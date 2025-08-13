@@ -1,0 +1,516 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rsd32
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private bc As ByteConverter
+	Private SD As SD32
+	Private task() As Boolean = Array As bool(False, False, False, False, False, False, False)
+	Dim str(10) As String
+	Dim LF() As Byte = Array As Byte(10)
+	
+	str(0) = "Hello "
+	str(1) ="World "
+	str(2) = "I am "
+	str(3) = "from "
+	str(4) = "France "
+	str(5) = "and "
+	str(6) = "i like "
+	str(7) ="B4R "
+	str(8) ="SD library for esp32 "
+	str(9) ="exemple "
+End Sub
+'#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
+'#define FSPI  0
+'#define HSPI  1
+'#else
+'#define FSPI  1 //SPI bus attached to the flash (can use the same data lines but different SS)
+'#define HSPI  2 //SPI bus normally mapped to pins 12 - 15, but can be matrixed to any pins
+'#if CONFIG_IDF_TARGET_ESP32
+'#define VSPI  3 //SPI bus normally attached to pins 5, 18, 19 and 23, but can be matrixed to any pins
+'#endif
+'#endif
+
+' ESP32: 
+' FSPI = 1, SPI attached To flash / normally Not used    
+' HSPI = 2, uses SPI2  => MOSI (13), SCK (14), MISO (12), SS (15)
+' VSPI = 3, uses SPI3  => MOSI (23), SCK (18), MISO (19), SS (5)
+' VSPI is SPI by default
+
+' ESP32-S2: 
+' FSPI = 1, uses SPI2 =>MOSI (13), SCK (14), MISO (15) And SS (12) / 6 SS lines any other pin
+' HSPI = 2, uses SPI3 =>MOSI (35), SCK (36), MISO (37) And SS (34) / 3 SS lines at any other pin
+' VSPI Not defined
+
+' ESP32 C3: 
+' FSPI = 0, uses SPIx =>MOSI (5), SCK (6), MISO (7) And SS (10) / 6 SS lines any other pin
+' HSPI Not defined
+' VSPI Not defined
+
+' * SPI Standard case: Connect the SD card To the following pins:
+' *
+' * SD Card  |  ESP32  |  HSPI  |  VSPI
+' *    D2       -
+' *    D3       SS        15        5
+' *    CMD      MOSI      13       23
+' *    VSS      GND
+' *    VDD      3.3V
+' *    CLK      SCK       14       18
+' *    VSS      GND
+' *    D0       MISO      12       19
+' *    D1       -
+' */
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+
+'case SD32 library
+'   If SD.Initialize(False) Then
+'	If SD.Initialize1(SD.ESP32_VSPI, 5, 4000000, 5, False) Then
+'	If SD.Initialize2(SD.ESP32_VSPI, 5, 18, 19, 23, False) Then
+'	If SD.Initialize3(SD.ESP32_VSPI, 5, 18, 19, 23, 4000000, 5, False) Then  	
+	
+'	If SD.Initialize1(SD.ESP32_HSPI, 15, 4000000, 5, False) Then   'not working on esp32 30pins
+	If SD.Initialize2(SD.ESP32_HSPI, 15, 17, 16, 4, False) Then    
+'	If SD.Initialize3(SD.ESP32_HSPI, 15, 17, 16, 4, 4000000, 5, True) Then    
+       Log("init OK, SD mounted")
+		check_SD
+	Else
+		Log("<error> Card Mount Failed")
+	End If
+End Sub
+
+
+Sub check_SD
+'	Dim totalBytes As ULong = SD.totalBytes '/ mo
+'	Log("SD Total Bytes: ", totalBytes, " o")
+'	Log("stack :", StackBufferUsage)
+'	Delay(100)
+'	Dim usedBytes As ULong = SD.usedBytes '/ mo
+'	Log("SD Used Bytes: ", usedBytes, " o")
+'	Log("stack :", StackBufferUsage)
+'	Delay(100)
+	
+	
+	Dim cardType As Byte = SD.cardType
+
+	If(cardType = SD.CARD_NONE) Then
+		Log("No SD card attached")
+	Else
+		Log("SD card attached"):Log("")
+		Log("check type of card: ")
+		If(cardType == SD.CARD_MMC) Then
+			Log("SD Card Type: ","MMC")
+		else if(cardType == SD.CARD_SD) Then
+			Log("SD Card Type: ","SD")
+		else if(cardType == SD.CARD_SDHC) Then
+			Log("SD Card Type: ","SDHC")
+		Else
+			Log("SD Card Type: ","UNKNOWN")
+		End If
+		Dim mo As ULong = 1024*1024
+		Log("stack :", StackBufferUsage)
+		Dim cardSize As ULong = SD.cardSize / mo
+		Log("SD Card Size: ", cardSize, " Mo")
+		Log("stack :", StackBufferUsage)
+		Delay(100)
+		Dim totalBytes As ULong = SD.totalBytes / mo
+		Log("SD Total Bytes: ", totalBytes, " Mo")
+		Log("stack :", StackBufferUsage)
+		Delay(100)
+		Dim usedBytes As ULong = SD.usedBytes / mo
+		Log("SD Used Bytes: ", usedBytes, " Mo")
+		Log("stack :", StackBufferUsage)
+		Delay(100)
+		task(0) = True
+		CallSubPlus("MkdirWriteListRemoveRmdirList_FS",10000,0)
+	End If
+End Sub
+	
+Sub List_CleanWrite_FS(tag As Byte)
+	Log("SD Mount OK")
+	Log("***ListDIR:")
+	listdir("/",7)
+	Log("end listdir"):Log(" ")
+	
+	clean
+	Log("end clean"):Log(" ")
+	
+	write_1
+	Log("end write_1"):Log(" ")
+		
+	Log("***ListDIR:")
+	listdir("/",5)
+	Log("end phase 1.0"):Log(" ")
+
+	task(1) = True
+'	CallSubPlus("ReadRemoveList_FS",10000,0)
+End Sub
+
+Sub Read_RemoveList_FS(tag As Byte)
+	read_1
+	Log("end read 1"):Log(" ")
+	
+	remove_1
+	Log("end remove 1"):Log(" ")
+	
+	Log("***ListDIR:")
+	listdir("/",5)
+	Log("end phase 1.1"):Log(" ")
+	task(2) = True
+'	CallSubPlus("MkdirWriteListRemoveRmdirList_FS",10000,0)
+End Sub
+
+Sub MkdirWriteListRemoveRmdirList_FS(tag As Byte)
+	createDIR_2
+
+	write_2
+	
+	listdir("/", 1)
+	Log("end phase 2.1"):Log(" ")
+	
+	remove_2
+
+	removeDIR_2
+
+	Log("***ListDIR:")
+	listdir("/", 1)
+	Log("end phase 2.2"):Log(" ")
+	task(3) = True
+	CallSubPlus("WriteReadRenameReadRemove_FS",10000,0)
+End Sub
+
+Sub WriteReadRenameReadRemove_FS(tag As Byte)
+	write_3
+	Log("end write_3")
+	
+	append_3
+	Log("end append_3")
+		
+	read_3
+	Log("end read_3")
+	
+	rename_3
+	Log("end rename_3")
+	
+	read2_3
+	Log("end read2_3")
+		
+	remove_3
+
+	Log("***ListDIR:")
+	listdir("/",3)
+	Log("end remove_3")
+	Log("end phase 3"):Log(" ")
+	task(4)=True
+	CallSubPlus("WriteUlongReadUlong_FS",10000,0)
+End Sub
+
+Sub WriteUlongReadUlong_FS(tag As Byte)
+	Log("test Write Ulong in a file")
+	
+	WriteUlong
+	
+	ReadUlong
+	Log("end write 10000 Ulong")
+	task(5)=True
+	CallSubPlus("WriteStringReadString_FS",10000,0)
+End Sub
+
+Sub WriteStringReadString_FS(tag As Byte)
+	Log("test Read/Check String in a file")
+
+	SD.Remove("/StringFile.txt")
+	
+	writeString
+	
+	readString
+	Log("end read/check text sentences")
+	task(6)=True
+	CallSubPlus("End_FS",10000,0)
+End Sub
+
+Sub End_FS(tag As Byte)
+	Log("Test completed" )
+	For i = 0 To 6
+		task(i) = False
+	Next
+End Sub
+
+
+'************************************************
+Sub clean
+	remove_1
+	remove_2
+	removeDIR_2
+	remove_3
+	SD.Remove("/new1/new2/new3")
+	SD.RMDir("/new1/new2")
+'	SD.Format
+End Sub
+
+Sub write_1
+	SD.OpenReadWrite("/new1/new2/new3/hello3.txt")
+	Dim txt() As Byte = "Hello3 a tous"
+	SD.Stream.WriteBytes(txt,0,txt.Length)
+	SD.close
+	Log("file hello3.txt created")
+End Sub
+
+Sub read_1
+	If SD.Exists("/new1/new2/new3/hello3.txt") Then
+		SD.OpenRead("/new1/new2/new3/hello3.txt")
+		Dim txt(SD.CurrentFile.Size) As Byte
+		SD.Stream.ReadBytes(txt,0,SD.CurrentFile.Size)
+		SD.close
+		Log("file content : ",txt)
+	Else
+		Log(" file /new1/new2/new3/hello3.txt not created")
+	End If
+End Sub
+
+Sub remove_1
+	If SD.Exists("/new1/new2/new3/hello3.txt")	Then
+		SD.Remove("/new1/new2/new3/hello3.txt")
+		Log("file /new1/new2/new3/hello3.txt removed")
+	Else
+		Log("file /new1/new2/new3/hello3.txt don't exist")
+	End If
+End Sub
+
+Sub createDIR_2
+	If Not(SD.Exists("/mydir")) Then
+		SD.MKDir("/mydir")
+	Else
+		Log("directory /mydir already exists")
+	End If
+End Sub
+
+Sub write_2
+	SD.OpenReadWrite("/mydir/hello2.txt")
+	Dim txt() As Byte = "Hello2"
+	SD.Stream.WriteBytes(txt,0,txt.Length)
+	SD.close
+	Log("directory mydir created, file hello3.txt created, file content : ",txt)
+End Sub
+
+Sub remove_2
+	If SD.Exists("/mydir/hello2.txt")	Then
+		SD.Remove("/mydir/hello2.txt")
+		Log("/mydir/hello2.txt removed")
+	Else
+		Log("file /mydir/hello2.txt don't exist")
+	End If
+End Sub
+
+Sub removeDIR_2
+	If SD.exists("/mydir") Then
+		SD.RMDir("/mydir")
+		Log("directory mydir removed removed")
+	Else
+		Log("directory mydir don't exist")
+	End If
+End Sub
+
+Sub write_3
+	SD.OpenReadWrite("/hello.txt")
+	Dim txt() As Byte =JoinStrings(Array As String("Hello! ",CRLF))
+	SD.Stream.WriteBytes(txt,0,txt.Length)
+	SD.Close
+End Sub
+
+Sub append_3
+	SD.OpenAppend("/hello.txt")
+	Dim txt() As Byte =JoinStrings(Array As String("World!",CRLF))
+	SD.Stream.WriteBytes(txt,0,txt.Length)
+	SD.Close
+End Sub
+
+Sub read_3
+	If SD.Exists("/hello.txt") Then
+		SD.OpenRead("/hello.txt")
+		Dim txt(SD.CurrentFile.Size) As Byte
+		SD.Stream.ReadBytes(txt,0,SD.CurrentFile.Size)
+		SD.close
+		Log("text after append : ",txt)
+	Else
+		Log("file /hello.txt not created")
+	End If
+End Sub
+
+Sub rename_3
+	If SD.Exists("/hello.txt") Then
+		SD.Rename("/hello.txt", "/foo.txt")
+		Log("file /hello.txt created before rename")
+	Else
+		Log("file /hello.txt not created before rename")
+	End If
+End Sub
+
+Sub read2_3
+	If SD.Exists("/foo.txt") Then
+		SD.OpenRead("/foo.txt")
+		Dim txt(SD.CurrentFile.Size) As Byte
+		SD.Stream.ReadBytes(txt,0,SD.CurrentFile.Size)
+		SD.close
+		Log("text after rename : ",txt)
+	Else
+		Log("file /foo.txt not created before rename")
+	End If
+End Sub
+
+Sub remove_3
+	If SD.Exists("/foo.txt") Then
+		SD.Remove("/foo.txt")
+	Else
+		Log("file /foo.txt not created before remove")
+	End If
+End Sub
+	
+Sub listdir(path As String, nblevel As Byte)
+'	Log("stack: ",StackBufferUsage)
+	If nblevel > 6 Then nblevel = 6
+	Dim ppath() As Byte
+	Dim level() As Byte = DIRlevel(bc.StringToBytes(path))
+	For Each f As File In SD.ListFiles(path)
+		If f.isdirectory Then
+			If path <> "/" Then
+				ppath = JoinBytes(Array(path.getbytes,"/".getbytes,f.name.getbytes))
+			Else
+				ppath = JoinBytes(Array(path.getbytes,f.name.getbytes))
+			End If
+			Log(level,"Dir  : ",ppath)
+			If nblevel-1>0  Then
+				If nblevel > 1 Then listdir(bc.stringfrombytes(ppath),nblevel-1)
+			End If
+		Else
+			Log(level,"Name: ",f.name," - Size: ",f.size)
+		End If
+	Next
+End Sub
+
+Sub DIRlevel(lpath() As Byte) As Byte()
+	Dim level As Byte = 0
+	If lpath.Length >1 Then lpath = JoinBytes(Array(lpath,"/".getbytes))
+	For Each f As Byte In bc.substring(lpath,1)
+		If f = 47 Then level = level +1
+	Next
+	Dim tmp() As Byte = "-   -   -   -   -   -   -   -"
+	Return bc.SubString2(tmp,0,(level*4)+1)
+End Sub
+
+Sub WriteUlong
+	Log("test writebytes Ulong 0<10000")
+	If SD.OpenReadWrite("/Ulongfile.txt") Then
+		Dim i As ULong
+		For i = 0 To 10000
+			writefile(i)
+		Next
+		SD.Close
+	Else
+		Log("error open /Ulongsfile.txt")
+	End If
+End Sub
+Sub writefile(nb As ULong)
+	SD.stream.WriteBytes( bc.ULongsToBytes(Array As ULong(nb)),0,4)
+End Sub
+
+Sub ReadUlong
+	Log("test readbytes Ulong 0<10000")
+	If SD.Exists("/Ulongfile.txt") Then
+		SD.OpenRead("/Ulongfile.txt")
+		Dim i As ULong
+		For i = 0 To 10000
+			readfile(i)
+		Next
+		SD.Close
+	End If
+End Sub
+Sub readfile(nb As ULong)
+	Dim buff(4) As Byte : Dim j As UInt
+	j =SD.stream.readBytes(buff,0,4)
+	If j = 0 Then
+		Log("error readbytes ", nb)
+	End If
+	If bc.ULongsfromBytes(buff)(0) <> nb Then Log("wrong value at read ",nb)
+End Sub
+
+Sub writeString
+	Log("test writeString 100 sentences")
+	If SD.OpenReadWrite("/StringFile.txt") Then
+		Log(StackBufferUsage)
+		RndSeed(Millis)
+		For i = 0 To 100
+			writestring2(i)
+		Next
+		Log(StackBufferUsage)
+		SD.Close
+	Else
+		Log("error open /StringFile.txt")
+	End If
+End Sub
+Sub writestring2(nb As Byte)
+	Dim stra() As Byte= JoinStrings(Array As String(nb," ",str(Rnd(0,10)),str(Rnd(0,10)),str(Rnd(0,10)),str(Rnd(0,10)),str(Rnd(0,10)),str(Rnd(0,10)),str(Rnd(0,10)),".",CRLF))
+	SD.stream.WriteBytes(stra,0,stra.Length)
+End Sub
+
+Sub readString
+	Log("test readStrings 100 sentences")
+	Dim buff(256) As Byte : Dim Rbuff As UInt:Dim Lbuff As UInt:Dim NBstay As UInt = 0
+	If SD.Exists("/StringFile.txt") Then
+		SD.OpenRead("/StringFile.txt")
+		Log("start - bytesavailable",SD.Stream.BytesAvailable)
+		Do While SD.Stream.BytesAvailable > 0
+			Log(" "):Log(" bytesavailable ",SD.Stream.BytesAvailable)
+			Rbuff =NBstay+ SD.Stream.ReadBytes(buff,NBstay,Min(256-NBstay,SD.Stream.BytesAvailable))
+			If Rbuff = 256 Then
+				Lbuff = bc.LastIndexOf(buff,CRLF)
+			Else
+				Lbuff = Rbuff-2
+			End If
+			Log(" bytesavailable",SD.Stream.BytesAvailable)
+			NBstay = Rbuff-Lbuff-2
+			Log("lbuff: ",Lbuff, " Rbuff: ",Rbuff," NBstay: ",NBstay):Log(" ")
+			readString2(bc.SubString2(buff,0,Lbuff+2))
+			If NBstay >0 Then
+				bc.ArrayCopy2(buff,Lbuff+2,buff,0,NBstay)
+			End If
+			
+		Loop  'Next
+		SD.Close
+	Else
+		Log("error open /StringFile.txt")
+	End If
+End Sub
+Sub readString2(buff() As Byte)
+	For Each s() As Byte In bc.Split(buff, LF)
+		If s.Length <> 0 Then
+			Log(s)
+		End If
+	Next
+End Sub
+	
+	

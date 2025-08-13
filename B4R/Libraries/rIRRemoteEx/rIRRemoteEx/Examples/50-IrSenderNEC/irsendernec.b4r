@@ -1,0 +1,69 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR sender sending NEC command. There is no Arduino receiver used.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The default pins are used as defined in PinDefinitionsAndMore.h.
+'Hardware:		Arduino UNO
+'				KEYES IR-Sender KY-005 (carrier frequency 38 kHz, distance max 18m).
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+#End Region
+
+#Region Wiring
+'IR-Sender KY-005 = Arduino UNO (wirecolor)
+'VCC = 5V (RED)
+'TX = 3 (YELLOW)
+'GND = GND (BLACK)
+'The transmitting LED should be connected with a resistor: 3,3V=120Ω, 5V=220Ω
+
+'IR-Receiver KY-022 = Arduino UNO (wirecolor)
+'VCC = 5V (RED)
+'TX = 3 (YELLOW)
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRSENDERNEC v20250506"
+	Public SerialLine As Serial
+	Public irsender As IrSender
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+	
+	'Init the sender using the default pin 3.
+	irsender.Initialize()
+	
+	CallSubPlus("SendNEC", 1000, 5)
+End Sub
+
+Private Sub SendNEC(tag As Byte)
+	Log("[SendNEC] Start")
+	irsender.SendNEC(0, 0x19, 0)
+End Sub
+
+'Get the HEX value from an ULong.
+'Depends on: ByteConverter
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+

@@ -1,0 +1,111 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+Library3=reflection
+Library4=threading
+Library5=slbytearraybuffer
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddPermission("android.permission.RECORD_AUDIO")~\n~AddPermission("android.permission.MODIFY_AUDIO_SETTINGS")~\n~
+Module1=Vizualizer
+Module2=WavDraw
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=7.95
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim MP As MediaPlayer
+	
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim Viz As Vizualizer
+	Private btnStartWav As Button
+	Private btnStopWav As Button
+	Private pnlWav As Panel
+	Private sbGain As SeekBar
+	Private sbZoom As SeekBar
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+	
+	'Initialize the Mediaplayer
+	MP.Initialize
+	
+	'Load a file
+	MP.Load(File.DirAssets,"Add your mp3 name here") '(and add it to the files tab)
+	
+	Dim R As Reflector
+	R.Target = MP
+	Dim MPJO As JavaObject = R.GetField("mp")
+	
+	'Get the audio session Id
+	Dim AudioSession As Int = MPJO.RunMethod("getAudioSessionId",Null)
+	
+	'Initialize the Visualizer
+	Viz.Initialize(Me,AudioSession)
+	Viz.CaptureSize = Viz.CaptureSizeRange(1)
+	Viz.SetDataCaptureListener(Viz.GetMaxCaptureRate / 2,True,True)
+
+	Viz.DrawWavFormInitialize(pnlWav)
+	'Viz.DrawWavColor = Colors.Blue
+
+	Viz.Enabled = True
+	MP.Play
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Viz.StopDataCapture
+	Viz.Release
+	MP.Stop
+	MP.Release
+End Sub
+Sub FFT_Capture(Data() As Byte,SamplingRate As Int)
+'	Log("FFT " & Data.Length)
+'	Log(SamplingRate)
+End Sub
+Sub Wave_Capture(Data() As Byte,SamplingRate As Int)
+'	Log("Wav " & Data.Length)
+'	Log(SamplingRate)
+End Sub
+Sub sbZoom_ValueChanged (Value As Int, UserChanged As Boolean)
+	Viz.DrawWavZoom = Value / 10
+End Sub
+Sub sbGain_ValueChanged (Value As Int, UserChanged As Boolean)
+	Viz.DrawWaveGain = Max(1,sbGain.Max - Value)
+End Sub
+Sub btnStopWav_Click
+	Viz.DrawWaveFormStop
+End Sub
+Sub btnStartWav_Click
+	Viz.DrawWaveFormStart
+End Sub

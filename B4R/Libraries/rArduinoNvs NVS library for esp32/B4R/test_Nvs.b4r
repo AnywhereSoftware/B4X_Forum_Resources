@@ -1,0 +1,132 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rarduinonvs
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private Nvs As ArduinoNvs 
+	Private raf As RandomAccessFile
+	Private bc As ByteConverter
+	Private erase As Boolean = False
+End Sub
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+    Nvs.Initialize
+	
+	If Nvs.begin("storage") Then Log("Begin OK") Else Log("Begin NOK")
+	
+	If erase Then  
+		If Nvs.eraseAll(False) Then Log("Global erase OK") Else Log("Global erase NOK")
+	End If
+	
+	If erase Then   
+		If Nvs.setByte("mybyte",0xAB,False) Then Log("write Byte 0xAB OK") Else Log("write Byte NOK")
+	End If
+	Log("read byte Nvs 0xAB : ",bytetoHexa(Nvs.getByte("mybyte",0)))
+	
+	If erase Then
+		If Nvs.setInt("myInt",0x45AB,False) Then Log("write Int 0x45AB OK")Else Log("write Int NOK")
+	End If	
+	Log("read Int Nvs 0x45AB : ",inttoHexa(Nvs.getInt("myInt",0)))
+	
+	If erase Then
+		If Nvs.setUint("myUInt",0x95AB,False) Then Log("write Uint 0x95AB OK") Else Log("write Uint NOK")
+	End If	
+	Log("read UInt Nvs 0x95AB : ",UinttoHexa(Nvs.getUInt("myUInt",0)))
+	
+	If erase Then
+		If Nvs.setLong("myLong",0x1045AB,False) Then Log("write Long 0x1045AB OK") Else Log("write Long NOK")
+	End If	
+	Log("read Long Nvs 0x1045AB : ",longtoHexa(Nvs.getLong("myLong",0)))
+	
+	If erase Then
+		If Nvs.setULong("myUlong",0x8095AB,False) Then Log("write ULong 0x8095AB OK") Else Log("write ULong NOK")
+	End If	
+	Log("read ULong Nvs 0x8095AB : ",UlongtoHexa(Nvs.getULong("myUlong",0)))
+
+	If erase Then
+		If Nvs.setDouble("myDouble",1045.123,False)  Then Log("write Double 1045,123 OK") Else Log("write Double NOK")
+	End If	
+	Log("read Double Nvs 1045,123 : ",Nvs.getDouble("myDouble",0))
+	
+	If erase Then
+		If Nvs.setString("myString","test de save des string",False) Then Log("write String 'test de save des string' OK") Else Log("write String NOK")
+	End If
+	Log("read String Nvs by Return  'test du save des string' : ", Nvs.getString1("myString"))
+
+	 Dim buff_len As UInt = 40 :Dim buff(buff_len) As Byte
+	 Dim len(1) As Byte: len(0) = buff_len
+	If Nvs.getString("myString",buff,len) Then Log("read String in ArrayByte OK") Else  Log("read String in ArrayByte NOK")
+
+	Log("read String Nvs by parameter Array 'test du save des string' : ", bc.SubString2(buff,0,len(0)))	
+	
+	If erase Then
+		Dim BlobArray() As Byte = Array As Byte (48,49,50,51,52,53,54,55,56,57,58,59,60,61)
+		If Nvs.setBlobArray("myBlobArray", BlobArray, BlobArray.Length,False) Then Log("Write BlobArray OK") Else Log("Write BlobArray NOK")
+	End If
+	Dim Bloblength As UInt = Nvs.getBlobSize("myBlobArray"): Log("BlobLength to read :",Bloblength)
+	Dim BlobRead(Bloblength) As Byte
+	If Nvs.getBlobArray("myBlobArray",BlobRead,Bloblength) Then Log("Read BlobArray OK")Else Log("Read BlobArray NOK")
+	Log("BlobArray read : [",bc.StringFromBytes(BlobRead),"]") 
+	Log(" ")
+	Log("Configuration of test : ")
+	Log("erase = true : memory erased at boot and data are written before read")	
+	Log("erase = false : no memory erase, no data written before read, we read data stored in flash")
+End Sub
+
+Sub bytetoHexa(n As UInt) As Byte()
+	Dim b1(2) As Byte
+	raf.Initialize(b1, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.SubString(bc.HexFromBytes(b1),2)
+End Sub
+
+Sub inttoHexa(n As Int) As Byte()
+	Dim b1(2) As Byte
+	raf.Initialize(b1, False) 'big endian
+	raf.Writeint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b1)
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub longtoHexa(n As Long) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteLong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+

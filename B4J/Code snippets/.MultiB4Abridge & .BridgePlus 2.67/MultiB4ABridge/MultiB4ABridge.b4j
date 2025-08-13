@@ -1,0 +1,328 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=icon.png
+File2=main.bjl
+File3=style1_mainform_dark.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jdraganddrop2
+Library4=jfx
+Library5=jnetwork
+Library6=jrandomaccessfile
+Library7=jsql
+Library8=b4xencryption
+Module1=AutoDiscover
+Module2=CallSubUtils
+Module3=Client
+Module4=KeyValueStore
+Module5=ProcessByPID
+NumberOfFiles=3
+NumberOfLibraries=8
+NumberOfModules=5
+Version=10.2
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+#End Region
+
+' Version 1.01
+
+#AdditionalJar: sqlite-jdbc-3.7.2
+
+#If Release
+	#CustomBuildAction: 2, c:\windows\system32\cmd.exe, /c copy  ..\Objects\MultiB4ABridge.jar D:\B4J\MultiB4ABridge.jar
+#End If
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private fc As FileChooser
+
+#Region Process PID 
+	Dim x As String = "+82553264GRE6"
+	Private PID As String
+	Private jo As JavaObject
+	Private processBy As ProcessByPID
+#End Region
+
+#Region VIEWS 
+	Private tfHost As TextField
+	Private lblDiscovering As Label
+	Private lvDevices As ListView
+	Private btnDiscover As Button
+	Private taAPKFullFileName As TextArea
+	Private btnInstall As Button
+	Private btnExitApp As Button
+	Private btnChooseFileApp As Button
+#End Region
+	
+	Private mHost As String
+	Private kvs As KeyValueStore
+	Public  csu As CallSubUtils
+	Private auto As AutoDiscover
+	Private const DiscoverTimeout As Int = 7000
+	Private NumOfFileSent As Int
+
+	Private DragDrop As DragAndDrop
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Title = "MultiB4ABridge - B4J"
+	
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets,"style1_mainform_dark.css"))
+	
+	Dim Img As Image
+	Img.InitializeSample(File.DirAssets,"icon.png",32,32)
+	MainForm.Icon = Img
+	
+	MainForm.Show
+	
+	processBy.Initialize
+	btnExitApp.RequestFocus
+	
+	jo.InitializeStatic("java.lang.management.ManagementFactory")
+	PID = jo.RunMethodJO("getRuntimeMXBean",Null).RunMethod("getName",Null)
+	PID = PID.SubString2(0,PID.IndexOf("@"))
+
+	' Just to get the broadcast address.
+	Dim udpsocket As UDPSocket
+	udpsocket.Initialize("udpsocket", 0, 8192)
+	mHost = udpsocket.GetBroadcastAddress
+	udpsocket.Close
+
+#Region Code: - Encrypting information with RandomAccessFile library. 
+	Private eF As Boolean = File.Exists(File.DirApp, "Settings.kvs2")
+	kvs.Initialize(File.DirApp, "Settings.kvs2")
+	If eF = False Then
+		kvs.PutEncrypted("APKFullFileName","",x)
+		kvs.PutEncrypted("Host", mHost,x)
+		kvs.PutEncrypted("Path", File.DirApp, x)
+	End If
+	taAPKFullFileName.Text = kvs.GetEncrypted("APKFullFileName",x)
+	tfHost.Text = kvs.GetEncrypted("Host",x)
+#End Region
+
+#Region Code: - Args( [Broadcast host address] and [ APK Full File Name] ) 
+	If Args.Length > 0 Then
+		For Each arg As String In Args
+			If IsNumber(arg.SubString2(0,1)) = True And arg.IndexOf(".") > -1 Then
+				tfHost.Text = arg
+			Else
+				taAPKFullFileName.Text = arg
+			End If
+		Next
+	Else
+		'	Args: 0
+		'	The program requires the parameters - AppStart.
+	End If
+#End Region
+	
+	DragDrop.Initialize(Me)
+	DragDrop.MakeDragTarget(taAPKFullFileName, "taAPKFullFileName")
+
+	csu.Initialize
+	DiscoverTask
+End Sub
+
+#Region VIEWS' EVENTS 
+
+Sub btnDiscover_Click
+	btnExitApp.RequestFocus
+	btnDiscover.Visible = False
+	btnInstall.Visible = False
+	tfHost.Enabled = False
+	taAPKFullFileName.Enabled = False
+	lblDiscovering.Text = Chr(0xF211) & "  Discovering, please wait..."
+	lvDevices.Items.Clear
+	DiscoverTask
+End Sub
+
+Sub lvDevices_SelectedIndexChanged(Index As Int)
+	
+	EnablingInstallation
+	
+	If btnInstall.Enabled = False Then
+		' Check if selected only devices "started".
+		btnDiscover.Visible = True
+	End If
+End Sub
+
+Sub taAPKFullFileName_TextChanged (Old As String, New As String)
+	EnablingInstallation
+End Sub
+
+Sub taAPKFullFileName_DragOver(e As DragEvent)
+	If e.GetDragboard.GetUrl.Length > 0 Then
+		e.AcceptTransferModes(TransferMode.COPY)
+	End If
+End Sub
+
+Sub taAPKFullFileName_DragDropped(e As DragEvent)
+	Dim URIs As String
+	URIs = e.GetDataObjectForId("text/uri-list")
+	Dim arrURIs() As String = Regex.Split("file:/", URIs)
+	If arrURIs.Length = 0 Then Return
+	If arrURIs(1).EndsWith(".apk") Then
+		taAPKFullFileName.Text = arrURIs(1)
+	End If
+End Sub
+
+Sub btnInstall_Click
+	If taAPKFullFileName.Text <> "" And File.Exists(File.GetFileParent(taAPKFullFileName.Text), File.GetName(taAPKFullFileName.Text)) Then
+		EnableViews(False)
+		btnInstall.Visible = False
+		Dim lstTargetIPs As List
+		lstTargetIPs.Initialize
+		Dim TargetIP As String
+		Dim Item As String
+		NumOfFileSent = 0
+		For Each Device As String In lvDevices.GetSelectedIndices
+			Item = lvDevices.Items.Get(Device)
+			TargetIP = Regex.Split(" - ", Item)(0).Trim
+			lstTargetIPs.Add(TargetIP)
+		Next
+		Install(lstTargetIPs)
+	Else
+		CallSubDelayed(Me, "btnChooseFileApp_Click")
+	End If
+End Sub
+
+Sub btnChooseFileApp_Click
+	If taAPKFullFileName.Enabled = True Then
+		fc.Initialize
+		fc.Title = "File Explorer"
+		Private fd As String = kvs.GetEncrypted("Path", x)
+		If fd <> "" Then 
+			fc.InitialDirectory = fd
+		Else
+			If taAPKFullFileName.Text <> "" Then
+				Private endindex As Int = taAPKFullFileName.Text.LastIndexOf("\")
+				If endindex > 0 Then
+					Private isDirectory As String = taAPKFullFileName.Text.SubString2(0,endindex)
+					If File.IsDirectory(isDirectory,"") Then
+						fc.InitialDirectory = taAPKFullFileName.Text.SubString2(0,endindex)
+					Else
+						fc.InitialDirectory = File.DirApp
+					End If
+				Else
+					fc.InitialDirectory = File.DirApp
+				End If
+			End If
+		End If
+		fc.SetExtensionFilter("APK-application", Array As String("*.apk"))
+		Private apkname As String = fc.ShowOpen(MainForm)
+		If apkname <> "" Then
+			kvs.PutEncrypted("Path", fc.InitialDirectory, x)
+			taAPKFullFileName.Text = apkname
+		End If
+	End If
+End Sub
+
+Sub btnExitApp_Click
+	MainForm.Close
+End Sub
+
+#End Region
+
+#Region METHODS 
+
+Private Sub DiscoverTask
+	EnableViews(False)
+	auto.Initialize(tfHost.Text)
+	auto.Start
+	csu.CallSubPlus(Me, "StopDiscover", DiscoverTimeout)
+End Sub
+
+Private Sub StopDiscover
+	auto.Stop
+	Dim lstIndices As List
+	lstIndices.Initialize
+	Dim Device As String
+	For i = 0 To lvDevices.Items.Size - 1
+		Device = lvDevices.Items.Get(i)
+		If Not(Device.EndsWith("(not started)")) Then
+			lstIndices.Add(i)
+		End If
+	Next
+	lvDevices.SetSelectedIndices(lstIndices)
+	lblDiscovering.Text = ""
+
+	EnableViews(True)
+End Sub
+
+Private Sub Install(lstTargetIPs As List)
+	For Each TargetIP As String In lstTargetIPs
+		Dim clnt As Client
+		clnt.Initialize(TargetIP)
+	Next
+End Sub
+
+Private Sub EnablingInstallation
+	Dim APKFullFileName As String = taAPKFullFileName.Text
+	btnInstall.Visible = (lvDevices.GetSelectedIndices.Size > 0 And APKFullFileName.Length > 0 And APKFullFileName.EndsWith(".apk"))
+
+	' Check if selected only devices "started".
+	Dim Item As String
+	For Each Device As String In lvDevices.GetSelectedIndices
+		Item = lvDevices.Items.Get(Device)
+		If Item.EndsWith("(not started)") Then
+			btnInstall.Enabled = False
+			Return
+		End If
+	Next
+	
+	' Check if apk file exists.
+	Dim Dir, FileName As String
+	Dim p As Int = APKFullFileName.LastIndexOf("/")
+	If p <> - 1 Then
+		Dir = APKFullFileName.SubString2(0, p)
+		FileName = APKFullFileName.SubString(p + 1)
+		btnInstall.Visible = btnInstall.Visible And File.Exists(Dir, FileName)
+		btnInstall.Enabled = btnInstall.Visible
+	Else
+		btnInstall.Visible = False
+		Return
+	End If
+End Sub
+
+Private Sub EnableViews(Enable As Boolean)
+	btnDiscover.Visible = Enable
+	tfHost.Enabled = Enable
+	taAPKFullFileName.Enabled = Enable
+	EnablingInstallation
+End Sub
+
+#End Region
+
+#Region OTHER EVENTS 
+
+Public Sub Client_Connected(Clnt As Client)
+	Clnt.SendFile(taAPKFullFileName.Text)
+End Sub
+
+Public Sub AutoDiscover_Found (DeviceName As String, DeviceIp As String)
+	lvDevices.Items.Add($"${DeviceIp} - ${DeviceName}"$)
+End Sub
+
+Public Sub SendCompleted(Clnt As Client)
+	NumOfFileSent = NumOfFileSent + 1
+	If NumOfFileSent = lvDevices.GetSelectedIndices.Size Then
+		EnableViews(True)
+	End If
+End Sub
+
+#End Region
+
+Sub MainForm_Closed
+	kvs.PutEncrypted("APKFullFileName", taAPKFullFileName.Text,x)
+	kvs.PutEncrypted("Host", tfHost.Text,x)
+	Wait For (processBy.KillByPID(PID)) Complete (resultSession As Boolean)
+'	If resultSession Then Log("Success") Else Log("ERROR") 'Kill My Session
+End Sub

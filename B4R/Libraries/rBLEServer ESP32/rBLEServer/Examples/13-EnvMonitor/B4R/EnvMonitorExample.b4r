@@ -1,0 +1,318 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rbleserver
+Library2=rcore
+Library3=rdhtesp
+Library4=resp32rgbledc
+Library5=rrandomaccessfile
+Library6=rtm1637ex
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEServer
+'Description:	Environment monitor example for the B4R Library rBLEServer.
+'				Advertise DHT22 Temp+Hum sensor serialized data.
+'				9 objects are advertised:
+'				Temperature, Humidity, rgbtemperature duty (3 values), rgbhumidity duty (3 values), timerinterval in ms
+'				Handle client data containing serialized data with 1 field to set the advertising interval in seconds.
+'				RGBTemperature indicates temperature comfort zone: < 20 = blue, 20-26 = green, > 26 = red
+'				RGBHumidity indicates humidity comfort zone: < 30 = blue, 30-60 = green, > 30 = pink
+'				Example serialized data with 9 objects (marker start 7E, end 7F):
+'				[BLEServer_Write]data=7E09079A9971410766668142B201CDB201FF01C001CB03881300007F
+'BLE:			Device name: BLEServer, MAC: 30:C9:22:D1:80:2E
+'Source:		EnvMonitorExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rBLEServer 0.80 - BLE advertising
+'rDHTESP 1.01 - DHT reader esp. for ESP
+'rESP32RGBLEDC - Set color of RGB
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Wrover Kit
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'DHT22	= ESP32 (wirecolor)
+'VCC	= 5V (red)
+'Signal = D4 (brown)
+'GND 	= GND
+
+'RGBLED Temperature = ESP32 (wirecolor)
+'LED RED	= D25 (red)
+'LED GREEN	= D27 (green)
+'LED BlUE	= D26 (blue)
+'GND		= GND (black)
+
+'RGBLED Humidity = ESP32 (wirecolor)
+'LED RED	= D14 (red)
+'LED GREEN	= D12 (green)
+'LED BLUE	= D13 (blue)
+'GND		= GND (black)
+
+'TM1637 	= ESP32 (wirecolor)
+'DIO		= D33 (blue)
+'CLK		= D32 (green)
+'VCC		= 5V  (red)
+'GND		= GND (black)
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEServer EnvMon Example v20250212"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEServer As BLEServer
+	Private MTUSize As UInt = 100			'MTU has to be increased because of serialized data with 9 objects.
+	
+	'Serializer
+	Private SerData As B4RSerializator
+	Private SerDataBuffer(10) As Object 	'Storage buffer with max 10 items
+
+	'DHT22
+	Private DHT As DHTESP
+	Private DHTPinNumber As UInt 			= 4		'D4
+	Private Humidity As Float
+	Private Temperature As Float
+
+	'Comfort zone indicators - if in zone color is green
+	Private TEMPERATUREHIGH As Float		= 26	'Comfort zone indicator high RGB turns red
+	Private TEMPERATURELOW As Float			= 20	'Comfort zone indicator low RGB turns blue
+	Private HUMIDITYHIGH As Float			= 60	'Comfort zone indicator high RGB turns pink
+	Private HUMIDITYLOW As Float			= 30	'Comfort zone indicator low RGBLED turns blue
+	Private ComfortIndicatorFading As Boolean = True
+
+	'RGB LED red,green,blue connected to GPIO 25,26,27
+	Private RGBTemperature As ESP32RGBLEDC
+	Private RGBTemperatureDuty(3) As Byte	= Array As Byte(0, 0, 0)
+	Private RGBHumidity As ESP32RGBLEDC
+	Private RGBHumidityDuty(3) As Byte		= Array As Byte(0, 0, 0)
+
+	'Color index for the byte arrays	
+	Private RED=0, GREEN=1, BLUE=2 As Byte
+	
+	'TM1637
+	Private TM1637 As TM1637Display
+	Private TM1637DIOPinNumber As UInt 		= 33
+	Private TM1637CLKPinNumber As UInt 		= 32
+	
+	'Timer for advertising in regular intervals the temp+hum+comfortindicator
+	Private TimerDataAdvertising As Timer
+	Private TimerDataAdvertisingInterval As ULong = 5 	'seconds
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init DHT22
+	DHT.Setup22(DHTPinNumber)
+
+	'Init RGBLEDs
+	RGBTemperature.Initialize(25, 26, 27, RGBTemperature.FREQUENCY_DEFAULT, RGBTemperature.RESOLUTION_DEFAULT)
+	RGBHumidity.Initialize(14, 12, 13, RGBTemperature.FREQUENCY_DEFAULT, RGBTemperature.RESOLUTION_DEFAULT)
+
+	'Init TM1637 display
+	TM1637.Initialize(TM1637CLKPinNumber, TM1637DIOPinNumber)
+	TM1637.ShowText("go",0,1)
+
+	'Init the ble server with name, events and mtu size
+	BLEServer.Initialize("BLEServer", "BLEServer_NewData", "BLEServer_Error", MTUSize)
+
+	'Turn on led green to indicate ready
+	RGBTemperature.Green = 255
+
+	'Init Timer Data Advertising
+	TimerDataAdvertising.Initialize("TimerDataAdvertising_Tick", TimerDataAdvertisingInterval * 1000)
+	TimerDataAdvertising.Enabled = True
+	TimerDataAdvertising_Tick
+End Sub
+
+#Region Timer
+'Read the DHT22 data and advertise as serialized data.
+Sub TimerDataAdvertising_Tick
+	'Read the sensor data
+	Temperature = DHT.GetTemperature
+	Humidity = DHT.GetHumidity
+
+	'[TimerDataAdvertising_Tick] t=19.30 C, h=92.40 %RH
+	Log("[TimerDataAdvertising_Tick] data", _ 
+		",t=", NumberFormat(Temperature,0,2), ",rgbt=",RGBTemperatureDuty(0), "-", RGBTemperatureDuty(1), "-", RGBTemperatureDuty(2), _ 
+	    ",h=", NumberFormat(Humidity,0,2), "rgbh=", RGBHumidityDuty(0), RGBHumidityDuty(1), RGBHumidityDuty(2), _ 
+		",i=", TimerDataAdvertising.Interval)
+	
+	'Set the RGB's
+	SetRGBTemperature
+	SetRGBHumidity
+
+	'Set the TM1637 segments TTHH, TT starts pos 0, HH starts pos 2
+	TM1637.ShowText(NumberFormat(Temperature,0,0),0,1)
+	TM1637.ShowText(NumberFormat(Humidity,0,0),2,1)
+
+	'BLE advertise data serialized with 9 objects
+	Dim data() As Byte = SerData.ConvertArrayToBytes(Array As Object( _ 
+		Temperature, Humidity, _ 
+		RGBTemperatureDuty(0), RGBTemperatureDuty(1), RGBTemperatureDuty(2), _ 
+		RGBHumidityDuty(0), RGBHumidityDuty(1), RGBHumidityDuty(2), _ 
+		NumberFormat(TimerDataAdvertising.Interval,0,0) ))
+
+	'Advertised = write the serialized data	to the connected client
+	BLEServer_Write(data)
+End Sub
+#End Region
+
+#Region BLEServer
+'Handle new data received from connected client.
+'The buffer contains following fields:
+'Index 0 = timer data advertising interval in seconds. If 0 the timer is stopped.
+'buffer - Byte array holding the data send by the client
+Private Sub BLEServer_NewData(buffer() As Byte)
+	'The data received is serialized > convert first
+	Dim data() As Object = SerData.ConvertBytesToArray(buffer, SerDataBuffer)
+	Log("[BLEServer_NewData] buffer=",bc.HexFromBytes(buffer),",data=",data.Length)
+
+	'Check if there is data
+	If data.length > 0 Then
+		'Data field 1 = TimerDataAdvertisingInterval
+		TimerDataAdvertising.Enabled = False
+		TimerDataAdvertisingInterval = data(0)
+		If TimerDataAdvertisingInterval > 0 Then
+			TimerDataAdvertising.Interval = TimerDataAdvertisingInterval * 1000
+			TimerDataAdvertising.Enabled = True
+		Else
+			TimerDataAdvertising.Enabled = False
+		End If
+		Log("[BLEServer_NewData] timerdataadvertising=",TimerDataAdvertising.Interval)
+	End If
+End Sub
+
+'Handle BLE server error.
+'Log the error to the B4R IDE, but could also use an LED
+'code - BLE server error code
+Private Sub BLEServer_Error(code As Byte)
+	Log("[BLEServer_Error]code=",code)
+	Select code
+		Case BLEServer.WARNING_INVALID_MTU
+			Log("[WARNING][Initialize] MTU out of range 23-512, default is set (23).")
+		Case BLEServer.ERROR_INVALID_CHARACTERISTIC
+			Log("[ERROR][Write] failed: No valid characteristic.")
+		Case BLEServer.ERROR_EMPTY_DATA
+			Log("[ERROR][Write] failed: No data.")
+	End Select
+End Sub
+
+'Write data to the connected client.
+'data - Byte array containing data fo the connected client
+Private Sub BLEServer_Write(data() As Byte)
+	If data == Null Then
+		Log("[ERROR][BLEServer_Write] No data.")	
+		Return
+	End If
+	Log("[BLEServer_Write]data=", bc.HexFromBytes(data))
+	BLEServer.Write(data)
+End Sub
+#End Region
+
+#Region RGBLED
+
+'Set RGB Temperature:
+'< low = blue, > high = red, normal = green
+Public Sub SetRGBTemperature
+	Dim DUTY_MIN As Byte = 125
+	Dim DUTY_MAX As Byte = 255
+	Dim duty As Int = 255
+
+	RGBHumidityDuty(RED) = 0
+	RGBHumidityDuty(GREEN) = 0
+	RGBHumidityDuty(BLUE) = 0
+
+	If Temperature < TEMPERATURELOW Then
+		If ComfortIndicatorFading Then
+			duty = MapRange(Temperature * 100, TEMPERATURELOW * 100, (TEMPERATURELOW - 5) * 100, DUTY_MIN, DUTY_MAX)
+		End If
+		RGBTemperatureDuty(BLUE) = duty
+	Else If Temperature > TEMPERATUREHIGH Then
+		If ComfortIndicatorFading Then
+			duty = MapRange(Temperature * 100, TEMPERATUREHIGH * 100, (TEMPERATUREHIGH + 5) * 100, DUTY_MIN, DUTY_MAX)
+		End If
+		RGBTemperatureDuty(RED) = duty
+	Else
+		'If ComfortIndicatorFading Then
+		'	duty = MapRange(Temperature * 100, TEMPERATURELOW * 100, TEMPERATUREHIGH * 100, DUTY_MIN, DUTY_MAX)
+		'End If
+		'Set lime 50,205,50 instead green 0-255-0 (RGBTemperatureDuty(1) = duty)
+		RGBTemperatureDuty(RED) = 50
+		RGBTemperatureDuty(GREEN) = 205
+		RGBTemperatureDuty(BLUE) = 50
+	End If
+	RGBTemperature.SetColor(RGBTemperatureDuty(RED), RGBTemperatureDuty(GREEN), RGBTemperatureDuty(BLUE))
+	Log("[SetRGBTemperature] t=",Temperature,", rgb=",RGBTemperatureDuty(0),"-",RGBTemperatureDuty(1),"-",RGBTemperatureDuty(2))
+End Sub
+
+'Set RGB Humidity:
+'< low = blue, > high = pink, normal = green
+Public Sub SetRGBHumidity
+	Dim DUTY_MIN As Byte = 125
+	Dim DUTY_MAX As Byte = 255
+	Dim duty As Int = 255
+
+	If Humidity < HUMIDITYLOW Then
+		'Blue
+		If ComfortIndicatorFading Then
+			duty = MapRange(Humidity * 100, HUMIDITYLOW * 100, (HUMIDITYLOW - 10) * 100, DUTY_MIN, DUTY_MAX)
+		End If
+		RGBHumidityDuty(RED) = 0
+		RGBHumidityDuty(GREEN) = 0
+		RGBHumidityDuty(BLUE) = duty
+	Else If Humidity > HUMIDITYHIGH Then
+		'Pink
+		If ComfortIndicatorFading Then
+			duty = MapRange(Humidity * 100, HUMIDITYHIGH * 100, (HUMIDITYHIGH + 10) * 100, DUTY_MIN, DUTY_MAX)
+		End If
+		RGBHumidityDuty(RED) = 255
+		RGBHumidityDuty(GREEN) = 192
+		RGBHumidityDuty(BLUE) = 203
+	Else
+		'Lime
+		'If ComfortIndicatorFading Then
+		'	duty = MapRange(Humidity * 100, HUMIDITYLOW * 100, HUMIDITYHIGH * 100, DUTY_MIN, DUTY_MAX)
+		'End If
+		'Set lime 50,205,50 instead green 0-255-0 (RGBHumidityDuty(1) = duty)
+		RGBHumidityDuty(RED) = 50
+		RGBHumidityDuty(GREEN) = 205
+		RGBHumidityDuty(BLUE) = 50
+	End If
+	RGBHumidity.SetColor(RGBHumidityDuty(RED), RGBHumidityDuty(GREEN), RGBHumidityDuty(BLUE))
+	Log("[SetRGBHumidity] h=",Humidity,", rgb=",RGBHumidityDuty(0),"-",RGBHumidityDuty(1),"-",RGBHumidityDuty(2))
+End Sub
+#End Region
+
+#Region Helper
+'Helper
+'Get HEX code for a single byte.
+'b - Single byte
+'Returns HEX code as string
+Public Sub HexFromByte(b As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(b))
+End Sub
+#End Region

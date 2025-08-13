@@ -1,0 +1,229 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=reeprom
+Library3=resp32watchdog
+Library4=resp8266wifi
+Library5=rhttputils2
+Library6=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Purpose:	rESP32Watchdog CloudServer Example for ESP32 with Arduino board library 3.x.
+'			The ESP32, CloudClient, sends the text HelloFromB4R to the cloud server and receives as response HelloFromB4J@timestamp.
+'			ESP32 crashes are sumulated by a random generator which triggers the watchdog to action.
+'Hardware:	ESP32 Dev Module
+'Author:	Robert W.B. Linn
+'Version:	See globals VERSION
+
+'Wiring:	Built-in LED=GPIO2
+
+'Various
+'Disable logging by adding HU2_DISABLE_LOGS as a conditional symbol (Ctrl + B).#End Region
+
+'Example Log CloudServer Response
+'[TimerCloudRequest_Tick] TEST_MODE=0
+'trying To connect To: NNN.NNN.NNN.NNN port: -14494 ssl: 0
+'connected: NNN.NNN.NNN.NNN
+'HTTP/1.1 200 OK
+'Date: Mon, 21 Apr 2025 11:06:46 GMT
+'Content-Length: 22
+'Server: Jetty(11.0.9)
+'[JobDone][OK] name=cloudrequest,success=1,status=200,response=Received: HelloFromB4J@13:21:12
+
+'Example Log with wrong CloudServer port (80 instead 51042)
+'The cloudserver is a B4J console application.
+'[AppStart]rESP32Watchdog CLOUDSERVER v20250421
+'[WiFiConnect] Connected To wifi with local IP NNN.NNN.NNN.NNN
+'[TimerCloudRequest_Tick] Sending data To cloud...
+'trying To connect To: NNN.NNN.NNN.NNN port: 80 ssl: 0
+'[JobDone][ERROR] status=0, message=Failed To connect,response=
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rESP32Watchdog CLOUDSERVER v20250422"
+
+	Private Serial1 As Serial
+
+	Private NETWORK_SSID As String		= "YourSSID"
+	Private NETWORK_PASSWORD As String	= "YourPassword"
+	Private CLOUD_URL As String			= "http://IP-CLOUD-SERVER:51042/cloud"
+	Private CLOUD_CONTENT As String		= "msg=HelloFromB4R"
+	
+	Private WIFIMAXRETRIES As Byte = 2
+	Private WiFiRetriesCounter As Byte = 0
+	Private wifi As ESP8266WiFi
+
+	Private WATCHDOG_TIMEOUT As ULong = 5000
+	Private WATCHDOG As ESP32Watchdog
+
+	Private TimerCloudRequest As Timer
+	Private TIMERCLOUDREQUEST_INTERVAL As ULong = 5000
+
+	'Pins
+	Private PIN_NR_ONBOARD_LED As Byte = 2
+	Private Pin_Onboard_Led As Pin
+
+	' Test mode 0 = normal
+	Private TEST_MODE As Byte = 0   ' 0=normal, 1=infinite loop, 2=skip watchdog, 3=http hang, 4=recursion crash
+
+	Private EEPROM_RESET_REASON_ADDRESS As Byte = 0
+	Private eeprom As EEPROM
+	
+	'Helpers
+	Private bc As ByteConverter	'ignore
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	' EEPROM reset reason (log and clear)
+	Dim lastReason As Byte = GetStoredResetReason
+	If lastReason > 0 Then
+		Log("[AppStart] Last reset reason (from EEPROM): ", lastReason)
+		StoreResetReason(0) ' Clear it
+	End If
+
+	' Init GPIO
+	Pin_Onboard_Led.Initialize(PIN_NR_ONBOARD_LED, Pin_Onboard_Led.MODE_OUTPUT)
+	Pin_Onboard_Led.DigitalWrite(False)
+
+	' Timer Periodic sender to cloud - enabled is set after wifi connected
+	TimerCloudRequest.Initialize("TimerCloudRequest_Tick", TIMERCLOUDREQUEST_INTERVAL)
+	TimerCloudRequest.Enabled = False
+    
+	' Connect to WiFi
+	If Not(WiFiConnect) Then
+		Return
+	End If
+
+    ' Start hardware watchdog with timeout 5000ms with event
+    WATCHDOG.Initialize(WATCHDOG_TIMEOUT, "WatchdogResetReason")
+   End Sub
+
+#Region Watchdog
+' Log and store the reason for the watchdog to trigger ESP reset.
+' This event is triggerd by the library.
+Private Sub WatchdogResetReason(reason As Int)
+	Log("[WatchdogResetReason] reason=", reason)
+	StoreResetReason(reason)
+End Sub
+#End Region
+
+#Region WIFI
+'Connect to the wifi using the credentials.
+'If connection OK, the onboard BLUE LED is on.
+Private Sub WiFiConnect As Boolean
+	Dim result As Boolean
+	TimerCloudRequest.Enabled = False
+	
+	' Connect with wifi by setting SSID and password
+	If wifi.Connect2(NETWORK_SSID, NETWORK_PASSWORD) Then
+		Log("[WiFiConnect] Connected to WiFi with local IP ", wifi.LocalIp)
+		WiFiRetriesCounter = 0
+		TimerCloudRequest.Enabled = True
+		Pin_Onboard_Led.DigitalWrite(True)
+		result = True
+	Else
+		'Connection failed, retry
+		WiFiRetriesCounter = WiFiRetriesCounter + 1
+		Log("[AppStart][ERROR] Failed to connect to WiFi. Retry ", WiFiRetriesCounter)
+		If WiFiRetriesCounter < WIFIMAXRETRIES Then
+			'Try to reconnect again
+			Delay(1000)
+			WiFiConnect
+		Else
+			'Max retries = abort
+			Log("[AppStart][ERROR] Failed to connect to WiFi. Check network parameter.")
+			TimerCloudRequest.Enabled = False
+			Pin_Onboard_Led.DigitalWrite(False)
+		End If
+		result = False
+	End If
+	Return result
+End Sub
+#End Region
+
+#Region HTTPCLOUD
+Sub TimerCloudRequest_Tick
+	Log("[TimerCloudRequest_Tick] TEST_MODE=", TEST_MODE)
+
+	' Simulate 4 crash scenarios. Set to 0 for normal mode.
+	TEST_MODE = Rnd(0, 5)
+	
+	Select TEST_MODE
+		Case 0
+			' Normal mode
+			WATCHDOG.Feed
+			HttpJob.Initialize("cloudrequest")
+			HttpJob.AddHeader("Content-Type", "application/x-www-form-urlencoded")
+			HttpJob.Post(CLOUD_URL, CLOUD_CONTENT)
+
+		Case 1
+			' Infinite loop (simulate freeze)
+			Log("[Simulate TEST_MODE=1] Infinite loop...")
+			Do While True
+			Loop
+
+		Case 2
+			' Skip watchdog feed (simulate hang)
+			Log("[Simulate TEST_MODE=2] Skipping Watchdog.Feed")
+			HttpJob.Initialize("cloudrequest")
+			HttpJob.AddHeader("Content-Type", "application/x-www-form-urlencoded")
+			HttpJob.Post(CLOUD_URL, CLOUD_CONTENT)
+
+		Case 3
+			' HTTP hang (invalid IP)
+			Log("[Simulate TEST_MODE=3] HTTP request to dead IP")
+			WATCHDOG.Feed
+			HttpJob.Initialize("cloudrequest")
+			HttpJob.Post("http://10.255.255.1:51042/cloud", CLOUD_CONTENT)
+
+		Case 4
+			' Stack overflow (recursive call)
+			Log("[Simulate TEST_MODE=4] Recursive crash incoming...")
+			RecursiveCrash
+
+		Case Else
+			Log("[Unknown TEST_MODE] Running normal")
+			WATCHDOG.Feed
+	End Select
+End Sub
+
+Sub JobDone (Job As JobResult)
+	If Job.Success Then
+		Log("[JobDone][OK] name=", Job.JobName, ",success=", Job.Success, ",status=", Job.Status, ",response=", Job.Response)
+	Else
+		Log("[JobDone][ERROR] status=", Job.status, ", message=", Job.ErrorMessage, ",response=",Job.Response)
+	End If
+End Sub
+
+Private Sub RecursiveCrash
+	RecursiveCrash
+End Sub
+#End Region
+
+#Region EEPROM
+' Store the reset reason at byte pos 1.
+Private Sub StoreResetReason(Reason As Byte)
+	Dim b(1) As Byte
+	b(0) = Reason
+	eeprom.WriteBytes(b, EEPROM_RESET_REASON_ADDRESS)
+End Sub
+
+' Read the reset reason from first byte pos.
+Private Sub GetStoredResetReason As Byte
+	Dim b(1) As Byte
+	b = eeprom.ReadBytes(EEPROM_RESET_REASON_ADDRESS, 1)
+	Return b(0)
+End Sub
+
+#End Region

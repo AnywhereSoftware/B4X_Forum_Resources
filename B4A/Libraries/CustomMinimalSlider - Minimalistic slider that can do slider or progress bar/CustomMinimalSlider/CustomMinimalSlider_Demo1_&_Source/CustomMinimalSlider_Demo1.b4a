@@ -1,0 +1,154 @@
+﻿Build1=Default,b4a.example.simplecsb.demo.one
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=animationplus
+Library3=ahviewpager
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=CustomMinimalSlider
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: CustomMinimalSlider_Demo1
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+	
+	#LibraryName: CustomMinimalSlider
+	#LibraryVersion: 1.16	
+	#LibraryAuthor: Massimo Meli
+	
+	#BridgeLogger: True
+#End Region
+
+#Region Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+' FEATURES: 
+'
+' - CustomMinimalSlider is a minimalistic custom slider (non-customized) class you can customize for your needs
+'   It just show a colored bar with a border, a tag label with it's name and a value label with it's value.
+'
+' - CustomMinimalSlider can be used like a touch slider or like a progressbar or both
+'   the same time, you can even disable the touch at all.
+
+' - CustomMinimalSlider is multitouch, any istance of it has separate touch events, this
+'   mean that you can move five sliders the same time with five fingers, even more using
+'   two hands, and track the moved/released sliders by index in the event callback sub.
+
+' - Created sliders can be vertical or horizontal depending of it's width and height, 
+'   if the slider is larger than highter then it is horizontal and viceversa, the library
+'   will set it automatically when you create it.
+
+' - You can create one or more single sliders with Create method or a block of sliders
+'   with CreateBlock method, any of these optionally can be animated.
+
+' - Max value can be assigned individually for any slider/progressbar, it will be 
+'   mapped automatically by the library.
+	
+Sub Process_Globals
+	Private MaxValue As Int = 100
+End Sub
+
+Sub Globals
+	Dim CMS1 As CustomMinimalSlider	
+	Dim CMS2 As CustomMinimalSlider
+	
+	Dim mainPnl As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	Activity.LoadLayout("1")
+	Activity.Color = Colors.Black
+
+	' Vertical	(Accept Activity or Panel or View as first argument)
+	CMS1.Initialize
+	CMS1.Create(mainPnl, Me, "CustomMinimalSlider1", 30dip, 40dip, 40dip, 250dip, _
+	            Colors.Black, Colors.Blue, Colors.White, 1, True,True,True,True)
+	
+'	CMS1.Enabled = False
+	CMS1.MaxValue = MaxValue
+	CMS1.Tag = "CMS1"
+'	CMS1.TouchOffset = 10%y  ' We can set touch offset
+
+	CMS1.ValueLabel.TextSize = 10
+	CMS1.ValueLabel.TextColor = Colors.White
+	CMS1.TagLabel.TextSize = 10
+	CMS1.TagLabel.TextColor = Colors.Green
+	CMS1.TagLabel.Text = "ADC1"
+	
+'	CMS1.FireEventMove(False)  ' We can disable _Move event, and then reenable it multiple times. (by default True)
+'	CMS1.FireEventRelease(False)  ' We can disable _Release event, and then reenable it multiple times. (by default True)
+		
+	' Horizontal 	(Accept Activity or Panel or View as first argument)
+	CMS2.Initialize
+	CMS2.Create(mainPnl, Me, "CustomMinimalSlider2", 200dip, 40dip, 350dip, 40dip, _
+	            Colors.Black, Colors.Blue, Colors.White, 1, True,True,True,True)
+
+'	CMS2.Enabled = False
+	CMS2.MaxValue = MaxValue
+	CMS2.Tag = "CMS2"
+'	CMS2.TouchOffset = 10%x   ' We can set touch offset
+	
+'	CMS2.FireEventMove(True) ' True by default
+'	CMS2.FireEventRelease(True) ' True by default
+	
+	CMS2.ValueLabel.TextSize = 10
+	CMS2.ValueLabel.TextColor = Colors.White
+	CMS2.TagLabel.TextSize = 10
+	CMS2.TagLabel.TextColor = Colors.Green
+	CMS2.TagLabel.Text = "ADC2"
+	
+'	CMS2.FireEventTouchMove(False)  ' We can disable _Move event, and then reenable it multiple times. (by default True)
+'	CMS2.FireEventTouchUp(False)  ' We can disable _Release event, and then reenable it multiple times. (by default True)
+			
+'	CMS2.TagLabel.Visible = False
+	If CMS2.TagLabel.IsInitialized Then CMS2.TagLabel.Left = CMS2.TagLabel.Left - 10dip
+	If CMS2.ValueLabel.IsInitialized Then CMS2.ValueLabel.Left = CMS2.ValueLabel.Left + 10dip
+End Sub
+
+Sub Activity_Resume	
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+
+Sub CustomMinimalSlider1_Moved(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS1.UserChanged Then
+		Log("MOVED     Tag: " & CMS1.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+Sub CustomMinimalSlider1_Released(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS1.UserChanged Then
+		Log("RELEASED      Tag: " & CMS1.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+Sub CustomMinimalSlider2_Moved(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.	
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS2.UserChanged Then
+		Log("MOVED     Tag: " & CMS2.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+Sub CustomMinimalSlider2_Released(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS2.UserChanged Then
+		Log("RELEASED      Tag: " & CMS2.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub

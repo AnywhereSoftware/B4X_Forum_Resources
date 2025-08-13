@@ -1,0 +1,267 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rbleserver
+Library2=rcore
+Library3=rrandomaccessfile
+Library4=rdhtesp
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEServer
+'Description:	Example for the B4R Library rBLEServer.
+'				Advertise: DHT22 sensor data Temperature (int) + Humidity (int) plus timer interval (uint). The data is advertised by a timer intervals.
+'				Receive: Commands to set Traffic-Light LED or set the advertisement timer interval.
+'				Command Set Traffic-Light: 2 Bytes; Byte 1=0x01 LED RED or 0x02 LED YELLOW or 0x03 LED GREEN; Byte 2=0x00 LED OFF or 0x01 LED ON. Example 0101 to set LED RED ON.
+'				Command Set Advertisement Timer Interval: Byte 1=0x04; Byte2=0x00-0x3C (DEC 60). Example 0414 for interval 20 seconds.
+'BLE:			Device name: BLEServer, MAC: 30:C9:22:D1:80:2E
+'Source:		BLETCPBridge.b4r, B4R 4.00 (64 bit)
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rDHTESP 1.01- DHT reader esp. for ESP
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32-Wrover-KIt
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'DHT22 = ESP32 (wirecolor)
+'VCC = 5V (red)
+'Signal = D4 (brown)
+'GND = GND (black)
+
+'Traffic-Light = ESP32 (wirecolor)
+'LED RED	   = D25 (red)
+'LED YELLOW	   = D26 (yellow)
+'LED GREEN	   = D27 (green)
+'GND		   = GND (black)
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEServer Example BLETCPBridge v20250302"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEServer As BLEServer
+	Private MTUSize As UInt = BLEServer.MTU_SIZE_MIN
+
+	'DHT22
+	Private DHT As DHTESP
+	Private DHTPinNumber As UInt = 0x04
+	Private Temperature As Int
+	Private Humidity As Int
+
+	'LED's Traffic-Light
+	Private LEDRed As Pin
+	Private LEDRedGPIO As Byte = 25	'0x19
+	Private LEDYellow As Pin
+	Private LEDYellowGPIO As Byte = 26 '0x1A
+	Private LEDGreen As Pin
+	Private LEDGreenGPIO As Byte = 27 '0x1B
+	
+	'Timer
+	Private TimerDataAdvertising As Timer
+	Private TimerDataAdvertisingInterval As ULong = 5000	'milliseconds
+
+	'Commands received from BLE client CMD(BYTE)VALUE(BYTE(S)), i.e. 01001 = LED RED high
+	Private CMD_LENGTH As Byte = 2
+	Private CMD_LED_RED = 1, CMD_LED_YELLOW = 2, CMD_LED_GREEN = 3 As Byte
+	Private CMD_TIMER As Byte = 4
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init DHT22
+	DHT.Setup22(DHTPinNumber)
+
+	'Init Traffic-Light indicator
+	LEDRed.Initialize(LEDRedGPIO, LEDRed.MODE_OUTPUT)
+	LEDYellow.Initialize(LEDYellowGPIO, LEDYellow.MODE_OUTPUT)
+	LEDGreen.Initialize(LEDGreenGPIO, LEDGreen.MODE_OUTPUT)
+
+	'Init BLE Server with name, events and mtu size
+	BLEServer.Initialize("BLEServer", "BLEServer_NewData", "BLEServer_Error", MTUSize)
+
+	'Init Timer Data Advertising
+	TimerDataAdvertising.Initialize("TimerDataAdvertising_Tick", TimerDataAdvertisingInterval)
+	TimerDataAdvertising.Enabled = True
+	TimerDataAdvertising_Tick
+End Sub
+
+#Region Timer
+'Read the DHT22 data and advertise as serialized data.
+Sub TimerDataAdvertising_Tick
+
+	'Get and convert temperature to int NNNN (2 bytes signed)
+	Temperature = DHT.GetTemperature * 100
+	Humidity = DHT.GetHumidity * 100
+
+	'Get and convert timerinterval to uint NNNN (2 bytes unsigned)
+	Dim Interval As UInt = TimerDataAdvertising.Interval
+
+	'BLE advertise 6 bytes: temp (2 bytes) + hum (2 bytes) + interval (2 bytes)
+	Dim data(6) As Byte
+	Dim t(2) As Byte = BytesFromInt(Temperature, True)
+	Dim h(2) As Byte = BytesFromInt(Humidity, True)
+	Dim i(2) As Byte = BytesFromInt(Interval, True)
+	data(0) = t(0)
+	data(1) = t(1)
+	data(2) = h(0)
+	data(3) = h(1)
+	data(4) = i(0)
+	data(5) = i(1)
+
+	'[TimerDataAdvertising_Tick] t=1610, h=6519, i=5000, hex=4A0677198813
+	Log("[TimerDataAdvertising_Tick] t=", Temperature, ", h=", Humidity, ", i=",Interval, ", hex=", bc.HexFromBytes(data))
+
+	'Write to the BLE server
+	BLEServer_Write(data)
+End Sub
+#End Region
+
+'Handle new data received from connected client.
+'The data is an bytearray with 2 entries: index 0=command, index 1=command value
+'buffer - Byte array holding the data send by the client, like 0101 to turn RED LED on
+Private Sub BLEServer_NewData(buffer() As Byte)
+	Log("[BLEServer_NewData] buffer=",bc.HexFromBytes(buffer), ", len=", buffer.Length, " bytes")
+	'Check buffer length if at least minimum
+	If buffer.Length >= CMD_LENGTH Then
+		'Select command
+		Dim cmd As Byte = buffer(0)
+
+		Select cmd
+			Case CMD_LED_RED
+				SetTrafficLight(LEDRed, buffer(1))
+				Log("[BLEServer_NewData] trafficlight red change to ", LEDRed.DigitalRead)
+			Case CMD_LED_YELLOW
+				SetTrafficLight(LEDYellow, buffer(1))
+				Log("[BLEServer_NewData] trafficlight yellow change to ", LEDYellow.DigitalRead)
+			Case CMD_LED_GREEN
+				SetTrafficLight(LEDGreen, buffer(1))
+				Log("[BLEServer_NewData] trafficlight green change to ", LEDGreen.DigitalRead)
+			Case CMD_TIMER
+				'Set timerinterval
+				Dim timerinterval As Byte = buffer(1)
+				'Disable to set new interval
+				TimerDataAdvertising.Enabled = False
+				'If > 0 set new value & enable else timer is stopped
+				If timerinterval > 0 Then
+					TimerDataAdvertising.Interval = timerinterval * 1000
+					TimerDataAdvertising.Enabled = True
+				End If
+				Log("[BLEServer_NewData] timerinterval=", TimerDataAdvertising.Interval, ",enabled=",TimerDataAdvertising.Enabled)
+			Case Else
+				Log("[BLEServer_NewData][WARNING] Unknown Command ", cmd)
+		End Select
+	Else
+		Log("[BLEServer_NewData][ERROR] Command length out of range, len is ", buffer.Length, " instead minumum ", CMD_LENGTH)
+	End If
+End Sub
+
+'Handle BLE server error.
+'Log the error to the B4R IDE, but could also use an LED
+'code - BLE server error code
+Private Sub BLEServer_Error(code As Byte)
+	Log("[BLEServer_Error]code=",code)
+	Select code
+		Case BLEServer.WARNING_INVALID_MTU
+			Log("[WARNING][Initialize] MTU out of range 23-512, default is set (23).")
+		Case BLEServer.ERROR_INVALID_CHARACTERISTIC
+			Log("[ERROR][Write] failed: No valid characteristic.")
+		Case BLEServer.ERROR_EMPTY_DATA
+			Log("[ERROR][Write] failed: No data.")
+	End Select
+End Sub
+
+'Write data to the connected client.
+'data - Byte array containing data fo the connected client
+Private Sub BLEServer_Write(data() As Byte)
+	If data == Null Then
+		Log("[ERROR][BLEServer_Write] No data.")
+		Return
+	End If
+	Log("[BLEServer_Write]data=", bc.HexFromBytes(data))
+	BLEServer.Write(data)
+End Sub
+
+'Write data advertised
+'data - Byte array containing data fo the connected client
+Private Sub BLEServer_WriteAdvertisement(data() As Byte)
+	If data == Null Then
+		Log("[ERROR][BLEServer_WriteAdvertisement] No data.")
+		Return
+	End If
+	Log("[BLEServer_WriteAdvertisement]data=", bc.HexFromBytes(data))
+	BLEServer.WriteAdvertisement(data)
+End Sub
+
+#Region Helper
+'Helper
+
+'Set trafffic-light led state
+Public Sub SetTrafficLight(ledpin As Pin, state As Byte)
+	ledpin.DigitalWrite(IIf(state == 1, True, False))
+End Sub
+
+'Get HEX code for a single byte.
+'b - Single byte
+'Returns HEX code as string
+Public Sub HexFromByte(b As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(b))
+End Sub
+
+Public Sub HexFromInt(i As Int) As String
+	Dim b() As Byte = bc.IntsToBytes(Array As Int(i))
+	'Log("[HexFromInt]i=", i, ",bytes=",b(0),b(1))
+	Return bc.HexFromBytes(b)
+End Sub
+
+'Get 4 bytes from long.
+'Do not use the byteconverter as it converts per default to little endian.
+'value - Long value to convert
+'littleendian - Flag to set little endian, set to false for big endian
+'Returns 4 bytes
+Public Sub BytesFromLong(value As Long, littleendian As Boolean) As Byte()
+	Dim raf As RandomAccessFile
+	'Set the return byte array size = 4
+	Dim b(4) As Byte
+	raf.Initialize(b, littleendian)
+	raf.WriteULong32(value, 0)
+	Return b
+End Sub
+
+'Get 2 bytes from integer.
+'value - Integer value to convert
+'littleendian - Flag to set little endian, set to false for big endian
+'Returns 2 bytes as uint
+Public Sub BytesFromInt(value As Int, littleendian As Boolean) As Byte()
+	Dim raf As RandomAccessFile
+	'Set the return byte array size = 2
+	Dim b(2) As Byte
+	raf.Initialize(b, littleendian)
+	raf.WriteUInt16(value, 0)
+	Return b
+End Sub
+#End Region

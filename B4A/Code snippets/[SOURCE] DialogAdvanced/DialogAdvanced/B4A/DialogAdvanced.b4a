@@ -1,0 +1,106 @@
+﻿Build1=Default,b4a.example
+File1=lucidasansdemibold.ttf
+File2=MainPage.bal
+File3=paypal.png
+File4=strings.db
+File5=svmainpaymentdialog.bal
+File6=svmainpaymentmessage.bal
+FileGroup1=Files Fonts
+FileGroup2=Files Group
+FileGroup3=Files Images
+FileGroup4=Files Localizator
+FileGroup5=Files Group
+FileGroup6=Files Group
+Group=Default Group
+Library1=ahpreferenceactivity
+Library2=b4xpages
+Library3=b4xpreferencesdialog
+Library4=core
+Library5=ime
+Library6=sql
+Library7=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~'Preference activity~\n~AddApplicationText(<activity android:name="de.amberhome.objects.preferenceactivity"/>)~\n~'Then all files from app will be deleted when app was uninstall~\n~SetActivityAttribute(Main, "android:excludeFromRecents", "true")~\n~SetApplicationAttribute(android:allowBackup, "false")~\n~SetApplicationAttribute(android:largeHeap, "true") 'out of memory error!~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~'IME~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~
+Module1=B4XLocalizator
+Module2=|relative|..\B4XMainPage
+Module3=B4XShareCode
+Module4=Starter
+NumberOfFiles=6
+NumberOfLibraries=7
+NumberOfModules=4
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel:  Dialog
+	#VersionCode: 1
+	#VersionName: 1.01  Dialog Advanced
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'#BridgeLogger: True
+
+Sub Process_Globals
+	Dim pmr As AHPreferenceManager
+	Public ActionBarHomeClicked As Boolean
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	If  B4XPages.MainPage.Dialog.IsInitialized Then
+		If B4XPages.MainPage.Dialog.PutAtTop = True Then
+			B4XPages.MainPage.Dialog.Close(B4XPages.MainPage.xui.DialogResponse_Cancel)
+			Return True
+		End If
+	End If
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

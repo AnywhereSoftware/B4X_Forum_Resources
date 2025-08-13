@@ -1,0 +1,249 @@
+﻿Build1=Default,b4a.textsize
+File1=hamburger.png
+File2=LayoutBase.bal
+File3=LayoutLblText.bal
+File4=LayoutLeft.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=b4xdrawer
+Library2=core
+Library3=javaobject
+Library4=phone
+Library5=stringutils
+Library6=xmllayoutbuilder
+Library7=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="7" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~        <item name="colorPrimary">#0098FF</item>~\n~        <item name="colorPrimaryDark">#007CF5</item>~\n~        <item name="colorAccent">#AAAA00</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~		<item name="android:windowTranslucentNavigation">false</item>~\n~     	<item name="android:windowTranslucentStatus">true</item>~\n~    </style>~\n~	~\n~	<style name="myPopupMenuStyle" parent="@style/Widget.AppCompat.Light.PopupMenu">~\n~       <item name="android:popupBackground">@drawable/my_popup_bg</item>~\n~   </style>~\n~   <style name="myPopupMenuTextAppearanceSmall" parent="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Small">~\n~       <item name="android:textColor">#FFFFFF</item>~\n~   </style>~\n~   <style name="myPopupMenuTextAppearanceLarge" parent="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large">~\n~       <item name="android:textColor">#FFFFFF</item>~\n~   </style>~\n~</resources>~\n~)~\n~~\n~CreateResource(drawable, my_popup_bg.xml,~\n~<shape xmlns:android="http://schemas.android.com/apk/res/android"~\n~       android:shape="rectangle">~\n~    <corners android:radius="2dp" />~\n~    <solid android:color="#002C74" />~\n~</shape>~\n~)~\n~
+Module1=Starter
+NumberOfFiles=4
+NumberOfLibraries=7
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TextSize
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#AdditionalJar: androidx.arch.core:core-runtime
+	#AdditionalRes: "..\resource"
+	#Extends: android.support.v7.app.AppCompatActivity
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+'Correction for Android 5.0.1 (API 22) of black border in the Manifest Editor.			'Font: https://www.b4x.com/android/forum/threads/acpopupmenu-black-border-on-api-level-22.88706/
+
+
+Sub Process_Globals
+
+	Private RealFontSize As Double
+End Sub
+
+
+Sub Globals
+	
+	Private ACToolBarLight1 As ACToolBarLight		'AppCompat library
+	Private ToolbarHelper As ACActionBar			'AppCompat library
+	Private Drawer As B4XDrawer						'B4XDrawer library
+	Private ListView1 As ListView
+	Private acMenuPopup As ACPopupMenu				'AppCompat library
+	Private Label1 As Label
+	Dim xml As XmlLayoutBuilder						'XmlLayoutBuilder library
+	Private svBase As ScrollView
+	Private lblText As Label
+	Private su As StringUtils						'StringUtils library
+	Private lblMenu As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	'STAND OUT -->
+	'Get the value declared in the Manifest Editor					'Inspired from https: https://www.b4x.com/android/forum/threads/get-manifest-values.108463/
+	Dim ac As AppCompat			'AppCompat library
+	Dim actionbarcolor As Int
+	actionbarcolor = ac.GetThemeAttribute("colorPrimary")
+	Log(actionbarcolor)
+	
+	
+	'And we use it to color the StatusBar of the system
+'	setStatusbarColor(Colors.RGB(0, 152, 255))
+	setStatusbarColor(actionbarcolor)								'Font: https://www.b4x.com/android/forum/threads/set-status-bar-colors.89733/
+	
+	
+	
+	'Sliding side panel
+	Drawer.Initialize(Me, "Drawer", Activity, 300dip)
+	Drawer.CenterPanel.LoadLayout("LayoutBase")
+	ToolbarHelper.Initialize
+	ToolbarHelper.ShowUpIndicator = True 	'set to true to show the up arrow
+	Dim bd As BitmapDrawable
+	bd.Initialize(LoadBitmap(File.DirAssets, "hamburger.png"))
+	ToolbarHelper.UpIndicatorDrawable =  bd
+	ACToolBarLight1.InitMenuListener
+	Drawer.LeftPanel.LoadLayout("LayoutLeft")
+	For i = 1 To 30
+		ListView1.AddSingleLine("Item " & i)
+	Next
+	
+	
+	svBase.Panel.LoadLayout("LayoutLblText")
+	
+	
+	lblText.Text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." & CRLF _
+	& CRLF & "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit," _
+	& " sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"
+	
+	
+	'To remember his value wen we rotate the device
+	If FirstTime Then
+		RealFontSize = lblText.TextSize
+	Else
+		lblText.TextSize = RealFontSize
+	End If
+	
+	'STAND OUT -->	'Modification
+	lblText.Height = su.MeasureMultilineTextHeight(lblText, lblText.Text) * (lblText.TextSize / 15)		'If your label has any padding, it must be taken into account
+
+	svBase.Panel.Height = lblText.Height
+	Sleep(0)
+	
+	
+	'We create a label in the ACToolBarLight1				'Font: https://www.b4x.com/android/forum/threads/appcompat-acpopupmenu-usage.80970/#post-513538
+	lblMenu.Initialize("lblMenu")
+	lblMenu.TextColor = Colors.White
+	lblMenu.TextSize = 18
+	lblMenu.Gravity = Gravity.CENTER_VERTICAL
+	lblMenu.Text = Floor(lblText.TextSize)
+	ACToolBarLight1.AddView(lblMenu, 60dip, 40dip, Gravity.RIGHT)
+	
+
+	'STAND OUT -->
+	'This tag is the view that the MenuPopup will hang from, since it cannot hang from an icon item of the ACToolBar
+	acMenuPopup.Initialize("acMenuPopup", lblMenu)		'visible label
+'	acMenuPopup.Initialize("acMenuPopup", Label1)		'hidden label in the Designer
+
+'	For i = 0 To 3
+'		acMenuPopup.AddMenuItem(i,"Item "&i,Null)
+'	Next
+
+	acMenuPopup.AddMenuItem(1,"More ", xml.GetDrawable("baseline_add_circle_outline_black_36"))		'Icon font: https://fonts.google.com/icons?selected=Material+Icons&icon.platform=android
+	acMenuPopup.AddMenuItem(2,"Less ", xml.GetDrawable("baseline_remove_circle_outline_black_36"))
+	
+'	Dim cs As CSBuilder		'It change the color of the text, but not its size :(
+'	acMenuPopup.AddMenuItem(1, cs.Initialize.Color(Colors.Red).Append("More ").Size(48).PopAll, xml.GetDrawable("baseline_add_circle_outline_black_36"))
+'	acMenuPopup.AddMenuItem(2, cs.Initialize.Append("Less ").Size(88).PopAll, xml.GetDrawable("baseline_remove_circle_outline_black_36"))
+End Sub
+
+Sub Activity_Resume
+
+	Log("lblText.TextSize = " & lblText.TextSize & " and RealFontSize = " & RealFontSize)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	
+	If KeyCode = KeyCodes.KEYCODE_BACK And Drawer.LeftOpen Then
+		Drawer.LeftOpen = False
+		Return True
+	End If
+	Return False
+End Sub
+
+
+Sub ACToolBarLight1_NavigationItemClick
+	
+	Drawer.LeftOpen = Not(Drawer.LeftOpen)
+End Sub
+
+
+private Sub setStatusbarColor(clr As Int)
+	
+	Dim p As Phone: If p.SdkVersion < 20 Then Return
+	
+	Dim java As JavaObject
+	
+	java.InitializeContext
+	
+	Dim window As JavaObject = java.RunMethodJO("getWindow", Null)
+	
+	window.RunMethod("clearFlags", Array(0x04000000))
+	window.RunMethod("addFlags", Array(0x80000000))
+	window.RunMethod("setStatusBarColor", Array(clr))
+	
+	Dim view As JavaObject = window.RunMethodJO("getDecorView", Null)
+	
+	view.RunMethod("setSystemUiVisibility", Array(Bit.Or(0x00002000, view.RunMethod("getSystemUiVisibility", Null))))
+End Sub
+
+
+Sub Activity_CreateMenu(Menu As ACMenu)
+	
+	Menu.Clear
+'	Menu.Add(0, 0, "Overflow1", Null)
+'	Menu.Add(0, 0, "Overflow2", Null)
+'	Menu.Add(0, 0, "Overflow3", Null)
+
+	Dim item As ACMenuItem
+	ACToolBarLight1.Menu.Add2(1,1,"show", xml.GetDrawable("baseline_text_fields_white_36")).ShowAsAction = item.SHOW_AS_ACTION_ALWAYS
+'	acActionBarLight.Menu.Add2(1,1,"show", xml.GetDrawable("ic_settings_24dp")).ShowAsAction = item.SHOW_AS_ACTION_ALWAYS
+End Sub
+
+
+#If Java
+
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+    if (processBA.subExists("activity_createmenu")) {
+        processBA.raiseEvent2(null, true, "activity_createmenu", false, new de.amberhome.objects.appcompat.ACMenuWrapper(menu));
+        return true;
+    }
+    else
+        return false;
+}
+#End If
+
+
+
+'Font: https://www.b4x.com/android/forum/threads/activity_createmenu-and-translation.81113/#post-514614
+Sub acMenuPopup_ItemClicked (item As ACMenuItem)
+	
+	Log("acMenuPopup_ItemClicked = " & item.Id)
+	
+	Select item.Id
+		Case 1
+			lblText.TextSize = lblText.TextSize + 1
+		Case 2
+			lblText.TextSize = lblText.TextSize - 1
+	End Select
+	
+	lblText.Height = su.MeasureMultilineTextHeight(lblText, lblText.Text) * 1.16		'If your label has any padding, it must be taken into account
+	svBase.Panel.Height = lblText.Height
+	
+	RealFontSize = lblText.TextSize
+	
+	lblMenu.Text = Floor(lblText.TextSize)		'To show rounded
+End Sub
+
+
+Sub ACToolBarLight1_MenuItemClick (item As ACMenuItem)
+	
+	Log("acActionBarLight_MenuItemClick = " & item.Id)
+	
+'	Select Case item.Id
+'		Case 1
+		acMenuPopup.Show
+'	End Select
+End Sub

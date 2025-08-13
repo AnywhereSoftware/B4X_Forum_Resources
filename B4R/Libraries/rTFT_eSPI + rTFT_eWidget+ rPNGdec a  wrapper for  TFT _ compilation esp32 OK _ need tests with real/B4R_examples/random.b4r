@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Draw random coloured smooth (anti-aliased) rounded rectangles on the TFT
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+    Dim xx As Byte = 25
+	Dim yy() As Byte = Array As Byte(1,2,3,4,5)
+    Log("test", xx, "azerty",yy,"fin")
+	
+'	Log("randomSeed : ",randomSeed)
+    AddLooper("LocalLoop")
+	
+End Sub
+
+'// =========================================================================
+'// Loop
+'// =========================================================================
+Sub LocalLoop
+  	Log("random : ",random(0,255))
+	Delay(2000)
+End Sub
+
+Sub random(Mini As ULong,Maxi As ULong) As ULong
+	Dim tmp() As ULong = Array As ULong(Mini, Maxi)
+	Return RunNative("getRandom",tmp)
+End Sub
+Sub randomSeed As ULong
+	Return RunNative("setRandomSeed",0)
+End Sub
+
+#if C
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  uint32_t* a = (uint32_t*) b->data;
+	  uint32_t rand = random(a[0],a[1]); 
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      uint32_t ran =  (uint32_t) millis();
+	  uint8_t * rand = (uint8_t*) &ran;
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,rand[0]);
+	  randomSeed(rand[0]); 
+	  return returnvalue.wrapNumber(rand[0]);
+ }; 
+#End If

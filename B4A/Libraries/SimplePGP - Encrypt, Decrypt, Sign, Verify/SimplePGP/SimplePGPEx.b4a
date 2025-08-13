@@ -1,0 +1,71 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+IconFile=
+Library1=core
+Library2=simplepgp
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE) ' Allows an application to write to external storage.~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE) ' Allows an application to read from external storage.
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: bcpkix-jdk15on-1.58.0.0
+#AdditionalJar: bcprov-jdk15on-1.59
+#AdditionalJar: bctls-jdk15on-1.58.0.0
+#AdditionalJar: pg-1.54.0.0
+#AdditionalJar: sc-core-1.58.0.0
+#AdditionalJar: sc-prov-1.58.0.0
+#AdditionalJar: slf4j-api-1.7.25
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim pgpkeys As PGPKeyPairGenerator
+	Dim signer As PGPMessageSigner
+	Dim crypt As PGPMessageEncryptor
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Dim publicKey As OutputStream
+	publicKey = File.OpenOutput(File.DirRootExternal,"PublicKey.pem",False)
+	
+	Dim secretKey As OutputStream
+	secretKey = File.OpenOutput(File.DirRootExternal,"SecretKey.pem",False)
+
+	pgpkeys.Initialize("")
+	Log(pgpkeys.generateKeyPair("DonManfred","DonManfred",publicKey, secretKey))
+	'signer.
+	'crypt.encrypt(publickeyofreceipient, "Manfred",plaininputdata, destfile)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

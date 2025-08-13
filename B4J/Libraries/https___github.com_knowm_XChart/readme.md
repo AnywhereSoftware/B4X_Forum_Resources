@@ -1,0 +1,407 @@
+### https://github.com/knowm/XChart by Johan Schoeman
+### 04/09/2023
+[B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/147329/)
+
+Wanted to see what is in the demo's of [**this Github Project**](https://github.com/knowm/XChart). Have compiled the library and demo code into a single jar (JHSxChart.jar). Download and copy JHSxChart.jar to your B4J additional library folder.  
+  
+You will also need to download the other required JAR's from here:  
+  
+[MEDIA=googledrive]1Mbe9zfKsa27y-oz41vx5XKIq6wphfbdF[/MEDIA]  
+  
+Download the zip, extract it and copy the JAR's to your additional library folder.  
+  
+You also need to download XChart\_64\_64.png (attached.). Once you have run the attached B4J project for the first time you need to copy the png file into the /Objects folder of the B4J project.  
+  
+Run the B4J project again and select from the ComboBox the chart you would like to view. **There are 65 different charts to view**. Some are RealTime charts.  
+  
+Who would like to convert this into a B4J library…..?  
+  
+Enjoy ;)  
+  
+Sample Code:  
+  
+
+```B4X
+#Region Project Attributes  
+    #MainFormWidth: 600  
+    #MainFormHeight: 600  
+#End Region  
+  
+#AdditionalJar: JHSxChart  
+#AdditionalJar: animated-gif-lib-1.4  
+#AdditionalJar: commons-logging-1.2  
+#AdditionalJar: fontbox-2.0.27  
+#AdditionalJar: graphics2d-0.42  
+#AdditionalJar: pdfbox-2.0.27  
+#AdditionalJar: VectorGraphics2D-0.13  
+  
+  
+Sub Process_Globals  
+    Private fx As JFX  
+    Private MainForm As Form  
+    Private xui As XUI  
+    Dim mychart As JavaObject  
+    Private ComboBox1 As ComboBox  
+  
+End Sub  
+  
+Sub AppStart (Form1 As Form, Args() As String)  
+    MainForm = Form1  
+    MainForm.RootPane.LoadLayout("Layout1")  
+    MainForm.Show  
+      
+    Dim selectionlist As List = Array As String("AreaChart01", "AreaChart02", "AreaChart03", "AreaChart04", "AreaChart05",  _  
+                                                "BarChart01", "BarChart02", "BarChart03", "BarChart04", "BarChart05", "BarChart06", "BarChart07", "BarChart08", "BarChart09", "BarChart10", "BarChart11", _  
+                                                "BoxChart01", "BoxChart02", "BoxChart03", _  
+                                                "BubbleChart01", _  
+                                                "DateChart01", "DateChart02", "DateChart03", _  
+                                                "DialChart01", "DialChart02", _  
+                                                "HeatMapChart01", "HeatMapChart02", "HeatMapChart03", "HeatMapChart04", "HeatMapChart05", _  
+                                                "LineChart01", "LineChart02", "LineChart03", "LineChart04", "LineChart05", "LineChart06", "LineChart07", "LineChart08", "LineChart09", "LineChart10", _  
+                                                "OHLCChart01", "OHLCChart02", "OHLCChart03", _  
+                                                "PieChart01", "PieChart02", "PieChart03", "PieChart04", "PieChart05", _  
+                                                "RadarChart01", "RadarChart02", _  
+                                                "RealtimeChart01", "RealtimeChart02", "RealtimeChart03", "RealtimeChart04", "RealtimeChart05", "RealtimeChart06", _  
+                                                "ScatterChart01", "ScatterChart02", "ScatterChart03", "ScatterChart04", _  
+                                                "StickChart01", _  
+                                                "ThemeChart01", "ThemeChart02", "ThemeChart03", "ThemeChart04")  
+                                                  
+    ComboBox1.Items.AddAll(selectionlist)  
+      
+End Sub  
+  
+Private Sub ComboBox1_ValueChanged (Value As Object)  
+      
+    Dim myval As String = Value  
+    Select myval  
+          
+        Case "AreaChart01"  
+            'AreaChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.area.AreaChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "AreaChart02"  
+            'AreaChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.area.AreaChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "AreaChart03"  
+            'AreaChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.area.AreaChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "AreaChart04"  
+            'AreaChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.area.AreaChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "AreaChart05"  
+            'AreaChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.area.AreaChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart01"  
+            'BarChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart02"  
+            'BarChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart03"  
+            'BarChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart04"  
+            'BarChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart05"  
+            'BarChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart06"  
+            'BarChart06  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart06", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart07"  
+            'BarChart07  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart07", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart08"  
+            'BarChart08  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart08", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart09"  
+            'BarChart09  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart09", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart10"  
+            'BarChart10  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart10", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BarChart11"  
+            'BarChart11  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bar.BarChart11", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BoxChart01"  
+            'BoxChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.box.BoxChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BoxChart02"  
+            'BoxChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.box.BoxChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BoxChart03"  
+            'BoxChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.box.BoxChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "BubbleChart01"  
+            'BubbleChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.bubble.BubbleChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "DateChart01"  
+            'DateChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.date.DateChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "DateChart02"  
+            'DateChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.date.DateChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "DateChart03"  
+            'DateChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.date.DateChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "DialChart01"  
+            'DailChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.dial.DialChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "DialChart02"  
+            'DialChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.dial.DialChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "HeatMapChart01"  
+            'HeatMapChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.heatmap.HeatMapChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "HeatMapChart02"  
+            'HeatMapChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.heatmap.HeatMapChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "HeatMapChart03"  
+            'HeatMapChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.heatmap.HeatMapChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "HeatMapChart04"  
+            'HeatMapChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.heatmap.HeatMapChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "HeatMapChart05"  
+            'HeatMapChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.heatmap.HeatMapChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart01"  
+            'LineChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart02"  
+            'LineChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart03"  
+            'LineChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart04"  
+            'LineChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart05"  
+            'LineChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart06"  
+            'LineChart06  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart06", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart07"  
+            'LineChart07  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart07", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart08"  
+            'LineChart08  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart08", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart09"  
+            'LineChart09  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart09", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "LineChart10"  
+            'LineChart10  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.line.LineChart10", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "OHLCChart01"  
+            'OHLCChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.ohlc.OHLCChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "OHLCChart02"  
+            'OHLCChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.ohlc.OHLCChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "OHLCChart03"  
+            'OHLCChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.ohlc.OHLCChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "PieChart01"  
+            'PieChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.pie.PieChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "PieChart02"  
+            'PieChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.pie.PieChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "PieChart03"  
+            'PieChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.pie.PieChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "PieChart04"  
+            'PieChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.pie.PieChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "PieChart05"  
+            'PieChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.pie.PieChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RadarChart01"  
+            'RadarChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.radar.RadarChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RadarChart02"  
+            'RadarChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.radar.RadarChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart01"  
+            'RealtimeChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart02"  
+            'RealtimeChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart03"  
+            'RealtimeChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart04"  
+            'RealtimeChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart05"  
+            'RealtimeChart05  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart05", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "RealtimeChart06"  
+            'RealtimeChart06  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.realtime.RealtimeChart06", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ScatterChart01"  
+            'ScatterChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.scatter.ScatterChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ScatterChart02"  
+            'ScatterChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.scatter.ScatterChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ScatterChart03"  
+            'ScatterChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.scatter.ScatterChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ScatterChart04"  
+            'ScatterChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.scatter.ScatterChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "StickChart01"  
+            'StickChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.stick.StickChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ThemeChart01"  
+            'ThemeChart01  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.theme.ThemeChart01", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ThemeChart02"  
+            'ThemeChart02  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.theme.ThemeChart02", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ThemeChart03"  
+            'ThemeChart03  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.theme.ThemeChart03", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+        Case "ThemeChart04"  
+            'ThemeChart04  
+            mychart.InitializeNewInstance("org.knowm.xchart.demo.charts.theme.ThemeChart04", Null)  
+            Dim aa() As String = Array As String("")  
+            mychart.RunMethod("main", Array(aa))  
+  
+    End Select  
+      
+End Sub
+```

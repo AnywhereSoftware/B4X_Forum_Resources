@@ -1,0 +1,234 @@
+﻿Build1=Default,b4a.mediastorerecents
+File1=icon_picture_gray.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=contentresolver
+Library2=core
+Library3=javaobject
+Library4=runtimepermissions
+Library5=sql
+Library6=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE) ' Allows an application to write to external storage.
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MediaStoreRecents
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+	Private rp As RuntimePermissions
+	Private lstRepresetativeImages As List
+	Private lstRepresetativeImages2 As List
+End Sub
+
+Sub Globals
+	
+	Private btnPictures As Button
+	Private btnVideos As Button
+	Private ivPicture As ImageView
+	Private edtMediaResult As EditText
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = True Then
+		Activity.LoadLayout("Layout")
+
+		If FirstTime Then
+			lstRepresetativeImages.Initialize
+			lstRepresetativeImages2.Initialize
+		End If
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub GetGalleryFolders(MediaType As String)
+	
+	Dim MediaStore As JavaObject		' Create a JavaObject instance for MediaStore.Images.Media and MediaStore.Video.Media 		'JavaObject library
+	
+	If MediaType = "image" Then
+		MediaStore.InitializeStatic("android.provider.MediaStore.Images$Media")		'class in Android that provides access to the media table of contents of images in the device storage. This class is part of the Android MediaStore content framework
+	Else
+		MediaStore.InitializeStatic("android.provider.MediaStore.Video$Media")
+	End If
+	
+	Dim uri As Object = MediaStore.GetField("EXTERNAL_CONTENT_URI")		'content://media/external/images/media for images, content://media/external/video/media fo videos
+	Dim projection() As String = Array As String("_id", "mime_type", "_data", "_display_name", "_size", "date_modified")
+	
+	If MediaType = "image" Then
+		Dim selection As String = "bucket_display_name" & " IS NOT NULL AND " & "mime_type" & " LIKE 'image/%'"
+	Else
+		Dim selection As String = "bucket_display_name" & " IS NOT NULL AND " & "mime_type" & " LIKE 'video/%'"
+	End If
+	
+	'LIMIT not work on android 11+
+	Dim sortOrder As String = "date_modified DESC"
+	
+	
+	
+	Dim cr As ContentResolver
+	cr.Initialize("")
+	
+	Dim cursor As Cursor		'SQL lib
+	cursor = cr.Query(uri, projection, selection, Null, sortOrder)
+	
+	Log(cursor.RowCount)
+
+	If cursor <> Null And cursor.RowCount > 0 Then	'Checks to make sure the cursor is not null and has at least one result
+		
+		Private count As Int
+		
+		For i = 0 To cursor.RowCount - 1
+			
+			cursor.Position = i
+			
+			Dim data As String = cursor.GetString("_data")							'Path
+			Log(data)
+			
+			edtMediaResult.Text = edtMediaResult.Text & data & CRLF
+			Sleep(0)			'To give the app time to write the line
+			
+			If MediaType = "image" Then
+				lstRepresetativeImages.Add(data)
+			Else
+				Private bmp As Bitmap = CreateVideoThumbnail(data)
+				lstRepresetativeImages2.Add(bmp)
+			End If
+			
+			count = count + 1
+			
+			If count = 29 Then Exit			'LIMIT not work on android 11+		Needs Bundle
+		Next
+	End If
+	cursor.Close
+	
+	If MediaType = "image" Then
+		RepresetativeImages
+	Else
+		RepresetativeImages2
+	End If
+End Sub
+
+
+Sub CheckForRepeatedChar(s As String, c As Char) As Boolean
+	For i = 0 To s.Length - 1
+		If s.CharAt(i) = c And s.SubString(i + 1).IndexOf(c) > -1 Then
+			Return True
+		End If
+	Next
+	Return False
+End Sub
+
+
+Private Sub RepresetativeImages
+	
+	For j = 0 To lstRepresetativeImages.Size - 1
+		Private Path As String = lstRepresetativeImages.Get(j)
+		
+		'We get the directory and file name:
+		Private LastIndex As String = Path.LastIndexOf("/")
+		Private Directory As String = Path.SubString2(0, LastIndex)
+		Private FileName As String = Path.SubString(LastIndex+1)
+		
+'		Log($"Path: ${Directory} (${FileName})"$)
+
+		Sleep(800)	'So that you have time to see all the images. His thing is to put it on a grid
+		
+		
+		'To avoid images as Path: /storage/emulated/0/documents (fb.bin.png)		with 2 dots
+		If CheckForRepeatedChar(FileName, ".") = False Then
+			Private bmp As Bitmap = LoadBitmapResize(Directory, FileName, ivPicture.Width, ivPicture.Height, True)
+			ivPicture.Bitmap = bmp
+		Else
+			ivPicture.Bitmap = LoadBitmapResize(File.DirAssets, "icon_picture_gray.png", ivPicture.Width, ivPicture.Height, True)
+		End If
+	Next
+	
+	btnPictures.Enabled = True
+	btnVideos.Enabled = True
+End Sub
+
+
+Private Sub RepresetativeImages2
+	
+	For j = 0 To lstRepresetativeImages2.Size - 1
+		Private bmp As Bitmap = lstRepresetativeImages2.Get(j)
+		Sleep(800)
+		ivPicture.Bitmap = bmp
+	Next
+	
+	btnPictures.Enabled = True
+	btnVideos.Enabled = True
+End Sub
+
+
+'Source: https://www.b4x.com/android/forum/threads/get-single-bitmap-frame-from-mp4.29553/#post-171643
+Sub CreateVideoThumbnail(vidfile As String) As Bitmap
+	
+	Dim rfl As Reflector		'Reflection library
+	Dim obj As Object
+	Dim b As Bitmap
+	 
+	obj = rfl.CreateObject("android.media.MediaMetadataRetriever")
+	rfl.Target = obj
+	rfl.RunMethod2("setDataSource", vidfile, "java.lang.String")
+	b = rfl.RunMethod3("getFrameAtTime", 0, "java.lang.long", 3, "java.lang.int")
+	 
+	Return b
+End Sub
+
+
+
+
+'Controls:
+Sub btnPictures_Click
+	
+	btnPictures.Enabled = False
+	btnVideos.Enabled = False
+	lstRepresetativeImages.Clear
+	edtMediaResult.Text = ""
+	ivPicture.Bitmap = Null
+	Sleep(0)
+	GetGalleryFolders("image")
+End Sub
+
+
+Private Sub btnVideos_Click
+	
+	btnPictures.Enabled = False
+	btnVideos.Enabled = False
+	lstRepresetativeImages2.Clear
+	edtMediaResult.Text = ""
+	ivPicture.Bitmap = Null
+	Sleep(0)
+	GetGalleryFolders("video")
+End Sub

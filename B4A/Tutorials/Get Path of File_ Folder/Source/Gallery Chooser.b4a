@@ -1,0 +1,162 @@
+﻿Build1=Default,b4a.example.test2
+File1=l1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=runtimepermissions
+Library3=javaobject
+Library4=jk_materialtoast
+Library5=sql
+Library6=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE)~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=11.5
+@EndOfDesignText@
+
+
+'*******************************************************************************
+'******************************-Author By Abbas Nazari-**************************
+'*******************************************************************************
+
+
+
+
+
+#Region  Project Attributes 
+	#ApplicationLabel: Choose Image From Gallary
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalRes : ../resMaterialToast
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim photoPickerIntent As Intent
+	Dim CheckRunTime As RuntimePermissions
+	Dim MaterialToast As JK_MaterialToast
+	Dim Tface As Typeface = Typeface.DEFAULT
+	Dim GetGallery As Object
+	Private ImageView1 As ImageView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("l1")
+End Sub
+
+Sub Button1_Click
+	Log(CheckRunTime.PERMISSION_READ_EXTERNAL_STORAGE)
+	CheckRunTime.CheckAndRequest(CheckRunTime.PERMISSION_READ_EXTERNAL_STORAGE)
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	If CheckRunTime.Check(CheckRunTime.PERMISSION_READ_EXTERNAL_STORAGE) = True Then
+		photoPickerIntent.Initialize(photoPickerIntent.ACTION_PICK, "")
+		photoPickerIntent.SetType("image/*")
+		Try
+			StartActivityForResult(photoPickerIntent)
+		Catch
+			MaterialToast.Initialize(LastException.Message,MaterialToast.LENGTH_SHORT,MaterialToast.TYPE_ERROR,Tface)
+		End Try
+	Else
+		MaterialToast.Initialize("برنامه به مجوز دسترسی به حافظه نیاز دارد",MaterialToast.LENGTH_SHORT,MaterialToast.TYPE_ERROR,Tface)
+	End If
+End Sub
+
+Sub StartActivityForResult(i As Intent)
+	Dim jo As JavaObject = GetBA
+	GetGallery = jo.CreateEvent("anywheresoftware.b4a.IOnActivityResult", "GetGallery", Null)
+	jo.RunMethod("startActivityForResult", Array As Object(GetGallery, i))
+End Sub
+
+Sub GetBA As Object
+	Dim jo As JavaObject
+	Dim cls As String = Me
+	cls = cls.SubString("class ".Length)
+	jo.InitializeStatic(cls)
+	Return jo.GetField("processBA")
+End Sub
+
+Sub GetGallery_Event (MethodName As String, Args() As Object) As Object
+	If Args(0) = -1 Then 'resultCode = RESULT_OK
+		Dim i As Intent = Args(1)
+		Dim path As String = (GetPathFromContentResult(i.GetData))
+		
+		Dim Dir As String = getFilePath(path)
+		Dim FileName As String = getFileName(path)
+		
+		ImageView1.Bitmap = LoadBitmap(Dir,FileName)
+	End If
+	Return Null
+End Sub
+
+Sub GetPathFromContentResult(UriString As String) As String
+	If UriString.StartsWith("/") Then Return UriString 'If the user used a file manager to choose the image
+	Dim Proj() As String
+	Proj = Array As String("_data")
+	Dim Cursor As Cursor
+	Dim r As Reflector
+	Dim Uri As Object
+	Uri = r.RunStaticMethod("android.net.Uri", "parse", _
+      Array As Object(UriString), _
+      Array As String("java.lang.String"))
+	r.Target = r.GetContext
+	r.Target = r.RunMethod("getContentResolver")
+	Cursor = r.RunMethod4("query", _
+   Array As Object(Uri, Proj, Null, Null, Null), _
+   Array As String("android.net.Uri", _
+      "[Ljava.lang.String;", "java.lang.String", _
+      "[Ljava.lang.String;", "java.lang.String"))
+ 
+	Cursor.Position = 0
+	Dim res As String
+	res = Cursor.GetString("_data")
+	Cursor.Close
+	Return res
+	
+End Sub
+
+' Returns the filename from a fullpath
+Sub getFileName(path As String) As String
+	' Define the JavaObject
+	Dim fileO As JavaObject
+	' Get the fileio class
+	fileO.InitializeNewInstance("java.io.File", Array As Object(path))
+	' Getthe filename
+	Return fileO.RunMethod("getName", Null)
+End Sub
+' Returns the filepath from a fullpath
+Sub getFilePath(path As String) As String
+	' Define the JavaObject
+	Dim fileO As JavaObject
+	' Get the fileio class
+	fileO.InitializeNewInstance("java.io.File", Array As Object(path))
+	' Getthe filename and path
+	Dim n As String = fileO.RunMethod("getName", Null)
+	Dim p As String = fileO.RunMethod("getPath", Null)
+	p = p.Replace(n, "")
+	Return p
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

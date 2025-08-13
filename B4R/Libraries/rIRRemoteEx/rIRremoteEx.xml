@@ -1,0 +1,1055 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RIrDecodedData</name>
+        <shortname>IrDecodedData</shortname>
+        <comment>B4RIrDecodedData</comment>
+        <field>
+            <name DesignerName="Protocol">Protocol</name>
+            <comment>Struct selected members from enum IRData (see IRProtocol.h)
+ with additions: protocolname (get name from protocol, i.e 8=NEC)</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name DesignerName="ProtocolName">ProtocolName</name>
+            <returntype>B4R::B4RString*</returntype>
+        </field>
+        <field>
+            <name DesignerName="Address">Address</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="Command">Command</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="Extra">Extra</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="NumberOfBits">NumberOfBits</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="Flags">Flags</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RawDataLen">RawDataLen</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="RawDataDecoded">RawDataDecoded</name>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="InitialGapTicks">InitialGapTicks</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceHeaderMarkMicros">PulseDistanceHeaderMarkMicros</name>
+            <comment>Special for protocol PULSE_DISTANCE using the DistanceWidthTimingInfoStruct (see IRProtocol.h)</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceHeaderSpaceMicros">PulseDistanceHeaderSpaceMicros</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceOneMarkMicros">PulseDistanceOneMarkMicros</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceOneSpaceMicros">PulseDistanceOneSpaceMicros</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceZeroMarkMicros">PulseDistanceZeroMarkMicros</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PulseDistanceZeroSpaceMicros">PulseDistanceZeroSpaceMicros</name>
+            <returntype>UInt</returntype>
+        </field>
+    </class>
+    <class>
+        <name>B4R::B4RIrReceiver</name>
+        <shortname>IrReceiver</shortname>
+        <comment>IrReceiver</comment>
+        <event>DecodedData (Data As B4RIrDecodedData)</event>
+        <property>
+            <name>EnableProtocolUnknown</name>
+            <comment>Enable protocol UNKNOWN.
+Show unknow protocol data in the B4R callback event.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>state</name>
+                <type>bool</type>
+            </parameter>
+        </property>
+        <property>
+            <name>DumpToSerial</name>
+            <comment>Enable to dump the received data to the serial line.
+The data received is converted to JSON string.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>state</name>
+                <type>bool</type>
+            </parameter>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initialize the IR Receiver object.
+The IR receiver pin is default 2 (example Arduino UNO) (see PinDefinitionsAndMore.h).
+IrDecodedDataSub - The sub that will handle the callback event. NOTE: Only for known protocols and not for noise or protocol UNKNOWN.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>IrDecodedDataSub</name>
+                <type>SubVoidIrDecodedData</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetProtocolString">GetProtocolString</name>
+            <comment>Get the protocol as string.
+ProtocolId - Type as defined by the protocol enum decode_type_t in IRProtocol.h</comment>
+            <returntype>B4R::B4RString*</returntype>
+            <parameter>
+                <name>ProtocolType</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="UNKNOWN">B4RIrReceiver_UNKNOWN</name>
+            <comment>LED</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="DISABLE_LED_FEEDBACK">B4RIrReceiver_DISABLE_LED_FEEDBACK</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="ENABLE_LED_FEEDBACK">B4RIrReceiver_ENABLE_LED_FEEDBACK</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="USE_DEFAULT_FEEDBACK_LED_PIN">B4RIrReceiver_USE_DEFAULT_FEEDBACK_LED_PIN</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="NO_REPEATS">B4RIrReceiver_NO_REPEATS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_EMPTY">B4RIrReceiver_IRDATA_FLAGS_EMPTY</name>
+            <comment>IRDATA_FLAGS. The comments are taken from the source IRProtocol.h.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_IS_REPEAT">B4RIrReceiver_IRDATA_FLAGS_IS_REPEAT</name>
+            <comment>The gap between the preceding frame is as smaller than the maximum gap expected for a repeat.
+ !!!We do not check for changed command or address, because it is almost not possible to press 2 different buttons on the remote within around 100 ms!!!</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_IS_AUTO_REPEAT">B4RIrReceiver_IRDATA_FLAGS_IS_AUTO_REPEAT</name>
+            <comment>The current repeat frame is a repeat, that is always sent after a regular frame and cannot be avoided. Only specified for protocols DENON, and LEGO.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_PARITY_FAILED">B4RIrReceiver_IRDATA_FLAGS_PARITY_FAILED</name>
+            <comment>The current (autorepeat) frame violated parity check.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_TOGGLE_BIT">B4RIrReceiver_IRDATA_FLAGS_TOGGLE_BIT</name>
+            <comment>Is set if RC5 or RC6 toggle bit is set.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_TOGGLE_BIT_MASK">B4RIrReceiver_IRDATA_TOGGLE_BIT_MASK</name>
+            <comment>deprecated -is set if RC5 or RC6 toggle bit is set.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_EXTRA_INFO">B4RIrReceiver_IRDATA_FLAGS_EXTRA_INFO</name>
+            <comment>There is extra info not contained in address and data (e.g. Kaseikyo unknown vendor ID, or in decodedRawDataArray).</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_IS_PROTOCOL_WITH_DIFFERENT_REPEAT">B4RIrReceiver_IRDATA_FLAGS_IS_PROTOCOL_WITH_DIFFERENT_REPEAT</name>
+            <comment>Here we have a repeat of type NEC2 or SamsungLG</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_WAS_OVERFLOW">B4RIrReceiver_IRDATA_FLAGS_WAS_OVERFLOW</name>
+            <comment>irparams.rawlen is set to 0 in this case to avoid endless OverflowFlag.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_IS_MSB_FIRST">B4RIrReceiver_IRDATA_FLAGS_IS_MSB_FIRST</name>
+            <comment>Value is mainly determined by the (known) protocol.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="IRDATA_FLAGS_IS_LSB_FIRST">B4RIrReceiver_IRDATA_FLAGS_IS_LSB_FIRST</name>
+            <comment>Value is mainly determined by the (known) protocol.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="DELAY_SHORT_AFTER_RECEIVE">DELAY_SHORT_AFTER_RECEIVE</name>
+            <comment>Short delay 40ms after data has been received to avoid multiple data received within short timeframe.</comment>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="DELAY_LONG_AFTER_RECEIVE">DELAY_LONG_AFTER_RECEIVE</name>
+            <comment>Long delay 2000ms (2s) after data has been receive to avoid multiple data received within short timeframe.</comment>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_UNKNOWN">PROTOCOL_UNKNOWN</name>
+            <comment>PROTOCOLS taken from IRProtocol.h enum decode_type_t
+IMPORTANT: The codes are hardcoded from the enum, but if the enum changes the codes below must be changed accordingly.
+Numbering starts with 0.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_PULSE_WIDTH">PROTOCOL_PULSE_WIDTH</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_PULSE_DISTANCE">PROTOCOL_PULSE_DISTANCE</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_APPLE">PROTOCOL_APPLE</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_DENON">PROTOCOL_DENON</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_JVC">PROTOCOL_JVC</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_LG">PROTOCOL_LG</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_LG2">PROTOCOL_LG2</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_NEC">PROTOCOL_NEC</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_NEC2">PROTOCOL_NEC2</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_ONKYO">PROTOCOL_ONKYO</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_PANASONIC">PROTOCOL_PANASONIC</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_KASEIKYO">PROTOCOL_KASEIKYO</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_KASEIKYO_DENON">PROTOCOL_KASEIKYO_DENON</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_KASEIKYO_SHARP">PROTOCOL_KASEIKYO_SHARP</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_KASEIKYO_JVC">PROTOCOL_KASEIKYO_JVC</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_KASEIKYO_MITSUBISHI">PROTOCOL_KASEIKYO_MITSUBISHI</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_RC5">PROTOCOL_RC5</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_RC6">PROTOCOL_RC6</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_RC6A">PROTOCOL_RC6A</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_SAMSUNG">PROTOCOL_SAMSUNG</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_SAMSUNGLG">PROTOCOL_SAMSUNGLG</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_SAMSUNG48">PROTOCOL_SAMSUNG48</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_SHARP">PROTOCOL_SHARP</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_SONY">PROTOCOL_SONY</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_BANG_OLUFSEN">PROTOCOL_BANG_OLUFSEN</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_BOSEWAVE">PROTOCOL_BOSEWAVE</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_LEGO_PF">PROTOCOL_LEGO_PF</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_MAGIQUEST">PROTOCOL_MAGIQUEST</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_WHYNTE">PROTOCOL_WHYNTE</name>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PROTOCOL_FAST">PROTOCOL_FAST</name>
+            <returntype>UInt</returntype>
+        </field>
+    </class>
+    <class>
+        <name>B4R::B4RIrSender</name>
+        <shortname>IrSender</shortname>
+        <comment>IrSender</comment>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Init the IR sender.
+The IR sender pin is default 3 (Example Arduino) (see PinDefinitionsAndMore.h).</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="SendNEC">SendNEC</name>
+            <comment>NEC Send frame and special repeats.
+There is NO delay after the last sent repeat.
+NumberOfRepeats  - If less 0 then only a special NEC repeat frame will be sent by calling NECProtocolConstants.SpecialSendRepeatFunction.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendNECRaw">SendNECRaw</name>
+            <comment>Sends NEC protocol
+NumberOfRepeats  If less 0 then only a special repeat frame without leading and trailing space will be sent by calling NECProtocolConstants.SpecialSendRepeatFunction.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>RawData</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendBangOlufsen">SendBangOlufsen</name>
+            <comment>NumberOfRepeats=NO_REPEATS
+NumberOfHeaderBits = 8</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Header</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfHeaderBits</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendBoseWave">SendBoseWave</name>
+            <comment>NumberOfRepeats=NO_REPEATS</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendDenon">SendDenon</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>SendSharpFrameMarker</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendFAST">SendFAST</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>aCommand</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendJVC">SendJVC</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendOnkyo">SendOnkyo</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendApple">SendApple</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendKaseikyo">SendKaseikyo</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>VendorCode</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendPanasonic">SendPanasonic</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendKaseikyo_Denon">SendKaseikyo_Denon</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendKaseikyo_Mitsubishi">SendKaseikyo_Mitsubishi</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendKaseikyo_Sharp">SendKaseikyo_Sharp</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendKaseikyo_JVC">SendKaseikyo_JVC</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendRC5">SendRC5</name>
+            <comment>EnableAutomaticToggle=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>aEnableAutomaticToggle</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendRC6">SendRC6</name>
+            <comment>EnableAutomaticToggle=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>aEnableAutomaticToggle</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendRC6A">SendRC6A</name>
+            <comment>EnableAutomaticToggle=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Customer</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>aEnableAutomaticToggle</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSamsung">SendSamsung</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSamsung16BitAddressAnd8BitCommand">SendSamsung16BitAddressAnd8BitCommand</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSamsung16BitAddressAndCommand">SendSamsung16BitAddressAndCommand</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSamsung48">SendSamsung48</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSamsungLG">SendSamsungLG</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSharp">SendSharp</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendSony">SendSony</name>
+            <comment>numberOfBits=12</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>numberOfBits</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendLegoPowerFunctions">SendLegoPowerFunctions</name>
+            <comment>DoSend5Times=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Mode</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>DoSend5Times</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendLegoPowerFunctions2">SendLegoPowerFunctions2</name>
+            <comment>DoSend5Times=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>RawData</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>DoSend5Times</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendLegoPowerFunctions3">SendLegoPowerFunctions3</name>
+            <comment>DoSend5Times=true</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>RawData</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>DoSend5Times</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendMagiQuest">SendMagiQuest</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>WandId</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Magnitude</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendPronto">SendPronto</name>
+            <comment>NumberOfRepeats=NO_REPEATS</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>length</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendShuzu">SendShuzu</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Command</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendDish">SendDish</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendWhynter">SendWhynter</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfBitsToSend</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendRawWithMicroseconds">SendRawWithMicroseconds</name>
+            <comment>Sends a 16 byte microsecond timing array.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>BufferWithMicroseconds</name>
+                <type>UInt[]</type>
+            </parameter>
+            <parameter>
+                <name>IRFrequencyKilohertz</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendPulseDistanceWidth">SendPulseDistanceWidth</name>
+            <comment>Sends PulseDistance frames and repeats.
+@param aFrequencyKHz, aHeaderMarkMicros, aHeaderSpaceMicros, aOneMarkMicros, aOneSpaceMicros, aZeroMarkMicros, aZeroSpaceMicros, aFlags, aRepeatPeriodMillis
+Values to use for sending this protocol, also contained in the PulseDistanceWidthProtocolConstants of this protocol.
+@param aData             uint32 or uint64 holding the bits to be sent.
+@param aNumberOfBits     Number of bits from aData to be actually sent.
+@param aFlags            Evaluated flags are PROTOCOL_IS_MSB_FIRST and SUPPRESS_STOP_BIT. Stop bit is otherwise sent for all pulse distance protocols.
+@param aNumberOfRepeats  If less 0 and a aProtocolConstants-&gt;SpecialSendRepeatFunction() is specified then it is called without leading and trailing space.
+SpecialSendRepeatFunction is not defined (nullptr).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>FrequencyKHz</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>HeaderMarkMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>HeaderSpaceMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>OneMarkMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>OneSpaceMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>ZeroMarkMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>ZeroSpaceMicros</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfBits</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Flags</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>RepeatPeriodMillis</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>NumberOfRepeats</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="DISABLE_LED_FEEDBACK">B4RIrSender_DISABLE_LED_FEEDBACK</name>
+            <comment>Defines</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="ENABLE_LED_FEEDBACK">B4RIrSender_ENABLE_LED_FEEDBACK</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="USE_DEFAULT_FEEDBACK_LED_PIN">B4RIrSender_USE_DEFAULT_FEEDBACK_LED_PIN</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="NO_REPEATS">B4RIrSender_NO_REPEATS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SIRCS_12_PROTOCOL">B4RIrSender_SIRCS_12_PROTOCOL</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SIRCS_15_PROTOCOL">B4RIrSender_SIRCS_15_PROTOCOL</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SIRCS_20_PROTOCOL">B4RIrSender_SIRCS_20_PROTOCOL</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SUPPRESS_STOP_BIT">B4RIrSender_SUPPRESS_STOP_BIT</name>
+            <comment>Stop bit is otherwise sent for all pulse distance protocols, i.e. aOneSpaceMicros != aZeroSpaceMicros.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PROTOCOL_IS_MSB_FIRST">B4RIrSender_PROTOCOL_IS_MSB_FIRST</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PROTOCOL_IS_LSB_FIRST">B4RIrSender_PROTOCOL_IS_LSB_FIRST</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SONY_KHZ">B4RIrSender_SONY_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BOSEWAVE_KHZ">B4RIrSender_BOSEWAVE_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="DENON_KHZ">B4RIrSender_DENON_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="JVC_KHZ">B4RIrSender_JVC_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LG_KHZ">B4RIrSender_LG_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="NEC_KHZ">B4RIrSender_NEC_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SAMSUNG_KHZ">B4RIrSender_SAMSUNG_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="KASEIKYO_KHZ">B4RIrSender_KASEIKYO_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="RC5_RC6_KHZ">B4RIrSender_RC5_RC6_KHZ</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="DELAY_SHORT_AFTER_SEND">DELAY_SHORT_AFTER_SEND</name>
+            <comment>Short delay 40ms after data has been sent.</comment>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="DELAY_LONG_AFTER_SEND">DELAY_LONG_AFTER_SEND</name>
+            <comment>Long delay 2000ms (2s) after data has been sent.</comment>
+            <returntype>ULong</returntype>
+        </field>
+    </class>
+    <version>0.84</version>
+    <author>Robert W.B. Linn</author>
+</root>

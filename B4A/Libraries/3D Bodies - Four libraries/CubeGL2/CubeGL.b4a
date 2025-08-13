@@ -1,0 +1,210 @@
+﻿Version=4
+IconFile=
+NumberOfModules=0
+Build1=Default,Derez.CubeGL
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=4
+File1=cgl.bal
+File2=dodecahedron.txt
+File3=field3.jpg
+File4=monopoly1.jpg
+NumberOfLibraries=4
+Library1=core
+Library2=opengl
+Library3=reflection
+Library4=cubegl
+@EndOfDesignText@
+#Region Module Attributes
+'	#FullScreen: False
+'	#IncludeTitle: False
+	#ApplicationLabel: CubeGLDemo
+	#VersionCode: 1
+	#VersionName: 1.02
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'Activity module
+Sub Process_Globals
+Dim tmr, fly As Timer
+End Sub
+
+Sub Globals
+Dim bmp As Bitmap
+Dim color() As Int
+Dim  flag As Int
+Dim plus(3),minus(3) As Button
+Dim rndbtn As ToggleButton
+Dim pitch,Yaw ,roll  As Float
+Dim posx,posy,posz As Float 
+Dim bd, c3 As CubeGL
+Dim viewangle As Float = 50
+Dim rndflag As Boolean = False
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+Activity.LoadLayout("cgl.bal")
+	add_views
+	init
+	Define_Cube  ' define starting point, angles and colors
+	bd.Initialize(Me,"bd")           ' create bd CubeGL object by code
+		' In code  creation you cannot set the background to color,
+		' it is either transparent (when bmp Is Null) or a Bitmap.
+	bd.CodeCreateView(100%x, 100%x, Colors.black, bmp)
+	Activity.AddView(bd.AsView,0,0,100%x,100%x)
+	bd.Start( color )
+	bd.SetViewAngle(47)  ' viewangle)
+	bd.Show1(pitch,Yaw ,roll, posx+2, posy+2, posz)
+	
+		' creation by designer :
+		' Set the drawable to bitmap and set the bitmap to blank if you want
+		' the background To be transparent, otherwise set the picture File
+		' from the assets.
+		' If you want a colored background - set a color drawable with the color.
+		' Set Textcolor to be the Dot color
+	c3.Start(color) ' C3 CubeGL was created by designer
+	c3.SetViewAngle(20)
+	c3.Show1(pitch,Yaw ,roll, posx, posy, posz)
+End Sub
+
+Sub init
+	bmp.Initialize(File.DirAssets,"monopoly1.jpg")
+	tmr.Initialize("tmr", 50)  ' use higher value for debug mode
+	fly.Initialize("fly", 50)
+End Sub
+																		' 
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub add_views
+Dim dr As ColorDrawable
+dr.Initialize(Colors.rgb(255,120,120), 6dip)
+rndbtn.Initialize("rndbtn")
+Activity.addview(rndbtn,8%x ,78%y,25%x,12%y)
+rndbtn.background = dr
+rndbtn.Texton = "Dice On"
+rndbtn.Textoff = "Dice Off"
+rndbtn.TextColor = Colors.Black
+
+dr.Initialize(Colors.Yellow, 6dip)
+For i = 0 To 2
+	plus(i).initialize("plus")
+	plus(i).Tag = i+1
+	Activity.addview(plus(i),40%x + i * 20%x ,75%y,15%x,8%y)
+	plus(i).background = dr
+	plus(i).TextColor = Colors.Black
+
+	minus(i).initialize("minus")
+	minus(i).Tag = -(i+1)
+	Activity.addview(minus(i),40%x + i * 20%x ,85%y,15%x,8%y)
+	minus(i).background = dr
+	minus(i).TextColor = Colors.Black
+	Select i
+		Case 0
+			plus(i).Text = "+x"
+			minus(i).Text = "-x"
+		Case 1
+			plus(i).Text = "+y"
+			minus(i).Text = "-y"
+		Case 2
+			plus(i).Text = "+z"
+			minus(i).Text = "-z"
+	End Select
+Next
+End Sub
+
+
+#Region Controls
+Sub plus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub plus_up
+	flag = 0
+End Sub
+
+Sub minus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub minus_up
+	flag = 0
+End Sub
+
+Sub tmr_tick
+	Select flag
+		Case -1
+			pitch = pitch - 5
+		Case -2
+			Yaw = Yaw - 5
+		Case -3
+			roll = roll - 5 
+		Case 0
+			tmr.Enabled = False
+		Case 1
+			pitch = pitch + 5
+		Case 2
+			Yaw = Yaw + 5
+		Case 3
+			roll = roll + 5 
+	End Select
+	bd.Show(pitch,Yaw ,roll )
+	c3.Show(pitch,Yaw ,roll )
+End Sub
+
+Public Sub bd_Result(Value As Int)
+	Activity.Title = "dice 1 = " & Value '& " " & pitch & "  " & Yaw & "  " & roll'Log("dice  = " & Value)
+End Sub
+
+Sub c3_Result(Value As Int)
+Activity.Title = "dice 2 = " & Value
+End Sub
+
+Sub rndbtn_click
+rndflag = Not(rndflag)
+rndbtn.Checked = rndflag
+bd.Randomize(rndflag)
+c3.Randomize(rndflag)
+
+End Sub
+#End Region
+
+Sub Define_Cube
+
+	pitch = 0
+	Yaw = 45 
+	roll = 45
+	posx = 0
+	posy = 0
+	posz = 30
+
+	viewangle = 40
+
+	Dim color(6) As Int
+	color(0) = Colors.Blue
+	color(1) = Colors.cyan
+	color(2) = Colors.Red
+	color(3) = Colors.Rgb(255,128,192)
+	color(4) = Colors.Green
+	color(5) = Colors.RGB(150,150,0)
+
+End Sub
+
+
+

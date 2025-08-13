@@ -1,0 +1,254 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jokhttputils2
+Library4=jrandomaccessfile
+Module1=AppNotes
+Module2=DBRequestManager
+Module3=jRDC2Utils
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=3
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 700
+	#MainFormHeight: 500 
+	
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Dim cmbStudentID As ComboBox
+	Dim lblStudentName As Label
+	Dim lblBirthday As Label
+	Dim cmbStudentID As ComboBox
+	Dim txtGrade As TextField
+	Dim lstFailedTest As ListView
+	Dim btnSetGrade As Button
+	Dim cmbTests As ComboBox
+	Dim TableView1 As TableView
+	
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+	Type DBCommand (Name As String, Parameters() As Object)
+
+'	'Try #1 (using busyFlag)	
+'	Private busyFlag As Boolean = False
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.BackColor = fx.Colors.White
+	MainForm.Title = "jRDC2Utils"
+	MainForm.Show
+	
+	'************
+	'IMPORTANT!!!
+	'Adjust as needed to access your jRDC2 server
+	'************
+	'jRDC2Utils.Intitialize("http://192.168.1.148:17178/rdc")
+	jRDC2Utils.Intitialize("http://localhost:17178/rdc")
+	
+	'Let's drop some tables
+	Dim cmdList As List
+	cmdList.Initialize
+	jRDC2Utils.AddCommand(cmdList, "drop_students", Null)
+	jRDC2Utils.AddCommand(cmdList, "drop_grades", Array())
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+
+	'Let's create some tables
+	cmdList.Clear
+	jRDC2Utils.AddCommand(cmdList, "create_table_students", Array())
+	jRDC2Utils.AddCommand(cmdList, "create_table_grades", Array())
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	
+	'Create some student data
+	Wait for (FillStudentsTable) complete (Result As Int)
+	
+	'Create some grade data
+	Wait for (FillGradesTable) complete (Result As Int)
+
+	'Fill out the cmbStudentID combo with student id's
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_studentids", Null)
+	'Dim cmd As DBCommand
+	Wait For (jRDC2Utils.ExecuteList(cmd, cmbStudentID.Items)) complete (Result As Int)
+	
+	'Fill out the TableView1 with student info
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_students", Array())
+	Wait For (jRDC2Utils.ExecuteTableView(cmd, TableView1)) complete (Result As Int)
+	'convert the birthday ticks value to a date string
+	DateTime.DateFormat = "yyyy/MM/dd" 'sortable format
+	For Each row() As Object In TableView1.Items
+		row(3) = DateTime.Date(row(3))
+	Next
+	'****************************************************************************
+	'This is a hack? Look's like event's are firing before TableView1 is set up.
+	' Because of wait fors? 
+	TableView1_Resize(TableView1.Width, TableView1.Height)
+	'Without setting the date column invisible/visible, the dates would at times
+	'not show up properly (the ticks showed).
+	TableView1.SetColumnVisible(3, False)
+	TableView1.SetColumnVisible(3,True)
+	'****************************************************************************
+End Sub
+
+Sub FillStudentsTable As ResumableSub
+	'Generate data for the Students table
+	Dim cmdList As List
+	cmdList.Initialize
+	Dim id As Int
+	'Generate 20 students. Create the DBCommands.
+	For i = 1 To 20
+		id = Rnd(id + 1, id + 10000)
+		jRDC2Utils.AddCommand(	cmdList, _
+								"insert_students", _
+								Array(	NumberFormat2(id, 6, 0, 0, False), _
+										"John", _
+										$"Smith ${i}"$, _
+										DateTime.Add(DateTime.Now, Rnd(-100, 0), Rnd(-12, 0), Rnd(-30, 0))))
+	Next
+	'Execute the DBCommands.
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	Return Result
+End Sub
+
+Sub FillGradesTable As ResumableSub
+	'Generate data for the Grades table
+	Dim Result As Int = -1
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_studentids", Array())
+	Wait For (jRDC2Utils.ExecuteQuery(cmd)) complete (res As DBResult)
+	If res <> Null Then
+		Dim cmdList As List
+		cmdList.Initialize
+		'Generate 20 Grades records for each student and the corresponding DBCommands.
+		For test = 1 To 20
+			For Each row() As Object In res.Rows
+				jRDC2Utils.AddCommand(cmdList, "insert_grades", Array(row(0), $"Test #${test}"$, Rnd(0, 101)))
+			Next
+		Next
+		'Execute the DBCommands.
+		Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	End If
+	Return Result
+End Sub
+
+
+Sub cmbStudentID_ValueChanged (Value As Object)
+	Log($"cmbStudentID_ValueChanged (Value: ${Value})"$)
+	'If nothing is selected in TableView1, then selectedRow will be -1 and the call to SelectedRowValues(0) needs to be skipped
+	Dim selectedRowValue As Object
+	Dim selectedRow As Int = TableView1.SelectedRow
+	Log($"selectedRow: ${selectedRow}"$)
+	If selectedRow > -1 Then selectedRowValue = TableView1.SelectedRowValues(0)	
+	'Update student information
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_student", Array As String (Value))
+	Wait For (jRDC2Utils.ExecuteQuery(cmd)) complete (res As DBResult)
+	If res = Null Then
+		lblStudentName.Text = "N/A"
+		lblBirthday.Text = ""
+	Else
+		lblStudentName.Text = $"${jRDC2Utils.GetColumnObject(res, 0, "first name")} ${jRDC2Utils.GetColumnObject(res, 0, "last name")}"$
+		lblBirthday.Text = DateTime.Date(jRDC2Utils.GetColumnObject(res, 0, "BIRTHDAY"))
+	End If
+	'Get the tests for this specific student (currently it is all tests).
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_tests", Array As String(Value))
+	Wait For (jRDC2Utils.ExecuteList(cmd, cmbTests.Items)) complete (Result As Int)
+	cmbTests.SelectedIndex = 0
+	Wait for (FindFailedTests(Value)) complete (Result As Int)
+	'Select the relevant row in the table.
+	If selectedRow = -1 Or selectedRowValue <> Value Then
+		Log($"selectedRow: ${selectedRow}, selectedRowValue: ${selectedRowValue}, Value: ${Value}"$)
+		For Each row() As Object In TableView1.Items
+			If row(0) = Value Then
+				TableView1.SelectedRowValues = row
+				TableView1.ScrollTo(TableView1.SelectedRow)
+				Exit
+			End If
+		Next
+	End If
+End Sub
+
+Sub cmbTests_SelectedIndexChanged(Index As Int, Value As Object)
+	If Index = -1 Then Return
+	'Find the slected test's grade and display it
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_grade", Array As String(cmbStudentID.Value, Value))
+	wait for (jRDC2Utils.ExecuteQuery(cmd)) complete (res As DBResult)
+	If res = Null Then
+		txtGrade.Text = "N/A"
+	Else
+		txtGrade.Text = jRDC2Utils.GetColumnObject(res, 0, "grade")
+	End If
+End Sub
+
+Sub FindFailedTests(StudentId As String) As ResumableSub
+	'Find all tests of this student with grade lower than 55.
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("select_testgrades", Array As String(StudentId))
+	Wait For (jRDC2Utils.ExecuteList(cmd, lstFailedTest.Items)) complete (Result As Int)
+	Return Result
+End Sub
+
+Sub txtGrade_Action
+	btnSetGrade_Action
+End Sub
+
+Sub btnSetGrade_Action
+	'Holdover from DBUtils example. Showing how to create a snapshot?
+	Dim out As OutputStream = File.OpenOutput(File.DirApp, "1.png", False)
+	MainForm.RootPane.Snapshot.WriteToStream(out)
+	out.Close
+	'Check that the value is valid
+	If IsNumber(txtGrade.Text) = False Or txtGrade.Text > 100 Or txtGrade.Text < 0 Then
+		'ToastMessageShow("Invalid value. Value should be between 0 to 100.", True)
+		Return
+	End If
+	'Update the grade
+	Dim cmd As DBCommand = jRDC2Utils.CreateCommand("update_grade", Array As String (txtGrade.Text, cmbStudentID.Value, cmbTests.Value))
+	Wait For (jRDC2Utils.ExecuteCommands(Array(cmd))) complete (Result As Int)
+	'Update the failed test list
+	Wait For (FindFailedTests(cmbStudentID.Value)) complete (Result As Int)
+End Sub
+
+#if B4J
+'Fixed to work in B4J
+Sub	lstFailedTest_MouseClicked(MouseData As MouseEvent)
+	If lstFailedTest.SelectedIndex = -1 Then Return
+	'Extract the test name for the selected item
+	Dim testName As String = lstFailedTest.SelectedItem
+	testName = testName.SubString2(0,testName.IndexOf(","))
+#Else
+Sub lstFailedTest_ItemClick (Position As Int, Value As Object)
+	Log("Changing test value via list click")
+	'Value is an array of strings
+	Dim values() As String
+	values = Value
+	Dim testName As String
+	testName = values(0)
+#End if
+	'Find the index of this test in cmbTests and set it.
+	For i = 0 To cmbTests.Items.Size - 1
+		If testName = cmbTests.Items.Get(i) Then
+			cmbTests.SelectedIndex = i
+			Exit
+		End If
+	Next
+	txtGrade.SelectAll
+End Sub
+
+Sub TableView1_SelectedRowChanged(Index As Int, Row() As Object)
+	If Index = -1 Then Return		'Nothing is selected
+	cmbStudentID.Value = Row(0) 	'id is the first column
+End Sub
+
+Sub TableView1_Resize(Width As Double, Height As Double)
+	Log($"TableView1_Resize(Width: ${Width}, Height: ${Height}"$)
+	For i = 0 To TableView1.ColumnsCount - 1
+		TableView1.SetColumnWidth(i, (Width - 10dip)/ TableView1.ColumnsCount)
+	Next
+End Sub

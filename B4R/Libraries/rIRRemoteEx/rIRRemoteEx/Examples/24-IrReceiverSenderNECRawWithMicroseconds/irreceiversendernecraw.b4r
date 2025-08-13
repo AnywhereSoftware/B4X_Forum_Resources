@@ -1,0 +1,145 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR receiver and sender NEC RAW with microseconds (byte array).
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The default pins as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'				KEYES IR-Sender KY-005 (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+
+'Rawdata:	The raw data is taken from the example sendrawdemo.ino
+'As given by the ino example: The Values are taken from the NEC timing definitions (using exact NEC timing)
+'const uint16_t rawData[] = {
+'9000, 
+'4500/*Start Bit*/, 
+'560, 560, 560, 560, 560, 1690, 560,
+'560/*0010 0x4 of 8 Bit address LSB first*/, 
+'560, 560, 560, 560, 560, 560, 560, 
+'560/*0000*/, 
+'560, 1690, 560, 1690, 560, 560, 560, 
+'1690/*1101 0xB - inverted 0x04*/, 
+'560, 1690, 560, 1690, 560, 1690, 560, 
+'1690/*1111 - inverted 0*/, 
+'560, 560, 560, 560, 560, 560, 560, 
+'1690/*0001 0x08 of command LSB first*/, 
+'560, 1690, 560, 560, 560, 560, 560, 
+'560/*1000 0x01*/, 
+'560, 1690, 560, 1690, 560, 1690, 560, 
+'560/*1110 Inverted 8 of command*/, 
+'560, 560, 560, 1690, 560, 1690, 560,
+'1690/*1111 inverted 0 of command*/, 
+'560 /*stop Bit*/
+
+'Log Example
+'[AppStart] rRemoteEx IRRECEIVERSENDERRAW v20250429
+'[rIRRemoteEx irreceiver Initialize] IrReceiverPin=2
+'[rIRRemoteEx irreceiver Initialize] IrDecodedDataSub added
+'[rIRRemoteEx irreceiver Initialize] Ready To receive IR signals of protocols: NEC/NEC2/Onkyo/Apple, Panasonic/Kaseikyo, Denon/Sharp, Sony, RC5, RC6, LG, JVC, Samsung, FAST, Whynter, Lego Power Functions, Bosewave, MagiQuest, Universal Pulse Distance Width, Hash 
+'[rIRRemoteEx irsender Initialize] IrSenderPin=3
+'[SendNECRawWithMicroseconds] rawdata len=67
+'[NewData] +++
+'[NewData] protocol=8,name=NEC,address=4,command=24,commandhex=18,flags=0,initialgapticks=20394,flags_is_repeat=1
+'[NewData] rawdata len=68,decoded=3877174020,rawdata hex=04FB18E7
+'[NewData] ---
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=NEC Address=0x4 Command=0x18 Raw-Data=0xE718FB04 32 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: irsender.sendNEC(0x4, 0x18, <numberOfRepeats>);
+#End Region
+
+#Region Wiring
+'IR-Receiver = Arduino UNO
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+
+'IR-Sender = Arduino UNO
+'VCC = 5V (RED)
+'TX = 3 (YELLOW) - use resistor 3V3=120Ohm,5V=220Ohm
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 100
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVERSENDERRAW v20250429"
+
+	Private SerialLine As Serial
+
+	Private irreceiver As IrReceiver
+	Private irsender As IrSender
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	'Init the ir receriver & sender using default pins 2 & 3	
+	irreceiver.Initialize("NewData")
+	irsender.Initialize()
+	
+	CallSubPlus("SendNECRawWithMicroseconds", 1000, 1)
+End Sub
+
+'Test send raw with NEC data using exact NEC timing.
+Private Sub SendNECRawWithMicroseconds(Tag As Byte)
+
+	'Values are not multiple of 50, but are taken from the NEC timing definitions.
+	Dim rawdata() As UInt = Array As UInt( _ 
+		9000, 4500, 560, 560, 560, 560, 560, 1690, 560, _ 
+		560, 560, 560, 560, 560, 560, 560, 560, 560, 560, 1690, 560, 1690, 560, 560, _ 
+		560, 1690, 560, 1690, 560, 1690, 560, 1690, 560, 1690, 560, 560, 560, 560, _ 
+		560, 560, 560, 1690, 560, 1690, 560, 560, 560, 560, 560, 560, 560, 1690, 560, _ 
+		1690, 560, 1690, 560, 560, 560, 560, 560, 1690, 560, 1690, 560, 1690, 560)
+	
+	Log("[SendNECRawWithMicroseconds] rawdata len=", rawdata.Length)
+	irsender.SendRawWithMicroseconds(rawdata, irsender.NEC_KHZ)
+End Sub
+
+Private Sub NewData(data As IrDecodedData)
+	'Check if data is noise (protocol 0 == UNKNOWN) as we want to receive NEC data only
+'	If data.Protocol == 0 Then
+'		Return
+'	End If
+
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", bc.HexFromBytes(Array As Byte( data.Command)), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+#Region HELPER
+'Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+'Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+'Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region
+
+

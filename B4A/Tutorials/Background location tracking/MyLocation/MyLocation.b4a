@@ -1,0 +1,94 @@
+﻿Build1=Default,b4a.example2
+Group=Default Group
+Library1=core
+Library2=gps
+Library3=phone
+Library4=runtimepermissions
+Library5=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~SetServiceAttribute(Tracker, android:foregroundServiceType, "location")~\n~AddPermission(android.permission.FOREGROUND_SERVICE_LOCATION)~\n~AddPermission(android.permission.ACCESS_BACKGROUND_LOCATION)~\n~AddPermission(android.permission.RECEIVE_BOOT_COMPLETED)~\n~AddReceiverText(StartAtBootReceiver,~\n~<intent-filter>~\n~	<action android:name="android.intent.action.BOOT_COMPLETED"/>~\n~</intent-filter>)~\n~
+Module1=StartAtBootReceiver
+Module2=Starter
+Module3=Tracker
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=3
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+End Sub
+
+Sub Activity_Resume
+	Wait For (CheckAndRequestNotificationPermission) Complete (HasPermission As Boolean)
+	If HasPermission = False Then
+		Log("no permission")
+		ToastMessageShow("no permission", True)
+		Return
+	End If
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		If Starter.phone.SdkVersion >= 34 Then
+			'This is only required for the case where the Tracker service is started after boot.
+			'In other cases it is considered to be running in the foreground.
+			If Starter.rp.Check(Starter.BACKGROUND_LOCATION_PERMISSION) = False Then
+				MsgboxAsync("Please allow app to always allow location services", "")
+				Wait For Msgbox_Result (unused As Int)
+				Dim in As Intent
+				in.Initialize("android.settings.LOCATION_SOURCE_SETTINGS", "")
+				StartActivity(in)
+				'catch the Activity_Resume event to prevent an endless loop if the user denies the permission.
+				Wait For Activity_Resume
+			End If
+		End If
+		StartService(Tracker)
+	Else
+		ToastMessageShow("No permission...", True)
+	End If
+End Sub
+
+Private Sub CheckAndRequestNotificationPermission As ResumableSub
+	Dim p As Phone
+	If p.SdkVersion < 33 Then Return True
+	Dim ctxt As JavaObject
+	ctxt.InitializeContext
+	Dim targetSdkVersion As Int = ctxt.RunMethodJO("getApplicationInfo", Null).GetField("targetSdkVersion")
+	If targetSdkVersion < 33 Then Return True
+	Dim NotificationsManager As JavaObject = ctxt.RunMethod("getSystemService", Array("notification"))
+	Dim NotificationsEnabled As Boolean = NotificationsManager.RunMethod("areNotificationsEnabled", Null)
+	If NotificationsEnabled Then Return True
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_POST_NOTIFICATIONS)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean) 'change to B4XPage_PermissionResult if B4XPages project
+	Log(Permission & ": " & Result)
+	Return Result
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

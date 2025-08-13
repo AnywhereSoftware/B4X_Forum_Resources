@@ -1,0 +1,186 @@
+﻿Version=4
+IconFile=
+NumberOfModules=0
+Build1=Default,derez.Cube3D
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=2
+File1=cube.bal
+File2=monopoly1.jpg
+NumberOfLibraries=2
+Library1=core
+Library2=cube3d
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Cube3D
+	#VersionCode: 1
+	#VersionName: 1.01
+	#LibraryAuthor: David Erez 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Dim tmr As Timer
+End Sub
+
+Sub Globals
+	Dim c3d, c3d1 As Cube3D
+	Dim rndflag As Boolean = False
+	Dim plus(3),minus(3) As Button
+	Dim rndbtn As ToggleButton
+	Dim pitch,Yaw ,roll As Float
+	Dim color(6), flag As Int
+	Dim background As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+Activity.LoadLayout("cube.bal")
+Activity.color = Colors.black
+add_views
+
+roll = 0
+pitch = 0
+Yaw = 45
+
+color(0) = Colors.Blue
+color(1) = Colors.cyan
+color(2) = Colors.Red
+color(3) = Colors.Rgb(255,128,192)
+color(4) = Colors.Green
+color(5) = Colors.RGB(150,150,0)
+
+Dim wh As Float = 35%x
+
+c3d.Initialize("Main","c3d")
+c3d.CodeCreateView(wh)
+Activity.AddView(c3d.AsView, 50%x,10%y,wh,wh)
+c3d.Start( color, Colors.black, 0.10)
+
+c3d.linecolor(Colors.RGB(120,0,0))
+c3d.Show(pitch,Yaw ,roll )
+
+'c3d1.Initialize("Main","c3d1")  ' created by the designer as custom view
+'Activity.AddView(c3d1.AsView, 13%x,35%y,wh,wh)
+c3d1.Start(color, Colors.white, 0.10)
+
+c3d1.Show(pitch,Yaw ,roll )
+
+tmr.Initialize("tmr", 20)
+
+End Sub
+
+Sub add_views
+background.Initialize("")
+Activity.AddView(background,0,0,100%x,100%x)
+background.SetBackgroundImage(LoadBitmap(File.DirAssets,"monopoly1.jpg"))
+background.SendToBack
+
+Dim dr As ColorDrawable
+dr.Initialize(Colors.rgb(255,120,120), 6dip)
+rndbtn.Initialize("rndbtn")
+Activity.addview(rndbtn,8%x ,78%y,25%x,12%y)
+rndbtn.background = dr
+rndbtn.Texton = "Dice On"
+rndbtn.Textoff = "Dice Off"
+rndbtn.TextColor = Colors.Black
+
+dr.Initialize(Colors.Yellow, 6dip)
+For i = 0 To 2
+	plus(i).initialize("plus")
+	plus(i).Tag = i+1
+	Activity.addview(plus(i),40%x + i * 20%x ,75%y,15%x,8%y)
+	plus(i).background = dr
+	plus(i).TextColor = Colors.Black
+
+	minus(i).initialize("minus")
+	minus(i).Tag = -(i+1)
+	Activity.addview(minus(i),40%x + i * 20%x ,85%y,15%x,8%y)
+	minus(i).background = dr
+	minus(i).TextColor = Colors.Black
+	Select i
+		Case 0
+			plus(i).Text = "+x"
+			minus(i).Text = "-x"
+		Case 1
+			plus(i).Text = "+y"
+			minus(i).Text = "-y"
+		Case 2
+			plus(i).Text = "+z"
+			minus(i).Text = "-z"
+	End Select
+Next
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub plus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub plus_up
+	flag = 0
+End Sub
+
+Sub tmr_tick
+	Select flag
+		Case -1
+			pitch = pitch - 2
+		Case -2
+			Yaw = Yaw - 2
+		Case -3
+			roll = roll - 2 
+		Case 0
+			tmr.Enabled = False
+		Case 1
+			pitch = pitch + 2
+		Case 2
+			Yaw = Yaw + 2
+		Case 3
+			roll = roll + 2 
+	End Select
+	c3d.Show(pitch,Yaw ,roll )
+	c3d1.Show(pitch,Yaw ,roll )
+End Sub
+
+Sub minus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub minus_up
+	flag = 0
+End Sub
+
+Public Sub c3d_Result(Value As Int)
+	Log("dice 1 = " & Value)
+End Sub
+
+Public Sub c3d1_Result(Value As Int)
+	Log("dice 2 = " & Value)
+End Sub
+
+Sub rndbtn_click
+rndflag = Not(rndflag)
+rndbtn.Checked = rndflag
+c3d.Randomize(rndflag)
+c3d1.Randomize(rndflag)
+End Sub
+

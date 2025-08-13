@@ -1,0 +1,272 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jaudiostreamer
+Library2=jcore
+Library3=jfx
+Library4=jnetwork
+Library5=jrandomaccessfile
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 740
+	#MainFormHeight: 460 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private cmbPlayDevice As ComboBox
+	Private cmbRecDevice As ComboBox
+	Private AudioS As AudioStreamer
+	Private lstRecDevices As List
+	Private lstPlayDevices As List
+	Private iRecID, iPlayID As Int
+	Private radMono As RadioButton
+	Private radStereo As RadioButton
+	Private sldPlayback As Slider
+	Private sldRecord As Slider
+	Private txtSamplerate As TextField
+	Private txtBits As TextField
+	Private chkMute As CheckBox
+	Private txtPlayDB As TextField
+	Private txtRecDB As TextField
+	Private txtPlayID As TextField
+	Private txtPlayLineBufferSize As TextField
+	Private txtPlayQueueSize As TextField
+	Private txtRecBufferSize As TextField
+	Private txtRecID As TextField
+	Private txtRecLineBufferSize As TextField
+	Private myServerSocket As ServerSocket
+	Private mySocketCli,mySocketSrv As Socket
+	Private AstreamSrv, AstreamCli As AsyncStreams
+	Private sldJitter As Slider
+	Private sldLatency As Slider
+	Private txtJitter As TextField
+	Private txtLatency As TextField
+	Private txtTCPport As TextField
+	Private tmrLatency As Timer
+	Private counterLatency As Int = 100
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	MainForm.RootPane.Style = "-fx-background-color: #00FFFF"
+	lstRecDevices = AudioS.RecordingDevices
+	Dim i As Int
+	For i = 0 To lstRecDevices.Size - 1
+		Dim ad As aDevice = lstRecDevices.Get(i)
+		cmbRecDevice.Items.Add(ad.devName)
+	Next
+	lstPlayDevices = AudioS.PlaybackDevices
+	For i = 0 To lstPlayDevices.Size - 1
+		Dim ad As aDevice = lstPlayDevices.Get(i)
+		cmbPlayDevice.Items.Add(ad.devName)
+	Next
+	cmbRecDevice.SelectedIndex = 0
+	cmbPlayDevice.SelectedIndex = 0
+	radMono.Selected = True
+	txtBits.Text = "16"
+	txtSamplerate.Text = 8000
+	txtRecBufferSize.Text = 256
+	txtPlayQueueSize.Text = txtRecBufferSize.text
+	txtRecLineBufferSize.Text = 2*txtRecBufferSize.Text
+	txtPlayLineBufferSize.text = txtRecLineBufferSize.Text
+	sldPlayback.Value = 100
+	txtPlayDB.Text = "0dB"
+	sldRecord.Value = 100
+	txtRecDB.Text = "0dB"
+	sldJitter.Value = 0
+	sldLatency.Value = 0
+	txtJitter.Text = 0
+	txtLatency.Text = 0
+	txtTCPport.Text = 8765
+	MainForm.BackColor = fx.Colors.LightGray
+	tmrLatency.Initialize("tmrLatency",100)
+End Sub
+
+Private Sub GetDevID(sDevName As String, Play As Boolean) As Int
+	Dim i As Int
+	Dim lst As List
+	If Play Then 
+		lst = lstPlayDevices
+	Else
+		lst = lstRecDevices
+	End If
+	For i = 0 To lst.Size - 1
+		Dim ad As aDevice 
+		If Play Then
+			ad = lstPlayDevices.Get(i)
+		Else
+			ad = lstRecDevices.Get(i)
+		End If
+		If ad.devName = sDevName Then Return ad.devID
+	Next
+	Return 999
+End Sub
+
+Private Sub cmbRecDevice_ValueChanged (Value As Object)
+	iRecID = GetDevID(Value, False)
+	txtRecID.Text = iRecID
+End Sub
+
+Private Sub cmbPlayDevice_ValueChanged (Value As Object)
+	iPlayID	 = GetDevID(Value, True)
+	txtPlayID.Text = iPlayID
+End Sub
+
+Private Sub btnStop_Click
+	tmrLatency.Enabled = False
+	AstreamSrv.Close
+	AstreamCli.Close
+	mySocketCli.Close
+	mySocketSrv.Close
+	myServerSocket.Close
+	MainForm.RootPane.Style = "-fx-background-color: #00FFFF"
+	If Not(AudioS.IsInitialized) Then Return
+	AudioS.stopRecorder
+	AudioS.stopPlayer
+End Sub
+
+Private Sub ServerSocket_NewConnection(Successful As Boolean, NewSocket As Socket)
+	mySocketSrv = NewSocket
+	If Successful Then
+		Log("Network server connected successfully")
+		AstreamSrv.InitializePrefix(mySocketSrv.InputStream,False,mySocketSrv.OutputStream,"AstreamSrv")
+	Else
+		Log("Network Server cannot accept the new connection request")
+	End If
+End Sub
+	
+Sub AstreamSrv_NewData(buffer() As Byte)
+	Dim l As Int = txtLatency.Text
+	Dim j As Int = txtJitter.Text
+	Dim d As Int
+	If l > 0 Then
+		d = l+Rnd(-1,1)*j
+		Sleep(Round(d))
+	End If
+	If AstreamSrv.IsInitialized Then AstreamSrv.Write(buffer)
+End Sub
+
+Sub AstreamCli_NewData(buffer() As Byte)
+	If AudioS.IsInitialized Then AudioS.writeData(buffer)
+End Sub
+
+private Sub mySocketCli_Connected(Successful As Boolean)
+	If Successful Then 
+		Log("Network Client connected successfully")
+		MainForm.RootPane.Style = "-fx-background-color: #00FF00"
+		AstreamCli.InitializePrefix(mySocketCli.InputStream,False,mySocketCli.OutputStream,"AstreamCli")
+	Else	
+		Log("Network Client cannot connect")
+	End If
+End Sub
+
+Private Sub btnStart_Click
+	If AudioS.IsInitialized Then btnStop_Click
+	myServerSocket.Initialize(txtTCPport.Text,"ServerSocket")
+	myServerSocket.Listen
+	mySocketCli.Initialize("mySocketCli")
+	mySocketCli.Connect("127.0.0.1",txtTCPport.Text,1000)
+	Dim ch As Int
+	If radMono.Selected Then
+		ch = AudioS.CH_MONO
+	Else
+		ch = AudioS.CH_STEREO
+	End If
+	If AudioS.Initialize("AudioS",iRecID, iPlayID,txtSamplerate.Text,txtBits.text,ch,txtRecLineBufferSize.Text,txtPlayLineBufferSize.Text) Then
+		Log("Audio Streamer successfully initialized")
+	Else
+		Log("Cannot initialize Audio Streamer")
+		Return
+	End If
+	AudioS.queueLength = txtPlayQueueSize.Text
+	AudioS.RecorderBufferSize = txtRecBufferSize.Text
+	AudioS.startPlayer
+	AudioS.startRecorder
+	AudioS.muteLineOut(chkMute.Checked)
+	' now read the values back, to see if changed
+	txtPlayQueueSize.Text = AudioS.queueLength
+	txtRecBufferSize.Text = AudioS.RecorderBufferSize
+	txtRecLineBufferSize.Text = AudioS.LineInBufferSize
+	txtPlayLineBufferSize.Text = AudioS.LineOutBufferSize
+	sldPlayback.Value = 100		' set Att to 0dB
+	sldRecord.Value = 100		' set Att to 0dB
+	tmrLatency.Enabled = True
+End Sub
+
+Private Sub sldRecord_ValueChange (Value As Double)
+	' value 0-100, but adjustment is logarithmic (100 = 0dB)
+	If AudioS.IsInitialized Then
+		Dim db As Float = AudioS.VolumeRecorder(Value)
+		If Round(db) = 999 Then
+			txtRecDB.text = "N/A"
+		Else
+			txtRecDB.text = Round(db) & "dB"
+		End If
+	End If
+End Sub
+
+Private Sub sldPlayback_ValueChange (Value As Double)
+	' value 0-100, but adjustment is logarithmic  (100 = 0dB)
+	If AudioS.IsInitialized Then
+		Dim db As Float = AudioS.VolumePlayer(Value)
+		If Round(db) = 999 Then
+			txtPlayDB.text = "N/A"
+		Else
+			txtPlayDB.text = Round(db) & "dB"
+		End If
+	End If
+End Sub
+
+Private Sub chkMute_CheckedChange(Checked As Boolean)
+	If AudioS.IsInitialized Then AudioS.muteLineOut(chkMute.Checked)
+End Sub
+
+Sub AudioS_DataReceived(buffer() As Byte)
+	If AstreamCli.IsInitialized Then
+		AstreamCli.Write(buffer)
+	End If
+End Sub
+
+Sub AudioS_Error(msg As String)
+	Log(msg)	
+End Sub
+
+Sub AudioS_PlaybackComplete
+	Log("Playback Complete")	
+End Sub
+
+Private Sub sldLatency_ValueChange (Value As Double)
+	txtLatency.Text = Round(5*Value)
+	If Value < txtJitter.Text Then 
+		txtJitter.text = Value
+		sldJitter.Value = 100
+	End If
+	counterLatency = 0		' initiate latency reset
+End Sub
+
+Sub tmrLatency_Tick
+	counterLatency = counterLatency+1
+	If counterLatency = 6 And AudioS.IsInitialized Then
+		Sleep(500)
+		AudioS.flushPlayer
+		AudioS.flushRecorder
+	End If
+	If counterLatency > 100 Then counterLatency=100
+	
+End Sub
+
+Private Sub sldJitter_ValueChange (Value As Double)
+	Dim i As Int = txtLatency.Text
+	If i > 50 Then i = 50
+	txtJitter.Text = Round(Value*i/100)
+End Sub

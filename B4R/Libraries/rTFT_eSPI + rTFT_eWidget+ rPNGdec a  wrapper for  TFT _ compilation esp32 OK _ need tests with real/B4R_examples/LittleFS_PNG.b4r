@@ -1,0 +1,141 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rpngdec
+Library4=rrandomaccessfile
+Library5=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// This example If For processors with LittleFS capability (e.g. RP2040,
+'// ESP32, ESP8266). It renders a PNG file that is stored in LittleFS
+'// using the PNGdec library (available via library manager).
+
+'// Note: The PNGDEC required lots of RAM To work (~40kbytes) so
+'// this sketch is will Not run on smaller memory processors (e.g.
+'// ESP8266, STM32F103 etc.)
+
+'// The test image is in the sketch "data" folder (press Ctrl+K To see it).
+'// You must upload the image To LittleFS using the Arduino IDE Tools Data
+'// Upload menu option (you may need To install extra tools For that).
+
+'// Don't forget to use the Arduino IDE Tools menu to allocate a LittleFS
+'// memory partition before uploading the sketch And data!
+
+
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private FS As LittleFS
+	Private PNG As PNG
+	Private bc As ByteConverter
+	Private DEG2RAD As Double = 0.0174532925
+	Private MAX_IMAGE_WIDTH As UInt = 240
+	Private xpos As UInt = 0
+	Private ypos As UInt = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	Log("TFT Booting...")
+	
+	TFTid = TFT.Initialize(-1,-1)	
+  '// Initialise the screen
+	TFT.begin(0xFF)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	Log("\r\nInitialisation done.")
+	PNG.Initialize
+
+	'// Initialise FS
+	If Not(FS.Initialize) Then
+	   Log("LittleFS initialisation failed!")
+	   Do While True : Delay(100):Loop   '// Stay here twiddling thumbs waiting
+    End If
+
+
+    AddLooper("LocalLoop")
+End Sub
+
+'// =========================================================================
+'// Loop
+'// =========================================================================
+Sub LocalLoop
+	Dim rc As Int
+	'// Scan LittleFS And load any *.png files
+    For Each f As File In FS.ListFiles("/")
+		If (Not(f.IsDirectory))And(bc.EndsWith(f.name, ".png")) Then
+			'// If it is Not a directory And filename ends in .png Then load it
+			rc = PNG.open(f.name, "pngDraw")
+		    If rc == PNG.PNG_SUCCESs Then 
+				TFT.startWrite
+			    Log("image specs:", PNG.getWidth, PNG.getHeight, PNG.getBpp," pixel type:", PNG.getPixelType)
+				Dim dt As ULong = Millis()
+	  			If PNG.getWidth > MAX_IMAGE_WIDTH Then
+		    		Log("Image too wide for allocated line buffer size!")
+				Else
+					rc = PNG.decode(0)
+            		PNG.close
+				End If
+		        TFT.endWrite
+                '// How long did rendering take...
+                Log(Millis()-dt, "ms")
+			End If	
+        	Delay(3000)
+        	TFT.fillScreen(random(0,0x10000))
+		End If
+	Next
+End Sub
+
+Sub random(Mini As ULong,Maxi As ULong) As ULong
+	Dim tmp() As ULong = Array As ULong(Mini, Maxi)
+    Return RunNative("getRandom",tmp)
+End Sub 
+
+'//=========================================v==========================================
+'//                                      pngDraw
+'//====================================================================================
+'// This Next function will be called during decoding of the PNG file To
+'// render each image line To the TFT.  If you use a different TFT library
+'// you will need To adapt this function To suit.
+'// Callback function To draw pixels To the display
+Sub pngDraw(pDrawID As ULong, pDraw_y As Int, pDraw_iWidth As Int)
+  Dim lineBuffer(MAX_IMAGE_WIDTH) As UInt
+  PNG.getLineAsRGB565(pDrawID, lineBuffer, PNG.PNG_RGB565_BIG_ENDIAN, 0xffffffff)
+  TFT.pushImage(xpos, ypos + pDraw_y, pDraw_iWidth, 1, lineBuffer)
+End Sub
+
+#if C
+//***********************
+// random
+//***********************  
+ B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  uint32_t* a = (uint32_t*) b->data;
+	  uint32_t rand = random(a[0],a[1]); 
+  	  return returnvalue.wrapNumber(rand);
+ ;} 
+
+#End If

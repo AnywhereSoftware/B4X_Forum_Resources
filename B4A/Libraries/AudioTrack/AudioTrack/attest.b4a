@@ -1,0 +1,149 @@
+﻿Build1=Default,com.stevel05.attest
+File1=trom.wav
+FileGroup1=Default Group
+Group=Default Group
+Library1=audiorecord
+Library2=audiotrack
+Library3=core
+Library4=randomaccessfile
+ManifestCode=
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.2
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: attest
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Dim at As AudioTrack
+	Dim Ra As RandomAccessFile
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim BufferSize As Int
+	Dim SampleRate As Int
+	Dim ChannelConfig As Int
+	Dim AudioFormat As Int
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	'Can't load from assets so move it
+	If File.Exists(File.DirAssets,"trom.wav") Then
+		File.Copy(File.DirAssets,"trom.wav",File.DirDefaultExternal,"trom.wav")
+	End If
+	
+	'Open the file for Random Access
+	Ra.Initialize2(File.DirDefaultExternal,"trom.wav",True,True)
+	
+	'Could get this from wav header, but just enter it
+	SampleRate=44100
+	AudioFormat=at.Af_PCM_16
+	ChannelConfig=at.Ch_Conf_Stereo
+
+	'Play Streaming
+	Wait For(PlayStream) Complete (Resp As Boolean)
+	Log("Playing Finished")
+'	
+	
+'	'Play Static
+'	PlayStatic
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	at.Release
+End Sub
+
+
+Sub PlayStream As ResumableSub
+	
+	'Get the min buffer size
+	BufferSize=at.GetMinBuffersize(SampleRate,ChannelConfig,AudioFormat)
+	
+	'Try to initialize the player
+	at.Initialize(at.Stream_Music,SampleRate,ChannelConfig,AudioFormat,BufferSize,at.Mode_Stream)
+
+	Log(at.GetState)
+	'Check it initialized
+	If at.GetState < 0 Then
+		Msgbox("Failed to initialize AudioTrack","Initialize Failed")
+		Activity.Finish
+	End If
+	Log("Playing")
+	Log( "File Size " & Ra.Size)
+	Dim Pos As Int
+	at.SetStereoVolume(at.GetMaxVolume,at.GetMaxVolume)
+	'File has a wav header we need to ignore
+	Pos=44
+	For i = 0 To Ra.Size-BufferSize Step BufferSize
+		'Break into buffersize chunks and write to the AudioTrack
+		Dim Dat(BufferSize) As Byte
+		Ra.ReadBytes(Dat,0,BufferSize,Pos)
+		at.WriteByte(Dat,0,BufferSize)
+		Sleep(0)
+		Pos=Pos+Dat.Length
+		If i = 0 Then 
+			at.Play
+			at.SetLoopPoints(0,1024,3)
+		End If
+	Next
+	
+	'Write the last bit
+	Dim Dat(Ra.Size-Pos) As Byte
+	Ra.ReadBytes(Dat,0,Ra.Size-Pos,Pos)	
+	at.WriteByte(Dat,0,Ra.Size-Pos)
+	
+	Return True
+End Sub
+
+Sub PlayStatic
+	
+	'Get the min buffer size
+	BufferSize=Ra.Size - 44
+	
+	'Try to initialize the player
+	at.Initialize(at.Stream_Music,SampleRate,ChannelConfig,AudioFormat,BufferSize,at.Mode_Static)
+
+	Log("AT State " & at.GetState)
+	'Check it initialized
+	If at.GetState < 0 Then
+		Msgbox("Failed to initialize AudioTrack","Initialize Failed")
+		Activity.Finish
+	End If
+	Log("Playing")
+	Log( "File Size " & Ra.Size)
+	at.SetStereoVolume(at.GetMaxVolume,at.GetMaxVolume)
+	'File has a wav header we need to ignore
+	Dim Pos As Int = 44
+	
+	Dim Dat(BufferSize) As Byte
+	Log("Read " & Ra.ReadBytes(Dat,0,BufferSize,Pos))
+	Log("Write " & at.WriteByte(Dat,0,BufferSize))
+	
+	Dim Frames As Int = (BufferSize / 4) ' Framesize = 4 = Samplesize in bytes * No Channels
+	Log("Frames " & Frames)
+	at.SetLoopPoints(0,Frames,3)
+	at.Play
+
+End Sub

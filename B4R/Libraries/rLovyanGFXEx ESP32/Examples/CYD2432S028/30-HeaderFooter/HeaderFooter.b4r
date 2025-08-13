@@ -1,0 +1,75 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLOvyanGFXEx
+'Description:	Example showing the header and footer function.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 900
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx HEADERFOOTER v20250406"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display Instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	' Callsub to let the display initialize
+	CallSubPlus("SetUp", 500, 5)
+End Sub
+
+Private Sub SetUp(tag As Byte)
+	lcd.DisplayRotation = 1
+
+	'lcd.FillScreen(lcd.COLOR_WHITE)
+	lcd.BackgroundColor = lcd.color_white
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	'Draw b4x slogan at the bottom
+	lcd.DrawFooter("B4X=Great", lcd.FONT_FREESERIFBOLD_24, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_LIGHTGRAY, lcd.COLOR_WHITE_SMOKE, lcd.COLOR_BLACK)
+	
+	'Draw text in the display center
+	lcd.FONT = lcd.FONT_ORBITRON_LIGHT_24
+	Dim fontsize As Byte = 2
+	Dim fontheight As Int = lcd.GetFontHeight * fontsize
+	lcd.DrawText(lcd.CenterX, lcd.CenterY - (fontheight/2), "Hello", lcd.TEXT_ALIGN_MIDDLE_CENTER, fontsize , lcd.COLOR_BLACK, lcd.COLOR_NONE)
+End Sub

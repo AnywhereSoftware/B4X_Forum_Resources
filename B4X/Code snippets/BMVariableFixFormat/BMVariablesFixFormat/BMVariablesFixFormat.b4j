@@ -1,0 +1,165 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private txtInput As TextArea
+	Type Variable (State As String, Name As String, Typ As String)
+	Public Vars_Public, Vars_Private, Vars_Dim, TypVars As List
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.WindowWidth = 1000
+	MainForm.WindowHeight = 800
+	MainForm.Show
+	Vars_Public.Initialize
+	Vars_Private.Initialize
+	Vars_Dim.Initialize
+	TypVars.Initialize
+End Sub
+
+Private Sub btnConvert_Click
+	Vars_Public.Clear
+	Vars_Private.Clear
+	Vars_Dim.Clear
+	TypVars.Clear
+	
+	txtInput.Text = Regex.Replace(TAB,txtInput.Text,"")
+	
+	If Not(txtInput.Text = "") Then
+	Dim Text() As String = Regex.Split(CRLF,txtInput.Text)
+		If Text.Length <> 0 Then
+			For i = 0 To Text.Length - 1
+				Dim Split() As String = Regex.Split(" ",Text(i))
+								
+				Select Split(0)
+					Case "Public" : Vars_Public.Add(CreateVariable(Split(0),Split(1),Split(3)))
+					Case "Private" : Vars_Private.Add(CreateVariable(Split(0),Split(1),Split(3)))
+					Case "Dim" : Vars_Dim.Add(CreateVariable(Split(0),Split(1),Split(3)))
+					Case "Type" : TypVars.Add(Text(i))
+					Case Else : Continue
+				End Select
+					
+	
+'				If Split(0) = "Public" Or Split(0) = "Private" Or Split(0) = "Dim" Then
+'					Vars.Add(CreateVariable(Split(0),Split(1),Split(3)))
+'				Else
+'					TypVars.Add(Text(i))
+'				End If
+			Next
+		End If
+	End If
+	
+	Output
+End Sub
+
+Public Sub Output
+	txtInput.Text = ""
+	txtInput.Text = "#REGION BMVariableFixFormat v1.1" & CRLF
+	txtInput.Text = txtInput.Text & "'This tool is created by Brian Michael for B4X Forum." & CRLF 
+	
+	Dim Pr As List = getAllTypes.Get("Private")
+
+	For Each Typ As String In Pr
+		txtInput.Text = txtInput.Text & "Private "
+		Dim lst As List : lst.initialize
+		For Each Var As Variable In Vars_Private
+			If Var.Typ = Typ Then lst.Add(Var.Name)
+		Next
+		For i = 0 To lst.Size - 1
+			txtInput.Text = txtInput.Text & lst.Get(i)
+			If i < lst.Size - 1 Then txtInput.Text = txtInput.Text & ","
+		Next
+		txtInput.Text = txtInput.Text & " As " & Typ & CRLF
+	Next
+	
+	Dim Pu As List = getAllTypes.Get("Public")
+
+	For Each Typ2 As String In Pu
+		txtInput.Text = txtInput.Text & "Public "
+		Dim lst2 As List : lst2.initialize
+		For Each Var2 As Variable In Vars_Public
+			If Var2.Typ = Typ2 Then lst2.Add(Var2.Name)
+		Next
+		For i2 = 0 To lst2.Size - 1
+			txtInput.Text = txtInput.Text & lst2.Get(i2)
+			If i2 < lst2.Size - 1 Then txtInput.Text = txtInput.Text & ","
+		Next
+		txtInput.Text = txtInput.Text & " As " & Typ2 & CRLF
+	Next
+	
+	Dim Di As List = getAllTypes.Get("Dim")
+	
+	For Each Typ3 As String In Di
+		txtInput.Text = txtInput.Text & "Dim "
+		Dim lst3 As List : lst3.initialize
+		For Each Var3 As Variable In Vars_Dim
+			If Var3.Typ = Typ3 Then lst3.Add(Var3.Name)
+		Next
+		For i3 = 0 To lst3.Size - 1
+			txtInput.Text = txtInput.Text & lst3.Get(i3)
+			If i3 < lst3.Size - 1 Then txtInput.Text = txtInput.Text & ","
+		Next
+		txtInput.Text = txtInput.Text & " As " & Typ3 & CRLF
+	Next
+	
+	
+	For Each tv As String In TypVars
+		txtInput.Text = txtInput.Text & tv & CRLF
+	Next
+	txtInput.Text = txtInput.Text & "#END REGION" &  CRLF
+End Sub 
+
+Public Sub CreateVariable (State As String, Name As String, Typ As String) As Variable
+	Dim t1 As Variable
+	t1.Initialize
+	t1.State = State
+	t1.Name = Name
+	t1.Typ = Typ
+	Return t1
+End Sub
+
+Public Sub getAllTypes As Map
+	Dim temp_List1 As List : temp_List1.Initialize
+	Dim temp_List2 As List : temp_List2.Initialize
+	Dim temp_List3 As List : temp_List3.Initialize
+	
+	For Each Var As Variable In Vars_Public
+		If (temp_List1.IndexOf(Var.Typ) = -1) Then
+			temp_List1.Add(Var.Typ)
+		End If
+	Next
+	
+	For Each Var2 As Variable In Vars_Private
+		If (temp_List2.IndexOf(Var2.Typ) = -1) Then
+			temp_List2.Add(Var2.Typ)
+		End If
+	Next
+	
+	For Each Var3 As Variable In Vars_Dim
+		If (temp_List3.IndexOf(Var3.Typ) = -1) Then
+			temp_List3.Add(Var3.Typ)
+		End If
+	Next
+	
+	Return CreateMap("Public":temp_List1,"Private":temp_List2, "Dim":temp_List3)
+End Sub

@@ -1,0 +1,218 @@
+﻿Build1=Default,pacman.ddd
+File1=Layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=xui
+Library3=reflection
+Library4=sd_xui_view3d
+Library5=dialogs
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:largeHeap,"true")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Pacman 3D (DDD)
+	#VersionCode: 1
+	#VersionName: 0.0.24
+	
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	' -------------------------------------------------------------------------------------
+	' add SetApplicationAttribute(android:largeHeap,"true") on Manifest
+	' -------------------------------------------------------------------------------------
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim TDraw As Timer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private PanelCommand As Panel
+	Private Panel As B4XView
+	
+	Private SeekBarY As SeekBar
+	Private SeekBarX As SeekBar
+	Private SeekBarZ As SeekBar
+	Private LabelC As Label
+	
+	Dim xui As XUI
+	
+	Dim P3D As Object3D
+	Dim Large As Int = 20
+	Dim Zoom As Float = 1.4
+	Dim LastX,LastY As Int
+	Dim PacX As Int = 6
+	Dim PacY As Int = 6
+	Dim PacDir As Int = 0
+	
+	Dim Base() As String = Array As String( _
+	"*************", _
+	"*           *", _
+	"* **     ** *", _
+	"* *       * *", _
+	"*   ** **   *", _
+	"*   *   *   *", _
+	"*           *", _
+	"*   *   *   *", _
+	"*   ** **   *", _
+	"* *       * *", _
+	"* **     ** *", _
+	"*           *", _
+	"*************" _
+	)
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+
+	AdaptiveView(SeekBarY,90)
+	SeekBarX.Color=Colors.DarkGray
+	SeekBarY.Color=Colors.DarkGray
+	SeekBarZ.Color=Colors.DarkGray
+
+	P3D.Initialize
+	TDraw.Initialize("TDraw",150)
+	TDraw.Enabled=True
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+#region Button 
+
+Sub ButtonUP_Click
+	PacDir=-1
+End Sub
+
+Sub ButtonDW_Click
+	PacDir=1
+End Sub
+
+Sub ButtonRT_Click
+	PacDir=2
+End Sub
+
+Sub ButtonLF_Click
+	PacDir=-2
+End Sub
+
+Sub ButtonSTOP_Click
+	PacDir=0
+End Sub
+
+#End Region
+
+#Region Touch 
+
+Sub Panel_Touch (Action As Int, X As Float, Y As Float)
+	Dim P As Panel = Sender
+	Dim V As Int
+
+	Select Action
+		Case 0
+			LastX=X
+			LastY=y
+		Case 1
+			If Abs(LastX-X)<2dip And Abs(LastY-Y)<2dip Then
+				ToastMessageShow($"Face n. ${P3D.PointClick(X,Y,True)}"$,False)
+			End If
+		Case 2
+			If Abs(y-LastY)>3dip Or Abs(x-LastX)>3dip Then
+				If Abs(y-LastY)<Abs(x-LastX) Then ' Move fo x
+					If Y<P.Height/3 Then 
+						V=(360+SeekBarZ.Value+(x-LastX)/1dip) Mod 360
+						SeekBarZ.Value=v
+					else If Y<P.Height*2/3 Then
+						V=(360+SeekBarY.Value+(LastX-x)/1dip) Mod 360
+						SeekBarY.Value=v
+					Else
+						V=(360+SeekBarZ.Value+(LastX-x)/1dip) Mod 360
+						SeekBarZ.Value=v
+					End If
+				Else ' move for y
+					V=(360+SeekBarX.Value+(y-LastY)/1dip) Mod 360
+					SeekBarX.Value=v
+				End If
+				LastX=X
+				LastY=y
+			End If
+	End Select
+End Sub
+
+#End Region
+
+#Region Other
+Sub AdaptiveView(V As View, Degree As String)
+	Dim R As Reflector
+	R.Target=V
+	R.RunMethod2("setRotation",Degree,"java.lang.float")
+End Sub
+#End Region
+
+Sub TDraw_Tick
+	P3D.Clear
+	
+	P3D.AddSpere2(1,0,0,0,Large/1.5,xui.Color_Gray,xui.Color_Yellow,0,225,0,180,10,10)
+	Select PacDir
+		Case -1 ' UP
+			If Base(PacY-1).CharAt(PacX)=" " Then
+				PacY=PacY-1
+			Else 
+				PacDir=0
+			End If
+			P3D=P3D.Rotate(Array As Int(1),0,0,90)
+		Case 1 ' Down
+			If Base(PacY+1).CharAt(PacX)=" " Then
+				PacY=PacY+1
+			Else
+				PacDir=0
+			End If
+			P3D=P3D.Rotate(Array As Int(1),0,0,270)
+		Case -2 ' left
+			If Base(PacY).CharAt(PacX-1)=" " Then
+				PacX=PacX-1
+			Else
+				PacDir=0
+			End If
+		Case 2 ' right
+			If Base(PacY).CharAt(PacX+1)=" " Then
+				PacX=PacX+1
+			Else
+				PacDir=0
+			End If
+			P3D=P3D.Rotate(Array As Int(1),0,0,180)
+	End Select
+	p3d=P3D.MoveObj(Array As Int(1),-(Large*5)+Pacx*Large,-(Large*5)+Pacy*Large,Large/2)
+	For y=0 To Base.Length-1
+		For x=0 To Base(Y).Length-1
+			If Base(y).CharAt(x)="*" Then P3D.AddCube(0,-(Large*5.5)+y*Large,-(Large*5.5)+x*Large,Large,-(Large*4.5)+y*Large,-(Large*4.5)+x*Large,0,xui.Color_Gray,Array As Int(xui.Color_White))
+		Next
+	Next
+	
+	P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(Panel,Panel.Width/2,Panel.Height/2,Zoom,1)
+	LabelC.Text=$"X:${SeekBarX.Value} Y:${SeekBarY.Value} Z:${SeekBarZ.Value}  Zoom:$1.1{Zoom}"$
+End Sub
+
+#End Region

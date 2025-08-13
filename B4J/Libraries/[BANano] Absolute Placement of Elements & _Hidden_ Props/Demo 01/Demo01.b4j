@@ -1,0 +1,160 @@
+﻿AppType=JavaFX
+Build1=Default,com.application.bananoionicdemo
+File1=baselayout.bjl
+File2=childlayout.bjl
+File3=config.properties
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Module1=pgIndex
+Module2=SHIonBaseElement
+Module3=|relative|..\..\..\..\..\..\..\b4j\shared\SithasoElement
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=3
+Version=9.8
+@EndOfDesignText@
+#IgnoreWarnings: 12, 15
+#Region Project Attributes 
+	#MergeLibraries: True
+	#LibraryAuthor: Anele Mashy Mbanga
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "htmlcore"
+	Public AppTitle As String = "BANanoHTML Core"
+	Private Publish As String = "C:\laragon\www"
+	Public ServerIP As String = "localhost"
+	Public Version As String = "0.1"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'read the ServerIP from config.properties file
+	'change this according to your needs
+	Dim config As Map = File.ReadMap(File.DirAssets, "config.properties")
+	ServerIP = config.Get("ServerIP")
+	
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName, DateTime.now)
+	BANano.HTML_NAME = "index.html"
+	BANano.JAVASCRIPT_NAME = "app" & DateTime.Now & ".js"
+	BANano.Header.Title = AppTitle
+	BANano.Header.AddFavicon("./assets/favicon.png", "16x16")
+	BANano.Header.AddAppleTouchIcon("apple-touch-icon.png", "180x180")
+	BANano.Header.Author ="Anele Mbanga (Mashy)"
+	'BANano.Header.Charset = "iso-8859-1"
+	BANano.Header.Description = "Sithaso HTML Design System"
+	'BANano.header.Expires = "Mon, 22 Jul 2002 11:12:01 GMT"
+	BANano.Header.Keywords = "banano,html5"
+	BANano.Header.Language = "en"
+	BANano.Header.AddMeta($"<meta name="copyright" content="&copy; 2022 Sithaso">"$)
+	BANano.Header.AddMeta($"<meta name="robots" content="ALL">"$)
+	'
+	BANano.Header.AddMeta($"<meta name="description" content="Sithaso: WebApps Websites using B4X." />"$)
+	BANano.Header.AddMeta($"<meta itemprop="name" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta itemprop="description" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta itemprop="image" content="https://s3.amazonaws.com/creativetim_bucket/products/154/original/material-dashboard-laravel.jpg" />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:card" content="product" />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:site" content="@mashymbanga" />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:title" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:description" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:creator" content="@mashymbanga" />"$)
+	BANano.Header.AddMeta($"<meta name="twitter:image" content="https://s3.amazonaws.com/creativetim_bucket/products/154/original/material-dashboard-laravel.jpg" />"$)
+	'BANano.Header.AddMeta($"<meta property="fb:app_id" content="655968634437471" />"$)
+	BANano.Header.AddMeta($"<meta property="og:title" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta property="og:type" content="article" />"$)
+	BANano.Header.AddMeta($"<meta property="og:url" content="https://sithasodaisyui.netlify.app/" />"$)
+	BANano.Header.AddMeta($"<meta property="og:image" content="https://s3.amazonaws.com/creativetim_bucket/products/154/original/material-dashboard-laravel.jpg" />"$)
+	BANano.Header.AddMeta($"<meta property="og:description" content="Sithaso: WebApps using B4X." />"$)
+	BANano.Header.AddMeta($"<meta property="og:site_name" content="Sithaso Holdings" />"$)
+	
+	
+	'BANano.Header.AddMSTileIcon("mstile-150x150.png", "144x144")
+	'BANano.Header.SetMaskIcon("safari-pinned-tab.svg")
+	'BANano.Header.AddManifestIcon("android-chrome-192x192.png", "192x192")
+	'BANano.Header.AddManifestIcon("android-chrome-512x512.png", "512x512")
+	BANano.TranspilerOptions.UseServiceWorker = False
+	BANano.TranspilerOptions.MinifyOnline = False
+	BANano.TranspilerOptions.RemoveDeadCode = False
+	BANano.TranspilerOptions.IgnoreWarningsOldBrowsers = True
+	BANano.TranspilerOptions.ShowWarningDeadCode = False
+	BANano.TranspilerOptions.MergeAllCSSFiles = False
+	BANano.TranspilerOptions.MergeAllJavascriptFiles = False
+	BANano.TranspilerOptions.EnableLiveCodeSwapping = False
+	BANano.TranspilerOptions.DisableShortenVariableNames = False
+	'BANano.Header.OnDOMContentLoaded = SDUIShared.DOMContentLoaded
+	'BANano.Header.AddCSSFile("https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;900&display=swap")
+	'
+	' a PWA must have a service worker.  Will be build automatically caching everything used in your Web App
+	' optional: if your WebApp is not in the root
+	'BANano.TranspilerOptions.SetPWAStartUrl($"${AppName}/index.html"$)
+	BANano.Header.BackgroundColor = "#1e1e1e"
+	'BANano.SERVICEWORKER_NAME = "service-worker.js"
+	#if Release
+	'	BANano.TranspilerOptions.UseServiceWorkerWithUpdateMessage(True, "#26AE60", "Update available", "Click here to update the app to the latest version")
+	#end if	
+	
+	' additonal JavaScript and CSS files we want to include
+	' BANano.Header.AddJavascriptFile("jsstore.min.js")
+
+	' settings needed for the PWA app icons, splash screens, etc…
+	BANano.Header.AddMSTileIcon("mstile-150x150.png", "150x150")
+	BANano.Header.MSTileColor = "#ffc40d"
+	
+	BANano.Header.AddManifestIcon("android-chrome-192x192.png", "192x192")
+	BANano.Header.AddManifestIcon("android-chrome-512x512.png", "512x512")
+	BANano.Header.SetAndroidMaskIcon("maskable_icon.png", "731x731")
+	BANano.Header.MaskIconColor = "#1e1e1e"
+	
+	BANano.Header.AddAppleTouchIcon("apple-touch-icon.png", "")
+	BANano.Header.SetAppleMaskIcon("safari.png")
+	BANano.Header.AddAppleTouchStartupImage("iphone5_splash.png", "320px", "568px", "2")
+	BANano.Header.AddAppleTouchStartupImage("iphone6_splash.png", "375px", "667px", "2")
+	BANano.Header.AddAppleTouchStartupImage("iphoneplus_splash.png", "621px", "1104px", "3")
+	BANano.Header.AddAppleTouchStartupImage("iphonex_splash.png", "375px", "812px", "3")
+	BANano.Header.AddAppleTouchStartupImage("iphonexr_splash.png", "414px", "896px", "2")
+	BANano.Header.AddAppleTouchStartupImage("iphonexsmax_splash.png", "414px", "896px", "3")
+	BANano.Header.AddAppleTouchStartupImage("ipad_splash.png", "768px", "1024px", "2")
+	BANano.Header.AddAppleTouchStartupImage("ipadpro1_splash.png", "834px", "1112px", "2")
+	BANano.Header.AddAppleTouchStartupImage("ipadpro2_splash.png", "834px", "1194px", "2")
+	BANano.Header.AddAppleTouchStartupImage("ipadpro3_splash.png", "1024px", "1366px", "2")
+		
+	BANano.Header.AddFavicon("favicon-16x16.png", "16x16")
+	BANano.Header.AddFavicon("favicon-32x32.png", "32x32")
+	'
+	'set php settings
+	'BANano.PHP_NAME = $"${AppName}.php"$
+	#if release
+	'change to external host domain e.g http://www.google.com
+	'exclude the port address
+	#end if
+	'BANano.PHPHost = $"${ServerIP}/${AppName}/"$
+	'BANano.PHPAddHeader("Access-Control-Allow-Origin: *")
+	'BANano.ShowDebugEveryLine = False
+	BANano.Build(Publish)
+	
+	Dim fx As JFX
+	'Dim URL As String = File.GetUri(File.DirApp,"log.txt")
+	'fx.ShowExternalDocument(URL)
+	'
+	Dim appPath As String = $"${ServerIP}/${AppName}/index.html"$
+	fx.ShowExternalDocument(appPath)
+	#if release
+	ExitApplication
+	#end if
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub BANano_Ready
+	pgIndex.Initialize
+End Sub

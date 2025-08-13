@@ -1,0 +1,137 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,de.amberhome.swipetorefreshulv
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=3
+Library1=core
+Library2=ultimatelistview
+Library3=ahswipetorefresh
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: STR with ULV
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim tm As Timer
+	
+	Dim numbers(100) As Int
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Dim STR As AHSwipeToRefresh
+	Dim ULV As UltimateListView
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	STR.Initialize("STR")
+	Activity.AddView(STR, 0, 0, 100%x, 100%y)
+
+	ULV.Initialize(0, 0, "", "ULV")
+
+	STR.AddView(ULV)
+
+	'Set a color scheme for the progress bar.
+	STR.SetColorScheme(Colors.Red, Colors.Green, Colors.Blue, Colors.Yellow)
+
+	'Add a menu for manual refresh
+	Activity.AddMenuItem3("Refresh", "Menu", Null, True)
+	
+	'Creates a layout and builds the items list
+	ULV.AddLayout("MY_NAME", "Item_LayoutCreator", "Item_ContentFiller", 40dip, True)
+	ULV.BulkAddItems(100, "MY_NAME", 0)
+
+	'Create an array for our ULV data
+	For i = 0 To 99
+		numbers(i) = Rnd(0, 100)
+	Next
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'Manually start a refresh from menu button
+Sub Menu_Click
+	Log("Manual Refresh")
+	STR.Refreshing = True
+	STR_Refresh
+End Sub
+
+Sub STR_Refresh
+	Log("Refresh started")
+
+	'Start the timer. Normally you will start your asynchronous job here
+	tm.Initialize("Timer", 5000)
+	tm.Enabled = True
+	
+	'Disable the object so we can not start a new refresh process
+	STR.Enabled = False
+End Sub
+
+'The timer tick simulates the end of the refreshing process
+Sub Timer_Tick
+	Log("Refresh stopped")
+	
+	tm.Enabled = False
+
+	'Generate new data in the array
+	For i = 0 To 99
+		numbers(i) = Rnd(0, 100)
+	Next
+	
+	'Refresh the ULV content
+	ULV.RefreshContent
+
+	STR.Refreshing = False
+	STR.Enabled = True
+End Sub
+
+'LayoutCreator for ULV
+Sub Item_LayoutCreator(LayoutName As String, LayoutPanel As Panel)
+	Dim l As Label
+	l.Initialize("")
+	LayoutPanel.AddView(l, 0, 0, 100%x, 35dip)
+End Sub
+
+'ContentFiller for ULV
+Sub Item_ContentFiller(ItemID As Long, LayoutName As String, LayoutPanel As Panel, Position As Int)
+	'Sets the text of the label
+	Dim lbl As Label = LayoutPanel.GetView(0) 'First (and only) view in the panel
+	lbl.Text = numbers(Position)
+End Sub
+
+'Show some scroll information in the log
+Sub ULV_Scrolled(FirstVisibleItem As Int, VisibleItemCount As Int, TotalItemCount As Int, IsAtTop As Boolean, IsAtBottom As Boolean)
+	Log("FirstVisible: " & FirstVisibleItem)
+End Sub
+
+'You will see that Overscrolled event will not always fire. Instead, the swipe to refresh action will start.
+'So overscrolling ist not really working with SwipeToRefresh object
+Sub ULV_Overscrolled(Action As Int, ScrollY As Int)
+	Log("Action: " & Action & " ScrollY: " & ScrollY)
+End Sub
+	

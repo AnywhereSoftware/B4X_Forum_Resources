@@ -1,0 +1,89 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jsd_creativebackground
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private xui As XUI
+	
+	Private MainForm As Form
+	Private Pane1 As B4XView
+	Private Pane2 As B4XView
+	Private Pane3 As B4XView
+	Private Pane4 As B4XView
+	Private Label11 As B4XView
+	Private Label12 As B4XView
+	
+	
+	Private PaneBase As B4XView
+	Private Label01 As B4XView
+	Private Label02 As B4XView
+	Private Label03 As B4XView
+	Private Label04 As B4XView
+	Private Label05 As B4XView
+	
+	Dim Se As ShadowEffectBackground
+	Dim G1 As GradientBackground
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	
+	G1.Initialize
+	G1.GradientToView(Pane1,G1.PatternColor(0),"RADIAL",xui.Color_Black,0dip,20dip)
+	G1.GradientToView(Pane2,G1.PatternColor(1),"BL_TR",xui.Color_Black,0dip,20dip)
+	G1.GradientToView(Pane3,G1.PatternColor(4),"BL_TR",xui.Color_Black,0dip,20dip)
+	G1.GradientToView(Label11,G1.PatternColor(5),"BL_TR",xui.Color_Black,0dip,20dip)
+	G1.GradientToView(Label12,Array As Int(0xFFFEAC00,0xFFF3FD00),"BL_TR",xui.Color_Black,0dip,20dip)
+	
+	Dim N1 As NativeShadow
+	N1.Initialize
+	N1.nativeShadowToView(Pane4,5dip)
+	
+	
+	Se.Initialize
+	SetNewColor
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+
+End Sub
+
+Private Sub PaneBase_MouseClicked (EventData As MouseEvent)
+	SetNewColor ' click panel for new color
+End Sub
+
+Private Sub SetNewColor
+	Dim C As Int= xui.Color_RGB(Rnd(30,230), Rnd(30,230), Rnd(30,230))
+	Dim Recursive As Int = Rnd(1,5)
+	
+	Se.Initialize
+	PaneBase.Color=C
+	Se.EffectBackgroundToView(Label01,Se.TypeRect,False,c,10,20,1,True)
+	Se.EffectBackgroundToView(Label02,Se.TypeRect,True,c,10,20,Recursive,False)
+	Se.EffectBackgroundToView(Label03,Se.TypeHexagonShadow,True,c,7,0,Recursive,True)
+	Se.EffectBackgroundToView(Label04,Se.TypeHexagonShadow,True,c,7,0,Recursive,False)
+	Se.EffectBackgroundToView(Label05,Se.TypeRect,False,c,10,Label05.Width/2,Recursive,True)
+End Sub

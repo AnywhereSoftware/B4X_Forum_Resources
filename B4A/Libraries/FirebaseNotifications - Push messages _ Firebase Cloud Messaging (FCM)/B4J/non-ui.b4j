@@ -1,0 +1,51 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2
+Library3=json
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private const API_KEY As String = "AIzxxxxxxxxxxxxxxxx"
+End Sub
+
+Sub AppStart (Args() As String)
+	SendMessage("general", "title", "body")
+	StartMessageLoop
+End Sub
+
+Private Sub SendMessage(Topic As String, Title As String, Body As String)
+	Dim Job As HttpJob
+	Job.Initialize("fcm", Me)
+	Dim m As Map = CreateMap("to": $"/topics/${Topic}"$)
+	Dim data As Map = CreateMap("title": Title, "body": Body)
+	If Topic.StartsWith("ios_") Then
+		Dim iosalert As Map =  CreateMap("title": Title, "body": Body, "sound": "default")
+		m.Put("notification", iosalert)
+	End If
+	m.Put("priority", 10)
+	m.Put("data", data)
+	Dim jg As JSONGenerator
+	jg.Initialize(m)
+	Job.PostString("https://fcm.googleapis.com/fcm/send", jg.ToString)
+	Job.GetRequest.SetContentType("application/json;charset=UTF-8")
+	Job.GetRequest.SetHeader("Authorization", "key=" & API_KEY)
+	Wait For (Job) JobDone(Job As HttpJob)
+	Log(Job)
+	If Job.Success Then
+		Log(Job.GetString)
+	End If
+	Job.Release
+	ExitApplication '!
+End Sub
+

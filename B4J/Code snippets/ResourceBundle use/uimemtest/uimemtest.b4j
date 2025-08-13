@@ -1,0 +1,102 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=messages_de.properties
+File3=messages_en.properties
+File4=messages_es.properties
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private Label1 As Label
+	Private Label2 As Label
+	Private Label3 As Label
+	Private TextField1 As TextField
+	Private TextField2 As TextField
+	Private TextField3 As TextField
+	Dim b4xLocale As JavaObject
+	Dim b4xbundle As JavaObject
+	Dim rt As JavaObject
+	Dim mem As Double
+	Private Button2 As Button
+	Private Button3 As Button
+	Private Button4 As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	'setup javaobjects
+	rt = rt.InitializeStatic("java.lang.Runtime").RunMethod("getRuntime",Null)
+	' calc used memory as percentage
+	mem = 100.0 - (rt.RunMethod("freeMemory",Null) / rt.RunMethod("totalMemory",Null))*100.0
+End Sub
+
+Sub Button1_Click
+	setOutputLanguage("fr") ' not valid in this example
+	
+	setControls
+	TextField1.Text = NumberFormat( mem,0,3) &"%"
+	TextField2.Text = NumberFormat( rt.RunMethod("freeMemory",Null),0,0)
+	TextField3.Text = NumberFormat( rt.RunMethod("totalMemory",Null),0,0)
+End Sub
+
+Sub setControls
+	Dim labels() As Label = Array As Label(Label1,Label2,Label3)
+	For Each l As Label In labels
+		l.Text = translate(l.Tag)
+	Next
+End Sub
+
+Sub setOutputLanguage(lang As String)
+	Dim langs() As String = Array As String("en","de","es")
+	If langs.As(List).IndexOf(lang) = -1 Then
+		Log("No language file for " & lang)
+		Log("Defaulting to English (en)")
+		lang = "en"
+	End If
+		
+	b4xLocale.InitializeNewInstance("java.util.Locale",Array(lang)) ' can be  en, de or es
+	b4xbundle = b4xbundle.InitializeStatic("java.util.ResourceBundle").RunMethod("getBundle",Array("Files/messages",b4xLocale))
+		
+End Sub
+
+Sub translate (key As String) As String
+	Return b4xbundle.RunMethod("getString",Array(key))
+End Sub
+
+Private Sub Button2_Click
+	setOutputLanguage("en")
+	setControls
+End Sub
+
+Private Sub Button3_Click
+	setOutputLanguage("de")
+	setControls
+End Sub
+
+Private Sub Button4_Click
+	setOutputLanguage("es")
+	setControls
+End Sub

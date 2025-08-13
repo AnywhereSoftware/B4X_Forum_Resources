@@ -1,0 +1,247 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rrandomaccessfile
+Library4=rtft_espi
+Library5=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Button widget demo, requires SPI display with touch screen
+
+'// Requires widget library here:
+'// https://github.com/Bodmer/TFT_eWidget
+
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private raf As RandomAccessFile
+    Private LFS As LittleFS
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+	Private BtnL As ButtonWidget
+	Private BtnR As ButtonWidget
+	Private Btn() As ButtonWidget = Array As ButtonWidget (BtnL, BtnR)
+	Private Calibration_File As String = "TouchCalData1"
+	Private Repeat_Cal As bool = False
+	Private BUTTON_W As Byte = 100
+	Private BUTTON_H As Byte = 50
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+ 	TFTid = TFT.Initialize(-1,-1)
+	BtnL.initialize(TFTid)
+	BtnR.initialize(TFTid)
+
+	TFT.begin(0xFF)
+	TFT.setRotation(0)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	TFT.setFreeFont(0) '(FF18 = FreeMonoBold18pt7b = FreeFont 0)
+	'// Calibrate the touch screen And retrieve the scaling factors
+	touch_calibrate
+	initButtons
+	AddLooper ("LocalLoop")
+End Sub
+
+'// Create an Array of button instances To use in For() loops
+'// This is more useful where large numbers of buttons are employed
+'ButtonWidget* btn[] = {&BtnL , &BtnR};;
+'uint8_t buttonCount = SizeOf(btn) / SizeOf(btn[0]);
+
+Sub btnL_pressAction
+  	If BtnL.justPressed Then
+  	    Log("Left button just pressed")
+		BtnL.drawSmoothButton(True,-1,0x00FFFFFF,"")
+ 	End If
+End Sub
+
+Sub btnL_releaseAction
+  Dim waitTime As ULong = 1000
+  If BtnL.justReleased Then
+    Log("Left button just released")
+		BtnL.drawSmoothButton(False,-1,0x00FFFFFF,"")
+    BtnL.setReleaseTime(Millis())
+    waitTime = 10000
+  Else 
+    If (Millis - BtnL.getReleaseTime) >= waitTime Then
+      waitTime = 1000
+      BtnL.setReleaseTime(Millis)
+	  BtnL.drawSmoothButton(Not(BtnL.getState),-1,0x00FFFFFF,"")
+    End If
+  End If	
+End Sub
+
+Sub btnR_pressAction
+  Dim bt As String 
+  If BtnR.justPressed Then
+	If BtnR.getState = True Then bt = "ON" Else bt = "OFF"
+    BtnR.drawSmoothButton(Not(BtnR.getState), 3, TFT.TFT_BLACK, bt)
+    Log("Button toggled: ")
+    If (BtnR.getState) Then Log("ON") Else  Log("OFF")
+    BtnR.setPressTime(Millis)
+  End If
+
+  '// If button pressed For more than 1 sec...
+  If (Millis - BtnR.getPressTime) >= 1000 Then
+    Log("Stop pressing my buttton.......")
+  Else 
+  	Log("Right button is being pressed")
+  End If
+End Sub
+
+Sub btnR_releaseAction
+  Log("btnR releaseAction No Action") '// Not action
+End Sub
+
+Sub initButtons
+  Dim x As UInt = (TFT.width - BUTTON_W) / 2
+  Dim y As UInt = ((TFT.height / 2) - BUTTON_H) - 10
+  BtnL.initButtonUL(x, y, BUTTON_W, BUTTON_H, TFT.TFT_WHITE, TFT.TFT_RED, TFT.TFT_BLACK, "Button", 1)
+  BtnL.setPressAction("btnL_pressAction")
+  BtnL.setReleaseAction("btnL_releaseAction")
+  BtnL.drawSmoothButton(False, 3, TFT.TFT_BLACK,"") '// 3 is outline width, TFT_BLACK is the surrounding background colour For anti-aliasing
+
+  y = TFT.height() / 2 + 10
+  BtnR.initButtonUL(x, y, BUTTON_W, BUTTON_H, TFT.TFT_WHITE, TFT.TFT_BLACK, TFT.TFT_GREEN, "OFF", 1)
+  BtnR.setPressAction("btnR_pressAction")
+  '//BtnR.setReleaseAction("btnR_releaseAction")
+  BtnR.drawSmoothButton(False, 3, TFT.TFT_BLACK,"")  '// 3 is outline width, TFT.TFT_BLACK is the surrounding background colour For anti-aliasing
+End Sub
+
+
+Sub LocalLoop
+  Dim scanTime As ULong = Millis
+  Dim t_x As UInt = 9999: Dim t_y As UInt = 9999 '// To store the touch coordinates
+
+  '// Scan keys every 50ms at most
+  If Millis - scanTime >= 50 Then
+    '// Pressed will be set True If there is a valid touch on the screen
+	Dim xy(2) As UInt
+    Dim pressed As Byte = TFT.getTouch(xy,600)
+    scanTime = Millis
+'	For b = 0 To 1
+	For Each b As ButtonWidget In Btn			
+      If pressed=1 Then
+        If (b.contains(t_x, t_y)) Then
+          b.press(True)
+          b.pressAction
+        End If
+      Else 
+        b.press(False)
+        b.releaseAction
+      End If
+    Next
+  End If
+End Sub
+
+Sub setByte(in() As UInt, out() As Byte)
+	For i = 0 To 6
+		out(i*2) = Bit.HighByte(in(i))
+		out(i*2+1) = Bit.LowByte(in(i))
+	Next
+End Sub
+Sub setUInt(in() As Byte, out() As UInt)
+	Dim b(2) As Byte
+	raf.Initialize(b,False)
+	For i = 0 To 6
+		raf.WriteByte(in(i*2),0)
+		raf.WriteByte(in(i*2+1),8)
+		out(i)=raf.ReadUInt16(0)
+	Next
+End Sub
+
+
+Sub touch_calibrate
+  Dim calDatab(14) As Byte
+  Dim calData(7) As UInt
+  Dim calDataOK As bool = False
+  
+  '// check file system exists
+  If (Not(LFS.Initialize)) Then
+     Log("Formating file system")
+     LFS.format
+     If Not(LFS.Initialize) Then
+	 	 Do While True : Delay(100) : Loop
+     End If
+  End If	 
+
+  '// check If calibration file exists And size is correct
+  If (LFS.exists(Calibration_File)) Then
+    If (Repeat_Cal) Then
+      '// Delete If we want To re-calibrate
+      LFS.remove(Calibration_File)
+    Else
+      Dim f As bool = LFS.OpenRead(Calibration_File)
+      If (f=True) Then
+        If (LFS.Stream.ReadBytes(calDatab,0, 14) = 14) Then
+		  setUInt(calDatab,calData)
+          calDataOK = True
+		End If  
+        LFS.close
+      End If
+    End If
+  End If
+
+  If calDataOK And Not(Repeat_Cal) Then
+    '// calibration data valid
+    TFT.setTouch(calData)
+  Else
+    '// data Not valid so recalibrate
+    TFT.fillScreen(TFT.TFT_BLACK)
+    TFT.setCursor(20, 0)
+    TFT.setTextFont(2)
+    TFT.setTextSize(1)
+    TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False)  '????
+
+    TFT.println("Touch corners as indicated")
+
+    TFT.setTextFont(1)
+    TFT.println("")
+
+    If (Repeat_Cal) Then
+      TFT.setTextColor1(TFT.TFT_RED, TFT.TFT_BLACK,False)
+      TFT.println("Set REPEAT_CAL to false to stop this running again!")
+    End If
+
+    TFT.calibrateTouch(calData, TFT.TFT_MAGENTA, TFT.TFT_BLACK, 15)
+
+    TFT.setTextColor1(TFT.TFT_GREEN, TFT.TFT_BLACK,False)
+    TFT.println("Calibration complete!")
+
+    '// store data
+    Dim f As bool = LFS.openread(Calibration_File)
+    If (f=True) Then
+'      f.write((const unsigned char *)calData, 14)
+       setByte(calData,calDatab)
+	   LFS.stream.WriteBytes(calDatab,0, 14)
+      LFS.close()
+    End If
+		End If
+	End Sub
+#if C
+   const GFXfont * B4R::B4RTFT_eSPI::GFXfonts[1]= { 
+      &FreeMonoBold18pt7b             // => setFreeFont(00)
+   };
+#End If
+

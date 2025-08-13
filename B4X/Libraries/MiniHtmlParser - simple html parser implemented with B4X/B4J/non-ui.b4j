@@ -1,0 +1,64 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=rates.html
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=minihtmlparser
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private HtmlParser As MiniHtmlParser
+	Type CurrencyRate (Name As String, FromUSD As Double, ToUSD As Double)
+	Private Rates As List
+End Sub
+
+Sub AppStart (Args() As String)
+	Rates.Initialize
+	HtmlParser.Initialize
+	Dim root As HtmlNode = HtmlParser.Parse(File.ReadString(File.DirAssets, "rates.html"))
+	'Find the table element
+	Dim Table As HtmlNode = HtmlParser.FindNode(root, "table", HtmlParser.CreateHtmlAttribute("class", "ratesTable"))
+	If Table.IsInitialized Then
+		'find the tbody element
+		Dim tbody As HtmlNode = HtmlParser.FindNode(Table, "tbody", Null)
+		If tbody.IsInitialized Then
+			'print the first tr element:
+			HtmlParser.PrintNode(tbody.Children.Get(1))
+			For Each tr As HtmlNode In HtmlParser.FindDirectNodes(tbody, "tr", Null)
+				Dim tds As List = HtmlParser.FindDirectNodes(tr, "td", Null)
+				Dim name As String = HtmlParser.GetTextFromNode(tds.Get(0), 0)
+				
+				Dim a As HtmlNode = HtmlParser.FindNode(tds.Get(1), "a", Null)
+				Dim FromUSD As Double = HtmlParser.GetTextFromNode(a, 0)
+				
+				Dim a As HtmlNode = HtmlParser.FindNode(tds.Get(2), "a", Null)
+				Dim ToUSD As Double = HtmlParser.GetTextFromNode(a, 0)
+				Rates.Add(CreateCurrencyRate(name, FromUSD, ToUSD))
+			Next
+		End If
+	Else
+		Log("not found!!!")
+	End If
+	Log("***********************")
+	For Each rate As CurrencyRate In Rates
+		Log(rate)
+	Next
+End Sub
+
+Public Sub CreateCurrencyRate (Name As String, FromUSD As Double, ToUSD As Double) As CurrencyRate
+	Dim t1 As CurrencyRate
+	t1.Initialize
+	t1.Name = Name
+	t1.FromUSD = FromUSD
+	t1.ToUSD = ToUSD
+	Return t1
+End Sub

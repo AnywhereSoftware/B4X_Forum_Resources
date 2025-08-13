@@ -1,0 +1,150 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rmcp23017
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private raf As RandomAccessFile
+	Private bc As ByteConverter
+	Private MCP As MCP23017
+	Private InterruptPin As Pin
+	Private time0 As ULong = 0
+	Private val As Byte
+End Sub
+
+'=======================================
+'mcp23017 - I2C config is depending depending of hard:
+'=======================================
+'esp32 
+'  2 I2C by default : Wire and Wire1 
+' for Wire1, this begin is mandatory :Wire1.begin(SDA_2, SCL_2, freq)
+' pins by default For Wire :  SCL : GPIO 22  (I2C -> Clock)  /  SDA : GPIO 21  (I2C -> Data)
+' pins by default can be changed, on both by Wire1.begin(SDA_2, SCL_2, freq) .(example:SDA : GPIO 33 / SCL : GPIO 32)
+
+'esp8266
+' with Wire pins by default are used:
+'   SCL : GPIO 5 D1
+'   SDA : GPIO 4 D2
+' pins can be changed, example: SDA : GPIO 33 / SCL : GPIO 32
+ 
+'Arduino Nano
+'   SDA: A4
+'   SCL: A5 
+
+'Arduino Uno
+'   SDA: PIN18
+'   SCL: PIN19 
+
+'Arduino Mega
+'   SDA: PIN20
+'   SCL: PIN21 
+
+'// mcp23017 Module use I2C/SPI bus,the slave device address setting:
+'/********************************************
+'0 1 0  0 A2 A1 A0 
+'0 1 0  0 0  0  0    0x20
+'0 1 0  0 0  0  1    0x21
+'0 1 0  0 0  1  0    0x22
+'0 1 0  0 0  1  1    0x23
+'0 1 0  0 1  0  0    0x24
+'0 1 0  0 1  0  1    0x25
+'0 1 0  0 1  1  0    0x26
+'0 1 0  0 1  1  1    0x27
+'*********************************************/
+' MCP_ADDRESS 0x27(A2=1,A1=1,A0=1)
+' MCP_ADDRESS 0x20 // (A2/A1/A0 = LOW)
+
+
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+   InterruptPin.Initialize(14,InterruptPin.MODE_INPUT_PULLUP)   'pin 14 is connected to intB
+   InterruptPin.AddListener("interruptpin_change")
+
+'case init I2C with default config
+'	MCP.InitializeI2C(MCP.ADDRESS_0x20, 99)
+'	MCP.BeginI2C
+' case init I2C and esp8266 with specified pins for SDA and SCL
+	MCP.InitializeI2C_Esp(MCP.ESP_Wire, MCP.ADDRESS_0x20, 99)
+	MCP.BeginI2C_Esp(MCP.ESP_Wire,4,5)
+'	MCP.BeginI2C 'if no pin changed
+  
+If Not(MCP.Init) Then Log(" MCP not connected") Else Log("MCP connected")
+Delay(500)
+  MCP.setAllPins(MCP.portA, MCP.LOW)
+  Delay(1000) 
+  MCP.setPortMode(MCP.OUTPUT,MCP.portA)
+  MCP.setPort(0xFF, MCP.portA)                     ' just a LED test
+  val = 0xFF
+  Delay(1000) 
+
+  MCP.setInterruptPinPol(MCP.HIGH)                         ' set INTA And INTB active-high
+ ' Delay(10)
+  MCP.setPortPullUp(0xFF, MCP.portB)                       ' pull-up for B0-B3
+  MCP.setInterruptOnDefValDevPort(0x80, MCP.portB, 0xFF)   ' interrupt on pin 0b1000000, port=B, DEFVAL=0xFF
+'  MCP.setInterruptOnChangePort(0xFF, MCP.portB)            ' interrupt on all B pins , port=B
+  Delay(10)
+  MCP.getIntCap(MCP.portB)                                 ' ensures that existing interrupts are cleared
+  
+  AddLooper("loopbase")                               
+End Sub
+
+Sub loopbase
+	If (Millis > time0 + 2000) Then             'make a led lighting every 2,5sec
+		MCP.setPort(val,MCP.PortA)		
+		Log("pin changed ",val)
+		val = Bit.Not(val)
+		time0 = Millis
+	End If
+End Sub
+
+
+Sub InterruptPin_Change(state As Boolean)
+'	MCP.getIntCap(MCP.portB)
+	If state = True Then                           'interrupt event
+		Log("interruptFlag ON")		
+		Dim intFlagReg As Byte = MCP.getIntFlag(MCP.portB)
+	'	Dim eventPort As Byte = Bit.Get   Log(intFlagReg)/Log(2)
+		Dim intCapReg As Byte = MCP.getIntCap(MCP.portB)
+
+		Log("Interrupt Flag Register: 0x",bytetoHexa(intFlagReg))
+		Log("Interrupt Capture Register: 0x",bytetoHexa(intCapReg))
+		Dim eventOnPins As Byte =Bit.And(intFlagReg,intCapReg)
+		If eventOnPins <> 0 Then          ' LOW-HIGH Or HIGH-LOW interrupt => LOW
+			Log("Pins on PortB ", Bit.ToBinaryString(eventOnPins), " went HIGH")			 
+		End	if
+ 
+'		MCP.setPort(intFlagReg, MCP.portA)
+		Delay(400)
+		intCapReg = MCP.getIntCap(MCP.portB)
+	Else 
+		Log("interruptFlag OFF")	
+	End If
+End Sub
+
+Sub bytetoHexa(n As UInt) As Byte()
+	Dim b1(2) As Byte
+	raf.Initialize(b1, False) 'big endian
+	raf.WriteUint16(n, 0)
+	Return bc.SubString(bc.HexFromBytes(b1),2)
+End Sub
+
+Sub b(bin As String) As Byte                  'to use binary format like b("00001111")
+	Return  Bit.ParseInt(bin, 2)
+End Sub

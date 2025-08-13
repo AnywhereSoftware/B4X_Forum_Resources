@@ -1,0 +1,162 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example,HU2_PUBLIC,HU2_ACCEPTALL
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=gsheets
+Library2=jcore
+Library3=jfx
+Library4=jxui
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+
+	Private TableView1 As TableView
+	Private telephone As TextField
+	Private Name As TextField
+	Private Age As TextField
+	Private Button1 As Button
+	Private Button2 As Button
+	Private Button3 As Button
+	Dim gs As GSheets
+	Dim id As String
+	Private Button4 As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	gs.Initialize(Me,"gs","xxxxxxxxxx","xxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com")
+	' s.Initialize("1XXXXXXXXXXXXXX.apps.googleusercontent.com","XXXXXXXXXXX") 'CLIENT ID AND CLIENT SECRET FOR GOOGLE CONSOLE DEVELOPER APP DESKTOP
+	gs.SpreadsheetsId="1FHx-a_a4afTQ3L5hXJIOttCVaJNngO3113E-qqFOjbk"
+	gs.Sheets_name="Example"
+	'
+	gs.oauth2.html_code ="<html><head><meta charset=""UTF-8""><title>Successful Connection</title><style>body{text-align:center;background-color:#f0f5f9;color:#333333;font-family:Arial,sans-serif;}h1{color:#007bff;font-size:24px;}img{width:200px;height:200px;}p{margin-bottom:20px;font-size:16px;}</style></head><body><h1>Successful Connection</h1><img src=""https://images.prismic.io/wdr-test-icti/3f9387b0e53fb535624c3a559964e5f3871345ac_connect-logo3x.png?auto=compress,format"" alt=""Logo""><p>You can now return to your application.</p></body></html>"
+	
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	GetSheet
+End Sub
+
+
+
+
+Private Sub TableView1_SelectedRowChanged(Index As Int, Row() As Object)
+	Try
+		Dim R() As String = TableView1.Items.Get(Index)
+		Log(R(0))
+'	
+		id = (R(0))
+
+		telephone.Text= R(1)
+		'
+		Name.Text = R(2)
+
+		Age.Text= R(3)
+	Catch
+	End Try
+
+End Sub
+
+'get table
+Sub GetSheet
+	
+	TableView1.Items.Clear
+	gs.GetSheet("Example")
+	
+	'
+End Sub
+
+Private Sub gs_get_success(x As List, success As Boolean)
+	If success = True Then
+		For Each col As Map In x
+			TableView1.Items.Add(Array As String(col.Get("1"),col.Get("Téléphone"),col.Get("Name"),col.Get("Age"),col.Get("created")))
+		Next
+	else if success = False Then
+			
+			
+	End If
+	
+End Sub
+
+
+
+Private Sub gs_get_error(error As String)
+	Log(error)
+End Sub
+'add row
+Private Sub Button3_Click
+	Dim l1 As List
+	l1.Initialize
+	DateTime.DateFormat = "dd-MM-yyyy"
+	Dim dt As Long =DateTime.DateParse(DateTime.date(DateTime.Now))
+	
+	l1.Add(Array As String(telephone.Text, Name.Text,Age.Text,$"$Date{dt}"$))
+	gs.insert_list(l1)
+
+End Sub
+
+Private Sub gs_insert_list_success(success As Boolean)
+	If success = True Then
+		GetSheet
+	End If
+	
+End Sub
+
+Private Sub gs_insert_list_error(error As String)
+	Log(error)
+End Sub
+'update row
+Private Sub Button2_Click
+	Dim l1 As List
+	l1.Initialize
+	DateTime.DateFormat = "dd-MM-yyyy"
+	Dim dt As Long =DateTime.DateParse(DateTime.date(DateTime.Now))
+	l1.Add(Array As String(telephone.Text, Name.Text,Age.Text,$"$Date{dt}"$))
+	
+	gs.Updatesheet(id,l1)
+
+	
+	
+End Sub
+
+Private Sub gs_Updatesheet_success(success As Boolean)
+	If success = True Then
+		GetSheet
+	End If
+	
+End Sub
+
+Private Sub gs_Updatesheet_error(error As String)
+	Log(error)
+End Sub
+'delete row
+Private Sub Button1_Click
+	gs.delete(id)
+	
+End Sub
+
+Private Sub gs_delete_success(success As Boolean)
+	If success = True Then
+		GetSheet
+	End If
+End Sub
+
+Private Sub gs_delete_error(error As String)
+	Log(error)
+End Sub
+
+Private Sub Button4_Click
+	gs.connect
+End Sub

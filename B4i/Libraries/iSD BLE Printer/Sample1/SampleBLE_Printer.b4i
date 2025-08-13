@@ -1,0 +1,121 @@
+﻿Build1=Default,it.tecnomedia.bleprinter
+File1=Layout1.bil
+File2=qr.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=isd_ble_printer
+Library3=ixui
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: BLE Printer
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 9
+	
+#End Region
+
+'	#If DEBUG
+	   #CertificateFile: ios_developement.cer
+	   #ProvisionFile: Developement.mobileprovision
+'	#ELSE If RELEASE
+'	   #CertificateFile: ios_distribution.cer
+'	   #ProvisionFile: distribution.mobileprovision
+'	#END IF
+	
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private xui As XUI
+
+	Private LabelInfo As Label
+	Dim Ble As BLE_Printer
+	Private ButtonSend As Button
+	Private ButtonImage As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("Layout1")
+	
+	Ble.Initialize(Me,"Ble",Encoding.UTF8,"123")
+	ButtonSend.Visible=False
+	ButtonImage.Visible=False
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub Ble_PrinterFound(Name As String, ID As String)
+	LabelInfo.Text=$"Found device: ${Name} ${CRLF}(${ID})"$
+	If Name<>"" Then Ble.connect(ID)
+End Sub
+
+Sub Ble_Connected(services As List)
+	ButtonSend.Visible=True
+	ButtonImage.Visible=True
+End Sub
+
+Sub Ble_Disconnected
+	LabelInfo.Text=""
+	ButtonSend.Visible=False
+	ButtonImage.Visible=False
+End Sub
+
+Sub ButtonScan_Click
+	LabelInfo.Text=""
+	Ble.ScanPrinter
+	ButtonSend.Visible=False
+	ButtonImage.Visible=False
+End Sub
+
+Sub ButtonSend_Click
+	Ble.RightJustify
+	Ble.Writeline(ESC_POS.DoubleOn & "RIGHT PRINT" & ESC_POS.DoubleOff)
+	Ble.CenterJustify
+	Ble.Writeline(ESC_POS.FontA_DoubleHight & "CENTER PRINT" & ESC_POS.FontA_Normal)
+	Ble.LeftJustify
+	Ble.Writeline("LEFT PRINT")
+End Sub
+
+Sub ButtonImege_Click
+	'don't work
+	Ble.PrintBitmap(CreateImage(Chr(0xF209) & " " & Chr(0xF17B),xui.CreateFontAwesome(16)))
+End Sub
+
+Sub CreateImage(Text As String,FontText As B4XFont) As Bitmap
+	Dim Can As B4XCanvas
+	Dim V As B4XView = xui.CreatePanel("")
+	V.SetLayoutAnimated(0,0,0,90,90) 'ignore
+	
+	Can.Initialize(V)
+	Can.DrawRect(Can.TargetRect,xui.Color_White,True,1)
+	Can.DrawText(Text,Can.TargetRect.CenterX,Can.TargetRect.Bottom*0.70,FontText,xui.Color_Black,"CENTER")
+	Can.Invalidate
+	Return Can.CreateBitmap
+	
+End Sub
+	

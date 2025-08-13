@@ -1,0 +1,87 @@
+﻿Build1=Default,as.msg.box
+File1=b4x.png
+File2=frm_main.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Module1=|absolute|C:\Users\Schnattern\OneDrive\StolteX\ASMsgBox\ASMsgBox
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=1
+Version=5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: AS MsgBox Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Dim xui As XUI
+	
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("frm_main")
+	
+	
+
+
+	
+End Sub
+
+
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub lbl_show_msg_Click
+	Dim ASMsgBox1 As ASMsgBox
+	ASMsgBox1.Initialize(Me,"ASMsgBox1")
+	ASMsgBox1.InitializeWithoutDesigner(Page1.RootPanel,0xFF2F343A,True,True,False)
+	ASMsgBox1.InitializeBottom("Button1","Button2","Button3")
+	
+	
+	ASMsgBox1.icon_set_icon(xui.LoadBitmap(File.DirAssets,"b4x.png"))
+	ASMsgBox1.CenterDialog(Page1.RootPanel)
+	ASMsgBox1.CloseButtonVisible = True
+	ASMsgBox1.ShowWithText("Hello B4X!",True)
+	
+	ASMsgBox1.EnableDrag = ASMsgBox1.DragableTop
+	
+	Wait For ASMsgBox1_result(res As Int)
+	
+
+	If res = ASMsgBox1.POSITIVE  Then
+		
+		Log("Postive")
+		Msgbox("test","title")
+	End If
+	
+	Wait For (ASMsgBox1.Close(True)) Complete (Closed As Boolean)
+	
+End Sub

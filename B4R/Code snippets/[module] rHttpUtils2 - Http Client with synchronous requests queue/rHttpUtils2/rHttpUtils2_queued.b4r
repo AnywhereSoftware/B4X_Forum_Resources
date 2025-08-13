@@ -1,0 +1,84 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rrandomaccessfile
+Module1=HttpJob
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 12000
+	#DefineExtra: #define SKIP_B4RNEW
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi
+	Public tim As Timer
+End Sub
+
+Public Sub AppStart
+	Serial1.Initialize(115200)
+	Delay(2000)
+	tim.Initialize("tim_Tick", 5000)
+	tim.Enabled = False
+	Log("AppStart")
+	Do Until Connected
+		Delay(1000)
+	Loop
+	For i = 0 To 14
+		'HttpJob.Initialize("Example")	'JoinStrings(Array As String("Example_", i))
+		'HttpJob.Download("http://www.example.com")
+		Dim res As Boolean = HttpJob.AddRequestToQueue(JoinStrings(Array As String("Example_", i)), 0, "http://www.example.com", Null)
+		Log("AddRequestToQueue: ", res)
+	Next
+	tim.Enabled = True
+End Sub
+
+Sub Connected As Boolean
+	If wifi.Connect2("SC3_2G", "Stan3control") Then
+		Log("Connected to WiFi-router.")
+		Return True
+	Else
+		Log("Failed to connect to router, re-connecting...")
+		Return False
+	End If
+End Sub
+
+'extra http-request generator
+Sub tim_Tick
+	Dim res As Boolean = HttpJob.AddRequestToQueue(JoinStrings(Array As String("Example_", Rnd(1, 500))), 0, "http://www.example.com", Null)
+	Log("Timer added AddRequestToQueue: ", res)
+	tim.Interval = Rnd(200, 1000)
+End Sub
+
+Sub JobDone (Job As JobResult)
+	Log("**********JobDone*********************")
+'	Log("JobName: ", Job.JobName)
+	If Job.Success And Job.Status <> 0 Then 
+		'Dim bc As ByteConverter
+		'Log("Response: ", bc.SubString2(Job.Response, 0, Min(200, Job.Response.Length))) 'truncate to 200 characters
+		'If Job.JobName = "Example" Then
+			Log("Request is finished OK !")
+			'send another request
+			'This time it is a POST request and we set the Content-Type header
+			'HttpJob.AddRequestToQueue("Example2", 1, "http://www.b4x.com/print.php?key1=value1", "PostKey1=PostValue2&abc=def")
+			
+			'HttpJob.Initialize("Example2")
+			'add headers before calling Post or Download (this is different than the standard HttpUtils2 library).
+			'HttpJob.AddHeader("Content-Type", "application/x-www-form-urlencoded")
+			'HttpJob.Post("http://www.b4x.com/print.php?key1=value1", "PostKey1=PostValue2&abc=def")
+			
+		'End If
+	Else
+		Log("ErrorMessage: ", Job.ErrorMessage)
+		Log("Status: ", Job.Status)
+		'Log(Job.Response)
+	End If
+End Sub
+

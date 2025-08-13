@@ -1,0 +1,300 @@
+﻿Version=1.80
+IconFile=
+FullScreen=False
+IncludeTitle=True
+NumberOfModules=0
+Package=com.swt
+Label=swt
+VersionCode=1
+VersionString=
+Orientation=landscape
+CanInstallToExternalStorage=False
+DoNotOverwriteManifest=False
+ManifestCode=
+NumberOfFiles=1
+File1=1.bal
+NumberOfLibraries=4
+Library1=audiotrack
+Library2=core
+Library3=eqlib
+Library4=threading
+@EndOfDesignText@
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+	Dim at As AudioTrack
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Dim Canvas1 As Canvas
+	Dim Play As Thread
+	
+	Dim BufferSize As Int
+	Dim ChannelConfig As Int
+	Dim AudioFormat As Int
+	Dim SampleRate As Float
+	Dim Frequency As Float
+	Dim MaxAmp,MaxGain As Int
+	Dim HalfMaxAmp As Int
+	Dim Amplitude As Int
+	Dim Gain As Int
+	Dim CycleSh() As Short
+	Dim CycleBy() As Byte
+
+	Dim Panel1 As Panel
+	Dim FreqLbl As Label
+	Dim FreqSB As SeekBar
+	Dim FreqSBMax,FreqSBMin As Int
+	Dim GainLbl As Label
+	Dim GainSB As SeekBar
+	Dim PlayBtn As Button
+	Dim DurLbl As Label
+	Dim DurSB As SeekBar
+	Dim SampleRateSP As Spinner
+	Dim SampleSizeSp As Spinner
+
+	Dim GainET As EditText
+	Dim FreqET As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	'set up display
+	Activity.LoadLayout("1.bal")
+	Canvas1.Initialize(Panel1)
+	
+	'set up separate thread to play soun on
+	Play.Initialise("Play")
+	
+	'Setup Seek Bars
+	MaxGain=100
+	GainSB.Max=MaxGain
+	
+	FreqSBMin=40
+	FreqSBMax=19000
+	FreqSB.Max=FreqSBMax-FreqSBMin
+	
+	Log("AT "&at)
+	
+	'Set up Spinners
+	
+	SampleRateSP.AddAll(Array As String("8000","11025","22050","44100"))
+	SampleRateSP.SelectedIndex=1
+	SampleSizeSp.AddAll(Array As String("8 Bit","16 Bit"))
+	SampleSizeSp.SelectedIndex=0
+	
+	'
+	'Set up AudioTrack 
+	'	
+	SampleRate=11025
+	AudioFormat=at.Af_PCM_8
+	ChannelConfig=at.Ch_Conf_Mono
+	
+	Frequency = 440
+	Gain=100
+	
+	InitAudioTrack
+
+
+
+End Sub
+Sub InitAudioTrack
+
+	If at.IsInitialized Then ' has been initialized once already
+		at.Release
+	End If
+	
+	'Get the min buffer size
+	BufferSize=at.GetMinBuffersize(SampleRate,ChannelConfig,AudioFormat)
+	
+	'Try to initialize the player
+	at.Initialize(at.Stream_Music,SampleRate,ChannelConfig,AudioFormat,BufferSize,at.Mode_Stream)
+
+	'Check it initialized
+	If at.GetState = 0 Then
+		Msgbox("Failed to initialize AudioTrack Error: "&at.GetState,"Initialize Failed")
+		Activity.Finish
+	End If
+	
+	If AudioFormat=at.Af_PCM_16 Then 
+		MaxAmp=65535
+	Else
+		MaxAmp = 256
+	End If
+	
+	'
+	'Create PCM Data
+	'
+	HalfMaxAmp=MaxAmp/2
+	Amplitude=HalfMaxAmp/100*Gain
+	
+End Sub
+Sub PlayBtn_Click
+	CreateSineWave
+	PlotCycle
+	'Play the sound on a separate thread
+	Play.Start("PlaySound",Array As Object(DurSB.Value))
+End Sub
+Sub CreateSineWave
+
+	'The length of 1 cycle is determined by the Frequency, SampleRate and sample size.
+	'SampleRate = Samples per second so 1 CycleLength = SampleRate/Frequency
+	'1 complete cycle (a 360 degree plot) has to fit into the cyclelength so we need to
+	'travel 360 degrees over the CycleLength
+	
+	Dim CycleLength,CycleFactor As Float
+	CycleLength = SampleRate/Frequency   ' = Number of samples per cycle
+	
+	'Scale the sine wave to fit the cycle length
+	CycleFactor = 360/CycleLength
+	
+	If AudioFormat=at.Af_PCM_16 Then 
+		'Re initialize the cycle
+		Dim CycleSh(CycleLength) As Short
+
+		'Create the current sine wave
+		X=0
+		i=0
+		Do While i < 360-CycleFactor
+			CycleSh(X)=SinD(i)*Amplitude
+			X=X+1
+			i=i+CycleFactor
+		Loop
+	Else
+		'Re initialize the cycle
+		Dim CycleBy(CycleLength) As Byte
+
+		'Create the current sine wave
+		X=0
+		i=0
+		Do While i < 360-CycleFactor
+			CycleBy(X)=SinD(i)*Amplitude
+			X=X+1
+			i=i+CycleFactor
+		Loop
+	End If
+
+End Sub
+Sub PlaySound(Duration As Int)
+
+	'Start playing (will wait for data to arrive)
+	at.Play
+	'Set the volume
+	at.SetStereoVolume(at.GetMaxVolume,at.GetMaxVolume)
+
+	
+	'how many cycles make up the required duration?
+	Loops=Frequency*Duration/1000
+	
+	'& whats left over
+	Addl=Loops-Floor(Loops)
+	
+	If AudioFormat = at.Af_PCM_16 Then
+		'Write the complete loops
+		For i = 0 To Loops
+			at.WriteShort(CycleSh,0,CycleSh.Length)
+		Next
+		'and the part of the cycle that's left to fill the duration
+		at.WriteShort(CycleSh,0,CycleSh.Length*Addl)
+	Else
+	'Write the complete loops
+		For i = 0 To Loops
+			at.WriteByte(CycleBy,0,CycleBy.Length)
+		Next
+		'and the part of the cycle that's left to fill the duration
+		at.WriteByte(CycleBy,0,CycleBy.Length*Addl)
+	End If
+		
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	at.Release
+End Sub
+Sub PlotCycle
+	'Plot 1 cycle
+	Canvas1.DrawColor(Colors.Gray)
+	Dim DispHeight,X As Int
+	Dim DispFactor As Float
+	X=0
+	DispHeight=Panel1.Height
+	DispFactor = DispHeight/MaxAmp
+	DispZeroPoint=DispHeight/2
+	If AudioFormat = at.Af_PCM_16 Then
+		For i = 0 To CycleSh.Length-1
+			Y=CycleSh(i)*DispFactor+DispZeroPoint
+			Canvas1.DrawPoint(X,Y,Colors.White)
+			X=X+1
+		Next
+	Else
+		For i = 0 To CycleBy.Length-1
+			Y=CycleBy(i)*DispFactor+DispZeroPoint
+			Canvas1.DrawPoint(X,Y,Colors.White)
+			X=X+1
+		Next
+	End If
+	Panel1.Invalidate
+	DoEvents
+End Sub
+Sub Play_Ended(endedOK As Boolean,Error As String)
+Log("Playing Finished")
+End Sub
+Sub GainSB_ValueChanged (Value As Int, UserChanged As Boolean)
+	Gain=Value
+	Amplitude=HalfMaxAmp/100*Gain
+	GainLbl.Text="Gain : "&Gain
+End Sub
+Sub FreqSB_ValueChanged (Value As Int, UserChanged As Boolean)
+	Frequency=Value+FreqSBMin
+	FreqLbl.Text="Freq : "&Frequency
+End Sub
+Sub DurSB_ValueChanged (Value As Int, UserChanged As Boolean)
+	DurLbl.Text="Dur : "&Value
+End Sub
+Sub SampleSizeSp_ItemClick (Position As Int, Value As Object)
+	Select Value
+		Case "8 Bit"
+			AudioFormat=at.Af_PCM_8
+		Case "16 Bit"
+			AudioFormat=at.Af_PCM_16
+	End Select
+	InitAudioTrack
+End Sub
+Sub SampleRateSP_ItemClick (Position As Int, Value As Object)
+	SampleRate = Value
+	InitAudioTrack
+End Sub
+Sub GainLbl_Click
+	GainET.Visible=True
+End Sub
+Sub GainET_EnterPressed
+	If GainET.Text < 0 OR GainET.Text > MaxGain Then 
+		GainET.Text=100
+		Return
+	End If
+	GainET.Visible=False
+	'Gain=GainET.Text
+	GainSB.Value=GainET.Text
+	'Amplitude=HalfMaxAmp/100*Gain
+	'GainLbl.Text="Gain : "&Gain
+End Sub
+Sub FreqLbl_Click
+	FreqET.Visible=True
+End Sub
+Sub FreqET_EnterPressed
+	If FreqET.Text < FreqSBMin OR FreqET.Text > FreqSBMax Then 
+		FreqET.Text=Frequency
+		Return
+	End If
+	FreqET.Visible=False
+	FreqSB.Value=FreqET.Text-FreqSBMin
+End Sub

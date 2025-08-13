@@ -1,0 +1,56 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.gps
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=gps
+Library3=runtimepermissions
+Library4=javaobject
+Library5=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddManifestText(<uses-feature android:name="android.hardware.location.gps"/>)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=11.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: GPS
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Private Button1 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	
+	
+End Sub
+
+
+
+
+
+Private Sub Button1_Click
+	If Starter.GPS1.GPSEnabled = False Then
+		ToastMessageShow("Please enable the GPS device.", True)
+		StartActivity(Starter.GPS1.LocationSettingsIntent) 'Will open the relevant settings screen.
+	Else
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result Then CallSubDelayed(Starter, "StartGPS")
+	End If
+End Sub

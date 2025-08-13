@@ -1,0 +1,93 @@
+﻿Build1=Default,b4a.example.intentusb
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=audio
+Library2=core
+Library3=usb
+Library4=xui
+Library5=serial
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddReceiverText(ReceivedUSB, <intent-filter>~\n~        <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~</intent-filter>~\n~    <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"~\n~        android:resource="@xml/device_filter" />)~\n~
+Module1=ReceivedUSB
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=12.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private ListView1 As ListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+private Sub Button1_Click
+	Search
+End Sub
+
+Public Sub Search
+	Dim manager As UsbManager
+	Dim usbdevices() As UsbDevice
+	Private outEndpoint, inEndpoint As UsbEndpoint 'ignore
+	
+	manager.Initialize
+	usbdevices = manager.GetDevices
+	
+	ListView1.Clear
+	'Iterate over devices and find the correct one
+	ListView1.AddSingleLine("FOUND element: " & usbdevices.Length)
+	For i = 0 To usbdevices.Length - 1
+		Dim udevice As UsbDevice
+		udevice = usbdevices(i)
+		'Iterate over interfaces
+		For a = 0 To udevice.InterfaceCount - 1
+			Dim inter As UsbInterface
+			inter = udevice.GetInterface(a)
+			ListView1.AddTwoLines("CLASS"  , inter.InterfaceClass)
+			Log("CLASS: " & inter.InterfaceClass)
+			Select inter.InterfaceClass
+				Case manager.USB_CLASS_AUDIO
+					Log("**AUDIO")
+				Case manager.USB_CLASS_CDC_DATA
+					Log("**CDC DATA")
+				Case manager.USB_CLASS_HUB
+					Log("**HUB")
+				Case manager.USB_CLASS_MASS_STORAGE
+					Log("**MASS STORAGE")
+				Case manager.USB_CLASS_PRINTER
+					Log("**PRINTER")
+			End Select
+		Next
+	Next
+End Sub

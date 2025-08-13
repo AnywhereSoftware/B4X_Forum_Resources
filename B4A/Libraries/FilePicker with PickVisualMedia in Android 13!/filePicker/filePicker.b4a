@@ -1,0 +1,484 @@
+﻿Build1=Default,b4a.example.demonewfilepicker
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=xui
+Library4=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~        <item name="colorPrimary">#0098FF</item>~\n~        <item name="colorPrimaryDark">#007CF5</item>~\n~        <item name="colorAccent">#AAAA00</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~    </style>~\n~</resources>~\n~)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#Extends: android.support.v7.app.AppCompatActivity
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim nt As JavaObject
+	Private Button1 As Button
+	Private Button2 As Button
+	Private Button3 As Button
+	Private Button4 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	nt.InitializeContext
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	Open_Single(False)
+End Sub
+Private Sub Button2_Click
+	Open_Single(True)
+End Sub
+Private Sub Button3_Click
+	Open_Multi(False)
+End Sub
+Private Sub Button4_Click
+	Open_Multi(True)
+End Sub
+
+
+
+
+
+
+Sub Open_Single(isdocument As Boolean)
+	If isdocument Then
+		'SINGLE
+		'document minetype , can multi minetype example Array As String("application/pdf","text/plain")
+		nt.RunMethod("open_android_13_document",Array As Object(nt.InitializeContext,Array As String("application/pdf")))
+	Else
+		'image/video
+		nt.RunMethod("open_android_13",Array As Object(nt.InitializeContext,"image/*")) 'or video/*
+	End If
+	Wait For newpicker_result(issuccess As Boolean,mapinfofile As Map)
+	Log(issuccess)
+	Log(mapinfofile)
+	'COPY FILE TO CACHE TO READY USE
+	If issuccess Then
+		Wait For (File.CopyAsync(mapinfofile.Get("Dir"), mapinfofile.Get("File"), File.DirInternalCache, mapinfofile.Get("fileName"))) Complete (success As Boolean)
+		Log("Success: " & success)
+	End If
+End Sub
+
+Sub Open_Multi(isdocument As Boolean)
+	If isdocument Then
+		'MULTI
+		'document minetype , can multi minetype example Array As String("application/pdf","text/plain")
+		nt.RunMethod("open_android_13_document_multi",Array As Object(nt.InitializeContext,Array As String("application/pdf")))
+	Else
+		'image/video
+		nt.RunMethod("open_android_13_multi",Array As Object(nt.InitializeContext,"image/*",99)) 'or video/* - 99 is max items to select
+	End If
+	Wait For newpicker_multi_result(issuccess As Boolean,list_files As List)
+	Log(issuccess)
+	Log(list_files)
+	'COPY FILES TO CACHE TO READY USE
+	If issuccess Then
+		For Each mapinfofile As Map In list_files
+			Log(mapinfofile)
+			Wait For (File.CopyAsync(mapinfofile.Get("Dir"), mapinfofile.Get("File"), File.DirInternalCache, mapinfofile.Get("fileName"))) Complete (success As Boolean)
+			Log("Success: " & success)
+		Next
+	End If
+End Sub
+
+
+
+#IF JAVA
+import android.content.Context;
+import java.io.File;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import anywheresoftware.b4a.IOnActivityResult;
+//PickVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia;
+import androidx.appcompat.app.AppCompatActivity;
+import android.net.Uri;
+import android.content.Intent;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import android.content.ClipData;
+
+        public static List<Uri> getClipDataUris( Intent intent) {
+            // Use a LinkedHashSet to maintain any ordering that may be
+            // present in the ClipData
+            LinkedHashSet<Uri> resultSet = new LinkedHashSet<>();
+            if (intent.getData() != null) {
+                resultSet.add(intent.getData());
+            }
+            ClipData clipData = intent.getClipData();
+            if (clipData == null && resultSet.isEmpty()) {
+                return Collections.emptyList();
+            } else if (clipData != null) {
+                for (int i = 0; i < clipData.getItemCount(); i++) {
+                    Uri uri = clipData.getItemAt(i).getUri();
+                    if (uri != null) {
+                        resultSet.add(uri);
+                    }
+                }
+            }
+            return new ArrayList<>(resultSet);
+        }
+
+public static class FileDetail {
+
+    // fileSize.
+    public String fileName;
+
+    // fileSize in bytes.
+    public long fileSize;
+
+    /**
+     * Constructor.
+     */
+	 
+	 public String getfileName(){
+	 return this.fileName;
+	 }
+	 
+	  public long getfileSize(){
+	 return this.fileSize; 
+	 }
+    public FileDetail() {
+
+    }
+}
+public static FileDetail getFileDetailFromUri(final Context context, final Uri uri) {
+    FileDetail fileDetail = null;
+    if (uri != null) {
+        fileDetail = new FileDetail();
+        // File Scheme.
+        if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
+            File file = new File(uri.getPath());
+            fileDetail.fileName = file.getName();
+            fileDetail.fileSize = file.length();
+        }
+        // Content Scheme.
+        else if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            Cursor returnCursor =
+                    context.getContentResolver().query(uri, null, null, null, null);
+            if (returnCursor != null && returnCursor.moveToFirst()) {
+                int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
+                fileDetail.fileName = returnCursor.getString(nameIndex);
+                fileDetail.fileSize = returnCursor.getLong(sizeIndex);
+                returnCursor.close();
+            }
+        }
+    }
+    return fileDetail;
+}
+
+
+
+         private IOnActivityResult ion;
+ ActivityResultLauncher<PickVisualMediaRequest> launcher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
+        @Override
+        public void onActivityResult(Uri uri) {
+			BA.Log(uri.toString());
+            if (uri == null) {
+			
+               // Toast.makeText(MainActivity.this, "No image Selected", Toast.LENGTH_SHORT).show();
+            } else {
+               // Glide.with(getApplicationContext()).load(uri).into(imageView);
+			   BA.Log(uri.toString());
+            }
+        }
+    });
+	
+	
+  private final ActivityResultLauncher<String[]> launcheropenDoc =
+    registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+      new ActivityResultCallback<Uri>() {
+        @Override
+        public void onActivityResult(Uri uri) {
+			BA.Log(uri.toString());
+        //  motor.generatePassphrase(uri);
+		BA.Log(uri.toString());
+        }
+      });
+	  
+	  
+public void open_android_13(final Context context,final String mimeType){
+
+//ActivityResultLauncher<PickVisualMediaRequest> launcher2 =null;
+androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia launcher2 =new androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia();
+Intent intentve;
+intentve= launcher2.createIntent(this,new PickVisualMediaRequest.Builder()
+        .setMediaType(new PickVisualMedia.SingleMimeType(mimeType))
+        .build());
+		
+		        ion = new IOnActivityResult() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void ResultArrived(int resultCode, Intent intent) {
+			String Dir = null, File = null;
+			FileDetail fileinfo=new FileDetail();
+			
+            if (resultCode == -1 && intent != null && intent.getData() != null)
+              try {
+                Uri uri = intent.getData();
+				fileinfo=getFileDetailFromUri(context,uri) ;
+                String scheme = uri.getScheme();
+                if ("file".equals(scheme)) {
+                  Dir = "";
+                  File = uri.getPath();
+                } else if ("content".equals(scheme)) {
+                  Dir = "ContentDir";
+                  File = uri.toString();
+                } 
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }  
+			  if (Dir != null && File != null) {
+			  //anywheresoftware.b4a.objects.collections
+			  anywheresoftware.b4a.objects.collections.Map mapgui=new anywheresoftware.b4a.objects.collections.Map();
+			   mapgui.Initialize();
+			   mapgui.Put("Dir",Dir);
+			   mapgui.Put("File",File);
+			   mapgui.Put("fileName",fileinfo.fileName);
+			   mapgui.Put("fileSize",fileinfo.fileSize);
+			   
+			  
+			  
+              processBA.raiseEvent(this, "newpicker_result", new Object[] { Boolean.valueOf(true), mapgui});
+            } else {
+              processBA.raiseEvent(this, "newpicker_result", new Object[] { Boolean.valueOf(false), null });
+            } 
+              }
+            };
+            processBA.startActivityForResult(ion, intentve);
+
+
+//return launcher.getContract().createIntent(this,new PickVisualMediaRequest.Builder()
+//	.setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+//.build());
+	               // launcher.launch(new PickVisualMediaRequest.Builder()
+					//ActivityResultContracts.PickVisualMedia.ImageAndVideo, ActivityResultContracts.PickVisualMedia.ImageOnly, ActivityResultContracts.PickVisualMedia.SingleMimeType, ActivityResultContracts.PickVisualMedia.VideoOnly
+                     //   .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+						//.setMediaType(ActivityResultContracts.PickVisualMedia.SingleMimeType("application/pdf").INSTANCE)
+                       // .build());
+			}
+			
+			
+			public void open_android_13_multi(final Context context,final String mimeType,final int maxItems){
+androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia launcher2 =new androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia(maxItems);
+Intent intentve;
+//String mimeType = "application/pdf";
+intentve= launcher2.createIntent(this,new PickVisualMediaRequest.Builder()
+        .setMediaType(new PickVisualMedia.SingleMimeType(mimeType))
+        .build());
+		        ion = new IOnActivityResult() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void ResultArrived(int resultCode, Intent intent) {
+			String Dir = null, File = null;
+			
+			anywheresoftware.b4a.objects.collections.List list_multi_files=new anywheresoftware.b4a.objects.collections.List();
+			list_multi_files.Initialize();
+            if (resultCode == -1 && intent != null ){
+			
+					for (Uri uri_item : getClipDataUris(intent)) {
+					FileDetail fileinfo_item=new FileDetail();
+					String Diritem = null, Fileitem = null;
+					 try {
+				fileinfo_item=getFileDetailFromUri(context,uri_item) ;
+                String scheme = uri_item.getScheme();
+                if ("file".equals(scheme)) {
+                  Diritem = "";
+                  Fileitem = uri_item.getPath();
+                } else if ("content".equals(scheme)) {
+                  Diritem = "ContentDir";
+                  Fileitem = uri_item.toString();
+                } 
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }  
+			  
+			   anywheresoftware.b4a.objects.collections.Map mapgui=new anywheresoftware.b4a.objects.collections.Map();
+			   mapgui.Initialize();
+			   mapgui.Put("Dir",Diritem);
+			   mapgui.Put("File",Fileitem);
+			   mapgui.Put("fileName",fileinfo_item.fileName);
+			   mapgui.Put("fileSize",fileinfo_item.fileSize);
+			  
+					 list_multi_files.Add(mapgui.getObject());
+        			}
+			
+              processBA.raiseEvent(this, "newpicker_multi_result", new Object[] { Boolean.valueOf(true), list_multi_files});
+            } else {
+              processBA.raiseEvent(this, "newpicker_multi_result", new Object[] { Boolean.valueOf(false), null});
+            } 
+             }
+            };
+            processBA.startActivityForResult(ion, intentve);
+			}
+			
+			
+			
+			
+			public void open_android_13_document(final Context context,final String[] input){
+androidx.activity.result.contract.ActivityResultContracts.OpenDocument launcher_documents =new androidx.activity.result.contract.ActivityResultContracts.OpenDocument();
+Intent intentve;
+//String mimeType = "application/pdf";
+intentve= launcher_documents.createIntent(this,input);
+		
+		        ion = new IOnActivityResult() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void ResultArrived(int resultCode, Intent intent) {
+			String Dir = null, File = null;
+			FileDetail fileinfo=new FileDetail();
+			
+            if (resultCode == -1 && intent != null && intent.getData() != null)
+              try {
+                Uri uri = intent.getData();
+				fileinfo=getFileDetailFromUri(context,uri) ;
+                String scheme = uri.getScheme();
+                if ("file".equals(scheme)) {
+                  Dir = "";
+                  File = uri.getPath();
+                } else if ("content".equals(scheme)) {
+                  Dir = "ContentDir";
+                  File = uri.toString();
+                } 
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }  
+			  if (Dir != null && File != null) {
+			  
+			   anywheresoftware.b4a.objects.collections.Map mapgui=new anywheresoftware.b4a.objects.collections.Map();
+			   mapgui.Initialize();
+			   mapgui.Put("Dir",Dir);
+			   mapgui.Put("File",File);
+			   mapgui.Put("fileName",fileinfo.fileName);
+			   mapgui.Put("fileSize",fileinfo.fileSize);
+			      processBA.raiseEvent(this, "newpicker_result", new Object[] { Boolean.valueOf(true), mapgui});
+              
+            } else {
+              processBA.raiseEvent(this, "newpicker_result", new Object[] { Boolean.valueOf(false), null });
+            } 
+            
+             }
+            };
+            processBA.startActivityForResult(ion, intentve);
+
+
+//return launcher.getContract().createIntent(this,new PickVisualMediaRequest.Builder()
+//	.setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+//.build());
+	               // launcher.launch(new PickVisualMediaRequest.Builder()
+					//ActivityResultContracts.PickVisualMedia.ImageAndVideo, ActivityResultContracts.PickVisualMedia.ImageOnly, ActivityResultContracts.PickVisualMedia.SingleMimeType, ActivityResultContracts.PickVisualMedia.VideoOnly
+                     //   .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+						//.setMediaType(ActivityResultContracts.PickVisualMedia.SingleMimeType("application/pdf").INSTANCE)
+                       // .build());
+			}
+			
+			public void open_android_13_document_multi(final Context context,final String[] input){
+androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments launcher_documents =new androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments();
+Intent intentve;
+intentve= launcher_documents.createIntent(this,input);
+		        ion = new IOnActivityResult() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void ResultArrived(int resultCode, Intent intent) {
+			String Dir = null, File = null;
+			
+			anywheresoftware.b4a.objects.collections.List list_multi_files=new anywheresoftware.b4a.objects.collections.List();
+			list_multi_files.Initialize();
+            if (resultCode == -1 && intent != null ){
+			
+					for (Uri uri_item : getClipDataUris(intent)) {
+					FileDetail fileinfo_item=new FileDetail();
+					String Diritem = null, Fileitem = null;
+					 try {
+				fileinfo_item=getFileDetailFromUri(context,uri_item) ;
+                String scheme = uri_item.getScheme();
+                if ("file".equals(scheme)) {
+                  Diritem = "";
+                  Fileitem = uri_item.getPath();
+                } else if ("content".equals(scheme)) {
+                  Diritem = "ContentDir";
+                  Fileitem = uri_item.toString();
+                } 
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }  
+			  
+			   anywheresoftware.b4a.objects.collections.Map mapgui=new anywheresoftware.b4a.objects.collections.Map();
+			   mapgui.Initialize();
+			   mapgui.Put("Dir",Diritem);
+			   mapgui.Put("File",Fileitem);
+			   mapgui.Put("fileName",fileinfo_item.fileName);
+			   mapgui.Put("fileSize",fileinfo_item.fileSize);
+			  
+					 list_multi_files.Add(mapgui.getObject());
+        			}
+			
+              processBA.raiseEvent(this, "newpicker_multi_result", new Object[] { Boolean.valueOf(true), list_multi_files});
+            } else {
+              processBA.raiseEvent(this, "newpicker_multi_result", new Object[] { Boolean.valueOf(false), null});
+            } 
+             }
+            };
+            processBA.startActivityForResult(ion, intentve);
+			}
+public Intent open_android_13_intent(){
+androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia launcher2 =new androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia();
+String mimeType = "application/pdf";
+return launcher2.createIntent(this,new PickVisualMediaRequest.Builder()
+        .setMediaType(new PickVisualMedia.SingleMimeType(mimeType))
+        .build());
+			}
+			
+			
+			
+			public Intent open_document(){
+			return launcheropenDoc.getContract().createIntent(this,new String[]{"application/pdf","text/plain"});
+	                      // launcheropenDoc.launch(new String[]{"application/pdf","text/plain"});
+			}
+			
+			
+#End If
+

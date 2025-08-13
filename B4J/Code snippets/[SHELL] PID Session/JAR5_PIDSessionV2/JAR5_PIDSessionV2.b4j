@@ -1,0 +1,127 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jshell
+Module1=ProcessByPID
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+'PID Session.
+'Author of the source: @T201016
+
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+#End Region
+
+#If Release
+	#CustomBuildAction: 2, c:\windows\system32\cmd.exe, /c copy  ..\Objects\JAR5_PIDSessionV2.jar D:\©.B4X_Launch4J\B4J\JAR5_PIDSessionV2.jar
+#End If
+
+Sub Process_Globals
+	Type session1 (ApplicationName As String, WindowTitle As String, Unknown As Boolean)
+	Type session2 (ImageName As String, PID As String, WindowTitle As String)
+	
+	Dim ByUnknown As session1
+	Dim BySession As session2
+	
+	Dim processBy As ProcessByPID
+	Dim PID As String
+	
+	Dim components() As String
+	Dim componentsMap As Map
+	Dim jo As JavaObject
+	Private js  As Shell
+	Dim Value As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+    #Region (Data initiation for a file PID@Session.txt) 
+	processBy.Initialize(File.DirApp, "PID@Session.txt")
+	BySession.Initialize
+	ByUnknown.Initialize
+	ByUnknown.ApplicationName = "notepad++.exe" 	'Enter the name of the program for which you intend to complete the process.
+	ByUnknown.WindowTitle = "note 1 - notepad++"	'Enter the title of the window (OPTIONAL).
+	ByUnknown.Unknown = True
+    #End Region
+	
+	jo.InitializeStatic("java.lang.management.ManagementFactory")
+	PID = jo.RunMethodJO("getRuntimeMXBean",Null).RunMethod("getName",Null)
+	PID = PID.SubString2(0,PID.IndexOf("@"))
+	
+	componentsMap.Initialize
+	js.Initialize("js", "tasklist.exe", Array As String("/v"))
+	js.Run(60000)
+End Sub
+
+Sub js_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	Dim xui As JFX
+	If Success Then
+		
+		components = Regex.Split(CRLF, StdOut)
+		
+		If components.Length > 0 Then
+			For i = 3 To components.Length - 1
+				componentsMap.Clear
+				componentsMap.Put("ImageName", components(i).SubString2(0,25))
+				componentsMap.Put("PID", components(i).SubString2(26,34))
+				componentsMap.Put("SessionName", components(i).SubString2(35,51))
+				componentsMap.Put("Session#", components(i).SubString2(52,63))
+				componentsMap.Put("MemUsage", components(i).SubString2(64,76))
+				componentsMap.Put("Status", components(i).SubString2(77,92))
+				componentsMap.Put("UserName", components(i).SubString2(93,143))
+				componentsMap.Put("CPUTime", components(i).SubString2(144,156))
+				componentsMap.Put("WindowTitle", components(i).SubString2(157,229))
+
+				'---------------------------------------------------------------
+				'------------------------------------- For the next line of text
+				For Each Key As String In componentsMap.Keys
+					Dim L As Int
+					Dim chars As String = Chr(32)
+					If Key.Contains("ImageName") Or Key.Contains("SessionName") Or Key.Contains("Status") Or Key.Contains("UserName") Or Key.Contains("WindowTitle") Then
+						Value = componentsMap.Get(Key)
+						Do While True
+							L = Value.LastIndexOf(chars)
+							If L > 0 Then
+								Value = Value.SubString2(0,L) 'After passing the next instances of the SPACE sign.
+							Else
+								If Key.Contains("ImageName") Then BySession.ImageName = Value
+								If Key.Contains("WindowTitle") Then BySession.WindowTitle = Value
+								Exit
+							End If
+						Loop
+					Else If Key.Contains("MemUsage") Then
+						Value = componentsMap.Get(Key)
+						Value = Value.Replace("�",".").Replace(chars,"") & " K" 'Where a given sign may coour.
+					Else
+						Value = componentsMap.Get(Key)
+						Value = Value.Replace(chars,"")
+						If Key.Contains("PID") Then BySession.PID = Value
+					End If
+				Next 
+				'------------------------------------- For the next line of text
+				'---------------------------------------------------------------
+				If ByUnknown.ApplicationName.ToLowerCase.Contains(BySession.ImageName.ToLowerCase) = True _
+					Or ByUnknown.WindowTitle.ToLowerCase.Contains(BySession.WindowTitle.ToLowerCase) = True Then
+					Wait For (processBy.KillByPID(BySession.PID)) Complete (resultKill As Boolean)
+					ByUnknown.Unknown = False
+					If resultKill = True Then 
+						Log("Kill : " & BySession.ImageName)
+					End If
+				End If
+			Next
+		End If
+	End If
+	
+	'Kill My Session
+	Wait For (processBy.KillByPID(PID)) Complete (resultSession As Boolean)
+	If resultSession = True Then
+		If ByUnknown.Unknown = True Then Log("The program requires the parameters - AppName[ or ]AppTitle.")
+		Log("Kill: Session")
+	End If
+End Sub

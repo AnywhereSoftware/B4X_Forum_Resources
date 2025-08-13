@@ -1,0 +1,192 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleserver
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEServer
+'Description:	InputOutput Example for the B4R Library rBLEServer.
+'				Input=Push-Button, Output=3 LEDs (Traffic-Light).
+'				Push-button to turn on a Red or Yellow or Green LED (Traffic-Light) and advertise (write) the LED ID (pin number) turned on.
+'				Handle client data (sends single byte 0x19 (R), 0x21 (Y), 0x20 (G)) received to set the selected LED.
+'				Tested client with Android app BLE Scanner:
+'				Connect to BLEServer, select custom service, press N (for notify), press R (for read), then watch the Hex value changing when pressing the push-button.
+'				Set the LED by writing HEX byte array. Press W, select HEX, enter 19 followed by OK. The red led is turned on.
+'BLE:			Device name: BLEServer, MAC: 30:C9:22:D1:80:2E
+'Source:		InputOutputExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rDHTESP 1.01 - DHT22 reader for ESP
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Wrover Kit
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'LED's		= ESP32	(wirecolor)
+'LED RED	= D25 (0x19) (red)
+'LED YELLOW	= D33 (0x21) (yellow)
+'LED GREEN	= D32 (0x20) (green)
+'GND		= GND
+
+'Push-Button	= ESP32 (wirecolor)
+'VCC 			= 5V	(red)
+'GND 			= GND	(black)
+'Signal 		= D23	(green)
+'DFRobot green push-button
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEServer InputOutputExample v20250207"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEServer As BLEServer
+	Private MTUSize As UInt = BLEServer.MTU_SIZE_MIN
+
+	'LED's red,yellow,green connected to GPIO25,33,32
+	Private LEDRed As Pin
+	Private LEDRedNumber As Byte	= 25	'0x19
+	Private LEDYellow As Pin
+	Private LEDYellowNumber As Byte	= 33	'0x21
+	Private LEDGreen As Pin
+	Private LEDGreenNumber As Byte	= 32	'0x20
+	Private LEDSelected As Byte		= 0
+	
+	'Push-Button
+	Private PushButton As Pin
+	Private PushButtonNumber As Byte = 23
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init the Traffic-Light
+	LEDRed.Initialize(LEDRedNumber, LEDRed.MODE_OUTPUT)
+	LEDYellow.Initialize(LEDYellowNumber, LEDYellow.MODE_OUTPUT)
+	LEDGreen.Initialize(LEDGreenNumber, LEDGreen.MODE_OUTPUT)
+
+	'Init the Push-Button
+	PushButton.Initialize(PushButtonNumber, PushButton.MODE_INPUT)
+	PushButton.AddListener("PushButton_StateChanged")
+
+	'Init the ble server with name, events and mtu size
+	BLEServer.Initialize("BLEServer", "BLEServer_NewData", "BLEServer_Error", MTUSize)
+
+	'Turn on led green to indicate ready
+	LEDGreen.DigitalWrite(True)
+	'Write the led green pinnumber as byte
+	BLEServer_Write(Array As Byte(LEDGreen.PinNumber))
+End Sub
+
+#Region Button
+'Handle button state changed. 
+'This is a pushbutton, means when pressing the button the state is false. 
+Sub PushButton_StateChanged(State As Boolean)
+	'Short delay for debouncing
+	Delay(20)
+	If State == False Then
+		Log("[PushButton_StateChanged] state=", State)
+		Select LEDSelected
+			Case 0
+				SetTrafficLight(LEDRed)
+			Case LEDRed.PinNumber
+				SetTrafficLight(LEDYellow)
+			Case LEDYellow.PinNumber
+				SetTrafficLight(LEDGreen)
+			Case LEDGreen.PinNumber
+				SetTrafficLight(LEDRed)
+		End Select
+	End If
+End Sub
+
+'Set one of the traffic-light led.
+Private Sub SetTrafficLight(led As Pin)
+	Log("[SetTrafficLight] led=", led.PinNumber)
+	LEDSelected = led.PinNumber
+
+	LEDRed.DigitalWrite(False)
+	LEDYellow.DigitalWrite(False)
+	LEDGreen.DigitalWrite(False)
+	led.DigitalWrite(True)	
+	
+	'Example LED RED: [SetTrafficLight][BLEServer]write=25,hex=19
+	Log("[SetTrafficLight][BLEServer] write=", LEDSelected, ",hex=", HexFromByte(LEDSelected))
+	BLEServer_Write(Array As Byte(led.PinNumber))
+End Sub
+#End Region
+
+'Handle new data received from connected client.
+'buffer - Byte array holding the data send by the client
+Private Sub BLEServer_NewData(buffer() As Byte)
+	Log("[BLEServer_NewData]buffer=",bc.HexFromBytes(buffer))
+	Dim led As Byte = buffer(0)
+	Select led
+		Case LEDRed.PinNumber
+			SetTrafficLight(LEDRed)
+		Case LEDYellow.PinNumber
+			SetTrafficLight(LEDYellow)
+		Case LEDGreen.PinNumber
+			SetTrafficLight(LEDGreen)
+		Case Else
+			Log("[ERROR][BLEServer_NewData] wrong led selected=", bc.HexFromBytes(buffer))
+	End Select
+End Sub
+
+'Handle BLE server error.
+'Log the error to the B4R IDE, but could also use an LED
+'code - BLE server error code
+Private Sub BLEServer_Error(code As Byte)
+	Log("[BLEServer_Error]code=",code)
+	Select code
+		Case BLEServer.WARNING_INVALID_MTU
+			Log("[WARNING][Initialize] MTU out of range 23-512, default is set (23).")
+		Case BLEServer.ERROR_INVALID_CHARACTERISTIC
+			Log("[ERROR][Write] failed: No valid characteristic.")
+		Case BLEServer.ERROR_EMPTY_DATA
+			Log("[ERROR][Write] failed: No data.")
+	End Select
+End Sub
+
+'Write data to the connected client.
+'data - Byte array containing data fo the connected client
+Private Sub BLEServer_Write(data() As Byte)
+	If data == Null Then
+		Log("[ERROR][BLEServer_Write] No data.")	
+		Return
+	End If
+	Log("[BLEServer_Write]data=", bc.HexFromBytes(data))
+	BLEServer.Write(data)
+End Sub
+
+'Helper
+'Get HEX code for a single byte.
+'b - Single byte
+'Returns HEX code as string
+Public Sub HexFromByte(b As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(b))
+End Sub

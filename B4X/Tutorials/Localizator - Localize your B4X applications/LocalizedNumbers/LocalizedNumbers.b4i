@@ -1,0 +1,84 @@
+﻿Version=2.75
+NumberOfModules=1
+Module1=Localizator
+Build1=Default,b4i.example2
+NumberOfFiles=2
+File1=1.bil
+File2=strings.db
+NumberOfLibraries=3
+Library1=icore
+Library2=isql
+Library3=iui8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Localizator Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Public loc As Localizator
+	Private edtName As TextField
+	Private lstLanguages As TableView
+	Private name As String
+	Private lblHello As Label
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	loc.Initialize(File.DirAssets, "strings.db")
+	Page1.Title = "Page 1"
+	ResetLayout
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub ResetLayout
+	If edtName.IsInitialized Then name = edtName.Text
+	Page1.RootPanel.RemoveAllViews
+	Page1.RootPanel.LoadLayout("1")
+	loc.LocalizeLayout(Page1.RootPanel)
+	Dim availableLangs() As String = Array As String ("en", "fr", "he", "de")
+	For i = 0 To availableLangs.Length - 1
+		Dim tc As TableCell = lstLanguages.AddSingleLine(loc.Localize(availableLangs(i)))
+		tc.Tag = availableLangs(i)
+	Next
+	edtName.Text = name
+	UpdateNameLabel(edtName.Text)
+End Sub
+
+
+Sub lstLanguages_SelectedChanged (SectionIndex As Int, Cell As TableCell)
+	loc.ForceLocale(Cell.Tag)
+	ResetLayout
+End Sub
+
+Sub edtName_TextChanged (OldText As String, NewText As String)
+	UpdateNameLabel (NewText)
+End Sub
+
+Sub UpdateNameLabel (NewText As String)
+	lblHello.Text = loc.LocalizeParams("Hello {1}!", Array(NewText))
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+

@@ -1,0 +1,85 @@
+﻿Build1=Default,b4i.example2
+File1=MainPage.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=designerutils
+Library3=icore
+Library4=icpp
+Library5=ilocation
+Library6=xui views
+Library7=mediachooser
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\SelfieSegmentation
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=2
+Version=8.51
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 11
+#End Region
+
+#Region MLKit
+#AdditionalLib: MLKitCommon.framework.3
+#AdditionalLib: MLKitBarcodeScanning.framework.3
+#AdditionalLib: MLImage.framework.3
+#AdditionalLib: MLKitVision.framework.3
+#AdditionalLib: MLKitImageLabeling.framework.3
+#AdditionalLib: MLKitImageLabelingCommon.framework.3
+#AdditionalLib: MLKitImageLabelingCustom.framework.3
+#AdditionalLib: MLKitObjectDetection.framework.3
+#AdditionalLib: MLKitObjectDetectionCommon.framework.3
+#AdditionalLib: MLKitObjectDetectionCustom.framework.3
+#AdditionalLib: MLKitVisionKit.framework.3
+#AdditionalLib: MLKitXenoCommon.framework.3
+#AdditionalLib: PromisesObjC.framework.3
+#AdditionalLib: GTM
+#AdditionalLib: sqlite3
+#AdditionalLib: GTMSessionFetcher.framework.3
+#AdditionalLib: GoogleUtilitiesComponents.framework.3
+#AdditionalLib: Accelerate.framework
+#AdditionalLib: GoogleDataTransport.framework.3
+'segmentation
+#AdditionalLib: MLKitSegmentationCommon.framework.3
+#AdditionalLib: MLKitSegmentationSelfie.framework.3
+#End Region
+
+
+'CPP and iLocation libraries are required but are not used by the code so we add an ignore warnings declaration.
+#IgnoreWarnings: 32 
+#PlistExtra:<key>NSPhotoLibraryUsageDescription</key><string>Select a photo.</string>
+#PlistExtra:<key>NSCameraUsageDescription</key><string>Taking a photo.</string>
+#PlistExtra:<key>NSMicrophoneUsageDescription</key><string>Record video.</string>
+#PlistExtra:<key>NSPhotoLibraryAddUsageDescription</key><string>Save photo in albums.</string>
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(NavControl)
+End Sub
+
+'Template version: B4i-1.0
+#Region Delegates
+Private Sub Application_Background
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Private Sub Application_Foreground
+	B4XPages.Delegate.Activity_Resume
+End Sub
+#End Region

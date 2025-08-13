@@ -1,0 +1,644 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.tummosoft.jCSV</name>
+        <shortname>jCSV</shortname>
+        <owner>process</owner>
+        <event>CSVComplete (Success As Boolean, Crsr As ResultSet)</event>
+        <method>
+            <name>Reader</name>
+            <comment></comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>CSVPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>classname</name>
+                <type>java.lang.Class</type>
+            </parameter>
+            <parameter>
+                <name>columnMap</name>
+                <type>anywheresoftware.b4a.objects.collections.Map</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>com.tummosoft.jH2Server</name>
+        <shortname>jH2Server</shortname>
+        <owner>process</owner>
+        <method>
+            <name>Stop</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ShutDown</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>InitializeServer</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>pass</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DatabasePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>isTcpPortOpen</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>port</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>URL</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <class>
+        <name>com.tummosoft.jSQLSupport</name>
+        <shortname>jSQLSupport</shortname>
+        <owner CheckForReinitialize="true">process</owner>
+        <event>QueryComplete (Success As Boolean, Crsr As ResultSet)</event>
+        <event>NonQueryComplete (Success As Boolean)</event>
+        <event>Ready (Success As Boolean)</event>
+        <method>
+            <name>HikariEnable</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecQuery2</name>
+            <comment>Executes the query and returns a cursor which is used to go over the
+ results. The query can include question marks which will be replaced with
+ the values in the array.      Example:&lt;code&gt;
+Dim Cursor As ResultSet
+Cursor = sql1.ExecQuery2("SELECT col1 FROM table1 WHERE col3 = ?", Array As String(22))&lt;/code&gt;
+ jSQL5ite will try to convert the string values based on the columns
+ types.</comment>
+            <returntype>com.tummosoft.jSQLSupport.ResultSetWrapper</returntype>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecCall</name>
+            <comment>Executes a call statement previously created with CreateCallStatement.</comment>
+            <returntype>com.tummosoft.jSQLSupport.ResultSetWrapper</returntype>
+            <parameter>
+                <name>CallStatement</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecQuery</name>
+            <comment>Executes the query and returns a cursor which is used to go over the
+ results.      Example:&lt;code&gt;
+Dim Cursor As ResultSet
+Cursor = jSQL51.ExecQuery("SELECT col1, col2 FROM table1")
+Do While Cursor.NextRow
+	Log(Cursor.GetString("col1"))
+	Log(Cursor.GetInt("col2"))
+Loop&lt;/code&gt;</comment>
+            <returntype>com.tummosoft.jSQLSupport.ResultSetWrapper</returntype>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializeH2</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>DriverClass</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>JdbcUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Database</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>UserName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CacheSize</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecQuerySingleResult2</name>
+            <comment>Executes the query and returns the value in the first column and the
+ first row (in the result set). Returns Null if no results were found.      Example:&lt;code&gt;
+Dim NumberOfMatches As Int
+NumberOfMatches = jSQL51.ExecQuerySingleResult2("SELECT count(*) FROM table1 WHERE col2 &gt; ?", Array As String(300))&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CreateCallStatement</name>
+            <comment>Create a statement object which you can use with ExecCall to call stored
+ procedures.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment>Tests whether the database is initialized and opened.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>InitializejSQL5ite</name>
+            <comment>Opens the jSQL5ite database file. A new database will be created if it
+ does not exist and CreateIfNecessary is true. Note that you should add
+ the following attribute to the main module:
+ &lt;code&gt;#AdditionalJar: sqlite-jdbc-3.7.2&lt;/code&gt;      Example:&lt;code&gt;
+Dim jSQL51 As jSQL5
+jSQL51.InitializejSQL5ite(File.DirApp, "MyDb.db", True)&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>DriverClass</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>JdbcUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecNonQueryBatch</name>
+            <comment>Asynchronously executes a batch of non-query statements (such as INSERT).
+ The NonQueryComplete event is raised after the statements are completed.
+ You should call AddNonQueryToBatch one or more times before calling this
+ method to add statements to the batch. Note that this method internally
+ begins and ends a transaction. Returns an object that can be used as the
+ sender filter for Wait For calls.      Example:&lt;code&gt;
+For i = 1 To 1000
+	sql.AddNonQueryToBatch("INSERT INTO table1 VALUES (?)", Array(Rnd(0, 100000)))
+Next
+Dim SenderFilter As Object = sql.ExecNonQueryBatch("jSQL5")
+Wait For (SenderFilter) jSQL5_NonQueryComplete (Success As Boolean)
+Log("NonQuery: " &amp; Success)&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>checkNull</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>BeginTransaction</name>
+            <comment>Begins a transaction. A transaction is a set of multiple "writing"
+ statements that are atomically committed, hence all changes will be made
+ or no changes will be made. As a side effect those statements will be
+ executed significantly faster (in the default case a transaction is
+ implicitly created for each statement). It is very important to handle
+ transaction carefully and close them. The transaction is considered
+ successful only if TransactionSuccessful is called. Otherwise no changes
+ will be made. Typical usage:&lt;code&gt;
+jSQL51.BeginTransaction
+Try
+	'block of statements like:
+	For i = 1 to 1000
+		jSQL51.ExecNonQuery("INSERT INTO table1 VALUES(...)
+	Next
+	jSQL51.TransactionSuccessful
+Catch
+	Log(LastException.Message)
+  jSQL51.RollBack 'no changes will be made
+End Try
+ &lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>AddNonQueryToBatch</name>
+            <comment>Adds a non-query statement to the batch of statements. The statements are
+ (asynchronously) executed when you call ExecNonQueryBatch. Args parameter
+ can be Null if it is not needed.      Example:&lt;code&gt;
+For i = 1 To 1000
+	sql.AddNonQueryToBatch("INSERT INTO table1 VALUES (?)", Array(Rnd(0, 100000)))
+Next
+Dim SenderFilter As Object = sql.ExecNonQueryBatch("jSQL5")
+Wait For (SenderFilter) jSQL5_NonQueryComplete (Success As Boolean)
+Log("NonQuery: " &amp; Success)&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Statement</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize2</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>DriverClass</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>JdbcUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>UserName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExecQuerySingleResult</name>
+            <comment>Executes the query and returns the value in the first column and the
+ first row (in the result set). Returns Null if no results were found.      Example:&lt;code&gt;
+Dim NumberOfMatches As Int
+NumberOfMatches = jSQL51.ExecQuerySingleResult("SELECT count(*) FROM table1 WHERE col2 &gt; 300")&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>TransactionSuccessful</name>
+            <comment>Commits the statements and ends the transaction.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ExecNonQuery</name>
+            <comment>Executes a single non query jSQL5 statement.      Example:&lt;code&gt;
+jSQL51.ExecNonQuery("CREATE TABLE table1 (col1 TEXT , col2 INTEGER, col3 INTEGER)")&lt;/code&gt;
+ It will be significantly faster to explicitly start a transaction before
+ applying any changes to the database.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Statement</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Closes the database. Does not do anything if the database is not opened
+ or was closed before.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ExecQueryAsync</name>
+            <comment>Asynchronously executes the given query. The QueryComplete event will be
+ raised when the results are ready. Returns an object that can be used as
+ the sender filter for Wait For calls.      Example:&lt;code&gt;
+Dim SenderFilter As Object = sql.ExecQueryAsync("jSQL5", "SELECT * FROM table1", Null)
+Wait For (SenderFilter) jSQL5_QueryComplete (Success As Boolean, rs As ResultSet)
+If Success Then
+	Do While rs.NextRow
+		Log(rs.GetInt2(0))
+	Loop
+	rs.Close
+Else
+	Log(LastException)
+End If&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Query</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Rollback</name>
+            <comment>Rollbacks the changes from the current transaction and closes the
+ transaction.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ExecNonQuery2</name>
+            <comment>Executes a single non query jSQL5 statement. The statement can include
+ question marks which will be replaced by the items in the given list.
+ Note that B4J converts arrays to lists implicitly. The values in the list
+ should be strings, numbers or bytes arrays.      Example:&lt;code&gt;
+jSQL51.ExecNonQuery2("INSERT INTO table1 VALUES (?, ?, 0)", Array As Object("some text", 2))&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Statement</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializeAsync</name>
+            <comment>Asynchronously initializes the jSQL5 connection. The Ready event will be
+ raised when the connection is ready or if an error has occurred. The
+ EventName parameter sets the sub that will handle the Ready event.      Example:&lt;code&gt;
+Sub Process_Globals
+	Dim sql1 As jSQL5
+End Sub
+
+Sub AppStart (Args() As String)
+	sql1.InitializeAsync("sql1", "com.mysql.jdbc.Driver", _
+		"jdbc:mysql://localhost/example", "username", "password")
+	StartMessageLoop 'only required in a console app
+End Sub
+
+Sub sql1_Ready (Success As Boolean)
+	Log(Success)
+	If Success = False Then
+		Log(LastException)
+		Return
+	End If
+	Dim rs As ResultSet = sql1.ExecQuery("SELECT table_name FROM information_schema.tables")
+	Do While rs.NextRow
+		Log(rs.GetString2(0))
+	Loop
+	rs.Close
+End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DriverClass</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>JdbcUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>UserName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>com.tummosoft.jSQLSupport.ResultSetWrapper</name>
+        <shortname>ResultSet</shortname>
+        <objectwrapper>java.sql.ResultSet</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>GetInt2</name>
+            <comment>Returns the Int value stored in the column at the given ordinal. The
+ value will be converted to Int if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetInt2(0))&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetBlob</name>
+            <comment>Returns the blob stored in the given column.          Example:&lt;code&gt;
+Dim Buffer() As Byte
+Buffer = Cursor.GetBlob("col1")&lt;/code&gt;</comment>
+            <returntype>byte[]</returntype>
+            <parameter>
+                <name>ColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDouble</name>
+            <comment>Returns the Double value stored in the given column. The value will
+ be converted to Double if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetDouble("col2"))&lt;/code&gt;</comment>
+            <returntype>java.lang.Double</returntype>
+            <parameter>
+                <name>ColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLong</name>
+            <comment>Returns the Long value stored in the given column. The value will be
+ converted to Long if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetLong("col2"))&lt;/code&gt;</comment>
+            <returntype>java.lang.Long</returntype>
+            <parameter>
+                <name>ColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetColumnName</name>
+            <comment>Returns the name of the column at the specified index. The first
+ column index is 0.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetBlob2</name>
+            <comment>Returns the blob stored in the column at the given ordinal.          Example:&lt;code&gt;
+Dim Buffer() As Byte
+Buffer = Cursor.GetBlob2(0)&lt;/code&gt;</comment>
+            <returntype>byte[]</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetInt</name>
+            <comment>Returns the Int value stored in the given column. The value will be
+ converted to Int if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetInt("col2"))&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>ColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>NextRow</name>
+            <comment>Moves the cursor to the next result. Returns false when the cursor
+ reaches the end.          Example:&lt;code&gt;
+Do While ResultSet1.NextRow
+ 'Work with Row
+Loop&lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetString</name>
+            <comment>Returns the String value stored in the given column. The value will
+ be converted to String if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetString("col2"))&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>ColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Closes the cursor and frees resources.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetDouble2</name>
+            <comment>Returns the Double value stored in the column at the given ordinal.
+ The value will be converted to Double if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetDouble2(0))&lt;/code&gt;</comment>
+            <returntype>java.lang.Double</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetString2</name>
+            <comment>Returns the String value stored in the column at the given ordinal.
+ The value will be converted to String if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetString2(0))&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLong2</name>
+            <comment>Returns the Long value stored in the column at the given ordinal. The
+ value will be converted to Long if it is of different type.          Example:&lt;code&gt;
+Log(Cursor.GetLong2(0))&lt;/code&gt;</comment>
+            <returntype>java.lang.Long</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>ColumnCount</name>
+            <returntype>int</returntype>
+            <comment>Gets the number of columns available in the result set.</comment>
+        </property>
+    </class>
+    <version>2.0</version>
+    <comment>The jSQL5 library allows you to create and manage jSQL5 databases. Using
+ this library you can connect to any type of jSQL5 database. See this
+ &lt;link&gt;link|http://www.basic4ppc.com/android/forum/threads/sql-tutorial.35185/&lt;/link&gt;
+ for more information.</comment>
+</root>

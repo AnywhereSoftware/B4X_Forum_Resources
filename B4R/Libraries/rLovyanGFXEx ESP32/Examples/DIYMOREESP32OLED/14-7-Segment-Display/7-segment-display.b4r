@@ -1,0 +1,86 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	OLED SSD1306 example using 7-segment font.
+'				The max number is 9999 because of the font size w32xh48px for the display w128xh64px.
+'Colors: 		The top area with height 16px has yellow text per default, the area below has blue text.
+'Hardware:		diymore ESP-WROOM-32 ESP32 OLED Development Board 0.96" OLED Display Type C Dual-Core 240MHz Bluetooth WiFi Modul CH340 2414~2484MHz.
+'				SSD1306 I2C w128xh64px, monochrome, no touch, pins SCL 22, SDA 21, I2C address 0x3C.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'SSD1306 = ESP32
+'VCC = 3V3
+'GND = GND
+'SCL = 22 (pink)
+'SDA = 21 (blue)
+
+'Display
+'Set the display to use in the project attributes directive DefineExtra: #define ESP32_SSD1306.
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+	'Define the display driver
+	#DefineExtra: #define ESP32_SSD1306
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx 7-SEGMENT v20250416"
+	'Communication
+	Public Serial1 As Serial
+	'LovyanGFX instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+	Log("[AppStart] display w=", lcd.Width,",h=",lcd.Height)
+
+	'Show title and number
+	ShowNumber
+End Sub
+
+
+Sub ShowNumber
+	' Set cursor at x,y position
+	Dim x,y As ULong
+
+	' Header with font size w12xh16px
+	x = lcd.CenterX
+	y = 0
+	lcd.Font = lcd.FONT_FONT2
+	lcd.DrawCenterString(x,y,"BATTERY %")
+
+	' Number with font size w32xh48px - max number 9999 (=4x32px)
+	lcd.Font = lcd.FONT_FONT7
+	x = lcd.CenterX
+	y = lcd.Height - lcd.FontHeight
+	lcd.DrawCenterString(x,y, 98)
+End Sub

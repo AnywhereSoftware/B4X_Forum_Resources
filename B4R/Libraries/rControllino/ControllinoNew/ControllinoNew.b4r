@@ -1,0 +1,168 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rcontrollino
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	
+	Public Serial1 As Serial
+	Dim aDay , aWeekDay, aMonth, aYear, aHour, aMinute, aSecond As Byte
+
+	Dim t As Timer
+	
+	Dim p As Pin                  'will be using it for cont_rtc.CONTROLLINO_D0
+	
+	Dim p2 As Pin                 'RTC Alarm Interrupt (cont_rtc.CONTROLLINO_RTC_INTERRUPT)
+	
+	Dim p3 As Pin
+	
+	Dim cont_rtc As CONTROLLINO   'Get an instance of the CONTROLLINO library
+	
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	cont_rtc.Init                  'initialize the RTC
+	
+	cont_rtc.ClearRTCAlarm         'clear all RTC alarms 
+	
+	t.Initialize("t_tick", 1000)   'timer runs every 1 second
+	
+	p.Initialize(cont_rtc.CONTROLLINO_D0, p.MODE_OUTPUT)    'it will just blink the D0 LED in the timer
+	
+	p3.Initialize(cont_rtc.CONTROLLINO_D16, p3.MODE_OUTPUT)
+	
+	aDay = 25
+	aWeekDay = 1
+	aMonth = 2
+	aYear = 24
+	aHour = 18
+	aMinute = 26
+	aSecond = 0
+	
+	'Method 1 to set date and time
+	'cont_rtc.SetTimeDate(aDay, aWeekDay, aMonth, aYear, aHour, aMinute, aSecond)
+
+	'Method 2 to set date and time
+	Dim datum() As Byte = "Mar 29 2024"
+	Dim tyd() As Byte = "14:58:45"
+	Dim err As Byte = cont_rtc.SetTimeDateStrings(datum, tyd)
+	Log("err = ", err)
+	
+	p2.Initialize(cont_rtc.CONTROLLINO_RTC_INTERRUPT, p2.MODE_INPUT_PULLUP)    'pull the CONTROLLINO_RTC_INTERRUPT pin HIGH (see the hover help - it is pin 73)
+	Dim alarmset As Byte = cont_rtc.SetRTCAlarm(14, 59)    'set the time that the alarm should be triggered (RTC time - it is not relative to current RTC time but actual time)
+	If alarmset = 0 Then
+		p3.DigitalWrite(True)                             'if the alarm has been set then light up the LED of pin CONTROLLINO_D16
+	End If
+	t.Enabled = True                     'enable the timer
+	
+End Sub
+
+Sub t_tick
+	
+	p.DigitalWrite(Not(p.DigitalRead))    'blink the LED of D0
+	
+	cont_rtc.PrintTimeAndDate             'prints the date and time to the log (eg 29/3/24   11:14:28)
+	
+	aDay = cont_rtc.GetDay                'get the Day of the month
+	aWeekDay = cont_rtc.GetWeekDay        'get the weekday of the date (0 = Sun, 6 = Sat)
+	aMonth = cont_rtc.GetMonth            'get the month (1 to 12)
+	aYear = cont_rtc.GetYear              'get the year (it returns the last 2 digits eg 24 for 2024)
+	aHour = cont_rtc.GetHour              'get the hour (1 to 12 or 0 to 23)
+	aMinute = cont_rtc.GetMinute          'get the minutes (0 to 59)
+	aSecond = cont_rtc.GetSecond          'get the seconds (0 to 59)
+	
+	Log("aDay = " , aDay)                 'log what was read from the RTC
+	Log("aWeekday = " , aWeekDay)
+	Log("aMonth = " , aMonth)
+	Log("aYear = " , aYear)
+	Log("aHour = " , aHour)
+	Log("aMinute = " , aMinute)
+	Log("aSecond = " , aSecond)
+	Log(" ")
+	
+	If p2.DigitalRead = False Then       'P2 was pulled HIGH when initialized - Once the alarm trigger is will be pulled LOW
+		cont_rtc.ClearRTCAlarm           'Clear the alarm after it was triggered
+		Log("Alarm triggered!")          'Log Alaram Triggered
+		p3.DigitalWrite(False)           'switch off the LED of pin CONTROLLINO_D16 when the alarm was triggered
+		
+		If aMinute < 59 Then
+			t.Enabled = False
+			Delay(500)
+			cont_rtc.SetRTCAlarm(aHour, aMinute + 1)
+			t.Enabled = True
+			p3.DigitalWrite(True)               'switch on the LED of CONTROLLINO_D16
+		Else if aMinute = 59 Then
+			t.Enabled = False
+			Delay(500)
+			cont_rtc.SetRTCAlarm(aHour + 1 , 0)	'switch on the LED of CONTROLLINO_D16
+			t.Enabled = True
+			p3.DigitalWrite(True)
+		End If
+		
+	End If
+
+	
+End Sub
+
+
+'#if C
+'
+'#include <Controllino.h>
+'
+'void initialize (B4R::Object* o) {
+'   Controllino_RTC_init();
+'}
+'
+'void setTimeAndDate(B4R::Object* o) {
+'	Serial.println(b4r_main::_aday);
+'	Controllino_SetTimeDate(b4r_main::_aday, b4r_main::_aweekday, b4r_main::_amonth, b4r_main::_ayear, b4r_main::_ahour, b4r_main::_aminute, b4r_main::_asecond);
+'}
+'
+'void getDay(B4R::Object* o) {
+'	b4r_main::_aday = Controllino_GetDay();
+'}	
+'
+'void getWeekDay(B4R::Object* o) {
+'	b4r_main::_aweekday = Controllino_GetWeekDay();
+'}	
+'
+'void getMonth(B4R::Object* o) {
+'	b4r_main::_amonth = Controllino_GetMonth();
+'}	
+'
+'void getYear(B4R::Object* o) {
+'	b4r_main::_ayear = Controllino_GetYear();
+'}	
+'
+'void getHour(B4R::Object* o) {
+'	b4r_main::_ahour = Controllino_GetHour();
+'}	
+'
+'void getMinute(B4R::Object* o) {
+'	b4r_main::_aminute = Controllino_GetMinute();
+'}	
+'
+'void getSecond(B4R::Object* o) {
+'	b4r_main::_asecond = Controllino_GetSecond();
+'}	
+'
+'#End If
+'
+'
+'
+'

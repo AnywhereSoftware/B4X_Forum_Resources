@@ -1,0 +1,52 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rsrf05
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+'    FILE: SRF05_demo_average.ino
+'  AUTHOR: Rob Tillaart
+' PURPOSE: demo distance sensor
+'    DATE: 2021-05-17
+'     URL: https://github.com/RobTillaart/SRF05
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private SRF As SRF05
+	Private trigger As Int = 7
+	Private echo As Int = 6
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("SSID", "PASSWORD") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	SRF.Initialize(trigger,echo,0)
+	SRF.setCorrectionFactor(1.035)
+	SRF.setModeAverage(10)
+	AddLooper("localloop")
+End Sub
+
+private Sub localloop
+	Log(SRF.getMillimeter)
+	Delay(100)
+	Log(" ")	
+End Sub
+
+

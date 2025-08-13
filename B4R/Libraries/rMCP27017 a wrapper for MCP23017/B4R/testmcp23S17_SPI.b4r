@@ -1,0 +1,138 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rmcp23017
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private raf As RandomAccessFile
+	Private bc As ByteConverter
+	Private MCP As MCP23017
+	Private InterruptPin As Pin
+	Private time0 As ULong = 0
+	Private val As Byte
+End Sub
+
+'// mcp23017 Module use I2C/SPI bus,the slave device address setting:
+'/********************************************
+'0 1 0  0 A2 A1 A0 
+'0 1 0  0 0  0  0    0x20
+'0 1 0  0 0  0  1    0x21
+'0 1 0  0 0  1  0    0x22
+'0 1 0  0 0  1  1    0x23
+'0 1 0  0 1  0  0    0x24
+'0 1 0  0 1  0  1    0x25
+'0 1 0  0 1  1  0    0x26
+'0 1 0  0 1  1  1    0x27
+'*********************************************/
+' MCP_ADDRESS 0x27(A2=1,A1=1,A0=1)
+' MCP_ADDRESS 0x20 // (A2/A1/A0 = LOW)
+
+'=======================================
+'mcp27S17 - SPI config is depending depending of hard:
+'=======================================
+'esp32:
+' SPI by default : MOSI=23 MISO=19 SCK=18 SS=5 
+'HSPI = 2, => mapped To pins MOSI=13 MISO=12 SCK=14 SS=15       
+'VSPI = 3, => mapped To pins MOSI=23 MISO=19 SCK=18 SS=5   => (VSPI=SPI by default)
+'
+'esp8266 :
+'SPI library supports the entire Arduino SPI API including transactions, including setting phase (CPHA). Setting the Clock polarity (CPOL) is Not supported, yet (SPI_MODE2 And SPI_MODE3 Not working).
+'SPI by default : MOSI = GPIO13 MISO = GPIO12 SCLK = GPIO14
+'HSPI : MOSI = GPIO13 MISO = GPIO12 SCLK = GPIO14
+' 
+'There’s an extended mode where you can swap the normal pins To the SPI0 hardware pins. This is enabled by calling
+'SPI.pins(6, 7, 8, 0) before the call To SPI.begin().
+' HSPI_OVERLAP : MOSI = GPIO8  MISO = GPIO7 SCLK = GPIO6  HWCS = GPIO0
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+   InterruptPin.Initialize(14,InterruptPin.MODE_INPUT_PULLUP)   'pin 14 is connected to intB
+   InterruptPin.AddListener("interruptpin_change")
+'   MCP_ADDRESS 0x20 <=> A2/A1/A0 = LOW  
+'case init SPI with default config   
+   MCP.InitializeSPI(10,99,MCP.ADDRESS_0x20)
+   MCP.BeginSPI
+'case init SPI for ESP32, we have 2 SPI HSPI / VSPI
+'	MCP.InitializeSPI_ESP32(MCP.ESP32_HSPI,6,99,MCP.ADDRESS_0x20)
+'	MCP.BeginSPI_ESP32(MCP.ESP32_HSPI, 14, 12, 13, 15)
+'	MCP.BeginSPI 
+If Not(MCP.Init) Then Log(" MCP not connected") Else Log("MCP connected")
+Delay(500)
+  MCP.setAllPins(MCP.portA, MCP.LOW)
+  Delay(1000) 
+  MCP.setPortMode(MCP.OUTPUT,MCP.portA)
+  MCP.setPort(0xFF, MCP.portA)                     ' just a LED test
+  val = 0xFF
+  Delay(1000) 
+
+  MCP.setInterruptPinPol(MCP.HIGH)                         ' set INTA And INTB active-high
+ ' Delay(10)
+  MCP.setPortPullUp(0xFF, MCP.portB)                       ' pull-up for B0-B3
+  MCP.setInterruptOnDefValDevPort(0x80, MCP.portB, 0xFF)   ' interrupt pins, port, DEFVALB
+'  MCP.setInterruptOnChangePort(0xFF, MCP.portB)            ' set all B pins As interrrupt Pins
+  Delay(10)
+  MCP.getIntCap(MCP.portB)                                 ' ensures that existing interrupts are cleared
+  
+  AddLooper("loopbase")                               
+End Sub
+
+Sub loopbase
+	If (Millis > time0 + 2000) Then 
+		MCP.setPort(val,MCP.PortA)		
+		Log("pin changed ",val)
+		val = Bit.Not(val)
+		time0 = Millis
+	End If
+End Sub
+
+
+Sub InterruptPin_Change(state As Boolean)
+'	MCP.getIntCap(MCP.portB)
+	If state = True Then                           'interrupt event
+		Log("interruptFlag ON")		
+		Dim intFlagReg As Byte = MCP.getIntFlag(MCP.portB)
+	'	Dim eventPort As Byte = Bit.Get   Log(intFlagReg)/Log(2)
+		Dim intCapReg As Byte = MCP.getIntCap(MCP.portB)
+
+		Log("Interrupt Flag Register: 0x",bytetoHexa(intFlagReg))
+		Log("Interrupt Capture Register: 0x",bytetoHexa(intCapReg))
+		Dim eventOnPins As Byte =Bit.And(intFlagReg,intCapReg)
+		If eventOnPins <> 0 Then          ' LOW-HIGH Or HIGH-LOW interrupt => LOW
+			Log("Pins on PortB ", Bit.ToBinaryString(eventOnPins), " went HIGH")			 
+		End	if
+ 
+		MCP.setPort(intFlagReg, MCP.portA)
+		Delay(400)
+		intCapReg = MCP.getIntCap(MCP.portB)
+	Else 
+		Log("interruptFlag OFF")	
+	End If
+End Sub
+
+Sub bytetoHexa(n As UInt) As Byte()
+	Dim b1(2) As Byte
+	raf.Initialize(b1, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.SubString(bc.HexFromBytes(b1),2)
+End Sub
+
+Sub b(bin As String) As Byte                  'to use binary format like b("00001111")
+	Return  Bit.ParseInt(bin, 2)
+End Sub

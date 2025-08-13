@@ -1,0 +1,139 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rmqtt
+Library4=rrandomaccessfile
+Library5=resp8266
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi
+	Private astream As AsyncStreams
+	Private d1 As D1Pins
+	Private PinGPIO12 As Pin
+	Private PinGPIO13 As Pin
+	Private PinGPIO14 As Pin
+	Private PinGPIO04 As Pin	
+	Private MQTT As MqttClient
+	Private MQTTUser As String = ""
+	Private MQTTPassword As String = ""
+	Private MQTTBroker As String = "test.mosquitto.org"'change for other broker
+	Private MQTTPort As Int = 1883
+	Private WiFiStr As WiFiSocket
+	Private State As Boolean
+	Private BC As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Delay(500)
+	Serial1.Initialize(115200)
+	Log("AppStart")	
+'...............................................................................................	
+	'Pin Output Module AZDelivery NodeMCU Amica V2 ESP8266
+	PinGPIO04.Initialize(d1.D2, PinGPIO04.MODE_OUTPUT)'Pin D2 ESP Relay 1
+	PinGPIO14.Initialize(d1.D5, PinGPIO14.MODE_OUTPUT)'Pin D5 ESP Relay 2	
+	PinGPIO12.Initialize(d1.D6, PinGPIO12.MODE_OUTPUT)'Pin D6 ESP Relay 3
+	PinGPIO13.Initialize(d1.D7, PinGPIO13.MODE_OUTPUT)'Pin D7 ESP Relay 4	
+		
+	'set off pin esp
+	PinGPIO04.DigitalWrite(True)'True = 1 | Pin D2 Esp is Off | Relay_1 is Off
+	PinGPIO14.DigitalWrite(True)
+	PinGPIO12.DigitalWrite(True)
+	PinGPIO13.DigitalWrite(True)
+	
+	
+'...............................................................................................	
+	'Connect to local WiFi Access Point
+	If wifi.Connect2("XXXXXXXXX", "XXXXXXXXXX") Then'<---change for your wifi router AP
+		Log("Connected to Router WiFi --> Ok")'connected
+		Log("ESP8266 IP --> ", wifi.LocalIp)'IP ESP
+		'Connect to CloudMQTT broker
+		Dim clientId As String = "ESP-" + Rnd(0, 999999999)'create unique id
+		MQTT.Initialize2(WiFiStr.stream, MQTTBroker, MQTTPort, clientId, "MQTT_MessageArrived", "MQTT_Disconnected")				
+		MQTT_Connect(0)'--->sub connect
+	Else
+		Log("Connection wifi problem!")
+		Return
+	End If
+	
+End Sub
+
+Sub Server_NewConnection (NewSocket As WiFiSocket)
+	Log("Client connected")	
+	astream.Initialize(NewSocket.Stream, "astream_NewData", "astream_Error")		
+End Sub
+
+Sub Astream_NewData (Buffer() As Byte)
+	Log("Received: ", Buffer)
+End Sub
+
+Sub AStream_Error
+	Log("Error")
+	
+End Sub
+
+'Mqtt connect/reconnect
+Sub MQTT_Connect(Unused As Byte)
+	If MQTT.Connect = False Then'if do not connect...		
+		Dim mo As MqttConnectOptions
+		mo.Initialize(MQTTUser, MQTTPassword)
+		MQTT.Connect2(mo)
+		CallSubPlus("MQTT_Connect", 1000, 0)'...Tray to reconnect after 1 sec.
+	Else
+		Log("Connected to broker --> Ok")'All ok
+		
+		'Subscribe to topic = to B4J/B4A/B4i/B4R/WebApp/Html......
+		MQTT.Subscribe("ControlRelay4/#", 1)'<---change the name of the topic!
+		MQTT.Subscribe("Relay_1", 1)'		 <---change the name of the topic!
+		MQTT.Subscribe("Relay_2", 1)'		 <---change the name of the topic!
+		MQTT.Subscribe("Relay_3", 1)'		 <---change the name of the topic!
+		MQTT.Subscribe("Relay_4", 1)'		 <---change the name of the topic!
+		
+	End If
+End Sub
+
+
+'Receive Command Mqtt from B4J/B4A/B4i/B4R/WebApp/Html......
+Sub MQTT_MessageArrived (Topic As String, Payload() As Byte)	
+	
+	If BC.StringFromBytes(Payload) = "true" Then State = True Else State = False
+	Log(Topic," ",Not(State))
+	
+	Select Case Topic
+		
+		Case "Relay_1"
+			PinGPIO04.DigitalWrite(Not(State))'Relay 1 ON/OFF House Alarm			
+		Case "Relay_2"
+			PinGPIO14.DigitalWrite(Not(State))'Relay 2 ON/OFF Garden Light
+		Case "Relay_3"
+			PinGPIO12.DigitalWrite(Not(State))'Relay 3 ON/OFF Garage Light
+		Case "Relay_4"
+			PinGPIO13.DigitalWrite(Not(State))'Relay 4 Motor Garage ON/OFF impulse
+			CallSubPlus("Relay_Garage", 1000, 1)'---> Sub			
+
+	End Select
+		
+End Sub
+
+'Motor Garage impulse OFF
+Sub Relay_Garage(Tag As Byte)
+	PinGPIO13.DigitalWrite(True)'Relay 4 OFF Motor Garage
+End Sub
+
+'Disconnect
+Sub MQTT_Disconnected
+	Log("Mqtt Disconnct")
+	MQTT.Close
+End Sub

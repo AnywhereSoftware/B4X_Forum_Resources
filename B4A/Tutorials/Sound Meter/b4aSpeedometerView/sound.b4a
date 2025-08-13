@@ -1,0 +1,217 @@
+﻿Build1=Default,b4a.example1
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=androidplot_0_6_2
+Library2=core
+Library3=runtimepermissions
+Library4=voicerecording
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~'AddManifestText(<uses-permission android:name="android.permission.RECORD_AUDIO" />)~\n~'AddManifestText(<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />)~\n~'RemovePermission(android.permission.WRITE_EXTERNAL_STORAGE)
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=12.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SoundMeter
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+' 	Dim nativeMe As JavaObject
+	Dim T As Timer
+	Dim rp As RuntimePermissions
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+ 
+	Dim vo As VoiceRecording
+ 
+	Private Label1 As Label
+	
+'   Dim A As AudioRecorder
+ 
+	Dim Panel1 As Panel
+ 
+	Dim cn As Canvas
+	Dim rec As Rect
+	
+	
+	
+	Dim bufsize As Int = 300                                  'set the data buffer size here i.e how many values to display in the plot area
+	Dim xlab(bufsize) As String
+	
+	Private lc1 As RealTimeLineChart
+	Dim a As Int = 0
+	Dim xlabeltrack As Int = 0
+ 
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("main")
+	
+
+	
+	
+	
+	
+	rp.CheckAndRequest(rp.PERMISSION_RECORD_AUDIO)
+	wait for Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		
+		cn.Initialize(Panel1)
+ 
+		T.Initialize("t",25)
+ 
+		T.Enabled=True
+ 
+		vo.Initialize("vo")
+ 
+		vo.toggleRecording
+ 
+ 
+	End If
+		
+		
+	lcv1	
+		
+
+End Sub
+
+
+
+
+Sub Activity_Resume
+ 
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	T.Enabled=False
+	vo.stopRecording
+End Sub
+
+
+Sub lcv1
+	
+	lc1.GraphTitleColor = Colors.White
+	lc1.GraphTitleSkewX = -0.15
+	lc1.GraphTitleBold = True
+	lc1.GraphTitleTextSize = 15.0
+	lc1.GraphPlotAreaBackgroundColor = Colors.Black          'this will paint the plotting area DrakGray regardless of what GraphBackgroundColor has been set to
+	lc1.GraphBackgroundColor = Colors.Transparent               'this will paint everything within the outer frame to be white
+	lc1.GraphFrameColor = Colors.Red                            'this adjusts only the outer frame color
+	lc1.GraphFrameWidth = 2.0
+	lc1.GraphBufferSize = bufsize
+	lc1.GraphTitle = "Sound Meter"
+
+	lc1.DomainLabelColor = Colors.Cyan
+	lc1.DomainLabelTextSize = 25
+	lc1.DomianLabel = "Sound Level"
+	
+	lc1.YaxisRangeMode = lc1.YaxisMode_FIXED                    'the other option is FIXED
+	lc1.YaxisRange(00.0, 100.0)
+	lc1.YaxisDivisions = 10
+	lc1.YaxisLabelTicks = 1
+	lc1.YaxisShowZero = True
+	lc1.YaxisTitleTextSize = 20.0
+	lc1.YaxisTitleColor = Colors.Green
+	lc1.YaxisGridLineColor = Colors.Yellow
+	lc1.YaxisLabelTextSize = 20
+	lc1.YaxisLabelColor = Colors.Green
+	lc1.YaxisLabelOrientation = 0
+	lc1.YaxisTitle = "dB"
+	
+	'************************ If you comment this code then the x-axis labels will be the index value of the buffer
+	For i = 0 To bufsize - 1
+		xlab(i) = "" & i
+	Next
+	lc1.XAxisLabels = xlab
+	'*************************************************************************************************************
+		
+	lc1.XaxisLabelTextSize = 20
+	lc1.XaxisLabelTextColor = Colors.Cyan
+	lc1.XaxisGridLineColor = Colors.Yellow
+	lc1.XaxisLabelOrientation = 0
+	lc1.XaxisDivisions = 30
+	lc1.XaxisLabelTicks = 1
+
+	
+	lc1.LegendTextSize = 15.0
+	lc1.LegendTextColor = Colors.White
+	lc1.LegendBackgroundColor = Colors.Transparent
+	
+	'setup for Line 1
+	lc1.Line_1_LineColor = Colors.Red
+	lc1.Line_1_LineWidth = 3.0
+	lc1.Line_1_DrawDash = False
+	lc1.Line_1_LegendText = ""
+
+	lc1.NumberOfLineCharts = 1
+	lc1.DrawTheGraphs
+	
+	
+End Sub
+
+
+ 
+Sub t_tick
+	lc1.START
+ 
+	rec.Initialize(20,0,vo.DecibelValue*10,60)
+	cn.DrawColor(Colors.RGB(0,0,0))
+	cn.DrawRect(rec,Colors.Red,True,5dip)
+	Panel1.Invalidate
+	Label1.Text=vo.DecibelValue &" dB"
+ 
+ 
+ 
+	
+	lc1.addData(vo.DecibelValue, 0, 0, 0, 0)
+	a = a + 1
+	If a = 301 Then a = 0
+   
+	If xlabeltrack = bufsize + 1 Then
+		xlabeltrack = 0
+		lc1.ClearAllData                        'THIS WILL CLEAR THE DATA
+		a = 0
+		For i = 0 To bufsize - 1
+			xlab(i) = "" & i
+		Next
+		lc1.XAxisLabels = xlab
+		lc1.DrawTheGraphs
+		lc1.START
+	End If
+End Sub
+ 
+ 
+Sub shiftarray (oldarray() As String) As String()
+	
+	Dim newarray(bufsize)
+	For i = 0 To bufsize - 2
+		newarray(i) = oldarray(i + 1)
+	Next
+	Return newarray
+	
+End Sub
+
+ 
+ 
+ 
+
+

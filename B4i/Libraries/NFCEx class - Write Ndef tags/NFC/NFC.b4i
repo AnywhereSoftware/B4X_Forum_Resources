@@ -1,0 +1,83 @@
+﻿Build1=Default,b4i.myapplication
+File1=1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=infc
+Library3=irandomaccessfile
+Module1=NFCEx
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=6
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+ #ApplicationLabel: B4i Example
+ #Version: 1.0.0 
+ 'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+ #iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+ #iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+ #Target: iPhone, iPad
+ #ATSEnabled: True
+#End Region
+#MinVersion: 13
+'privacy description:
+#PlistExtra: <key>NFCReaderUsageDescription</key><string>Read nfc tags.</string>
+#Entitlement: <key>com.apple.developer.nfc.readersession.formats</key><array><string>NDEF</string></array>
+#AdditionalLib: CoreNFC.framework, ReferenceOnly
+#PlistExtra: <key>UIUserInterfaceStyle</key><string>Light</string>
+'Change to your provision profile!!!
+#ProvisionFile: Firebase.mobileprovision
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+ 
+	Private lblSupported As Label
+	Private TextView1 As TextView
+	Private btnScan As Button
+	Private NFCEx1 As NFCEx
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	NFCEx1.Initialize
+	If NFCEx1.nfc.Supported Then
+		lblSupported.Text = "Supported"
+	Else
+		lblSupported.Text = "Not supported!"
+	End If
+	btnScan.Enabled = NFCEx1.nfc.Supported
+End Sub
+
+Sub btnScan_Click
+	NFCEx1.Scan("Scan tag")
+End Sub
+
+
+Public Sub LogMsg(msg As String)
+	Log(msg)
+	TextView1.Text = TextView1.Text & msg & CRLF
+	TextView1.ScrollTo(TextView1.Text.Length)
+End Sub
+
+
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+ 
+End Sub
+
+Private Sub Application_Background
+ 
+End Sub
+
+
+

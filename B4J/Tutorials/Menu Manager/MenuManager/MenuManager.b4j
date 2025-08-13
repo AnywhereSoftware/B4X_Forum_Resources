@@ -1,0 +1,289 @@
+﻿AppType=JavaFX
+Build1=Default,com.stevel05.menumanager
+File1=1.bjl
+File2=icon.png
+File3=MenuManager.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Module1=MenuManager
+Module2=MenuCheckBoxClass
+Module3=MenuManagerUtils
+Module4=KeyCombinations
+Module5=MenuItemTextClass
+Module6=MenuCustomClass
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=6
+Version=6.01
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+	#LibraryName: jMenuManager
+	#LibraryAuthor: Steve Laming
+	#LibraryVersion: 0.03
+#End Region
+
+'Requires B4j V5.9+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private MenuBar1 As MenuBar
+	Private ContextMenu1 As ContextMenu
+	Private Label1 As Label
+	Private DisabledIcon As MenuItemTextClass
+	'Menumanager object need to be Global as they manage the callbacks throughout the life of the menu.
+	Private FileMenu,HelpMenu,MMContext As MenuManager
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets,"MenuManager.css"))
+	
+	BuildMenus
+	MainForm.Show
+End Sub
+
+Private Sub BuildMenus
+	
+	MenuBar1.Menus.Clear
+
+	FileMenu.Initialize(Me,"Menu","File")
+	
+	
+	'*******************************************************************************************************************
+	'Items attached to the main menu
+	'*******************************************************************************************************************
+	Dim SubMenu2 As List = Array( _
+		FileMenu.MenuCheckBox("Option 1").SetTag("Option 1"), _
+		FileMenu.MenuSeparator, _
+		FileMenu.MenuCheckBox("Option 2 Alternate Event Name").SetEventName("MCB").SetTag("Option 2"), _
+		FileMenu.MenuCheckBox("Option 3").SetTag("Option 3").SetShortCutKey(Array As String(KeyCombinations.KC_CONTROL,KeyCombinations.KC_SHIFT,"K")))
+	
+	DisabledIcon = FileMenu.MenuText("Item With MaterialIcon As Icon").SetTag("MA1").SetGraphic(FileMenu.NewMaterialIcon(Chr(0xE14B),fx.Colors.Red)).SetEnabled(False)
+	
+	Dim SubMenu1 As List = Array( _
+		FileMenu.MenuText("Item With ShortCut").SetTag("IWS1").SetShortCutKey(Array As String(KeyCombinations.KC_CONTROL,KeyCombinations.KC_SHIFT,"L")), _
+		FileMenu.MenuText("Normal Item").SetTag("NIT1"), _
+		FileMenu.MenuText("Item With FontAwesom As Icon").SetTag("FA1").SetGraphic(FileMenu.NewFontAwesome(Chr(0xF1E3),fx.Colors.Black)), _
+		DisabledIcon, _
+		FileMenu.MenuText("Enable above option").SetTag("EnableMA1"), _
+		FileMenu.MenuText("Item With image As Icon").SetTag("Img1").SetGraphic(FileMenu.NewImage(File.DirAssets,"icon.png")), _
+		FileMenu.MenuSeparator, _
+		FileMenu.MenuSubMenu("Options",SubMenu2))
+		
+	'
+	'Add a menutitle, menuText, Seperator or CheckBox (you can add more see: https://docs.oracle.com/javase/8/javafx/api/javafx/scene/control/MMContext.html
+	'for items available
+	'
+	
+	'
+	'Create the objects for the custom menuitems
+	'
+	Dim Lbl As Label
+	Lbl.Initialize("")
+	Lbl.Text = "Item with Tooltip"
+	Lbl.TooltipText = "Tooltip for label"
+	
+	Dim Lbl2 As Label
+	Lbl2.Initialize("")
+	Lbl2.Font = fx.CreateFontAwesome(15)
+	Lbl2.Text = Chr(0xF0A1)
+	Lbl2.TextColor = fx.Colors.black
+	
+	Dim Lbl3 As Label
+	Lbl3.Initialize("")
+	Lbl3.Text = "another label with tooltip and Icon"
+	Lbl3.TooltipText = "Another tooltip"
+	Lbl3.TextColor = fx.Colors.black
+	
+	'
+	'An HBox is useful as it will align items horizontally without any effort.  
+	'Full Docs are here: https://docs.oracle.com/javase/8/javafx/api/javafx/scene/layout/HBox.html
+	'The item with HBox is sent to a different Event callback as it needs to be unwrapped before it can be accessed. 
+	'
+	Dim HBox As JavaObject
+	HBox.InitializeNewInstance("javafx.scene.layout.HBox",Null)
+	HBox.RunMethodJO("getChildren",Null).RunMethod("add",Array(Lbl2))
+	HBox.RunMethodJO("getChildren",Null).RunMethod("add",Array(Lbl3))
+	HBox.RunMethod("setSpacing",Array(10.0))
+	
+	'
+	'Add them along with submenu1 to the main menu
+	'
+	Dim MainMenu As List = Array As Object( _
+		FileMenu.MenuSeparator, _
+		FileMenu.MenuSubMenu("SubMenu1",SubMenu1), _
+		FileMenu.MenuSeparator, _
+		FileMenu.MenuText("Menuitem Alternate Event Name").SetTag("AEN").SetEventName("AltEN"), _
+		FileMenu.MenuCustom(Lbl).SetTag("IWT"), _
+		FileMenu.MenuCustom(HBox).SetTag("IWT2").SetEventName("HBox") _
+		)
+	
+	
+	
+	'*******************************************************************************************************************
+	'Items attached to the help menu
+	'*******************************************************************************************************************
+	
+	HelpMenu.Initialize(Me,"Menu","Help")
+	Dim Simple2 As List = HelpMenu.SimpleMenuList(Array As String("About"))
+	
+	
+	
+	
+	'*******************************************************************************************************************
+	'Build and add the menus to the menu bar
+	'*******************************************************************************************************************
+	
+	'Get the Menumanager to build the menus
+	FileMenu.AddItems(MainMenu,True)
+	HelpMenu.AddItems(Simple2,True)
+	
+	'Add the built menus to the MenuBar
+	MenuBar1.Menus.Add(FileMenu.Menu)
+	MenuBar1.Menus.Add(HelpMenu.menu)
+	
+	
+	'*******************************************************************************************************************
+	'MMContext with submenus
+	'*******************************************************************************************************************
+	
+	MMContext.Initialize(Me,"MContext","")
+	
+	'
+	'Need to set the MENUTYPE for a context menu
+	'
+	MMContext.MenuType = MMContext.MENUTYPE_CONTEXTMENU
+	
+	'
+	'Note: of you want to change the state of a menu checkbox in code, you will need to keep a reference to it as a global variable,
+	'the same goes for changing any attributes once the menus are built.  See the disabledicon in the main menu.
+	
+	Dim Lbl As Label
+	Lbl.Initialize("")
+	Lbl.Text = "Item with Tooltip"
+	Lbl.TooltipText = "Tooltip for label"
+	'
+	Dim SubMenu2 As List = Array( _
+		MMContext.MenuCheckBox("Option 1").SetTag("CM Option 1"), _
+		MMContext.MenuSeparator, _
+		MMContext.MenuCheckBox("Option 2").SetTag("CM Option 2"), _
+		MMContext.MenuCheckBox("Option 3").SetTag("CM Option 3"))
+	
+	Dim SubMenu1 As List = Array( _
+		MMContext.MenuText("Item 2-1").SetTag("CM Item 2-1"), _
+		MMContext.MenuSeparator, _
+		MMContext.MenuSubMenu("SubMenu2",SubMenu2), _
+		MMContext.MenuSeparator, _
+		MMContext.MenuText("Item With image As Icon").SetTag("CM Img 1").SetGraphic(FileMenu.NewImage(File.DirAssets,"icon.png")))
+
+	Dim SimpleMenu As List = MMContext.SimpleMenuList(Array As String("Simple 1","Simple 2","-","Simple 3"))
+		
+	Dim MenuContext As List = Array As Object( _
+		MMContext.MenuTitle("MMContextTitle").SetHideOnClick(False,True), _
+		MMContext.MenuSeparator, _
+		MMContext.MenuSubMenu("SubMenu1",SubMenu1), _
+		MMContext.MenuSubMenu("Simple Menu",SimpleMenu), _
+		MMContext.MenuSeparator, _
+		MMContext.MenuText("Menuitem 1").SetTag("CM MI 1"))
+	
+	'
+	'Add the menu to the menu manager for building
+	'
+	MMContext.AddItems(MenuContext,True)
+	MMContext.AddItems(Array(MMContext.MenuCustom(Lbl)),False)
+
+	'
+	'Assign the menu to the context menu, need to keep this as a global variable so we can call it when needed.
+	'
+	ContextMenu1 = MMContext.Menu
+	
+End Sub
+
+'*******************************************************************************************************************
+'Menu Callbacks
+'*******************************************************************************************************************
+
+Sub Menu_CustomAction(MC As MenuCustomClass)
+	Dim L As Label = MC.GetContent
+	Log("MainMenu Text Activated" & L.Text & " Tag " & MC.GetTag)
+End Sub
+
+Sub HBox_CustomAction(MC As MenuCustomClass)
+	Dim HBox As JavaObject = MC.GetContent
+	Dim Children As List = HBox.RunMethod("getChildren",Null)
+	Dim L As Label = Children.Get(1)
+	Log("Menu Text Activated" & L.Text & " Tag " & MC.GetTag)
+End Sub
+
+'
+'A menu item has been clicked
+'
+Sub Menu_Action(MI As MenuItemTextClass)
+	Log("Menu Text Activated " & MI.Text & " Tag " & MI.GetTag)
+	
+	'Enable and disable an item with graphic
+	If MI.GetTag = "EnableMA1" Then
+		If DisabledIcon.GetEnabled = False Then
+			DisabledIcon.SetEnabled(True).SetGraphic(FileMenu.NewMaterialIcon(Chr(0xE876),fx.Colors.Green))
+			MI.Text = "Disable Above Item"
+		Else
+			DisabledIcon.SetEnabled(False).SetGraphic(FileMenu.NewMaterialIcon(Chr(0xE14B),fx.Colors.Red)).SetEnabled(False)
+			MI.Text = "Enable Above Item"
+		End If
+	End If
+End Sub
+
+Private Sub Menu_MenuOpening(M As Menu)
+	Log(M & " opening")
+End Sub
+
+'
+'A checkbox item has been clicked
+'
+Sub Menu_SelectedChanged(MCB As MenuCheckBoxClass)
+	Log(MCB.Text &  " Checked = " & MCB.GetSelected & " Tag " & MCB.getTag)
+End Sub
+
+'
+'A menu item has been clicked  (For alternate Event Name Test)
+'
+Sub AltEn_Action(MI As MenuItemTextClass)
+	Log("Alternate EventName Activated Menu Text " & MI.Text & " Tag " & MI.GetTag)
+End Sub
+
+
+
+'*******************************************************************************************************************
+'Show the context menu
+'*******************************************************************************************************************
+
+'Show the MMContext if label1 is Right Clicked
+Sub Label1_MousePressed(EventData As MouseEvent)
+	If EventData.SecondaryButtonDown Then MenuManagerUtils.AsJO(ContextMenu1).RunMethod("show",Array(Label1,"RIGHT",0.0,0.0))
+End Sub
+
+
+'*******************************************************************************************************************
+'Context Menu callbacks
+'*******************************************************************************************************************
+
+'A checkbox item has been clicked (For alternate Event Name Test)
+Sub MContext_SelectedChanged(MCB As MenuCheckBoxClass)
+	Log("6")
+	Log("Context Menu Activated " & MCB.Text &  " Checked = " & MCB.GetSelected & " Tag " & MCB.getTag)
+End Sub
+
+Sub MContext_Action(MI As MenuItemTextClass)
+	Log("7")
+	Log("ContextMenu Text Activated " & MI.Text & " Tag " & MI.GetTag)
+End Sub

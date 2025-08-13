@@ -1,0 +1,344 @@
+﻿AppType=JavaFX
+Build1=Default,com.stevel05.jmidilib
+File1=1.bjl
+File2=BoogieWonderland.mid
+FileGroup1=New Group
+FileGroup2=New Group
+Group=Default Group
+Library1=byteconverter
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Module1=Midi_GM
+Module10=MidiInstrument
+Module11=MidiListenerClass
+Module12=MidiMessage
+Module13=MidiMessage_Static
+Module14=MidiMessageBuilder
+Module15=MidiMetaMessage
+Module16=MidiMetaMessage_Static
+Module17=MidiPatch
+Module18=MidiReceiver
+Module19=MidiSequence
+Module2=Midi_GM_Drums
+Module20=MidiSequence_Static
+Module21=MidiSequencer
+Module22=MidiShortMessage
+Module23=MidiShortMessage_Static
+Module24=MidiSoundbank
+Module25=MidiStatus
+Module26=MidiSynthesizer
+Module27=MidiSysexMessage
+Module28=MidiSysexMessage_Static
+Module29=MidiSystemStatic
+Module3=MidiChannel
+Module30=MidiTrack
+Module31=MidiTransmitter
+Module32=MidiTypeNames_Static
+Module33=MidiUtils
+Module4=MidiDevice
+Module5=MidiDeviceInfo
+Module6=MidiEvent
+Module7=MidiEventBuilder
+Module8=MidiEventStatic
+Module9=MidiFileFormat
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=33
+Version=10.1
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 600 
+#End Region
+
+'#LibraryAuthor: Stevel05
+'#LibraryName: jJavaxMidi
+'#LibraryVersion: 0.1
+
+'Uncomment to create a package for java9+
+'#VirtualMachineArgs:--add-opens java.desktop/com.sun.media.sound=ALL-UNNAMED
+'#PackagerProperty: VMArgs=--add-opens java.desktop/com.sun.media.sound=b4j
+
+'SL Tools
+'Archive modules ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=C:\noinst\B4j\ArchiveProjectModules\ArchiveProjectModules.exe&Args=%PROJECT%\%PROJECT_NAME%.b4j
+
+#If Version
+V1.1 	Fixed MidiEvent Tostring to work as TostringBBT but with ticks
+		added MidiUtils TimeSigFromEvent
+		added helper method MidiTrack.GetTimeSignatures
+
+V1.2	Modified ToString method in MidiEvent
+		Added ToString Method in MidiMetaMessage
+		Bug fix in the Demo - filter is kept when changing tracks
+
+V1.3	Fixed bug in soundfont initialization
+V1.4	Added TransposeTrack2 to MidiUtils which allows ignoring transpose on certain midi channels.
+		Fixed bug in MidiSynthesizer GetLoadedInstruments
+v1.5	Added ChrSet where needed to allow use of different character encoding for text events in a midifile.
+		Added VirtualMachinArgs and PackagerProperty to the example project as required to create a package on Java9+
+V1.6	Amended MidiData_Event in MidiTransmitter class to return a MidiMessage instead of MidiShortMessage
+V1.7	Modified MidiysytemStatic GetSequence2 and GetSequence3 to return wrapped sequence Objects
+V 1.8	Fixed bug in MidiSystemGetMidiFileFormat3
+		Bug Fixes
+v 1.9   Changed Sim initialized to IInitialized to stop issues with B4j V10.2 Beta
+#End iF
+
+Sub Process_Globals
+'	Type FileType(FileName As String, FilePath As String)
+	Private fx As JFX
+	Private MainForm As Form
+'	Private CurrentFile As FileType
+	Private Seq As MidiSequence
+	Private Seqr As MidiSequencer
+	Private ChoiceBox1 As ChoiceBox
+	Private ListView1 As ListView
+	Private btnLoadFile As Button
+	Private btnRewind As Button
+	Private AppName As String = "jMidiLibTest"
+	Private tbPosition As ToggleButton
+	Private tfFilter As TextField
+	Private ChrSet As String = "UTF-8"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	
+	'Need to initialize some Static classes as they update constants from the java class.
+	'If the class has an initialize method and you want to use the class, call the method.
+
+	MidiSystemStatic.Initialize
+	
+	Seqr = MidiSystemStatic.GetSequencer
+	Seqr.Open
+	
+	Seqr.GetTransmitter.AddListener(Me,"Trans")
+
+	LoadFile
+	
+
+
+	'Test for GetMidiFileFormat
+'	Log(MidiSystemStatic.GetMidiFileFormat(File.DirAssets,"BoogieWonderland.mid"))
+'	Dim inp As InputStream = File.OpenInput("D:/Documents/MidiFiles","BoogieWonderland.mid")
+'	Dim inp As InputStream = File.OpenInput("D:/Documents/MidiFiles","BoogieWonderland.mid")
+'	Log(MidiSystemStatic.GetMidiFileFormat2(inp).GetType_)
+'	Log(MidiSystemStatic.GetMidiFileFormat3(File.GetUri(File.DirAssets,"BoogieWonderland.mid")).GetType_)
+
+	'Test to load midi file from assets.
+'	LoadFromAssets("BoogieWonderland.mid")
+'	LoadFromFileURI(File.DirAssets,"BoogieWonderland.mid")
+	
+End Sub
+
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	Seqr.Close
+End Sub
+
+
+
+Private Sub LoadFile
+	Dim FC As FileChooser
+	FC.Initialize
+	Dim FP As String
+
+		If File.Exists(File.DirData(AppName),"LastFilePath.txt") Then
+			Dim FP As String = File.ReadString(File.DirData(AppName),"LastFilePath.txt")
+			If File.IsDirectory(FP,"") = False Then FP = ""
+		End If
+
+	If FP <> "" Then
+		FC.InitialDirectory = FP
+	Else
+		FC.InitialDirectory = GetSystemProperty("user.home","C:\")
+	End If
+	FC.SetExtensionFilter("Midi File",Array As String("*.kar","*.midi","*.mid"))
+
+	FC.Title = "Load Midi File"
+
+	Dim FileName As String = FC.ShowOpen(MainForm)
+
+	If FileName = "" Then Return
+
+	File.WriteString(File.DirData(AppName),"LastFilePath.txt",File.GetFileParent(FileName))
+
+	LoadFileDo(FileName)
+	
+	Log(Seq.GetResolution)
+End Sub
+
+
+Private Sub LoadFromAssets(FileName As String)
+	Log("Loading " & FileName)
+	MainForm.Title = "LyricManager " & FileName
+	
+	ListView1.Items.Clear
+	ChoiceBox1.Items.Clear
+	Try
+		Dim Inp As InputStream = File.OpenInput(File.DirAssets,FileName)
+		Seq = MidiSystemStatic.GetSequence2(Inp)
+		Seqr.SetSequence2(Seq)
+	Catch
+		Log(LastException)
+		Log("Could not load this file as a midi file")
+		Return
+	End Try
+	
+'	CurrentFile.FilePath = File.GetFileParent(FileName)
+'	CurrentFile.FileName = File.GetName(FileName)
+	
+	Dim TrackName As String
+	ChoiceBox1.Items.Clear
+	For i = 0 To Seq.GetTracks.Length - 1
+		Dim T As MidiTrack = Seq.GetTracks(i)
+		TrackName = T.GetTrackName(ChrSet)
+		If TrackName = "" Then TrackName = "NoName"
+		ChoiceBox1.Items.Add(i & " : " & TrackName & " : " & T.GetInstrumentName(ChrSet))
+		If ChoiceBox1.Items.Size > 0 Then ChoiceBox1.SelectedIndex = 0
+	Next
+End Sub
+
+Private Sub LoadFromFileURI(Dir As String, FileName As String)
+	Log("Loading " & FileName)
+	MainForm.Title = "LyricManager " & FileName
+	
+	ListView1.Items.Clear
+	ChoiceBox1.Items.Clear
+	Try
+		Seq = MidiSystemStatic.GetSequence3(File.GetUri(Dir,FileName))
+		Seqr.SetSequence2(Seq)
+	Catch
+		Log(LastException)
+		Log("Could not load this file as a midi file")
+		Return
+	End Try
+	
+'	CurrentFile.FilePath = File.GetFileParent(FileName)
+'	CurrentFile.FileName = File.GetName(FileName)
+	
+	Dim TrackName As String
+	ChoiceBox1.Items.Clear
+	For i = 0 To Seq.GetTracks.Length - 1
+		Dim T As MidiTrack = Seq.GetTracks(i)
+		TrackName = T.GetTrackName(ChrSet)
+		If TrackName = "" Then TrackName = "NoName"
+		ChoiceBox1.Items.Add(i & " : " & TrackName & " : " & T.GetInstrumentName(ChrSet))
+		If ChoiceBox1.Items.Size > 0 Then ChoiceBox1.SelectedIndex = 0
+	Next
+End Sub
+
+
+Private Sub LoadFileDo(FileName As String)
+	Log("Loading " & FileName)
+	MainForm.Title = "LyricManager " & FileName
+	
+	ListView1.Items.Clear
+	ChoiceBox1.Items.Clear
+	Try
+		Seq = MidiSystemStatic.GetSequence(File.GetFileParent(FileName),File.GetName(FileName))
+		Seqr.SetSequence2(Seq)
+	Catch
+		Log(LastException)
+		Log("Could not load this file as a midi file")
+		Return
+	End Try
+	
+'	CurrentFile.FilePath = File.GetFileParent(FileName)
+'	CurrentFile.FileName = File.GetName(FileName)
+	
+	Dim TrackName As String
+	ChoiceBox1.Items.Clear
+	For i = 0 To Seq.GetTracks.Length - 1
+		Dim T As MidiTrack = Seq.GetTracks(i)
+		TrackName = T.GetTrackName(ChrSet)
+		If TrackName = "" Then TrackName = "NoName"
+		ChoiceBox1.Items.Add(i & " : " & TrackName & " : " & T.GetInstrumentName(ChrSet))
+		If ChoiceBox1.Items.Size > 0 Then ChoiceBox1.SelectedIndex = 0
+	Next
+		
+End Sub
+
+Sub ChoiceBox1_SelectedIndexChanged(Index As Int, Value As Object)
+	If Index = -1 Then Return
+	UpdateListView(Seq.GetTracks(Index),tfFilter.Text)
+End Sub
+
+Private Sub UpdateListView(T As MidiTrack,Filter As String)
+	
+	ListView1.Items.Clear
+	If Filter = "" Then
+		For i = 0 To T.Size - 1
+			Dim Mevt As MidiEvent = T.Get(i)
+			If tbPosition.Selected Then
+				ListView1.Items.Add(Mevt.ToString(ChrSet))
+			Else
+				ListView1.Items.Add(Mevt.ToStringBBT(Seq,4,ChrSet))
+			End If
+		Next
+	Else
+		Dim Name As String
+		For i = 0 To T.Size - 1
+			Dim Mevt As MidiEvent = T.Get(i)
+			Dim eMsg As MidiMessage = Mevt.GetMessage
+			Dim ID As Int
+			If eMsg.IsMidiMetaMessage Then
+				ID = eMsg.GetMessage(1)
+			Else
+				ID = eMsg.GetMessage(0)
+			End If
+			Name = MidiTypeNames_Static.ShortName(Bit.And(ID,0xFF))
+			If Name.ToLowerCase.Contains(Filter.ToLowerCase) Then
+				If tbPosition.Selected Then
+					ListView1.Items.Add(Mevt.ToString(ChrSet))
+				Else
+					ListView1.Items.Add(Mevt.ToStringBBT(Seq,4,ChrSet))
+				End If
+			End If
+		Next
+	End If
+End Sub
+
+Sub btnPlayStop_Click
+	If Seqr.IsInitialized Then
+		If Seqr.IsRunning Then
+			Seqr.Stop
+		Else
+			Seqr.Start
+		End If
+	End If
+End Sub
+
+Sub btnRewind_Click
+	If Seqr.IsInitialized Then Seqr.SetMicrosecondPosition(0)
+End Sub
+
+Sub btnLoadFile_Click
+	If Seqr.IsRunning Then Seqr.Stop
+	LoadFile
+End Sub
+
+Sub tfFilter_TextChanged (Old As String, New As String)
+	UpdateListView(Seq.GetTracks(ChoiceBox1.SelectedIndex),New)
+End Sub
+
+Sub tbPosition_SelectedChange(Selected As Boolean)
+	UpdateListView(Seq.GetTracks(ChoiceBox1.SelectedIndex),tfFilter.Text)
+End Sub
+
+Private Sub Trans_Received(Msg As MidiMessage, TimeStamp As Long)
+	If Msg.IsShortMessage Then
+		Dim SM As MidiShortMessage = Msg.AsShortMessage
+		If SM.GetCommand = MidiStatus.NOTE_ON Or SM.GetCommand = MidiStatus.NOTE_OFF Then
+			Log(SM.GetCommand & " : " & SM.GetChannel & " : " & SM.GetData1 & " : " & SM.GetData2)
+		End If
+	End If
+End Sub

@@ -1,0 +1,944 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+  <b4x_version>13.00</b4x_version>
+  <dependsOn>ime</dependsOn>
+  <dependsOn>phone</dependsOn>
+  <dependsOn>reflection</dependsOn>
+  <dependsOn>sd_creativebackground</dependsOn>
+  <dependsOn>xui</dependsOn>
+  <dependsOn>javaobject</dependsOn>
+  <dependsOn>bitmapcreator</dependsOn>
+  <class>
+    <name>b4a.example.sd_keyboard._typeed</name>
+    <shortname>TypeED</shortname>
+    <owner>activity</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>NativeEventName</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>ck</name>
+      <returntype>b4a.example.customkey</returntype>
+    </field>
+    <field>
+      <name>NextFocus</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </field>
+    <field>
+      <name>Status</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>InputType</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.sd_keyboard</name>
+    <shortname>SD_Keyboard</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.VIBRATE</permission>
+    <event>Digit(Key As String)</event>
+    <event>DigitSpecialKey(Code As Int)</event>
+    <designerProperty>Key: KBackground, DisplayName: Keyboard Background: Default Color Example, FieldType: Color, DefaultValue: #FFADD9A2, Description: All keyboard background color</designerProperty>
+    <designerProperty>Key: KeyColor, DisplayName: Single Key Background: Default Color Example, FieldType: Color, DefaultValue: #FFADD9A2, Description: Keys background color</designerProperty>
+    <designerProperty>Key: KeyTextColor, DisplayName: Key TextColor: Default Color Example, FieldType: Color, DefaultValue: #FF000000, Description: Keys text color</designerProperty>
+    <designerProperty>Key: CornerColor, DisplayName: Corner Key Color: Default Color Example, FieldType: Color, DefaultValue: #FFFFFFFF, Description: Corner Keys color</designerProperty>
+    <designerProperty>Key: Between, DisplayName: Space between keys, FieldType: Int, DefaultValue: 3, MinRange: 0, MaxRange: 10, Description: Space Between Key</designerProperty>
+    <designerProperty>Key: CornerRadius, DisplayName: Corner radius, FieldType: Int, DefaultValue: 5, Description: Corner Radius</designerProperty>
+    <designerProperty>Key: CornerSize, DisplayName: Corner size, FieldType: Int, DefaultValue: 5, MinRange: 3, MaxRange: 10, Description: Corner size dept</designerProperty>
+    <designerProperty>Key: TextSize, DisplayName: Text Size, FieldType: Int, DefaultValue: 14, Description: Keys text size</designerProperty>
+    <designerProperty>Key: Key3D, DisplayName: Keys in 3D, FieldType: Boolean, DefaultValue: True, Description: Keys in 3D or Corner</designerProperty>
+    <designerProperty>Key: AutoClose, DisplayName: Auto closing, FieldType: Boolean, DefaultValue: False, Description: Automatic keyboard closing</designerProperty>
+    <designerProperty>Key: Vibrate, DisplayName: Vibrate on click, FieldType: Boolean, DefaultValue: False, Description: Vibrate on click</designerProperty>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ClearKeyboard">_clearkeyboard</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="DesignerCreateView">_designercreateview</name>
+      <comment>Base type must be Object
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Base</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>Lbl</name>
+        <type>anywheresoftware.b4a.objects.LabelWrapper</type>
+      </parameter>
+      <parameter>
+        <name>Props</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="DrawKeyboard">_drawkeyboard</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>V</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EventSender">_eventsender</name>
+      <returntype>Object</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetBase">_getbase</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getDarkFactor" HideFromIDE="true">_getdarkfactor</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getHeight" HideFromIDE="true">_getheight</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLeft" HideFromIDE="true">_getleft</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLightFactor" HideFromIDE="true">_getlightfactor</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShowKeyboard" HideFromIDE="true">_getshowkeyboard</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTop" HideFromIDE="true">_gettop</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getVisible" HideFromIDE="true">_getvisible</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getWidth" HideFromIDE="true">_getwidth</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Callback</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Invalidate">_invalidate</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="setDarkFactor" HideFromIDE="true">_setdarkfactor</name>
+      <comment>To set the intensity of the dark part of the shadow - normally = 0.85
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>f</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetEvent">_setevent</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>View</name>
+        <type>anywheresoftware.b4a.objects.EditTextWrapper</type>
+      </parameter>
+      <parameter>
+        <name>te</name>
+        <type>b4a.example.sd_keyboard._typeed</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFont" HideFromIDE="true">_setfont</name>
+      <comment> Set Key Font
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>F</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setHeight" HideFromIDE="true">_setheight</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setImageBackground" HideFromIDE="true">_setimagebackground</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>img</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XBitmapWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetKeyboard">_setkeyboard</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TextEditorView</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper</type>
+      </parameter>
+      <parameter>
+        <name>NativeEventName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>CustomizeKeyboard</name>
+        <type>b4a.example.customkey</type>
+      </parameter>
+      <parameter>
+        <name>ShiftOn</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>NextFocus</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setKeyStyle" HideFromIDE="true">_setkeystyle</name>
+      <comment> 0-Standard; 1-Comics; 2-Heart; 3-Flower; 4-Octagon
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>V</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLeft" HideFromIDE="true">_setleft</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLightFactor" HideFromIDE="true">_setlightfactor</name>
+      <comment> To set the intensity of the light part of the shadow - normally = 1.15
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>f</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShowKeyboard" HideFromIDE="true">_setshowkeyboard</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setSpecialKeyFont" HideFromIDE="true">_setspecialkeyfont</name>
+      <comment> Set Font of SpecilKey - Standard: MaterialIcon
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>F</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTop" HideFromIDE="true">_settop</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetupColor">_setupcolor</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>BackgroundColorKey</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextColorKey</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>BackgroundColorBoard</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVisible" HideFromIDE="true">_setvisible</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setWidth" HideFromIDE="true">_setwidth</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ShifOn">_shifon</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>S</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ShiftStatus">_shiftstatus</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Snapshot">_snapshot</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper.B4XBitmapWrapper</returntype>
+    </method>
+    <property>
+      <name DesignerName="DarkFactor">_darkfactor</name>
+      <comment>To set the intensity of the dark part of the shadow - normally = 0.85
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Height">_height</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Left">_left</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="LightFactor">_lightfactor</name>
+      <comment> To set the intensity of the light part of the shadow - normally = 1.15
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ShowKeyboard">_showkeyboard</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Top">_top</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Visible">_visible</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Width">_width</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Font">_font</name>
+      <comment> Set Key Font
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ImageBackground">_imagebackground</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XBitmapWrapper</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="KeyStyle">_keystyle</name>
+      <comment> 0-Standard; 1-Comics; 2-Heart; 3-Flower; 4-Octagon
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="SpecialKeyFont">_specialkeyfont</name>
+      <comment> Set Font of SpecilKey - Standard: MaterialIcon
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </property>
+    <field>
+      <name DesignerName="Tag">_tag</name>
+      <returntype>Object</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyShiftUp">_keyshiftup</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyShiftDown">_keyshiftdown</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyShiftLock">_keyshiftlock</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyCanc">_keycanc</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyDel">_keydel</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyTab">_keytab</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyNext">_keynext</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyEnter">_keyenter</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="keyEraseAll">_keyeraseall</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="TimeLapseMilliSec">_timelapsemillisec</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="InsertAlwaysAtEnd">_insertalwaysatend</name>
+      <returntype>boolean</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.customkey._type_singlekey</name>
+    <shortname>Type_SingleKey</shortname>
+    <owner>activity</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>UpperText</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>LowerText</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>UpperCode</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>LowerCode</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>size</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>Cstm</name>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>bkey</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>tkey</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>klb</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </field>
+    <field>
+      <name>AlternateUp</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+    <field>
+      <name>AlternateLo</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.customkey</name>
+    <shortname>CustomKey</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddCustomKeyToLastRow">_addcustomkeytolastrow</name>
+      <comment>Customize Key with color
+&lt;code&gt;Ck.AddCustomKeyToLastRow("SPACE",32,"SPACE.",32,3,xui.Color_Red,xui.Color_White) ' space large 3 key&lt;/code&gt;
+&lt;code&gt;Ck.AddCustomKeyToLastRow("Enter",ck.CodeEnter,"Enter",ck.CodeEnter,1, ,xui.Color_Green,xui.Color_White))&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>UpText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LoText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LoCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>BackgroundKeyColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextKeyColor</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddCustomKeyToLastRow2">_addcustomkeytolastrow2</name>
+      <comment>Customize Key with color and alternative key
+&lt;code&gt;ck. AddCustomKeyToLastRow2("E",69,"e",101,CreateMap("È":200,"É":201),CreateMap("è":232,"é":233),1,,xui.Color_Red,xui.Color_White)&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>UpText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LoText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LoCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>AlternateKeyUp</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>AlternateKeyLo</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>BackgroundKeyColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextKeyColor</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddEmptyRow">_addemptyrow</name>
+      <comment> Can add key with Add...LastRow
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddEmptySpaceToLastRow">_addemptyspacetolastrow</name>
+      <returntype>b4a.example.customkey</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddKeyToLastRow">_addkeytolastrow</name>
+      <comment> Ck.AddKeytoLastRow("SPACE",32,"SPACE.",32,3) ' space large 3 key
+ Ck.AddKeytoLastRow("",0,"",0,1) ' Empty
+ Ck.AddKeytoLastRow("Enter",ck.CodeEnter,"Enter",ck.CodeEnter,1)
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>UpperText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LowerText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LoCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddKeyToLastRow2">_addkeytolastrow2</name>
+      <comment> To insert alternative key
+ &lt;code&gt;Ck.AddKeyToLastRow2("E",69,"e",101,CreateMap("È":200,"É":201),CreateMap("è":232,"é":233),1)&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>UpperText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LowerText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LoCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>AlternateKeyUpper</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>AlternateKeyLower</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddRow">_addrow</name>
+      <comment> CustomKey.AddRow(ListOfSingleKey)
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Keys</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddSimpleCharToLastRow">_addsimplechartolastrow</name>
+      <comment> Char or key: Shift, Canc, Del, Tab, Esc, Next, EraseAll
+ &lt;code&gt;CustomKey.AddSimpleCharToLastRow(array as string("A","B","C","Next","Tab","Canc"))&lt;/code&gt;
+ &lt;code&gt;CustomKey.AddSimpleCharToLastRow(Regex.Split(",","A,B,C,0,1,2,Enter"))&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Keys</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddSimpleCharToNewRow">_addsimplechartonewrow</name>
+      <comment> Special Char or key: Shift, Canc, Del, Tab, Esc, Next, EraseAll
+&lt;code&gt;CustomKey.AddRowSimpleChar(array as string("A","B","C","Next","Tab","Canc"))&lt;/code&gt;
+&lt;code&gt;CustomKey.AddRowSimpleChar(Regex.Split(",","A,B,C,0,1,2,Enter"))&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Keys</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddStringtoKeyToNewRow">_addstringtokeytonewrow</name>
+      <comment> Don't insert special char: Shift, Canc, Del, Tab, Esc, Next
+&lt;code&gt; CustomKey.AddStringtoKeyToNewRow(array as string("00","000","Hallo"))&lt;/code&gt;
+&lt;code&gt; CustomKey.AddStringtoKeyToNewRow(Regex.Split(",","00,000,Hallo"))&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Strings</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddUpperLowerCharToLastRow">_addupperlowerchartolastrow</name>
+      <comment> Char or key: Shift, Canc, Del, Tab, Esc, Next,EraseAll
+ CustomKey.AddUpperLowerCharToLastRow(array as string("Aa","Bb","Cc","Next","Tab","Canc"))
+ CustomKey.AddUpperLowerCharToLastRow(Regex.Split(",","Aa,Bb,Cc,00,11,12,Enter"))
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Keys</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddUpperLowerCharToNewRow">_addupperlowerchartonewrow</name>
+      <comment> Char or key: Shift, Canc, Del, Tab, Esc, Next,EraseAll
+ &lt;code&gt;CustomKey.AddUpperLowerCharToNewRow(array as string("Aa","Bb","Cc","Next","Tab","Canc"))&lt;/code&gt;
+ &lt;code&gt;CustomKey.AddUpperLowerCharToNewRow(Regex.Split(",","Aa,Bb,Cc,00,11,12,Enter"))&lt;/code&gt;
+</comment>
+      <returntype>b4a.example.customkey</returntype>
+      <parameter>
+        <name>Keys</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="cEmptyKey">_cemptykey</name>
+      <returntype>b4a.example.customkey._type_singlekey</returntype>
+    </method>
+    <method>
+      <name DesignerName="cKey">_ckey</name>
+      <returntype>b4a.example.customkey._type_singlekey</returntype>
+      <parameter>
+        <name>UpperText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpperCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LowerText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LowerCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>AlternateUp</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>AlternateLo</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="cKeyCustomized">_ckeycustomized</name>
+      <returntype>b4a.example.customkey._type_singlekey</returntype>
+      <parameter>
+        <name>UpperText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpperCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LowerText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LowerCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>BackgroundKeyColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextKeyColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>AlternateUp</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>AlternateLo</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="cKeySized">_ckeysized</name>
+      <returntype>b4a.example.customkey._type_singlekey</returntype>
+      <parameter>
+        <name>UpperText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UpperCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>LowerText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>LowerCode</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>size</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>AlternateUp</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>AlternateLo</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="KeyBoard">_keyboard</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <field>
+      <name DesignerName="CodeCanc">_codecanc</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeTab">_codetab</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeEnter">_codeenter</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeEsc">_codeesc</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeDel">_codedel</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeNext">_codenext</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeShift">_codeshift</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="CodeEraseAll">_codeeraseall</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="InsertKeyText">_insertkeytext</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <version>2.03</version>
+  <author>Star-Dust</author>
+</root>

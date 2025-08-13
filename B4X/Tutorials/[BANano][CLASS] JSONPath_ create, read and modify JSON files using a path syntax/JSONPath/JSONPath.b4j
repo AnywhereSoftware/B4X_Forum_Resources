@@ -1,0 +1,198 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=json
+Module1=JSONPath
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	JsonTest
+End Sub
+
+public Sub JsonTest()
+	Log("---------- START EMPTY but the SET makes it a TYPE_ARRAY -----------------------------------")
+	
+	' create an empty JSONPath object
+	Dim Path As JSONPath
+	Path.Initialize("")
+	
+	' add a new team and add a player
+	Path.set("@/players/@", CreateMap("name": "Alain", "surName": "Bailleul"))
+	' on the last team, add a new player
+	Path.set("#/players/@", CreateMap("name": "Catherine", "surName": "Brion"))
+	' set the last player as captain
+	Path.set("#/players/#/isCaptain", True)
+	' set the team name
+	Path.set("#/name", "De Caddie Clan")
+	' add a new team and add a player
+	Path.set("@/players/@", CreateMap("name": "Filip", "surName": "Pattyn"))
+	' on the last team, add a new player
+	Path.set("#/players/@", CreateMap("name": "Kristof", "surName": "Wittouck"))
+	' set the last player as captain
+	Path.set("#/players/#/isCaptain", True)
+	' set the team name
+	Path.set("#/name", "The Golfers")
+	Log(Path.ToPrettyString(5))
+	
+	' add in every team this player
+	Path.set("*/players/@", CreateMap("name": "3th", "surName": "Person", "isReferee": True))
+	Log(Path.ToPrettyString(5))
+	
+	' find objects. Find in all the teams the players named 3th and add a gender to it
+	' the key contains the full path to the found object
+	Dim players As Map = Path.Filter("*/players", CreateMap("name": "3th"))
+	For Each key As String In players.Keys
+		Dim play As Map = players.Get(key)
+		play.Put("gender", "F")
+		Log("Player " & play.Get("name") & " full path = " & key)
+	Next
+	Log(Path.ToPrettyString(5))
+	
+	' find all the captains, print their full name and lookup their team name
+	Dim captains As Map = Path.Filter("*/players", CreateMap("isCaptain": True))
+	For Each key As String In captains.Keys
+		Dim play As Map = captains.Get(key)
+		Log("The captain is: " & play.Get("name") & " " & play.Get("surName"))
+		' use the key to lookup the team
+		Dim Keys() As String = Path.PathToKeys(key)
+		Dim TeamPath As Map = Path.Get(Keys(0))
+		Log("From the team: " & TeamPath.Get("name"))
+	Next
+	
+	' get the name of player 1 in team 1
+	Log("The name of player 1 in team 1 is " & Path.GetDefault("1/players/1/name", "Not found"))
+	
+	' move player 0 from team 1 and add him at the end of the players in team 0
+	Dim play As Map = Path.Move("1/players/0", "0/players/@")
+	
+	Log(Path.ToPrettyString(5))
+	
+	' copy player 0 from team 0 and add him at the end of the players in team 1
+	Dim play As Map = Path.Copy("0/players/0", "1/players/@")
+	
+	' you can make another JSONPath from this map or list
+	Dim PlayPath As JSONPath
+	PlayPath.Initialize(play)
+	' add a new property
+	PlayPath.Set("isCopied", True)
+	
+	Log(Path.ToPrettyString(5))
+	
+	Path.remove("1")
+	
+	Log(Path.ToPrettyString(5))
+	
+	' get the size of an array object
+	Dim size As Long = Path.GetArraySize("0/players")
+	Log("Number of players in team 0 = " & size)
+	
+	' get the type of the root of the JSON
+	Select Case Path.RootType
+		Case Path.TYPE_MAP
+			Log("Root of object is a map")
+		Case Path.TYPE_ARRAY
+			Log("Root of object is an array")
+		Case Else
+			Log("Root of object is still undefined")
+	End Select
+	
+	Log("---------- START EMPTY but the SET makes it a TYPE_MAP --------------------------------")
+	
+	Dim Path As JSONPath
+	Path.Initialize("")
+	'Path.Set("game", "2024/09/11")
+	' would also work and would make it a TYPE_MAP
+	' Path.Initialize($"{"game": "2024/09/11"}"$)
+	
+	Path.set("teams/@/players/@", CreateMap("name": "Alain", "surName": "Bailleul"))
+	' on the last added team, add a new player
+	Path.set("teams/#/players/@", CreateMap("name": "Catherine", "surName": "Brion"))
+	' set the last player as captain
+	Path.set("teams/#/players/#/isCaptain", True)
+	' set the team name
+	Path.set("teams/#/name", "De Caddie Clan")
+	' add a new team and add a player
+	Path.set("teams/@/players/@", CreateMap("name": "Filip", "surName": "Pattyn"))
+	' on the last added team, add a new player
+	Path.set("teams/#/players/@", CreateMap("name": "Kristof", "surName": "Wittouck"))
+	' set the last player as captain
+	Path.set("teams/#/players/#/isCaptain", True)
+	' set the team name
+	Path.set("teams/#/name", "De Golfers")
+	Log(Path.ToPrettyString(5))
+	
+	' add in every team this player
+	Path.set("teams/*/players/@", CreateMap("name": "3th", "surName": "Person", "isReferee": True))
+	Log(Path.ToPrettyString(5))
+	
+	Dim players As Map = Path.Filter("teams/*/players", CreateMap("name": "3th"))
+	For Each key As String In players.Keys
+		Dim play As Map = players.Get(key)
+		play.Put("gender", "F")
+		Log("Player " & play.Get("name") & " full path = " & key)
+	Next
+	Log(Path.ToPrettyString(5))
+	
+	'Dim captains As Map = Path.Filter($"teams/{"name": "De Caddie Clan"}/players"$, CreateMap("isCaptain": True))
+	'Dim captains As Map = Path.Filter($"teams/{"name": "De Caddie Clan"}/players/{"isCaptain": True}"$, Null)
+	Dim captains As Map = Path.Filter("teams/*/players", CreateMap("isCaptain": True))
+	For Each key As String In captains.Keys
+		Dim play As Map = captains.Get(key)
+		Log("The captain is: " & play.Get("name") & " " & play.Get("surName"))
+		' use the key to lookup the team
+		Dim Keys() As String = Path.PathToKeys(key)
+		Dim TeamPath As Map = Path.Get(Keys(0) & "/" & Keys(1))
+		Log("From the team: " & TeamPath.Get("name"))
+	Next
+	
+	' get the name of player 1 in team 1
+	Log("The name of player 1 in team 1 is " & Path.GetDefault("teams/1/players/1/name", "Not found"))
+	
+	' move player 0 from team 1 and add him at the end of the players in team 0
+	Dim play As Map = Path.Move("teams/1/players/0", "teams/0/players/@")
+	
+	Log(Path.ToPrettyString(5))
+	
+	' copy player 0 from team 0 and add him at the end of the players in team 1
+	Dim play As Map = Path.Copy("teams/0/players/0", "teams/1/players/@")
+	
+	' you can make another JSONPath from this map or list
+	Dim PlayPath As JSONPath
+	PlayPath.Initialize(play)
+	' add a new property
+	PlayPath.Set("isCopied", True)
+	
+	Log(Path.ToPrettyString(5))
+	
+	Path.remove("teams/1")
+	
+	Log(Path.ToPrettyString(5))
+	
+	' get the size of an array object
+	Dim size As Long = Path.GetArraySize("teams/0/players")
+	Log("Number of players in team 0 = " & size)
+	
+	' get the type of the root of the JSON
+	Select Case Path.RootType
+		Case Path.TYPE_MAP
+			Log("Root of object is a map")
+		Case Path.TYPE_ARRAY
+			Log("Root of object is an array")
+		Case Else
+			Log("Root of object is still undefined")
+	End Select
+End Sub

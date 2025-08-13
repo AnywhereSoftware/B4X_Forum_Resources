@@ -1,0 +1,330 @@
+﻿Build1=Default,name.obrien.dave.tipsdemo
+File1=main.bal
+File2=mainContent.bal
+File3=screenshot.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=stringutils
+Library4=accessibility
+ManifestCode=AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~	~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo.Light")~\n~SetApplicationAttribute(android:resizeableActivity, "true")~\n~~\n~AddApplicationText(<meta-data android:name="android.max_aspect" android:value="3"/>)~\n~
+Module1=DOTips
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+'DOTips demo 2.7, by Dave O'Brien
+'Last updated: 3 Dec 2022
+'
+'This demo uses the free DOTips class to add tips to an app.
+'The demo lets you change all properties of the tips (color, position, etc.) and see their effects.
+'Questions, suggestions, bugs? Please post on the DOTips thread in the B4A forums > Libraries & classes.
+
+#Region  Project Attributes 
+	#ApplicationLabel: DOTips demo
+	#VersionCode: 12
+	#VersionName: 2.7
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: true
+'	#ExcludeClasses: anywheresoftware.b4a.phone.RingtoneManager
+	#CustomBuildAction: 1, c:\windows\system32\attrib.exe, +r res\*.* /s
+	#CustomBuildAction: 4, c:\windows\system32\attrib.exe, -r res\*.* /s
+	#BridgeLogger: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Private finishedTips As Int = -1				'saves the progress of the tips list during orientation changes
+End Sub
+
+Sub Globals
+	Private backgroundColorLabel, positionLabel, alignmentLabel, landscapeAlignLabel As Label
+	Private backgroundColorSpinner, maskColorSpinner, highlightColorSpinner As Spinner
+	Private descriptionColorSpinner, nextButtonColorSpinner, nextButtonTextColorSpinner As Spinner
+	Private portraitPositionSpinner, landscapePositionSpinner, portraitAlignSpinner, landscapeAlignSpinner As Spinner
+	Private titleSizeField, descriptionSizeField, highlightRadiusField, highlightWidthField, highlightPaddingField As EditText
+	Private skipTextField, nextTextField, doneTextField, spacerField, elevationField As EditText
+	Private resetButton, showButton As Button
+	Private dummyLabel As Label
+	Private formSV As ScrollView
+	Private formPanel As Panel
+	Private tips As DOTips
+	Private canSkipSpinner As Spinner
+	Private closeButton As Button
+	Private alignmentPanel As Panel
+	Private portraitAlignLabel As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	formSV.Panel.LoadLayout("mainContent")
+	formSV.Panel.Height = formPanel.height
+	tips.Initialize(Me, Activity, "tips")
+	setupUI
+End Sub
+
+Sub Activity_Resume
+	If finishedTips >= 0 Then						'if tips were interrupted by activity being paused, resume them now
+		CallSubDelayed(Me, "showTips")
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If tips.Visible = True Then															'was showing tips when the app was paused
+		finishedTips = Max(0, finishedTips) + tips.getIndexOfCurrentTip 		'save how far we've gone through the tips, for resuming later
+	End If
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 		'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		'if we're showing a tip (and the tips are skippable), Back should end the tips
+		If (tips.Visible = True) And (tips.CanSkip) Then
+			tips.hide(True)
+			Return True
+		Else
+			Return False
+		End If
+	Else
+		Return False
+	End If
+End Sub
+
+'this sets up the demo UI controls
+Sub setupUI
+	backgroundColorSpinner.DropdownBackgroundColor = Colors.white
+	backgroundColorSpinner.Add("black (default)")
+	backgroundColorSpinner.Add("blue")
+	backgroundColorSpinner.Add("red")
+	
+	maskColorSpinner.DropdownBackgroundColor = Colors.white
+	maskColorSpinner.Add("black (default)")
+	maskColorSpinner.Add("blue")
+	maskColorSpinner.Add("red")
+	
+	highlightColorSpinner.DropdownBackgroundColor = Colors.white
+	highlightColorSpinner.Add("green (default)")
+	highlightColorSpinner.Add("magenta")
+	highlightColorSpinner.Add("yellow")
+		
+	descriptionColorSpinner.DropdownBackgroundColor = Colors.white
+	descriptionColorSpinner.Add("white (default)")
+	descriptionColorSpinner.Add("magenta")
+	descriptionColorSpinner.Add("yellow")
+	
+	nextButtonColorSpinner.DropdownBackgroundColor = Colors.white
+	nextButtonColorSpinner.Add("gray (default)")
+	nextButtonColorSpinner.Add("blue")
+	nextButtonColorSpinner.Add("red")
+	
+	nextButtonTextColorSpinner.DropdownBackgroundColor = Colors.white
+	nextButtonTextColorSpinner.Add("white (default)")
+	nextButtonTextColorSpinner.Add("magenta")
+	nextButtonTextColorSpinner.Add("yellow")
+	
+	canSkipSpinner.DropdownBackgroundColor = Colors.white
+	canSkipSpinner.Add("true (default)")
+	canSkipSpinner.Add("false")
+	
+	portraitPositionSpinner.DropdownBackgroundColor = Colors.white
+	portraitPositionSpinner.Add("POSITION_AUTO")
+	portraitPositionSpinner.Add("POSITION_ABOVE")
+	portraitPositionSpinner.Add("POSITION_BELOW")
+	portraitPositionSpinner.Add("POSITION_LEFT")
+	portraitPositionSpinner.Add("POSITION_RIGHT")
+	
+	landscapePositionSpinner.DropdownBackgroundColor = Colors.white
+	landscapePositionSpinner.Add("POSITION_AUTO")
+	landscapePositionSpinner.Add("POSITION_ABOVE")
+	landscapePositionSpinner.Add("POSITION_BELOW")
+	landscapePositionSpinner.Add("POSITION_LEFT")
+	landscapePositionSpinner.Add("POSITION_RIGHT")
+	
+	portraitAlignSpinner.DropdownBackgroundColor = Colors.white
+	portraitAlignSpinner.Add("ALIGN_AUTO")
+	portraitAlignSpinner.Add("ALIGN_LEFT")
+	portraitAlignSpinner.Add("ALIGN_CENTER")
+	portraitAlignSpinner.Add("ALIGN_RIGHT")
+	
+	landscapeAlignSpinner.DropdownBackgroundColor = Colors.white
+	landscapeAlignSpinner.Add("ALIGN_AUTO")
+	landscapeAlignSpinner.Add("ALIGN_LEFT")
+	landscapeAlignSpinner.Add("ALIGN_CENTER")
+	landscapeAlignSpinner.Add("ALIGN_RIGHT")
+
+	resetUI
+End Sub
+
+Sub resetButton_Click
+	resetUI
+	tips.resetSettings
+End Sub
+
+Sub resetUI
+	backgroundColorSpinner.SelectedIndex = 0
+	maskColorSpinner.SelectedIndex = 0
+	highlightColorSpinner.SelectedIndex = 0
+	highlightRadiusField.Text = Round(tips.DEFAULT_HIGHLIGHT_RADIUS / Density)
+	highlightWidthField.Text = Round(tips.DEFAULT_HIGHLIGHT_WIDTH / Density)
+	highlightPaddingField.Text = Round(tips.DEFAULT_HIGHLIGHT_PADDING / Density)
+	titleSizeField.Text = tips.DEFAULT_TITLE_SIZE
+	descriptionSizeField.Text = tips.DEFAULT_DESC_SIZE
+	descriptionColorSpinner.SelectedIndex = 0
+	skipTextField.Text = tips.DEFAULT_SKIP_TEXT
+	nextTextField.Text = tips.DEFAULT_NEXT_TEXT
+	doneTextField.Text = tips.DEFAULT_DONE_TEXT
+	nextButtonColorSpinner.SelectedIndex = 0
+	nextButtonTextColorSpinner.SelectedIndex = 0
+	canSkipSpinner.SelectedIndex = 0
+	portraitPositionSpinner.SelectedIndex = 0
+	landscapePositionSpinner.SelectedIndex = 0
+	portraitAlignSpinner.SelectedIndex = 0
+	landscapeAlignSpinner.SelectedIndex = 0
+	spacerField.Text = Round(tips.DEFAULT_SPACER / Density)
+	elevationField.Text = tips.DEFAULT_ELEVATION
+End Sub
+
+Sub showButton_Click
+	showTips
+End Sub
+
+'this is the important part, where we actually set up the tips and show them
+Sub showTips
+	tips.clear								'build the list fresh each time
+	tips.resetSettings					'restore to factory settings before applying new values
+	
+	getValuesFromFields					'for this demo, we'll get our tip settings from the demo UI
+	
+	tips.addGeneralTip("DOTips class - demo", "This class lets you explain your app to your users.")
+	
+	'picture tips show a graphic in any Android-supported format, and are auto-sized to the space available
+	tips.addPictureTip("screenshot.png", "You can show a picture of a concept or an interaction…")
+
+	'view tips just need to be pointed at a view whose Visible property is True.
+	tips.addTipForView(highlightColorSpinner, "Highlight color", "…or you can highlight and explain a specific control in your UI.")
+	tips.addTipForView(nextTextField, "Next button text", "This view is partway down a scrollview (which scrolls automatically).")
+
+	'Tips for areas - useful when you want to highlight an area of the screen that is not a view (or that includes several views).
+	'In this example, the area is bounded by the Portrait Align label at the upper left and the Landscape Align label at the lower right.
+	Dim tempLeft As Int = alignmentPanel.Left + portraitAlignLabel.Left
+	Dim tempTop As Int = alignmentPanel.Top + portraitAlignLabel.top
+	Dim tempRight As Int = alignmentPanel.Left + landscapeAlignLabel.left + landscapeAlignLabel.Width
+	Dim tempBottom As Int = alignmentPanel.Top + landscapeAlignLabel.Top + landscapeAlignLabel.Height
+	Dim tempRect As Rect
+	tempRect.Initialize(tempLeft, tempTop, tempRight, tempBottom)
+	tips.addTipForArea(tempRect, formSV, "A larger area", "Use the addTipForArea method to highlight any region of the screen.")
+
+	'When we add tips, they use the properties that were in effect WHEN THEY WERE ADDED.
+	'To change the appearance of the remaining tips, we change properties here, like this:
+	tips.BackgroundColor = Colors.ARGB(170, 0, 0, 255) 
+	tips.HighlightColor = Colors.cyan
+	tips.PortraitAlign = tips.ALIGN_RIGHT
+	tips.LandscapeAlign = tips.ALIGN_RIGHT
+	'...and the tips added below will then use those new colors:
+	tips.addTipForView(portraitPositionSpinner, "Position", "You can change most of the look and feel to suit your app.")
+	tips.addGeneralTip("Orientation changes", "You can even handle screen rotation with a few lines of codes copied from this demo. Try rotating now.")
+
+	'If we want to show or hide anything special while the tips are visible,
+	'do it just before showing the tips, then use the "OnHide" event (see bottom) to clean up afterward.
+	'In this demo, we just want the yellow label at the bottom to be hidden while the tips are shown (but restored after the tips are done).
+	dummyLabel.Visible = False
+	
+	If finishedTips >= 0 Then					'tips were interrupted, so resume where we left off
+		tips.resume(finishedTips)
+	Else												'no interruption, so show all the tips from the beginning
+		tips.show
+	End If
+End Sub
+
+'Once the tips are closed (no longer visible), you can do any post-tips actions here.
+'tipsSkipped is the # of tips that were skipped (i.e. zero if all the tips were viewed). You can use this to decide if you want to show the tips
+'again next time, or perhaps only show the ones that were skipped (e.g. build your tips list and then remove the first N tips they already saw).
+Sub tips_onHide(tipsSkipped As Int)
+	finishedTips = -1			'the user did a Skip All or finished all tips, so forget our last position in the tips list
+	dummyLabel.Visible = True
+End Sub
+
+'this demo uses the values from the UI to change the appearance of the tips
+Sub getValuesFromFields
+	Select backgroundColorSpinner.SelectedItem
+		Case "black (default)" : tips.BackgroundColor = tips.DEFAULT_BACKGROUND_COLOR
+		Case "blue" : tips.BackgroundColor = Colors.ARGB(80, 0, 0, 255)
+		Case "red" : tips.BackgroundColor = Colors.ARGB(80, 255, 0, 0)
+	End Select
+	Select maskColorSpinner.SelectedItem
+		Case "black (default)" : tips.maskColor = tips.DEFAULT_BACKGROUND_COLOR
+		Case "blue" : tips.maskColor = Colors.ARGB(80, 0, 0, 255)
+		Case "red" : tips.maskColor = Colors.ARGB(80, 255, 0, 0)
+	End Select
+	Select highlightColorSpinner.SelectedItem
+		Case "green (default)" : tips.HighlightColor = tips.DEFAULT_HIGHLIGHT_COLOR
+		Case "magenta" : tips.HighlightColor = Colors.Magenta
+		Case "yellow" : tips.HighlightColor = Colors.Yellow
+	End Select
+	tips.HighlightRadius = DipToCurrent(Abs(highlightRadiusField.text))
+	tips.HighlightWidth = DipToCurrent(Abs(highlightWidthField.text))
+	tips.HighlightPadding = DipToCurrent(Abs(highlightPaddingField.text))
+	tips.TitleSize = Abs(titleSizeField.Text)
+	tips.DescriptionSize = Abs(descriptionSizeField.Text)
+	Select descriptionColorSpinner.SelectedItem
+		Case "white (default)" : tips.DescriptionColor = tips.DEFAULT_DESC_COLOR
+		Case "magenta" : tips.DescriptionColor = Colors.Magenta
+		Case "yellow" : tips.DescriptionColor = Colors.Yellow
+	End Select
+	tips.SkipText = skipTextField.Text
+	tips.NextText = nextTextField.Text
+	tips.DoneText = doneTextField.Text
+	Select nextButtonColorSpinner.SelectedItem
+		Case "gray (default)" : tips.NextButtonColor = tips.DEFAULT_NEXT_BUTTON_COLOR
+		Case "blue" : tips.NextButtonColor = Colors.blue
+		Case "red" : tips.NextButtonColor = Colors.red
+	End Select
+	Select nextButtonTextColorSpinner.SelectedItem
+		Case "white (default)" : tips.NextButtonTextColor = tips.DEFAULT_NEXT_BUTTON_TEXT_COLOR
+		Case "magenta" : tips.NextButtonTextColor = Colors.magenta
+		Case "yellow" : tips.NextButtonTextColor = Colors.yellow
+	End Select
+	Select canSkipSpinner.SelectedItem
+		Case "true (default)" : tips.CanSkip = True
+		Case "false" : tips.CanSkip = False
+	End Select
+	Select portraitPositionSpinner.SelectedItem
+		Case "POSITION_AUTO" : tips.PortraitPosition = tips.POSITION_AUTO
+		Case "POSITION_ABOVE" : tips.PortraitPosition = tips.POSITION_ABOVE
+		Case "POSITION_BELOW" : tips.PortraitPosition = tips.POSITION_BELOW
+		Case "POSITION_LEFT" : tips.PortraitPosition = tips.POSITION_LEFT
+		Case "POSITION_RIGHT" : tips.PortraitPosition = tips.POSITION_RIGHT
+	End Select
+	Select landscapePositionSpinner.SelectedItem
+		Case "POSITION_AUTO" : tips.LandscapePosition = tips.POSITION_AUTO
+		Case "POSITION_ABOVE" : tips.LandscapePosition = tips.POSITION_ABOVE
+		Case "POSITION_BELOW" : tips.LandscapePosition = tips.POSITION_BELOW
+		Case "POSITION_LEFT" : tips.LandscapePosition = tips.POSITION_LEFT
+		Case "POSITION_RIGHT" : tips.LandscapePosition = tips.POSITION_RIGHT
+	End Select
+	Select portraitAlignSpinner.SelectedItem
+		Case "ALIGN_AUTO" : tips.PortraitAlign = tips.ALIGN_AUTO
+		Case "ALIGN_LEFT" : tips.PortraitAlign = tips.ALIGN_LEFT
+		Case "ALIGN_CENTER" : tips.PortraitAlign = tips.ALIGN_CENTER
+		Case "ALIGN_RIGHT" : tips.PortraitAlign = tips.ALIGN_RIGHT
+	End Select
+	Select landscapeAlignSpinner.SelectedItem
+		Case "ALIGN_AUTO" : tips.LandscapeAlign = tips.ALIGN_AUTO
+		Case "ALIGN_LEFT" : tips.LandscapeAlign = tips.ALIGN_LEFT
+		Case "ALIGN_CENTER" : tips.LandscapeAlign = tips.ALIGN_CENTER
+		Case "ALIGN_RIGHT" : tips.LandscapeAlign = tips.ALIGN_RIGHT
+	End Select
+	tips.Spacer = DipToCurrent(Abs(spacerField.text))
+	tips.Elevation = elevationField.Text
+End Sub
+
+Sub closeButton_Click
+	Activity.Finish	
+End Sub

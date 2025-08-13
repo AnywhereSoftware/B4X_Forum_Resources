@@ -1,0 +1,97 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+File2=overlay.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=phone
+Library4=xui
+Library5=rippledrawable
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=BottomSheetBuilder
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=2
+Version=12.96
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	
+	Public material_navigation = Chr(0xE55D) As Char
+	Public material_icon_add = Chr(0xE145) As Char
+	Public material_icon_add_circle = Chr(0xE148) As Char
+	Public material_autorenew = Chr(0xE5D5) As Char
+	Public material_filter_list = Chr(0xE152) As Char
+	Public material_favorite = Chr(0xE87D) As Char
+	Public material_findinpage = Chr(0xE880) As Char
+	Public material_info = Chr(0xE88E) As Char
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim bottomopciones1 As BottomSheetBuilder
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Button1_Click
+	
+End Sub
+
+Sub Button1_Click
+	bottomopciones1.Initialize(Activity,Me,"bottomopciones1")
+	bottomopciones1.addItem(2,"NAVEGAR", material_navigation)
+	bottomopciones1.addItem(3,"AÑADIR", material_icon_add)
+	bottomopciones1.addItem(4,"OPCION1", material_icon_add_circle)
+	bottomopciones1.addItem(5,"OPCION2", material_autorenew)
+	bottomopciones1.addItem(6,"OPCION3", material_favorite)
+	bottomopciones1.addItem(7,"OPCION4", material_filter_list)
+	bottomopciones1.addItem(8,"OPCION5", material_findinpage)
+	bottomopciones1.addItem(9,"OPCION6", material_info)
+	bottomopciones1.addItem(10,"OPCION7", material_info)
+	bottomopciones1.addItem(11,"OPCION8", material_autorenew)
+	bottomopciones1.addItem(12,"OPCION9", material_icon_add_circle)
+	bottomopciones1.show
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'return true if you want to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If bottomopciones1.IsInitialized And bottomopciones1.checkoverlayvisible Then
+			bottomopciones1.ToggleDrawerState
+			Return True
+		End If
+	End If
+	
+	Return False
+End Sub
+
+Sub bottomopciones1_BottomSheetItemClick(BottomSheetId As Int)
+	Log(BottomSheetId)
+	ToastMessageShow(BottomSheetId & " clicado!", False)
+End Sub
+

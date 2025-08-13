@@ -1,0 +1,93 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2
+Library3=json
+Library4=okhttp
+Library5=javaobject
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+'Version: 2.00
+
+#AdditionalJar: google-auth-library-oauth2-http-1.18.0.jar
+#AdditionalJar: google-auth-library-credentials-1.18.0.jar
+#AdditionalJar: guava-23.0.jar
+#AdditionalJar: google-http-client-1.43.3.jar
+#AdditionalJar: google-http-client-gson-1.43.3.jar
+#AdditionalJar: gson-2.10.1.jar
+#AdditionalJar: opencensus-api-0.31.1.jar
+#AdditionalJar: opencensus-contrib-http-util-0.31.1.jar
+#AdditionalJar: grpc-context-1.27.2.jar
+#PackagerProperty: AdditionalModuleInfoString = uses com.google.auth.http.HttpTransportFactory;
+
+Sub Process_Globals
+	Private Const ProjectId As String = "b4a-test1" 'change
+	Private ServiceAccountFilePath As String = "C:\Users\H\Downloads\b4a-test1-firebase-adminsdk-9ze0o-ecfe854c74.json" 'change
+	Private Token As String
+End Sub
+
+Sub AppStart (Args() As String)
+	Send("general", "this is the title", "And this is the body")
+	StartMessageLoop
+End Sub
+
+Private Sub Send (topic As String, title As String, body As String)
+	Dim Token As String = GetTokenValue(ServiceAccountFilePath)
+	Wait For (SendMessage(topic, title, body)) Complete (Success As Boolean) 'B4A - commend if not needed
+	Wait For (SendMessage("ios_" & topic, title, body)) Complete (Success As Boolean) 'B4i - comment if not needed
+	ExitApplication
+End Sub
+
+Private Sub SendMessage(Topic As String, Title As String, Body As String) As ResumableSub
+	Dim Job As HttpJob
+	Job.Initialize("", Me)
+	Dim data As Map = CreateMap("title": Title, "body": Body)
+	Dim message As Map = CreateMap("topic": Topic, "data": data)
+	If Topic.StartsWith("ios_") Then
+		'B4i
+		Dim Badge As Int = 0
+		Dim iosalert As Map =  CreateMap("title": Title, "body": Body)
+		message.Put("notification", iosalert)
+		message.Put("apns", CreateMap("headers": _
+			CreateMap("apns-priority": "10"), _
+			"payload": CreateMap("aps": CreateMap("sound":"default", "badge": Badge))))
+	Else
+		'B4A
+		message.Put("android", CreateMap("priority": "high"))
+	End If
+	Dim jg As JSONGenerator
+	jg.Initialize(CreateMap("message": message))
+	Log(jg.ToPrettyString(4))
+	Job.PostString($"https://fcm.googleapis.com/v1/projects/${ProjectId}/messages:send"$, jg.ToString)
+	Job.GetRequest.SetContentType("application/json;charset=UTF-8")
+	Job.GetRequest.SetHeader("Authorization", "Bearer " & Token)
+	Wait For (Job) JobDone(Job As HttpJob)
+	If Job.Success Then
+		Log(Job.GetString)
+	End If
+	Job.Release
+	Return True
+End Sub
+
+Private Sub GetTokenValue (FilePath As String) As String
+	Dim GoogleCredentials As JavaObject
+	GoogleCredentials.InitializeStatic("com.google.auth.oauth2.GoogleCredentials")
+	Dim Credentials As JavaObject = GoogleCredentials.RunMethodJO("fromStream", Array(File.OpenInput(FilePath, ""))) _
+		.RunMethod("createScoped", Array(Array As String("https://www.googleapis.com/auth/firebase.messaging")))
+	Credentials.RunMethod("refreshIfExpired", Null)
+	Return Credentials.RunMethodJO("getAccessToken", Null).RunMethod("getTokenValue", Null)
+End Sub
+
+
+
+
+

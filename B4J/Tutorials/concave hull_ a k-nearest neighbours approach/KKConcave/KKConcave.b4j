@@ -1,0 +1,140 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=KKShape
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Type coord(x As Double, y As Double)
+	Type Pair(First As Int, Second As Double)
+	Type sorttype(distance As Int, point() As Int,Angle As Double,deg As Double)
+
+	Private const center=200 As Int
+	Private const radius=50 As Int
+	Private const pl() As Int=Array As Int(207, 184,393, 60,197, 158,197, 114,128, 261,442, 40, _
+	237, 159,338, 75,194, 93,33, 159,393, 152,433, 267, _
+	324, 141,384, 183,273, 165,250, 257,423, 198,227, 68, _
+	120, 184,214, 49,256, 75,379, 93,312, 49,471, 187,366, 122)
+	Private time As Long
+	Dim cvs As Canvas
+	Private hull As List
+	Private timer1 As Timer
+	Type xy(x As Int, y As Int)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	hull.Initialize
+
+	cvs.Initialize("cvs")
+	MainForm.RootPane.AddNode(cvs, 0, 0, MainForm.RootPane.Width, MainForm.RootPane.Height)
+	Private points As List
+	points.Initialize
+	For x=0 To pl.Length-1 Step 2
+
+		Private t() As Int=Array As Int(pl(x),pl(x+1))
+		points.Add(t)
+	Next
+'	For x=0 To 50
+'		Private t() As Int=Array As Int(Rnd(50,400),Rnd(50,400))
+'		points.Add(t)
+'	Next
+'	points=createtestpattern(points)
+
+
+'	For x=0 To 360 Step 10
+'		Private t() As Int=Array As Int(Sin(deg2rad(x))*radius+center,Cos(deg2rad(x))*radius+center)
+'		points.Add(t)
+'	Next
+
+
+	timer1.Initialize("Build",5000)
+	timer1.Enabled=True
+	time=DateTime.Now
+	cvs.ClearRect(0,0,MainForm.RootPane.Width,MainForm.RootPane.Height)
+
+'	hull.Add(hull.Get(0))
+
+	hull=KKShape.concave(points,5)
+	paintgraphics(points)
+	Log("It took: " & (DateTime.Now-time) & " ms to construct the concave")
+End Sub
+Sub createtestpattern(points As List) As List
+	For y=50 To 400  Step 4
+		Private t() As Int=Array As Int(Rnd(150,170),y)
+		points.Add(t)
+	Next
+	For y=50 To 70  Step 1
+		Private t() As Int=Array As Int(Rnd(170,280),y)
+		points.Add(t)
+	Next
+	For y=380 To 400  Step 1
+		Private t() As Int=Array As Int(Rnd(170,280),y)
+		points.Add(t)
+	Next
+	For y=210 To 230  Step 1
+		Private t() As Int=Array As Int(Rnd(170,240),y)
+		points.Add(t)
+	Next
+	Return points
+End Sub
+Sub paintgraphics(points As List)
+	
+	For x=0 To 500 Step 50
+		cvs.DrawText(x,0,x,fx.DefaultFont(16),fx.Colors.DarkGray,"LEFT")
+		cvs.DrawText(x,x,15,fx.DefaultFont(16),fx.Colors.DarkGray,"LEFT")
+		cvs.DrawLine(x,0,x,500,fx.Colors.LightGray,1)
+		cvs.DrawLine(0,x,500,x,fx.Colors.LightGray,1)
+	Next
+	
+	For x=0 To  hull.Size-2
+		Private qff As xy=hull.Get(x)
+		Private qtt As xy=hull.Get(x+1)
+		cvs.DrawCircle(qff.x,qff.y,3,fx.Colors.Black,True,1)
+		cvs.DrawLine(qff.x,qff.y,qtt.x,qtt.y,fx.Colors.black,3)
+	Next
+	For x=0 To points.Size-1
+		Private qf() As Int=points.Get(x)
+		cvs.DrawCircle(qf(0),qf(1),3,fx.Colors.blue,True,1)
+
+	Next
+End Sub
+Sub build_tick
+	time=DateTime.Now
+	timer1.Interval=3000
+	Log("timer1")
+	Private points As List
+	points.Initialize
+'	For x=0 To 50
+'		Private t() As Int=Array As Int(Rnd(50,400),Rnd(50,400))
+'		points.Add(t)
+'	Next
+	points=createtestpattern(points)
+	cvs.ClearRect(0,0,MainForm.RootPane.Width,MainForm.RootPane.Height)
+
+	hull=KKShape.concave(points,5)
+	
+
+
+	Log("It took: " & (DateTime.Now-time) & " ms to construct the concave")
+	paintgraphics(points)
+End Sub

@@ -1,0 +1,100 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR receiver and sender using the protocol NEC and sending RAW data (ULong).
+'				The rawdata is defined as ULong 2774204160 which holds command HEX 5A (DEC 90). The rawdata len=68, decoded=2774204160, rawdata hex=00FF5AA5.
+'				Decoded Data Format: data len = 4 bytes
+'				Byte 0 = flags		00
+'				Byte 1 = address	FF
+'				Byte 2 = command	5A (90)
+'				Byte 3 = protocol	A5 (165)
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The default pins are used as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'				KEYES IR-Sender KY-005 (carrier frequency 38 kHz, distance max 18m).
+'Log Example
+
+#End Region
+
+#Region Wiring
+'IR-Receiver = Arduino UNO
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+
+'IR-Sender = Arduino UNO
+'VCC = 5V (RED)
+'TX = 3 (YELLOW) - use resistor 3V3=120Ohm,5V=220Ohm
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVERSENDERNECRAW v20250429"
+
+	Private SerialLine As Serial
+
+	Private irreceiver As IrReceiver
+	Private irsender As IrSender
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	'Init the ir receriver & sender using defaulr pins 2 & 3	
+	irreceiver.Initialize("NewData")
+	irsender.Initialize()
+	
+	CallSubPlus("SendNECRaw", 1000, 1)
+End Sub
+
+'Test sendnec command with 0 repeats
+Private Sub SendNECRaw(Tag As Byte)
+
+	'Define the rawdata
+	Dim rawdata As ULong = 2774204160
+	Log("[SendNECRaw] rawdata=", rawdata, ", hex=", HexFromULong(rawdata))
+	irsender.SendNECRaw(rawdata, 0)
+End Sub
+
+'Handle new IR data received
+Private Sub NewData(data As IrDecodedData)
+	'Check if data is noise (protocol 0 == UNKNOWN) as we want to receive NEC data only
+	If data.Protocol == 0 Then
+		Return
+	End If
+
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", bc.HexFromBytes(Array As Byte( data.Command)), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",rawdata hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+'Get the HEX value from an ULong.
+'Depends on: ByteConverter
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub

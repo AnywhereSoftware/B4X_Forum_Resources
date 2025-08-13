@@ -1,0 +1,58 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200 
+		
+	#if RELEASE
+        #MergeLibraries: True
+        #CustomBuildAction: 2, %JAVABIN%\jar.exe, uf Selenium15.jar -C e:\B4J\_WRAP\Selenium\Selenium15\Files META-INF\selenium-build.properties
+	#End If
+
+#End Region
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+	' How to compile app in release mode with #MergeLibraries: True
+	' *******************************************************************************
+	
+	' In line 7 we have: #CustomBuildAction: 2, %JAVABIN%\jar.exe, uf Selenium15.jar -C e:\B4J\_WRAP\Selenium\Selenium15\Files META-INF\selenium-build.properties
+	' Selenium15.jar - change to YourProjectName.jar, do not use SPACES in project name 
+	' e:\B4J\_WRAP\Selenium\Selenium15 - change to folder where is YourProjectName.b4j, do not use SPACES in path to project
+	' DO NOT CHANGE part: \Files META-INF\selenium-build.properties
+	' META-INF is folder inside Files folder, selenium-build.properties is inside META-INF folder, the space between \Files and META-INF is important
+	' Do not remove META-INF from Files folder.
+	
+	
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+	Selenium.NavigateTo("https://www.selenium.dev/")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+
+End Sub

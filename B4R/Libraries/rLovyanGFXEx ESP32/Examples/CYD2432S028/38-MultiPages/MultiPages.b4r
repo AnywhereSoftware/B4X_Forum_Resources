@@ -1,0 +1,230 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example multi pages with 2 touch buttons.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 900
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx MULTIPAGES v20250408"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display Instance
+	Private lcd As LovyanGFXEx
+
+	'Button default width and height
+	Private BUTTON_WIDTH As ULong = 120
+	Private BUTTON_HEIGHT As ULong = 50
+	Private BUTTON_OFFSET_Y As Int = 10
+
+	'Button labels are defined as constants with fixed text to avoid ESP32 crash when assigning text in a sub (Modifying constant strings is problematic)
+	Private BUTTON_PAGE1_LABEL As String = "Page 1"
+	Private BUTTON_PAGE2_LABEL As String = "Page 2"
+	Private BUTTON_PAGE3_LABEL As String = "Page 3"
+
+	'Button structure without label
+	Type TButton(id As Int, x As ULong, y As ULong, w As ULong, h As ULong, textcolor As ULong, color As ULong)
+
+	'Button array with 2 buttons
+	Private Buttons(2) As TButton
+
+	Private SelectedPage As Byte	'1,2,3
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display with mandatory touch event
+	lcd.Initialize("LCD_Touch")
+	lcd.DisplayRotation = 1
+	lcd.SetRGBLEDOff
+
+	'Init the buttons whicgh are position at display bottom
+	InitButtons
+
+	'DrawPage
+	DrawPage1
+End Sub
+
+#Region Touch Event
+'LCD touched event with x,y coordinates.
+Private Sub LCD_Touch(x As ULong, y As ULong)
+	'Get the button id of the button touched
+	Dim buttonid As Int = TouchedButton(x, y)
+	'Set the selected page
+	Select buttonid
+		Case 0
+			'Left Page Select Button
+			Select SelectedPage
+				Case 1: DrawPage2
+				Case 2: DrawPage1
+				Case 3: DrawPage1
+			End Select
+		Case 1
+			'Right Page Select Button
+			Select SelectedPage
+				Case 1: DrawPage3
+				Case 2: DrawPage3
+				Case 3:	DrawPage2
+			End Select
+		Case Else
+			Return
+	End Select
+End Sub
+#End Region
+
+#Region Buttons
+'Initialize the buttons.
+'The id must be the button array index starting with 0.
+Private Sub InitButtons
+	'Set the button index
+	Dim idx As Byte 
+
+	'START
+	idx = 0
+	Buttons(idx).id = idx
+	Buttons(idx).x = 20
+	Buttons(idx).y = lcd.Height - BUTTON_HEIGHT - BUTTON_OFFSET_Y
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_WHITE
+	Buttons(idx).color = lcd.COLOR_NAVY
+
+	'CLEAR
+	idx = 1
+	Buttons(idx).id = idx
+	Buttons(idx).x = lcd.Width - BUTTON_WIDTH - 20
+	Buttons(idx).y = lcd.Height - BUTTON_HEIGHT - BUTTON_OFFSET_Y
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_WHITE
+	Buttons(idx).textcolor = lcd.COLOR_WHITE
+	Buttons(idx).color = lcd.COLOR_NAVY
+End Sub
+
+'Draw the buttons using the button properties and the label constants
+Private Sub DrawButtons(label1 As String, label2 As String)
+	Log("[DrawButtons] selectedpage=", SelectedPage, ",label1=",label1,",label2=",label2)
+	Dim label As String
+
+	'Default textsize
+	Dim textsize As Byte = 1
+
+	'Set bold font
+	lcd.Font = lcd.FONT_FREEMONOBOLD_12
+
+	'Draw the buttons
+	For Each btn As TButton In Buttons
+		If btn.id == 0 Then label = label1
+		If btn.id == 1 Then label = label2
+		lcd.DrawButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.color, btn.textcolor, label, textsize, textsize, False)
+	Next
+
+	'Set font back to default
+	lcd.Font = lcd.FONT_DEFAULT
+End Sub
+
+'Check if a button is touched.
+'Used in the LCD touched event with x,y coordinates.
+'Returns button id or -1 if no button touched
+Private Sub TouchedButton(touchx As ULong, touchy As ULong) As Int
+	' Log("[TouchedButton] touchx=", touchx, ",touchy=", touchy)
+
+	For Each btn As TButton In Buttons
+		' Log("[TouchedButton] id=", btn.id, ",btn.x=", btn.x, ", btn.y=", btn.y)
+		If (touchx >= btn.x And touchx <= btn.x + btn.w) And (touchy >= btn.y And touchy <= btn.y + btn.h) Then
+			Log("[TouchedButton] id=", btn.id, ",touchx=", touchx, ",touchy=", touchy)
+			Return btn.id
+		End If
+	Next
+
+	' Button id not found
+	Return -1
+End Sub
+#End Region
+
+#Region Draw the pages
+Private Sub DrawPage1
+	SelectedPage = 1
+
+	lcd.Clear
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(BUTTON_PAGE1_LABEL, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	lcd.Font = lcd.FONT_ORBITRON_LIGHT_32
+	lcd.DrawString("This is page 1", lcd.CenterX, lcd.CenterY - (lcd.FontHeight / 2))
+	lcd.Font = lcd.FONT_DEFAULT
+
+	'Button to select a page
+	DrawButtons(BUTTON_PAGE2_LABEL, BUTTON_PAGE3_LABEL)
+End Sub
+
+Private Sub DrawPage2
+	SelectedPage = 2
+
+	lcd.Clear
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(BUTTON_PAGE2_LABEL, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	lcd.Font = lcd.FONT_ORBITRON_LIGHT_32
+	lcd.DrawString("This is page 2", lcd.CenterX, lcd.CenterY - (lcd.FontHeight / 2))
+	lcd.Font = lcd.FONT_DEFAULT
+
+	'Button to select a page
+	DrawButtons(BUTTON_PAGE1_LABEL, BUTTON_PAGE3_LABEL)
+End Sub
+
+Private Sub DrawPage3
+	SelectedPage = 3
+
+	lcd.Clear
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(BUTTON_PAGE3_LABEL, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	lcd.Font = lcd.FONT_ORBITRON_LIGHT_32
+	lcd.DrawString("This is page 3", lcd.CenterX, lcd.CenterY - (lcd.FontHeight / 2))
+	lcd.Font = lcd.FONT_DEFAULT
+
+	'Button to select a page
+	DrawButtons(BUTTON_PAGE1_LABEL, BUTTON_PAGE2_LABEL)
+End Sub
+#End Region
+

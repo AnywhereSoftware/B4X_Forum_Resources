@@ -1,0 +1,106 @@
+﻿Build1=Default,fg.PreferenceMenu
+File1=frmPreferenceScreen.bal
+File2=ntpserver.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=accessibility
+Library10=xui
+Library11=fspreferences
+Library2=core
+Library3=dialogs
+Library4=javaobject
+Library5=phone
+Library6=preferenceactivity
+Library7=reflection
+Library8=sql
+Library9=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~'<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="14"/>~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~'Directly set Holo theme~\n~'SetApplicationAttribute(android:theme, "@android:style/Theme.Holo.Light.DarkActionBar")~\n~~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo.Light")~\n~~\n~'SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~'CreateResource(values, theme.xml,~\n~'<resources>~\n~'    <style name="MyAppTheme" parent="@style/Theme.AppCompat">~\n~'		<item name="colorPrimary">#607D8B</item>~\n~'		<item name="colorPrimaryDark">#455A64</item> ~\n~'		<item name="colorAccent">#607D8B</item> ~\n~'    </style>~\n~'</resources>~\n~')~\n~
+Module1=mPreferenceMenu
+NumberOfFiles=2
+NumberOfLibraries=11
+NumberOfModules=1
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Preferences
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: true
+#End Region
+
+'==================================
+' Änderungen:
+' 25.11.22  v3.00	1)	Extra für B4a erstellt
+'
+'
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	'Ersatz für den PreferenceManager
+	Public manager As clsPreferenceManager
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+
+	If FirstTime Then		
+		'Settings-Menu
+	End If
+	
+	manager.Initialize
+	SetDefaults
+
+	Activity.AddMenuItem("Menu", "mnuMenu")
+	
+End Sub
+
+Sub Activity_Resume
+	Log("RadioButton=" & manager.GetMapCurrentValue("RadioButton2") )
+	Log("RadioButton=" & manager.GetMapIndex("RadioButton2") )
+	Log("RadioButton=" & manager.GetMapValue("RadioButton2", 0) )
+	Log("RadioButton=" & manager.GetMapValue("RadioButton2", 1) )
+	Log("rbtAppModality=" & manager.getString("rbtAppModality"))
+	manager.SetString("rbtAppModality", "Training")
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub mnuMenu_click
+	StartActivity(mPreferenceMenu)
+End Sub
+
+Sub SetDefaults
+	Log("SetDefaults")
+    'defaults are only set on the first run.
+	If Not(manager.ExistKey("rbtClockSynchModus")) Or manager.IsLanguageChanged Then manager.SetDefaultList("rbtClockSynchModus", Array As String("GPS", "Atomtime", "Manuell"), 0)
+
+	If Not(manager.ExistKey("txtLapDistance")) Then manager.SetString("txtLapDistance","400")
+	If Not(manager.ExistKey("lstSpeedUnits")) Then manager.setString("lstSpeedUnits","kmh")
+	If Not(manager.ExistKey("txtBeepCount")) Then manager.SetString("txtBeepCount",10)
+	If Not(manager.ExistKey("lstVolume")) Then manager.setString("lstVolume",5)
+	If Not(manager.ExistKey("lstStrokRate")) Then manager.setString("lstStrokRate",3)
+	If Not(manager.ExistKey("RadioButton2")) Then manager.SetDefaultList("RadioButton2", Array("Radio 1","Radio 2","Radio 3","Radio 4","Radio 5"), 0)
+	If Not(manager.ExistKey("rbtAppModality")) Or manager.IsLanguageChanged Then
+		manager.SetDefaultList("rbtAppModality", Array("Normal", "Training"), 0)
+	End If
+	If Not(manager.ExistKey("rbtTrainingsmode")) Or manager.IsLanguageChanged Then
+		manager.SetDefaultList("rbtTrainingsmode", Array("StartTimeMeasurement", "StopTimeMeasurement"), 0)
+	End If
+End Sub

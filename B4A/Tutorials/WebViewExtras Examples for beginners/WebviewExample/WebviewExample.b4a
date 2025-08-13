@@ -1,0 +1,259 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=json
+Library3=webviewextras
+Library4=webviewsettings
+Library5=xui
+Library6=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: WebviewExtras Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	
+	Private WebView1 As WebView
+	Private WebViewExtras1 As WebViewExtras
+	Private WebViewSetting1 As WebViewSettings
+	
+	Private EditText1 As EditText
+	Private Button3 As Button
+	Private Label1 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("Layout")
+	
+	WebViewExtras1.addWebChromeClient(WebView1, "WebViewExtras1")
+	WebViewSetting1.setDatabaseEnabled(WebView1, True)
+	WebViewSetting1.setDOMStorageEnabled(WebView1, True)
+	WebViewSetting1.setGeolocationEnabled(WebView1, True)
+	
+	WebViewSetting1.setJavaScriptCanOpenWindowsAutomatically(WebView1, False)
+	WebViewSetting1.setSaveFormData(WebView1, False)
+	WebViewSetting1.setSavePassword(WebView1, False)
+	WebViewSetting1.setSupportZoom(WebView1, False)
+	WebViewSetting1.setUseWideViewPort(WebView1, False)
+	
+	WebViewSetting1.setDatabasePath(WebView1, "")
+	WebViewExtras1.addJavascriptInterface(WebView1, "B4X")
+	
+	
+	'IF YOU FOUND THIS EXAMPLE USEFUL.. please consider donating or buying me a coffee... :)😁 THEY ARE REALLY EXPENSIVE WHERE I STAY
+	'DONATION LINK:  https://dashboard.flutterwave.com/donate/xua1z1xmabji
+	'OR IF THAT DOES NOT WORK.. you can message me for a newer link : https://www.b4x.com/android/forum/members/frostcodes.107647/
+	
+	' JS = javascript
+	RunSample
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'IF YOU ADD A NEW SUB while the code is running and you are calling it from the javascript..
+'You need to restart the project again...
+Public Sub RunSample 
+	
+	'NOTE: its better to send your messages as JSON to b4a because that way you can send different data types and larger DATA!!
+	'ALSO for subs in b4a PLEASE USE _ in their names... 
+	' for example a sub named SearchDatabase() please use Search_Database() this way when you compile to Release(Obfuscated)..
+	' Your code would still run VERY WELL!!!
+	
+	WebView1.LoadHtml($"
+	<html>
+	<body>
+	
+	<div id="dataFromB4a"></div>
+	
+	
+	<p>Welcome to the WEBVIEW</p>
+	
+	<button onclick="sendDataToB4a('Message from webview to B4a console')">Send Message to b4a console log</button>
+	<br />
+	<br />
+	<button onclick="callB4aSub('No_ParamSub')">Call b4a sub without parameters</button>
+	<br />
+	<br />
+	<button onclick="callB4aSub('Sample_SubWithParam', 'Hello! Consider donating to me...Link inside code 😢')">Call b4a sub WITH Text</button>
+	<br />
+	<br />
+	<button onclick="updateB4aLabel()">Send Message as JSON to b4a</button>
+	
+	<hr>
+	<p>
+	If you click <span
+	onclick="callB4aSub('Sample_SubWithParam', 'You clicked the red! Consider donating to me...Link inside code 😢')"
+	style="color:red">the red</span> i would show a msgbox
+	</p>
+	
+	<script>
+	function updateText(data){
+		document.getElementById("dataFromB4a").innerHTML = data;
+	}
+	
+	function updateTextFromJson(data){
+		document.getElementById("dataFromB4a").innerHTML = data.sampleDataText + ' and my phone model is ' + data.phoneManufacturer
+	}
+	
+	
+	// B4X is a special variable that connects B4a and the webview together...
+	//you do not need to intialize it or anything just use it. All you need to do is call a sub with it
+	
+	//NOTE: please avoid using this method to send data to your b4a subs... INSTEAD USE JSON!!
+	// Trust me .. it would save you a lot of time than spending time fixing bugs you wont understand where they are coming from
+	function sendDataToB4a(data){
+	   // Second parametr must be TRUE.. read WebviewExtras documentation @ https://www.b4x.com/android/forum/threads/webviewextras.12453/
+		B4X.CallSub("Log_TextToB4a", true, data); 
+	}
+	
+	
+	// allows calling a b4x native sub asynchronously.. this is a better way to avoid freezing the UI on older devices
+  function callB4aSub(b4xSubName, values) {
+    setTimeout(function() {
+      if (!values) {
+        return B4X.CallSub('CallB4xUiSub_Async', true, b4xSubName, "");
+      }
+
+      return B4X.CallSub('CallB4xUiSub_Async', true, b4xSubName, JSON.stringify(values));
+    }, 0);
+  }
+  
+  
+  function updateB4aLabel(){
+  callB4aSub('Update_LabelText', { text: 'Time from JS is' + new Date(), 'sampleInt': 3848, sampleArray: ['cow', 'dog', 'sheep']} )
+  }
+	</script>
+	
+	</body>
+	</html>
+	"$)
+End Sub
+
+
+
+Private Sub Button2_Click
+	RunSample
+End Sub
+
+
+Sub Button1_Click
+	'READ ME: Here we call the js sub with the b4a value... PLEASE NOTE THAT ITS BETTER TO USE JSON so you dont face issues with ' or / encodings
+	'USUALLY THIS  WOULD CAUSE YOUR CODE TO NOT WORK SO AVOID USING THIS METHOD UNLESS YOU ARE SURE ITS JUST A NUMBER OR BOOLEAN
+	'ARE PASSING as a parameter .. BUT REALLY I DONT ADVICE USING THIS AT ALL!!!
+	
+	Dim sampleData As String = EditText1.Text & ".... I was sent FROM B4A @ " & DateTime.Time(DateTime.Now)
+	WebViewExtras1.executeJavascript(WebView1, $"updateText('${sampleData}')"$)
+End Sub
+
+Private Sub EditText1_EnterPressed
+	Button1_Click
+End Sub
+
+Private Sub Button3_Click
+	'RECOMENDED METHOD!! 
+	
+	'IF YOU NOTICED.. WE CALLED THE JS FUNCTION WITHOUT QUOTES..UNLIKE THE FIRST EXAMPLE
+	' the reason is that way we are telling js we are sending a standard JS object which is the same as a JSON
+	'because JSON must be parsed back to a JS object .. but using this method we avoid all webview error related to json econding
+	'and we make the webview faster because it doesnt have to deserialize the JSON instead it treats it as a normal object immediately
+	'
+	'This means on the JS side.. you dont need to parse the data as json! You are to access it directly as a JSON object!!
+	
+	Dim sampleData As String = $"${EditText1.Text} ....
+	I was sent <span style="color: red">FROM B4A</span> @ " & ${DateTime.Time(DateTime.Now)}
+	"$
+	
+	Dim phone As Phone
+	Dim json As JSONGenerator
+	json.Initialize(CreateMap("sampleDataText": sampleData, "phoneManufacturer": phone.Manufacturer))
+	
+	WebViewExtras1.executeJavascript(WebView1, $"updateTextFromJson(${json.ToString})"$)
+End Sub
+
+'Receives a sub to call from Vue js
+Public Sub CallB4xUiSub_Async(subName As String, parameterDatas As String)
+	'Call a sub in Main Activity or Form
+	If parameterDatas.Length = 0 Then
+		CallSubDelayed(Me, subName)
+	Else
+		CallSubDelayed2(Me, subName, parameterDatas)
+	End If
+End Sub
+
+
+'Reads a Webview Data from Json format
+Public Sub ReadWebviewJsObjectData(json As String) As Map
+	If Not(json.Trim = "") Then
+		Private JSONParserEngine As JSONParser
+		JSONParserEngine.Initialize(json)
+		Return JSONParserEngine.NextObject
+	End If
+	
+	Return CreateMap()
+End Sub
+
+Public Sub No_ParamSub
+	Log("I was called::: NoParamSub.  @  " & DateTime.Time(DateTime.Now))
+End Sub
+
+Public Sub Sample_SubWithParam(text As String)
+	MsgboxAsync(text, "FROM the webview to b4a")
+End Sub
+
+Public Sub Log_TextToB4a(text As String)
+	Log(text)
+End Sub
+
+Public Sub Update_LabelText(json As String)
+	Dim datas As Map = ReadWebviewJsObjectData(json)
+	Label1.Text = datas.Get("text")
+	Label1.Color = Colors.RGB(Rnd(10, 200), Rnd(10, 200), Rnd(10, 255))
+	Label1.TextColor = Colors.White
+	
+	'Extra data... we just log them..
+	
+	Log("Extra Datas from UpdateLabelText:")
+	Log("sampleInt::::   " & datas.Get("sampleInt"))
+	
+	Dim animals As List = datas.Get("sampleArray")
+	Log("sampleArray::::   ")
+	Log(animals)
+	
+	
+	
+	Log("The last item of sampleArray is ::::   ")
+	Log(animals.Get(animals.Size - 1))
+End Sub

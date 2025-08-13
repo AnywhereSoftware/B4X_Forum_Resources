@@ -1,0 +1,182 @@
+﻿Build1=Default,b4a.example
+File1=image1.png
+File2=image2.png
+File3=image3.png
+File4=image4.png
+File5=m1.png
+File6=m2.png
+File7=m3.png
+File8=m4.png
+File9=main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=sd_floatingstandout
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/> )~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Translucent")~\n~
+Module1=Starter
+NumberOfFiles=9
+NumberOfLibraries=2
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Floating StandOut Example 2
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+' remenber Add on Manifest this permission:
+'	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private Label As Label
+	Private PanelMenu As Panel
+	Private PanelMain As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Activity.LoadLayout("main")
+	FloatingStandOut.PathImage=File.DirAssets
+	FloatingStandOut.NameFileImage="image1.png"
+	FloatingStandOut.X=50%x
+	FloatingStandOut.Y=50%y
+	
+	FloatingStandOut.SetEvent("FS")
+	FloatingStandOut.SetStartActivity(True,False,False)
+	FloatingStandOut.SetStopFloating(False,False,True)
+		
+	RequestPermission
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Touch (Action As Int, X As Float, Y As Float)
+	Activity.Finish
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub ButtonStart_Click
+	RequestPermission
+End Sub
+
+Sub ButtonStop_Click
+	FloatingStandOut.Stop
+End Sub
+
+Sub Button1_Click
+	FloatingStandOut.Stop
+	FloatingStandOut.PathImage=File.DirAssets
+	FloatingStandOut.NameFileImage="image1.png"
+	
+	RequestPermission
+End Sub
+
+Sub Button2_Click
+	FloatingStandOut.Stop
+	FloatingStandOut.PathImage=File.DirAssets
+	FloatingStandOut.NameFileImage="image2.png"
+	
+	RequestPermission
+	
+End Sub
+
+Sub Button3_Click
+	FloatingStandOut.Stop
+	FloatingStandOut.PathImage=File.DirAssets
+	FloatingStandOut.NameFileImage="image3.png"
+	
+	RequestPermission
+	
+End Sub
+
+Sub Button4_Click
+	FloatingStandOut.Stop
+	FloatingStandOut.PathImage=File.DirAssets
+	FloatingStandOut.NameFileImage="image4.png"
+	
+	RequestPermission
+	
+End Sub
+
+
+Sub FS_OnClick(X As Int,Y As Int)
+	'Label.Text="Single Tap"
+	PanelMain.Visible=False
+	PanelMenu.Visible=True
+	PanelMenu.Left=FloatingStandOut.X-(PanelMenu.Width-FloatingStandOut.WidthImage)/2
+	PanelMenu.top=FloatingStandOut.y-(PanelMenu.Height-FloatingStandOut.HeightImage)/2
+	StartActivity(Me)
+End Sub
+
+Sub FS_OnDoubleClick(X As Int,Y As Int)
+	PanelMain.Visible=False
+	PanelMenu.Visible=True
+	PanelMenu.Left=FloatingStandOut.X-(PanelMenu.Width-FloatingStandOut.WidthImage)/2
+	PanelMenu.top=FloatingStandOut.y-(PanelMenu.Height-FloatingStandOut.HeightImage)/2
+	Label.Text="Double Tap"
+End Sub
+
+Sub FS_OnLongClick(X As Int,Y As Int)
+	Label.Text="Long Tap"
+End Sub
+
+Sub FS_OnMove(X As Int,Y As Int)
+	If PanelMenu.Visible Then 
+		PanelMenu.Left=FloatingStandOut.X-(PanelMenu.Width-FloatingStandOut.WidthImage)/2
+		PanelMenu.top=FloatingStandOut.y-(PanelMenu.Height-FloatingStandOut.HeightImage)/2
+	End If
+End Sub
+
+Sub Button_Click
+	PanelMain.Visible=True
+	PanelMenu.Visible=False
+End Sub
+
+Sub PanelMain_Touch (Action As Int, X As Float, Y As Float)
+	
+End Sub
+
+Sub RequestPermission
+	Dim Permission As SpecialPermission
+	Permission.Initialize
+	Log(Permission.GetPermission)
+	Wait For (Permission.ActivatePermissionResumable) Complete (Success As Boolean)
+	If Success Then	FloatingStandOut.Start(Me)
+End Sub
+
+Sub ButtonOpenSetting_Click
+	Dim Permission As SpecialPermission
+	Permission.Initialize
+	ToastMessageShow("Setting is:" & Permission.GetPermission,True)
+	Permission.OpenSettingPermission
+End Sub

@@ -1,0 +1,183 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=spritestrip2.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=b4xbitmapeffects
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=0
+Version=10.12
+@EndOfDesignText@
+#Region Project Attributes 
+    #MainFormWidth: 1920
+    #MainFormHeight: 800
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+	Private ImageViews As List
+	Private Transitions As List
+	Private Directions As Map
+	Private NumSprites As Int = 100
+	Dim spriteSizeX As Int = 400
+	Dim spriteSizeY As Int = 300
+
+	Private SpriteSheet As B4XBitmap
+	Private FrameBitmapsRight As List
+	Private FrameBitmapsLeft As List
+	Private FrameIndex As Int = 0
+	Private tmrAnim As Timer
+	Private NumFrames As Int = 30
+
+	Private effects As BitmapCreatorEffects
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	ImageViews.Initialize
+	Transitions.Initialize
+	Directions.Initialize
+	effects.Initialize
+
+	'Spritesheet laden und Frames vorbereiten
+	SpriteSheet = xui.LoadBitmap(File.DirAssets, "spritestrip2.png")
+	FrameBitmapsRight.Initialize
+	FrameBitmapsLeft.Initialize
+	Dim fw As Int = SpriteSheet.Width / NumFrames
+	Dim fh As Int = SpriteSheet.Height
+
+	For i = 0 To NumFrames - 1
+		Dim src As B4XRect
+		src.Initialize(i * fw, 0, (i + 1) * fw, fh)
+		Dim frame As B4XBitmap = SpriteSheet.Crop(src.Left, src.Top, src.Width, src.Height)
+		FrameBitmapsRight.Add(frame)
+		FrameBitmapsLeft.Add(effects.FlipHorizontal(frame))
+	Next
+
+	For i = 0 To NumSprites - 1
+		Dim iv As ImageView
+		iv.Initialize("")
+		iv.SetImage(FrameBitmapsRight.Get(0))
+		Dim startY As Double = Rnd(50, MainForm.Height - spriteSizeY)
+		MainForm.RootPane.AddNode(iv, 0, startY, spriteSizeX, spriteSizeY)
+		
+		Dim jo As JavaObject = iv
+		jo.RunMethod("setOnMouseClicked", Array(jo.CreateEvent("javafx.event.EventHandler", "SpriteClicked", True)))
+
+		SetNodeX(iv, -spriteSizeX)
+		ImageViews.Add(iv)
+		Directions.Put(iv, True)
+
+		Dim joDur As JavaObject
+		joDur.InitializeStatic("javafx.util.Duration")
+		Dim duration As Object = joDur.RunMethod("seconds", Array(15.0 + Rnd(0, 5)))
+
+		Dim tt As JavaObject
+		tt.InitializeNewInstance("javafx.animation.TranslateTransition", Array(duration, iv))
+		tt.RunMethod("setToX", Array(MainForm.Width + spriteSizeX))
+		tt.RunMethod("setCycleCount", Array(1))
+
+		Dim ev As JavaObject = tt.CreateEvent("javafx.event.EventHandler", "OnFinished", False)
+		tt.RunMethod("setOnFinished", Array(ev))
+
+		Transitions.Add(tt)
+		tt.RunMethod("play", Null)
+	Next
+
+	tmrAnim.Initialize("tmrAnim", 100)
+	tmrAnim.Enabled = True
+End Sub
+
+Private Sub SetNodeX(n As B4XView, x As Double)
+	Dim jo As JavaObject = n
+	jo.RunMethod("setTranslateX", Array(x))
+End Sub
+
+Sub tmrAnim_Tick
+	FrameIndex = (FrameIndex + 1) Mod NumFrames
+	For Each iv As ImageView In ImageViews
+		Dim toRight As Boolean = Directions.Get(iv)
+		If toRight Then
+			iv.SetImage(FrameBitmapsRight.Get(FrameIndex))
+		Else
+			iv.SetImage(FrameBitmapsLeft.Get(FrameIndex))
+		End If
+	Next
+End Sub
+
+Sub OnFinished_Event(MethodName As String, Args() As Object)
+	
+    Dim ev As JavaObject = Args(0)
+    Dim transition As JavaObject = ev.RunMethod("getSource", Null)
+    Dim iv As ImageView = transition.RunMethod("getNode", Null)
+
+    If Directions.ContainsKey(iv) = False Then Return 'Sprite wurde entfernt
+
+	Dim toRight As Boolean = Directions.Get(iv)
+	toRight = Not(toRight)
+	Directions.Put(iv, toRight)
+
+	Dim newY As Double = Rnd(50, MainForm.Height - spriteSizeY)
+
+	Dim fromX, toX As Double
+	If toRight Then
+		fromX = -spriteSizeX
+		toX = MainForm.Width
+	Else
+		fromX = MainForm.Width
+		toX = -spriteSizeX
+	End If
+
+	'Absolute Startposition
+	iv.SetLayoutAnimated(0, 0, newY, spriteSizeX, spriteSizeY)
+	SetNodeX(iv, fromX)
+
+	'Start neue Transition
+	Dim joDur As JavaObject
+	joDur.InitializeStatic("javafx.util.Duration")
+	Dim duration As Object = joDur.RunMethod("seconds", Array(15.0 + Rnd(0, 5)))
+
+	Dim newTT As JavaObject
+	newTT.InitializeNewInstance("javafx.animation.TranslateTransition", Array(duration, iv))
+
+	'Setze relative Distanz
+	newTT.RunMethod("setByX", Array(toX - fromX))
+
+	newTT.RunMethod("setCycleCount", Array(1))
+	Dim ev2 As JavaObject = newTT.CreateEvent("javafx.event.EventHandler", "OnFinished", False)
+	newTT.RunMethod("setOnFinished", Array(ev2))
+	newTT.RunMethod("play", Null)
+End Sub
+
+Sub SpriteClicked_Event(MethodName As String, Args() As Object)
+	Dim event As JavaObject = Args(0)
+	Dim iv As ImageView = event.RunMethod("getSource", Null)
+	iv.RemoveNodeFromParent
+	Dim index As Int = ImageViews.IndexOf(iv)
+	If index > -1 Then
+		ImageViews.RemoveAt(index)
+		Directions.Remove(iv)
+	End If
+	Directions.Remove(iv)
+End Sub
+
+Sub ImageView_MouseClicked (EventData As MouseEvent)
+	Dim iv As ImageView = Sender
+	iv.RemoveNodeFromParent
+	Directions.Remove(iv)
+	Dim index As Int = ImageViews.IndexOf(iv)
+	If index > -1 Then ImageViews.RemoveAt(index)
+End Sub

@@ -1,0 +1,91 @@
+﻿Build1=Default,b4a.firebase2
+File1=1.bal
+File2=btn_google_signin_dark_normal_web@2x.png
+File3=fb_disabled.png
+File4=fblogin.png
+File5=google_disabled.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=core
+Library2=facebook
+Library3=firebaseanalytics
+Library4=firebaseauth
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~CreateResourceFromFile(Macro, FirebaseAuth.FirebaseAuth)~\n~~\n~~\n~'************ Facebook Login ****************~\n~CreateResource(values, facebook.xml, <resources>~\n~    <string name="facebook_app_id">111111111111111</string>~\n~   </resources>)~\n~   ~\n~ AddApplicationText(<meta-data android:name="com.facebook.sdk.ClientToken" android:value="aaaaaaaaaabbbbbbbe053434346"/>)~\n~~\n~AddApplicationText( <activity~\n~            android:name="com.facebook.FacebookActivity"~\n~            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"~\n~           android:theme="@android:style/Theme.Translucent.NoTitleBar" />~\n~          <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>)~\n~   ~\n~AddApplicationText(~\n~    <provider~\n~            android:name="com.facebook.internal.FacebookInitProvider"~\n~            android:authorities="${applicationId}.FacebookInitProvider"~\n~            android:exported="false" />~\n~~\n~        <receiver~\n~            android:name="com.facebook.CurrentAccessTokenExpirationBroadcastReceiver"~\n~            android:exported="false" >~\n~            <intent-filter>~\n~                <action android:name="com.facebook.sdk.ACTION_CURRENT_ACCESS_TOKEN_CHANGED" />~\n~            </intent-filter>~\n~        </receiver>~\n~        <receiver~\n~            android:name="com.facebook.AuthenticationTokenManager$CurrentAuthenticationTokenChangedBroadcastReceiver"~\n~            android:exported="false" >~\n~            <intent-filter>~\n~                <action android:name="com.facebook.sdk.ACTION_CURRENT_AUTHENTICATION_TOKEN_CHANGED" />~\n~            </intent-filter>~\n~        </receiver>~\n~		~\n~		 <activity~\n~            android:name="com.facebook.FacebookActivity"~\n~            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"~\n~            android:theme="@style/com_facebook_activity_theme" />~\n~        <activity android:name="com.facebook.CustomTabMainActivity" />~\n~        <activity~\n~            android:name="com.facebook.CustomTabActivity"~\n~            android:exported="true"~\n~             >~\n~            <intent-filter>~\n~                <action android:name="android.intent.action.VIEW" />~\n~~\n~                <category android:name="android.intent.category.DEFAULT" />~\n~                <category android:name="android.intent.category.BROWSABLE" />~\n~~\n~                <data~\n~                    android:host="cct.${applicationId}"~\n~                    android:scheme="fbconnect" />~\n~            </intent-filter>~\n~        </activity>~\n~)~\n~~\n~'************ Facebook Login (end) **********~\n~	 ~\n~	 ~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11.96
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#MultiDex: true
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Private lblName As Label
+	Private btnSignInFacebook As Button
+	Private btnSignInGoogle As Button
+	Private btnSignOut As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub btnSignInFacebook_Click
+	Starter.facebook.SignIn
+End Sub
+
+Sub btnSignInGoogle_Click
+	Starter.auth.SignInWithGoogle
+End Sub
+
+
+Sub btnSignOut_Click
+	Starter.auth.SignOutFromGoogle
+	Starter.facebook.SignOut
+	lblName.Text = "Goodbye!"
+	SetState
+End Sub
+
+	
+Sub Activity_Resume
+	SetState
+End Sub
+
+Sub SetState
+	If Starter.auth.CurrentUser.IsInitialized Then
+		Dim cu As FirebaseUser = Starter.auth.CurrentUser
+		lblName.Text = "Hello: " & cu.DisplayName
+	End If
+	For Each btn As Button In Array (btnSignInFacebook, btnSignInGoogle)
+		btn.Enabled = Not(Starter.auth.CurrentUser.IsInitialized)
+	Next
+	btnSignOut.Enabled = Starter.auth.CurrentUser.IsInitialized
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+

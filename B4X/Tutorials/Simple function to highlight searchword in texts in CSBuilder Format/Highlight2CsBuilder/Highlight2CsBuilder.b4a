@@ -1,0 +1,91 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=13
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true	
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Label0 As B4XView
+	Private Label1 As B4XView
+	Private EditText1 As B4XView
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Label0.Text = "Lorem ipsum dolor sit diam amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua."
+
+	EditText1.Text = "diam"
+	
+End Sub
+	
+Private Sub Button1_Click
+	Dim cs As CSBuilder = HighlightCsTextWithRegex(Label0.Text, EditText1.Text)
+	Label1.Text = cs.PopAll
+	MsgboxAsync(cs.PopAll, "Highlighted result")
+End Sub
+	
+
+ 
+ Sub HighlightCsTextWithRegex(OriginalText As String, searchWord As String) As CSBuilder 
+	Dim escapedSearchWord As String = RegexEscapeSpecialChars(searchWord)
+	Dim pattern As String = "(?i)" & escapedSearchWord ' (?i) case-insensitive!
+	Dim matcher As Matcher = Regex.Matcher(pattern, OriginalText)
+	Dim cs As CSBuilder
+	cs.Initialize
+	Dim lastIndex As Int = 0
+	Do While matcher.Find
+		Dim startIndex As Int = matcher.GetStart(0)
+		Dim endIndex As Int = matcher.GetEnd(0)
+		cs.Append(OriginalText.SubString2(lastIndex, startIndex))
+		cs.BackgroundColor(xui.Color_Yellow)
+		cs.Append(OriginalText.SubString2(startIndex, endIndex))
+		cs.Pop
+		lastIndex = endIndex
+	Loop
+	cs.Append(OriginalText.SubString(lastIndex)) 
+	Return cs
+End Sub
+
+Sub RegexEscapeSpecialChars(input As String) As String '##v723 #
+    Dim specialChars As List
+    specialChars.Initialize2(Array As String("\", ".", "$", "^", "{", "[", "(", "|", ")", "*", "+", "?", "<", ">", "-", "&", "%"))
+    For Each charX As String In specialChars
+        input = input.Replace(charX, "\\" & charX)
+    Next
+    Return input
+End Sub
+

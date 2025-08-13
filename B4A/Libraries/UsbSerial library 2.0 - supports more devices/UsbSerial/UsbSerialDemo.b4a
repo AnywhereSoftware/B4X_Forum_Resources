@@ -1,0 +1,105 @@
+﻿Version=2.52
+IconFile=
+NumberOfModules=0
+Package=b4a.example1
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddActivityText(main, <intent-filter>~\n~	<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~</intent-filter>~\n~	<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"~\n~        android:resource="@xml/device_filter" />)~\n~
+UserTypesHint=
+NumberOfFiles=1
+File1=1.bal
+NumberOfLibraries=3
+Library1=core
+Library2=randomaccessfile
+Library3=usbserial
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: USB Serial Example
+	#VersionCode: 1
+	#VersionName:
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: false
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Dim usb As UsbSerial
+	Dim astreams As AsyncStreams
+End Sub
+
+Sub Globals
+
+	Dim btnSend, btnOpen, btnClose As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	btnClose.Enabled = False
+	btnSend.Enabled = False
+End Sub
+
+Sub btnOpen_Click
+	If usb.UsbPresent = usb.USB_NONE Then
+		Log("Msgbox - no device")
+		Msgbox("No USB device or accessory detected!", "Error")
+		Log("Msgbox - returned")
+		Return
+	End If
+	Log("Checking permission")
+	If (usb.HasPermission) Then
+		Msgbox(usb.DeviceInfo, "Device Information")
+		Dim dev As Int
+		dev = usb.Open(115200)		
+		If dev <> usb.USB_NONE Then
+			Log("Connected successfully!")
+			btnOpen.Enabled = False
+			btnClose.Enabled = True
+			btnSend.Enabled = True			
+			astreams.Initialize(usb.GetInputStream, usb.GetOutputStream, "astreams")
+		Else
+			Log("Error opening USB port")
+		End If
+	Else
+		usb.RequestPermission
+	End If
+End Sub
+
+Sub Astreams_NewData (Buffer() As Byte)
+	Log("NewData")
+	Log(BytesToString(Buffer, 0, Buffer.Length, "UTF8"))
+End Sub
+
+Sub btnClose_Click
+	astreams.Close
+	btnOpen.Enabled = True
+	btnClose.Enabled = False
+	btnSend.Enabled = False	
+End Sub
+
+Sub btnSend_Click
+	astreams.Write("abcde".GetBytes("UTF8"))
+End Sub
+
+Sub btnExit_Click
+	ExitApplication
+End Sub
+
+Sub AStreams_Error
+	Log("Error: " & LastException)
+	astreams.Close
+End Sub
+Sub Astreams_Terminated
+	Log("Terminated")
+	astreams.Close
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

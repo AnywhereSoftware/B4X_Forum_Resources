@@ -1,0 +1,114 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+File2=test.html
+File3=test.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=fileprovider
+Library3=ultimatewebview2
+Library4=webviewextras2
+Library5=webviewsettings
+Library6=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:usesCleartextTraffic,"true")~\n~~\n~~\n~~\n~AddManifestText(<uses-permission~\n~   android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~   android:maxSdkVersion="18" />~\n~)~\n~~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~<paths>~\n~    <files-path name="internal_files" path="." />~\n~    <cache-path name="cache_files" path="." />~\n~</paths>~\n~)~\n~~\n~
+Module1=Starter
+NumberOfFiles=3
+NumberOfLibraries=6
+NumberOfModules=1
+Version=13
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private WebView1 As WebView
+
+	' from lib: WebViewExtras2 and WebViewSettings
+	Private WebViewEx As WebViewExtras
+	Private WebViewClient As DefaultWebViewClient
+	
+	' from lib: UltimateWebView2
+	Private WebViewAssetLoader1 As WebViewAssetLoader
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	' Prepare Views
+	WebViewAssetLoader1.Initialize(Application.PackageName)
+	WebViewEx.Initialize(WebView1)
+	WebViewClient.Initialize("WebViewClient")
+	WebViewEx.SetWebViewClient(WebViewClient)
+	WebViewEx.JavaScriptEnabled=True
+
+	
+	' Copy test data
+	File.MakeDir(File.DirInternal, "images")
+	File.Copy(File.DirAssets, "test.html", File.DirInternal, "test.html")
+	File.Copy(File.DirAssets, "test.jpg", File.Combine(File.DirInternal, "images"), "test.jpg")
+End Sub
+
+Sub Activity_Resume
+	
+	' Load the page from DirInternal
+	WebView1.LoadUrl(WebViewAssetLoader1.InternalPathUrl & "test.html")	
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Private Sub WebViewClient_PageFinished(Url As String)
+	
+	' Opional
+	If Url.StartsWith(WebViewAssetLoader1.AssetPathUrl) Then
+		ToastMessageShow("Page loaded from DirAsset",True)
+	Else If Url.StartsWith(WebViewAssetLoader1.InternalPathUrl) Then
+		ToastMessageShow("Page loaded from DirInternal",True)
+	Else If Url.StartsWith(WebViewAssetLoader1.ResourcesPathUrl) Then
+		ToastMessageShow("Page loaded from Resources",True)
+	Else
+		ToastMessageShow("Page loaded from internet",True)
+	End If
+End Sub
+
+Private Sub WebViewClient_ShouldInterceptRequest(Url As String) As WebResourceResponse
+	Log("URL: " &  Url)
+	
+	Dim Response As WebResourceResponse
+	Dim ResponseReceived As WebResourceResponse 
+
+	Try
+		ResponseReceived = WebViewAssetLoader1.ShouldInterceptRequest(Url)
+		
+		If Not(ResponseReceived = Null) And ResponseReceived.IsInitialized Then
+			Response.Initialize(ResponseReceived.GetMimeType, ResponseReceived.GetEncoding, ResponseReceived.GetData)
+			Return Response
+		End If
+	Catch
+		' In case the URL fails to load, we receive an exception here
+		Log("URL not found: " & Url)
+	End Try
+	
+	Return Null
+	
+End Sub

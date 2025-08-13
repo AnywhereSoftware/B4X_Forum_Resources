@@ -1,0 +1,305 @@
+﻿Build1=Default,b4a.tableclass144
+File1=citylist.csv
+File2=citylist.db
+File3=Grades.csv
+File4=persons.csv
+File5=persons.db
+File6=persons1.db
+File7=sort_asc.png
+File8=sort_desc.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=reflection
+Library3=scrollview2d
+Library4=sql
+Library5=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Table
+NumberOfFiles=8
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TableClass144
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Dim SQL1 As SQL
+	
+	Dim DBFileDir As String				: DBFileDir = File.DirDefaultExternal
+'	Dim DBFileName As String			: DBFileName = "persons.db"
+'	Dim DBTableName As String			: DBTableName = "persons"
+	Dim DBFileName As String			: DBFileName = "citylist.db"
+	Dim DBTableName As String			: DBTableName = "citylist"
+'	Dim DBFileName As String			: DBFileName = "test.db"
+'	Dim DBTableName As String			: DBTableName = "Test"
+	Dim SelectedID = -1 As Int
+	Dim SelectedRow As Int
+End Sub
+
+Sub Globals
+	Dim Table1 As Table
+	Dim pnlTable As Panel
+	Dim btnDB, btnCVS, btnChangeHeaders As Button
+	Dim NewHeaders = True As Boolean
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+'		File.Delete(File.DirDefaultExternal, DBFileName)	' for testing to remove an old file
+
+		If File.Exists(File.DirDefaultExternal, DBFileName) = False Then
+			File.Copy(File.DirAssets, DBFileName, DBFileDir, DBFileName)
+		End If
+		SQL1.Initialize(DBFileDir, DBFileName, True)
+'		CreateTestDB	'Test for big numbers 
+	End If
+	
+'' Test for big numbers 	
+'	Table1.Initialize(Me, "Table1", 4, Gravity.CENTER_HORIZONTAL, False)
+'	Table1.AddToActivity(Activity, 0, 0, 100%x, 100%y)	
+''	Table1.LoadSQLiteDB(SQL1, "SELECT * FROM Test", True)
+''	Table1.LoadSQLiteDB2(SQL1, "SELECT * FROM Test", True, Array As String("I", "T", "R", "I"))
+'	Table1.LoadSQLiteDB2(SQL1, "SELECT ID, Number FROM Test", True, Array As String("I", "R"))
+'	Return
+	
+	btnChangeHeaders.Initialize("btnChangeHeaders")
+	Activity.AddView(btnChangeHeaders, 2%x, 100%y - 60dip, 30%x, 50dip)	
+	btnChangeHeaders.Text = "Change headers"
+	
+	btnDB.Initialize("btnDB")
+	Activity.AddView(btnDB, 34%x, 100%y - 60dip, 30%x, 50dip)	
+	btnDB.Text = "SwapDB"
+
+	btnCVS.Initialize("btnCVS")
+	Activity.AddView(btnCVS, 68%x, 100%y - 60dip, 30%x, 50dip)	
+	btnCVS.Text = "CVS"
+
+	pnlTable.Initialize("")
+	Activity.AddView(pnlTable, 20dip, 20dip, 100%x - 40dip, 100%y - 90dip)	
+'	Activity.AddView(pnlTable, 20dip, 20dip, 100%x - 40dip, 50%y)	
+	
+'	Table1.Initialize(Me, "Table1", 4, Gravity.CENTER_HORIZONTAL, True)
+
+	Table1.Initialize(Me, "Table1", 5, Gravity.CENTER_HORIZONTAL, True)
+	Table1.CellAlignment = Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL)
+	Table1.HeaderColor = Colors.Blue
+	Table1.HeaderTextColor = Colors.Yellow
+	Table1.TextColor = Colors.Blue
+	Table1.TableColor = Colors.Red
+	Table1.RowHeight = 40dip
+'	Table1.RowColor1 = Colors.RGB(244,164,96)
+'	Table1.RowColor2 = Colors.RGB(255, 153, 255)
+	
+'	Table1.SelectedRowColor = Colors.RGB(255,239,213)
+'	Table1.AllowSelection = False
+	Table1.AddToActivity(pnlTable, 0, 0, pnlTable.Width, pnlTable.Height)	
+	
+'	Table1.MultiSelect = True
+	Table1.MultiSelect = False
+	Table1.SortColumn = False
+	Table1.SingleLine = False	
+	
+'	FillTableFix
+'	FillTableSQLite
+	FillTableCSV
+End Sub
+
+Sub Activity_Resume
+'	Table1.sortTableNum(2, True)
+'	Dim align() As Int
+'	align = Array As Int (Gravity.CENTER, Bit.OR(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.OR(Gravity.Right, Gravity.CENTER_VERTICAL), Gravity.CENTER, Gravity.CENTER)
+'	Table1.SetCellAlignments(align)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Activity_Click
+'	Table1.Visible = Not(Table1.Visible)
+	Dim rc As RowCol
+	rc.Row = -1
+	rc.Col = 1
+	Table1.SelectRow(rc)
+End Sub
+
+Sub Table1_CellClick (Col As Int, Row As Int)
+	Activity.Title = Table1.GetValue(Col, Row)
+	
+	SelectedRow = Row
+	
+'	SelectedID = Table1.GetValue(0, SelectedRow)
+'	If SelectedRow > -1 Then
+'		Activity.Title = "ID = " & SelectedID & "col = " & Col & " row = " & Row
+'	End If
+End Sub
+
+Sub Table1_HeaderClick (Col As Int)
+	Activity.Title = "HeaderClick: " & Col
+End Sub
+
+Sub btnDB_Click
+	If DBFileName = "persons.db" Then
+		DBFileName = "citylist.db"
+		DBTableName = "citylist"
+'		DBFileName = "persons1.db"
+'		DBTableName = "persons"
+	Else
+		DBFileName = "persons.db"
+		DBTableName = "persons"
+	End If
+	If File.Exists(File.DirDefaultExternal, DBFileName) = False Then
+		File.Copy(File.DirAssets, DBFileName, DBFileDir, DBFileName)
+	End If
+	
+	SQL1.Initialize(DBFileDir, DBFileName, True)
+	FillTableSQLite
+End Sub
+
+Sub btnCVS_Click
+	Table1.ClearAll
+'	Table1.LoadTableFromCSV(File.DirAssets, "persons.csv", True)
+'	Table1.SetColumnsWidths(Array As Int(50dip, 130dip, 130dip, 130dip, 130dip))
+'	Table1.SetColumnsWidths(Array As Int(50dip, 130dip, 0, 0, 130dip))
+'	Table1.SetColumnsWidths(Array As Int(50dip, 130dip, 130dip, 130dip, 130dip))
+	Table1.LoadTableFromCSV2(File.DirAssets, "persons.csv", True, ",", True)
+'	Table1.LoadTableFromCSV2(File.DirAssets, "persons.csv", True, ",", False)
+End Sub
+
+Sub FillTableSQLite
+	Dim Query As String
+	
+	Table1.ClearAll
+
+	Table1.LineWidth = 3dip
+	Table1.TextSize = 20
+
+	Dim tf() As Typeface
+	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
+	Table1.SetTypeFaces(tf)
+
+	Table1.UseColumnColors = True
+	Table1.SetColumnColors(Array As Int(Colors.White, 0xFF98F5FF, 0xFFFFC0FF, 0xFFC0FFC0, 0xFFFFFFC0))
+	Table1.SetTextColors(Array As Int(Colors.Black, 0xFF800000, 0xFF0000FF, 0xFF004000, 0xFF400040))
+	Table1.SetHeaderColors(Array As Int(Colors.Black, 0xFF800000, 0xFF0000FF, 0xFF004000, 0xFF400040))
+	Table1.SetHeaderTextColors(Array As Int(Colors.White, 0xFF98F5FF, 0xFFFFC0FF, 0xFFC0FFC0, 0xFFFFFFC0))
+
+	Query = "SELECT * FROM " & DBTableName
+'	Query = "SELECT * FROM " & DBTableName & " ORDER BY LastName ASC"
+	
+	Table1.LoadSQLiteDB(SQL1, Query, True)
+'	Table1.AddRow(Array As String("aaa", "bbbb", "cccc", "dddd", "eeee"))	
+'	Table1.hideCol(2)
+	
+'	Table1.LoadSQLiteDB(SQL1, Query, False)
+'	Table1.SetColumnsWidths(Array As Int(50dip, 100dip, 100dip, 150dip, 100dip))
+
+'	Query = "SELECT FirstName, LastName FROM " & DBTableName
+'	Table1.LoadSQLiteDB(SQL1, Query, False)
+'	Table1.SetColumnsWidths(Array As Int(150dip, 150dip))
+
+'	Query = "SELECT * FROM " & DBTableName & " WHERE ID >= 10 AND ID <= 15"
+'	Table1.LoadSQLiteDB(SQL1, Query, False)
+'	Table1.SetColumnsWidths(Array As Int(50dip, 100dip, 100dip, 150dip, 100dip))
+
+'	Query = "SELECT * FROM " & DBTableName & " WHERE LastName = 'MARTIN'"
+'	Table1.LoadSQLiteDB(SQL1, Query, False)
+'	Table1.SetColumnsWidths(Array As Int(50dip, 100dip, 100dip, 150dip, 100dip))
+
+'	Table1.LineWidth = 3dip
+'	Table1.TextSize = 20
+
+'	Dim tf() As Typeface
+'	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
+'	Table1.SetTypeFaces(tf)
+End Sub
+
+Sub FillTableCSV
+	Table1.ClearAll
+
+	Table1.LineWidth = 2dip
+	Table1.TextSize = 20
+
+'	Table1.LoadTableFromCSV2(File.DirAssets, "Grades.csv", True, ",",True)
+	Table1.LoadTableFromCSV2(File.DirAssets, "citylist.csv", True, ";", True)
+	Table1.JumpToRow(405)
+
+	Dim Alignments() As Int
+	Alignments = Array As Int(Gravity.CENTER, Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL))
+	Table1.SetHeaderAlignments(Alignments)
+	Table1.SetCellAlignments(Alignments)
+	Dim tf() As Typeface
+	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
+	Table1.SetTypeFaces(tf)
+End Sub
+
+Sub btnChangeHeaders_Click
+	Dim Headers() As String
+	
+	NewHeaders = Not(NewHeaders)
+	If NewHeaders = True Then
+		Headers = Array As String("Col1", "First" & CRLF & "name", "Last name", "Addresses", "Cities")
+	Else
+		Headers = Array As String("ID", "FirstName", "LastName", "Address", "City")
+	End If
+	Table1.SetHeader(Headers)
+End Sub
+
+Sub Table1_HeaderLongClick(col As Int)
+	Msgbox("Header '" & Table1.HeaderNames.Get(col) & "' clicked", "Header")
+End Sub
+
+Sub FillTableFix
+	Table1.LineWidth = 3dip
+	Table1.TextSize = 20
+
+  Dim tf() As Typeface
+	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
+	Table1.SetTypeFaces(tf)
+
+	Table1.SetHeader(Array As String("Head1", "Head2", "Head3", "Head4", "Head4"))
+	Table1.SetColumnsWidths(Array As Int(25%x, 25%x, 25%x, 25%x, 25%x))
+	Table1.ClearAll
+
+	Table1.AddRow(Array As String("aaa1", "bbbb1", "cccc1", "dddd1", "eeee1"))
+	Table1.AddRow(Array As String("aaa2", "bbbb2", "cccc2", "dddd2", "eeee2"))
+	Table1.AddRow(Array As String("aaa3", "bbbb3", "cccc3", "dddd3", "eeee3"))
+End Sub
+
+Sub CreateTestDB
+	Dim query As String
+
+	query = "CREATE TABLE Test (ID INTEGER PRIMARY KEY, Name TEXT, Number REAL, Int INTEGER)"
+	SQL1.ExecNonQuery(query)
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name1'", 1, 1234567))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name2'", 12345678, 123456789))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name3'", 1234567.23, 123456789))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name4'", 12345.6723, 123456789))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name5'", 123.456723, 123456789))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name6'", 1234567.23, 123456789))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name7'", 1234.5678901234567, 1234567890123))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name8'", 12345678.901234567, 123456789012345))
+	SQL1.ExecNonQuery2("INSERT INTO Test VALUES(Null, ?, ?, ?)", Array As Object("'Name9'", 123456789.01234567, 12345678901234567))	
+End Sub

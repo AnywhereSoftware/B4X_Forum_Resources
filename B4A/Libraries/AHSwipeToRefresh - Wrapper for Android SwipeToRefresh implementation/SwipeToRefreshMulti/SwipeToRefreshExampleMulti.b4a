@@ -1,0 +1,164 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,de.amberhome.swiperefreshmulti
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=3
+Library1=ahswipetorefresh
+Library2=core
+Library3=compatactionbar
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SwipeToRefresh Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'This example is to show how you can use multiple views in the SwipeToRefresh view that can be used to trigger
+'the swipe to refresh gesture.
+
+'This ist NOT meant to create a swipe to refresh for multiple ListViews. You can use it if you want to display a Label
+'if the ListView is empty. Then you can add the Label to the STR object, tell it that it should trigger the str gesture,
+'too and all should work fine.
+
+'If you want to use it with several ListViews the easiest way is to use a STR object for every ListView.
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	'A timer to simulate some background work
+	Dim tm As Timer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Dim STR As AHSwipeToRefreshMulti
+	Dim Panel1 As Panel
+	Dim ListView1 As ListView
+	Dim Label1 As Label
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+
+	'This would be the manual method to add the AHSwipeToRefresh object to the Activity
+	STR.Initialize("STR")
+	Activity.AddView(STR, 0, 0, 100%x, 100%y)
+
+	'It is not possible to add child objects to custom views in the designer.
+	'So we have to add the listview manually here.
+	ListView1.Initialize("")
+	Panel1.Initialize("")
+	'Activity.LoadLayout("l1")
+	STR.AddView(Panel1)
+
+	Label1.Initialize("")
+	Label1.Text = "This ListView is empty!"
+	Label1.TextSize = 18
+	
+	Panel1.AddView(ListView1, 0, 0, 100%x, 100%y)
+	Panel1.AddView(Label1, 0, 50%y - 15dip, 100%x, 30dip)
+	Label1.Gravity = Gravity.CENTER_HORIZONTAL
+
+	'Set a color scheme for the progress bar.
+	STR.SetColorScheme(Colors.Red, Colors.Green, Colors.Blue, Colors.Yellow)
+	
+	'Create a list with all swipeable children
+	Dim l As List
+	l.Initialize
+	l.Add(ListView1)
+	l.Add(Label1)
+	
+	'Now we tell the STR which views can trigger the swipe to refresh gesture.
+	STR.SwipeableChilden = l
+	
+	'STR.SetProgressViewOffset(True, -20dip, 10dip)
+	'STR.Size = STR.SIZE_LARGE
+	
+	'Add a menu for manual refresh
+	Activity.AddMenuItem3("Refresh", "Refresh", Null, True)
+	Activity.AddMenuItem3("Clear", "Clear", Null, True)
+	
+	ListView1.Visible = False
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'Manually start a refresh from menu button
+Sub Refresh_Click
+	Log("Manual Refresh")
+	STR.Refreshing = True
+	STR_Refresh
+End Sub
+
+Sub Clear_Click
+	Log("Clear the ListView")
+	
+	ClearListView
+End Sub 
+
+Sub STR_Refresh
+	Log("Refresh started")
+
+	'Start the timer. Normally you will start your asynchronous job here
+	tm.Initialize("Timer", 5000)
+	tm.Enabled = True
+	
+	'Disable the object so we can not start a new refresh process
+	STR.Enabled = False
+End Sub
+
+'The timer tick simulates the end of the refreshing process
+Sub Timer_Tick
+	Log("Refresh stopped")
+	
+	tm.Enabled = False
+	
+	RefreshListView
+
+	STR.Refreshing = False
+	STR.Enabled = True
+End Sub
+
+'Refresh the Listview
+Sub RefreshListView
+	ListView1.Clear
+
+	For i = 0 To 20
+		ListView1.AddSingleLine("Entry " & Rnd(0, 100))
+	Next
+	
+	ListView1.Visible = True
+	Label1.Visible = False
+End Sub
+
+'Clear all entries from the Listview and just show the label with the text that it is empty.
+Sub ClearListView
+	ListView1.Clear
+	
+	ListView1.Visible = False
+	Label1.Visible = True
+End Sub
+	
+
+

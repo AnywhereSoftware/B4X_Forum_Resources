@@ -1,0 +1,157 @@
+﻿AppType=JavaFX
+Build1=Default,com.prosoft.glow
+Build2=JavaObj,com.prosoft.glow,JavaObj
+Build3=Native,com.prosoft.glow,Native
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+  #MainFormWidth: 600
+  #MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private ps As JavaObject
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+#if Native
+	glowFx
+#end if  
+#if JavaObj
+	ps.InitializeStatic("javafx.stage.Stage")
+	ps=MainForm.As(JavaObject).GetField("stage")
+	Dim GlowEffectDemo As JavaObject
+	GlowEffectDemo.InitializeStatic("com.prosoft.glow.main$GlowEffectDemo")
+	GlowEffectDemo.RunMethod("glowText",Array(ps))
+#End If
+End Sub
+
+Private Sub glowFx()
+	'
+	'//Creating an image
+	Dim image As JavaObject
+	image.InitializeNewInstance("javafx.scene.image.Image",Array("https://mydrawer2.000webhostapp.com/welcome3.png"))
+
+	Dim imageView As ImageView
+	imageView.Initialize("iv")
+	imageView.setImage(image)
+    
+	'//setting the fit width of the image view
+     imageView.PrefWidth=500
+	 imageView.PrefHeight=300
+	 
+	'//Setting the preserve ratio of the image view
+	imageView.PreserveRatio=True
+	    
+'	// Create the glow effect
+	Dim glow As JavaObject
+	glow.InitializeNewInstance("javafx.scene.effect.Glow", Null)
+	imageView.As(JavaObject).RunMethod("setEffect", Array(glow))
+       
+'	// Create a slider To control the intensity of the glow
+
+	Dim slider As JavaObject
+	slider.InitializeNewInstance("javafx.scene.control.Slider",Null)
+	Dim sliderMin As Double=0
+	Dim sliderMax As Double=1
+	
+	slider.RunMethod("setMin",Array(sliderMin))
+	slider.RunMethod("setMax",Array(sliderMax))
+	
+ '	// enable the marks
+	slider.RunMethod("setShowTickMarks",Array(True))
+	'
+'	// enable the Labels
+	slider.RunMethod("setShowTickLabels",Array(True))
+	'
+'	// set Major tick unit
+
+	Dim mtu As Double=0.25f
+	slider.RunMethod("setMajorTickUnit",Array(mtu))
+	'
+'	// sets the value of the property
+'	// blockIncrement
+
+	Dim bic As Double=0.1f
+	slider.RunMethod("setBlockIncrement",Array(bic))
+	
+'	// Bind the slider value To the glow level
+
+	glow.RunMethodJO("levelProperty",Null).RunMethod("bind",Array(slider.RunMethod("valueProperty",Null)))
+'        
+'	// Layout
+	Dim root As JavaObject
+	root.InitializeNewInstance("javafx.scene.layout.VBox",Null)
+	Dim children As JavaObject = root.RunMethod("getChildren", Null)
+	Dim iv As JavaObject=imageView.As(JavaObject)
+	children.RunMethod("add", Array(iv))
+	children.RunMethod("add", Array(slider))
+'        
+	'//Add all to Main Form
+	MainForm.RootPane.AddNode(root,0,0,0,0)
+
+'
+End Sub
+
+#if  java
+
+import javafx.scene.Scene;
+import javafx.scene.control.Slider;
+import javafx.scene.effect.Glow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+public static class GlowEffectDemo {
+		
+		public static void glowText(Stage primaryStage) {
+        // Load the image
+        Image image = new Image("https://mydrawer2.000webhostapp.com/glow.png");
+        ImageView imageView = new ImageView(image);
+        
+        // Create the glow effect
+        Glow glow = new Glow();
+        imageView.setEffect(glow);
+        
+        // Create a slider to control the intensity of the glow
+        Slider slider = new Slider(0, 1, 0);
+		slider.setMajorTickUnit(0.25f);
+        slider.setShowTickLabels(true);
+        slider.setShowTickMarks(true);
+        
+        // Bind the slider value to the glow level
+        glow.levelProperty().bind(slider.valueProperty());
+        
+        // Layout
+        VBox root = new VBox(10, imageView, slider);
+        
+        // Scene
+        Scene scene = new Scene(root, 600, 400);
+        
+        // Stage
+        primaryStage.setTitle("Glow Effect Demo");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+   
+}
+
+#End If

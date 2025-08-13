@@ -1,0 +1,83 @@
+﻿Build1=Default,com.softorientationactivity.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=reflection
+Library4=xui
+Library5=softorientation
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main, android:configChanges, "orientation|keyboardHidden|screenSize|screenLayout")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SoftOrientationExample2
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private SoftOrientationMain As SoftOrientationForActivities
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	SoftOrientationMain.Initialize(Me,"SoftOrientationMain",Activity,"Layout")
+	SoftOrientationMain.Orientation=SoftOrientationMain.SCREEN_ORIENTATION_SENSOR
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'This event will be activated when the orientation change procedure is completed.
+Private Sub SoftOrientationMain_ActivityConfigurationChanged (NewConfiguration As AndroidContentResConfiguration)
+	If NewConfiguration.Orientation=NewConfiguration.Constants.ORIENTATION_PORTRAIT Then
+		Log("portrait")
+	Else if NewConfiguration.Orientation=NewConfiguration.Constants.ORIENTATION_LANDSCAPE Then
+		Log("landscape")
+	End If
+End Sub
+
+'Do not forget to add line in Manifest for your future projects: SetActivityAttribute(Main, android:configChanges, "orientation|keyboardHidden|screenSize|screenLayout")
+'Do not forget to create single Layout file for portrait and landscape mode in Designer in your future projects. Recommended to use variants, designer script and anchors.
+'********************Copy this part of codes to your future project Main activity, including Java code*********************************
+Public Sub onConfigurationChanged (NewConfig As Object)
+	SoftOrientationMain.OnConfigurationChanged(NewConfig)
+End Sub
+
+#If Java
+
+import android.content.res.Configuration;
+
+@Override
+public void onConfigurationChanged (Configuration newConfig) {
+	super.onConfigurationChanged(newConfig);
+	processBA.raiseEvent(null, "onconfigurationchanged", newConfig);
+}
+#End If
+'************************************End of code*********************************************************************************************

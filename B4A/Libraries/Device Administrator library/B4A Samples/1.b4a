@@ -1,0 +1,56 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.admin
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=administrator
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~~\n~'End of default text.~\n~AddApplicationText(<receiver android:name="anywheresoftware.b4a.objects.AdminReceiver2"~\n~  android:permission="android.permission.BIND_DEVICE_ADMIN"~\n~  android:exported="true"~\n~  >~\n~  <meta-data android:name="android.app.device_admin"~\n~  android:resource="@xml/device_admin" />~\n~  <intent-filter>~\n~  <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />~\n~  </intent-filter>~\n~</receiver>)~\n~~\n~CreateResource(xml, device_admin.xml,~\n~<device-admin xmlns:android="http://schemas.android.com/apk/res/android">~\n~  <uses-policies>~\n~  <limit-password />~\n~  <reset-password />~\n~  <force-lock />~\n~  </uses-policies>~\n~</device-admin>~\n~)~\n~
+Module1=ManagerService
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Administrator Example
+	#VersionCode: 1
+	#VersionName: 1
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+
+Sub Process_Globals
+	Public manager As AdminManager
+End Sub
+
+Sub Globals
+
+End Sub
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	If manager.Enabled And manager.PasswordSufficient Then
+		Log("User set properly")
+		'you can safely access whatever needs to be accessed...
+	Else If manager.Enabled And manager.PasswordSufficient = False Then
+		manager.RequestNewPassword
+	End If
+End Sub
+
+Sub btnEnable_Click
+	If manager.Enabled = False Then 
+		manager.Enable("Please enable in order to get access to the secured server.")
+	End If
+End Sub
+
+Sub btnDisable_Click
+	manager.Disable
+End Sub
+Sub btnLock_Click
+	If manager.Enabled Then manager.LockScreen
+End Sub

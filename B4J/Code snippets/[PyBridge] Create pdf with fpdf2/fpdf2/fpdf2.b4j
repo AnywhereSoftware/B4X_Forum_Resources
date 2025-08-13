@@ -1,0 +1,130 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=logo.png
+FileGroup1=New Group
+Group=Default Group
+Library1=jcore
+Library2=pybridge
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=10.2
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+'Open global Python shell - make sure to set the path under Tools - Configure Paths. Do not update the internal package.
+'ide://run?File=%B4J_PYTHON%\..\WinPython+Command+Prompt.exe
+Sub Process_Globals
+	Private Py As PyBridge
+End Sub
+
+Sub AppStart (Args() As String)
+	Start
+	StartMessageLoop
+End Sub
+
+'This event will be called once, before the page becomes visible.
+Private Sub Start
+	Py.Initialize(Me, "Py")
+	Dim opt As PyOptions = Py.CreateOptions("Python/python/python.exe")
+	Py.Start(opt)
+	Wait For Py_Connected (Success As Boolean)
+	If Success = False Then
+		LogError("Failed to start Python process.")
+		Return
+	End If
+	
+	Dim html As String = $"
+<dl>
+      <dt>Description title</dt>
+      <dd>Description Detail</dd>
+  </dl>
+  <h1>Big title</h1>
+  <section>
+    <h2>Section title</h2>
+    <p><b>Hello</b> world. <u>I am</u> <i>tired</i>.</p>
+    <p><a href="https://github.com/py-pdf/fpdf2">py-pdf/fpdf2 GitHub repo</a></p>
+    <p align="right">right aligned text</p>
+    <p>i am a paragraph <br>in two parts.</p>
+    <font color="#00ff00"><p>hello in green</p></font>
+    <font size="7"><p>hello small</p></font>
+    <font face="helvetica"><p>hello helvetica</p></font>
+    <font face="times"><p>hello times</p></font>
+  </section>
+  <section>
+    <h2>Other section title</h2>
+    <ul type="circle">
+      <li>unordered</li>
+      <li>list</li>
+      <li>items</li>
+    </ul>
+    <ol start="3" type="i">
+      <li>ordered</li>
+      <li>list</li>
+      <li>items</li>
+    </ol>
+    <br>
+    <br>
+    <pre>i am preformatted text.</pre>
+    <br>
+    <blockquote>hello blockquote</blockquote>
+    <table width="50%">
+      <thead>
+        <tr>
+          <th width="30%">ID</th>
+          <th width="70%">Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Alice</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Bob</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+	
+"$
+	Dim img() As Byte = File.ReadBytes(File.DirAssets, "logo.png")
+	Wait For (HtmlToPDF(html, img).Fetch) Complete (Result As PyWrapper)
+	File.WriteBytes(File.DirApp, "1.pdf", Result.Value)
+	Log($"PDF created successfully: ${File.Combine(File.DirApp, "1.pdf")}"$)
+
+	Sleep(500)
+	CloseProgram
+End Sub
+
+'Html - html string
+'img - Background image. Can be array of bytes or a string with the path to the image file.
+Public Sub HtmlToPDF (Html As Object, img As Object) As PyWrapper
+	Dim Code As String = $"
+import fpdf
+
+def HtmlToPDF (Html, img):
+	pdf = fpdf.FPDF()
+	pdf.add_page()
+	if not img is None:
+		pdf.image(img, x=0, y=0, w=210, h=297)
+	pdf.write_html(Html)
+	return pdf.output()
+"$
+	Return Py.RunCode("HtmlToPDF", Array(Html, img), Code)
+End Sub
+
+Private Sub CloseProgram 'ignore
+	Py.KillProcess
+	Sleep(100)
+	StopMessageLoop
+End Sub
+
+Private Sub Py_Disconnected
+	Log("PyBridge disconnected")
+End Sub

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Firebase</title>
+  <!-- Import Firebase modular SDK -->
+  <script type="module">
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      query,
+      orderBy,
+      limit,
+      where,
+      getDocs,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Initialize Firebase using the fetched configuration
+    const firebaseConfig = {
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get the query parameters from the URL
+    const queryParams = new URLSearchParams(window.location.search);
+
+    // Get a specific parameter value by its name
+    const collectionParam = queryParams.get('collection');
+    const orderByParam = queryParams.get("orderBy");
+    const directionParam = queryParams.get("direction");
+
+    let usersCollection; // Declaring the variable here
+    let unsubscribe;
+
+    if (queryParams.has('document')) {
+      // If the 'document' parameter exists
+      const documentParam = queryParams.get('document');
+      unsubscribe = onSnapshot(doc(db, collectionParam, documentParam), (doc) => {
+        let data = doc.data();
+        data['collection'] = collectionParam;
+        data['id'] = documentParam;
+        window.location = "#" + JSON.stringify(data);
+        console.log("Current data: ", data);
+      });
+    } else {
+      if ((queryParams.has("orderBy") && queryParams.has("direction")) == true) {
+        const orderByParam = queryParams.get("orderBy");
+        const directionParam = queryParams.get("direction");
+        usersCollection = query(collection(db, collectionParam), orderBy(orderByParam, directionParam));
+      } else {
+        usersCollection = collection(db, collectionParam);
+      }
+
+      unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          let totalDocs = snapshot.docChanges().length;
+          if (change.type === "added") {
+            console.log("New: ", change.doc.data());
+          }
+          if (change.type === "modified") {
+            console.log("Modified: ", change.doc.data());
+          }
+          if (change.type === "removed") {
+            console.log("Removed: ", change.doc.data());
+          }
+          window.location = "#" + JSON.stringify({
+            type: change.type.toUpperCase(),
+            collection: collectionParam,
+            id: change.doc.id,
+            data: change.doc.data()
+          });
+        });
+      });
+    }
+
+    export function disconnect() {
+      if (unsubscribe) {
+        unsubscribe();
+        window.location = "#disconnected"
+      }
+    }
+
+    window.disconnect = disconnect;
+  </script>
+</head>
+
+<body>
+  <h1>Firebase Realtime</h1>
+</body>
+
+</html>

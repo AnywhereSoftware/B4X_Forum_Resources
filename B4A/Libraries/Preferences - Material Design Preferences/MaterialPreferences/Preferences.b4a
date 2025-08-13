@@ -1,0 +1,95 @@
+﻿Build1=Default,de.amberhome.preferenceexample
+File1=layout1.bal
+File2=prefsscreen.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=preferences
+Library3=appcompat
+Library4=materialdatetimepicker
+Library5=dateutils
+Library6=xmllayoutbuilder
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="25"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text~\n~~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~~\n~'Add the preferenceTheme item and the two asp_ items for Prefence Screens.~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">~\n~        <item name="colorPrimary">#0098FF</item>~\n~        <item name="colorPrimaryDark">#007CF5</item>~\n~        <item name="colorAccent">#FF5522</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~		<item name="preferenceTheme">@style/PreferenceThemeOverlay.Material</item>~\n~		<item name="asp_preferenceIconTint">?colorAccent</item>~\n~        <item name="asp_preferenceDialogIconTint">?asp_preferenceIconTint</item>~\n~        <item name="windowActionModeOverlay">true</item>~\n~    </style>~\n~</resources>~\n~)~\n~~\n~~\n~
+Module1=Prefs1
+Module2=Prefs2
+Module3=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=3
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Preference Example
+	#VersionCode: 4
+	#VersionName: 2.0
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'Needed for the MaterialDateTimePicker library. It seems to be missing in the 
+'dependencies for the library.
+#AdditionalJar: com.android.support:design
+
+#AdditionalRes: ..\resource
+#Extends: android.support.v7.app.AppCompatActivity
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Dim Manager As PreferenceManager
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private AC As AppCompat
+	Private ToolBar As ACToolBarDark
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("layout1")
+	
+	ToolBar.Color = AC.GetThemeAttribute("colorPrimary")
+	
+	Activity.AddMenuItem("Settings", "Menu")
+
+End Sub
+
+Sub Activity_Resume
+
+	
+	Log("Prefs: " & Manager.GetAll)
+	
+	Log("Changed: " & Manager.GetUpdatedKeys.Size)
+
+	Dim MultiMonths As List
+	MultiMonths = Manager.GetList2("multilist", Array As String("January", "February"))
+	
+	If MultiMonths.IsInitialized Then
+		Log("Variable: " & MultiMonths)
+		For Each v As String In MultiMonths
+			Log("ForEach Multiselect Values: " & v)
+		Next
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Menu_Click
+	Log("Start Preference Activity")
+	StartActivity(Prefs1)
+End Sub

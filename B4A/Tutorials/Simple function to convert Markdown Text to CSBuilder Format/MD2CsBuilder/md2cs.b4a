@@ -1,0 +1,89 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Label1 As B4XView
+	Private Label2 As B4XView
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Dim markdownText As String = $"This is a **bold** Text, 
+	an *italic* Text 
+	and a [Link1](http://example1.com) 
+	and a [Link2](http://example2.com)."$
+	
+	Dim cs As CSBuilder = ProcessMarkdownToCSBuilder(markdownText)
+	Label1.Text = cs
+	cs.EnableClickEvents(Label1)
+	
+End Sub
+
+Sub ProcessMarkdownToCSBuilder(markdown As String) As CSBuilder
+    Dim cs As CSBuilder
+    cs.Initialize
+    Dim boldPattern As String = "\*\*(.*?)\*\*" ' Regex for **Text**
+    Dim italicPattern As String = "\*(.*?)\*" ' Regex for *Text*
+    Dim urlPattern As String = "\[(.*?)\]\((.*?)\)" ' Regex for [Text](URL)
+    Dim combinedPattern As String = boldPattern & "|" & italicPattern & "|" & urlPattern
+    Dim matcher As Matcher = Regex.Matcher(combinedPattern, markdown)
+    Dim lastEnd As Int = 0
+    Do While matcher.Find
+        cs.Append(markdown.SubString2(lastEnd, matcher.GetStart(0)))
+        If matcher.Group(1) <> Null Then
+            cs.Typeface(Typeface.DEFAULT_BOLD).Append(matcher.Group(1)).PopAll
+        Else If matcher.Group(2) <> Null Then
+            cs.Typeface(Typeface.CreateNew(Typeface.DEFAULT,Typeface.STYLE_ITALIC)).Append(matcher.Group(2)).PopAll
+        Else If matcher.Group(3) <> Null And matcher.Group(4) <> Null Then
+            cs.Color(Colors.Blue).Clickable("cs", matcher.Group(4)).Append(matcher.Group(3)).PopAll
+        End If
+        lastEnd = matcher.GetEnd(0)
+    Loop
+    cs.Append(markdown.SubString(lastEnd))
+    Return cs
+End Sub
+
+Sub cs_Click(cstag As Object)
+    Log($"Clicked on: ${cstag}"$)
+	Label2.Text = Label2.Text  & CRLF & cstag
+End Sub
+
+ 

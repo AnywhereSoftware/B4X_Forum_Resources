@@ -1,0 +1,128 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=RegexBuilder
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private ListView1 As ListView
+	Private Label1 As Label
+	Private lblfrom As Label
+	Private lblto As Label
+	Private lblsubj As Label
+	Private WebView1 As WebView
+	Private lbldate As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	
+	ListView1.Items.Clear
+	
+	Dim dc As DirectoryChooser
+	dc.Initialize
+	Label1.Text=dc.Show(MainForm)
+	
+	ListView1.Items.AddAll(File.ListFiles(Label1.Text))
+	
+	
+End Sub
+
+Private Sub ListView1_MouseClicked (EventData As MouseEvent)
+	
+	Try
+		
+		Dim txtwv As String=""
+	
+		Dim txt As String = File.ReadString(Label1.Text,ListView1.SelectedItem)
+	
+		Dim text, pattern As String
+		text = txt
+	
+		'date
+		pattern = "Delivery-date:\s+([^\r\n]+)"
+		Dim Matcher1 As Matcher
+		Matcher1 = Regex.Matcher(pattern, text)
+		Do While Matcher1.Find
+			lbldate.Text = Matcher1.Match
+		Loop
+	
+		'from
+		pattern = "Return-Path:\s+([^\r\n]+)"
+		Dim Matcher1 As Matcher
+		Matcher1 = Regex.Matcher(pattern, text)
+		Do While Matcher1.Find
+			lblfrom.Text=Matcher1.Match
+		Loop
+		lblfrom.Text=Regex.Replace("Return-Path:",lblfrom.Text,"From:")
+	
+		'to
+		pattern = "Delivered-To:.+"
+		Dim Matcher1 As Matcher
+		Matcher1 = Regex.Matcher(pattern, text)
+		Do While Matcher1.Find
+			lblto.Text=Matcher1.Match
+		Loop
+		
+		'subj
+		pattern = "Subject:\s*(.*)"
+		Dim lastone As String=""
+		Dim Matcher1 As Matcher
+		Matcher1 = Regex.Matcher(pattern, text)
+		Do While Matcher1.Find
+			lastone = Matcher1.Match
+		Loop
+		lblsubj.Text=lastone
+	
+		'
+'	pattern = "\s*boundary=([^\s;]+)"
+'	Dim Matcher1 As Matcher
+'	Matcher1 = Regex.Matcher(pattern, text)
+'	Do While Matcher1.Find
+'		TextArea1.Text = TextArea1.Text & CRLF & Matcher1.Match
+'		Exit
+'	Loop
+	
+		'msg
+		Dim rx As RegexBuilder
+		rx.Initialize.AppendStartString
+		rx.Append("(Content-Type: text/html)(?s).*")
+		Dim Matcher1 As Matcher
+		Matcher1 = Regex.Matcher2(rx.Pattern,Regex.MULTILINE, text)
+		Do While Matcher1.Find
+			txtwv = txtwv & CRLF & Matcher1.Match
+		Loop
+		
+		
+		
+		WebView1.LoadHtml(txtwv)
+	
+	
+	Catch
+		WebView1.LoadHtml(LastException)
+	End Try
+	
+End Sub
+

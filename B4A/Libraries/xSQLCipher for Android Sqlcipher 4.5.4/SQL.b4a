@@ -1,0 +1,115 @@
+﻿Build1=Default,com.tummosoft
+File1=db_cipher.db
+File2=layouttest.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=sql
+Library3=xui
+Library4=xsqlcipher
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: True
+#AdditionalJar: bcprov-jdk15on-1.70
+#AdditionalJar: sqlite-2.4.0.aar
+#AdditionalJar: nio-1.0.4.jar
+#AdditionalJar: android-database-sqlcipher-4.5.4.aar
+
+Sub Process_Globals
+	Dim sqlci As xSQLCipher
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Button2 As Button
+	Private Button1 As Button	
+	Dim dbpath As String
+	Private Button3 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("layouttest")
+	
+	Dim tken As xEncrypter
+	Dim token As String = tken.encrypt(tken.generateAESKey, "12345678")	' 128 bits (16 bytes)
+	Dim seckey() As Byte = tken.SecretKey
+	
+	Log("HEX=" & tken.parseByte2HexStr(seckey))
+	
+	
+	Dim tokenManganer As TokenManager
+	tokenManganer.initialize
+	tokenManganer.saveTokenToPreferences("sql_pass", token)
+	
+	' SAVE the rule when database has new version
+	Dim dbRule As Rules
+	
+	tokenManganer.saveTokenToPreferences("R_UPGRADE", 1)
+	tokenManganer.saveTokenToPreferences("R_DB_NAME", "dtest")
+	tokenManganer.saveTokenToPreferences("R_DB_PASS", token)
+	'swqhccKWiaLKJuPCGH2ebA==
+	'sqlci.initializeCipher("dtest", "swqhccKWiaLKJuPCGH2ebA==", 20)
+	
+	Dim target As String = File.Combine(File.DirInternalCache, "db_cipher.db")
+	'File.Copy(File.DirAssets, "db_cipher.db",File.DirInternalCache, "db_cipher.db")
+	sqlci.initializeCopy("sqlci", target, "", 1)
+	
+	'Log("IS THIS SqlCipher3(1024) or SqlCipher4 (4096): " & sqlci.PageSize)
+		
+	dbpath = sqlci.DatabasePath
+	Log(dbpath)	
+	'sqlci.Close
+	
+	Log("SQL has : " & sqlci.isDBEncrypted(dbpath))
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	
+End Sub
+
+Private Sub Button2_Click
+	Dim Cursor As Cursor
+	Cursor = sqlci.ExecQuery("SELECT col1, col2 FROM table1")
+	For i = 0 To Cursor.RowCount - 1
+		Cursor.Position = i
+		Log(Cursor.GetString("col1"))
+		Log(Cursor.GetInt("col2"))
+	Next
+End Sub
+
+Sub sqlci_CopyCompleted(succes As Boolean)
+	Log("COPY=" & succes)
+End Sub
+
+Private Sub Button3_Click
+	sqlci.changePassword("12345678")
+End Sub

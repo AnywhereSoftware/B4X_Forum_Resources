@@ -1,0 +1,186 @@
+﻿Build1=Default,b4a.example.dji.test
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=djiv5
+Library3=runtimepermissions
+Library4=xui
+Library5=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="24" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~)~\n~AddReplacement($DJI_KEY$, xxxxxxxx)~\n~CreateResourceFromFile(Macro, DJIv5.DJI)~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+	#MultiDex: true
+	#AdditionalJar: dji-sdk-v5-aircraft-provided-5.8.0, ReferenceOnly
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Private djiSDK As SDKManager
+	Private djiKeyManager As KeyManager
+	Private djiKeyTool As KeyTools
+	Private phone As Phone
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private LogWindow As EditText
+End Sub
+
+Sub cLog(text As String)
+	LogWindow.Text = LogWindow.Text & CRLF & text
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+	requestPermission
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	Dim allResult As Boolean =  Starter.rp.Check(Starter.rp.PERMISSION_ACCESS_COARSE_LOCATION) And _
+		Starter.rp.Check(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION) And _
+		Starter.rp.Check(Starter.rp.PERMISSION_RECORD_AUDIO) And _
+		Starter.rp.Check(Starter.rp.PERMISSION_CAMERA) And _ 
+		Starter.rp.Check(Starter.rp.PERMISSION_READ_PHONE_STATE)
+		
+	If phone.SdkVersion < 33 Then
+		allResult = allResult And _
+			Starter.rp.check(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE) And _
+			Starter.rp.check(Starter.rp.PERMISSION_READ_EXTERNAL_STORAGE)
+	Else
+		allResult = allResult And _
+			Starter.rp.Check("android.permission.READ_MEDIA_IMAGES") And _
+			Starter.rp.Check("android.permission.READ_MEDIA_VIDEO") And _
+			Starter.rp.Check("android.permission.READ_MEDIA_AUDIO")
+	End If
+	
+	If allResult = True Then
+		djiSDK.Initialize("dji")
+	Else
+		Log("Please allow all permission")
+		cLog("Please allow all permission")
+	End If
+End Sub
+
+Sub requestPermission
+	If phone.SdkVersion < 33 Then
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_READ_EXTERNAL_STORAGE)
+	Else
+		Starter.rp.CheckAndRequest("android.permission.READ_MEDIA_IMAGES")
+		Starter.rp.CheckAndRequest("android.permission.READ_MEDIA_VIDEO")
+		Starter.rp.CheckAndRequest("android.permission.READ_MEDIA_AUDIO")
+	End If
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_COARSE_LOCATION)
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_RECORD_AUDIO)
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_CAMERA)
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_READ_PHONE_STATE)
+End Sub
+
+Sub dji_InitProcess(initEventStatus As Object, totalProcess As Int)
+	Select initEventStatus
+		Case djiSDK.DJISDKInitEvent_START_TO_INITIALIZE
+			Log("SDK init process started")
+			cLog("SDK init process started")
+		Case djiSDK.DJISDKInitEvent_INITIALIZE_COMPLETE
+			Log("SDK init process complete")
+			cLog("SDK init process complete")
+			djiSDK.registerApp
+	End Select
+End Sub
+
+Sub dji_ProductConnect(productId As Int)
+	Log("Product connected. ID: "&productId)
+	cLog("Product connected. ID: "&productId)
+End Sub
+
+Sub dji_ProductDisconnect(productId As Int)
+	Log("Product disconnected. ID: "&productId)
+	cLog("Product disconnected. ID: "&productId)
+End Sub
+
+Sub dji_ProductChanged(productId As Int)
+	Log("Product state changed. ID: "&productId)
+	cLog("Product state changed. ID: "&productId)
+End Sub
+
+Sub dji_RegisterComplete(success As Boolean, error As DJIError)
+	If success Then
+		Log("registered. listening for connection...")
+		cLog("registered. listening for connection...")
+		
+		''Check this link for all available keys: https://developer.dji.com/api-reference-v5/android-api/Components/IKeyManager/DJIKey.html
+		djiKeyManager.listen("FCTRL_Conn", djiKeyTool.createKey2(djiKeyTool.FlightControllerKey_KeyConnection),Me,False)
+		djiKeyManager.listen("Product_Conn", djiKeyTool.createKey2(djiKeyTool.ProductKey_KeyConnection),Me, False)
+		djiKeyManager.listen("ProductKey", djiKeyTool.createKey2(djiKeyTool.ProductKey_KeyProductType),Me, False)
+		
+		'Check wrapper html doc for all managers
+		Dim djiAreaCodeManager As AreaCodeManager:djiAreaCodeManager.addAreaCodeChangeListener("AreaCode")
+		Dim djiDeviceStatusManager As DeviceStatusManager:djiDeviceStatusManager.addDJIDeviceStatusChangeListener("DeviceStatus")
+	Else
+		Log(error.description)
+		cLog(error.description)
+	End If
+End Sub
+
+Sub FCTRL_Conn_ValueChange(oldValue As Object, newValue As Object)
+	Log("Flight controller connection changed:" & oldValue & ", to: " & newValue)
+	cLog("Flight controller connection changed:" & oldValue & ", to: " & newValue)
+	
+	djiKeyManager.getValueAsync("ProductFirmware", djiKeyTool.createKey2(djiKeyTool.ProductKey_KeyFirmwareVersion))
+	Wait For ProductFirmware_GetValueComplete(value As Object, success As Boolean, error As DJIError)
+	If success Then
+		Log("Product firmware version: " & value)
+		cLog("Product firmware version: " & value)
+	Else
+		Log(error.description)
+		cLog(error.description)
+	End If
+End Sub
+
+Sub Product_Conn_ValueChange(oldValue As Object, newValue As Object)
+	Log("Product connection changed:" & oldValue & ", to: " & newValue)
+	cLog("Product connection changed:" & oldValue & ", to: " & newValue)
+End Sub
+
+Sub ProductKey_ValueChange(oldValue As Object, newValue As Object)
+	Log("Product key changed:" & oldValue & ", to: " & newValue)
+	cLog("Product key changed:" & oldValue & ", to: " & newValue)
+End Sub
+
+Sub AreaCode_AreaCodeOnChange(from As AreaCodeData, T As AreaCodeData)
+	Log("Area code changed: " & t.AreaCode & ", source: " & T.Source)
+	cLog("Area code changed: " & t.AreaCode & ", source: " & T.Source)
+End Sub
+
+Sub DeviceStatus_DeviceStatusUpdate(from As DJIDeviceStatus, t As DJIDeviceStatus)
+	Log("Area code changed: " & t.statusCode & ", des: " & T.description)
+	cLog("Area code changed: " & t.statusCode & ", des: " & T.description)
+End Sub

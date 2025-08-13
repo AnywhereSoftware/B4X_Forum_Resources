@@ -1,0 +1,516 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 10000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Public RSAKeySize As Int =2048
+	Public pubkey(1000) As Byte
+	Public privatekey(5000) As Byte
+	
+	Dim ESP32Sha256Hash(32) As Byte
+	
+	Dim Signature(1024) As Byte 'depends on the KeySize -> 2028 bit = 256 bytes long signature
+	Dim Signature_Length As UInt 'filled from inline C
+
+'just buffers. Note that the size of data to be encrypted is limited to 248 bytes for a 2048 bits long key
+	Public encrypted(1000) As Byte
+	Public encrypted_length As Int
+	Public decrypted(1000) As Byte 
+	Public decrypted_length As Int
+	
+	Dim bc As ByteConverter
+	
+		
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	'InitFS
+
+	Log("Generating RSA keys. This takes some time...")
+	RunNative("GenerateRSAKeys", Null)
+	
+	
+	EncryptRSA
+	DecryptRSA
+	
+	Log("Hash: ",bc.HexFromBytes(ESP32Sha256Hash))
+	Log("Signature: ",bc.HexFromBytes(Signature))
+	Log("Signature-Length: ",Signature_Length)
+	
+	
+End Sub
+
+Sub EncryptRSA
+	
+	Dim d() As Byte="This is a test text"
+	bc.ArrayCopy2(d,0,decrypted,0,d.Length)
+	decrypted_length=d.Length
+						
+	Log ("Hash and Sign...")
+	RunNative("RSAHashandSign", Null)
+								
+	Log ("Encrypting...")
+	RunNative("RSAEncrypt", Null)
+			
+	Dim es(encrypted_length) As Byte
+	bc.ArrayCopy2(encrypted,0,es,0,encrypted_length)
+	
+End Sub
+
+Sub DecryptRSA
+	RunNative("RSADecrypt", Null)
+	Log("Decrypted: ",decrypted)
+End Sub
+
+#if c
+
+//#include <Arduino.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/error.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+#include "mbedtls/bignum.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/rsa.h"
+#include "mbedtls/config.h"
+#include "mbedtls/platform.h"
+
+void GenerateRSAKeys (B4R::Object* o) {
+
+	#define EXPONENT 65537
+
+	mbedtls_pk_context pk;
+	mbedtls_entropy_context entropy;
+	mbedtls_ctr_drbg_context ctr_drbg;
+	mbedtls_mpi N, P, Q, D, E, DP, DQ, QP;
+
+  int ret;
+  bool success = false;
+
+  const char *pers = "rsa_genkey";
+  printf( "\n  . Initializing RSA..." );
+  mbedtls_ctr_drbg_init( &ctr_drbg );
+  printf( "\n  . ctr_drbg OK..." );
+
+  mbedtls_pk_init( &pk );
+  printf( "\n  . PK init ok..." );
+  mbedtls_mpi_init( &N ); mbedtls_mpi_init( &P ); mbedtls_mpi_init( &Q );
+  mbedtls_mpi_init( &D ); mbedtls_mpi_init( &E ); mbedtls_mpi_init( &DP );
+  mbedtls_mpi_init( &DQ ); mbedtls_mpi_init( &QP );
+  printf( "\n  . INIT NPQ, etc. init ok..." );
+  
+
+  printf( "\n  . Seeding the random number generator..." );
+  mbedtls_entropy_init( &entropy );
+  if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) pers, strlen( pers ) ) ) != 0 ){
+    printf( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
+ 
+  }
+  printf( "\n  . Seeding OK ok..." );
+  
+
+  if((ret = mbedtls_pk_setup( &pk, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA) )) != 0){
+    printf("pk_setup failed: %i\n", ret);
+  }
+	printf( "\n  . PK setup ok..." );
+
+  printf( " ok\n  . Generating the RSA key [ %d-bit ]...", b4r_main::_rsakeysize );
+  if( ( ret = mbedtls_rsa_gen_key( mbedtls_pk_rsa( pk ), mbedtls_ctr_drbg_random, &ctr_drbg, b4r_main::_rsakeysize, EXPONENT ) ) != 0 ){
+    printf( " failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret );
+    
+  }
+  printf( "\n  . Gen Key ok..." );
+
+  printf( " ok\n  . Checking public/private key validity...");
+  if(mbedtls_rsa_check_pubkey(mbedtls_pk_rsa( pk ))!=0){
+    printf("RSA context does not contain an rsa public key");
+   
+  }
+  if(mbedtls_rsa_check_privkey(mbedtls_pk_rsa( pk ))!=0){
+    printf("RSA context does not contain an rsa private key");
+    
+  }
+
+	
+
+  printf( " ok\n  . Writing public key to string(PEM format)...." );
+
+ 
+	if(mbedtls_pk_write_pubkey_pem(&pk,(uint8_t*)b4r_main::_pubkey->data, b4r_main::_pubkey->length) != 0)
+	{
+      printf("write public key to string failed");
+    }
+  
+  
+  printf( " ok\n  . Writing private key to string(PEM format)...." );
+	if(mbedtls_pk_write_key_pem(&pk,(uint8_t*)b4r_main::_privatekey->data,b4r_main::_privatekey->length) != 0)
+	{
+      printf("write public key to string failed");
+    }
+  
+  printf("\nSuccess, process complete. Cleaning up...");
+ 
+  mbedtls_mpi_free( &N ); mbedtls_mpi_free( &P ); mbedtls_mpi_free( &Q );
+  mbedtls_mpi_free( &D ); mbedtls_mpi_free( &E ); mbedtls_mpi_free( &DP );
+  mbedtls_mpi_free( &DQ ); mbedtls_mpi_free( &QP );
+  mbedtls_pk_free(&pk);
+  mbedtls_ctr_drbg_free(&ctr_drbg);
+  mbedtls_entropy_free( &entropy );
+}
+
+
+
+#End If
+
+#if c
+#include "mbedtls/pk.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/rsa.h"
+
+void RSAEncrypt (B4R::Object* o) {
+
+mbedtls_entropy_context entropy;
+mbedtls_entropy_init( &entropy );
+
+int ret = 0;
+
+mbedtls_ctr_drbg_context ctr_drbg;
+char *personalization = "rsa_genkey";
+
+mbedtls_ctr_drbg_init( &ctr_drbg );
+
+ret = mbedtls_ctr_drbg_seed( &ctr_drbg , mbedtls_entropy_func, &entropy,
+                 (const unsigned char *) personalization,
+                 strlen( personalization ) );
+if( ret != 0 )
+{
+    printf( " failed\n  ! mbedtls_ctr_drbg_seed -0x%04x\n", -ret );
+}
+else
+{
+    printf( " Seed generated...\n");
+
+}
+
+
+mbedtls_pk_context pk;
+mbedtls_pk_init( &pk );
+
+
+printf( "loading  public key\n");
+if( ( ret = mbedtls_pk_parse_public_key( &pk,(uint8_t*)b4r_main::_pubkey->data ,strlen((const char*)b4r_main::_pubkey->data)+1 ) ) != 0 )
+
+{
+    printf( " failed\n  ! mbedtls_pk_parse_public_key -0x%04x\n", -ret );
+}
+else
+{
+    printf( "\nPublic Key loaded...\n");
+
+}
+
+
+size_t olen = 0;
+
+
+printf( "\nEncrypting" );
+
+if( ( ret = mbedtls_pk_encrypt( &pk, (uint8_t*)b4r_main::_decrypted->data, b4r_main::_decrypted_length,
+                                (uint8_t*)b4r_main::_encrypted->data, &olen,b4r_main::_encrypted->length,
+								//(uint8_t*)b4r_main::_encrypted->data, (size_t*)b4r_main::_encrypted_length,b4r_main::_encrypted->length,
+                                mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+{
+    printf( " failed\n  ! mbedtls_pk_encrypt returned -0x%04x\n", -ret );
+}
+else
+{
+    printf( "\nEncryption successful...\n");
+	b4r_main::_encrypted_length = olen;
+	
+}
+
+mbedtls_pk_free(&pk);
+
+}
+
+
+#End If
+
+#if c
+#include "mbedtls/pk.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/rsa.h"
+
+void RSADecrypt (B4R::Object* o) {
+
+	mbedtls_rsa_context rsa;
+	//mbedtls_rsa_init(&rsa,  MBEDTLS_RSA_PKCS_V15,0);
+
+	mbedtls_entropy_context entropy;
+	mbedtls_entropy_init( &entropy );
+
+	mbedtls_pk_context pk;
+	mbedtls_pk_init( &pk );
+
+	int ret = 0;
+
+	mbedtls_ctr_drbg_context ctr_drbg;
+	char *personalization = "rsa_genkey";
+
+	mbedtls_ctr_drbg_init( &ctr_drbg );
+
+	ret = mbedtls_ctr_drbg_seed( &ctr_drbg , mbedtls_entropy_func, &entropy,
+	                 (const unsigned char *) personalization,
+	                 strlen( personalization ) );
+	if( ret != 0 )
+	{
+	    printf( " failed\n  ! mbedtls_ctr_drbg_seed -0x%04x\n", -ret );
+	}
+	else
+	{
+	    printf( " Seed generated...\n");
+
+	}
+
+	if( ( ret = mbedtls_pk_parse_key( &pk,(uint8_t*)b4r_main::_privatekey->data,strlen((const char*)b4r_main::_privatekey->data)+1,NULL,0 ) ) != 0 )
+	{
+	    printf( "\nfailed\n  ! mbedtls_pk_parse_key returned -0x%04x\n", -ret );
+	}
+	else
+	{
+	    printf( "\nPrivate Key loaded...\n");
+	}
+
+	printf( "\nDecrypting..." );
+
+	int i;
+
+	size_t declen;
+
+	mbedtls_rsa_set_padding( mbedtls_pk_rsa( pk ),MBEDTLS_RSA_PKCS_V15,0);
+
+	if( ( ret = mbedtls_pk_decrypt( &pk, (uint8_t*)b4r_main::_encrypted->data,
+	            //b4r_main::_encrypted_length, (uint8_t*)b4r_main::_decrypted->data, (size_t*)b4r_main::_decrypted_length,
+				b4r_main::_encrypted_length, (uint8_t*)b4r_main::_decrypted->data, &declen,
+				b4r_main::_decrypted->length,mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+
+	{
+	    
+		
+		printf( "\nfailed  ! mbedtls_pk_decrypt returned -0x%04x\n", -ret );
+	 
+	}
+	else
+	{
+	    b4r_main::_decrypted_length = declen;
+		printf( "\nDecrypt successful...\n");
+		
+	}
+
+
+	//######################### Hash and Verify ############################################
+	printf( "\nHashing to verify...\n" );
+
+	#include "mbedtls/md.h"
+
+
+	  mbedtls_md_context_t ctx;
+	  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;;
+
+	  mbedtls_md_init(&ctx);
+	 
+	  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
+	    
+	  mbedtls_md_starts(&ctx);
+	  
+	  mbedtls_md_update(&ctx, (unsigned char *)b4r_main::_decrypted->data, b4r_main::_decrypted_length);
+	  
+	  mbedtls_md_finish(&ctx, (unsigned char *)b4r_main::_esp32sha256hash->data);
+	  mbedtls_md_free(&ctx);
+
+	  
+	  
+	  size_t siglen = 0;
+  
+
+
+	//############## Verify ####################
+
+	printf( "\nloading  Public Key\n");
+	mbedtls_pk_init( &pk );
+
+	if( ( ret = mbedtls_pk_parse_public_key( &pk,(uint8_t*)b4r_main::_pubkey->data ,strlen((const char*)b4r_main::_pubkey->data)+1 ) ) != 0 )
+	{
+	    printf( " failed\n  ! mbedtls_pk_parse_public_key -0x%04x\n", -ret );
+	}
+	else
+	{
+	    printf( "\nPublic Key loaded...\n");
+
+	}
+	mbedtls_rsa_set_padding( mbedtls_pk_rsa( pk ),MBEDTLS_RSA_PKCS_V15,0);
+
+	printf( "\nVerifying...\n");
+
+	size_t hashlen = 32;
+	siglen=b4r_main::_signature_length;
+
+
+	if ((ret = mbedtls_pk_verify(&pk, 
+								MBEDTLS_MD_SHA256,
+								(unsigned char *)b4r_main::_esp32sha256hash->data, hashlen,
+								 (unsigned char *)b4r_main::_signature->data,
+								 siglen)) 
+								 != 0) {
+	        mbedtls_printf(" failed\n  ! mbedtls_pk_verify returned -0x%04x\n", (unsigned int) -ret);
+	       unsigned char buf[256];
+		   mbedtls_strerror(ret, (char *) buf, sizeof(buf));
+	        mbedtls_printf("  !  Last error was: %s\n", buf);
+	    }
+		
+		else
+	{
+	    printf( "\nSignature OK...\n");
+
+	}
+
+	//##################################
+
+	 mbedtls_pk_free(&pk);
+
+}
+#End If
+
+#If c
+
+	#include "mbedtls/pk.h"
+	#include "mbedtls/entropy.h"
+	#include "mbedtls/ctr_drbg.h"
+	#include "mbedtls/rsa.h"
+
+	void RSAHashandSign (B4R::Object* o) {
+
+	//######################### SIGN ############################################
+	printf( "\nSigning..." );
+
+	#include "mbedtls/md.h"
+
+
+	mbedtls_entropy_context entropy;
+	mbedtls_entropy_init( &entropy );
+
+	int ret = 0;
+
+	mbedtls_ctr_drbg_context ctr_drbg;
+	char *personalization = "rsa_genkey";
+
+	mbedtls_ctr_drbg_init( &ctr_drbg );
+
+	ret = mbedtls_ctr_drbg_seed( &ctr_drbg , mbedtls_entropy_func, &entropy,
+	                 (const unsigned char *) personalization,
+	                 strlen( personalization ) );
+	if( ret != 0 )
+	{
+	    printf( " failed\n  ! mbedtls_ctr_drbg_seed -0x%04x\n", -ret );
+	}
+	else
+	{
+	    printf( " Seed generated...\n");
+
+	}
+
+
+	mbedtls_pk_context pk;
+	mbedtls_pk_init( &pk );
+
+	if( ( ret = mbedtls_pk_parse_key( &pk,(uint8_t*)b4r_main::_privatekey->data,strlen((const char*)b4r_main::_privatekey->data)+1,NULL,0 ) ) != 0 )
+		{
+		    printf( "\nfailed\n  ! mbedtls_pk_parse_key returned -0x%04x\n", -ret );
+		}
+		else
+		{
+		    printf( "\nPrivate Key loaded...\n");
+		}
+
+	  mbedtls_md_context_t ctx;
+	  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;;
+	  mbedtls_md_init(&ctx);
+	  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
+	  mbedtls_md_starts(&ctx);
+	  mbedtls_md_update(&ctx, (unsigned char *)b4r_main::_decrypted->data, b4r_main::_decrypted_length);
+	  mbedtls_md_finish(&ctx, (unsigned char *)b4r_main::_esp32sha256hash->data);
+	  mbedtls_md_free(&ctx);
+
+	printf( "\nHashing ok...\n");
+
+	  size_t siglen = 0;
+  
+
+	if ((ret = mbedtls_pk_sign(&pk, MBEDTLS_MD_SHA256,
+								(unsigned char *)b4r_main::_esp32sha256hash->data, 0,
+	                               (unsigned char *)b4r_main::_signature->data,&siglen ,
+	                               mbedtls_ctr_drbg_random, &ctr_drbg)) != 0) {
+	        mbedtls_printf(" failed\n  ! mbedtls_pk_sign returned -0x%04x\n", (unsigned int) -ret);
+	}
+
+	else
+	{
+	    b4r_main::_signature_length = siglen;
+		printf( "\nSign successful...\n");
+	}
+	
+	//############## Check  Signature ################
+	mbedtls_pk_init( &pk );
+	  printf( "loading  public key\n");
+		if( ( ret = mbedtls_pk_parse_public_key( &pk,(uint8_t*)b4r_main::_pubkey->data ,strlen((const char*)b4r_main::_pubkey->data)+1 ) ) != 0 )
+		{
+		    printf( " failed\n  ! mbedtls_pk_parse_public_key -0x%04x\n", -ret );
+		}
+		else
+		{
+		    printf( "\nPublic Key loaded...\n");
+
+		}
+
+	size_t hashlen = 0;
+
+ 	printf( "\nChecking  signature...\n");
+	if ((ret = mbedtls_pk_verify(&pk, MBEDTLS_MD_SHA256, (unsigned char *)b4r_main::_esp32sha256hash->data, hashlen,
+	                                 (unsigned char *)b4r_main::_signature->data,siglen)) != 0) {
+	        mbedtls_printf(" failed\n  ! mbedtls_pk_verify returned -0x%04x\n", (unsigned int) -ret);
+	       
+	    }
+		
+		else
+	{
+	    printf( "\nSignature OK...\n");
+
+	}
+	
+	mbedtls_pk_free(&pk);
+}
+
+
+#End If
+
+

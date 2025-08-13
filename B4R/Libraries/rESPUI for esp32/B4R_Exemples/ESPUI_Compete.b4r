@@ -1,0 +1,627 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rrandomaccessfile
+Library4=respui
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private UI As ESPUI
+	Private wifi As ESP8266WiFi 
+	Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private maintab, mainLabel, mainSwitcher, mainSlider, mainText, mainselector, mainNumber, mainScrambleButton, mainTime As UInt
+	Private styletab, styleButton, styleLabel, styleSwitcher, styleSlider, styleButton2, styleLabel2, styleSlider2 ,colourtab As UInt
+	Private graph, grouptab, groupbutton, groupsliders, groupswitcher,grouplabel,grouplabel2,vertgroupswitcher, vertgroupslider As UInt
+	Private exampletab,examplegroup1,wifitab, wifi_ssid_text, wifi_pass_text, sliderVal  As UInt
+	Private updates As bool = False
+	Private lastTime As ULong
+	Private SSID As String = "xxxxxx"
+	Private PASS As String = "xxxxxxxxxx"
+	Private sctext As bool = False
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2(SSID, PASS) Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	UI.Initialize( "OnExtendedCB")
+    Log("local IP ",wifi.LocalIp)
+    AddLooper("localloop")
+	
+    setUpUI
+		
+End Sub
+
+
+
+'// This is the main function which builds our GUI
+Sub setUpUI
+
+'#ifdef ESP8266
+'    { HeapSelectIram doAllocationsInIRAM;
+'#endif
+
+'	//Turn off verbose debugging
+	UI.setVerbosity(UI.Verb_Quiet)
+
+'	//Make sliders continually report their position As they are being dragged.
+	UI.sliderContinuous = True
+
+'	//This GUI is going To be a tabbed GUI, so we are adding most controls using ESPUI.addControl
+'	//which allows us To set a parent control. If we didn't need tabs we could use the simpler add
+'	//functions like:
+'	//    ESPUI.button()
+'	//    ESPUI.label()
+
+
+'	/*
+'	 * TAB: Basic Controls
+'	 * This TAB contains all the basic ESPUI controls, And shows how To read And update them at runtime.
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	maintab = UI.addControl1(UI.ControlTyp_TAB, "", "Basic controls")
+
+	UI.addControl3(UI.ControlTyp_Separator, "General controls", "", UI.Controlcol_None, maintab)
+	UI.addControl_CB(UI.ControlTyp_Button, "Button", "Button 1", UI.Controlcol_Alizarin, maintab, 19)						'paramCallback ********************
+	'19--> paramCallback
+	
+	mainLabel = UI.addControl_CB(UI.ControlTyp_Label, "Label", "Label text", UI.Controlcol_Emerald, maintab,0) 				'generalCallback
+	mainSwitcher = UI.addControl_CB(UI.ControlTyp_Switcher, "Switcher", "", UI.Controlcol_Sunflower, maintab,0)				'generalCallback
+
+'	//Sliders default To being 0 To 100, but If you want different limits you can add a Min And Max control
+	mainSlider = UI.addControl_CB(UI.ControlTyp_slider, "Slider", "200", UI.Controlcol_Turquoise, maintab,0)					'generalCallback
+	UI.addControl3(UI.ControlTyp_Min, "", "10", UI.Controlcol_None, mainSlider)
+	UI.addControl3(UI.ControlTyp_Max, "", "400", UI.Controlcol_None, mainSlider)
+
+'	//These are the values For the selector's options. (Note that they *must* be declared static
+'	//so that the storage is allocated in global memory And Not just on the stack of this function.)
+	Dim optionValues() As Object = Array As Object("Value 1", "Value 2", "Value 3", "Value 4", "Value 5")
+	mainselector = UI.addControl_CB(UI.ControlTyp_Select, "Selector", "Selector", UI.Controlcol_Wetasphalt, maintab,0)			'generalCallback
+	For Each v As Object In optionValues
+		'Log("v=",v)
+		UI.addControl3(UI.ControlTyp_Option, v, v, UI.Controlcol_None, mainselector)
+	Next
+
+	mainText = UI.addControl_CB(UI.ControlTyp_Text, "Text Input", "Initial value", UI.Controlcol_Alizarin, maintab,0)   		'generalCallback
+
+'	//Number inputs also accept Min And Max components, but you should still validate the values.
+	mainNumber = UI.addControl_CB(UI.ControlTyp_Number, "Number Input", "42", UI.Controlcol_Emerald, maintab,0)					'generalCallback
+	UI.addControl3(UI.ControlTyp_Min, "", "10", UI.Controlcol_None, mainNumber)
+	UI.addControl3(UI.ControlTyp_Max, "", "50", UI.Controlcol_None, mainNumber)
+
+	UI.addControl3(UI.ControlTyp_Separator, "Updates", "", UI.Controlcol_None, maintab)
+
+'	//This button will update all the updatable controls on this TAB To random values
+	mainScrambleButton = UI.addControl_CB(UI.ControlTyp_Button, "Scramble Values", "Scramble Values", UI.Controlcol_Carrot, maintab,9)	'scrambleCallback
+	'9 --> scrambleCallback
+	
+	UI.addControl_CB(UI.ControlTyp_Switcher, "Constant updates", "0", UI.Controlcol_Carrot, maintab,10)  
+	'10 --> constant updatesCallback  
+	               
+	'//Add the invisible "Time" control				
+	mainTime = UI.addControl_cb(UI.ControlTyp_Time, "", "", UI.Controlcol_none,0,0)
+	'8 --> timeCallback
+	
+	'//Request an update To the time
+	'//Will trigger timeCallback									
+	UI.addControl_CB(UI.ControlTyp_Button, "Get Time", "Get Time", UI.Controlcol_Carrot, maintab,11)		'gettimeCallback
+	'11 --> gettimeCallback
+	
+	UI.addControl_CB(UI.ControlTyp_Button, "Set Time", "Set Time", UI.Controlcol_Carrot, maintab,7)         'settimeCallback
+	'7 --> settimeCallback
+	UI.addControl3(UI.ControlTyp_Separator, "Control Pads", "", UI.Controlcol_None, maintab)
+	UI.addControl_CB(UI.ControlTyp_Pad, "Normal", "", UI.Controlcol_Peterriver, maintab,0)										'generalCallback)
+	UI.addControl_CB(UI.ControlTyp_PadWithCenter, "With center", "", UI.Controlcol_Peterriver, maintab,0)						'generalCallback)
+
+
+'	/*
+'	 * TAB: Colours
+'	 * This TAB shows all the basic colours
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	colourtab = UI.addControl1(UI.ControlTyp_TAB, "", "Colours")
+	UI.addControl_CB(UI.ControlTyp_Button, "Alizarin", "Alizarin", UI.Controlcol_Alizarin, colourtab,0)							'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Turquoise", "Turquoise", UI.Controlcol_Turquoise, colourtab,0)						'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Emerald", "Emerald", UI.Controlcol_Emerald, colourtab,0)							'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Peterriver", "Peterriver", UI.Controlcol_Peterriver, colourtab,0)					'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Wetasphalt", "Wetasphalt", UI.Controlcol_Wetasphalt, colourtab,0)					'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Sunflower", "Sunflower", UI.Controlcol_Sunflower, colourtab,0)						'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Carrot", "Carrot", UI.Controlcol_Carrot, colourtab,0)								'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Dark", "Dark", UI.Controlcol_Dark, colourtab,0)										'generalCallback
+
+
+'	/*
+'	 * TAB: Styled controls
+'	 * This TAB shows off how inline CSS styles can be applied To elements And panels in order
+'	 * To customise the look of the UI.
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	styletab = UI.addControl1(UI.ControlTyp_TAB, "", "Styled controls")
+	styleButton = UI.addControl_CB(UI.ControlTyp_Button, "Styled Button", "Button", UI.Controlcol_Alizarin, styletab,0)			'generalCallback
+	styleLabel = UI.addControl_CB(UI.ControlTyp_Label, "Styled Label", "This is a label", UI.Controlcol_Alizarin, styletab,0)	'generalCallback
+	styleSwitcher = UI.addControl_CB(UI.ControlTyp_Switcher, "Styled Switcher", "1", UI.Controlcol_Alizarin, styletab,0)		'generalCallback
+	styleSlider = UI.addControl_CB(UI.ControlTyp_slider, "Styled Slider", "0", UI.Controlcol_Alizarin, styletab,0)				'generalCallback
+
+'	//This button will randomise the colours of the above controls To show updating of inline styles
+	UI.addControl_CB(UI.ControlTyp_Button, "Randomise Colours", "Randomise Colours", UI.Controlcol_Sunflower, styletab,17)		'RandomiseColorsCB
+	'17 --> 'RandomiseColorsCB
+	
+	UI.addControl3(UI.ControlTyp_Separator, "Other styling examples", "", UI.Controlcol_None, styletab)
+	styleButton2 = UI.addControl_CB(UI.ControlTyp_Button, "Styled Button", "Button", UI.Controlcol_Alizarin, styletab,16)		'generalCallback
+	UI.setPanelStyle(styleButton2, "background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%); border-bottom: #555;",-1)
+	UI.setElementStyle(styleButton2, "border-radius: 2em; border: 3px solid black; width: 30%; background-color: #8df;",-1)
+
+	styleSlider2 = UI.addControl_CB(UI.ControlTyp_slider, "Styled Slider", "0", UI.Controlcol_Dark, styletab,0)					'generalCallback
+	UI.setElementStyle(styleSlider2, "background: linear-gradient(to right, red, orange, yellow, green, blue);",-1)
+
+	styleLabel2 = UI.addControl_CB(UI.ControlTyp_Label, "Styled Label", "This is a label", UI.Controlcol_Dark, styletab,0)		'generalCallback
+	UI.setElementStyle(styleLabel2, "text-shadow: 3px 3px #74b1ff, 6px 6px #c64ad7; font-size: 60px; font-variant-caps: small-caps; background-color: unset; color: #c4f0bb; -webkit-text-stroke: 1px black;",-1)
+
+
+
+
+
+
+'	/*
+'	 * TAB: Grouped controls
+'	 * This TAB shows how multiple control can be grouped into the same panel through the use of the
+'	 * parentControl value. This also shows how To add labels To grouped controls, And how To use vertical controls.
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	grouptab = UI.addControl1(UI.ControlTyp_Tab, "", "Grouped controls")
+
+'	//The parent of this button is a TAB, so it will create a new panel with one control.
+	groupbutton = UI.addControl_CB(UI.ControlTyp_Button, "Button Group", "Button A", UI.Controlcol_Dark, grouptab,0)			'generalCallback
+'	//However the parent of this button is another control, so therefore no new panel is
+'	//created And the button is added To the existing panel.
+	UI.addControl_CB(UI.ControlTyp_Button, "", "Button B", UI.Controlcol_Alizarin, groupbutton,0)								'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "", "Button C", UI.Controlcol_Alizarin, groupbutton,0)								'generalCallback
+
+
+'	//Sliders can be grouped As well
+'	//To label each slider in the group, we are going add additional labels And give them custom CSS styles
+'	//We need this CSS style rule, which will remove the label's background and ensure that it takes up the entire width of the panel
+	Dim clearLabelStyle As String = "background-color: unset; width: 100%;"
+'	//First we add the main slider To create a panel
+	groupsliders = UI.addControl_CB(UI.ControlTyp_slider, "Slider Group", "10", UI.Controlcol_Dark, grouptab,0)					'generalCallback
+'	//Then we add a label And set its style To the clearLabelStyle. Here we've just given it the name "A"
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "A", UI.Controlcol_None, groupsliders), clearLabelStyle,-1)
+'	//We can now Continue To add additional sliders And labels
+	UI.addControl_CB(UI.ControlTyp_slider, "", "20", UI.Controlcol_None, groupsliders,0)										'generalCallback
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "B", UI.Controlcol_None, groupsliders), clearLabelStyle,-1)
+	UI.addControl_CB(UI.ControlTyp_slider, "", "30", UI.Controlcol_None, groupsliders,0)										'generalCallback
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "C", UI.Controlcol_None, groupsliders), clearLabelStyle,-1)
+
+'	//We can also usefully group switchers.
+	groupswitcher = UI.addControl_CB(UI.ControlTyp_Switcher, "Switcher Group", "0", UI.Controlcol_Dark, grouptab,0)				'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Switcher, "", "1", UI.Controlcol_Sunflower, groupswitcher,0)									'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Switcher, "", "0", UI.Controlcol_Sunflower, groupswitcher,0)									'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Switcher, "", "1", UI.Controlcol_Sunflower, groupswitcher,0)									'generalCallback
+'	//To label these switchers we need To first go onto a "new line" below the line of switchers
+'	//To Do this we add an empty label set To be clear And full width (with our clearLabelStyle)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "", UI.Controlcol_None, groupswitcher), clearLabelStyle,-1)
+'	//We will now need another label style. This one sets its width To the same As a switcher (And turns off the background)
+	Dim switcherLabelStyle As String = "width: 60px; margin-left: .3rem; margin-right: .3rem; background-color: unset;"
+'	//We can now just add the styled labels.
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "A", UI.Controlcol_None, groupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "B", UI.Controlcol_None, groupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "C", UI.Controlcol_None, groupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "D", UI.Controlcol_None, groupswitcher), switcherLabelStyle,-1)
+
+'	//You can mix And match different control types, but the results might sometimes
+'	//need additional styling To lay out nicely.
+	grouplabel = UI.addControl3(UI.ControlTyp_Label, "Mixed Group", "Main label", UI.Controlcol_Dark, grouptab)
+	grouplabel2 = UI.addControl3(UI.ControlTyp_Label, "", "Secondary label", UI.Controlcol_Emerald, grouplabel)
+	UI.addControl_CB(UI.ControlTyp_Button, "", "Button D", UI.Controlcol_Alizarin, grouplabel,0)								'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Switcher, "", "1", UI.Controlcol_Sunflower, grouplabel,0)									'generalCallback
+	UI.setElementStyle(grouplabel2, "font-size: x-large; font-family: serif;",-1)
+
+'	//Some controls can even support vertical orientation, currently Switchers And Sliders
+	UI.addControl3(UI.ControlTyp_Separator, "Vertical controls", "", UI.Controlcol_None, grouptab)
+	vertgroupswitcher = UI.addControl_CB(UI.ControlTyp_Switcher, "Vertical Switcher Group", "0", UI.Controlcol_Dark, grouptab,0)	'generalCallback
+	UI.setVertical(vertgroupswitcher,True)
+'	//On the following lines we wrap the value returned from addControl And send it straight To setVertical
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_Switcher, "", "0", UI.Controlcol_None, vertgroupswitcher,0),True)			'generalCallback
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_Switcher, "", "0", UI.Controlcol_None, vertgroupswitcher,0),True)			'generalCallback
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_Switcher, "", "0", UI.Controlcol_None, vertgroupswitcher,0),True)			'generalCallback
+'	//The mechanism For labelling vertical switchers is the same As we used above For horizontal ones
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "", UI.Controlcol_None, vertgroupswitcher), clearLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "A", UI.Controlcol_None, vertgroupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "B", UI.Controlcol_None, vertgroupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "C", UI.Controlcol_None, vertgroupswitcher), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "D", UI.Controlcol_None, vertgroupswitcher), switcherLabelStyle,-1)
+
+	vertgroupslider = UI.addControl_CB(UI.ControlTyp_slider, "Vertical Slider Group", "15", UI.Controlcol_Dark, grouptab,0)	'generalCallback
+	UI.setVertical(vertgroupslider,True)
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_slider, "", "25", UI.Controlcol_None, vertgroupslider,0),True)				'generalCallback
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_slider, "", "35", UI.Controlcol_None, vertgroupslider,0),True)				'generalCallback
+	UI.setVertical(UI.addControl_CB(UI.ControlTyp_slider, "", "45", UI.Controlcol_None, vertgroupslider,0),True)				'generalCallback
+'	//The mechanism For labelling vertical sliders is the same As we used above For switchers
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "", UI.Controlcol_None, vertgroupslider), clearLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "A", UI.Controlcol_None, vertgroupslider), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "B", UI.Controlcol_None, vertgroupslider), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "C", UI.Controlcol_None, vertgroupslider), switcherLabelStyle,-1)
+	UI.setElementStyle(UI.addControl3(UI.ControlTyp_Label, "", "D", UI.Controlcol_None, vertgroupslider), switcherLabelStyle,-1)
+
+'	//Note that combining vertical And horizontal sliders is going To result in very messy layout!
+
+'	/*
+'	 * TAB: Example UI
+'	 * An example UI For the documentation
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	exampletab = UI.addControl1(UI.ControlTyp_TAB, "Example", "Example")
+	UI.addControl3(UI.ControlTyp_Separator, "Control and Status", "", UI.Controlcol_None, exampletab)
+	UI.addControl_CB(UI.ControlTyp_Switcher, "Power", "1", UI.Controlcol_Alizarin, exampletab,0)								'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Label, "Status", "System status: OK", UI.Controlcol_Wetasphalt, exampletab,0)				'generalCallback
+
+ 	UI.addControl3(UI.ControlTyp_Separator, "Settings", "", UI.Controlcol_None, exampletab)
+	UI.addControl_CB(UI.ControlTyp_PadWithCenter, "Attitude Control", "", UI.Controlcol_Dark, exampletab,0)					'generalCallback
+	examplegroup1 = UI.addControl_CB(UI.ControlTyp_Button, "Activate Features", "Feature A", UI.Controlcol_Carrot, exampletab,0)	'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Activate Features", "Feature B", UI.Controlcol_Carrot, examplegroup1,0)			'generalCallback
+	UI.addControl_CB(UI.ControlTyp_Button, "Activate Features", "Feature C", UI.Controlcol_Carrot, examplegroup1,0)			'generalCallback
+	UI.addControl_CB(UI.ControlTyp_slider, "Value control", "45", UI.Controlcol_Peterriver, exampletab,0)						'generalCallback
+
+'	/*
+'	 * TAB: wifi Credentials
+'	 * You use this TAB To enter the SSID And password of a wifi network To autoconnect To.
+'	 *-----------------------------------------------------------------------------------------------------------*/
+	wifitab = UI.addControl1(UI.ControlTyp_TAB, "", "WiFi Credentials")
+	wifi_ssid_text = UI.addControl_CB(UI.ControlTyp_Text, "SSID", "", UI.Controlcol_Alizarin, wifitab,13)						'textCallback  ***************
+	'13 --> textCallback
+'	//Note that adding a "Max" control To a text control sets the Max length
+	UI.addControl3(UI.ControlTyp_Max, "", "32", UI.Controlcol_None, wifi_ssid_text)
+	wifi_pass_text = UI.addControl_CB(UI.ControlTyp_Text, "Password", "", UI.Controlcol_Alizarin, wifitab,14)					'textCallback  *************
+	'14 --> textCallback
+	UI.addControl3(UI.ControlTyp_Max, "", "64", UI.Controlcol_None, wifi_pass_text)
+	UI.addControl_CB(UI.ControlTyp_Button, "Save", "Save", UI.Controlcol_Peterriver, wifitab,15)								'enterWifiDetailsCallback *************
+	'15 --> enterWifiDetailsCallback
+
+'	//Finally, start up the UI.
+'	//This should only be called once we are connected To wifi.
+	UI.begin("HOSTNAME","","",80)
+
+'#ifdef ESP8266
+	'    } // HeapSelectIram
+	'#endif
+End Sub
+
+
+Sub OnExtendedCB(ControlId As UInt, ControlType As Byte,ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	If ControlType <> 20 Then 
+	Log("ControlId=",ControlId," ControlType=",ControlType, " ControlLabel='",ControlLabel, "' ControlValue='",ControlValue, "' eventType=", eventType, " userData=",userData)
+	End If
+	Select ControlType
+		Case UI.ControlTyp_Title		 '0
+			
+		Case UI.ControlTyp_pad 			 '1
+			'	padExample(ControlId, ControlType, ControlLabel, ControlValue, eventType)
+		Case UI.ControlTyp_PadWithCenter '2
+			'	padExample(ControlId, ControlType, ControlLabel, ControlValue, eventType)
+		Case UI.ControlTyp_Button		'3
+			If userData = 7 Then setTimeCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+'			If userData = 8 Then TimeCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+			If userData = 9 Then scrambleCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+			If userData = 11 Then getTimeCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+			If userData = 17 Then RandomiseColorsCallback(ControlId, ControlType,ControlLabel, ControlValue, eventType, userData)
+'			If userData = 16 Then styleCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+			If userData = 15 Then button_saveCB(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+			If userData = 19 Then paramCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		Case UI.ControlTyp_Label		'4
+			'rem
+		Case UI.ControlTyp_Switcher		'5
+			If userData = 10 Then ConstantupdatesCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		Case UI.ControlTyp_Slider		'6
+			'	slider(ControlId, ControlType, ControlLabel, ControlValue, eventType)
+		Case UI.ControlTyp_Number		'7
+			'	numberCall(ControlId, ControlType, ControlLabel, ControlValue, eventType)
+		Case UI.ControlTyp_Text			'8
+			If userData = 13 Then textCallback(ControlId, ControlType,ControlLabel, ControlValue, eventType, userData)
+			If userData = 14 Then textCallback(ControlId, ControlType,ControlLabel, ControlValue, eventType, userData)
+	End Select
+End Sub
+
+
+
+'15
+Sub button_saveCB(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As UInt)
+		If eventType = UI.CBEvent_B_UP Then
+		Log("Control value SSID : ", UI.getControlvalue(wifi_ssid_text))
+		Log("Control value PASS :",UI.getControlvalue(wifi_pass_text))
+'		Log("Control label SSID : ", UI.getControlLabel(wifi_ssid_text))
+'		Log("Control label PASS :",UI.getControlLabel(wifi_pass_text))
+'		Log("control_type SSID:",UI.getControltype(wifi_ssid_text))
+'		Log("control_type PASS:",UI.getControltype(wifi_pass_text))
+		Log("Saving credentials to EPROM...")
+
+	End If			
+'				Dim i  As UInt
+'				EEPROM.begin(100)
+'				For (i =0 To UI.getControl(wifi_ssid_text)->value.length() Then
+'					EEPROM.write(i, ESPUI.getControl(wifi_ssid_text)->value.charAt(i));
+'					If(i==30) break; //Even though we provided a Max length, user input should never be trusted
+'				}
+'				EEPROM.write(i, '\0');
+'
+'				For(i = 0; i < ESPUI.getControl(wifi_pass_text)->value.length(); i++) {
+'					EEPROM.write(i + 32, ESPUI.getControl(wifi_pass_text)->value.charAt(i));
+'					If(i==94) break; //Even though we provided a Max length, user input should never be trusted
+'				}
+'				EEPROM.write(i + 32, '\0');
+'				EEPROM.end();	
+'	End If
+End Sub
+'9    //This callback updates the "values" of a bunch of controls
+Sub scrambleCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	Dim rndString1(10) As Byte
+	Dim rndString2(20) As Byte
+
+	If(eventType == UI.CBEvent_B_UP) Then '{ //Button callbacks generate events For both UP And DOWN.
+'		//Generate some random text
+		randomString(rndString1, 10)
+		randomString(rndString2, 20)
+
+'		//Set the various controls To random value To show how controls can be updated at runtime
+		UI.updateLabel(mainLabel, bc.StringFromBytes(rndString1))
+'		Log("mainswitcher",UI.getControlValue(mainSwitcher))
+		If UI.getControlValue(mainSwitcher) = "0" Then UI.updateControlValue(mainSwitcher,"1",-1) Else UI.updateControlValue(mainSwitcher,"0",-1)
+	
+'		Log("random1 :", random(10, 400))
+		UI.updateSlider(mainSlider, random(10, 400), -1)
+		UI.updateText(mainText, bc.StringFromBytes(rndString2),-1)
+'		Log("random2 :",  random(0,100))
+		UI.updateNumber(mainNumber, random(0,1000),-1)
+		Dim tmp As String: If sctext=False Then tmp =  "Scrambled..." Else tmp = "Scrambled <!>"
+'		UI.updateButton(mainScrambleButton, scText ? "Scrambled!" : "Scrambled.");
+		UI.updateButton(mainScrambleButton, tmp)
+		sctext = Not(sctext)
+	End If
+End Sub
+'17
+Sub RandomiseColorsCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+'	"background-color: #aabbcc;"
+'	[](Control *Sender, int Type) {
+'	//Declare space For style strings. These have To be static so that they are always available
+'	//To the websocket layer. If we'd not made them static they'd be allocated on the heap and
+'	//will be unavailable when we leave this function.
+	Dim stylecol1, stylecol2 As String
+	If (eventType == UI.CBEvent_B_UP) Then
+'		//Generate two random HTML hex colour codes, And print them into CSS style rules
+		stylecol1 = concat("border-bottom: #999 3px solid; background-color: #",inttoHexa(random(0x0, 0xFFF)),";")
+		stylecol2 = concat("background-color: #",inttoHexa(random(0x0, 0xFFF)),";")
+		Log("stylecol1 : ",stylecol1) : Log("styleocol2 :",stylecol2)
+'		//Apply those styles To various elements To show how controls react To styling
+		UI.setPanelStyle(styleButton, stylecol1,-1)
+		UI.setElementStyle(styleButton, stylecol2,-1)
+		UI.setPanelStyle(styleLabel, stylecol1,-1)
+		UI.setElementStyle(styleLabel, stylecol2,-1)
+		UI.setPanelStyle(styleSwitcher, stylecol1,-1)
+		UI.setElementStyle(styleSwitcher, stylecol2,-1)
+		UI.setPanelStyle(styleSlider, stylecol1,-1)
+		UI.setElementStyle(styleSlider, stylecol2,-1)
+	End If
+End Sub
+'11
+Sub getTimeCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	If(eventType = UI.CBEvent_B_UP) Then		
+		Log("time", UI.getcontrolvalue(mainTime))
+	End If
+End Sub
+'10 
+Sub ConstantupdatesCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+ 	If UI.GetControlValue(ControlId) = "1" Then 
+		updates = True
+		Log("constant true")
+	Else
+		Log("constant false")
+		updates = False
+	End If
+End Sub
+
+'7
+Sub setTimeCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	If(eventType = UI.CBEvent_B_UP) Then
+		UI.updateTime(mainTime,-1)
+		Log("set time")
+	End If
+End Sub
+'13 / 14
+Sub textCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	'//This callback is needed To handle the changed values, even though it doesn't do anything itself.	
+End Sub
+'19
+Sub paramCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	Log("paramCB", userData)
+End Sub
+
+'//This callback generates and applies inline styles to a bunch of controls to change their colour.
+'//The styles created are of the form: 
+'//	"border-bottom: #999 3px solid; background-color: #aabbcc;"
+'//	"background-color: #aabbcc;"
+'16 -->
+Sub styleCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+'	//Declare space for style strings. These have to be static so that they are always available
+'	//to the websocket layer. If we'd not made them static they'd be allocated on the heap and
+'	//will be unavailable when we leave this function.
+	Dim stylecol1, stylecol2 As String
+'	Log("style changes")
+	If(eventType == UI.CBEvent_B_UP) Then
+'		//Generate two random HTML hex colour codes, And print them into CSS style rules
+		'	sprintf(stylecol1, "border-bottom: #999 3px solid; background-color: #%06X;", (uint) random(0x0, 0xFFFFFF));
+		'	sprintf(stylecol2, "background-color: #%06X;", (uint) random(0x0, 0xFFFFFF));
+		stylecol1 = concat("border-bottom: #999 3px solid; background-color: #",inttoHexa(random(0x0, 0xFFF)),";")
+		stylecol2 = concat("background-color: #",inttoHexa(random(0x0, 0xFFF)),";")
+'		Log("** stylecolo1=",stylecol1): 	Log("** stylecolo2=",stylecol2)
+'		//Apply those styles To various elements To show how controls react To styling
+		UI.setPanelStyle(styleButton, stylecol1,-1)
+		UI.setElementStyle(styleButton, stylecol2,-1)
+		UI.setPanelStyle(styleLabel, stylecol1,-1)
+		UI.setElementStyle(styleLabel, stylecol2,-1)
+		UI.setPanelStyle(styleSwitcher, stylecol1,-1)
+		UI.setElementStyle(styleSwitcher, stylecol2,-1)
+		UI.setPanelStyle(styleSlider, stylecol1,-1)
+		UI.setElementStyle(styleSlider, stylecol2,-1)
+	End If
+End Sub
+
+
+
+
+
+Sub graphAddCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int)
+	If(eventType == UI.CBEvent_B_UP) Then
+		UI.addGraphPoint(graph, random(1, 50),-1)
+	End If
+End Sub
+
+Sub graphClearCallback(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int)
+	If(eventType == UI.CBEvent_B_UP) Then
+		UI.clearGraph(graph,-1)
+	End If
+End Sub
+
+Sub ScrambleValuesCB(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	' //This callback updates the "values" of a bunch of controls
+	Dim rndString1(10) As Byte
+	Dim rndString2(20) As Byte
+	Dim sctext As bool = False
+
+	If(eventType == UI.CBEvent_B_UP) Then '//Button callbacks generate events For both UP And DOWN.
+		'//Generate some random text
+		randomString(rndString1, 10)
+		randomString(rndString2, 20)
+
+		'//Set the various controls To random value To show how controls can be updated at runtime
+		UI.updateLabel(mainLabel, bc.StringFromBytes(rndString1))
+		Log("mainswitcher",UI.getControlValue(mainSwitcher))
+		If UI.getControlValue(mainSwitcher) = "0" Then UI.updateControlValue(mainSwitcher,"1",-1) Else UI.updateControlValue(mainSwitcher,"0",-1)
+'		UI.updateSwitcher(mainSwitcher, UI.getControlValue(mainSwitcher).toInt() ? False : True
+		UI.updateSlider(mainSlider, random(10, 400),-1)
+		UI.updateText(mainText, bc.StringFromBytes(rndString2),-1)
+		UI.updateNumber(mainNumber, random(0,100000),-1)
+		Dim tmm As String: If sctext = True Then tmm = "Scrambled!" Else tmm = "Scrambled."
+		UI.updateButton(mainScrambleButton, tmm)
+		sctext = Not(sctext)
+	End If
+End Sub
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Sub localloop
+'	//Send periodic updates if switcher is turned on
+	If(updates And (Millis > lastTime + 1000)) Then
+		sliderVal = sliderVal+10
+Log("loop update")
+'		//Flick this switcher on and off
+		Log("mainswitcher",UI.getControlValue(mainSwitcher))
+		If UI.getControlValue(mainSwitcher) = "0" Then UI.updateControlValue(mainSwitcher,"1",-1) Else UI.updateControlValue(mainSwitcher,"0",-1)
+		
+		If(sliderVal > 400) Then sliderVal = 10
+
+'		//Sliders, numbers, and labels can all be updated at will
+'        Log(sliderVal) 
+		UI.updateSlider(mainSlider, sliderVal,-1)
+		UI.updateNumber(mainNumber, random(0,1000),-1)
+		UI.updateLabel(mainLabel, NumberFormat(sliderVal,4,0))
+		lastTime = Millis
+	End If
+'	#if !defined(ESP32)
+'		//We don't need to call this explicitly on ESP32 but we do on 8266
+'		MDNS.update();
+'	#end if
+End Sub
+
+Sub concat(txt1 As String, txt2 As String, txt3 As String) As String
+	Return JoinStrings(Array As String (txt1, txt2, txt3))
+End Sub
+
+Sub randomString(buf() As Byte, len As Int)
+	For  i = 0 To len-1
+		buf(i) = random(0, 26) + 65 'A'
+	Next
+	buf(len-1) = 0  '/0
+End Sub
+
+Sub inttoHexa(n As Int) As String
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.Writeint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Dim hexa As String = bc.HexFromBytes(b)
+	Log("random=",n,"  hexa=", hexa)
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub random(Mini As Long,Maxi As Long) As Long
+	Dim tmp() As Long = Array As Long(Mini, Maxi)
+	Dim Ret As Long=  RunNative("getRandom",tmp)
+'	Log("mini=",tmp(0),"  maxi=",tmp(1)," result :",Ret)
+	Return Ret
+End Sub
+Sub randomSeed
+	RunNative("setRandomSeed",0)
+End Sub
+
+#if C
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  int32_t* a = (int32_t*) b->data;
+//	  Serial.print(String(a[0]));Serial.print(" - "); Serial.println(String(a[1]));
+	  int32_t rand = random(a[0],a[1]); 
+//	  Serial.println(String(rand));
+//long random(long, long);	  
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      uint32_t ran =  (uint32_t) millis();
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,ran);
+//void randomSeed(unsigned long);
+	  randomSeed(ran); 
+ }; 
+#End If

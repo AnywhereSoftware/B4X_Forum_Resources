@@ -1,0 +1,148 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rrandomaccessfile
+Library4=rtft_espi
+Library5=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Demonstrate graph widget functions with two independant trace instances
+'// Multiple traces can be drawn at a time with multiple trace instances
+'// Note: Traces are automatically clipped at graph boundaries by widget library
+
+'// Requires widget library here:
+'// https://github.com/Bodmer/TFT_eWidget
+
+
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private raf As RandomAccessFile
+    Private LFS As LittleFS
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+	Private GR As GraphWidget
+	Private GRid As ULong
+	Private TR1 As TraceWidget
+	Private TR2 As TraceWidget
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+ 	TFTid = TFT.Initialize(-1,-1)
+	GRid = GR.initialize(TFTid)
+	TR1.initialize(GRid)
+	TR2.initialize(GRid)
+	TFT.begin(0xFF)
+	TFT.setRotation(3)
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	'// Graph area is 200 pixels wide, 150 pixels high, dark grey background
+	GR.createGraph(200, 150, TFT.color565(5, 5, 5))
+	
+	'// x scale units is from 0 To 100, y scale units is -50 To 50
+	GR.setGraphScale(0.0, 100.0, -50.0, 50.0)
+
+	'// X GRid starts at 0 with lines every 10 x-scale units
+	'// Y GRid starts at -50 with lines every 25 y-scale units
+	'// blue GRid
+	GR.setGraphGrid(0.0, 10.0, -50.0, 25.0, TFT.TFT_BLUE)
+
+	'// Draw empty graph, top left corner at 40,10 on TFT
+	GR.drawGraph(40, 10)
+
+	'// Start a trace with using red And another with green
+	TR1.startTrace(TFT.TFT_RED)
+	TR2.startTrace(TFT.TFT_GREEN)
+
+	'// Add points on graph To trace 1 using graph scale factors
+	TR1.addPoint(0.0, 0.0)
+	TR1.addPoint(100.0, 0.0)
+
+	'// Add points on graph To trace 2 using graph scale factors
+	'// Points are off graph so the plotted line is clipped To graph area
+	TR2.addPoint(0.0, -100.0)
+	TR2.addPoint(100.0, 100.0)
+
+	'// Get x,y pixel coordinates of any scaled point on graph
+	'// And ring that point.
+	TFT.drawCircle(GR.getPointX(50.0), GR.getPointY(0.0), 5, TFT.TFT_MAGENTA)
+
+	'// Draw the x axis scale
+	TFT.setTextDatum(TFT.TC_DATUM)   ' // Top centre text datum
+	TFT.drawNumber1(0, GR.getPointX(0.0), GR.getPointY(-50.0) + 3)
+	TFT.drawNumber1(50, GR.getPointX(50.0), GR.getPointY(-50.0) + 3)
+	TFT.drawNumber1(100, GR.getPointX(100.0), GR.getPointY(-50.0) + 3)
+
+	'// Draw the y axis scale
+	TFT.setTextDatum(TFT.MR_DATUM)   '// Middle right text datum
+	TFT.drawNumber1(-50, GR.getPointX(0.0), GR.getPointY(-50.0))
+	TFT.drawNumber1(0, GR.getPointX(0.0), GR.getPointY(0.0))
+	TFT.drawNumber1(50, GR.getPointX(0.0), GR.getPointY(50.0))
+
+	'// Restart traces with new colours
+	TR1.startTrace(TFT.TFT_WHITE)
+	TR2.startTrace(TFT.TFT_YELLOW)
+
+	AddLooper ("LocalLoop")
+End Sub
+
+Sub LocalLoop
+Dim plotTime As ULong = Millis
+	Dim gx As Double = 0.0
+	Dim gy As Double = 0.0
+	Dim delta As Double = 7.0
+
+'// Sample periodically
+If (Millis - plotTime >= 100) Then
+	plotTime = Millis
+
+	'// Add a new point on each trace
+	TR1.addPoint(gx, gy)
+	TR2.addPoint(gx, gy/2.0)  '// half y amplitude
+
+	'// Create Next plot point
+	gx = gx + 1.0
+    gy =  gy + delta
+	If (gy >  70.0) Then 
+		delta = -7.0: gy =  70.0
+	End If
+	If (gy < -70.0) Then 
+		delta =  7.0: gy = -70.0
+	End If
+
+	'// If the end of the graph is reached start 2 new traces
+	If (gx > 100.0) Then
+		gx = 0.0;
+		gy = 0.0;
+
+		'// Draw empty graph at 40,10 on display
+		GR.drawGraph(40, 10)
+		'// Start new trace
+		TR1.startTrace(TFT.TFT_GREEN)
+		TR2.startTrace(TFT.TFT_YELLOW)
+    End If
+  End If
+
+End Sub

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.objects.SFtpWrapper</name>
+        <shortname>SFtp</shortname>
+        <comment>This library wraps JSch open source project. It supports the SFTP protocol.
+See this &lt;link&gt;tutorial|http://www.basic4ppc.com/forum/basic4android-getting-started-tutorials/26994-android-sftp-based-jsch-tutorial.html&lt;/link&gt; for more information.</comment>
+        <owner>process</owner>
+        <event>DownloadCompleted (ServerPath As String, Success As Boolean)</event>
+        <event>DownloadProgress (ServerPath As String, TotalDownloaded As Long, Total As Long)</event>
+        <event>UploadCompleted (ServerPath As String, Success As Boolean)</event>
+        <event>UploadProgress (ServerPath As String, TotalUploaded As Long, Total As Long)</event>
+        <event>CommandCompleted (Command As String, Success As Boolean, Reply As String)</event>
+        <event>PromptYesNo (Message As String)</event>
+        <event>ShowMessage (Message As String)</event>
+        <event>ListCompleted (ServerPath As String, Success As Boolean, Folders() As SFtpEntry, Files() As SFtpEntry)</event>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>Mkdir</name>
+            <comment>Creates a new folder.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetPromptResult</name>
+            <comment>Sets the result of the server prompt. The network thread waits for this call for up to 60 seconds.
+After 60 seconds the result will be set to False (No) automatically.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Result</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CloseNow</name>
+            <comment>Closes the connection immediately without waiting for current tasks to finish.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Rmdir</name>
+            <comment>Deletes the given folder. The folder must be empty.The CommandCompleted event will fire with the command "rmdir".</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DownloadFile</name>
+            <comment>Downloads a file from the server. The DownloadCompleted event will be raised when download completes.
+DownloadProgress events will be raised during download.
+ServerFilePath - Full path to the remote file.
+DeviceFolder - Folder that the file will be saved to.
+DeviceFile - The name of the local file that will be created.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>ServerFilePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DeviceFolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DeviceFile</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the SFtp object.
+EventName - The event subs prefix.
+Username - The user name.
+Password - User password.
+Host - SSH host.
+Port - SSH port (default is 22).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Username</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Port</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetKnownHostsStore</name>
+            <comment>Sets the file that stores the known hosts.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Rename</name>
+            <comment>Renames the given file. The CommandCompleted event will fire when operation completes.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>OldPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>NewPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Activity_Resume</name>
+            <comment>This method should be called in Activity_Resume. It will call the PromptYesNo event again (if the message was visible before).</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>UploadFile</name>
+            <comment>Uploads a file to the server. The UploadCompleted event will be raised when upload completes.
+UploadProgress events will be raised during the upload.
+DeviceFolder - Local folder.
+DeviceFile - Local file name.
+ServerFilePath - Full path to file that will be created on the server.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>DeviceFolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DeviceFile</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>ServerFilePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetCurrentPath</name>
+            <comment>Gets the current server path. The CommandCompleted event will be raised with the command "pwd".</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>List</name>
+            <comment>Fetches the list of folders and files in the specified path.
+The ListCompleted event will be raised when the data is available.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>ServerPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Closes the connection after all submitted tasks finish. Note that this method does not block.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Chmod</name>
+            <comment>Sets the permissions of the given file. The permissions should be formatted as a three digits octal number.
+The CommandCompleted event will fire when operation completes.
+Example:&lt;code&gt;
+sftp1.Chmod("/home/user/somefile", "644")&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Permissions</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DeleteFile</name>
+            <comment>Deletes the given file. The CommandCompleted event will be raised with the command "delete".</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ServerFilePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.objects.SFtpWrapper.SFTPFileWrapper</name>
+        <shortname>SFtpEntry</shortname>
+        <comment>SFtpEntry represents a file or a folder. Call SFtp.List to get the files and folders.</comment>
+        <objectwrapper>com.jcraft.jsch.ChannelSftp.LsEntry</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <property>
+            <name>Size</name>
+            <returntype>long</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Timestamp</name>
+            <returntype>long</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Name</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <version>1.31</version>
+    <dependsOn>jsch-0.1.54</dependsOn>
+</root>

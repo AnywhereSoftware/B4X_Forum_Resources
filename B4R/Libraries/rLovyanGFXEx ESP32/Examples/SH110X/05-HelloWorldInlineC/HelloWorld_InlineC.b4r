@@ -1,0 +1,105 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example LovyanGFX library direct access using Inline C.
+'Hardware:		SH1106 I2C w128xh64, monochrome blue, no touch, pins SCL 22, SDA 21, I2C address 0x3C.
+'				ESP32 Wrover Kit
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "LovyanGFX HelloWorld Inline C v20250321"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Helper
+	Private bc As ByteConverter	'ignore
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	RunNative("initDisplay", Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	RunNative("setHelloWorld", Null)
+End Sub
+
+#If C
+
+#define LGFX_USE_V1
+#include <LovyanGFX.hpp>
+
+// Set the path to the display driver header located in the same folder as the B4R program.
+// The B4R compiled source is in folder Object/src/ and references in b4r_main.cpp
+#include "..\..\ESP32_SH110x.h"
+
+SH110x lcd;
+
+int32_t x;
+int32_t y;
+
+void initDisplay(B4R::Object* o) {
+
+  lcd.init();
+  lcd.setRotation(0);
+  lcd.fillScreen(TFT_WHITE);
+}
+
+void setHelloWorld(B4R::Object* o)
+{
+  lcd.fillScreen(TFT_WHITE);
+
+  x = lcd.width() / 2;
+  y = lcd.height() / 4;
+
+  // Show text using set cursor and println
+  lcd.setCursor(x, y);
+  lcd.setTextSize(1);
+  lcd.setTextColor(TFT_BLACK);
+  lcd.println("HELLO");
+
+  // Show text using drawString
+  y = lcd.height() / 2;
+  lcd.setTextSize(1);
+  lcd.setTextColor(TFT_BLACK);
+  lcd.setTextDatum(MR_DATUM);
+  lcd.drawString("WORLD", x, y);
+}
+#End If

@@ -1,0 +1,80 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=Bottom.bjl
+File3=logo.png
+File4=Top.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=bctextengine
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private SplitPane1 As SplitPane
+	Private TextArea1 As TextArea
+	Private BBCodeView1 As BBCodeView
+	Private version As Float = 1.00
+	Private xui As XUI
+	Private TextEngine As BCTextEngine
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Title = $"BBCodeDesigner - ${NumberFormat2(version, 0, 2, 2, False)}"$
+	SplitPane1.LoadLayout("Top")
+	SplitPane1.LoadLayout("Bottom")
+	MainForm.Show
+	TextEngine.Initialize(MainForm.RootPane)
+End Sub
+
+Sub MenuBar1_Action
+	btnUpdate_Click 'note that the menu shortcut will only work on Java 9+ if the TextArea is focused.
+End Sub
+
+Sub btnUpdate_Click
+	Try
+		AddViews(TextArea1.Text)
+		BBCodeView1.Text = TextArea1.Text
+	Catch
+		TextEngine.TagParser.ErrorString.Append(CRLF).Append(LastException.Message)
+		Log(LastException)
+	End Try
+	If TextEngine.TagParser.ErrorString.Length > 0 Then
+		xui.MsgboxAsync(TextEngine.TagParser.ErrorString, "Error")
+	End If
+End Sub
+
+Sub AddViews (s As String)
+	Dim m As Matcher = Regex.Matcher2("\[view=(\w+)", Regex.CASE_INSENSITIVE, s)
+	Do While m.Find
+		Dim key As String = m.Group(1)
+		If BBCodeView1.Views.ContainsKey(key) = False Then
+			Dim p As B4XView = xui.CreatePanel("")
+			p.SetLayoutAnimated(0, 0, 0, 100dip, 100dip)
+			p.Color = Rnd(0xff000000, -1)
+			BBCodeView1.Views.Put(key, p)
+		End If
+	Loop
+End Sub
+
+
+
+Sub BBCodeView1_LinkClicked (URL As String)
+	MainForm.Title = URL
+End Sub

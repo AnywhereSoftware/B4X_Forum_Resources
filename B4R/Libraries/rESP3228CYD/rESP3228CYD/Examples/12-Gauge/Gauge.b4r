@@ -1,0 +1,96 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=resp3228cyd
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP3228CYD
+'Description:	B4R Library rESP3228CYD example showing 4 gauges. No touch. Values are simulated.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rESP3228CYD Example Gauge v20250314"
+
+	'Communication
+	Public Serial1 As Serial
+	Private lcd As ESP3228CYD
+		
+	'Simulator
+	Private TimerSimulator As Timer
+	Private TimerSimulatorInterval As ULong = 2000
+	Private TimerCounter As UInt = 0
+
+	'Helper
+	Private bc As ByteConverter	'ignore
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display
+	lcd.Initialize(Null)
+	lcd.DisplayRotation = 1
+	lcd.FillScreen(lcd.COLOR_GREEN)
+	lcd.DrawText(lcd.Width / 2, 10, VERSION, lcd.TEXT_ALIGN_MIDDLE_CENTER, 1.5, lcd.COLOR_WHITE, lcd.COLOR_BLUE)
+
+	'Init simulator
+	TimerSimulator.Initialize("TimerSimulator_Tick", TimerSimulatorInterval)
+	TimerSimulator.Enabled = True
+End Sub
+
+Private Sub TimerSimulator_Tick
+	Dim value As Double
+	Dim title As String
+	'Draw the 4 gauges on display 320 width x 240 height, radius 50
+	
+	value = Rnd(0, 51)
+	title = NumberFormat(value,0,0)
+	lcd.DrawGauge(70, 70, 50, 0, 50, value, title, lcd.COLOR_BLACK, lcd.COLOR_BLUE, lcd.COLOR_RED, 8, 1.5, lcd.COLOR_LIGHTGRAY)
+
+	value = Rnd(-10, 41)
+	title = "Temperature"
+	lcd.DrawGauge(250, 70, 50, -10, 40, value, title, lcd.COLOR_BLACK, lcd.COLOR_BLUE, lcd.COLOR_BLACK, 8, 1, lcd.COLOR_LIGHTGRAY)
+	
+	value = Rnd(0, 11)
+	title = ""
+	lcd.DrawGauge(70, 180, 50, 0, 10, value, title, lcd.COLOR_BLACK, lcd.COLOR_BLUE, lcd.COLOR_RED, 8, 1.5, lcd.COLOR_WHITE)
+
+	value = Rnd(0, 1001) / 10
+	title = JoinStrings(Array As String("H ", NumberFormat(value, 0, 2)))
+	lcd.DrawGauge(250, 180, 50, 0, 100, value, title, lcd.COLOR_BLACK, lcd.COLOR_BLUE, lcd.COLOR_BLUE, 8, 1, lcd.COLOR_WHITE)
+
+	'Update timer counter and stop
+	TimerCounter = TimerCounter + 1
+	If TimerCounter == 5 Then
+		TimerSimulator.Enabled = False
+	End If
+End Sub
+

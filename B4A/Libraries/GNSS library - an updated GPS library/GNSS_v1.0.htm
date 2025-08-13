@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>GNSS</title>
+	<style type="text/css">
+		body{
+			background-color:#E1DEE6;
+			color:#222;
+			font-family:Arial,Helvetica,sans-serif;
+			font-size:14px;
+			margin:0;
+			padding:0;
+		}
+		h3{
+			background-color:#869BBF;
+			margin:0;
+			padding:5px;
+		}
+		ul{
+			list-style:none;
+			margin:5px;
+			padding:0;
+		}
+		ul li{
+			background-color:#FFF;
+			border:1px solid #666;
+			margin:0;
+			padding:5px;
+		}
+		ul li:first-child, h3{
+			border-top-left-radius:5px;
+			border-top-right-radius:5px;
+		}
+		ul li:last-child, h3{
+			border-bottom-left-radius:5px;
+			border-bottom-right-radius:5px;
+		}
+		ul h3:first-child{
+			background-color:#869BDF;
+			margin-bottom:5px;
+		}
+	</style>
+</head>
+<body><h3>GNSS</h3>
+<ul><i>The GNSSS library allows you to get information from the phone's GNSSS device.
+This library can be used as a drop-in replacement for the GPS library merely by changing the GPS type to GNSS.
+Android devices, if capable, will report location information using all available constellations.
+However only limited satellite information is available in the GpsStatus event.
+   
+This library is a strict superset of the original GPS library.  
+To access additional data on the satellites a new GnssStatus event is available in Android API 24 and later.
+The GnssStatus event passes a single GnssStatus object as its only parameter.
+The GnssStatus object contains information for the visible satellites of all the constellations available.   
+The GnssStatus event is only available on Android 7 devices and later that implement API 24 or higher.
+The library can be used without problem on earlier devices but on these the GnssStatus event will never be raised.
+The GNSS receivers in devices will vary in which constellations that they will recognize depending on when they were designed.
+Devices from 2019 and later will probably recognise all four of GPS, GALILEO, GLONASS and BEIDOU.</i></ul>
+<ul><li><h3>Classes</h3>
+<ul><li><A href="#0">GNSS</A></li>
+<li><A href="#1">GPSSatellite</A></li>
+<li><A href="#2">GnssStatus</A></li>
+<li><A href="#3">Location</A></li>
+</ul></li></ul>
+<ul><A id="0"/>
+<li><h3>GNSS</h3>
+<ul><i>The main object that raises the GPS and GNSS events.</i></ul>
+<h3>Events:</h3>
+<ul><li><b>GnssStatus</b> (SatelliteInfo <span style='color:blue'>As</span> <span style='color:#008B8B'>GnssStatus</span>) ' Only raised for API 24 and later devices.</li>
+<li><b>GpsStatus</b> (Satellites <span style='color:blue'>As</span> <span style='color:#008B8B'>List</span>)</li>
+<li><b>LocationChanged</b> (Location1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Location</span>)</li>
+<li><b>NMEA</b> (TimeStamp <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>, Sentence <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>)</li>
+<li><b>UserEnabled</b> (Enabled <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>)</li>
+</ul>
+<h3>Functions:</h3>
+<ul><li><b>Initialize</b> (EventName <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>) 
+<br/><i></i>
+</li><li><b>IsInitialized</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>Start</b> (MinimumTime <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>, MinimumDistance <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>) 
+<br/><i>Starts listening for events.<BR/>
+MinimumTime - The shortest period (measured in milliseconds) between events. Pass 0 for highest frequency.<BR/>
+MinimumDistance - The shortest change in distance (measured in meters) for which to raise events. Pass 0 for highest frequency.</i>
+</li><li><b>Stop</b>  
+<br/><i>Stops listening to the GNSS. You will usually want to call Stop inside Sub Activity_Pause.</i>
+</li></ul>
+<h3>Properties:</h3>
+<ul><li><b>GNSSEnabled</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Tests whether the user has enabled GNSS.<BR/>
+This is identical to GPSEnabled and provided to match the new GNSS class name.</i>
+</li><li><b>GPSEnabled</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Tests whether the user has enabled GNSS.<BR/>
+This is identical to GNSSEnabled which is provided to match the new GNSS class name.<BR/>
+This property is retained for backward compatibility with the original GPS library.</i>
+</li><li><b>LocationSettingsIntent</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>android.content.Intent</span> [read only]
+<br/><i>Returns the intent that is used to show the global locations settings.<BR/>
+Example:<code><BR/>
+   If GNSS1.GNSSEnabled = False Then StartActivity(GNSS1.LocationSettingsIntent)</code></i>
+</li></ul>
+</li>
+</ul><ul><A id="1"/>
+<li><h3>GPSSatellite</h3>
+<ul><i>The GPSSatellite object holds various information about a satellite.
+A List with the available satellites is passed to the GpsStatus event.
+All visible satellites from all the available constellations are in this list.
+Only limited information for each satellite is available in GPSSatellite.
+Additional information on each satellite is available in the GnssStatus event.</i></ul>
+<h3>Functions:</h3>
+<ul><li><b>IsInitialized</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li></ul>
+<h3>Properties:</h3>
+<ul><li><b>Azimuth</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Returns the satellite azimuth in degrees (0 - 360).</i>
+</li><li><b>Elevation</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Returns the satellite elevation in degrees (0 - 90).</i>
+</li><li><b>Prn</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Returns the PRN (pseudo-random number) for the satellite.<BR/>
+This number is the pseudo-random number for most constellations. It is FCN and OSN number for Glonass.<BR/>
+To avoid duplication the actual values has a constant added to indicate the satellite constellation.<BR/>
+The base values for each contellation are as returned by GnssStatus.Svid().<BR/>
+GPS PRNs are unadjusted and are in the range 1 to 32<BR/>
+Glonass FCNs/OSNs have 64 added and are in the range 65 to 88 or possibly 157 to 172.<BR/>
+Beidou PRNs have 200 added and are in the range 201 to 237.<BR/>
+Galileo PRNs have 300 added and are in the range 301 to 326.</i>
+</li><li><b>Snr</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Returns the signal to noise ratio for the satellite.</i>
+</li><li><b>UsedInFix</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Tests whether this satellite was used to calculate the most recent fix.</i>
+</li></ul>
+</li>
+</ul><ul><A id="2"/>
+<li><h3>GnssStatus</h3>
+<ul><i>The GnssStatus object holds the information for all the available GNSS satellites.
+A single GnssStatus object is passed to the GnssStatus event.
+GnssStatus holds information on all the visible satellites of all constallations.
+Presenting the information in this way is more efficient than entirely parsing every satelllite into
+   a separate object as there can be many satellites available from several constellations.
+This way only the information needed by the application needs to to be accessed when it is required
+This is different to the GPSSatellite object which holds only the information for a single satellite.
+A List of GPSSatellite objects for each available satellite is passed to the GpsStatus event.
+Each GPSSatellite holds information for one satellite which can be from any available constellation.</i></ul>
+<h3>Functions:</h3>
+<ul><li><b>Azimuth</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Returns the satellite azimuth in degrees (0 - 360).</i>
+</li><li><b>CarrierFrequencyHz</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets the carrier frequency of the signal tracked. <BR/>
+For example it can be the GPS central frequency<BR/>
+   L1 = 1575.45 MHz, L2 = 1227.60 MHz, L5 = 1176.45 MHz, varying GLO channels, etc.<BR/>
+   If the field is not set, it is the primary common use central frequency, e.g. L1 = 1575.45 MHz for GPS.<BR/>
+For an L1, L5 receiver tracking a satellite on L1 and L5 at the same time, two measurements will be reported for this same satellite,<BR/>
+   in one all the values related to L1 will be filled, and in the other all of the values related to L5 will be filled.<BR/>
+The value is only available if hasCarrierFrequencyHz(int) is true.</i>
+</li><li><b>Cn0DbHz</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Retrieves the carrier-to-noise density in dB-Hz at the antenna of the satellite at the specified index.</i>
+</li><li><b>ConstellationType</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i>Retrieves the constellation type of the satellite at the specified index. <BR/>
+Compare this with one of the CONSTELLATION constants to identify the constellation.</i>
+</li><li><b>Elevation</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Returns the satellite elevation in degrees (0 - 90).</i>
+</li><li><b>HasAlmanacData</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Reports whether the satellite at the specified index has almanac data.</i>
+</li><li><b>HasCarrierFrequencyHz</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Reports whether a valid CarrierFrequency is available for the satellite at the specified index.</i>
+</li><li><b>HasEphemerisData</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Reports whether the satellite at the specified index has ephemeris data.</i>
+</li><li><b>IsInitialized</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>SatelliteCount</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i>Gets the total number of satellites in the satellite list.</i>
+</li><li><b>Svid</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i>Gets the identification number for the satellite at the specific index.<BR/>
+This svid is the pseudo-random number for most constellations. It is FCN and OSN number for Glonass.<BR/>
+The distinction is made by looking at ConstellationType. Expected values are in the range of:<BR/>
+GPS: 1-32<BR/>
+SBAS: 120-151, 183-192<BR/>
+GLONASS: One of: OSN or FCN+100<BR/>
+   1-24 as the orbital slot number (OSN) (preferred, if known)<BR/>
+   93-106 as the frequency channel number (FCN) (-7 to +6) plus 100. i.e FCN of -7 is 93, 0 is 100, and +6 is 106<BR/>
+QZSS: 193-200<BR/>
+Galileo: 1-36<BR/>
+Beidou: 1-37</i>
+</li><li><b>UsedInFix</b> (satIndex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Tests whether the satellite at the specified index was used to calculate the most recent fix.</i>
+</li></ul>
+<h3>Properties:</h3>
+<ul><li><b>CONSTELLATION_BEIDOU</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_GALILEO</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_GLONASS</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_GPS</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_QZSS</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_SBAS</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li><li><b>CONSTELLATION_UNKNOWN</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i></i>
+</li></ul>
+</li>
+</ul><ul><A id="3"/>
+<li><h3>Location</h3>
+<ul><i>A Location object holds various information about a specific GNSS fix.
+In most cases you will work with locations that are passed to the GNSS LocationChanged event.
+The location object can also be used to calculate distance and bearing to other locations.</i></ul>
+<h3>Functions:</h3>
+<ul><li><b>BearingTo</b> (TargetLocation <span style='color:blue'>As</span> <span style='color:#008B8B'>android.location.Location</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Returns the bearing to the given location.</i>
+</li><li><b>ConvertToMinutes</b> (Coordinate <span style='color:blue'>As</span> <span style='color:#008B8B'>Double</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>
+<br/><i>Converts the given coordinate to a string formatted with the following format:<BR/>
+   [+-]DDD:MM.MMMMM (Minute = 1/60 of a degree)</i>
+</li><li><b>ConvertToSeconds</b> (Coordinate <span style='color:blue'>As</span> <span style='color:#008B8B'>Double</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>
+<br/><i>Converts the given coordinate to a string formatted with the following format:<BR/>
+   [+-]DDD:MM:SS.SSSSS (Minute = 1/60 of a degree, Second = 1/3600 of a degree)</i>
+</li><li><b>DistanceTo</b> (TargetLocation <span style='color:blue'>As</span> <span style='color:#008B8B'>android.location.Location</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Returns the distance to the given location measured in meters.</i>
+</li><li><b>Initialize</b>  
+<br/><i>Initializes an empty location object.</i>
+</li><li><b>Initialize2</b> (Latitude <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>, Longitude <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>) 
+<br/><i>Initializes the location object with the given Latitude and Longitude.<BR/>
+Values can be formatted in any of the three formats:<BR/>
+   Degrees: [+-]DDD.DDDDD<BR/>
+   Minutes: [+-]DDD:MM.MMMMM (Minute = 1 / 60 of a degree)<BR/>
+   Seconds: [+-]DDD:MM:SS.SSSSS (Second = 1 / 3600 of a degree)<BR/>
+Example:<code><BR/>
+   Dim L1 As Location<BR/>
+   L1.Initialize2("45:30:30", "45:20:15")</code></i>
+</li><li><b>IsInitialized</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li></ul>
+<h3>Properties:</h3>
+<ul><li><b>Accuracy</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the fix accuracy (meters).</i>
+</li><li><b>AccuracyValid</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Returns true if the fix includes an accuracy value.</i>
+</li><li><b>Altitude</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Double</span>
+<br/><i>Gets or sets the fix altitude (meters).</i>
+</li><li><b>AltitudeValid</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Returns true if the fix includes altitude value.</i>
+</li><li><b>Bearing</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the fix bearing East of true North.</i>
+</li><li><b>BearingValid</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Returns true if the fix includes a bearing value.</i>
+</li><li><b>Latitude</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Double</span>
+<br/><i>Gets or sets the fix latitude (degrees from -90 (South) to 90 (North)).</i>
+</li><li><b>Longitude</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Double</span>
+<br/><i>Gets or sets the fix longitude (degrees from -180 to 180, positive values represent the eastern hemisphere).</i>
+</li><li><b>Speed</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the fix speed (meters/second).</i>
+</li><li><b>SpeedValid</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Returns true if the fix includes speed value.</i>
+</li><li><b>Time</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>
+<br/><i>Gets or sets the UTC time of this fix, in milliseconds since January 1, 1970.</i>
+</li></ul>
+</li>
+</ul>
+<ul><li><h3>Author: </h3></li></ul>
+<ul><li><h3>Version: 1.0</h3></li></ul>
+</body>
+</html>

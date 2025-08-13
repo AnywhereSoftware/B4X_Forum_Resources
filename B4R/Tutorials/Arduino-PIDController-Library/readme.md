@@ -1,0 +1,296 @@
+### Arduino-PIDController-Library by Johan Schoeman
+### 05/05/2024
+[B4X Forum - B4R - Tutorials](https://www.b4x.com/android/forum/threads/160949/)
+
+An inline C wrap for [this Github project](https://github.com/luisllamasbinaburo/Arduino-PIDController-Library). Should be able to use it for PID control. It works very well.  
+  
+Study the code - change your pins to what you need. For the attached project:  
+A0 = plant feedback  
+A1 = Setpoint  
+D0 = control parameter  
+  
+The attached zip includes PIDController.hpp - you can leave it in the B4R project folder as the inline C code is defined as:  
+  
+
+```B4X
+#include "PIDController.hpp"
+```
+
+  
+  
+  
+Note this sub - it is specific to your "plant and you need to amend it accordingly (I have used a LDR as plant feedback)":  
+
+```B4X
+Sub readFeedback As Float                    'specific to the LDR I am using as feedback from the "plant"  
+      
+    Dim mean As Float = 0  
+    Dim V As Float  
+    For i = 0 To 99  
+        V = feedbackpin.AnalogRead  
+        mean = mean +  (V * A * 10) / (B * Rc * (1024 - V))  
+    Next  
+    mean  = mean / 100  
+    Return mean  
+      
+End Sub
+```
+
+  
+  
+  
+  
+
+```B4X
+#Region Project Attributes  
+    #AutoFlushLogs: True  
+    #CheckArrayBounds: True  
+    #StackBufferSize: 300  
+#End Region  
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src  
+'https://github.com/luisllamasbinaburo/Arduino-PIDController-Library  
+Sub Process_Globals  
+    Public Serial1 As Serial  
+      
+    Dim t As Timer  
+      
+    Dim kp, ki, kd As Double                 'Used to set the kp, ki, kd parameters in the inline C code  
+  
+    Dim cont As CONTROLLINO  
+    Dim setpointpin, feedbackpin, outputpin, additionaloutputpin As Pin  
+    Dim setpointval, feedbackval As UInt  
+    Dim outputval As Int                     'inline C code will set this value  
+      
+    Dim output_min, output_max As Double     'inline C code will use these value  
+      
+    Dim A  As Long = 1000                    'Resistance in darkness in KΩ  
+    Dim B As Int = 15                        'Light resistance (10 Lux) in KΩ  
+    Dim Rc As Int = 10                       'Calibration resistance in KΩ  
+      
+    Dim direction_direct As Byte = 0  
+    Dim direction_reverse As Byte = 1  
+      
+    Dim proportionalOn_measure As Byte = 0  
+    Dim proportionalOn_error As Byte = 1  
+  
+    Dim setpnt As Int                                     'inline C code will set this value  
+    Dim illum As Int                                      'inline C code will set this value  
+    Dim outpt As Int                                      'inline C code will set this value  
+    Dim ito As Boolean                                    'inline C code will set this value  
+    Dim error As Double                                   'inline C code will set this value  
+    Dim correctedkp, correctedki, correctedkd As Double   'inline C code will set this value  
+    Dim termp, termi, termd As Double                     'inline C code will set this value  
+  
+End Sub  
+  
+Private Sub AppStart  
+    Serial1.Initialize(115200)  
+    Log("AppStart")  
+    t.Initialize("t_tick", 100)     
+      
+    output_min = 0  
+    output_max = 255  
+      
+    kp = 0.4                    'the kp constant of the PID controller  
+    ki = 6.0                    'the ki constant of the PID controller  
+    kd = 0.0001                 'the kd constant of the PID controller  
+      
+    setpointpin.Initialize(cont.CONTROLLINO_A1, setpointpin.MODE_INPUT)  'pin 55  
+    feedbackpin.Initialize(cont.CONTROLLINO_A0, feedbackpin.MODE_INPUT)  'pin 54  
+    outputpin.Initialize(cont.CONTROLLINO_D0, outputpin.MODE_OUTPUT)     'pin 2  
+    additionaloutputpin.Initialize(cont.CONTROLLINO_D1, additionaloutputpin.MODE_OUTPUT)   'pin 3  
+      
+    feedbackval = feedbackpin.AnalogRead  
+    setpointval = setpointpin.AnalogRead  
+      
+    RunNative("setFeedbackValue", Null)             'pass the plant feedback value to the PIDController  
+    RunNative("setSetpointValue", Null)             'pass the setpoint (in this case a POT) to the PIDController  
+    RunNative("TurnOn", Null)                       'Turn the PIDController ON  
+      
+    RunNative("setParameters", Null)                'set the kp, ki, kd parameters of the PIDController  
+    RunNative("SetOutputLimits", Null)              'limit the output to the range 0…255  
+    RunNative("SetDirection", direction_direct)     'can also be direction_reverse  
+      
+    t.Enabled = True                                'enable the timer  
+      
+End Sub  
+  
+Sub t_tick  
+      
+    feedbackval = readFeedback                     'get the feedback from the plant (in this case a LDR) - see the B4R Sub  
+    
+    setpointval = setpointpin.AnalogRead / 4  
+      
+    RunNative("setSetpointValue", Null)            'set the setpoint value of the PIDController  
+      
+    RunNative("setFeedbackValue", Null)            'pass the palnt feedback value to the PIDController  
+      
+    RunNative("Update", Null)                      'Tell the PIDController to update itself based on new values that was set above  
+  
+    RunNative("getOutputValue", Null)              'get the Output value of the PIDController - it will update variable outputval of the B4R code  
+      
+    outputpin.AnalogWrite(outputval)               'write the output value to the output pin (in this case a LED that changes brightness and shines directly onto the LDR))  
+    additionaloutputpin.AnalogWrite(outputval)     'just an additional output - I have a 24VDC fan connected to this pin  
+  
+    Log("Setpoint = ", setpointval)                'Log the Setpoint - it is set by the inline C code  
+    Log("Feedback = ", feedbackval)                'Log the Illumination value from the LDR - it is set by the inline C code  
+    Log("Output = ", outputval)                    'Log the Output - it is set by the inline C code and will drive the brighness of the LED that is aimed at the LDR  
+    RunNative("IsTurnedOn", Null)                  'check if the PID controller is on  
+    Log("isTurnedOn = ", ito)   
+    RunNative("GetError", Null)                    'get the error between the setpoint and the feedack                     
+    Log("Error = ", error)  
+'    RunNative("GetKp", Null)  
+'    Log("Kp = ", kp)  
+'    RunNative("GetKi", Null)  
+'    Log("Ki = ", ki)  
+'    RunNative("GetKd", Null)  
+'    Log("Kd = ", kd)  
+'    RunNative("GetCorrectedKp", Null)  
+'    Log("correctedKp = ", correctedkp)  
+'    RunNative("GetCorrectedKi", Null)  
+'    Log("correctedKi = ", correctedki)  
+'    RunNative("GetCorrectedKd", Null)  
+'    Log("correctedKd = ", correctedkd)  
+'    RunNative("GetTermP", Null)  
+'    Log("TermP = ", termp)  
+'    RunNative("GetTermI", Null)  
+'    Log("TermI = ", termi)  
+'    RunNative("GetTermD", Null)  
+'    Log("TermD = ", termd)  
+  
+    Log(" ")  
+  
+End Sub  
+  
+Sub readFeedback As Float                    'specific to the LDR I am using as feedback from the "plant"  
+      
+    Dim mean As Float = 0  
+    Dim V As Float  
+    For i = 0 To 99  
+        V = feedbackpin.AnalogRead  
+        mean = mean +  (V * A * 10) / (B * Rc * (1024 - V))  
+    Next  
+    mean  = mean / 100  
+    Return mean  
+      
+End Sub  
+  
+#If C  
+  
+#include "PIDController.hpp"  
+  
+int pidDirection;  
+enum PID::DIRECTION direct = PID::DIRECT;  
+enum PID::DIRECTION reverse = PID::REVERSE;  
+  
+int pidProportionalOn;  
+enum PID::PROPORTIONAL_ON measure = PID::MEASURE;  
+enum PID::PROPORTIONAL_ON error = PID::ERROR;  
+  
+  
+PID::PIDParameters < double > parameters;  
+PID::PIDController < double > pidController(parameters);  
+  
+void setFeedbackValue(B4R::Object* o) {  
+    pidController.Input = b4r_main::_feedbackval;  
+}  
+  
+void setSetpointValue(B4R::Object* o) {  
+    pidController.Setpoint = b4r_main::_setpointval;  
+}  
+  
+void getOutputValue(B4R::Object* o) {  
+    b4r_main::_outputval = pidController.Output;  
+}  
+  
+void setParameters(B4R::Object* o) {  
+    parameters.Set(b4r_main::_kp, b4r_main::_ki, b4r_main::_kd);  
+    pidController.SetTunings(parameters);  
+}  
+  
+void SetOutputLimits(B4R::Object* o) {  
+    pidController.SetOutputLimits(b4r_main::_output_min, b4r_main::_output_max);  
+}  
+  
+void Update(B4R::Object* o) {  
+    pidController.Update();  
+}  
+  
+void TurnOn(B4R::Object* o) {  
+    pidController.TurnOn();  
+}  
+  
+void TurnOff(B4R::Object* o) {  
+    pidController.TurnOff();  
+}  
+  
+void Toggle(B4R::Object* o) {  
+    pidController.Toggle();  
+}  
+  
+void IsTurnedOn(B4R::Object* o) {  
+    b4r_main::_ito = pidController.IsTurnedOn();  
+}  
+  
+void GetError(B4R::Object* o) {  
+   b4r_main::_error = pidController.GetError();  
+}  
+  
+void GetKp(B4R::Object* o) {  
+   b4r_main::_kp = pidController.GetKp();  
+}  
+  
+void GetKi(B4R::Object* o) {  
+   b4r_main::_ki = pidController.GetKi();  
+}  
+  
+void GetKd(B4R::Object* o) {  
+   b4r_main::_kd = pidController.GetKd();  
+}  
+  
+void GetCorrectedKp(B4R::Object* o) {  
+   b4r_main::_correctedkp = pidController.GetCorrectedKp();  
+}  
+  
+void GetCorrectedKi(B4R::Object* o) {  
+   b4r_main::_correctedki = pidController.GetCorrectedKi();  
+}  
+  
+void GetCorrectedKd(B4R::Object* o) {  
+   b4r_main::_correctedkd = pidController.GetCorrectedKd();  
+}  
+  
+void GetTermP(B4R::Object* o) {  
+    b4r_main::_termp = pidController.GetTermP();  
+}  
+  
+void GetTermI(B4R::Object* o) {  
+    b4r_main::_termi = pidController.GetTermI();  
+}  
+  
+void GetTermD(B4R::Object* o) {  
+    b4r_main::_termd = pidController.GetTermD();  
+}  
+  
+void SetDirection(B4R::Object* o) {  
+    pidDirection = (Byte)o->toULong();     
+    if (pidDirection == 0)  
+        pidController.SetDirection(direct);  
+    if (pidDirection == 1)  
+        pidController.SetDirection(reverse);     
+}  
+  
+void SetProportionalOn(B4R::Object* o) {  
+    pidProportionalOn = (Byte)o->toULong();     
+    if (pidProportionalOn == 0)  
+        pidController.SetProportionalOn(measure);  
+    if (pidProportionalOn == 1)  
+        pidController.SetProportionalOn(error);     
+}  
+  
+#End If
+```
+
+  
+  
+Shout if you need some clarification - will try to assist the best I can. But this is a very nice PIDController.

@@ -1,0 +1,407 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rrandomaccessfile
+Library4=rili9488
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private bc As ByteConverter
+	Private tft As ILI9488
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("SSID", "PASSWORD") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	
+
+
+'// case hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
+'  tft.Initialize2(TFT_CS, TFT_DC, TFT_RST)
+  tft.Initialize3(15, 5)
+'// case software SPI, change pins As desired
+'//  tft.initialize1(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO)
+'  tft.initialize1(15, 2, 13, 14, 0, 12)
+  Log("ILI9488 Test!")
+  AddLooper("lLoop")
+  tft.begin
+  tft.setFont(5)
+  tft.setTextColor1(2,5)
+'  // read diagnostics (optional but can help debug problems)
+  Dim x As Byte = tft.readcommand8(tft.ILI9488_RDMODE,0)
+  Log("Display Power Mode: 0x",BytetoHexa(x))
+  x = tft.readcommand8(tft.ILI9488_RDMADCTL,0)
+  Log("MADCTL Mode: 0x",BytetoHexa(x))
+  x = tft.readcommand8(tft.ILI9488_RDPIXFMT,0)
+  Log("Pixel Format: 0x",BytetoHexa(x))
+  x = tft.readcommand8(tft.ILI9488_RDIMGFMT,0)
+  Log("Image Format: 0x",BytetoHexa(x))
+  x = tft.readcommand8(tft.ILI9488_RDSELFDIAG,0)
+  Log("Self Diagnostic: 0x", BytetoHexa(x))
+
+  Log("Benchmark Time",Micros)
+
+  Log("Screen fill              ",testFillScreen)
+  Delay(500)
+
+  Log("Text                     ",testText)
+  Delay(3000)
+
+  Log("Lines                    ",testLines(tft.ILI9488_CYAN))
+  Delay(500)
+
+  Log("Horiz/Vert Lines         ",testFastLines(tft.ILI9488_RED, tft.ILI9488_BLUE))
+  Delay(500)
+
+  Log("Rectangles (outline)     ",testRects(tft.ILI9488_GREEN))
+  Delay(500)
+
+  Log("Rectangles (filled)      ",testFilledRects(tft.ILI9488_YELLOW, tft.ILI9488_MAGENTA))
+  Delay(500)
+
+  Log("Circles (filled)         ",testFilledCircles(10, tft.ILI9488_MAGENTA))
+
+  Log("Circles (outline)        ",testCircles(10, tft.ILI9488_WHITE))
+  Delay(500)
+
+  Log("Triangles (outline)      ",testTriangles)
+  Delay(500)
+
+  Log("Triangles (filled)       ",testFilledTriangles)
+  Delay(500)
+
+  Log("Rounded rects (outline)  ",testRoundRects)
+  Delay(500)
+
+  Log("Rounded rects (filled)   ",testFilledRoundRects)
+  Delay(500)
+
+  Log("Done!")
+
+End Sub
+
+
+Sub lLoop 
+  Dim rotation As Byte
+  For rotation = 0 To 3 '<4
+    tft.setRotation(rotation)
+    testText
+    Delay(1000)
+  Next
+End Sub
+
+Sub testFillScreen As ULong
+  Dim start As ULong = Micros
+  tft.fillScreen(tft.ILI9488_BLACK)
+  tft.fillScreen(tft.ILI9488_RED)
+  tft.fillScreen(tft.ILI9488_GREEN)
+  tft.fillScreen(tft.ILI9488_BLUE)
+  tft.fillScreen(tft.ILI9488_BLACK)
+  Return Micros - start
+End Sub
+
+Sub testText As ULong
+  tft.fillScreen(tft.ILI9488_BLACK)
+  Dim start As ULong = Micros()
+  tft.setCursor(0, 0)
+  tft.setTextColor(tft.ILI9488_WHITE):  tft.setTextSize(1)
+  tft.println("Hello World!")
+  tft.setTextColor(tft.ILI9488_YELLOW): tft.setTextSize(2)
+  tft.println(1234.56)
+  tft.setTextColor(tft.ILI9488_RED):    tft.setTextSize(3)
+  tft.println(bc.StringFromBytes(UlongtoHexa(0xDEADBEEF)))
+  tft.println("")
+  tft.setTextColor(tft.ILI9488_GREEN)
+  tft.setTextSize(5)
+  tft.println("Groop")
+  tft.setTextSize(2)
+  tft.println("I implore thee,")
+  tft.setTextSize(1)
+  tft.println("my foonting turlingdromes.")
+  tft.println("And hooptiously drangle me")
+  tft.println("with crinkly bindlewurdles,")
+  tft.println("Or I will rend thee")
+  tft.println("in the gobberwarts")
+  tft.println("with my blurglecruncheon,")
+  tft.println("see if I don't!")
+  Return Micros - start
+End Sub
+
+Sub testLines( color As UInt) As ULong
+  Dim start, t As ULong
+  Dim x1, y1, x2, y2 As Int = 0
+  Dim w As Int = tft.width
+  Dim h As Int = tft.height
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+
+'  x1 = y1 = 0
+  y2    = h - 1
+  start = Micros
+  For x2 = 0 To w-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  x2 = w - 1
+  For y2=0 To h-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  t= Micros - start
+  tft.fillScreen(tft.ILI9488_BLACK)
+
+  x1    = w - 1
+  y1    = 0
+  y2    = h - 1
+  start = Micros
+  For x2=0 To w-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  x2    = 0
+  For y2=0 To h-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  t= t +Micros - start
+  tft.fillScreen(tft.ILI9488_BLACK)
+
+  x1    = 0
+  y1    = h - 1
+  y2    = 0
+  start = Micros
+  For x2=0 To w-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  x2    = w - 1
+  For y2=0 To h -1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  t=t +Micros - start
+  tft.fillScreen(tft.ILI9488_BLACK)
+
+  x1    = w - 1
+  y1    = h - 1
+  y2    = 0
+  start = Micros
+  For x2=0 To w-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color)
+  Next
+  x2    = 0
+  For y2=0 To h-1 Step 6
+  	 tft.drawLine(x1, y1, x2, y2, color) 
+  Next
+  Return Micros- start
+End Sub
+
+Sub testFastLines( color1 As UInt, color2 As UInt) As ULong
+  Dim start As ULong
+  Dim x, y, w,h As Int
+  w = tft.width: h = tft.height
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  start = Micros
+  For y=0 To h-1 Step 5 
+  	tft.drawFastHLine(0, y, w, color1)
+  Next
+  For x=0 To w-1 Step 5
+  	tft.drawFastVLine(x, 0, h, color2)
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testRects(color As UInt) As UInt
+  Dim start As ULong
+  Dim n, i, i2,cx,cy As Int
+  cx = tft.width  / 2
+  cy = tft.height / 2
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  n = Min(tft.width, tft.height)
+  start = Micros
+  For i=2 To n-1 Step 6
+    i2 = i / 2
+    tft.drawRect(cx-i2, cy-i2, i, i, color)
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testFilledRects( color1 As UInt, color2 As UInt) As ULong
+  Dim start, t As ULong = 0
+  Dim n, i, i2, cx, cy As Int
+  cx = tft.width  / 2 - 1
+  cy = tft.height / 2 - 1
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  n = Min(tft.width, tft.height)
+  For i=n To 1 Step -6
+  	i2 = i / 2
+    start = Micros
+    tft.fillRect(cx-i2, cy-i2, i, i, color1)
+    t = t + Micros - start
+'    // Outlines are Not included in timing results
+    tft.drawRect(cx-i2, cy-i2, i, i, color2)
+  Next
+
+  Return t
+End Sub
+
+Sub testFilledCircles( radius As Byte, color As UInt) As ULong
+  Dim start As ULong
+  Dim  x, y, w, h, r2 As Int
+  w = tft.width
+  h = tft.height
+  r2 = radius * 2
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  start = Micros
+  For x=radius To w-1 Step r2
+    For  y=radius To h-1 Step r2
+      tft.fillCircle(x, y, radius, color)
+    Next
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testCircles( radius As Byte, color As UInt) As ULong
+  Dim start As ULong
+  Dim x, y, r2, w, h As Int
+  r2 = radius * 2
+  w = tft.width  + radius
+  h = tft.height + radius
+
+'  // Screen is Not cleared For this one -- this is
+'  // intentional And does Not affect the reported time.
+  start = Micros
+  For x=0 To w-1 Step r2
+    For y=0 To h-1 Step r2
+      tft.drawCircle(x, y, radius, color)
+    Next
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testTriangles() As ULong
+ Dim start As ULong
+ Dim n, i, cx, cy As Int 
+ cx = tft.width  / 2 - 1
+ cy = tft.height / 2 - 1
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  n = Min(cx, cy)
+  start = Micros
+  For i=0 To n-1 Step 5
+    tft.drawTriangle(cx, cy-i, cx-i, cy+i, cx+i, cy+i, tft.color565(0, 0, i))
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testFilledTriangles() As ULong
+  Dim start, t As ULong = 0
+  Dim  i,cx, cy As Int 
+  cx = tft.width  / 2 - 1
+  cy = tft.height / 2 - 1
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  start = Micros
+  For i=Min(cx,cy) To 11 Step -5
+    start = Micros
+    tft.fillTriangle(cx, cy - i, cx - i, cy + i, cx + i, cy + i, tft.color565(0, i, i))
+    t =t+ Micros - start
+    tft.drawTriangle(cx, cy - i, cx - i, cy + i, cx + i, cy + i,  tft.color565(i, i, 0))
+  Next
+
+  Return t
+End Sub
+
+Sub testRoundRects() As ULong
+  Dim start As ULong
+  Dim w, i, i2, cx, cy As Int
+  cx = tft.width  / 2 - 1
+  cy = tft.height / 2 - 1
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  w = Min(tft.width, tft.height)
+  start = Micros
+  For i=0 To w-1 Step 6 
+    i2 = i / 2
+    tft.drawRoundRect(cx-i2, cy-i2, i, i, i/8, tft.color565(i, 0, 0))
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub testFilledRoundRects() As ULong
+  Dim start As ULong
+  Dim i, i2, cx, cy As Int
+  cx = tft.width  / 2 - 1
+  cy = tft.height / 2 - 1
+
+  tft.fillScreen(tft.ILI9488_BLACK)
+  start = Micros
+  For i=Min(tft.width, tft.height) To 21 Step -6
+    i2 = i / 2
+    tft.fillRoundRect(cx-i2, cy-i2, i, i, i/8, tft.color565(0, i, 0))
+  Next
+
+  Return Micros - start
+End Sub
+
+Sub BytetoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	Dim raf As RandomAccessFile
+	raf.Initialize(b, False) 'big endian
+	raf.WriteByte(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	Dim raf As RandomAccessFile
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+#if C
+  #include <Fonts/FreeMono9pt7b.h>
+  #include <Fonts/FreeSans9pt7b.h>
+  #include <Fonts/FreeSerif9pt7b.h>
+  #include <Fonts/FreeMonoBold9pt7b.h>
+  #include <Fonts/FreeMonoBoldOblique9pt7b.h>
+  #include <Fonts/FreeMonoOblique9pt7b.h>
+  #include <Fonts/FreeSansBold9pt7b.h>
+
+  const GFXfont * B4R::B4RILI9488::myfonts[7]= { 
+      &FreeMono9pt7b,                 // => setfont(00)
+      &FreeSans9pt7b,                 // => setfont(01)
+      &FreeSerif9pt7b,                // => setfont(02)
+      &FreeMonoBold9pt7b,             // => setfont(03)
+      &FreeMonoBoldOblique9pt7b,      // => setfont(04)
+      &FreeMonoOblique9pt7b,          // => setfont(05)
+      &FreeSansBold9pt7b              // => setfont(06)
+  };
+#End If

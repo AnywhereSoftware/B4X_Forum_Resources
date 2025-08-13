@@ -1,0 +1,58 @@
+﻿Version=4
+IconFile=
+NumberOfModules=0
+Build1=Default,derez.libs
+DoNotOverwriteManifest=False
+ManifestCode=
+NumberOfFiles=2
+File1=mag.bal
+File2=wmmc.cof
+NumberOfLibraries=3
+Library1=core
+Library2=magnetics
+Library3=navigation
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: magnetic
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+Dim mg As Magnetics
+Dim str(3) As String
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+Activity.LoadLayout("mag")
+
+End Sub
+
+Sub Activity_Resume
+Log(File.DirInternal)
+
+File.Copy(File.DirAssets,"WMMC.COF",File.DirInternal,"WMMC.COF")
+mg.initialize(File.DirInternal)
+
+str = mg.MagneticData(31,34,0)
+Log(str(0) & "  " & str(1) & "  " & str(2))
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

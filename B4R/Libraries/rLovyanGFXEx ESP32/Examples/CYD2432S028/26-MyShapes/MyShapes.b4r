@@ -1,0 +1,89 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rlovyangfxex
+Module1=Helper
+Module2=MyShapes
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example drawing own shapes defined in the code module MyShapes.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEX MyShapes v20250325"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'CYD
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	'Set screen rotation to power top left.
+	lcd.DisplayRotation = 1
+	
+	'Set screen background color
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+	
+	'Draw version text at top middle center
+	MyShapes.DrawHeading(lcd, VERSION)
+
+	'Draw text bottom left using drawtext
+	MyShapes.DrawFooter(lcd, "B4X is great... enjoy")
+
+	'Draw some pixels 8x8
+	Log("[Demo] drawpixel8")
+	For i = 0 To 4
+		MyShapes.DrawPixel8(lcd, 10 + (i * 16), 50, lcd.COLOR_RED)	
+	Next
+	
+	'Draw icon using size 8 which sets pixels 8x8
+	Log("[Demo] drawicon")
+	MyShapes.DrawIcon(lcd, 10, 100, 8, MyShapes.ArrowRight, lcd.COLOR_BLUE, lcd.color_WHITE)
+
+	'
+	Log("[Demo] drawroundrect")
+	MyShapes.DrawButtonRound(lcd, 100, 150, 100, 50, "MyButton", lcd.COLOR_WHITE, lcd.COLOR_BLACK)
+
+End Sub

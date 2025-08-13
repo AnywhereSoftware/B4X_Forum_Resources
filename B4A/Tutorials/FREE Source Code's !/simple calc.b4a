@@ -1,0 +1,173 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,b4a.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=1
+File1=calc.bal
+NumberOfLibraries=1
+Library1=core
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Simple Calculator
+	#VersionCode: 2
+	#VersionName: 1.01
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private totallb As Label
+	Private nrbtndiv As Button
+	Private calcpnl As Panel
+	Private nrbtn0 As Button
+	Private nrbtn1 As Button
+	Private nrbtn2 As Button
+	Private nrbtn3 As Button
+	Private nrbtn4 As Button
+	Private nrbtn5 As Button
+	Private nrbtn6 As Button
+	Private nrbtn7 As Button
+	Private nrbtn8 As Button
+	Private nrbtn9 As Button
+	Private nrbtnac As Button
+	Private nrbtndot As Button
+	Private nrbtneq As Button
+	Private nrbtnminus As Button
+	Private nrbtnmul As Button
+	Private nrbtnplus As Button
+	
+	Dim nr1,nr2 As String  = ""
+	Dim total As String  = ""
+	Dim mathstr As String = ""
+	Dim space As String = " "
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("calc")
+	totallb.Text = "0" & space
+End Sub
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+Sub calcpnl_Click
+	'do nothing
+End Sub
+
+Sub nrbtn_Click
+
+Dim btn As Button = Sender 'get the pressed button
+Dim btntag As String = btn.Tag 'get the selected button tag to know what button was clicked
+
+
+If IsNumber(btntag) Then 'if the pressed buttontag is a number the do this
+	If mathstr <> "" Then 
+		If nr2.Length = 1 Then 
+			If nr2 = "0" AND btntag = "0" Then 'avoid type 0 more then once on the first number
+				nr2 = "0" 
+			Else 
+				If nr2 = "0" AND btntag <> "0" Then nr2 = btntag Else nr2 = nr2 & btntag
+			End If
+		Else
+			nr2 = nr2 & btntag
+		End If
+		totallb.Text = nr2 & space
+	Else 
+		If nr1.Length = 1 Then 
+			If nr1 = "0" AND btntag = "0" Then 'avoid type 0 more then once on the first number
+				nr1 = "0" 
+			Else 
+				If nr1 = "0" AND btntag <> "0" Then nr1 = btntag Else nr1 = nr1 & btntag
+			End If
+		Else
+			nr1 = nr1 & btntag
+		End If
+		totallb.Text = nr1 & space
+	End If
+Else		
+	If nr1 = "" Then Return 'exit if nr is empty
+	
+	'here we will do action if the pressed number is not a number (like +,-,/,*,=,.,ac)
+	Select btntag
+		Case "plus" 'if the pressed button tag = "plus" then...
+			If mathstr = "" Then mathstr = btntag Else docalc(mathstr,btntag) 'if mathstr is empty set it to selected buttons else do calculation
+		Case "minus"
+			If mathstr = "" Then mathstr = btntag Else docalc(mathstr,btntag)
+		Case "mul"
+			If mathstr = "" Then mathstr = btntag Else docalc(mathstr,btntag)
+		Case "div" 
+			If mathstr = "" Then mathstr = btntag Else docalc(mathstr,btntag)
+		Case "eq"
+			docalc(mathstr,"") 'if button pressed is = then calculate the result
+		Case "AC" 'reset all variables
+			totallb.Text = "0" & space
+			nr1 = ""
+			nr2 = ""
+			mathstr = ""
+			total = ""
+		Case "."
+			If mathstr <> "" Then 
+               If Not(nr2.Contains(".")) Then nr2 = nr2 & "." 'if number2 doesnot contains allready . add . else dont add
+				totallb.Text = nr2 & space
+			Else
+				If nr1 = "" AND totallb.Text = "0" Then nr1 = "0" 'is nr1 is empty and i pressed . i want to get 0. so i change nr1 to 0
+				If Not(nr1.Contains(".")) Then nr1 = nr1 & "."
+				totallb.Text = nr1 & space
+		    End If			
+	End Select	
+End If
+	
+End Sub
+
+Sub docalc (math As String,newmath As String)
+
+	If math = "plus" Then 
+		total = nr1 + nr2
+	Else If math = "minus" Then 
+		total = nr1 - nr2
+	Else If math = "mul" Then 
+		total = nr1 * nr2
+	Else If math = "div" Then 
+		total = nr1 / nr2
+	Else
+		Return 'exit sub
+	End If
+	
+	If newmath <> "" Then 
+		mathstr = newmath 
+		nr2 = ""
+	Else
+		mathstr = ""		
+		nr2 = ""
+	End If
+	
+	nr1 = total 'will make it possible to continiue calculate
+	totallb.Text = total & space
+
+End Sub
+
+
+
+
+
+
+
+
+
+

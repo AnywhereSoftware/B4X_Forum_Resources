@@ -1,0 +1,65 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jsql
+Module1=DBUtils
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True
+	
+	#AdditionalJar: sqlite-jdbc-3.36.0.1_min
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim src_db As SQL
+	Dim dest_db As SQL
+	
+	src_db.InitializeSQLite(File.DirApp,"report.sqlite",False)	
+	dest_db.InitializeSQLite("", ":memory:",True)
+	
+	DBUtils.CopySQLiteDB(src_db,dest_db)
+	
+	Dim t1 As Long = DateTime.Now
+	
+	Dim Cursor1 As ResultSet
+	Cursor1 = src_db.ExecQuery($"SELECT count(*) FROM statistics"$)
+	Do While Cursor1.NextRow
+		For c = 0 To Cursor1.ColumnCount-1
+			Cursor1.GetColumnName(c)
+			Cursor1.GetString2(c)
+		Next
+	Loop	
+	Cursor1.Close
+	
+	Dim t2 As Long = DateTime.Now
+	Dim d As Long = t2-t1
+	Log("Handler response time: " & d)
+	
+	Dim t1 As Long = DateTime.Now
+	
+	Dim Cursor1 As ResultSet
+	Cursor1 = dest_db.ExecQuery($"SELECT count(*) FROM statistics"$)
+	Do While Cursor1.NextRow
+		For c = 0 To Cursor1.ColumnCount-1
+			Cursor1.GetColumnName(c)
+			Cursor1.GetString2(c)
+		Next
+	Loop
+	Cursor1.Close
+	
+	Dim t2 As Long = DateTime.Now
+	Dim d As Long = t2-t1
+	Log("Handler response time: " & d)
+	
+End Sub

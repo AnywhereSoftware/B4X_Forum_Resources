@@ -1,0 +1,250 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=android.png
+File2=card.png
+File3=cat.obj
+File4=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Library5=jbitmapcreator
+Library6=jsd_xui_view3d_demo
+NumberOfFiles=4
+NumberOfLibraries=6
+NumberOfModules=0
+Version=6.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 600 
+	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Dim xui As XUI
+	Dim P3D As Object3D
+	Dim MyColor(7) As Int = Array As Int (xui.Color_Yellow,xui.Color_Green,xui.color_red,xui.Color_White,xui.Color_Cyan,xui.Color_LightGray,xui.Color_Magenta)
+
+	Private centerX As Int
+	Private centerY As Int
+	Private ModeDraw As Int = 1
+	Dim Zoom As Float = 1
+
+	Public Panel,Panel2 As B4XView
+	Private SpinnerObiect As Spinner
+	Private SpinnerEffect As Spinner
+	Private CheckBox1 As CheckBox
+	Private CheckBox2 As CheckBox
+	Private CheckBox3 As CheckBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+	
+	SpinnerObiect.SetListItems(Array As String("Select Obj","Cube Line","Cube 3D","Pentagon","Circle","Sphere","Image","Card","Rubik","Cat"))
+	
+	SpinnerEffect.SetListItems(Array As String("None","Effect 1","Effect 2","Effect 3"))
+	
+	P3D.Initialize
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub Panel_Touch (Action As Int, X As Float, Y As Float)
+	
+End Sub
+
+Sub Draw(P As Object3D)
+	If ModeDraw<2 Then
+		Panel.Visible=True
+		Panel2.Visible=False
+		P.Rotate(Null,0,0,0).RenderToView(Panel,centerX,centerY,Zoom,ModeDraw)
+	Else
+		Panel.Visible=False
+		Panel2.Visible=True
+		P.Rotate(Null,0,0,0).RenderToView(Panel2,centerX,centerY,Zoom,ModeDraw)
+	End If
+End Sub
+
+#Region 3D Object
+
+Sub SpinnerObiect_ValueChanged ( Value As Object)
+	P3D.Initialize
+
+	Zoom=1
+	ModeDraw=1
+	centerX=Panel.Width/2
+	centerY=Panel.Height/2
+	
+	Select Value
+		Case "Cube Line"
+			Dim Point1 As Point3D_Type = P3D.ctp(-50,-50,50)
+			Dim Point2 As Point3D_Type = P3D.ctp(50,-50,50)
+			Dim Point3 As Point3D_Type = P3D.ctp(50,50,50)
+			Dim Point4 As Point3D_Type = P3D.CtP(-50,50,50)
+			Dim Point5 As Point3D_Type = P3D.ctp(-50,-50,50)
+			P3D.AddPolygon(1,Array As Point3D_Type(Point1,Point2,Point3,Point4,Point5),MyColor(0),xui.Color_Transparent)
+			
+			Dim Point1 As Point3D_Type = P3D.CtP(-50,-50,-50)
+			Dim Point2 As Point3D_Type = P3D.CtP(50,-50,-50)
+			Dim Point3 As Point3D_Type = P3D.CtP(50,50,-50)
+			Dim Point4 As Point3D_Type = P3D.CtP(-50,50,-50)
+			Dim Point5 As Point3D_Type = P3D.CtP(-50,-50,-50)
+			P3D.AddPolygon(1,Array As Point3D_Type(Point1,Point2,Point3,Point4,Point5),MyColor(1),xui.Color_Transparent)
+			'Linee
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-50,-50,50),P3D.CtP(-50,-50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(50,-50,50),P3D.CtP(50,-50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(50,50,50),P3D.CtP(50,50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-50,50,50),P3D.CtP(-50,50,-50)),MyColor(2),xui.Color_Transparent)
+		Case "Cube 3D"
+			' Cube 3D
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-50,-50,50) ,P3D.CtP(50,-50,50), P3D.CtP(50,50,50), P3D.CtP(-50,50,50)),xui.Color_Transparent,MyColor(0))
+			P3D.AddPolygon(2,Array As Point3D_Type(P3D.CtP(-50,-50,50) ,P3D.CtP(-50,50,50), P3D.CtP(-50,50,-50), P3D.CtP(-50,-50,-50)),xui.Color_Transparent,MyColor(1))
+			P3D.AddPolygon(3,Array As Point3D_Type(P3D.CtP(-50,-50,-50) ,P3D.CtP(50,-50,-50), P3D.CtP(50,50,-50), P3D.CtP(-50,50,-50)),xui.Color_Transparent,MyColor(2))
+			P3D.AddPolygon(4,Array As Point3D_Type(P3D.CtP(50,-50,50) ,P3D.CtP(50,50,50), P3D.CtP(50,50,-50), P3D.CtP(50,-50,-50)),xui.Color_Transparent,MyColor(3))
+		Case "Pentagon"
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-60,-30,50),P3D.CtP(0,-60,50),P3D.CtP(60,-30,50),P3D.CtP(40,50,50),P3D.CtP(-40,50,50)),xui.Color_Transparent,MyColor(0))
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-60,-30,-50),P3D.CtP(0,-60,-50),P3D.CtP(60,-30,-50),P3D.CtP(40,50,-50),P3D.CtP(-40,50,-50)),xui.Color_Transparent,MyColor(1))
+		Case "Circle"
+			P3D.AddArcZ(1,0,360,0,0,0,80,MyColor(0), xui.Color_Transparent)
+			P3D.AddArcy(2,0,360,0,0,0,80,MyColor(1),MyColor(1)) ' xui.Color_Transparent)
+			P3D.AddArcx(3,0,360,0,0,0,80,MyColor(2), xui.Color_Transparent)
+		Case "Sphere"
+			P3D.AddSpere(1,0,0,0,100,xui.Color_White,xui.Color_DarkGray)
+		Case "Image"
+			Dim p1,p2,p3,p4 As Point3D_Type
+			
+			p1=P3D.CtP(-50,-50,-50)
+			p2=P3D.CtP(50,-50,-50)
+			p3=P3D.CtP(50,50,-50)
+			p4=P3D.CtP(-50,50,-50)
+			P3D.AddImage(2,xui.LoadBitmap(File.DirAssets,"android.png").Resize(100,100,False),p1,p2,p3,p4)
+	
+			p1=P3D.CtP(-50,-50,50)
+			p2=P3D.CtP(50,-50,50)
+			p3=P3D.CtP(50,50,50)
+			p4=P3D.CtP(-50,50,50)
+			P3D.AddImage(1,xui.LoadBitmap(File.DirAssets,"android.png").Resize(100,100,False),p1,p2,p3,p4)
+		Case "Card"
+			Dim p1,p2,p3,p4 As Point3D_Type
+			
+			p1=P3D.CtP(-93,-135,1)
+			p2=P3D.CtP(93,-135,1)
+			p3=P3D.CtP(93,135,1)
+			p4=P3D.CtP(-93,135,1)
+			P3D.AddImage(1,xui.LoadBitmap(File.DirAssets,"card.png"),p1,p2,p3,p4)
+			
+			P3D.AddPolygon(2,Array As Point3D_Type(P3D.CtP(-93,-135,-2),P3D.CtP(93,-135,-2),P3D.CtP(93,135,-2),P3D.CtP(-93,135,-2)),xui.Color_Transparent,MyColor(2))
+		Case "Rubik"
+			Dim Sp As Int = 60
+			Dim ID As Int = 1
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For x=0 To 2
+					For y=0 To 2
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(x*Sp-Sp*1.5,y*Sp-Sp*1.5,i*Sp*1.5),P3D.CtP(x*Sp-Sp/2,y*Sp-Sp*1.5,i*Sp*1.5),P3D.CtP(x*Sp-Sp/2,y*Sp-Sp/2,i*Sp*1.5),P3D.CtP(x*Sp-Sp*1.5,y*Sp-Sp/2,i*Sp*1.5)),xui.Color_Black,MyColor(i+1))
+						ID=ID+1
+					Next
+				Next
+			Next
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For z=0 To 2
+					For y=0 To 2
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(i*Sp*1.5,y*Sp-Sp*1.5,z*Sp-Sp*1.5),P3D.CtP(i*Sp*1.5,y*Sp-Sp*1.5,z*Sp-Sp/2),P3D.CtP(i*Sp*1.5,y*Sp-Sp/2,z*Sp-Sp/2),P3D.CtP(i*Sp*1.5,y*Sp-Sp/2,z*Sp-Sp*1.5)),xui.Color_Black,MyColor(i+2))
+						ID=ID+1
+					Next
+				Next
+			Next
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For x=0 To 2
+					For z=0 To 2
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(x*Sp-Sp*1.5,i*Sp*1.5,z*Sp-Sp*1.5),P3D.CtP(x*Sp-Sp*1.5,i*Sp*1.5,z*Sp-Sp/2),P3D.CtP(x*Sp-Sp/2,i*Sp*1.5,z*Sp-Sp/2),P3D.CtP(x*Sp-Sp/2,i*Sp*1.5,z*Sp-Sp*1.5)),xui.Color_Black,MyColor(i+5))
+						ID=ID+1
+					Next
+				Next
+			Next
+		Case "Cat"
+			P3D.Initialize
+			File.Copy(File.DirAssets,"cat.obj",File.DirTemp,"cat.obj")
+			P3D.LoadObjFile(1,File.DirTemp,"cat.obj",xui.Color_White,xui.Color_Gray,0)
+			Zoom=0.5
+			CheckBox2.Checked=True
+			CheckBox2_CheckedChange(True)
+	End Select
+	
+	Draw(P3D)
+End Sub
+
+Sub SpinnerEffect_ValueChanged (Value As Object)
+
+	Select Value
+		Case "Effect 1"
+			For i=0 To 360 Step 10
+				Draw(P3D.Rotate(Null,45,i,0))
+				Sleep(50)
+			Next
+		Case "Effect 2"
+			For i=0 To 90 Step 15
+				'Poligon3D.RotateObjX(Array As Int(10,11,12,13,14,15,16,17,18),i).RotateY(SeekBarY.Value).RotateZ(SeekBarZ.Value).RotateX(SeekBarX.Value).RenderToView(Panel,2dip)
+				Draw(P3D.Rotate(Array As Int(10,11,12,13,14,15,16,17,18),i,0,0))
+				Sleep(50)
+			Next
+			
+		Case "Effect 3"
+			For i=0 To 90 Step 15
+				'Poligon3D.RotateObjy(Array As Int(2,5,8,11,14,17,20,23,26,29,32,35),i).RotateY(SeekBarY.Value).RotateZ(SeekBarZ.Value).RotateX(SeekBarX.Value).RenderToView(Panel,2dip)
+				Draw(P3D.Rotate(Array As Int(2,5,8,11,14,17,20,23,26,29,32,35),0,i,0))
+				Sleep(40)
+			Next
+	End Select
+	
+End Sub
+
+#End Region
+
+
+Sub CheckBox1_CheckedChange(Checked As Boolean)
+	If Checked Then
+		CheckBox2.Checked=False
+		CheckBox3.Checked=False
+		ModeDraw=1
+		Draw(P3D)
+	End If
+End Sub
+
+Sub CheckBox2_CheckedChange(Checked As Boolean)
+	If Checked Then
+		CheckBox1.Checked=False
+		CheckBox3.Checked=False
+		ModeDraw=2
+		Draw(P3D)
+	End If
+End Sub
+
+Sub CheckBox3_CheckedChange(Checked As Boolean)
+	If Checked Then
+		CheckBox1.Checked=False
+		CheckBox2.Checked=False
+		ModeDraw=0
+		Draw(P3D)
+	End If
+End Sub

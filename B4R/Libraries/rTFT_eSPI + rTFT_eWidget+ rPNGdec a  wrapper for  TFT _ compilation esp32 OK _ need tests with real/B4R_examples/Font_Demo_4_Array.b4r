@@ -1,0 +1,174 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+	'/*
+	'This sketch is the same As the Font_Demo_3 example, except the fonts in this
+	'example are in a FLASH (program memory) Array. This means that processors
+	'such As the STM32 series that are Not supported by a SPIFFS library can use
+	'smooth (anti-aliased) fonts.
+	'*/
+
+	'/*
+	'There are four different methods of plotting anti-aliased fonts To the screen.
+
+	'This sketch uses method 3, the font characters are first plotted in a Sprite, Then the
+	'Sprite is pushed To the screen. This method is very flexible And the Sprite can be
+	'created, deleted, resized As needed. To render anti-aliased fonts well the Sprite
+	'needs To be 16-Bit.  The fonts will render in 1 Bit per pixel sprites but there
+	'will Then be no anti-aliasing. Using 1 Bit per pixel Sprites is however useful
+	'To use the extended Unicode range in fonts on mono displays like ePaper.
+
+	'A single Sprite can be re-used For plotting different values And graphics To
+	'	different positions on the screen. This makes this method a very powerful display tool,
+	'	For example Round buttons can be created, making use of transparent colour plotting.
+	'	*/
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private SPR As TFT_eSprite
+	Private runtime As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	TFT.begin(0xFF)
+	SPR.Initialize(TFTid)
+
+	TFT.begin(0xFF)
+
+	TFT.setRotation(1)
+
+	SPR.setcolorDepth(16)  '// 16-Bit colour needed To show antialiased fonts
+
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+		
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	TFT.setTextColor1(TFT.TFT_WHITE,TFT.TFT_BLACK,False) ' // Set the font colour And the background colour
+
+	TFT.setTextDatum(TFT.TC_DATUM)  ' // Top CENTRE datum
+
+	Dim xpos As Int = TFT.width() / 2 '// Half the screen width
+	Dim ypos As Int  = 50
+
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Small font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	SPR.loadFontH(0) ' // Must load the font first into the sprite class
+  
+	SPR.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_BLACK, False)  ' // Set the sprite font colour And the background colour
+
+	TFT.setCursor(xpos - 50, ypos)  ' // Set the TFT cursor position, yes TFT position!
+	SPR.printToSprite("Small 15pt font")   ' // Prints To TFT cursor position, TFT cursor Not moved
+
+	ypos =ypos + SPR.fontHeight1    ' // Get the font height And move ypos down
+
+	SPR.unloadFont()   ' // Remove the font from sprite class To recover memory used
+
+	Delay(4000)
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Large font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	SPR.loadFontH(1)   ' // Load another different font
+
+	SPR.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLUE,False)  ' // Set the font colour And the background colour
+
+	TFT.setCursor(xpos - 90, ypos)  ' // Set the TFT cursor position
+	SPR.printToSprite("36pt font")  ' // Text is rendered via a minimally sized sprite
+
+	ypos = ypos + SPR.fontHeight1 ' // Get the font height And move ypos down
+
+	'// Draw changing numbers - no flicker using this plot method!
+	For i = 0 To 200 
+	   TFT.setCursor(10, 10)
+	   '// Number is converted To String Type by (String) (number)
+	   SPR.printToSprite(" " + NumberFormat(i / 100.0,4,2) + " ")   '// Space padding helps over-write old numbers
+	   Delay (20)
+    Next
+
+	SPR.unloadFont()  ' // Remove the font To recover memory used
+
+	Delay(8000)
+
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt, Result() As Byte)
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+ Next
+End Sub
+
+#if C
+//************************
+//VLW fonts management:
+//************************
+//  definition of fonts in h files and loaded by loadfont(VLWfont)
+//  8 VLW fonts can be added by <#define VLW0 font0> to  <#define VLW7 font7>:
+//  fonts must be in directory with rTFT_eSPI or TFT_eSPI
+#include "NotoSansBold15.h"
+#include "NotoSansBold36.h"
+
+  #undef VLW0
+  #define VLW0 NotoSansBold15			// => loadFont(00)
+  #undef VLW1
+  #define VLW1 NotoSansBold36			// => loadFont(01)
+//***********************
+
+#End If

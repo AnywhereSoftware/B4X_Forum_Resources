@@ -1,0 +1,379 @@
+﻿Version=4
+IconFile=
+NumberOfModules=0
+Build1=Default,Dudu.BodyGL
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=2
+File1=dodecahedron.txt
+File2=field3.jpg
+NumberOfLibraries=4
+Library1=core
+Library2=opengl
+Library3=reflection
+Library4=bodygl
+@EndOfDesignText@
+#Region Module Attributes
+'	#FullScreen: False
+'	#IncludeTitle: False
+	#ApplicationLabel: BodyGLDemo
+	#VersionCode: 1
+	#VersionName: 1.02
+	#LibraryVersion: 1.02
+	#LibraryAuthor: David Erez (derez)
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'Activity module
+Sub Process_Globals
+Dim tmr, fly As Timer
+End Sub
+
+Sub Globals
+Dim bmp As Bitmap
+
+Dim vert As Vertice3D
+Dim pol() As String
+Dim color() As Int
+Dim  flag As Int
+Dim plus(3),minus(3) As Button
+Dim pitch,Yaw ,roll  As Float
+Dim posx,posy,posz As Float 
+Dim bd As BodyGL
+Dim viewangle As Float = 45
+Dim fi ,fj As Int
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	add_views
+	init
+	Prism_Click
+End Sub
+
+Sub init
+	bmp.Initialize(File.DirAssets,"field3.jpg")
+	tmr.Initialize("tmr", 35)
+	fly.Initialize("fly", 50)
+End Sub
+
+Sub Set_body
+	If bd.IsInitialized Then bd.AsView.RemoveView
+	bd.Initialize(vert, pol, color, 100%x, 100%y, bmp, True)
+	Activity.AddView(bd.AsView,0,0,100%x,100%y)
+	bd.AsView.SendToBack
+	bd.SetViewAngle(viewangle)
+	bd.Start   ' must appear after adding the view
+	bd.Show1(pitch,Yaw ,roll, posx, posy, posz)
+End Sub
+
+																		' 
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub add_views  
+	For i = 0 To 2
+		plus(i).initialize("plus")
+		plus(i).Tag = i+1
+		Activity.addview(plus(i),40%x + i * 20%x ,75%y,15%x,8%y)
+		plus(i).color = Colors.Yellow
+		plus(i).TextColor = Colors.Black
+
+		minus(i).initialize("minus")
+		minus(i).Tag = -(i+1)
+		Activity.addview(minus(i),40%x + i * 20%x ,85%y,15%x,8%y)
+		minus(i).color = Colors.Yellow
+		minus(i).TextColor = Colors.Black
+		Select i
+			Case 0
+				plus(i).Text = "+x"
+				minus(i).Text = "-x"
+			Case 1
+				plus(i).Text = "+y"
+				minus(i).Text = "-y"
+			Case 2
+				plus(i).Text = "+z"
+				minus(i).Text = "-z"
+		End Select
+	Next
+	Activity.AddMenuItem("Cube","Cube")
+	Activity.AddMenuItem("Pyramid","Pyramid")
+	Activity.AddMenuItem("Prism","Prism")
+	Activity.AddMenuItem("Dodecahedron","Dodecahedron")
+	Activity.AddMenuItem("UAV","UAV")
+	Activity.AddMenuItem("Fly UAV","Fly_UAV")
+End Sub
+
+#Region Controls
+Sub plus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub plus_up
+	flag = 0
+End Sub
+
+Sub minus_Down
+	Dim b As Button = Sender
+	flag = b.tag
+	tmr.Enabled = True
+End Sub
+
+Sub minus_up
+	flag = 0
+End Sub
+
+Sub tmr_tick
+	Select flag
+		Case -1
+			pitch = pitch - 5
+		Case -2
+			Yaw = Yaw - 5
+		Case -3
+			roll = roll - 5 
+		Case 0
+			tmr.Enabled = False
+		Case 1
+			pitch = pitch + 5
+		Case 2
+			Yaw = Yaw + 5
+		Case 3
+			roll = roll + 5 
+	End Select
+	bd.Show(pitch,Yaw ,roll )
+
+End Sub
+#End Region
+
+#Region bodies
+Sub Cube_Click
+	vert.x = Array As Float(2, 2, 2, 2,-2,-2,-2,-2 )
+	vert.y = Array As Float(2, 2,-2,-2, 2, 2,-2,-2 )
+	vert.z = Array As Float(2,-2,-2, 2, 2,-2,-2, 2)
+	pitch = 0
+	Yaw = 45 
+	roll = 45
+	posx = 0
+	posy = 1.5
+	posz = 30
+	common_cube
+End Sub
+
+Sub Pyramid_Click
+	vert.x = Array As Float(0.5,0.5, 2, 2,-.5,-.5,-2,-2 )
+	vert.y = Array As Float( 2, 2,-2,-2,  2,  2,-2,-2 )
+	vert.z = Array As Float( 1,-1,-2, 2,  1, -1,-2, 2)
+	pitch = 30
+	Yaw = -5 
+	roll = 5
+	common_cube
+End Sub
+
+Sub common_cube
+	viewangle = 45
+	posx = 0
+	posy = 1.5
+	posz = 30
+
+	Dim pol(6) As String
+	Dim color(6) As Int
+	pol(0) = "3,2,1,0" 
+	pol(1) = "2,6,5,1"
+	pol(2) = "6,7,4,5"
+	pol(3) = "0,4,7,3"
+	pol(4) = "0,1,5,4"
+	pol(5) = "2,3,7,6"
+
+	color(0) = Colors.Blue
+	color(1) = Colors.cyan
+	color(2) = Colors.Red
+	color(3) = Colors.Rgb(255,128,192)
+	color(4) = Colors.Green
+	color(5) = Colors.RGB(150,150,0)
+	Set_body
+End Sub
+
+Sub Prism_Click
+	Dim pol(7) As String
+	Dim color(7) As Int
+
+	Dim a,b,c,D As Float
+	a = CosD(54)
+	b = SinD(54)
+	c = CosD(18)
+	D = SinD(18)
+
+	vert.x = Array As Float(-a, a, c, 0, -c, -a, a, c, 0, -c )
+	vert.y = Array As Float(-b, -b, D, 1, D, -b, -b, D, 1, D )
+	vert.z = Array As Float(-1, -1, -1, -1, -1, 1, 1, 1, 1, 1 )
+	pitch = -125
+	Yaw = 65
+	roll = 35
+	viewangle = 25
+	posx = 0
+	posy = 1.5
+	posz = 30
+
+	pol(0) = "0,1,6,5" 
+	color(0) = Colors.Blue
+	pol(1) = "1,2,7,6"
+	color(1) = Colors.Rgb(255,192,128)
+	pol(2) = "2,3,8,7"
+	color(2) = Colors.Red
+	pol(3) = "3,4,9,8"
+	color(3) = Colors.Rgb(255,128,192)
+	pol(4) = "4,0,5,9"
+	color(4) = Colors.Green
+	pol(5) = "4,3,2,1,0"
+	color(5) = Colors.Yellow
+	pol(6) = "5,6,7,8,9"
+	color(6) = Colors.Black
+	Set_body
+End Sub
+
+Sub Dodecahedron_Click
+	Dim tr As TextReader
+	Dim str() As String
+	Dim sx(20),sy(20), sz(20) As Float
+	Dim pol(12) As String
+	Dim color(12) As Int
+	viewangle = 20
+	posx = 0
+	posy = 1.5
+	posz = 30
+	tr.Initialize(File.OpenInput(File.DirAssets,"dodecahedron.txt"))
+	For i = 0 To 19
+		str = Regex.Split( ",",tr.ReadLine)
+		sz(i) = str(0)       ' This is the order in the file
+		sy(i) = str(1)
+		sx(i) = str(2)
+	Next
+	tr.Close
+	vert.x = sx
+	vert.y = sy
+	vert.z = sz
+
+	pol(0) = "1,2,18,11,14" 
+	color(0) = Colors.Blue
+	pol(1) = "2,17,9,10,18"
+	color(1) = Colors.Rgb(255,128,192)
+	pol(2) = "9,19,4,0,10"  
+	color(2) = Colors.Red
+	pol(3) = "8,15,3,4,19"
+	color(3) = Colors.Rgb(255,128,192)
+	pol(4) = "15,6,5,16,3"
+	color(4) = Colors.Green
+	pol(5) = "6,13,1,14,5" 
+	color(5) = Colors.Yellow
+	pol(6) = "12,16,5,14,11"
+	color(6) = Colors.rgb(255,120,120)
+	pol(7) = "0,4,3,16,12"
+	color(7) = Colors.Black
+	pol(8) = "10,0,12,11,18"
+	color(8) = Colors.rgb(255,180,210)
+	pol(9) = "8,7,13,6,15"
+	color(9) = Colors.Rgb(60,60,60)
+	pol(10) = "7,8,19,9,17"
+	color(10) = Colors.White
+	pol(11) = "1,13,7,17,2"
+	color(11) = Colors.Rgb(0,128,255)
+	Set_body
+End Sub
+
+Sub Uav_click
+	Define_UAV
+	Set_body
+End Sub
+
+Sub Define_UAV
+	vert.x = Array As Float(6,0,0,0,0,-6,-1,1,0,0,0,-0.17,-1.5,1.5,0.17)
+	vert.y = Array As Float(-3,-1.5,0,1.5,0,-3,-2,-2,-5,-5.5,-3.5,-3.5, -5.5,-5.5,-3.5)
+	vert.z = Array As Float(1.5,0,0.5,0,-0.25,1.5,0,0,0,1.5,0.17,0,0,0,0)
+
+	viewangle = 45
+	pitch = 0
+	Yaw = 45 
+	roll = 45
+	posx = 0
+	posy = 1
+	posz = 40
+	Dim pol(18) As String
+	Dim color(18) As Int
+
+	pol(0) = "5,6,4" 
+	color(0) = Colors.Blue
+	pol(1) = "5,4,3"
+	color(1) = Colors.rgb(255,125,125)
+	pol(2) = "0,7,2"  
+	color(2) = Colors.Yellow
+	pol(3) = "0,2,3"
+	color(3) = Colors.Green 'Rgb(255,128,192)
+	pol(4) = "6,5,2"
+	color(4) = Colors.Green
+	pol(5) = "2,5,3" 
+	color(5) = Colors.Yellow
+	pol(6) = "7,0,4"
+	color(6) = Colors.rgb(255,125,125)
+	pol(7) = "4,0,3"
+	color(7) = Colors.Blue
+	pol(8) = "2,8,6"
+	color(8) = Colors.Yellow
+	pol(9) = "8,2,7"
+	color(9) = Colors.Green
+	pol(10) = "4,6,8"
+	color(10) = Colors.rgb(255,125,125)
+	pol(11) = "4,8,7"
+	color(11) = Colors.Blue
+	pol(12) = "8,9,10"
+	color(12) = Colors.Red
+	pol(13) = "10,9,8"
+	color(13) = Colors.Red
+	pol(14) = "11,8,12"
+	color(14) = Colors.Red
+	pol(15) = "14,13,8"
+	color(15) = Colors.Red
+	pol(16) = "14,8,13"
+	color(16) = Colors.Red
+	pol(17) = "12,8,11"
+	color(17) = Colors.Red
+	
+End Sub
+
+Sub Fly_UAV_Click
+	Activity.CloseMenu
+	Define_UAV
+	pitch = 0
+	Yaw = 175 
+	roll = 45
+	posx = 5.5
+	posy = 4
+	posz = 60
+	Set_body
+	fly.Enabled = True
+End Sub
+
+Sub fly_tick
+	fi = fi + 2
+	fj = (fj + 2) Mod 360
+					' can use show1 instead of the two following lines
+	bd.Show1(0, 175- fj, 45, 5.5*CosD(fj), 4 + SinD(fj), 60)
+	If fi >= 720 Then 
+		fly.Enabled = False
+		fi = 0
+		fj = 0
+	End If
+End Sub
+#End Region

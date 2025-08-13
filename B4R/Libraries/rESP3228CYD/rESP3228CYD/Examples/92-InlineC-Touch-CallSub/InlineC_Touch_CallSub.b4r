@@ -1,0 +1,138 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP3228CYD
+'Description:	Example LovyanGFX library access using Inline C.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "LovyanGFX InlineC Touch v20250320"
+
+	'Communication
+	Public Serial1 As Serial
+	
+	' Define the user defined type
+	Type TTouchPosition(x As Int, y As Int)
+	Private TouchPos As TTouchPosition
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	RunNative("initDisplay", Null)
+
+	'Start the looper to handle touch
+	AddLooper("LooperTouch")
+End Sub
+
+Private Sub LooperTouch
+	RunNative("getTouch", Null)
+End Sub
+
+Private Sub OnTouch(x As Int, y As Int)	'ignore
+	Log("[OnTouch] x=",x,",y=",y)
+	TouchPos.x = x
+	TouchPos.y = y
+	RunNative("setText", TouchPos)
+End Sub
+
+#If C
+
+#define LGFX_USE_V1
+#include <LovyanGFX.hpp>
+
+// Set the path to the display driver header located in the same folder as the B4R program.
+// The B4R compiled source is in folder Object/src/ and references in b4r_main.cpp
+#include "..\..\ESP32_2432S028.h"
+
+#define MAX_X 319
+#define MAX_Y 239
+
+uint16_t touchX = 0, touchY = 0, touchZ = 0;
+
+static LGFX lcd;
+
+void initDisplay(B4R::Object* o) {
+
+  lcd.init();
+  lcd.setRotation(1);
+  lcd.fillScreen(TFT_WHITE);
+}
+
+void getTouch(B4R::Object* o) {
+  // Listen to touch
+  touchZ = lcd.getTouch(&touchX, &touchY);
+
+  // If panel touched, 1 is returned
+  if (touchZ == 1) {
+
+    // Check touch boundaries
+    if (touchX < 1 || touchX > MAX_X * 2) touchX = 0;
+    if (touchX > MAX_X && touchX < MAX_Y * 2) touchX = MAX_Y;
+    if (touchY < 1 || touchY > MAX_Y * 2) touchY = 0;
+    if (touchY > MAX_Y && touchY < MAX_Y * 2) touchY = MAX_Y;
+
+    // Clear the screen
+    lcd.clear(TFT_WHITE);
+
+    // Show touch position @ screen top left
+    lcd.setCursor(10, 10);
+    lcd.setTextSize(1);
+    lcd.setTextColor(TFT_BLACK);
+    lcd.printf("touchX=%d, touchY=%d, touchZ=%d", touchX, touchY, touchZ);
+
+    // Show red dot at touch position
+    lcd.fillCircle( (int32_t) touchX, (int32_t) touchY, (int32_t) 10, TFT_RED);
+
+	// Call the B4R Sub (note the lowercase)
+	b4r_main::_ontouch(touchX, touchY);
+  }
+
+  delay(100);
+}
+
+void setText(B4R::Object* o) {
+	// Get the defined object   
+    _ttouchposition* touchpos = (_ttouchposition *)B4R::Object::toPointer(o);
+
+	// Get data from the object pointer with structure x,y
+	int x = touchpos->x;
+	int y = touchpos->y;
+	char posString[20];
+	sprintf(posString, "%3d,%3d",x,y);
+	lcd.setTextSize(2);
+	lcd.setTextDatum(MC_DATUM);
+	lcd.drawString(posString, x, y);
+}
+
+#End If

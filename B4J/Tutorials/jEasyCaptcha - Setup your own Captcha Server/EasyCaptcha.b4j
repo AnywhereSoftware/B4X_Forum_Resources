@@ -1,0 +1,35 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jeasycaptcha
+Module1=CaptchaServer
+Module2=VerifyCaptcha
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+#AdditionalJar: EasyCaptcha.jar
+
+Sub Process_Globals
+	Private srvr As Server
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddHandler("/getcaptcha", "CaptchaServer", False)
+	srvr.AddHandler("/verify", "VerifyCaptcha", False)
+	
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:51042/getcaptcha
+End Sub

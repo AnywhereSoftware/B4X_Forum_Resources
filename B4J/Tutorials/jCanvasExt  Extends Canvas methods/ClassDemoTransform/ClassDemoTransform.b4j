@@ -1,0 +1,243 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.ClassDemoTransform
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Module1=|relative|..\..\ClassDemo\CanvasExt
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private cvsTest As Canvas
+	Private cvsTestExt As CanvasExt
+	Private Mode As Int
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	cvsTestExt.Initialize(cvsTest)
+	
+	Draw
+End Sub
+
+Private Sub btnNextDrawing_Click
+	Mode = Mode + 1
+	If Mode = 2 Then
+		Mode = 0
+	End If
+	Draw
+End Sub
+
+Private Sub Draw
+	Private yt, dy As Double
+	Private MyFont As Font
+	
+	MyFont = xui.CreateDefaultFont(16)
+	
+	Select Mode
+		Case 0	'first row
+			cvsTestExt.InitTransformMatrix
+			cvsTest.ClearRect(0, 0, cvsTest.Width, cvsTest.Height)
+			
+			'Initializez the square with the triangle
+			Private x(8), y(8), Angle As Double
+			x(0) = 25
+			y(0) = -25
+			x(1) = 0
+			y(1) = 0
+			x(2) = 25
+			y(2) = 0
+			x(3) = 25
+			y(3) = 25
+			x(4) = -25
+			y(4) = 25
+			x(5) = -25
+			y(5) = -25
+			x(6) = 25
+			y(6) = -25
+			x(7) = 25
+			y(7) = 0
+'			LogTransformMatrix	'logs the Transform Matrix
+			
+			'first row translation and rotation
+			yt = 60
+			dy = 100
+			
+			cvsTest.DrawText("Rotation", 25, yt - 35, MyFont, fx.Colors.Black, "LEFT")
+			cvsTestExt.Translate(50, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			cvsTestExt.Translate(100, 0)
+'			LogTransformMatrix
+			cvsTestExt.Rotate(30)
+			LogTransformMatrix
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			Angle = 60
+			cvsTestExt.SetTransform(CosD(Angle), SinD(Angle), -SinD(Angle), CosD(Angle), 250, yt)
+'			LogTransformMatrix
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			Angle = 90
+			cvsTestExt.SetTransform(CosD(Angle), SinD(Angle), -SinD(Angle), CosD(Angle), 350, yt)
+'			LogTransformMatrix
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			'second row, translation and shearing
+			yt = yt + dy
+
+			cvsTestExt.InitTransformMatrix
+			cvsTest.DrawText("Shearing", 25, yt - 35, MyFont, fx.Colors.Black, "LEFT")
+
+			cvsTestExt.Translate(50, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			cvsTestExt.SetTransform(1, 0, 0.4, 1, 150, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+			
+			cvsTestExt.SetTransform(1, 0, -0.4, 1, 250, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			cvsTestExt.SetTransform(1, 0.4, 0, 1, 350, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+			
+			cvsTestExt.SetTransform(1, -0.4, 0, 1, 450, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			cvsTestExt.SetTransform(1, 0.4, 0.4, 1, 550, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+			
+			'third row translation and reflection
+			yt =  yt + dy
+
+			cvsTestExt.InitTransformMatrix
+			cvsTest.DrawText("Reflection", 25, yt - 35, MyFont, fx.Colors.Black, "LEFT")
+
+			cvsTestExt.Translate(50, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			'reflection y axis
+			cvsTestExt.SetTransform(-1, 0, 0, 1, 150, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+
+'			'reflection x axis
+			cvsTestExt.SetTransform(1, 0, 0, -1, 250, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+
+'			'reflection x and y axis
+			cvsTestExt.SetTransform(-1, 0, 0, -1, 350, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+
+			'reflection y axis
+			cvsTestExt.SetTransform(0, 1, 1, 0, 450, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+
+			'forth row translation and stretching
+			yt =  yt + dy
+
+			cvsTestExt.InitTransformMatrix
+			cvsTest.DrawText("Stretching", 25, yt - 35, MyFont, fx.Colors.Black, "LEFT")
+
+			cvsTestExt.Translate(50, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+			
+			'stretching x axis
+			cvsTestExt.SetTransform(1.5, 0, 0, 1, 150, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+
+			'stretching y axis
+			cvsTestExt.SetTransform(1, 0, 0, 1.5, 250, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+	
+			'stretching x and y axis
+			cvsTestExt.SetTransform(1.5, 0, 0, 1.5, 350, yt)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Red, 2)
+			
+			'scale
+			cvsTestExt.InitTransformMatrix
+			cvsTestExt.Translate(450, yt)
+			cvsTestExt.Scale(1.5, 1.5)
+			cvsTestExt.DrawPolyline(x, y, 8, fx.Colors.Blue, 2)
+		Case 1
+			cvsTestExt.InitTransformMatrix
+			cvsTest.ClearRect(0, 0, cvsTest.Width, cvsTest.Height)
+			
+			Private x(4), y(4) As Double
+			x(0) = 50
+			y(0) = 0
+			x(1) = 100
+			y(1) = 50
+			x(2) = 50
+			y(2) = 100
+			x(3) = 0
+			y(3) = 50
+	
+			Private i, j, k As Int
+			k = 4
+			For j = 0 To 4
+				For i = 0 To k
+					cvsTestExt.DrawPolygon(x, y, 4, fx.Colors.Red, False, 2)
+					Sleep(100)
+					cvsTestExt.Translate(100, 0)
+				Next
+				If j Mod 2 = 0 Then
+					k = 3
+				Else
+					k = 4
+				End If
+				cvsTestExt.Translate(-450, 50)
+			Next
+
+			x(0) = 0
+			y(0) = 0
+			x(1) = 30
+			y(1) = -7.76
+			x(2) = 100
+			y(2) = 0
+			x(3) = 30
+			y(3) = 7.76
+			cvsTestExt.InitTransformMatrix
+			cvsTestExt.Translate(140, 420)
+			For i = 0 To 11
+				cvsTestExt.Rotate(30)
+'				LogTransformMatrix
+				cvsTestExt.DrawPolygon(x, y, 4, fx.Colors.Red, False, 2)
+				Sleep(200)
+			Next
+	
+			cvsTestExt.Translate(260, 0)
+			For i = 0 To 11
+				cvsTestExt.Rotate(30)
+				cvsTestExt.DrawPolygon(x, y, 4, fx.Colors.Blue, False, 2)
+			Next
+	End Select
+
+End Sub
+
+Private Sub LogTransformMatrix
+	Private mm(2,3) As Double
+	mm = cvsTestExt.GetTransformMatrix
+	Log("Mxx = " & mm(0, 0))
+	Log("Mxy = " & mm(0, 1))
+	Log("  Tx = " & mm(0, 2))
+	Log("Myx = " & mm(1, 0))
+	Log("Myy = " & mm(1, 1))
+	Log("  Ty = " & mm(1, 2))
+	Log(" ")
+End Sub

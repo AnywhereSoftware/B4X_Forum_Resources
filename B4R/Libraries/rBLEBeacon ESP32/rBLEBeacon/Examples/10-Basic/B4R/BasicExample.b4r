@@ -1,0 +1,94 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rblebeacon
+Library2=rcore
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEBeacon
+'Description:	Basic example for the B4R Library rBLEBeacon.
+'				Advertise every 5 seconds a counter value.
+'Source:		BasicExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Wrover Kit
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEBeacon Basic Example v20250212"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEBeacon As BLEBeacon
+	
+	'Timer
+	Private TimerDataAdvertising As Timer
+	Private TimerDataAdvertisingInterval As ULong = 5000	'Milliseconds
+	Private TimerCounter As UInt = 0
+	
+	'Helper
+	Dim bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init the ble beacon with name and mtu size
+	BLEBeacon.Initialize("BLEBeacon", "BLEBeacon_Error")
+
+	'Init Timer Data Advertising
+	TimerDataAdvertising.Initialize("TimerDataAdvertising_Tick", TimerDataAdvertisingInterval)
+	TimerDataAdvertising.Enabled = True
+	TimerDataAdvertising_Tick
+End Sub
+
+#Region Timer
+'Advertise counter, increase counter, reset if > 67
+'Example advertised data (see rBLEBeacon.cpp):
+'[B4RBLEBeacon::WriteAdvertisement] Advertised data: 00D20C9CB0A5D94BF7A3E1D20C9CB0A5D9F017
+'The last byte is the countervalue.
+Sub TimerDataAdvertising_Tick
+	Log("[TimerDataAdvertising_Tick] counter=", TimerCounter, ",hex=",bc.HexFromBytes(bc.UIntsToBytes(Array As UInt(TimerCounter))))
+	BLEBeacon.Advertise(bc.UIntsToBytes(Array As UInt(TimerCounter)))
+
+	TimerCounter = TimerCounter + 1000
+	If TimerCounter > 20000 Then TimerCounter = 0
+End Sub
+#End Region
+
+'Handle BLE Beacon error.
+'Log the error to the B4R IDE, but could also use an LED.
+Private Sub BLEBeacon_Error(code As Byte)
+	Log("[BLEBeacon_Error]code=",code)
+	Select code
+		Case BLEBeacon.ERROR_ADV_DATA_SIZE_TOO_LARGE
+			Log("[ERROR][Advertise] Data size exceeds maximum ", BLEBeacon.MAX_ADV_DATA_SIZE, " bytes.")
+	End Select
+End Sub
+

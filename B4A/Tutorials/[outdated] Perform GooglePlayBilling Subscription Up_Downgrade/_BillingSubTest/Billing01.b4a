@@ -1,0 +1,334 @@
+﻿Build1=Default,b4a.example.biltest001
+File1=billing_clvitem.bal
+File2=featgraph1024x500.png
+File3=icon512.png
+File4=Layout1.bal
+File5=scrshot01.png
+File6=scrshot02.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=googleplaybilling
+Library3=javaobject
+Library4=xui
+Library5=xui views
+Library6=xcustomlistview
+Library7=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="15" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~CreateResourceFromFile(Macro, GooglePlayBilling.GooglePlayBilling)~\n~
+Module1=Starter
+NumberOfFiles=6
+NumberOfLibraries=7
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: a B4A Billing Subscriptions Example
+	#VersionCode: 11
+	#VersionName: v0.1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+' Testers Playstore-Link --> https://play.google.com/apps/testing/b4a.example.biltest001
+
+' Google's howto --> https://developer.android.com/google/play/billing/billing_testing
+
+' User-test a Google Play Billing app --> https://developer.android.com/google/play/billing/billing_testing#test-purchases-sandbox
+
+' Google Test subscriptions-specific features --> https://developer.android.com/google/play/billing/billing_testing.html#testing-subscriptions
+#Region  Activity Attributes 
+	#FullScreen: true	
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	Dim BillingMapOfAvailableProducts As Map
+	Dim BillingActiveProductId As String = ""
+	Dim BillingActiveCostLevel As Int = 0
+End Sub
+Sub Globals
+	Private LabelAskProducts As B4XView
+	Private BillingProductsClv As CustomListView
+	Private clvitemBackPanel As B4XView
+	Private clvitemLabel1 As B4XView
+	Private clvitemLabel3 As B4XView
+	Private clvitemLabel4 As B4XView
+	Private clvitemButton1 As B4XView
+	Private StateOnline As B4XView
+End Sub
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout1")
+	Activity.Color = Colors.White
+	StateOnline.Text = ""
+	
+	BillingMapOfAvailableProducts = GetBillingSubProducts
+	
+End Sub
+Sub Activity_Resume
+	wait for(BillingAskProductsAndFillClv) complete(nix As Object)
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+ ' -------------------------------------
+
+private Sub GetBillingSubProducts As Map
+	' These are the App's Subsciption products as they are implemented in Google Playstore
+	' Path: GooglePlay console/ Store presence/ In-App products/ Subsriptions
+	
+	' The items should be ordered from lowest price to highest, so that 
+	' an "up/downgrade" option can be implemented
+	
+	Dim MapOfBillingSubscritions As Map
+	MapOfBillingSubscritions.Initialize
+	
+	Dim BillingSubProduct As BillingSubProduct
+	BillingSubProduct.Initialize
+	BillingSubProduct.ProductID = "free"
+	BillingSubProduct.OrderId = ""
+	BillingSubProduct.Title = "Free Testversion"
+	BillingSubProduct.Description = $"Basic functions. ${CRLF}Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa."$
+	BillingSubProduct.Price = "0.00"
+	BillingSubProduct.CostLevel = 0
+	BillingSubProduct.FreeTrialPeriod = 0
+	BillingSubProduct.BillingPeriod = "free"
+	BillingSubProduct.DeveloperPayload = ""
+	MapOfBillingSubscritions.Put(BillingSubProduct.ProductID, BillingSubProduct)
+	
+	Dim BillingSubProduct As BillingSubProduct
+	BillingSubProduct.Initialize
+	BillingSubProduct.ProductID = "subsprod1"
+	BillingSubProduct.OrderId = ""
+	BillingSubProduct.Title = "Prod1 SubWeekly"
+	BillingSubProduct.Description = $"Testproduct for SUBS "weekly". ${CRLF}Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa."$
+	BillingSubProduct.Price = "0.50"
+	BillingSubProduct.CostLevel = 1
+	BillingSubProduct.FreeTrialPeriod = 3
+	BillingSubProduct.BillingPeriod = "week"
+	BillingSubProduct.DeveloperPayload = ""
+	MapOfBillingSubscritions.Put(BillingSubProduct.ProductID, BillingSubProduct)
+
+	
+	Dim BillingSubProduct As BillingSubProduct
+	BillingSubProduct.Initialize
+	BillingSubProduct.ProductID = "subsprod2"
+	BillingSubProduct.OrderId = ""
+	BillingSubProduct.Title = "Prod2 SubMonth"
+	BillingSubProduct.Description = $"Testproduct for SUBS "monthly". ${CRLF}Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa."$
+	BillingSubProduct.Price = "1.00"
+	BillingSubProduct.CostLevel = 2
+	BillingSubProduct.FreeTrialPeriod = 3
+	BillingSubProduct.BillingPeriod = "month"
+	BillingSubProduct.DeveloperPayload = ""
+	MapOfBillingSubscritions.Put(BillingSubProduct.ProductID, BillingSubProduct)
+	
+	Return MapOfBillingSubscritions
+End Sub
+
+Sub BillingAskProductsAndFillClv As ResumableSub
+	Log("#-Sub main.AskProducts")
+	LabelAskProducts.Text = "Working..."
+	
+	StateOnline.Text = Chr(0xE2C1) ' cloud OFF
+	
+	Dim bspNull As BillingSubProduct
+	bspNull.Initialize
+	BillingActiveCostLevel = 0
+	
+	Dim sb As StringBuilder
+	sb.Initialize
+	
+	Wait For (Starter.billing.ConnectIfNeeded) Billing_Connected (Result As BillingResult)
+	
+	If Result.IsSuccess Then
+		StateOnline.Text = Chr(0xE2C2) ' cloud ON
+		If Starter.billing.SubscriptionsSupported Then
+			sb.Append("SUBS supported, ")
+		Else
+			sb.Append("SUBS not supported, ")
+		End If
+		
+		Wait For (Starter.billing.QueryPurchases("subs")) Billing_PurchasesQueryCompleted (Result As BillingResult, Purchases As List)
+		If Result.IsSuccess Then
+			Log("#-")
+			Log("#-  x106, Purchases.size=" & Purchases.Size)
+			If Purchases.Size = 0 Then
+				Dim bspdefault As BillingSubProduct = BillingMapOfAvailableProducts.Get("free")
+				BillingActiveProductId = bspdefault.ProductID
+				BillingActiveCostLevel = bspdefault.CostLevel
+				Starter.BillingActiveSubsProductTitle = bspdefault.Title
+			Else
+			
+				For Each p As Purchase In Purchases
+					Log("#-    x134, p.OrderId          = " & p.OrderId)
+					Log("#-    x135, p.PurchaseState    = " & p.PurchaseState & " --> " & Starter.BillingPurchState(p.PurchaseState))
+					Log("#-    x136, p.PurchaseTime     = " & p.PurchaseTime & $" --> $DateTime{p.PurchaseTime}"$)
+					Log("#-    x137, p.Sku              = " & p.Sku )
+					Log("#-    x138, p.IsAcknowledged   = " & p.IsAcknowledged)
+					Log("#-    x139, p.DeveloperPayload = " & p.DeveloperPayload)
+					Log("#-    x140, p.IsAutoRenewing   = " & p.IsAutoRenewing)
+					
+					sb.Append(p.Sku).Append(", ")
+				
+					If p.Sku <> Null Then
+						Dim bspx As BillingSubProduct = BillingMapOfAvailableProducts.GetDefault(p.Sku, bspNull)
+						If bspx.ProductID = p.Sku Then
+							BillingActiveProductId	= p.Sku						
+							bspx.DeveloperPayload = p.DeveloperPayload
+							BillingMapOfAvailableProducts.put(p.Sku, bspx)
+							BillingActiveCostLevel = bspx.CostLevel
+							Starter.BillingActiveSubsProductTitle = bspx.Title
+						End If
+					End If
+					
+				Next
+			End If
+			LabelAskProducts.Text = sb.ToString
+		End If
+	Else
+		LabelAskProducts.Text = "Not connected"
+		Log("#-  x139, not connected")
+	End If
+	Log("#-")
+	
+	FillClv_Products
+	
+	Return Null
+End Sub
+ 
+private Sub FillClv_Products
+	BillingProductsClv.Clear
+	Dim i As Int = 0
+	For Each k As String In BillingMapOfAvailableProducts.Keys
+		Dim bsp As BillingSubProduct = BillingMapOfAvailableProducts.Get(k)
+		BillingProductsClv.Add(BillingProductsClv_CreateItem(bsp, i), i)		
+		i = i +1
+	Next
+End Sub
+
+private Sub BillingProductsClv_CreateItem(bsp As BillingSubProduct, Index As Int) As B4XView
+	'Log($"#-Sub main.BillingProductsClv_CreateItem, Index=${Index}, bsp.ProductID="${bsp.ProductID}"$ )
+	Dim PanelHeight As Int = 216dip
+	Dim p As Panel
+	p.Initialize("")
+	p.SetLayout(0, 0, BillingProductsClv.AsView.Width, PanelHeight)
+	p.LoadLayout("billing_clvitem")
+	clvitemBackPanel.SetLayoutAnimated(0, 8dip, 0, BillingProductsClv.AsView.Width -16dip, PanelHeight -8dip)
+	clvitemLabel1.SetLayoutAnimated(0, 0, 0, BillingProductsClv.AsView.Width -16dip, 40dip)
+	clvitemLabel1.Text = bsp.Title
+	clvitemLabel3.Text = bsp.Description
+	clvitemLabel4.Text = bsp.Price
+	clvitemLabel4.SetColorAndBorder(Starter.xui.Color_White, 2dip, Starter.xui.Color_LightGray, 5dip)
+	clvitemButton1.Tag = bsp.ProductID
+	
+	'Log("#-  x205, BillingActiveProductId=" & BillingActiveProductId & ", BillingActiveCostLevel=" & BillingActiveCostLevel)
+	If BillingActiveProductId = bsp.ProductID Then
+		clvitemLabel4.Text = "Activated"
+		clvitemButton1.Text = "Show my Subscriptions"
+	Else
+		If BillingActiveProductId = "free" Then
+			clvitemButton1.Text = "BUY"
+		Else If Index > BillingActiveCostLevel Then
+			clvitemButton1.Text = "UPgrade"
+		else If Index < BillingActiveCostLevel Then
+			
+			If bsp.ProductID = "free" Then
+				clvitemButton1.Text = "Cancel Subscription"
+			Else
+				clvitemButton1.Text = "DOWNgrade"
+			End If
+			
+		Else
+			clvitemButton1.Text = "BUY"
+		End If
+	End If
+	
+	If bsp.ProductID = "free" Then
+	End If
+	Return p
+End Sub
+
+Sub clvitemButton1_Click As ResumableSub
+	Log("#-")
+	Dim ButtonX As Button = Sender
+	Dim bspSelectedByUser As BillingSubProduct = BillingMapOfAvailableProducts.Get(ButtonX.Tag)
+	Log("#-Sub main.clvitemButton1_Click, bspSelectedByUser.ProductID=" & bspSelectedByUser.ProductID )
+	If bspSelectedByUser.ProductID = "free" Then
+		' Cancel subscription
+		 
+	Dim sf As Object = Msgbox2Async($"The subscription cancellation takes place in the Playstore. All important information about the termination date will be displayed there."$, "Cancel Subscription" , "OK", "", "", Null, True )
+	Wait For (sf) Msgbox_Result (intIlResult As Int)
+
+		StartActivity (Starter.pi.OpenBrowser ("https://play.google.com/store/account/subscriptions") )
+	
+	else If bspSelectedByUser.ProductID = BillingActiveProductId Then
+		StartActivity (Starter.pi.OpenBrowser ("https://play.google.com/store/account/subscriptions") )
+		
+	Else
+		CallSubDelayed2(Me, "BuyProductBySku", bspSelectedByUser)
+	End If
+	Return Null
+End Sub
+
+Sub BuyProductBySku(bsp As BillingSubProduct) As ResumableSub
+	Dim ProductToBuy As String = bsp.ProductID
+	Log("#-Sub main.BuyProduct, ProductToBuy=" & ProductToBuy & ", " & $"$DateTime{DateTime.Now}"$)
+	LabelAskProducts.Text = $"Buy product "${ProductToBuy}" in progress"$
+	Log("#-  x239, BillingActiveProductId=" & BillingActiveProductId)
+	
+	Wait For (Starter.billing.ConnectIfNeeded) Billing_Connected (Result As BillingResult)
+	Log("#-  x241, Result.DebugMessage=" & Result.DebugMessage)
+	If Result.IsSuccess Then
+		
+		Dim sf As Object = Starter.billing.QuerySkuDetails("subs", Array(ProductToBuy))
+		Wait For (sf) Billing_SkuQueryCompleted (Result As BillingResult, SkuDetails As List)
+		If Result.IsSuccess And SkuDetails.Size = 1 Then
+
+			Log("#-  x249, BillingActiveProductId=" & BillingActiveProductId)
+			If BillingActiveProductId <> "free" Then
+				Result = LaunchBillingFlow2(SkuDetails.Get(0), BillingActiveProductId)
+			Else
+				'start the billing process. The PurchasesUpdated event will be raised in the starter service
+				Result = Starter.billing.LaunchBillingFlow(SkuDetails.Get(0))
+			End If
+			Log("#-  x78, Result.IsSuccess=" & Result.IsSuccess)
+
+			If Result.IsSuccess Then
+				LabelAskProducts.Text = $"Product "${ProductToBuy}" bought ok"$
+				Return Null
+			Else
+				LabelAskProducts.Text = $"Failed to buy product "${ProductToBuy}" "$
+			End If
+		End If
+	End If
+	ToastMessageShow("#-  x74, Error starting billing process", True)
+	Return Null
+End Sub
+
+Sub LaunchBillingFlow2(sku As SkuDetails, OldSku As String) As BillingResult
+	' Google --> https://developer.android.com/google/play/billing/billing_subscriptions.html#Allow-upgrade
+	' Erel --> https://www.b4x.com/android/forum/threads/howto-googleplaybilling-subscription-up-downgrade.111090/#post-693109
+	'   should be called from the activity
+	Dim jo As JavaObject = Starter.billing
+	Dim BillingClient As JavaObject = jo.GetField("client")
+	Dim context As JavaObject
+	context.InitializeContext
+	Dim BillingFlowParams As JavaObject
+	BillingFlowParams = BillingFlowParams.InitializeStatic("com.android.billingclient.api.BillingFlowParams") _
+               .RunMethodJO("newBuilder", Null).RunMethodJO("setSkuDetails", Array(sku)) _
+               .RunMethodJO("setOldSku", Array(OldSku)).RunMethod("build", Null)
+	Return BillingClient.RunMethod("launchBillingFlow", Array(context, BillingFlowParams))
+End Sub
+
+Sub AskPurchState_Click
+	CallSubDelayed(Me, "BillingAskProductsAndFillClv")
+End Sub
+
+ ' -------------------------------------

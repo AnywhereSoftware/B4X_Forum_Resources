@@ -1,0 +1,238 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=uk-100.csv
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jfx8print
+Library5=jxui
+Library6=textflow-b4xlib
+Library7=jreflection
+Module1=MeasureTextNode
+Module2=PrintTextFlow
+Module3=PTF_Utils
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=3
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+'#JavaCompilerPath: 11,C:\Java\jdk-11.0.1\bin\
+'#JavaCompilerPath: 8,C:\Java\jdk1.8.0_271\bin\
+#If MyUtils
+'Archive Project Modules - before creating B4xLib
+'Archive Modules: ide://run?File=C:\Java\jdk1.8.0_271\bin\java.exe&Args=-jar&Args=C:\NoInstApps\B4j\ArchiveProjectModules\ArchiveProjectModules.jar&Args=%PROJECT%\%PROJECT_NAME%.b4j
+'Find Libraries ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=D:\NoInstApps\B4j\FindLibraries\FindLibraries.jar&Args=B4J&Args=%B4X%&Args=%ADDITIONAL%&Args=%PROJECT%&Args=%PROJECT_NAME%.B4J
+#end If
+
+
+'Uncomment If Java > 8
+#VirtualMachineArgs: --add-opens javafx.graphics/javafx.print=ALL-UNNAMED --add-opens javafx.graphics/com.sun.prism.j2d.print=ALL-UNNAMED 
+#PackagerProperty: VMArgs = --add-opens javafx.graphics/javafx.print=b4j --add-opens javafx.graphics/com.sun.prism.j2d.print=b4j 
+
+
+Sub Process_Globals
+	Type LineType(XOffset As Double ,YOffset As Double, Text As String)
+	Type LabelsType(XOffset As Double, YOffset As Double, Content() As Object)
+	Private fx As JFX
+	Public MainForm As Form
+	Private xui As XUI
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+End Sub
+
+Private Sub btnPrintText_Click
+	Dim PTF As PrintTextFlow
+	PTF.Initialize
+
+	
+'	PTF.PrinterName ="Microsoft Print to PDF"
+'	PTF.Paper = Paper_static.A5
+	PTF.PageOrientation = "LANDSCAPE"
+
+
+	PTF.UnderlineColor = xui.Color_LightGray
+	PTF.UnderlineDashStyle = Array As Double(10,10)
+'	PTF.AlternateLineColor = 0xFF9EE2B6
+	PTF.AuditColumns = Array As Int(20,200)
+	PTF.AuditLineColor = xui.Color_LightGray
+''	PTF.TextColor = xui.Color_Blue
+	PTF.Font = fx.CreateFont("Sans Serif",10,False,False)
+	
+	'This will not work on all virtual printers, it does with "Microsoft Print to PDF" but not with BullZip.
+	PTF.SetFileDestination("","D:\TestDest.pdf")
+
+	PTF.TextContent = GetText
+	PTF.RemoveDoubleLineSpacing = True
+	
+	Wait For(PTF.Print) Complete(Result As String)
+	
+	Log("PrintJob Finished " & Result)
+End Sub
+
+
+Private Sub GetText As String
+	Return $"TODO
+
+	Remove App data returns and & wsf scripts, just leave B4s.
+
+	Older
+		Allow hotkey to be set by app
+		Menu doesn't always open on first start, is this a timing issue?
+
+BUGS
+ 	Problem pasting to command prompt: No clipboard capture, Return a string Fails, but works if Clipboard captured
+	
+IN PROGRESS
+	Create Dark and Light themes
+	
+TO-TEST
+
+Rethink
+	B4sEditor dark theme edit pane not aligned correctly
+	Redeploy B4seditor.b4xlib and SLCodeEditor when dark theme is working correctly
+	Complete backup and restore single menu.
+	
+DONE
+
+	Delete from Menu Edit not working
+	Implement dark css, look for UWP css
+	Allow divider in menus
+	Look at drag n  drop, it’s a bit flakey+
+	Added Template - Copy file content. Paste as HTML if HTM or HMTL file.
+	Allow operation by mouse button only - Consider buttons 4+ only
+	Change store to show all menus and allow copying
+	Switch from byapp to byTitle:
+	-	turn on radiobuttons & input field
+	Change runapp to always send data via file.
+	Allow editing of scripts from within app. Use default template and edit using CodeMirror + allow external editor.
+	Ensure MenuStore defaults are created on first run.
+	Disabling a menu duplicates it?
+	Change layout of item edit. One text item, add rb for menu. 
+	Move Menu items to identity pane
+	Write menu command handler
+	Manage expanded items on recreate (Not saved)
+	Implement Drag&Drop :
+	Error: when dropping from sub menu, item is duplicated.
+	When editing menu, match fails if changing match text on menu matched other than the one it was created on.
+	Add check that amendments to title selection will be found.
+	EditItem from button not working, cannot enter key combination
+	Add Buttons to add Items
+	Create Dialog with 4 buttons - Add files to allweod lists : EditMenu_Class.pnEIDragDrop_DragDropped
+
+
+	MenuStore
+	-	Disable top options on edit menustore
+	-	Add copy from MenuStore contextmenu, did it differently
+
+
+	Problems getting string from clipboard
+	Test arrows in shortcut & multikeys
+	Problem with clipboard data too long.
+	Scripting from wScript and B4j apps.
+	Drag over eidt menu from outside app crashes. - Check for source ID in dragover.
+	Implement Menu Store
+
+	Copy options from old version :
+	-	Add editing allowed documents to options. 
+	Backup / Restore 
+	-	All menus
+	-	Specific items. - Can't really see the point for this.
+	Theme not loading, stored in wrog place - revisit
+	Set tooltip on pncolors (need to catch mouseentered/exit events)
+	Add type icons to menus (edit and display)
+	-	Done for display, not working for edit
+	Icons for apps with data sent, and data sent and received.
+	
+CONSIDER
+
+	TVDrag&Drop : 	Cannot drop item below expanded last item tree
+	 Can, but it has to be dropped just under the parent.  Check Designer to see if it's the same
+
+	Managing filetypes - are apps available that can open these files.
+
+	Shared Menus
+
+	Add D&D to allow dropping on Treeview underneath existing items - More difficult than value?
+	Enable Copy from menu ?
+	Save Process
+	As the menu selection criteria can be modified, it is possible that multiple menus can be matched.  This is undesirable.
+
+	Recall the original menu from the initial appname and window title.
+	This should obtain the same menu.
+	If both menus are matched on the appname only, it is safe to save it.
+
+TESTING
+
+	Save-Process
+		Create new menu for app - by appName
+			Edit the menu -
+			Change to Selection by title
+
+			Result:
+				Confirmation that existing menu will be retained
+				Two menus
+
+			Edit the byappname Menu
+				Change to same Selection by title
+
+
+				Result:
+					Warning that menu exists, Overwrite?
+			Edit the by-title menu
+				Change to by AppName
+
+				Result -
+					Warning of overwrite.
+					Two Menus
+			Edit the by-title menu
+				Change to matching shorter name
+
+				Result
+					Warning of overwrite
+					Choose Keep both
+					Three Menus
+		Create a new menu for app - by title
+"$
+End Sub
+
+Private Sub GetText2 As String
+	Return $"Package javax.print
+Provides the principal classes and interfaces for the Java™ Print Service API. The Java Print Service API enables client and server applications to:
+Discover and select print services based on their capabilities
+Specify the format of print data
+Submit print jobs to services that support the document type to be printed.
+
+Print Service Discovery
+An application invokes the static methods of the abstract class PrintServiceLookup to locate print services that have the capabilities to satisfy the application's print request. For example, to print a double-sided document, the application first needs to find printers that have the double-sided printing capability.
+The JDK includes PrintServiceLookup implementations that can locate the standard platform printers. To locate other types of printers, such as IPP printers or JINI printers, a print-service provider can write implementations of PrintServiceLookup. The print-service provider can dynamically install these PrintServiceLookup implementations using the ServiceLoader facility.
+
+Attribute Definitions
+The javax.print.attribute and javax.print.attribute.standard packages define print attributes, which describe the capabilities of a print service, specify the requirements of a print job, and track the progress of a print job.
+The javax.print.attribute package describes the types of attributes and how they can be collected into sets. The javax.print.attribute.standard package enumerates all of the standard attributes supported by the API, most of which are implementations of attributes specified in the IETF Specification, RFC 2911 Internet Printing Protocol, 1.1: Model and Semantics, dated September 2000. The attributes specified in javax.print.attribute.standard include common capabilities, such as: resolution, copies, media sizes, job priority, and page ranges.
+
+Document Type Specification
+The DocFlavor class represents the print data format, such as JPEG or PostScript. A DocFlavor object consists of a MIME type, which describes the format, and a document representation class name that indicates how the document is delivered to the printer or output stream. An application uses the DocFlavor and an attribute set to find printers that can print the document type specified by the DocFlavor and have the capabilities specified by the attribute set.
+
+Using the API
+A typical application using the Java Print Service API performs these steps to process a print request:
+Chooses a DocFlavor.
+Creates a set of attributes.
+Locates a print service that can handle the print request as specified by the DocFlavor and the attribute set.
+Creates a Doc object encapsulating the DocFlavor and the actual print data, which can take many forms including: a Postscript file, a JPEG image, a URL, or plain text.
+Gets a print job, represented by DocPrintJob, from the print service.
+Calls the print method of the print job.
+The following code sample demonstrates a typical use of the Java Print Service API: locating printers that can print five double-sided copies of a Postscript document on size A4 paper, creating a print job from one of the returned print services, and calling print."$
+End Sub

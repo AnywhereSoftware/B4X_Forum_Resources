@@ -1,0 +1,213 @@
+﻿Build1=Default,b4a.ETEditor
+File1=ETEditor.png
+File2=MainPage.bal
+File3=Sample.et
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=core
+Library3=javaobject
+Library4=phone
+Library5=reflection
+Library6=runtimepermissions
+Library7=scrollview2d
+Library8=stringutils
+Library9=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=|relative|..\B4XMainPage
+Module2=EtEditor
+Module3=Starter
+Module4=XUIViewsBG
+NumberOfFiles=3
+NumberOfLibraries=9
+NumberOfModules=4
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ET Editor
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: true
+	#DebuggerForceStandardAssets: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+'#BridgeLogger: True
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+	Public ActionMode, ContextMenu As JavaObject
+	Public Device As Phone
+End Sub
+
+Sub Globals
+	Dim FocusedView As View
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+#End Region
+
+#Region Custom Context Menus
+' Custom context menus
+' see API reference
+' https://developer.android.com/reference/android/view/Menu
+' https://developer.android.com/reference/android/view/MenuItem
+' this sub is called if it exists in code when a submenu item is opened but before it is displayed (Setup by the Java code at the bottom)
+' It has to be here in the Main module and not on B4XMainPage (Make sure the Java code at the bottom is also there)
+Sub ContextMenu_Create(AM As JavaObject, Fw As View)	
+	ActionMode=AM
+	FocusedView=Fw	' view that called the submenu
+	If Fw = B4XPages.MainPage.ET.EditText Then
+		ContextMenu  = ActionMode.RunMethod("getMenu", Null)
+		'menu.RunMethod("clear", Null)	' will clear all the menuitems
+		Dim s As Int  = ContextMenu.RunMethod("size", Null)	' gets the count of the proposed context menu items.
+		' my tablet sometimes comes up with other irrelevant context menu items such as 'API demos'.
+		' this ensures that only the "Cut","Copy","Paste","Select all" items are kept.
+		' Custom items can then be added.
+		For i = 0 To s-1
+			Dim MenuItem As JavaObject = ContextMenu.RunMethod("getItem",Array(i))	' gets the individual menu item
+			Dim MenuTitle As String = MenuItem.RunMethod("getTitle",Null)	' get it's text
+			Select Case MenuTitle
+				Case "Copy","Paste"	,"Select all"	
+					' keeping these but they only work with the text and not the spans. (Use Copy+, Cut+, Paste+)
+				Case Else
+					' turn anything else to invisible, so we can add on our custom items
+					MenuItem.RunMethod("setVisible",Array(False))
+			End Select
+		Next
+		Dim event As Object = ContextMenu.CreateEvent("android.view.MenuItem.OnMenuItemClickListener", "ContextMenuClick", True)
+		' add extra menu items
+		Dim ExtraMenuItems As List
+		ExtraMenuItems.Initialize2(Array As String("Copy+","Cut+","Paste+","Hide Keyboard"))
+		For Each ExtraMenuItem As String In ListToStringArray(ExtraMenuItems)
+			ContextMenu.RunMethodJO("add", Array(ExtraMenuItem)).RunMethod("setOnMenuItemClickListener", Array(event))
+		Next		
+	End If
+End Sub
+
+Sub ContextMenuClick_Event (MethodName As String, Args() As Object) As Boolean
+	Dim MenuItem As JavaObject = Args(0)
+	Dim Title As String = MenuItem.RunMethod("getTitle", Null)
+
+	If FocusedView = B4XPages.MainPage.ET.EditText Then
+		Select Title
+			Case "Copy+"
+				B4XPages.MainPage.ET.Copy
+			Case "Cut+"
+				B4XPages.MainPage.ET.Cut
+			Case "Paste+"
+				B4XPages.MainPage.ET.paste	
+			Case "Hide Keyboard"
+				' so a style can be added and the result not hidden by the keyboard
+				Dim SelStart As Int = B4XPages.MainPage.ET.edittext.SelectionStart
+				Dim SelLength As Int = B4XPages.MainPage.ET.edittext.SelectionLength
+				Device.HideKeyboard(B4XPages.GetNativeParent(B4XPages.mainpage))
+		End Select
+  	End If
+
+	ActionMode.RunMethod("finish", Null)
+	
+	If FocusedView Is EditText Then
+		Select Title
+			Case "Hide Keyboard"
+				' when the menu finishes it cancels the selection, so this reinstates it
+				B4XPages.MainPage.ET.edittext.SetSelection(SelStart,SelLength)
+		End Select
+	End If
+	
+	Return True
+End Sub
+
+Sub ListToStringArray(list As List) As String()
+   Dim b(list.Size) As String
+   For i = 0 To list.Size - 1
+     b(i) = list.Get(i)
+   Next
+   Return b
+End Sub
+
+' this section for custom Contextmenus
+#if Java
+import android.view.*;
+import anywheresoftware.b4a.AbsObjectWrapper;
+import android.text.Selection;
+import android.widget.EditText;
+
+    @Override
+    public void onActionModeStarted(ActionMode mode) {
+        processBA.raiseEvent(this, "contextmenu_create", AbsObjectWrapper.ConvertToWrapper(new anywheresoftware.b4j.object.JavaObject(), mode),
+            AbsObjectWrapper.ConvertToWrapper(new anywheresoftware.b4a.objects.ConcreteViewWrapper(), getCurrentFocus()));
+        super.onActionModeStarted(mode);
+    }
+     @Override
+    public void onActionModeFinished(ActionMode mode) {
+        super.onActionModeFinished(mode);
+    }
+    public static int getSelectionLength(EditText et) {
+        return Selection.getSelectionEnd(et.getText()) - Selection.getSelectionStart(et.getText());
+    }
+
+#End If
+
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+}
+#End If
+#End region Custom Context Menus
+
+' this section to getAllSpans (could probably do it with B4A code but haven't figured out how yet, so use the Java code instead [Hey.. it works!..])
+#If Java
+import android.text.SpannableStringBuilder;
+import java.util.ArrayList;
+
+ public static ArrayList getAllSpans(SpannableStringBuilder sourcetext) {
+ 	
+	Object[] spans = sourcetext.getSpans(0, sourcetext.length(), Object.class);
+	ArrayList<Object> mylist = new ArrayList<Object>();
+	for (Object span : spans) {
+     	mylist.add(span);
+	    }
+		return mylist;
+		}
+#End If
+

@@ -1,0 +1,156 @@
+﻿Build1=Default,b4a.example.simplecms.demo.two
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=animationplus
+Library3=customminimalslider
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: CustomMinimalSlider_Demo2
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+'	#LibraryName: CustomMinimalSlider
+'	#LibraryVersion: 1.10	
+'	#LibraryAuthor: Massimo Meli
+#End Region
+
+#Region Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Private val As Int
+	Private Timer1 As Timer
+	Private Channel As Int = 0
+	Private Channels As Int = 16
+	Private stp As Int = 1
+	Private MaxValue As Int = 100
+End Sub
+
+Sub Globals
+	Dim Slider(Channels) As CustomMinimalSlider	
+	Dim mainPnl As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("1")
+	Activity.Color = Colors.Black	
+	Timer1.Initialize("Timer1", 10)
+	Timer1.Enabled = True
+	
+	For Interpolator = 0 To 7
+		Dim Duration As Int = 5000
+		Dim delay As Int = 100
+		
+		' Remove previous sliders if already initialized
+		For i = 0 To Channels-1
+			If Slider(i).IsInitialized Then Slider(i).Remove
+		Next
+		
+		' And initialize again
+		Slider(0).Initialize
+		'Accept Activity or Panel or View as first argument
+		Slider(0).CreateBlock(mainPnl, Me, "CustomMinimalSlider", Slider, _
+		   0, 40dip, mainPnl.Width, mainPnl.Height-80dip, Colors.Black, Colors.Blue, Colors.White, 1, _
+			True,True,True,False)
+		
+		ShowInterpolator(Interpolator)
+
+		For i = 0 To Channels-1
+'			Duration = Duration + 100 ' Uncomment to add additional deceleration
+			Slider(i).Visible = True
+			Slider(i).MaxValue = MaxValue
+			If Slider(i).ValueLabel.IsInitialized Then Slider(i).ValueLabel.TextSize = 11
+'			If Slider(i).ValueLabel.IsInitialized Then Slider(i).ValueLabel.Top = Slider(i).ValueLabel.Top - 8dip  ' Optionally you can access the labels
+'			If Slider(i).TagLabel.IsInitialized Then Slider(i).TagLabel.TextSize = 14
+'			If Slider(i).TagLabel.IsInitialized Then Slider(i).TagLabel.Text =  "ADC" & (i+1)  
+			If Slider(i).TagLabel.IsInitialized Then Slider(i).TagLabel.TextSize = 12
+'			If Slider(i).TagLabel.IsInitialized Then Slider(i).TagLabel.Top = Slider(i).TagLabel.Top + 8dip  ' Optionally you can access the labels
+			If Slider(i).TagLabel.IsInitialized Then Slider(i).TagLabel.Text = (i+1)
+			Slider(i).TagLabel.TextColor = Colors.Yellow
+'			Slider(i).Tag = "A" & (i + 1)
+			Slider(i).Tag = i + 1
+			
+'			Slider(i).Panel.Enabled = False
+'			Slider(i).Canvas.DrawText("Thanks", 4dip, 18dip, Typeface.DEFAULT, 9, Colors.Yellow, "LEFT") ' Optionally you can access the canvas
+			
+			Slider(i).AddFadeTransition(Duration, .2,1.0, 0, Slider(i).REPEAT_RESTART,Interpolator,-1)
+			Slider(i).AnimFade_StartOffset = delay
+			
+			Slider(i).AddRotateCenterTransition(Duration,  0, 720,  0, Slider(i).REPEAT_REVERSE, Interpolator, -1)
+			Slider(i).AnimRotateCenter_StartOffset = delay
+			
+			Slider(i).AddScaleCenterTransition(Duration,  0, 1, 0, 1,  0, Slider(i).REPEAT_REVERSE, Interpolator, -1)
+			
+			Slider(i).PlayAnimationSet(Duration, 0, True, Interpolator, .2)	 'This add recently animations and overwrite same animation parameters			
+			delay = delay + 80
+		Next
+		
+		Sleep(Duration + 10000)
+	Next
+End Sub
+
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Timer1_Tick
+	If Channel >= Channels Then Channel = 0
+	Slider(Channel).Value = val
+	val = val + stp
+	
+	If val >= MaxValue Then
+		stp = -1
+	Else If val < 0 Then
+		stp = 1
+		Channel = Channel + 1
+		If Channel > Channels Then Channel = 1
+	End If
+	
+	If val > MaxValue Then
+		Channel = Channel + 1
+		val = 0
+	End If
+End Sub
+
+Sub CustomMinimalSlider_Moved(Index As Int, Value As Int)    'Single CMS always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if
+	' we change the sliders value by code, eg. on this exampe by using Timer1
+	If Slider(Index).UserChanged Then
+		Log("Tag: " & Slider(Index).Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+Sub ShowInterpolator(Interpolator As Int)
+	Dim InterpolatorStr As String	
+	Select Interpolator
+		Case 0 : InterpolatorStr = "INTERPOLATOR_LINEAR"
+		Case 1 : InterpolatorStr = "INTERPOLATOR_ANTICIPATE"
+		Case 2 : InterpolatorStr = "INTERPOLATOR_ANTICIPATE_OVERSHOOT"
+		Case 3 : InterpolatorStr = "INTERPOLATOR_OVERSHOOT"
+		Case 4 : InterpolatorStr = "INTERPOLATOR_DECELERATE"
+		Case 5 : InterpolatorStr = "INTERPOLATOR_ACCELERATE_DECELERATE"
+		Case 6 : InterpolatorStr = "INTERPOLATOR_ACCELERATE"
+		Case 7 : InterpolatorStr = "INTERPOLATOR_BOUNCE"
+		Case 8 : InterpolatorStr = "INTERPOLATOR_CYCLE"
+	End Select	
+	Log("Interpolator: " & InterpolatorStr)
+	ToastMessageShow(InterpolatorStr, False)
+End Sub

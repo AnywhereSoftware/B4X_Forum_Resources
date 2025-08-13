@@ -1,0 +1,86 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Module1=CloudHandler
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region project Info
+'File:		B4JCloudServer
+'Brief:		Simulate a cloudserver.
+'			Listens on a TCP socket (e.g., port 51042). Accepts data from a B4R client. Prints/logs the data. Sends back a simple response like "OK\n".
+'			During development, ensure to kill the process from the B4J IDE.
+'AppType:	Non-UI application (console / server application)
+'Software:	B4J 10.-20 (64 bit), Java JDK 19.
+'Author:	Robert W.B. Linn
+'Date:		See process globals
+
+'Libraries:
+'jServer - Server
+
+'Hints:
+'Find process using port 51042: netstat -aon | findstr :51042
+'TCP    0.0.0.0:51042          0.0.0.0:0              ABHÖREN         30792
+'Kill process: taskkill /PID <PID> /F
+'taskkill /PID 30792 /F
+
+'Concept:
+'Server Initialization: erver initialized listen on port 51042.
+'Handler Setup: The handler For /cloud set up with the CloudHandler class.
+'CloudHandler Class: The CloudHandler class handles incoming requests, extracts the msg parameter, logs it, sends a response back.
+'Testing the B4J Server (Cloud)
+'Testing with Browser:
+'http://127.0.0.1:51042/cloud?msg=HelloFromBrowser.
+'Response: Received: HelloFromBrowser.
+'Testing with cURL
+'curl "http://127.0.0.1:51042/cloud?msg=HelloFromCurl"
+'Response: Received: HelloFromBrowser.
+
+'B4J Log:
+'[AppStart] B4JCloudServer v20250421
+'2025-04-21 11:45:45.579:INFO :oejs.Server:main: jetty-11.0.9; built: 2022-03-30T17:44:47.085Z; git: 243a48a658a183130a8c8de353178d154ca04f04; jvm 19.0.2+7-44
+'2025-04-21 11:45:45.643:INFO :oejss.DefaultSessionIdManager:main: Session workerName=node0
+'2025-04-21 11:45:45.653:INFO :oejsh.ContextHandler:main: Started o.e.j.s.ServletContextHandler@6107227e{/,File:///C:/Daten/b4/b4r/LIBRAR~1/RE9396~1/Examples/WebCloud/B4J-CL~2/Objects/www,AVAILABLE}
+'2025-04-21 11:45:45.677:INFO :oejs.RequestLogWriter:main: Opened C:\Daten\b4\b4r\libraries\rESP32Watchdog\Examples\WebCloud\B4J-CloudServer\Objects\logs\b4j-2025_04_21.request.log
+'2025-04-21 11:45:45.768:INFO :oejs.AbstractConnector:main: Started ServerConnector@d041cf{HTTP/1.1, (http/1.1)}{0.0.0.0:51042}
+'2025-04-21 11:45:45.777:INFO :oejs.Server:main: Started Server@a67c67e{STARTING}[11.0.9,sto=0] @382ms
+'[AppStart] Server started on port 51042
+'[CloudHandler Handle] Received request from: 127.0.0.1
+'[CloudHandler Handle] msg=HelloFromBrowser
+'[CloudHandler Handle] Response: HelloFromBrowser
+#End Region
+
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "CLOUDSERVER v20250422"
+	
+	Private SERVER_PORT As Int = 51042
+	Private CloudServer As Server			'Serve HTTP/WebSocket (jServer)
+End Sub
+
+Sub AppStart (Args() As String)
+	Log($"[AppStart] ${VERSION}"$)
+	
+	' Init the server with event
+	CloudServer.Initialize("cloudserver")
+	' Set the server port
+	CloudServer.Port = SERVER_PORT        
+	
+	' Add the handlers path,class,singlethread
+	' http://ip:51042/cloud?msg=HelloWorld
+	CloudServer.AddHandler("/cloud", "CloudHandler", False)
+	
+	' Start the server
+	CloudServer.Start
+	
+	Log($"[AppStart] Server started on port ${SERVER_PORT}"$)
+End Sub
+

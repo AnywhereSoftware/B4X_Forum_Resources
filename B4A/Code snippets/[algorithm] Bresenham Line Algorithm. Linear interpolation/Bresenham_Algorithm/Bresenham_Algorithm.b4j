@@ -1,0 +1,129 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 800
+	#IgnoreWarnings: 12
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private Canvas1 As B4XView
+	
+	Type Point(X As Int, Y As Int)
+	Private Current As Point
+	
+	Dim PointCount As Long = 0
+	Dim LineCount As Long = 0
+	
+'	Private const DELAY_TIME As Int = 0
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	MainForm.Title = "Bresenham's Line Algorithm"
+	
+	Current.Initialize
+	
+	Execute
+End Sub
+
+Sub Execute
+	
+	Clear
+	
+'	Wait For (DrawLine(100, 100, 300, 200, fx.Colors.Red))  Complete(Suc As Boolean)
+'	Wait For (DrawLine(24, 50, 150, 200, fx.Colors.Yellow))  Complete(Suc As Boolean)
+'	Wait For (DrawLine(0, 0, 80, 270, fx.Colors.Magenta))  Complete(Suc As Boolean)
+'	Wait For (DrawLine(0, 0, 600, 100, fx.Colors.White))  Complete(Suc As Boolean)
+'	Wait For (DrawLine(0, 0, 1000, 20, fx.Colors.Cyan))  Complete(Suc As Boolean)
+'	
+'	Wait For (DrawLineTo(300, 200, fx.Colors.Red))  Complete(Suc As Boolean)
+'	Wait For (DrawLineTo(150, 200, fx.Colors.Yellow))  Complete(Suc As Boolean)
+'	Wait For (DrawLineTo(80, 270, fx.Colors.Magenta))  Complete(Suc As Boolean)
+'	Wait For (DrawLineTo(600, 100, fx.Colors.White))  Complete(Suc As Boolean)
+'	Wait For (DrawLineTo(1000, 20, fx.Colors.Cyan))  Complete(Suc As Boolean)
+
+	Do While True
+		Wait For (DrawLineTo(Rnd(0, Canvas1.Width+1), Rnd(0, Canvas1.Height+1), fx.Colors.RGB(Rnd(10,256), Rnd(10,256), Rnd(10,256))))  Complete(Suc As Boolean)
+	Loop	
+End Sub
+
+Sub Clear
+	Canvas1.As(Canvas).DrawRect(0,0, Canvas1.Width, Canvas1.Height, fx.Colors.Black, True, 0)
+End Sub
+
+Sub DrawLine(x0 As Int, y0 As Int, x1 As Int, y1 As Int, Color As Paint) As ResumableSub
+'	If LineCount Mod 1000 = 0 Then
+		Log($"[${LineCount}]  DrawLine(${x0}, ${y0}, ${x1}, ${y1}, Color)     PointCount: ${PointCount}"$)
+'	End If
+
+	Dim dx, sx, dy, sy, error, error2 As Int
+
+	dx = Abs(x1 - x0)
+	If (x0 < x1) Then sx = 1 Else sx = -1	' sx = x0 < x1 ? 1 : -1
+	dy = -Abs(y1 - y0)
+	If (y0 < y1) Then sy = 1 Else sy = -1	' sy = y0 < y1 ? 1 : -1
+
+	error = dx + dy
+
+	Do While True
+		Wait For (DrawPixel(x0, y0, Color)) Complete(Suc As Boolean)
+		
+		If (x0 = x1) And (y0 = y1) Then Exit
+		error2 = 2 * error
+		If error2 >= dy Then
+			If (x0 = x1) Then Exit
+			error = error + dy
+			x0 = x0 + sx
+		End If
+		If error2 <= dx Then
+			If (y0 = y1) Then Exit
+			error = error + dx
+			y0 = y0 + sy
+		End If
+		
+'		Sleep(DELAY_TIME)
+	Loop
+
+	LineCount = LineCount + 1
+'	If LineCount > 200 Then
+'		Clear
+'		LineCount = 0
+'	End If
+	
+	Return True
+End Sub
+
+Sub DrawLineTo(x As Int, y As Int, Color As Paint) As ResumableSub
+'	Log($"drawLineTo(${x}, ${y}, Color)"$)
+	Wait For (DrawLine(Current.X, Current.Y, x, y, Color)) Complete(Suc As Boolean)
+	Return True
+End Sub
+
+Sub DrawPixel(x As Int, y As Int, Color As Paint) As ResumableSub
+'	Log($"DrawPixel(${x}, ${y}, Color)"$)
+'	Canvas1.As(Canvas).DrawRect(x, y, 1, 1, Color, True, 0)
+	Canvas1.As(Canvas).DrawLine(x+0.5, y+0.5, x+0.5, y+0.5, Color, 1)  'This just draw a point. We add 0.5 to remove aliasing on buggy JFX Canvas. See my post here: https://www.b4x.com/android/forum/threads/remove-aliasing-on-canvas-horizontal-and-vertical-lines.72236/#content
+	Current.X = x
+	Current.Y = y
+	PointCount = PointCount + 1
+	Return True
+End Sub

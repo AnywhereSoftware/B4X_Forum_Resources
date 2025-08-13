@@ -1,0 +1,205 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=core
+Library3=javaobject
+Library4=network
+Library5=phone
+Library6=randomaccessfile
+Library7=reflection
+Library8=xui
+Library9=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddPermission(android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+Module1=Conversion
+Module2=ModbusService
+Module3=ModbusTCP
+Module4=Starter
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=4
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Modbus TCP Tester
+	#VersionCode: 1
+	#VersionName: Debugger
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#LibraryVersion: 2.20
+	#LibraryAuthor: Walter Maniero
+	#LibraryName: ModbusTCP
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Private MyModbus As ModbusTCP
+	Private ModCom As ConnectionParams
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private CheckBox1 As CheckBox
+	Private CoilBtn As Button
+	Private CoilWriteBtn As Button
+	Private CycleText As EditText
+	Private EditText1 As EditText
+	Private HoldBtn As Button
+	Private IPText As EditText
+	Private PortText As EditText
+	Private StartBtn As Button
+	Private StopBtn As Button
+	Private Panel1 As Panel
+	Private TimeText As EditText
+	Private Panel2 As Panel
+	Private UnitText As EditText
+	Private ListView1 As ListView
+	Private EditText2 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	MyModbus.Initialize(Me,"Modbus",1)
+	RequestPowerMngt
+	MyModbus.AddToQuery(MyModbus.CreateQuery(1,0,100))
+	MyModbus.AddToQuery(MyModbus.CreateQuery(3,0,100))
+End Sub
+
+
+
+Sub Activity_Resume
+	If ModCom.Paramered Then
+		MyModbus.StartCOM(ModCom)
+	End If
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	MyModbus.StopCOM
+End Sub
+
+
+
+Private Sub WriteHoldBtn_Click
+	'MyModbus.SetHold(EditText2.Text,EditText1.Text)
+	Dim values(100) As Short
+	For i = 0 To values.Length - 1
+		values(i) = Rnd(1,10000)
+	Next
+	MyModbus.SetMultipleHold(0,values)
+End Sub
+
+Private Sub StopBtn_Click
+	MyModbus.StopServer
+	StopBtn.Enabled = False
+	StartBtn.Enabled = True
+	Panel1.Enabled = True
+	Panel2.Enabled = False
+End Sub
+
+Private Sub StartBtn_Click
+	ModCom = MyModbus.CreateConnection(IPText.Text,PortText.Text,TimeText.Text,CycleText.Text)
+	MyModbus.StartServer(ModCom)
+	StopBtn.Enabled = True
+	StartBtn.Enabled = False
+	Panel1.Enabled = False
+	Panel2.Enabled = True
+End Sub
+
+Private Sub HoldBtn_Click	
+	CallSub(Me,"HoldView")
+End Sub
+
+Private Sub HoldView
+	ListView1.Clear
+	Dim MyHolds() As Short = MyModbus.GetHolds()
+	Dim cs As CSBuilder
+	For i = 0 To MyHolds.Length - 1
+		ListView1.AddTwoLines(cs.Initialize.Color(Colors.Black).Append(i).PopAll,cs.Initialize.Color(Colors.Black).Append(MyHolds(i)).PopAll)
+	Next
+End Sub
+
+Private Sub CoilWriteBtn_Click
+	MyModbus.SetCoil(EditText2.Text,CheckBox1.Checked)
+End Sub
+
+Private Sub CoilBtn_Click	
+	CallSub(Me,"CoilView")
+End Sub
+
+private Sub CoilView
+	Sleep(1000)
+	ListView1.Clear
+	Dim MyCoils() As Boolean = MyModbus.GetCoil()
+	Dim cs As CSBuilder
+	For i = 0 To 2000
+		If MyCoils(i) = True Then
+			ListView1.AddTwoLines(cs.Initialize.color(Colors.Black).Append(i).PopAll,cs.Initialize.Color(Colors.Green).Append(MyCoils(i)).PopAll)
+		Else
+			ListView1.AddTwoLines(cs.Initialize.color(Colors.Black).Append(i).PopAll,cs.Initialize.Color(Colors.red).Append(MyCoils(i)).PopAll)
+		End If
+	Next
+End Sub
+
+Public Sub RequestPowerMngt()
+	Private Api As Int
+	Private r As Reflector
+ 
+	Api = r.GetStaticField("android.os.Build$VERSION", "SDK_INT")
+	Log(Api)
+ 
+	If Api >= 23 Then
+		Dim JavaObject1 As JavaObject
+		JavaObject1.InitializeContext
+		Dim Ignoring As Boolean=JavaObject1.RunMethod("isIgnoringBatteryOptimizations", Null)
+		If Ignoring=False Then
+			Dim JavaObject1 As JavaObject
+			JavaObject1.InitializeContext
+			JavaObject1.RunMethod("ShowPermissionDialog", Null)
+		End If
+		Log(JavaObject1.RunMethod("isIgnoringBatteryOptimizations", Null))
+'		Return JavaObject1.RunMethod("isIgnoringBatteryOptimizations", Null)
+	Else
+'		Return True
+	End If
+#If JAVA
+import android.content.Context;
+import android.content.Intent;
+import android.os.PowerManager;
+import android.provider.Settings;
+import android.net.Uri;
+import anywheresoftware.b4a.BA;
+
+public boolean isIgnoringBatteryOptimizations(){
+Context context=this;
+String packageName = context.getPackageName();
+PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+return pm.isIgnoringBatteryOptimizations(packageName);
+}
+
+public void ShowPermissionDialog(){
+    Intent intent = new Intent();
+    Context context=this;
+    String packageName = context.getPackageName();
+    PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+    if (pm.isIgnoringBatteryOptimizations(packageName)){
+        BA.LogInfo("isIgnoringBatteryOptimizations TRUE");
+        intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+    } else {
+        BA.LogInfo("isIgnoringBatteryOptimizations FALSE");
+        intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        intent.setData(Uri.parse("package:" + packageName));
+    }
+    context.startActivity(intent);
+}
+#End If
+End Sub

@@ -1,0 +1,164 @@
+﻿Build1=Default,com.vnt.smartsalon.SMSWifi
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library10=phonestatelistener
+Library2=b4xpages
+Library3=javaobject
+Library4=network
+Library5=phone
+Library6=randomaccessfile
+Library7=runtimepermissions
+Library8=mlwifi
+Library9=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddPermission(android.permission.PROCESS_OUTGOING_CALLS)~\n~AddPermission(android.permission.WRITE_CALL_LOG)~\n~AddPermission(android.permission.READ_CALL_LOG)~\n~AddPermission(android.permission.RECEIVE_SMS)~\n~'AddPermission(android.permission.WRITE_SMS)~\n~AddPermission(android.permission.READ_SMS)~\n~AddPermission(android.permission.SEND_SMS)~\n~AddPermission(android.permission.READ_PHONE_STATE~\n~AddPermission(android.permission.MODIFY_PHONE_STATE)~\n~AddPermission(android.permission.READ_CALL_LOG)~\n~AddPermission(android.permission.ACCESS_WIFI_STATE)~\n~'AddPermission(android.permission.ACCESS_FINE_LOCATION)~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~
+Module1=|relative|..\B4XMainPage
+Module2=modSMS
+Module3=SimpleProgressBar
+Module4=Starter
+NumberOfFiles=1
+NumberOfLibraries=10
+NumberOfModules=4
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SMSWifi
+	#VersionCode: 2
+	#VersionName: SMSWifi
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Dim Permissions As List
+	Public Vaixx As Boolean = False
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+	
+	If FirstTime Then
+		Permissions.Initialize
+		Permissions.Add(Starter.rp.PERMISSION_WRITE_CALL_LOG)
+		Permissions.Add(Starter.rp.PERMISSION_READ_CALL_LOG)
+		Permissions.Add(Starter.rp.PERMISSION_RECEIVE_SMS)
+		Permissions.Add(Starter.rp.PERMISSION_READ_SMS)
+		Permissions.Add(Starter.rp.PERMISSION_SEND_SMS)
+		Permissions.Add(Starter.rp.PERMISSION_READ_PHONE_STATE)
+'		Permissions.Add(Starter.rp.PERMISSION_ACCESS_NETWORK_STATE)
+'		Permissions.Add(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+		Permissions.Add(Starter.rp.PERMISSION_READ_CALL_LOG)		
+'		Permissions.Add(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+
+		
+	End If
+'	B4XPages.ShowPage("MainPage")
+'	B4XPages.ShowPageAndRemovePreviousPages("MainPage")
+End Sub
+
+Sub Activity_AfterPermission
+	Permissions.Initialize
+	Permissions.Add(Starter.rp.PERMISSION_SEND_SMS)
+    
+	For Each permission As String In Permissions
+		If Starter.rp.Check(permission) = False Then
+			Sleep(200)
+			Log(permission & " query")
+			Starter.rp.CheckAndRequest(permission)
+			Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+			If Result = False Then
+				Log(permission & " refused")
+			Else
+				Log(permission & " allowed")
+				'.... send message
+			End If
+		End If
+	Next
+	
+Vaixx =True
+
+End Sub
+
+
+'Template version: B4A-1.0
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+'	pws.ReleasePartialLockEnd Sub
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+
+	For Each permission As String In Permissions
+		If Starter.rp.Check(permission) = False Then
+			Sleep(200)
+			Starter.rp.CheckAndRequest(permission)
+			Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+			Log(permission)
+			If Result = False Then
+				ToastMessageShow("No permission " & permission, True)
+				Starter.rp.CheckAndRequest(permission)
+				Sleep(200)
+				Return
+			End If
+		End If
+
+	Next
+	Activity_AfterPermission
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+	Log("Activity_Pause")
+	If UserClosed Then
+'		B4XPages.MainPage.serial1.Disconnect
+		StopService(modSMS)
+		StopService(Starter)
+	End If
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+	
+	If Permission = Starter.rp.PERMISSION_SEND_SMS Then
+		If Result Then
+			ToastMessageShow("You have the permission to send SMS.", False)
+		Else
+			ToastMessageShow("You don't have the permission to send SMS", False)
+		End If
+	End If
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

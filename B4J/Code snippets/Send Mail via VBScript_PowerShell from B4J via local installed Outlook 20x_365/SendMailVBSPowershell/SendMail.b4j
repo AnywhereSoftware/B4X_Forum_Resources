@@ -1,0 +1,169 @@
+﻿AppType=JavaFX
+Build1=Default,b4x.sendmail
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private SendMailVBSBTN As Button
+	Private SendMailPSBTN As Button
+	Private EmailAdressTF As TextField
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	If File.Exists(File.DirApp & "/SENDMAIL","") = False Then 
+		File.MakeDir(File.DirApp,"SENDMAIL")
+	End If
+
+End Sub
+
+
+
+Private Sub SendMailBTN_Click
+	Dim BTN As Button = Sender
+	 
+	If EmailAdressTF.Text.Length=0 Or Check_Email_Address(EmailAdressTF.Text) = False Then 
+		fx.Msgbox(MainForm, "Wrong or empty Email Address", "Email")
+		Return
+	End If
+	
+	If BTN.Tag="VBS" Then
+		LogDebug("VBScript")
+		SendMailVBScript(EmailAdressTF.Text)
+	Else
+		LogDebug("PowerShell")
+		SendMailPowerShell (EmailAdressTF.Text)
+	End If
+End Sub
+
+Private Sub SendMailVBScript (SendToMailadress As String)
+	Dim MBody As String
+	Dim Writer As TextWriter
+	Writer.Initialize2(File.OpenOutput(File.DirApp & "/SENDMAIL","mail.vbs", False),"cp1252")
+	Dim vbsscript As String
+	
+	vbsscript ="Const olByValue = 1" & CRLF & "Const olMailItem = 0" & CRLF & "Dim oOApp" & CRLF & "Dim oOMail" & CRLF & $"Set oOApp = CreateObject("Outlook.Application")"$ & CRLF
+	Writer.WriteLine(vbsscript)
+	
+	vbsscript= CRLF & "Set oOMail = oOApp.CreateItem(olMailItem)" & CRLF
+	vbsscript=vbsscript& "With oOMail" & CRLF
+	vbsscript=vbsscript& $" .To = "${SendToMailadress}""$ &CRLF
+	vbsscript=vbsscript& $".Subject = "Mail via VBScript""$ & CRLF
+						
+	MBody = $"Dear receiver, " & vbCrLf & vbCrLf & _
+						"this is an email via VBScript  " 
+						 "$ 			
+	vbsscript=vbsscript& $".Body = "${MBody} "$ & CRLF
+	vbsscript=vbsscript& $".Save()"$ & CRLF
+	vbsscript=vbsscript& $"End With"$ & CRLF
+	Writer.WriteLine(vbsscript)
+						
+	Writer.Close
+	
+	Execute_VBScript
+	
+End Sub
+
+Sub Execute_VBScript
+	
+	If File.Exists(File.DirApp &  "\SENDMAIL\mail.vbs","") =False Then
+		Log("VBScript not found!")
+		Return
+	End If
+			
+	Dim SendMailSh As Shell
+	SendMailSh.Initialize("SendVBSMailSh", "WScript" , Array As String(File.DirApp &  "\SENDMAIL\mail.vbs"))
+	SendMailSh.WorkingDirectory = File.DirApp &  "\SendMail\"
+	SendMailSh.Run(-1)
+End Sub
+
+Sub SendVBSMailSh_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		LogDebug("Succesful...")
+	Else
+		Log("Failed")
+		Log(StdErr)
+	End If
+End Sub
+
+
+Private Sub SendMailPowerShell (SendToMailadress As String)
+	
+	Dim PSScriptName As String
+	Dim MBody As String
+	'write *.bat file
+	Dim Writer As TextWriter
+	Writer.Initialize2(File.OpenOutput(File.DirApp & "/SENDMAIL","mail.bat", False),"cp1252")
+	Dim Bat As String
+	PSScriptName=File.DirApp & "/SENDMAIL/mail.ps1"
+	Bat ="Powershell.exe -executionpolicy remotesigned -File " & $"${PSScriptName}"$
+	Writer.WriteLine(Bat)
+	Writer.Close
+	
+	'write Powershell script
+	Writer.Initialize2(File.OpenOutput(File.DirApp & "/SENDMAIL","mail.ps1", False),"cp1252")
+	Dim PSScript As String
+	
+	PSScript ="$outlook = new-object -comobject outlook.application" &CRLF
+	Writer.WriteLine(PSScript)
+	PSScript ="$email = $outlook.CreateItem(0)" & CRLF
+	Writer.WriteLine(PSScript)
+	PSScript =$"$email.To = "${SendToMailadress}""$ & CRLF
+	Writer.WriteLine(PSScript)
+	PSScript = $"$email.Subject = "Mail via PowerShell""$ & CRLF
+	Writer.WriteLine(PSScript)
+	MBody = $"Dear receiver, this is an email via PowerShell""$
+	PSScript = $"$email.Body = "${MBody}"$ & CRLF
+	Writer.WriteLine(PSScript)
+	PSScript ="$email.Save()"
+	Writer.WriteLine(PSScript)
+	Writer.Close
+	
+	Execute_PowerShellScript
+End Sub
+
+Sub Execute_PowerShellScript
+	
+	If File.Exists(File.DirApp &  "\SENDMAIL\mail.bat","") =False Then
+		Log("VBScript not found!")
+		Return
+	End If
+			
+	Dim SendMailSh As Shell
+	SendMailSh.Initialize("SendMailPowerShellSh", File.DirApp &  "\SENDMAIL\mail.bat" ,Null)
+	SendMailSh.WorkingDirectory = File.DirApp &  "\SENDMAIL\"
+	SendMailSh.Run(-1)
+End Sub
+
+Sub SendMailPowerShellSh_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		LogDebug("Succesful...")
+	Else
+		Log("Failed")
+		Log(StdErr)
+	End If
+End Sub
+
+
+Sub Check_Email_Address (email As String) As Boolean
+	Return Regex.IsMatch("^(|([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5}){1,25})+([;.](([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5}){1,25})+)*$",email)
+End Sub

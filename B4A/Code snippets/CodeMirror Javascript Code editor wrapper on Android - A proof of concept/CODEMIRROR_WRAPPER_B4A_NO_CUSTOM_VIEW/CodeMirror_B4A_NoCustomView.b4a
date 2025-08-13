@@ -1,0 +1,316 @@
+﻿Build1=Default,b4a.example.codemirror
+File1=codemirror.zip
+File2=CodeMirrorLayout1.bal
+File3=csslint.js
+File4=HTMLHint.js
+File5=jshint.js
+File6=jsonlint.min.js
+File7=wrapper.css
+File8=wrapper.js
+FileGroup1=New Group
+FileGroup2=Default Group
+FileGroup3=New Group
+FileGroup4=New Group
+FileGroup5=New Group
+FileGroup6=New Group
+FileGroup7=New Group
+FileGroup8=New Group
+Group=Default Group
+Library1=archiver
+Library2=core
+Library3=ime
+Library4=javaobject
+Library5=reflection
+Library6=stringutils
+Library7=webviewextras
+Library8=xui
+Library9=webviewsettings
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~
+Module1=CMW_Utils
+Module2=CodeEditor
+Module3=CodeMirrorWrapper
+Module4=IllegalArgumentException
+Module5=NumberFormatException
+Module6=Starter
+Module7=Throwables
+Module8=Throwables_Static
+NumberOfFiles=8
+NumberOfLibraries=9
+NumberOfModules=8
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4ACodeMirror
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+#BridgeLogger: True
+#IgnoreWarnings: 9
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+	Dim b4xCode As String = $"
+	' [FIRST LINE]
+	'
+	' B4X CODE EXAMPLE
+	'
+	' This is a CodeMirror demo. This demo code
+	' contain some B4X code and some Javascript and HTML code.
+	'
+	' What you can do here ...
+	'
+	' - Try to change the zoom with pinch-to-zoom,
+	'   on emulator use CTRL + Left mouse click, this is
+	'   the WebView zoom effect, but you can even change the
+	'   CodeMirror character text size by code or may add
+	'   some buttons to increase/decrease the font text size manually.
+	' - Try to switch from Javascript to B4X language and
+	'   viceversa to highlight the right language.
+	' - Try to scroll the code vertically and horizontally.
+	' - Try to write some code, language keywords will be
+	'   colored when you write last keyword character.
+	' - Try to change themes.
+	' - Try to activate/deactivate line numbers.
+
+Activity.LoadLayout("1")
+Wait For MapFragment1_Ready
+gmap = MapFragment1.GetMap
+rp.CheckAndRequest(rp.PERMISSION_ACCESS_FINE_LOCATION)
+Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+If Result Then
+    gmap.MyLocationEnabled = True
+Else
+    Log("No permission!")
+End If
+"$
+	
+	Dim jsCode As String = $"
+// JAVASCRIPT CODE EXAMPLE
+
+var camera, scene, renderer;
+var geometry, material, mesh;
+
+init();
+animate();
+
+function init() {
+	camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+	camera.position.z = 2;    
+	camera.position.x = 1.5;    
+
+	scene = new THREE.Scene();
+	geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
+	// Not assigning the color will create a box 
+	// with any face of different color, if you want
+	// to be colored just pass the color as argument
+	material = new THREE.MeshNormalMaterial(); 
+
+	for (let i = 0; i < 10; i ++) {
+		mesh = new THREE.Mesh( geometry, material );
+		mesh.position.x = i/3; 
+		scene.add( mesh );
+	}
+
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+
+   controls = new THREE.OrbitControls(camera, renderer.domElement);
+	
+	// Optionals adjustments
+	controls.rotateSpeed = 1.4;  // By default 1.0
+	controls.zoomSpeed = 0.8;    // By default 1.0
+	controls.panSpeed = 2.4;     // By default 1.0
+	controls.enableDamping = true;  // By default false
+	controls.dampingFactor = .02;   // By default 0.05
+}
+
+function animate() {
+	requestAnimationFrame( animate );
+	renderer.render( scene, camera );
+	controls.update();
+}
+
+[LAST LINE]
+"$
+
+	Dim htmlCode As String = $"
+<!DOCTYPE html>
+<html>
+	<head>
+	<title>I am inserting my title here</title>
+	</head>
+	<body bgcolor="FFFFFF">
+	<center><img src="hubspotsprocket.jpg" align="BOTTOM"> </center>
+	<hr>
+	<a href="http://hubspot.com">HubSpot</a>
+	Blogs help you create an HTML page example. 
+	<h1>When creating a site, you'd need an H1.</h1>
+	<h2>You would also need an H2.</h2>
+	<p> And a paragraph.</p>
+	<p> <b>And another.</b></p>
+	<br><i>I am adding a new sentence here and adding italics.</i>
+	  <b>I hope this helped you learn how to create an HTML site.</b>
+	<hr>	
+	</body>
+</html>
+"$
+
+	Private Timer1 As Timer
+
+	Private EXAMPLE As Int  ' Set this to 1 to get example 1 (B4X Code), to get example 2 (JS Code), 3 to get example 3 (HTML Code)
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+'	Private XUI As XUI
+	Private CodeEditor1 As CodeEditor	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	' Do not forget to load the layout file created with the visual designer. For example:
+'	Activity.LoadLayout("Layout1")
+
+	Activity.Title = "CodeMirror CodeEditor"
+	
+	If FirstTime Then
+		
+		Dim options As List = Array("Show B4X Code", "Show JS Code", "Show HTML Code")
+		InputListAsync(options, "Please, select the demo to run." & CRLF & "To run another demo kill and restart the app.", 0, False)
+		Wait For InputList_Result (Index As Int)
+		If Index <> DialogResponse.CANCEL Then
+			EXAMPLE = Index + 1
+			ToastMessageShow("Running " & options.Get(Index), False)
+		End If
+		
+		CodeEditor1.Initialize(Activity, Me, "CodeEditor1")
+		
+		If EXAMPLE = 1 Then ' B4X Code		
+			CodeEditor1.Start(CodeEditor1.LINT_TYPE_NONE, CodeEditor1.HINT_TYPE_NONE, True, True, True)  ' Ready Event will be raised when the editor is ready and fully loaded.
+		Else If EXAMPLE = 2 Then   ' JS Code
+			CodeEditor1.Start(CodeEditor1.LINT_TYPE_JS, CodeEditor1.HINT_TYPE_JS, True, True, True)  ' Ready Event will be raised when the editor is ready and fully loaded.
+		Else If  EXAMPLE = 3 Then   ' HTML Code
+			CodeEditor1.Start(CodeEditor1.LINT_TYPE_HTML, CodeEditor1.HINT_TYPE_HTML, True, True, True)  ' Ready Event will be raised when the editor is ready and fully loaded.
+		End If
+		
+'		'Show on Log a list of all supported Languages
+'		For i = 0 To CodeEditor1.Languages.Size - 1
+'			Log("[" & i & "] Language: " & CodeEditor1.Languages.Get(i))
+'		Next
+'		
+'		'Show on Log a list of all supported Themes
+'		For i = 0 To CodeEditor1.Themes.Size - 1
+'			Log("[" & i & "] Theme: " & CodeEditor1.Themes.Get(i))
+'		Next
+
+		Log($"Supported ${CodeEditor1.Languages.Size} languages"$)
+		Log($"Supported ${CodeEditor1.Themes.Size} themes"$)
+	End If
+	
+	Sleep(1000)
+	
+'	Timer1.Initialize("Timer1", 10000)
+'	Timer1.Enabled = True
+End Sub
+
+Sub Timer1_Tick
+	If CodeEditor1.FontSize < 30 Then
+		CodeEditor1.FontSize = CodeEditor1.FontSize + 1
+	Else
+		CodeEditor1.FontSize = 8
+	End If
+	ToastMessageShow("Current FontSize: " & CodeEditor1.FontSize & " pt", False)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub RepeatString (Text As String, Rep As Int) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	For i = 0 To Rep-1
+		sb.Append(Text)
+	Next
+	Return sb.ToString
+End Sub
+
+#Region Code Editor Events
+
+Private Sub CodeEditor1_Ready
+	Log("EDITOR PAGE LOADED")
+	
+	If EXAMPLE = 1 Then	    ' TEST 1 - B4X
+		CodeEditor1.FontSize = 12
+		CodeEditor1.CodeMirrorWrapper.Theme = "eclipse"  '"default"
+		CodeEditor1.CodeMirrorWrapper.Language = "B4X"
+		CodeEditor1.CodeMirrorWrapper.FixedGutter = False  ' <-- SET THE GUTTER FIXED TO LEFT INSTEAD TO MOVE WHEN SCROLL TEXT HORIZONTALLY
+		'	CodeEditor1.SetCode("")	'Set empty code or load some code
+		CodeEditor1.CodeMirrorWrapper.SetCode(RepeatString(b4xCode, 10))	'Load some code
+	Else If EXAMPLE = 2 Then		' TEST 2 - JAVASCRIPT with Automatic Error Check and Code Folding
+		CodeEditor1.FontSize = 12
+		CodeEditor1.CodeMirrorWrapper.Theme = "yonce"  '"default"
+		CodeEditor1.CodeMirrorWrapper.Language = "JavaScript"
+		CodeEditor1.CodeMirrorWrapper.FixedGutter = False  ' <-- SET THE GUTTER FIXED TO LEFT INSTEAD TO MOVE WHEN SCROLL TEXT HORIZONTALLY
+		CodeEditor1.CodeMirrorWrapper.SetCode(RepeatString(jsCode, 10))
+	Else If EXAMPLE = 3 Then		' TEST 3 - HTML with Automatic Error Check and Code Folding
+		'CodeEditor1.FontSize = 14 ' 14 pt
+		'or
+		Dim fs As CodeMirrorFontSize
+		fs.Initialize
+		fs.FontSize = 14
+		fs.FontUnit = "pt"
+		CodeEditor1.CodeMirrorWrapper.FontSize = fs  ' Alternative way to set the font size
+		CodeEditor1.CodeMirrorWrapper.Theme = "seti"  '"default"
+		CodeEditor1.CodeMirrorWrapper.Language = "HTML"
+'		CodeEditor1.CodeMirrorWrapper.SetCode(htmlCode)	'Load some code
+		CodeEditor1.CodeMirrorWrapper.SetCode(CodeEditor1.CodeMirrorWrapper.HTMLString)	'Load current codemirror HTML string
+		CodeEditor1.CodeMirrorWrapper.FixedGutter = False  ' <-- SET THE GUTTER FIXED TO LEFT INSTEAD TO MOVE WHEN SCROLL TEXT HORIZONTALLY
+	End If
+	
+'	CodeEditor1.CodeMirrorWrapper.Refresh
+'	
+'	Log("FULL HTML STRING:")
+'	Log(CodeEditor1.CodeMirrorWrapper.HTMLString)
+'	
+'	Sleep(3000)
+'	CodeEditor1.CodeMirrorWrapper.ExecuteScript("alert('Welcome to " & CodeEditor1.CodeMirrorWrapper.Version & "\r\n\r\nThe editor page is ready.')")
+	
+'	Log("Line count: " & CodeEditor1.CodeMirrorWrapper.LineCount)
+End Sub
+
+Private Sub CodeEditor1_LoadFileRequest As ResumableSub
+	Log("Load File")
+	ToastMessageShow("Load button has been clicked", False)
+	'Load button has been clicked, Load from file or elsewhere and pass to the CodeEditor via
+	'CodeEditor1.CodeMirrorWrapper1.SetCode("code") and return True
+	'Both of Load and save subs are Resumable so that a dialog can be displayed if required.
+	Return False
+End Sub
+
+Private Sub CodeEditor1_SaveFileRequest(CodeToSave As String) As ResumableSub
+	Log("Save File")
+	ToastMessageShow("Save button has been clicked", False)
+	'Save button has been clicked, Save the passed code as needed.
+	'Return True if saved so that the code revert point is updated.
+	Return True
+End Sub
+
+#End Region

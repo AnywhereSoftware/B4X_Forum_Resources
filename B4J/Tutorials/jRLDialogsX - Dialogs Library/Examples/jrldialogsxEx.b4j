@@ -1,0 +1,640 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=cssutils
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jrldialogsx
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Notes
+'B4J Project to test the library jRLDialogsX (written in B4J using Inline Java).
+'Ensure the files jRJDoalogsX.jar, jRLDialogsX.xml and jRLDialogsXFiles are stored in the B4J Additional Libraries folder.
+'@author Robert W.B. Linn
+'@version 20221122
+#End Region
+
+#Region Project ToDo
+#End Region
+
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private	CAPPTITLESHORT As String	= "jRLDialogsX Library Full Example"
+	Private	CAPPTITLE As String 		= "jRLDialogsX Library Full Example"
+	Private	CAPPVERSION As String 		= "v20221122"
+	Private	CAPPCOPYRIGHT As String 	= "Copyright (c) 2015-2022 by Robert W.B. Linn, Pinneberg, Germany"
+	Private	CAPPDESCRIPTION As String	= "Full Example using JavaFX dialogs and many more."
+	Private CAPPHELP As String			= "jrldialogsx.pdf"
+
+	Private Const BUTTONWIDTH As Int = 200
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private Dlg As DialogsX
+	Private lblLibVersion As Label
+	Private cbUseParentWindow As CheckBox
+	Private taDialogResult As TextArea
+	Private tfCancelButtonText As TextField
+	Private tfLoginButtonText As TextField
+	Private tfNOButtonText As TextField
+	Private tfOKButtonText As TextField
+	Private tfPasswordLabel As TextField
+	Private tfPasswordPrompt As TextField
+	Private tfSelectButtonText As TextField
+	Private tfUsernameLabel As TextField
+	Private tfUsernamePrompt As TextField
+	Private tfYESButtonText As TextField
+	Private lvButtons As ListView
+	Private btnHelp As Button
+	
+	Private mItem As Int = 0
+End Sub
+
+#Region APP
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Title = CAPPTITLESHORT						
+	MainForm.Resizable = False
+	MainForm.SetFormStyle("UTILITY")					
+	MainForm.Show
+	'
+	AppInit
+End Sub
+
+private Sub AppInit
+	Dlg.Initialize
+	lblLibVersion.Text = $"Library Version: ${Dlg.Version}"$
+	'Build a sorted list with dialogs
+	BuildListViewButtons
+	'Localization
+	tfOKButtonText.Text = "[OK]"
+	tfCancelButtonText.Text = "[Cancel]"
+	tfYESButtonText.Text = "[YES]"
+	tfNOButtonText.Text = "[NO]"
+	tfLoginButtonText.Text = "[Login]"
+	tfPasswordLabel.Text = "[Password]"
+	tfPasswordPrompt.Text = "[Password]"
+	tfSelectButtonText.Text = "[Select]"
+	tfUsernameLabel.Text = "[Username]"
+	tfUsernamePrompt.Text = "[Username]"
+End Sub
+
+'Close the app - add any specifics here
+Sub AppClose
+	MainForm.Close
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+#End Region
+
+#Region MainForm
+Sub MainForm_Close
+'	Log("MainForm Close")
+	AppClose
+End Sub
+
+'Handle form closing via system close (top right X button)
+Sub MainForm_CloseRequest (EventData As Event)
+'	Log("MainForm Closerequest")
+	AppClose
+End Sub
+#End Region
+'Show the webpage containing further information about jRLDialogsX
+Sub btnHelp_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.InformationDialog("Help", "", "See PDF document " & CAPPHELP & CRLF & CRLF & CAPPCOPYRIGHT & CRLF & CRLF & "Library Version: " & Dlg.Version)
+End Sub
+
+#Region LISTVIEWBUTTONS
+Sub BuildListViewButtons
+	Dim l As List
+	l.Initialize
+	l.AddAll(Array As String("About", _
+	"Information", "Warning", "Error", _ 
+	"Confirmation", "YesNoCancel", "AlertSelection", "CustomAlert", _ 
+	"TextInput", "TextInputDialog2", "TextInputDialog3", "TextInputDialog4", _ 
+	"MultiInputFieldDialog", "SimpleFormDialog", _ 
+	"IntegerInputDialog", _ 
+	"Choice", "Select", _ 
+	"Extended", _ 
+	"Login","LoginDialog2", _ 
+	"DidYouKnow","DidYouKnow2","Exception", _ 
+	"Message","MessageHTMLDialog", "MessageHTMLDialog2", "MessageHTMLDialog3", _ 
+	"List","ListDialog2", "ListFindDialog", _ 
+	"SpinnerInteger","SpinnerDouble","SpinnerList", _ 
+	"TextArea", _ 
+	"ToastMessage", "ToastMessageAlert", _ 
+	"DatePicker","TimePicker24","TimePicker12", _ 
+	"ColorName", "ColorPicker", _ 
+	"Slider", "DoNotAskAgain"))
+	'Sort the list and add the for each of the dialogs a button to the list
+	l.Sort(True)
+	For Each s As String In l
+		AddListViewButton(s)
+	Next
+End Sub
+
+' Add a button to the ListView. The eventname is the same as the button text.
+' Any Button property can be set
+Sub AddListViewButton(s As String)
+	Dim b As Button
+	b.Initialize(s)
+	b.PrefWidth = BUTTONWIDTH
+	b.Id = s
+	b.Text = s
+	lvButtons.Items.Add(b)
+End Sub
+
+Sub lvButtons_SelectedIndexChanged(Index As Int)
+	
+End Sub
+#End Region
+
+#Region PARENTWINDOW
+Sub SetParentWindow
+	If cbUseParentWindow.Checked = True Then 
+		Dlg.SetParentWindow(MainForm)
+	Else
+		Dlg.SetParentWindow(Null)
+	End If
+End Sub
+#End Region
+
+#Region BUTTONACTIONS
+Sub About_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.InformationDialog("About", CAPPTITLE & CRLF & CAPPVERSION, CAPPDESCRIPTION & CRLF & CRLF & CAPPCOPYRIGHT & CRLF & CRLF & "Library Version: " & Dlg.Version)
+End Sub
+
+Sub Information_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.OKButtonStyle = "-fx-font-size: 24px;-fx-background-color: indianred;"
+	Dlg.InformationDialog("InformationDialog Title", "Header", "Content")
+End Sub
+
+Sub Warning_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.OKButtonStyle = ""
+	Dlg.WarningDialog("WarningDialog Title", "Header", "Content")
+End Sub
+
+Sub Error_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.ErrorDialog("ErrorDialog Title", "Header", "Content")
+End Sub
+
+Sub Confirmation_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.OKButtonStyle = "-fx-font-size: 24px;-fx-background-color: green;"
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dlg.CancelButtonStyle = "-fx-font-size: 24px;-fx-background-color: red;"
+	taDialogResult.Text = Dlg.ConfirmationDialog("ConfirmationDialog Title", "Header", "Content")
+End Sub
+
+Sub YesNoCancel_Action
+	SetParentWindow
+	Dlg.YesButtonText = tfYESButtonText.Text
+	Dlg.YesButtonStyle = "-fx-font-size: 24px;-fx-background-color: green;"
+	Dlg.NoButtonText = tfNOButtonText.Text
+	Dlg.NoButtonStyle = "-fx-font-size: 24px;-fx-background-color: red;"
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dlg.CancelButtonStyle = "-fx-font-size: 24px;-fx-background-color: blue;"
+	taDialogResult.Text = Dlg.YesNoCancelDialog("YesNoCancelDialog Title", "Header", "Content")
+End Sub
+
+Sub AlertSelection_Action
+	Dim buttons() As String = Array As String ("A", "B", "C", "D", "E")
+	Dim selection As Int = Dlg.AlertSelectionDialog("Title", "Select an option", $""$, buttons)
+	taDialogResult.Text = $"Selected option: index=${selection}, buttontext=${buttons(selection)}"$
+End Sub
+
+Sub CustomAlert_Action
+	SetParentWindow
+	Dim DialogStyle As String	= "-fx-background-color: #e2e2e2; -fx-border-color: DarkSlateGray; -fx-border-width: 2; -fx-border-radius: 0;"
+	Dim HeaderStyle As String	= "-fx-background-color: #FFFF00; -fx-font-style: italic; -fx-font-size: 24px;-fx-text-fill: #FF0000; -fx-font-weight: bold;"
+	Dim ContentStyle As String	= "-fx-background-color: #00FF00; -fx-font-size: 33px;-fx-text-fill: #0000FF; -fx-font-weight: bold;"
+	taDialogResult.Text = Dlg.CustomAlertDialog("WARNING", "This is a Custom Alert", "Header", $"Content${CRLF}..."$, -1, -1, "", DialogStyle, HeaderStyle, ContentStyle, "OK", "", "", "-fx-background-color: #FF0000; -fx-text-fill: #FFFFFF; -fx-font-weight: bold;", "", "")
+End Sub
+
+Sub TextInput_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	taDialogResult.Text = Dlg.TextInputDialog("TextInputDialog Title", "Header", "Label", "Text")
+End Sub
+
+Sub TextInputDialog2_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim m As Map
+	m = Dlg.TextInputDialog2("TextInputDialog2 Title", "Header", "Label 1", "Label 2", "Field 1", "Field 2")
+	If m.IsInitialized = False Then
+		Log("User cancelled")
+		Return
+	End If
+	taDialogResult.Text = "Field Data (" & m.Size & ")" & CRLF
+	For i = 0 To m.Size - 1
+		taDialogResult.Text = taDialogResult.Text & m.GetKeyAt(i) & " = " & m.GetValueAt(i) & CRLF
+	Next
+End Sub
+
+Sub TextInputDialog3_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim result As String = Dlg.TextInputDialog3("TextInputDialog3 Title", "Header", "Label", "Text")
+	If result.EqualsIgnoreCase(Null) Then
+		taDialogResult.Text = "User Abort"
+	Else
+		taDialogResult.Text = result
+	End If
+End Sub
+
+Sub TextInputDialog4_Action
+	SetParentWindow
+	Dlg.OKButtonText = "Close"
+	Dim result  As String = Dlg.TextInputDialog4("TextInputDialog4 Title", "Enter the URL", "http://your.url", 600)
+	If result.EqualsIgnoreCase(Null) Then
+		taDialogResult.Text = "User Abort"
+	Else
+		taDialogResult.Text = result
+	End If
+End Sub
+
+Sub MultiInputFieldDialog_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	'Create the fieldmap with several fields defined by pair label:text
+	Dim fieldmap As Map
+	fieldmap.Initialize
+	For i = 0 To 8
+		fieldmap.put("Field"&i, "Value Field" &i)
+	Next
+	'Open the dialog
+	Dim resultmap As Map = Dlg.MultiInputFieldDialog("MultiInputFieldDialog Title", "Header", fieldmap, fieldmap.size)
+	'The resultmap holds for each field the pair fieldN:text
+	If resultmap.IsInitialized Then
+		Dim sb As StringBuilder
+		sb.Initialize
+		For i = 0 To resultmap.Size - 1
+			sb.Append($"${resultmap.GetKeyAt(i)} = ${resultmap.GetValueAt(i)}"$).Append(CRLF)
+		Next
+		taDialogResult.Text = sb.tostring
+	Else
+		taDialogResult.Text = "User Abort"
+	End If
+End Sub
+
+Sub SimpleFormDialog_Action
+	'Create the list of fieldmaps
+	Dim fieldlist As List
+	fieldlist.Initialize
+	fieldlist.Add(CreateMap("id":"textfield", "label":"Textfield", "value":"textfield", "type":"T"))
+	fieldlist.Add(CreateMap("id":"numeric", "label":"Numeric", "value":"1958", "type":"N"))
+	fieldlist.Add(CreateMap("id":"password", "label":"Password", "value":"password", "type":"P"))
+	fieldlist.Add(CreateMap("id":"checkbox", "label":"Checkbox", "value":"1", "type":"C"))
+	fieldlist.Add(CreateMap("id":"combobox", "label":"Combobox", "value":"Item 1,Item 2,Item 3", "type":"B"))
+	'Open the dialog
+	Dlg.SimpleFormSplitFields = True
+	Dim resultmap As Map = Dlg.SimpleFormDialog("SimpleFormDialog Title", "Header", fieldlist)
+	'The resultmap holds for each field the pair fieldN:text
+	If resultmap.IsInitialized Then
+		Dim sb As StringBuilder
+		sb.Initialize
+		For i = 0 To resultmap.Size - 1
+			sb.Append($"${resultmap.GetKeyAt(i)} = ${resultmap.GetValueAt(i)}"$).Append(CRLF)
+		Next
+		taDialogResult.Text = sb.tostring
+	Else
+		taDialogResult.Text = "User Abort"
+	End If
+End Sub
+
+Sub IntegerInputDialog_Action
+	Dim default As Int = 9
+	Dim result As Int = Dlg.IntegerInputDialog("IntegerInputDialog Title", "Header", "Label", default)
+	If result <>  default Then
+		taDialogResult.Text = result
+	Else
+		taDialogResult.Text = "User Abort or Input Error"
+	End If
+End Sub
+
+Sub Choice_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String("Option a","Option b","Option c","Option d","Option e"))
+	taDialogResult.Text = Dlg.ChoiceDialog("ChoiceDialog Title", "Header", "Label", l, 2)
+End Sub
+
+Sub Select_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String ("Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"))
+	Dim h As Double = 200
+	Dim w As Double = 300
+	Dim r As Int = Dlg.SelectDialog("SelectDialog Title", l, 2, h, w)
+	taDialogResult.Text = "Item Index selected: " &  CRLF & r
+End Sub
+
+Sub Extended_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.ExtendedDialogExpanded = False
+	Dlg.ExtendedDialog("ExtendedDialog Title", "Header", "Content", "My" & CRLF & "Content" & CRLF & "Extended")
+End Sub
+
+Sub Login_Action
+	SetParentWindow
+	Dlg.UsernameLabel = tfUsernameLabel.Text
+	Dlg.PasswordLabel = tfPasswordLabel.Text
+	Dlg.UsernamePrompt = tfUsernamePrompt.Text
+	Dlg.PasswordPrompt = tfPasswordPrompt.Text
+	Dlg.LoginButtonText = tfLoginButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim m As Map
+	m = Dlg.LoginDialog("LoginDialog Title", "Header")
+	If m.IsInitialized = False Then Return
+	taDialogResult.Text = "Login Data (" & m.Size & ")" & CRLF
+	For i = 0 To m.Size - 1
+		taDialogResult.Text = taDialogResult.Text & m.GetKeyAt(i) & " = " & m.GetValueAt(i) & CRLF
+	Next
+End Sub
+
+'Note: Ensure file login.png is stored in the project files folder and added to the project file tab
+Sub LoginDialog2_Action
+	SetParentWindow
+	Dlg.UsernameLabel = tfUsernameLabel.Text
+	Dlg.PasswordLabel = tfPasswordLabel.Text
+	Dlg.UsernamePrompt = tfUsernamePrompt.Text
+	Dlg.PasswordPrompt = tfPasswordPrompt.Text
+	Dlg.LoginButtonText = tfLoginButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim m As Map : m.Initialize
+	m = Dlg.LoginDialog2("LoginDialog2 Title", "Header", "UserName")
+	If m.IsInitialized = False Then Return
+	taDialogResult.Text = "Login Data (" & m.Size & ")" & CRLF
+	For i = 0 To m.Size - 1
+		taDialogResult.Text = taDialogResult.Text & m.GetKeyAt(i) & " = " & m.GetValueAt(i) & CRLF
+	Next
+End Sub
+
+'Note: Ensure file dyk.png is stored in the project files folder and added to the project file tab
+Sub DidYouKnow_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.DidYouKnowDialog("DidYouKnowDialog Title", "Header", "My" & CRLF & "Content" & CRLF & "Extended")
+End Sub
+
+Sub DidYouKnow2_Action
+	Dlg.SetParentWindow(MainForm)
+	Dlg.OKButtonText = "OK"
+	Dlg.PreviousButtonText = "<<"
+	Dlg.NextButtonText = ">>"
+	Dim l As List : l.Initialize : l.AddAll(Array As String ("Item 1", "Item 2", "Item 3"))
+	Dim result As Int = Dlg.DidYouKnowDialog2("Did You Know Dialog 2 Title", "Header", l, mItem, 400, 300)
+	mItem = result
+	taDialogResult.Text = $"Item Index selected: ${mItem} which is ${l.Get(mItem)}"$
+End Sub
+
+Sub Exception_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dim imgView As ImageView : imgView.Initialize("")
+	Try
+		imgView.SetImage(fx.LoadImage(File.DirAssets, "xxxlogin.png"))	'ignore
+	Catch
+		Dlg.ExceptionDialog("ExceptionDialog Title", "Header", "Content", LastException)
+	End Try
+End Sub
+
+Sub Message_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.MessageHTMLDialog("MessageDialog Title", "Content")
+End Sub
+
+Sub MessageHTMLDialog_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dim sb As StringBuilder : sb.Initialize
+	sb.Append("<H1>HTML Content</H1><HR>")
+	For i = 0 To 50
+		If i Mod 5 = 0 Then sb.Append("<H1>Section " & i & "</H1><HR>")
+		sb.Append("<P>Line " & i & "</P>")
+	Next
+	sb.Append("<HR>")
+	Dlg.MessageHTMLDialog("MessageHTMLDialog Title", sb.ToString)
+End Sub
+
+Sub MessageHTMLDialog2_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dim sb As StringBuilder : sb.Initialize
+	sb.Append("<H1>HTML Content</H1><HR>")
+	For i = 0 To 100
+		If i Mod 5 = 0 Then sb.Append("<H1>Section " & i & "</H1><HR>")
+		sb.Append("<P>Line " & i & "</P>")
+	Next
+	sb.Append("<HR>")
+	Dlg.MessageHTMLDialog2("MessageHTMLDialog2 Title", "Header", sb.ToString)
+End Sub
+
+Sub MessageHTMLDialog3_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dlg.MessageHTMLDialogHideDetails = True
+	Dim sb As StringBuilder : sb.Initialize
+	sb.Append("<H1>HTML Content</H1><HR>")
+	For i = 0 To 10
+		If i Mod 5 = 0 Then sb.Append("<H1>Section " & i & "</H1><HR>")
+		sb.Append("<P>Line " & i & "</P>")
+	Next
+	sb.Append("<HR>")
+	Dim result As Boolean = Dlg.MessageHTMLDialog3("MessageHTMLDialog3 Title", sb.ToString)
+	taDialogResult.Text = $"MessageHTMLDialog3 result:${CRLF}${result}"$
+End Sub
+
+Sub List_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String ("Item 1", "Item 2", "Item 3"))
+	taDialogResult.Text = "Item selected: " &  CRLF & Dlg.ListDialog("ListDialog Title", "Header", l, 1)
+End Sub
+
+Sub ListDialog2_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String ("Item 1", "Item 2", "Item 3"))
+	Dim m As Map = Dlg.ListDialog2("ListDialog2 Title", "Header", l, 1)
+	taDialogResult.Text = "Item selected: " & CRLF
+	If m.IsInitialized Then
+		Dim sb As StringBuilder
+		sb.Initialize
+		sb.append("Items selected (" & m.Size & "):").Append(CRLF)
+		For i = 0 To m.Size - 1
+			sb.Append(taDialogResult.Text & m.GetKeyAt(i) & " = " & m.GetValueAt(i)).Append(CRLF)
+		Next
+		taDialogResult.Text = sb.tostring
+	End If
+End Sub
+
+Sub ListFindDialog_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String ("Item 1", "Item 2", "Item 3"))
+	Dim result As String = Dlg.ListFindDialog("ListFindDialog Title", l, 1, 400, 300)
+	taDialogResult.Text = $"Item selected:${CRLF}${result}"$
+End Sub
+
+Sub SpinnerInteger_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	taDialogResult.Text = "Integer Selected: " &  CRLF & Dlg.SpinnerIntegerDialog("SpinnerIntegerDialog Title", "Header", "Label", 0, 100, 50, 10)
+End Sub
+
+Sub SpinnerDouble_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	taDialogResult.Text = "Double Selected: " &  CRLF & Dlg.SpinnerDoubleDialog("SpinnerDoubleDialog Title", "Header", "Label", 0.0, 10.0, 1.5, 0.5)
+End Sub
+
+Sub SpinnerList_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim l As List : l.Initialize : l.AddAll(Array As String("Item 1", "Item 2", "Item 3", "Item 4", "Item 5"))
+	taDialogResult.Text = "List Item Selected: " & CRLF & Dlg.SpinnerListDialog("SpinnerListDialog Title", "Header", "Label", l)
+End Sub
+
+Sub TextArea_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	Dim result As String = Dlg.TextAreaDialog("TextAreaDialog Title", "Header", "Label", "Text Line 1" & CRLF & "Text Line 2")
+	If result.EqualsIgnoreCase(Null) Then
+		taDialogResult.Text = "User Abort"
+	Else
+		taDialogResult.Text = result
+	End If
+End Sub
+
+Sub ToastMessage_Action
+	Dlg.ToastMessageFontSize = 32
+	Dlg.ToastMessageBorderWidth = 1
+	Dlg.ToastMessageBackgroundColor = fx.Colors.Yellow
+	Dlg.ToastMessageBorderColor = fx.Colors.Red
+	Dlg.ToastMessage("<html><h1><font color='red'><u>Welcome</u></font></h1>Many Thanks for using jRLDialogsX</html>", 3000)
+End Sub
+
+Sub ToastMessageAlert_Action
+	Dlg.ToastMessageAlertStyle(CSSUtils.ColorToHex(fx.Colors.Blue), 4, 2, 20)
+	Dlg.ToastMessageAlert("information", "ToastMessageAlert Information", $"Many Thanks ...${CRLF}${CRLF}for using jRLDialogsX"$, 3000)
+End Sub
+
+Sub DatePicker_Action
+	SetParentWindow
+	Dlg.OKButtonText = tfOKButtonText.Text
+	Dlg.CancelButtonText = tfCancelButtonText.Text
+	'IMPORTANT TO SET THIS FORMAT
+	DateTime.DateFormat = "yyyy-MM-dd"
+	taDialogResult.Text = "Date Selected: " &  CRLF & Dlg.DatePickerDialog("DatePickerDialog Title", "Header", "Label", DateTime.Date(DateTime.Now))
+End Sub
+
+Sub TimePicker24_Action
+	SetParentWindow
+	Dlg.OKButtonText = "Pick24"
+	Dim timepicked As String = Dlg.TimePicker24Dialog("TimePicker24Dialog Title", "Pick your time", 17,8, True)
+	taDialogResult.Text = timepicked
+End Sub
+
+Sub TimePicker12_Action
+	SetParentWindow
+	Dlg.OKButtonText = "Pick12"
+	Dim timepicked As String = Dlg.TimePicker12Dialog("TimePicker12Dialog Title", "Pick your time", 11,11, "AM", True)
+	taDialogResult.Text = timepicked
+End Sub
+
+Sub ColorName_Action
+	Dim default As Int = 1
+	Dim color As Paint = Dlg.ColorNameDialog("ColorNameDialog Title", "Header", default)
+	If color.IsInitialized Then
+		' CSSUtils.SetBackgroundColor(paneColor, color)
+		Dim ColorInt As Int  = fx.Colors.To32Bit(color)
+		'Convert To Hex String AARRGGBB
+		Dim HexARGB As String = Bit.ToHexString(ColorInt)
+		'Convert To Hex String RRGGBB
+		Dim HexRGB As String = HexARGB.SubString2(2,8)
+		taDialogResult.Text = $"Color Int:${ColorInt}${CRLF}HEXARGB:${HexARGB}${CRLF}HexRGB:${HexRGB}"$
+	Else
+		taDialogResult.Text = "User Abort"
+	End If
+End Sub
+
+Sub ColorPicker_Action
+	Dim color As Paint = Dlg.ColorPickerDialog("ColorPickerDialog Title", "Header", fx.Colors.blue)
+	If color.IsInitialized Then
+		' CSSUtils.SetBackgroundColor(paneColor, color)
+		Dim ColorInt As Int  = fx.Colors.To32Bit(color)
+		'Convert To Hex String AARRGGBB
+		Dim HexARGB As String = Bit.ToHexString(ColorInt)
+		'Convert To Hex String RRGGBB
+		Dim HexRGB As String = HexARGB.SubString2(2,8)
+		taDialogResult.Text = $"Color Int:${ColorInt}${CRLF}HEXARGB:${HexARGB}${CRLF}HexRGB:${HexRGB}"$
+	Else
+		taDialogResult.Text  = "User Abort or Input Error"
+	End If
+End Sub
+
+Sub Slider_Action
+	Dim defaultValue As Double = 58
+	Dlg.SliderShowValue = True
+	Dlg.SliderValueStyle = "-fx-text-fill: red; -fx-font-size: 24px;"
+	Dlg.SliderShowTickLabels = True
+	Dlg.SliderShowTickMarks = True
+	Dlg.SliderBlockIncrement = 10
+	Dlg.SliderMajorTickUnit = 10
+	Dim value As Double = Dlg.SliderDialog("SliderDialog Title", "Header", 0, 100, defaultValue)
+	If value <> defaultValue Then
+		taDialogResult.Text = $"Slider Value:${CRLF}${value}"$
+	Else
+		taDialogResult.Text  = $"User Abort.${CRLF}Selected Value ${value} = Default Value ${defaultValue}"$
+	End If
+End Sub
+
+Sub DoNotAskAgain_Action
+	Dim result As Boolean = Dlg.DoNotAskAgainDialog("DoNotAskAgain Title", "Header", "Content", "Do Not ask again", True)
+	Dim resultOption As Boolean = Dlg.DoNotAskAgainOption
+	taDialogResult.Text = $"Do Not Ask Again${CRLF}Result:${result}${CRLF}Option:${resultOption}"$
+End Sub
+
+#End Region

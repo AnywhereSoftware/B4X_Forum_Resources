@@ -1,0 +1,112 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=javaobject
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#AdditionalJar: commons-lang3-3.12.0
+'#AdditionalJar: commons-collections4-4.4
+#AdditionalJar: velocity-engine-core-2.3
+#AdditionalJar: slf4j-api-2.0.7
+#AdditionalJar: slf4j-simple-2.0.7
+'#AdditionalJar: slf4j-api-1.7.32
+'#AdditionalJar: slf4j-simple-1.7.32
+
+Sub Process_Globals
+
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim Velocity As JavaObject = Me
+	'Dim content As String = Velocity.RunMethod("runTest", Null)
+	'Log(content)
+	
+	Velocity.InitializeStatic("org.apache.velocity.app.Velocity")
+	Velocity.RunMethod("init", Null)
+	
+	Dim Context As JavaObject
+	Context.InitializeNewInstance("org.apache.velocity.VelocityContext", Null)
+	Context.RunMethod("put", Array("name", "Velocity"))
+	
+	Dim Template As JavaObject
+	Template = Template.InitializeNewInstance("org.apache.velocity.Template", Null)
+	Template = Velocity.RunMethod("getTemplate", Array As String("test.vm"))
+	
+	Dim StringWriter As JavaObject
+	StringWriter.InitializeNewInstance("java.io.StringWriter", Null)
+	Template.RunMethodJO("merge", Array( Context, StringWriter ) )
+	
+	Dim Content As String = StringWriter.RunMethod("toString", Null)
+	StringWriter.RunMethod("close", Null)
+	
+	Log(Content)
+End Sub
+
+#If Java
+import java.io.StringWriter;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.Template;
+import org.apache.velocity.app.Velocity;
+import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.velocity.exception.ParseErrorException;
+import org.apache.velocity.exception.MethodInvocationException;
+
+public static String runTest()
+{
+	Velocity.init();
+
+	VelocityContext context = new VelocityContext();
+
+	context.put( "name", new String("Velocity") );
+
+	Template template = null;
+
+	try
+	{
+	  template = Velocity.getTemplate("test.vm");
+	}
+	catch( ResourceNotFoundException rnfe )
+	{
+	  // couldn't find the template
+	}
+	catch( ParseErrorException pee )
+	{
+	  // syntax error: problem parsing the template
+	}
+	catch( MethodInvocationException mie )
+	{
+	  // something invoked in the template
+	  // threw an exception
+	}
+	catch( Exception e )
+	{
+	
+	}
+
+	String content = null;
+	
+	try
+	{
+		StringWriter sw = new StringWriter();
+
+		template.merge( context, sw );
+		
+		content = sw.toString();
+		sw.close();
+	}
+	catch (Exception we)
+	{
+
+	}
+	return content;
+}
+#End If

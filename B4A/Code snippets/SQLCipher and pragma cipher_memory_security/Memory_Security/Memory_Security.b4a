@@ -1,0 +1,270 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=sql
+Library3=sqlcipher
+Library4=keyvaluestore2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=clsConnection
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private cConn As clsConnection
+	Private lStartTime(10) As Long
+	Private strDefaultSelectSQL As String = "select str, count(*) from random_strings where str glob 'a*' group by str"
+	Private strSQLSelect As String
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private cConn As clsConnection
+	
+	Private btnDeleteDBs As Button
+	
+	Private edtSQL As EditText
+	
+	Private edtSelect_MemSec_On As EditText
+	Private edtSelect_MemSec_Off As EditText
+	Private edtCTE_MemSec_On As EditText
+	Private edtCTE_MemSec_Off As EditText
+	
+	Private edtSelectEncrypted_MemSec_On As EditText
+	Private edtSelectEncrypted_MemSec_Off As EditText
+	Private edtCTEEncrypted_MemSec_On As EditText
+	Private edtCTEEncrypted_MemSec_Off As EditText
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	cConn.Initialize
+	strSQLSelect = Starter.kvs.GetDefault("Select SQL", strDefaultSelectSQL)
+	edtSQL.Text = strSQLSelect
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnRunTests_Click
+	
+	Dim i As Int
+	Dim strSQLCreate As String
+	Dim strSQLInsert As String
+	Dim strSQLIndex As String
+	Dim strSQLCTE As String
+	Dim strSQLMemorySecurityOff As String
+	Dim strSQLMemorySecurityOn As String
+	Dim RS1 As ResultSet
+	
+	edtSelect_MemSec_On.Text = ""
+	edtSelect_MemSec_Off.Text = ""
+	edtCTE_MemSec_On.Text = ""
+	edtCTE_MemSec_Off.Text = ""
+	
+	edtSelectEncrypted_MemSec_On.Text = ""
+	edtSelectEncrypted_MemSec_Off.Text = ""
+	edtCTEEncrypted_MemSec_On.Text = ""
+	edtCTEEncrypted_MemSec_Off.Text = ""
+	
+	Sleep(0)
+	
+	strSQLMemorySecurityOff = "pragma cipher_memory_security = OFF"
+	strSQLMemorySecurityOn = "pragma cipher_memory_security = ON"
+	strSQLCreate = "create table if not exists random_strings(str string)"
+	strSQLInsert = "insert into random_strings values(?)"
+	strSQLIndex = "create index if not exists idx_random_strings_str on random_strings(str)"
+	strSQLSelect = edtSQL.Text
+	
+	'solves the sudoku as in the SQL
+	strSQLCTE = $"with recursive input(sud) as (values('53..7....6..1.5....98....6.8...6...34..8.3..17...2...6.6....2.....4.9..5....8..79')),
+digits(z, lp) as (values('1', 1) union all select cast(lp + 1 as text), lp + 1 from digits where lp < 9), x(s, ind) as (select sud, instr(sud, '.')
+from input union all select substr(s, 1, ind - 1) || z || substr(s, ind + 1), instr(substr(s, 1, ind - 1) || z || substr(s, ind + 1), '.')
+from x, digits as z where ind > 0 and not exists (select 1 from digits as lp where z.z = substr(s, ((ind - 1) / 9) * 9 + lp, 1) or z.z = 
+substr(s, ((ind - 1) %9) + (lp - 1) * 9 + 1, 1) or z.z = substr(s, (((ind - 1)/3) % 3) * 3 + ((ind - 1) / 27) * 27 + lp + ((lp - 1) / 3) * 6, 1)))
+select s as solution from x where ind = 0 order by s asc"$
+	
+	'memory security on (is default) -----------------------------------
+	'-------------------------------------------------------------------
+	cConn.SQLUnEncrypted.ExecQuery(strSQLMemorySecurityOn)
+	
+	'setup the tables if not present
+	'-------------------------------
+	If cConn.TableExists(cConn.strDBNameUnEncrypted, "random_strings") = False Then
+		cConn.SQLUnEncrypted.ExecNonQuery(strSQLCreate)
+		cConn.SQLUnEncrypted.BeginTransaction
+		For i = 0 To 1000000
+			cConn.SQLUnEncrypted.ExecNonQuery2(strSQLInsert, Array As String(MakeRandomString(10, 97, 122))) '10 random chars, a to z
+		Next
+		cConn.SQLUnEncrypted.ExecNonQuery(strSQLIndex)
+		cConn.SQLUnEncrypted.TransactionSuccessful
+		cConn.SQLUnEncrypted.EndTransaction
+	End If
+
+	If cConn.TableExists(cConn.strDBNameEncrypted, "random_strings") = False Then
+		'encrypted DB
+		cConn.SQLEncrypted.ExecNonQuery(strSQLCreate)
+		cConn.SQLEncrypted.BeginTransaction
+		For i = 0 To 1000000
+			cConn.SQLEncrypted.ExecNonQuery2(strSQLInsert, Array As String(MakeRandomString(10, 97, 122))) '10 random chars, a to z
+		Next
+		cConn.SQLEncrypted.ExecNonQuery(strSQLIndex)
+		cConn.SQLEncrypted.TransactionSuccessful
+		cConn.SQLEncrypted.EndTransaction
+	End If
+	
+	'unencrypted DB
+	'--------------
+	
+	'select ---------------
+	StartSW(0)
+	For i = 0 To 4000
+		RS1 = cConn.SQLUnEncrypted.ExecQuery(strSQLSelect)
+	Next
+	edtSelect_MemSec_On.Text = StopSW(0)
+	'Log("RS1.RowCount: " & RS1.RowCount)
+	RS1.Close
+	Sleep(0)
+
+	
+	'CTE ---------------
+	StartSW(0)
+	For i = 0 To 1500
+		RS1 = cConn.SQLUnEncrypted.ExecQuery(strSQLCTE)
+	Next
+	edtCTE_MemSec_On.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	'encrypted DB
+	'------------
+	cConn.SQLEncrypted.ExecQuery(strSQLMemorySecurityOn)
+	
+	'select ---------------
+	StartSW(0)
+	For i = 0 To 4000
+		RS1 = cConn.SQLEncrypted.ExecQuery(strSQLSelect)
+	Next
+	edtSelectEncrypted_MemSec_On.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	'CTE ---------------
+	StartSW(0)
+	For i = 0 To 1500
+		RS1 = cConn.SQLEncrypted.ExecQuery(strSQLCTE)
+	Next
+	edtCTEEncrypted_MemSec_On.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+'	'--------------------------------------------------------------------
+'	'memory security off ------------------------------------------------
+'	'--------------------------------------------------------------------
+	cConn.SQLUnEncrypted.ExecQuery(strSQLMemorySecurityOff)
+
+	'Unencrypted DB
+	'--------------
+	
+	'select ---------------
+	StartSW(0)
+	For i = 0 To 4000
+		RS1 = cConn.SQLUnEncrypted.ExecQuery(strSQLSelect)
+	Next
+	edtSelect_MemSec_Off.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	'CTE ---------------
+	StartSW(0)
+	For i = 0 To 1500
+		RS1 = cConn.SQLUnEncrypted.ExecQuery(strSQLCTE)
+	Next
+	edtCTE_MemSec_Off.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	'Encrypted DB
+	'--------------
+	cConn.SQLEncrypted.ExecQuery(strSQLMemorySecurityOff)
+	
+	'select ---------------
+	StartSW(0)
+	For i = 0 To 4000
+		RS1 = cConn.SQLEncrypted.ExecQuery(strSQLSelect)
+	Next
+	edtSelectEncrypted_MemSec_Off.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	'CTE ---------------
+	StartSW(0)
+	For i = 0 To 1500
+		RS1 = cConn.SQLEncrypted.ExecQuery(strSQLCTE)
+	Next
+	edtCTEEncrypted_MemSec_Off.Text = StopSW(0)
+	RS1.Close
+	Sleep(0)
+	
+	Starter.kvs.Put("Select SQL", strSQLSelect)
+	
+End Sub
+
+Sub btnDeleteDBs_Click
+	
+	If File.Exists(cConn.strDBFolder, cConn.strDBNameEncrypted) Then
+		File.Delete(cConn.strDBFolder, cConn.strDBNameEncrypted)
+	End If
+	
+	If File.Exists(cConn.strDBFolder, cConn.strDBNameUnEncrypted) Then
+		File.Delete(cConn.strDBFolder, cConn.strDBNameUnEncrypted)
+	End If
+	
+End Sub
+
+Sub MakeRandomString(iLength As Int, iMinChar As Int, iMaxChar As Int) As String  'ignore warning
+
+	Dim s As String
+	Dim i As Int
+    
+	For i = 1 To iLength
+		s = s & Chr(Rnd(iMinChar, iMaxChar))
+	Next
+    
+	Return s
+    
+End Sub
+
+Sub StartSW(iIndex As Int)
+	lStartTime(iIndex) = DateTime.Now
+End Sub
+
+Sub StopSW(iIndex As Int) As Long
+	Return DateTime.Now - lStartTime(iIndex)
+End Sub

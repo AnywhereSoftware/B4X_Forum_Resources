@@ -1,0 +1,150 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200 
+	#MergeLibraries: False	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+	' How to use Select class
+	' Working with select list elements
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+			
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+
+	Selenium.NavigateTo("https://www.selenium.dev/selenium/web/formPage.html")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+	Sleep (2000)
+	SelectOption	
+End Sub
+
+
+
+Sub SelectOption
+	' Select option
+	Dim ElementToSelect As Pnd_WebElement = Selenium.FindByName("selectomatic")
+	Dim SelectElement As Pnd_Select
+	SelectElement.Initialize(ElementToSelect)
+	
+	Dim TwoElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value=two]")
+	Dim FourElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value=four]")
+	Dim CountElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value='still learning how to count, apparently']")
+	
+	SelectElement.SelectByVisibleText("Four")
+	Log ("FourElement.IsSelected: " & FourElement.IsSelected)
+	Sleep (1000)
+	
+	SelectElement.SelectByValue("two")
+	Log ("TwoElement.IsSelected: " & TwoElement.IsSelected)
+	Sleep (1000)
+	
+	SelectElement.selectByIndex(3)
+	Log ("CountElement.IsSelected: " & CountElement.IsSelected)
+	Sleep (2000)
+	
+	SelectMultipleOption
+End Sub
+
+
+Sub SelectMultipleOption
+	Dim ElementToSelect As Pnd_WebElement = Selenium.FindByName("multi")
+	Dim SelectElement As Pnd_Select
+	SelectElement.Initialize(ElementToSelect)
+	
+	
+	Dim HamElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value=ham]")
+	Dim GravyElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value='onion gravy']")
+	Dim EggElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value=eggs]")
+	Dim SausageElement As Pnd_WebElement = Selenium.FindByCssSelector("option[value='sausages']")
+	
+	Dim OptionElementsList As List = ElementToSelect.FindByTagNameList("option")
+	Dim OptionList As List = SelectElement.GetOptions
+	
+	For Each Element As Pnd_WebElement In OptionElementsList
+		Log("OptionElementsList: " & Element.GetText)
+	Next
+			
+	For Each Element As Pnd_WebElement In OptionList
+		Log("OptionList: " & Element.GetText)
+	Next
+		
+	Dim SelectedOptionList As List = SelectElement.getAllSelectedOptions
+	Dim ExpectedSelection As List
+	ExpectedSelection.Initialize
+	ExpectedSelection.Add(EggElement)
+	ExpectedSelection.Add(SausageElement)
+	
+	For Each Element As Pnd_WebElement In SelectedOptionList
+		Log("SelectedOptionList: " & Element.GetText)
+	Next
+	
+	For Each Element As Pnd_WebElement In ExpectedSelection
+		Log("ExpectedSelection: " & Element.GetText)
+	Next
+	
+	
+	SelectElement.SelectByValue("ham")
+	Sleep(1000)
+	SelectElement.SelectByValue("onion gravy")
+	Sleep(1000)
+	Log ("HamElement.IsSelected: " & HamElement.IsSelected)
+	Log ("GravyElement.IsSelected: " & GravyElement.IsSelected)
+	
+	SelectElement.DeselectByValue("eggs")
+	Sleep(1000)
+	SelectElement.deselectByValue("sausages")
+	Sleep(1000)
+	Log ("EggElement.IsSelected: " & EggElement.IsSelected)
+	Log ("SausageElement.IsSelected: " & SausageElement.IsSelected)
+	Sleep (2000)
+	
+	DisabledOption
+End Sub
+
+
+Sub DisabledOption
+	Dim ElementToSelect As Pnd_WebElement = Selenium.FindByName("single_disabled")
+	Dim SelectElement As Pnd_Select
+	SelectElement.Initialize(ElementToSelect)
+	
+	Try
+		SelectElement.SelectByValue("disabled") ' you can't select disabled element
+	Catch
+		Log(LastException) ' java.lang.UnsupportedOperationException: You may not select a disabled option
+	End Try
+			
+	Sleep(2000)
+	Selenium.Quit
+	Sleep(1000)
+	ExitApplication
+End Sub

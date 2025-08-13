@@ -1,0 +1,274 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+File2=rose.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Module1=CanvasExt
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	
+	#LibraryName: jCanvasExt
+	#LibraryVersion: 1.1
+	#LibraryAuthor: Klaus CHRISTL (klaus)
+#End Region
+
+'The demo program uses two Canvases, cvsBackground for the background and cvsTest for the drawing
+'cvsTestExt extends the drawing function of cvsTest.
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private cvsBackground, cvsTest As Canvas
+	Private bmpBackground As Image
+	Private cvsTestExt As CanvasExt
+	Private lblX, lblY As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main") 'Load the layout file.
+	MainForm.Show
+	
+	bmpBackground.Initialize(File.DirAssets, "rose.jpg")
+	cvsBackground.DrawImage(bmpBackground, 0, 0, cvsBackground.Width, cvsBackground.Height)
+	
+	cvsTestExt.Initialize(cvsTest)
+	
+	cvsTest.DrawRect(0, 0, cvsTest.Width, cvsTest.Height, fx.Colors.Red, False, 2)
+'	cvsTest.DrawRect(0, 0, 100, 20, fx.Colors.Red, True, 2)
+	
+	Private g As String
+	g = "linear-gradient(from 0px 0px to 500px 500px, #00ff00 0%, 0xff0000 50%, 0x1122ff40 100%)"
+'	cvsTest.DrawLine(0, 0, cvsTest.Width, cvsTest.Height, fx.Colors.Red, 2)
+	cvsTest.DrawLine(0, 0, cvsTest.Width, cvsTest.Height, cvsTestExt.GetPaint(g), 5)
+	
+	cvsTestExt.DrawRectRounded(200, 50, 100, 100, 50, 25, fx.Colors.Blue, False, 2)
+
+	cvsTestExt.DrawText3("Amg", 10, 80, fx.CreateFont("Arial", 40, False, False), fx.Colors.Red, "LEFT", "TOP", True)
+	DrawCross(10, 80, fx.Colors.Black)
+
+	cvsTestExt.DrawText3("Amg", 10, 140, fx.CreateFont("Arial", 20, False, False), fx.Colors.Red, "LEFT", "CENTER", True)
+	DrawCross(10, 140, fx.Colors.Black)
+
+	cvsTestExt.DrawText3("Amg", 10, 180, fx.CreateFont("Arial", 20, False, False), fx.Colors.Red, "LEFT", "BASELINE", True)
+	DrawCross(10, 180, fx.Colors.Black)
+	
+	cvsTestExt.DrawText3("Amg", 10, 220, fx.CreateFont("Arial", 20, False, False), fx.Colors.Red, "LEFT", "BOTTOM", True)
+	DrawCross(10, 220, fx.Colors.Black)
+
+	Private Dashes(4)	As Double
+	Dashes = Array As Double(15, 5, 35, 10)
+	'You can set line properties with the extended function and draw with 'standard' functions
+'	cvsTestExt.SetLineDashes(Dashes)
+'	cvsTest.DrawLine(0, 20, cvsTest.Width, 20, fx.Colors.Red, 2)
+'	cvsTestExt.SetLineDashOffset(-10)	
+'	cvsTest.DrawLine(0, 30, cvsTest.Width, 30, fx.Colors.Red, 2)
+'	cvsTestExt.SetLineDashOffset(10)	
+'	cvsTest.DrawLine(0, 40, cvsTest.Width, 40, fx.Colors.Red, 2)	
+'	'Remove dashes for further lines drawings
+'	Private NoDashes(1)	As Double
+'	NoDashes(0) = 0
+'	cvsTestExt.SetLineDashes(NoDashes)	'removes the dashes for further lines
+
+	'Or use the extended functions
+	cvsTestExt.DrawDashedLine(0, 10, cvsTest.Width, 10, fx.Colors.Red, 2, Dashes, 0)
+	cvsTestExt.DrawDashedLine(0, 20, cvsTest.Width, 20, fx.Colors.Red, 2, Dashes, -10)
+	cvsTestExt.DrawDashedLine(0, 30, cvsTest.Width, 30, fx.Colors.Red, 2, Dashes, 10)
+	
+
+	cvsTestExt.DrawOval(400, 260, 160, 80, fx.Colors.Blue, True, 4)
+	
+	cvsTestExt.DrawArc(300, 300, 200, 200, -45, 80, "OPEN", fx.Colors.Red, True, 4)
+	cvsTestExt.DrawArc2(400, 400, 100, -45, 80, "ROUND", fx.Colors.Green, False, 2)
+
+	cvsTest.DrawCircle(60, 300, 40, fx.Colors.Blue, False, 3)
+	
+	Private x(4), y(4) As Double
+	x(0) = 350
+	y(0) = 160
+	x(1) = 450
+	y(1) = 220
+	x(2) = 330
+	y(2) = 260
+	x(3) = 300
+	y(3) = 200
+	cvsTestExt.DrawPolygon(x, y, 4, fx.Colors.Green, True, 2)
+'	cvsTestExt.DrawPolygon(x, y, 4, fx.Colors.Blue, False, 10)	' draws all 4 points
+'	cvsTestExt.DrawPolygon(x, y, 3, fx.Colors.Blue, False, 10)	' draws only 3 points
+'	cvsTestExt.DrawPolyline(x, y, 4, fx.Colors.Green, False, 10)
+'	cvsTestExt.SetMiterLimit(2)
+'	cvsTestExt.DrawPolyline2(x, y, 4, fx.Colors.Green, 10, "SQUARE", "MITER")
+'	cvsTestExt.DrawPolyline2(x, y, 4, fx.Colors.Green, 10, "SQUARE", "BEVEL")
+'	cvsTestExt.DrawPolyline2(x, y, 4, fx.Colors.ARGB(120, 255, 0, 0), 10, "SQUARE", "ROUND")
+'	cvsTestExt.DrawPolyline2(x, y, 4, fx.Colors.Green, 10, "ROUND", "ROUND")
+'	cvsTestExt.DrawPolyline(x, y, 4, fx.Colors.Cyan, 1)
+
+	cvsTestExt.DrawRect(400, 50, 150, 100, fx.Colors.Blue, True, 4)
+	
+	DrawLines
+	DrawPath1
+	DrawPath2
+	DrawPath3
+	DrawPath4
+	DrawPath5
+	DrawPath6
+End Sub
+
+Private Sub DrawLines
+	'basic draw line functions
+	cvsTestExt.SetStroke(fx.Colors.Green)			'sets the line color
+	cvsTestExt.SetLineWidth(10)								'sets the line width
+	
+	cvsTestExt.SetLineCap("SQUARE")						'sets the line cap to SQUARE
+	cvsTestExt.strokeLine(50, 400, 200, 400)	'draws the line
+	
+	cvsTestExt.SetLineCap("BUTT")							'sets the line cap to BUTT
+	cvsTestExt.strokeLine(50, 450, 200, 450)	'draws the line
+	
+	cvsTestExt.SetLineCap("ROUND")						'sets the line cap to ROUND
+	cvsTestExt.strokeLine(50, 500, 200, 500)	'draws the line
+	
+	'draws small lines in the lines drawn above to show the different Cap values
+	'we draw these line here because the LineWidth is changed. 
+	cvsTest.DrawLine(50, 400, 200, 400, fx.Colors.Red, 1)
+	cvsTest.DrawLine(50, 450, 200, 450, fx.Colors.Red, 1)
+	cvsTest.DrawLine(50, 500, 200, 500, fx.Colors.Red, 1)
+End Sub
+
+Private Sub DrawPath1
+	cvsTestExt.SetStroke(fx.Colors.Blue)
+	cvsTestExt.SetFill(fx.Colors.Red)
+	cvsTestExt.SetLineWidth(3)
+	cvsTestExt.beginPath
+	cvsTestExt.moveTo(400, 450)
+	cvsTestExt.lineTo(450, 500)
+	cvsTestExt.arcTo(410, 510, 380, 500, 100)
+'	cvsTestExt.lineTo(380, 500)
+	cvsTestExt.lineTo(400, 450)	'we need to add the last point = to the first one to close the polygon
+	cvsTestExt.fill							'fills the path
+	cvsTestExt.stroke						'draws the perimeter
+	cvsTestExt.closePath	
+End Sub
+
+Private Sub DrawPath2
+	cvsTestExt.SetStroke(fx.Colors.Blue)
+	cvsTestExt.SetFill(fx.Colors.Red)
+	cvsTestExt.SetLineWidth(3)
+	cvsTestExt.beginPath
+	cvsTestExt.moveTo(130, 250)
+	cvsTestExt.bezierCurveTo(230, 250, 230, 350, 130, 350)
+	cvsTestExt.lineTo(130, 250)
+	cvsTestExt.fill
+	cvsTestExt.stroke
+	cvsTestExt.closePath	
+End Sub
+
+Private Sub DrawPath3
+	cvsTestExt.SetStroke(fx.Colors.Blue)
+	cvsTestExt.SetFill(fx.Colors.Red)
+	cvsTestExt.SetLineWidth(3)
+	cvsTestExt.appendSVGPath("M 250 400 L 350 400 L 300 500 Z")  
+	cvsTestExt.stroke	
+	cvsTestExt.closePath
+End Sub
+
+Private Sub DrawPath4
+	cvsTestExt.SetFill(fx.Colors.Yellow)
+	cvsTestExt.SetLineWidth(2)
+	cvsTestExt.beginPath
+	cvsTestExt.moveTo(240, 65)
+	cvsTestExt.lineTo(260, 65)
+	cvsTestExt.arc(260, 90, 25, 25, 90, -cPI * 25)
+	cvsTestExt.lineTo(285, 100)
+	cvsTestExt.arc(260, 100, 25, 25, 0, -cPI * 25)
+	cvsTestExt.lineTo(240, 125)
+	cvsTestExt.arc(240, 100, 25, 25, -90, -cPI * 25)
+	cvsTestExt.lineTo(215, 90)
+	cvsTestExt.arc(240, 90, 25, 25, 170, -cPI * 25) 'it should be 180, but it works better with 170
+	cvsTestExt.fill
+	cvsTestExt.stroke
+End Sub
+
+Private Sub DrawPath5
+	cvsTestExt.SetStroke(fx.Colors.Blue)
+	cvsTestExt.SetFill(fx.Colors.Yellow)
+	cvsTestExt.SetLineWidth(3)
+	cvsTestExt.beginPath
+	cvsTestExt.moveTo(230, 250)
+	cvsTestExt.quadraticCurveTo(380, 300, 230, 350)
+	cvsTestExt.lineTo(230, 250)
+	cvsTestExt.fill
+	cvsTestExt.stroke
+	'when the line below is commented this path remains as he current path
+	'	cvsTestExt.closePath	
+End Sub
+
+Private Sub DrawPath6
+	cvsTestExt.SetStroke(fx.Colors.Blue)
+	cvsTestExt.SetLineWidth(10)
+	cvsTestExt.beginPath
+	cvsTestExt.moveTo(400, 180)
+	cvsTestExt.lineTo(500, 180)
+	cvsTestExt.lineTo(500, 230)
+	cvsTestExt.lineTo(400, 230)
+	cvsTestExt.lineTo(400, 180)
+	cvsTestExt.stroke
+	
+	cvsTestExt.SetStroke(fx.Colors.Yellow)
+	cvsTestExt.SetLineWidth(1)
+	cvsTestExt.stroke
+End Sub
+
+'Draws a cross at the given coordinates with the given color
+'x any y = coordinates in pixels
+'Color = color of the two lines
+'Code example: <code>
+'DrawCross(20, 50, fx.Colors.Red)</code>
+Private Sub DrawCross(x As Int, y As Int, Paint As Paint)
+	Private d = 5 As Int
+	
+	cvsTest.DrawLine(x - d, y, x + d, y, Paint, 1)
+	cvsTest.DrawLine(x, y - d, x, y + d, Paint, 1)
+End Sub
+
+'Changes the mouse cursor when the mouse is in the current path 
+Private Sub cvsTest_MouseMoved (EventData As MouseEvent)
+	'The long code
+	Private isIN As Boolean
+	
+	isIN = cvsTestExt.isPointInPath(EventData.X, EventData.Y)
+	
+	If isIN Then
+		MainForm.RootPane.MouseCursor = fx.Cursors.HAND
+	Else
+		MainForm.RootPane.MouseCursor = fx.Cursors.DEFAULT
+	End If
+	lblX.Text = EventData.X
+	lblY.Text = EventData.Y
+End Sub
+
+'If you click in the current path, its color will be changed
+Private Sub cvsTest_MouseClicked (EventData As MouseEvent)
+	'The short code
+	If cvsTestExt.isPointInPath(EventData.X, EventData.Y) Then
+		cvsTestExt.SetFill(fx.Colors.RGB(Rnd(0, 256), Rnd(0, 256), Rnd(0, 256)))
+		cvsTestExt.fill
+	End If
+End Sub
+
+Sub cbxShowBackground_CheckedChange(Checked As Boolean)
+	cvsBackground.Visible = Checked
+End Sub
+

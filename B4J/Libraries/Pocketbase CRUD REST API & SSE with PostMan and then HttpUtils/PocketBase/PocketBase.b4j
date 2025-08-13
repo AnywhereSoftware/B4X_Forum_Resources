@@ -1,0 +1,180 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jokhttputils2
+Library6=json
+Library7=jstringutils
+Library8=jxui
+Module1=jPocketBase
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private btnCreateUser As Button
+	Private Label1 As Label
+	Private Label2 As Label
+	Private txtEmail As TextField
+	Private txtpassword As TextField
+	Private Label3 As Label
+	Private txtConfirmPassword As TextField
+	Private pb As jPocketBase
+	Private Label4 As Label
+	Private txtOutput As TextArea
+	Private Label5 As Label
+	Private Label6 As Label
+	Private txtName As TextField
+	Private txtUsername As TextField
+	Private btnAuthViaEmail As Button
+	Private btnrequestPasswordReset As Button
+	Private Label7 As Label
+	Private Label8 As Label
+	Private txtID As TextField
+	Private txtToken As TextField
+	Private btnUpdateUser As Button
+	Private btnDeleteBy As Button
+	Private btnGetAll As Button
+	Private btnGetOne As Button
+	Private btnConnectSSE As Button
+	Private btnSubscribe As Button
+	Private Label9 As Label
+	Private txtClientID As TextField
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	'
+	pb.Initialize(Me, "pb", "http://127.0.0.1:8090/api")
+	'
+	txtEmail.Text = "user1@users.com"
+	txtpassword.Text = "password123!"
+	txtConfirmPassword.Text = "password123!"
+	txtUsername.Text = "mashiane"
+	txtName.text = "Anele Mbanga (Mashy)"
+	txtOutput.Text = ""
+	txtID.Text = ""
+	txtToken.Text = ""
+End Sub
+
+Private Sub btnCreateUser_Click
+	Dim u As Map = CreateMap()
+	u.Put("email", txtEmail.text)
+	u.Put("password", txtpassword.Text)
+	u.Put("passwordConfirm", txtConfirmPassword.Text)
+	u.Put("username", txtUsername.Text)
+	u.Put("name", txtName.Text)
+	Wait For(pb.Create("users", u)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtID.Text = Result.getdefault("id", "")
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub pb_SSE (Action As String, Response As Map)
+	Log(Action)
+	Log(Response)
+End Sub
+
+Private Sub pb_Connected (Status As Boolean)
+	txtOutput.Text = $"Connected: ${Status}"$
+End Sub
+
+Private Sub pb_ClientToken (Response As String)
+	btnConnectSSE.Text = "Connect2SSE"
+	txtOutput.Text = $"Client ID: ${Response}"$
+	txtClientID.Text = Response
+End Sub
+
+Private Sub btnAuthViaEmail_Click
+	Dim u As Map = CreateMap()
+	u.Put("identity", txtEmail.text)
+	u.Put("password", txtpassword.Text)
+	Wait For(pb.authWithPassword(u)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+	Dim record As Map = Result.Get("record")
+	Dim token As String = Result.GetDefault("token","")
+	txtToken.Text = token
+	txtID.Text = record.GetDefault("id","")
+End Sub
+
+
+Private Sub btnrequestPasswordReset_Click
+	Dim u As Map = CreateMap()
+	u.Put("email", txtEmail.text)
+	Wait For(pb.requestPasswordReset(u)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub btnUpdateUser_Click
+	If txtID.Text = "" Then Return
+	'
+	Dim u As Map = CreateMap()
+	u.Put("email", txtEmail.text)
+	u.Put("username", txtUsername.text)
+	u.Put("name", txtName.text)
+	Wait For(pb.Update("users", txtID.Text, u)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub btnGetOne_Click
+	If txtID.Text = "" Then Return
+	'
+	Wait For(pb.Read("users", txtID.Text)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub btnGetAll_Click
+	Wait For(pb.ReadPage("users", 1)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub btnDeleteBy_Click
+	If txtID.Text = "" Then Return
+	'
+	Wait For(pb.Delete("users", txtID.Text)) Complete (Result As Map)
+	Dim pjson As String = pb.Map2JsonPretty(Result)
+	txtOutput.Text = pjson
+End Sub
+
+Private Sub btnConnectSSE_Click
+	btnConnectSSE.Text = "Please wait..."
+	txtClientID.Text = ""
+	Wait For(pb.Connect2SSE) Complete (Result As Boolean)
+End Sub
+
+
+Private Sub btnSubscribe_Click
+	If txtClientID.Text = "" Then Return
+	'
+	Wait For(pb.Subscribe(Array("users"))) Complete (Result As Boolean)
+	If Result Then
+		txtOutput.Text = "Subscription successful"
+	Else
+		txtOutput.Text = "Subscription un-successful"
+	End If		
+End Sub
+
+Private Sub pb_Disconnected (Status As Boolean)
+	txtOutput.Text = $"Disconnected: ${Status}"$
+End Sub

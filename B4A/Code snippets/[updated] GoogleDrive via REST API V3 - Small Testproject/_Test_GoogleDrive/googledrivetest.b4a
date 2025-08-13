@@ -1,0 +1,276 @@
+﻿Build1=Default,b4a.example.gdt
+File1=1.bal
+File2=testdata2.json
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=json
+Library3=okhttp
+Library4=phone
+Library5=randomaccessfile
+Library6=stringutils
+Library7=okhttputils2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="20" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddActivityText(Main, ~\n~  <intent-filter>~\n~        <action android:name="android.intent.action.VIEW" />~\n~        <category android:name="android.intent.category.DEFAULT" />~\n~        <category android:name="android.intent.category.BROWSABLE" />~\n~        <data android:scheme="$PACKAGE$" />~\n~    </intent-filter>~\n~	)
+Module1=GoogleDrive
+Module2=GoogleOAuth2
+Module3=Starter
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=3
+Version=12.5
+@EndOfDesignText@
+'
+' This project is from B4X -- >  https://www.b4x.com/android/forum/threads/googledrive-via-rest-api-v3-small-testproject.95778/
+'
+#Region  Project Attributes 
+	#ApplicationLabel: aaB4A GDrive tester
+	#VersionCode: 19
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+
+	##Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+#region ---- INFO ----
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+' Previous Info sources on B4X (sorted by date DEC)
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+'	 2018-06-01, Erel, OAUTH2, v2.10		--> https://www.b4x.com/android/forum/threads/class-b4x-google-oauth2.79426/#content
+'	 2017-08-26, mw71, testconnect, 		--> https://www.b4x.com/android/forum/threads/problems-with-oauth.80174/page-2#post-526872'
+'	 2017-08-18, mw71, googledrive_playing 	--> https://www.b4x.com/android/forum/threads/problems-with-oauth.80174/#post-524978
+'	 2017-06-20, mw71, Testconnect 			--> https://www.b4x.com/android/forum/threads/googledrive-via-api-v3.80775/#post-512176
+'	 2017-06-18, mw71, GDrive via APIv3 	--> https://www.b4x.com/android/forum/threads/googledrive-via-api-v3.80775/
+'	 2017-06-04, mw71, upload File 			--> https://www.b4x.com/android/forum/threads/http-patch-request.80261/#post-508444
+' 
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+' Info pages
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+'
+' "Daily Limit for Unauthenticated Use Exceeded. Continued use requires signup." --> http://www.daimto.com/google-developer-console-create-public-api-key/
+' 
+' 
+'   OAuth process --> https://developers.google.com/identity/protocols/OAuth2?hl=en
+'	OAuth 2.0 for Mobile --> https://developers.google.com/identity/protocols/OAuth2InstalledApp
+'
+'   API console --> https://code.google.com/apis/console
+'
+'   Google Drive API, REST, list,	--> V3 -->  https://developers.google.com/drive/api/v3/reference/files/list
+'   Google Drive Reference --> https://developers.google.com/drive/api/v3/reference/files/create#auth
+' 	Google Drive Guide --> https://developers.google.com/drive/api/v3/manage-uploads
+'   Google drive API --> https://console.developers.google.com/apis/library/drive.googleapis.com?filter=category:gsuite&project=meigekarten
+'   Google drive API explorer --> https://developers.google.com/apis-explorer/?hl=en_GB#p/drive/v3/
+'
+'	RFC 339 format --> https://de.infobyip.com/epochtimeconverter.php
+' 	Oauth Client Credentials Grant --> http://oauthlib.readthedocs.io/en/latest/oauth2/grants/credentials.html
+'
+'   Daimto blog --> http://www.daimto.com/category/googledrive/
+'					https://www.daimto.com/google-drive-authentication-c/
+'					http://www.daimto.com/google-development-beginners/
+'
+'					"Private data is data that is owned by a user".  "We use Oauth2 to access private data."
+'					"The application should _____store_the_refresh_token_for_future use_____ and use the _____access_token_to_access_a_Google_API_____. 
+'					 Once the access token expires, the _____application_uses_the refresh_token_to_obtain_a_new_one_____."
+'
+'
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+' Scopes for "files":
+' ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- ~~~-- 
+'			https://www.googleapis.com/auth/drive
+'			https://www.googleapis.com/auth/drive.appdata
+'			https://www.googleapis.com/auth/drive.file
+'			https://www.googleapis.com/auth/drive.metadata
+'			https://www.googleapis.com/auth/drive.metadata.readonly
+'			https://www.googleapis.com/auth/drive.photos.readonly
+'			https://www.googleapis.com/auth/drive.readonly 
+'
+#end region
+'
+Sub Process_Globals
+	'
+	' #### NEVER STORE THIS IN PRODUCTION SOURCECODE #############################################################
+	
+	' You get this data from here --> https://console.cloud.google.com/apis/credentials
+	
+	Public ClientIdOauth As String  = "xxxxxxYOURKEYxxxxxxx" ' Looks like this: 12345678-324kj34hlk23j4hl23khl233k4jh234.apps.googleusercontent.com"
+	Public ClientSecret As String   = "" ' Not needed now, but you can get it if you choose Application type "Client ID for Web application" in "Create API Credential"
+	' #############################################################################################################
+	'
+	Private GD As GoogleDrive
+End Sub
+Sub Globals
+	Private btnCreaFolder As Button
+	Private btnDownload As Button
+	Private btnSearch As Button
+	Private btnStart As Button
+	Private btnUpload As Button
+	Private EditText1 As EditText
+	Private EditText2 As EditText
+	Private edtFileToDownload As EditText
+	Private edtFolderToCreate As EditText
+	Private Label1 As Label
+	Private Label2 As Label
+	Private Label3 As Label
+	Private Label4 As Label
+	Private ListView1 As ListView
+	Private Label5 As Label
+End Sub
+' ------------------------------------------------------------------------------
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	btnUpload.Enabled = False
+End Sub
+Sub Activity_Resume
+	If GD.IsInitialized Then
+		GD.oauth2.CallFromResume(Activity.GetStartingIntent)
+	End If
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+' ------------------------------------------------------------------------------
+Sub btnStart_Click As ResumableSub
+	Log("#-Sub btnStart_Click -----------------------------------")
+	Label1.Text = "(Trying to connect to Google Drive...)"
+	GD.Initialize(Me, "GD", ClientIdOauth, ClientSecret) ', AppApiKey)
+	GD.ConnectToDrive
+	wait for GD_Connected(mapRet As Map)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	'Log("#-  x129, GD_Connected, mapRet=" & mapToPrettyString(mapRet) )
+	Label1.Text = "Access_token= " & mapRet.GetDefault("access_token", "?")
+	'
+	GD.ShowFileList("")
+	wait for GD_FileListResult(lstFiles As List)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	Log("#-GD_FileListResult, lstFiles=" & lstToPrettyString(lstFiles) )
+	ListView1.Clear
+	Dim lblX As Label
+	lblX = ListView1.SingleLineLayout.Label
+	lblX.TextSize = 12
+	lblX.TextColor = Colors.Green
+	For i=0 To lstFiles.Size -1
+		ListView1.AddSingleLine(lstFiles.Get(i))
+	Next
+	
+	btnCreaFolder.Enabled = True
+	btnUpload.Enabled = True
+	btnDownload.Enabled = True
+	btnSearch.Enabled = True
+	'
+	EditText1.Text = "Testfolder_1533394136277"
+	EditText2.Text = "testdatafile4"
+	edtFolderToCreate.Text = "Testfolder_01"
+	'
+	Return Null
+End Sub
+' ------------------------------------------------------------------------------
+Sub btnCreaFolder_Click As ResumableSub
+	Log("#-")
+	Log("#- ---*** ---*** ---*** ---*** ---*** ---*** ---*** ---*** ")
+	Log("#-Sub btnCreaFolder_Click")
+	Dim strFolderParentID As String = "" ' Try a different folder
+	Label3.Text = $"(Trying to create folder ${edtFolderToCreate.Text})"$
+	GD.CreateFolder(edtFolderToCreate.Text, strFolderParentID)
+	wait for GD_FolderCreated(strFolderId As String)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	Label3.Text = "FileId= " & strFolderId
+	Log("#-  x178, strFileId=" & strFolderId)
+	Return Null
+End Sub
+' ------------------------------------------------------------------------------
+Sub btnUpload_Click As ResumableSub
+	Log("#-")
+	Log("#- ---*** ---*** ---*** ---*** ---*** ---*** ---*** ---*** ")
+	Log("#-Sub btnUpload_Click")
+	Dim strFolderParentID As String = ""
+	Dim strFilenameInGdrive As String = "testdatafile4"
+	EditText2.Text = strFilenameInGdrive
+	Dim strFileToUpload As String     = "testdata2.json"
+	Label2.Text = $"(Trying to upload ${strFileToUpload})"$
+	GD.UploadFile("", File.DirAssets, strFileToUpload, strFolderParentID, strFilenameInGdrive)
+	wait for GD_FileUploadDone(strFileId As String)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	Label2.Text = "FileId= " & strFileId
+	Log("#-  x130, strFileId=" & strFileId)
+	
+	edtFileToDownload.Text = strFileId
+	
+	Return Null
+End Sub
+' ------------------------------------------------------------------------------
+Sub btnSearch_Click As ResumableSub
+	Log("#-")
+	Log("#- ---*** ---*** ---*** ---*** ---*** ---*** ---*** ---*** ")
+	Log("#-Sub btnSearch_Click FILE")
+	Label4.Text = $"(Trying to search for ${EditText2.Text.Trim})"$
+	GD.SearchForFileID(EditText2.Text.Trim, "")
+	wait for GD_FileFound(strFileId As String)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	Label4.Text = "FileId= " & strFileId
+	Log("#-  x170, strFileId=" & strFileId)
+	Return Null
+End Sub
+'Sub btnSearch_Click As ResumableSub
+'	Log("#-")
+'	Log("#- ---*** ---*** ---*** ---*** ---*** ---*** ---*** ---*** ")
+'	Log("#-Sub btnSearch_Click FOLDER")
+'	Label4.Text = $"(Trying to search for ${EditText1.Text.Trim})"$
+'	GD.SearchForFolderId(EditText1.Text.Trim, "")
+'	wait for GD_FolderFound(strFolderId As String)
+'	' ww~~-- ww~~-- ────────────────────
+'	'
+'	Label4.Text = "strFolderId= " & strFolderId
+'	Log("#-  x202, strFolderId=" & strFolderId)
+'	Return Null
+'End Sub
+' ------------------------------------------------------------------------------
+Sub btnDownload_Click As ResumableSub
+	Log("#-")
+	Log("#- ---*** ---*** ---*** ---*** ---*** ---*** ---*** ---*** ")
+	Log("#-Sub btnDownload_Click")
+	
+	Label5.Text = $"(Trying to download ${edtFileToDownload.Text.Trim})"$
+	GD.DownloadFile(edtFileToDownload.Text.Trim, File.DirDefaultExternal, "aaa_file_" & edtFileToDownload.Text.Trim)
+	wait for GD_FileDownloaded(strRet As String)
+	' ww~~-- ww~~-- ────────────────────
+	'
+	Label5.Text = "strRet= " & strRet
+	Log("#-  x203, strRet=" & strRet)
+	Return Null
+End Sub
+' ------------------------------------------------------------------------------
+'
+'
+' Just for development
+'Sub mapToPrettyString(mapX As Map) As String
+'	Dim jg As JSONGenerator
+'	Try
+'		jg.Initialize(mapX)
+'	Catch
+'		Return "(empty)"
+'	End Try
+'	Return CRLF & jg.ToPrettyString(4)
+'End Sub
+Sub lstToPrettyString(lstX As List) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(CRLF).Append("-  -  -  -  -  -  ").Append(CRLF)
+	For i=0 To lstX.Size -1
+		Dim x As Object = lstX.Get(i)
+		If x Is String Then
+			sb.Append("  --> ").Append(i).Append(" = ").Append(x).Append(CRLF)
+		Else
+			sb.Append("  --> ").Append(i).Append(" = ").Append(" (some object) ").Append(CRLF)
+		End If
+	Next
+	sb.Append("-  -  -  -  -  -  ").Append(CRLF)
+	Return sb.ToString
+End Sub

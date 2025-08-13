@@ -1,0 +1,214 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Sketch To demonstrate smooth (anti-aliased) graphics functions:
+'// Smooth graphics result in less pixel resolution jaggedness.
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private SPR As TFT_eSprite
+	Private DEG2RAD As Double = 0.0174532925
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	Log("TFT Booting...")
+	
+	TFTid = TFT.Initialize(-1,-1)	
+  '// Initialise the screen
+	TFT.begin(0xFF)
+	SPR.Initialize(TFTid)
+
+  '// Ideally set orientation For good viewing angle range because
+  '// the anti-aliasing effectiveness varies with screen viewing angle
+  TFT.setRotation(0)
+
+  TFT.fillScreen(TFT.TFT_BLACK)
+
+  '// Small sprite For spot demo
+  SPR.createSprite(23, 23,1)
+  AddLooper("LocalLoop")
+End Sub
+
+'// =========================================================================
+'// Loop
+'// =========================================================================
+Sub LocalLoop
+  '// drawSpot is For small anti-aliased circles, coordinates And radius are
+  '// floating point to allow sub-pixel positioning (large circles will
+  '// be slow To draw). Use fillSmoothCircle() For large circles.
+  '// In this Case black is the background colour For the anti-aliasing
+  Dim x As Double = 10.5
+  Dim y As Double = 10.5
+  Dim r As Double = 8.6
+  TFT.drawSpot(x, y, r, TFT.TFT_WHITE, TFT.TFT_BLACK)
+
+  '// Fill sprite with a colour
+  SPR.fillSprite(TFT.TFT_RED)
+  '// Draw spot in sprite, the background colour is omitted so function
+  '// reads background colour For aliasing. (To use this method with direct write
+  '// To TFT (TFT.drawSpot...) requires the capability To read data from the TFT!)
+  SPR.drawSpot(x, y, r, TFT.TFT_WHITE, 0x00FFFFFF)
+  SPR.pushSprite(21, 0)
+
+
+  '// Draw a segmented ring meter Type display
+  '// Centre of screen
+  Dim cx As Int = TFT.width()  / 2
+  Dim cy As Int = TFT.height() / 2
+
+  '// Inner And outer radius of ring
+  Dim r1 As Double = Min(cx, cy) - 40.0
+  Dim r2 As Double = Min(cx, cy) - 10.0
+
+  '// Inner And outer line width
+  Dim w1 As Int = r1 / 25
+  Dim w2 As Int = r2 / 20
+
+  '// The following will be updated by the getcoord function
+  Dim pxy(4) As Double 
+	pxy(0) = 0.0 'px1
+	pxy(1) = 0.0 'py1
+	pxy(2) = 0.0 'px2
+	pxy(3) = 0.0 'py2
+
+  '// Wedge line function, an anti-aliased wide line between 2 points, with different
+  '// line widths at the two ends. Background colour is black.
+  For angle = -130 To 130 Step 10
+'    getcoord(cx, cy, &px1, &py1, &px2, &py2, r1, r2, angle)
+	getcoord(cx, cy, pxy, r1, r2, angle)
+    Dim colour As UInt = rainbow(MapRange(angle, -130, 130, 0, 127))
+    If angle > 45 Then colour = TFT.TFT_DARKGREY
+    TFT.drawWedgeLine(pxy(0), pxy(1), pxy(2), pxy(3), w1, w2, colour, TFT.TFT_BLACK)
+  Next
+
+  '// Smooth dark red filled circle
+  TFT.fillSmoothCircle(cx, cy, r1 - 8, TFT.TFT_MAROON, TFT.TFT_BLACK)
+
+  '// Draw a white dial pointer using wedge line function
+  getcoord(cx, cy, pxy, 0, r1 - 10, 45)
+  '// Magenta wedge line pointer on red background
+  '// Line tapers from radius 5 To zero
+  TFT.drawWedgeLine(cx, cy, pxy(2), pxy(3), 5, 0, TFT.TFT_WHITE, TFT.TFT_MAROON)
+
+  Delay(5000)
+
+  '// Test wideLine function
+  TFT.fillScreen(TFT.TFT_BLACK)
+
+  '// Line width
+  Dim wd As Int = 5
+
+  '// Screen limits
+  Dim w As Int= TFT.width() - wd
+  Dim h As Int= TFT.height() - wd
+
+  '// Line end coords
+  Dim x1 As Int= w - 1
+  Dim x2 As Int= w - 1
+  Dim y1 As Int= h - 1
+  Dim y2 As Int= wd
+
+  For x2 = wd To w Step (wd * 3)
+  	 TFT.drawWideLine(x1, y1, x2, y2, wd, TFT.TFT_WHITE, TFT.TFT_BLACK)
+  Next
+
+  x2 = wd
+  For y2 = wd To h Step (wd * 4) 
+  	TFT.drawWideLine(x1, y1, x2, y2, wd, TFT.TFT_WHITE, TFT.TFT_BLACK)
+Next
+
+  Delay(5000)
+
+  '// Demo filled smooth rounded rectangle
+  TFT.fillScreen(TFT.TFT_BLACK)
+
+  x1 = 30
+  y1 = 30
+  w = TFT.width() - 2 * x1
+  h = TFT.height() - 2 * y1
+  Dim rad As Int = 30
+
+  TFT.fillSmoothRoundRect(x1, y1, w, h, rad, TFT.TFT_CYAN, TFT.TFT_BLACK)
+
+  '// Wait forever
+  Do While True 
+    Delay(100)
+  Loop	
+End Sub
+
+
+'// =========================================================================
+'// Get coordinates of two ends of a line from r1 To r2, pivot at x,y, angle a
+'// =========================================================================
+'// Coordinates are returned To caller via the xp And yp pointers
+
+Sub getcoord(x As Int, y As Int, xyp() As Double, r1 As Int, r2 As Int, a As Double)
+  Dim sx As Double = Cos( (a - 90) * DEG2RAD)
+  Dim sy As Double = Sin( (a - 90) * DEG2RAD)
+  xyp(0) =  sx * r1 + x
+  xyp(1) =  sy * r1 + y
+  xyp(2) =  sx * r2 + x
+  xyp(3) =  sy * r2 + y
+End Sub
+
+'// =========================================================================
+'// Return a 16-Bit rainbow colour
+'// =========================================================================
+Sub rainbow(value As Byte) As UInt
+{
+  '// value is expected To be in range 0-127
+  '// The value is converted To a spectrum colour from 0 = blue through To 127 = red
+
+  Dim red As Byte = 0   '// Red is the top 5 bits of a 16-Bit colour value
+  Dim green As Byte = 0 '// Green is the middle 6 bits
+  Dim blue As Byte = 0  '// Blue is the bottom 5 bits
+
+  Dim quadrant As Byte = value / 32 
+
+  If quadrant = 0 Then
+    blue = 31
+    green = 2 * (value Mod 32)
+    red = 0
+  End If
+  If quadrant = 1 Then
+    blue = 31 - (value Mod 32)
+    green = 63
+    red = 0
+  End If
+  If quadrant = 2 Then
+    blue = 0
+    green = 63
+    red = value Mod 32
+  End If
+  If quadrant = 3 Then
+    blue = 0
+    green = 63 - 2 * (value Mod 32)
+    red = 31
+  End If
+	Return (Bit.ShiftLeft(red,11) + Bit.ShiftLeft(green,5) + blue)
+End Sub

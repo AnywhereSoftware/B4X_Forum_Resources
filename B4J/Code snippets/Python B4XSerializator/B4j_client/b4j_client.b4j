@@ -1,0 +1,54 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2
+Library3=randomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Log("Hello world!!!")
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download("http://localhost:5000/test")
+	StartMessageLoop
+End Sub
+
+Sub JobDone(j As HttpJob)
+	Log("Job succes: "&j.Success)
+	Dim ret As Map
+	ret.Initialize
+	If j.Success Then
+		Try
+			Dim ser As B4XSerializator
+			Dim respMap As Map = ser.ConvertBytesToObject(Bit.InputStreamToBytes(j.GetInputStream))
+			Log(respMap)
+
+			For Each k As String In respMap.Keys
+				If respMap.Get(k) = Null Then
+					Log(k & ": is null")
+				Else
+					Log(k & ": " & GetType(respMap.Get(k)))
+				End If
+				
+			Next
+			
+		Catch
+			Log(LastException)
+		End Try
+	End If
+	StopMessageLoop
+End Sub

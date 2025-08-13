@@ -1,0 +1,1 @@
+Copy the jar file to your additional libraries folder.

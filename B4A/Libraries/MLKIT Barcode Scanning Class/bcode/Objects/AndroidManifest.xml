@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.georgieapps.mlkitbarcode"
+	android:versionCode="1"
+	android:versionName=""
+	android:installLocation="internalOnly">
+	
+	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>
+	<supports-screens android:largeScreens="true" 
+	    android:normalScreens="true" 
+	    android:smallScreens="true" 
+	    android:anyDensity="true"/>
+	<application
+		android:icon="@drawable/icon"
+		android:label="MlKit Barcode"
+		android:theme="@style/LightTheme">
+		
+		<activity android:name="com.google.android.gms.common.api.GoogleApiActivity"
+		  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+		  android:exported="false"/>
+		    <meta-data
+		  android:name="com.google.android.gms.version"
+		  android:value="@integer/google_play_services_version" />
+		<meta-data
+		          android:name="com.google.mlkit.vision.DEPENDENCIES"
+		          android:value="barcode" />
+		<provider
+		            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+		            android:authorities="com.georgieapps.mlkitbarcode.mlkitinitprovider"
+		            android:exported="false"
+		            android:initOrder="99" />
+		
+		        <service
+		            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+		            android:directBootAware="true"
+		            android:exported="false"
+		             >
+		            <meta-data
+		                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+		                android:value="com.google.firebase.components.ComponentRegistrar" />
+					<meta-data
+		                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"
+		                android:value="com.google.firebase.components.ComponentRegistrar" />
+		        </service>
+		<activity
+			android:windowSoftInputMode="stateHidden"
+			android:launchMode="singleTop"
+			android:name=".main"
+			android:label="MlKit Barcode"
+			android:screenOrientation="unspecified"
+			android:exported="true">
+			<intent-filter>
+			   <action android:name="android.intent.action.MAIN" />
+			   <category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			
+		</activity>
+	</application>
+</manifest>

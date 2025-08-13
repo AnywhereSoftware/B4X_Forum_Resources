@@ -1,0 +1,112 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR Receiver to test remote controls (RC).
+'				Tested NEC (KEYES 17-keys), Sony, Samsung, Philips RC6.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The TX default pin is used as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+'Hints:			Set LONG DELAY after receive to avoid noise or multiple receives.
+
+'Log Examples
+'[AppStart] rRemoteEx irreceiver v20250429
+'[rIRRemoteEx irreceiver Initialize] IrReceiverPin=2
+'[rIRRemoteEx irreceiver Initialize] IrDecodedDataSub added
+'[rIRRemoteEx irreceiver Initialize] Ready To receive IR signals of protocols: NEC/NEC2/Onkyo/Apple, Panasonic/Kaseikyo, Denon/Sharp, Sony, RC5, RC6, LG, JVC, Samsung, FAST, Whynter, Lego Power Functions, Bosewave, MagiQuest, Universal Pulse Distance Width, Hash 
+'[AppStart] waiting For commands...
+
+'NEC
+'[NewData] +++
+'[NewData] protocol=8,name=NEC,address=0,command=90,commandhex=5A,flags=0,initialgapticks=60317,flags_is_repeat=1
+'[NewData] rawdata len=68,decoded=2774204160,rawdata hex=00FF5AA5
+'[NewData] ---
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=NEC Address=0x0 Command=0x5A Raw-Data=0xA55AFF00 32 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: IrSender.sendNEC(0x0, 0x5A, <numberOfRepeats>);
+
+'SONY
+'[NewData] +++
+'[NewData] protocol=24,name=Sony,address=7258,command=26,commandhex=1A,flags=0,initialgapticks=65535,flags_is_repeat=1
+'[NewData] rawdata len=42,decoded=929050,rawdata hex=1A2D0E00
+'[NewData] ---
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=Sony Address=0x1C5A Command=0x1A Raw-Data=0xE2D1A 20 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: IrSender.sendSony(0x1C5A, 0x1A, 2, 20);
+
+'Another example for protocol PulseDistance
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=PulseDistance Raw-Data=0x1A 7 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send on a 8 Bit platform with: IrSender.sendPulseDistanceWidth(38, 5950, 600, 500, 1550, 1500, 500, 0x1A, 7, PROTOCOL_IS_LSB_FIRST, <RepeatPeriodMillis>, <numberOfRepeats>);
+'[NewData] +++
+'[NewData] protocol=2,name=PulseDistance,address=0,command=0,commandhex=00,flags=0,initialgapticks=65535,flags_is_repeat=1
+'[NewData] rawdata len=18,decoded=3460670541,rawdata hex=4DA445CE
+'[NewData] ---
+#End Region
+
+#Region Wiring
+'IR-Receiver KY-022 = Arduino UNO (wirecolor)
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVER v20250506"
+
+	Private serialLine As Serial
+	Private irreceiver As IrReceiver
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+	
+	'Init the ireceiver with default pin 2 (see PinDefinitionsAndMore.h) and set the callback event NewData.
+	irreceiver.Initialize("NewData")
+
+	Log(CRLF, "[AppStart] waiting for commands from IR remote control...")
+End Sub
+
+'Handle new IR data received for all protocols including UNKNOWN.
+Private Sub NewData(data As IrDecodedData)
+	
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", HexFromByte(data.Command), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal.
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+#Region HELPER
+'Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+'Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+'Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region

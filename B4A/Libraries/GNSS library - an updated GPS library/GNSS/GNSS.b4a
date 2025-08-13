@@ -1,0 +1,181 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.gnss
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=gnss
+Library3=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddManifestText(<uses-feature android:name="android.hardware.location.gps"/>)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: GNSS Demo
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Dim lblLon As Label
+	Dim lblLat As Label
+	Dim lblSpeed As Label
+	Dim lblSatellites As Label
+	Private lblGnssStatus As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	If Starter.GNSS1.GPSEnabled = False Then
+		ToastMessageShow("Please enable the GNSS device.", True)
+		StartActivity(Starter.GNSS1.LocationSettingsIntent) 'Will open the relevant settings screen.
+	Else
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result Then CallSubDelayed(Starter, "StartGNSS")
+	End If
+End Sub
+	
+
+Sub Activity_Pause (UserClosed As Boolean)
+	CallSubDelayed(Starter, "StopGNSS")
+End Sub
+
+Public Sub GpsStatus (Satellites As List)
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("GPS Status:").Append(CRLF)
+	Dim NumberOfSatellites As Int = Satellites.Size
+	Dim Beidou, Galileo, Glonass, Gps, Other As List
+	Beidou.Initialize
+	Galileo.Initialize
+	Glonass.Initialize
+	Gps.Initialize
+	Other.Initialize
+	Dim usedinfix As Int = 0
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("GPS Status").Append(CRLF)
+	For i = 0 To NumberOfSatellites - 1
+		Dim gpsat As GPSSatellite = Satellites.Get(i)
+		If gpsat.Prn > 300 Then
+			Galileo.Add(i)
+		Else If gpsat.Prn > 200 Then
+			Beidou.Add(i)
+		Else If gpsat.Prn > 64 Then
+			Glonass.Add(i)
+		Else
+			Gps.Add(i)
+		End If
+		If gpsat.UsedInFix Then usedinfix = usedinfix + 1
+	Next
+	sb.Append($"Beidou ${Beidou.Size} : "$)
+	For i = 0 To Beidou.Size -1
+		Dim gpsat As GPSSatellite = Satellites.Get(Beidou.Get(i))
+		sb.Append(gpsat.Prn).Append(" ")
+	Next
+	sb.Append(CRLF)
+	
+	sb.Append($"Galileo ${Galileo.Size} : "$)
+	For i = 0 To Galileo.Size - 1
+		Dim gpsat As GPSSatellite = Satellites.Get(Galileo.Get(i))
+		sb.Append(gpsat.Prn).Append(" ")
+	Next
+	sb.Append(CRLF)
+	
+	sb.Append($"Glonass ${Glonass.Size} : "$)
+	For i = 0 To Glonass.Size -1
+		Dim gpsat As GPSSatellite = Satellites.Get(Glonass.Get(i))
+		sb.Append(gpsat.Prn).Append(" ")
+	Next
+	sb.Append(CRLF)
+	
+	sb.Append($"Gps ${Gps.Size} : "$)
+	For i = 0 To Gps.Size -1
+		Dim gpsat As GPSSatellite = Satellites.Get(Gps.Get(i))
+		sb.Append(gpsat.Prn).Append(" ")
+	Next
+	sb.Append(CRLF)
+	sb.Append($"Satellites : ${NumberOfSatellites}"$).Append(CRLF)
+	sb.Append($"Used in fix: ${usedinfix}"$).Append(CRLF)
+	lblSatellites.Text = sb.ToString
+End Sub
+
+Public Sub GnssStatus (Status As GnssStatus)
+	Dim NumberOfSatellites As Int = Status.SatelliteCount
+	Dim Beidou, Galileo, Glonass, Gps, Other As List
+	Beidou.Initialize
+	Galileo.Initialize
+	Glonass.Initialize
+	Gps.Initialize
+	Other.Initialize	
+	Dim usedinfix As Int = 0
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("GNSS Status").Append(CRLF)
+	For i = 0 To NumberOfSatellites - 1
+		Select Status.ConstellationType(i)
+			Case Status.CONSTELLATION_BEIDOU
+				Beidou.Add(i)
+			Case Status.CONSTELLATION_GALILEO
+				Galileo.Add(i)
+			Case Status.CONSTELLATION_GLONASS
+				Glonass.Add(i)
+			Case Status.CONSTELLATION_GPS
+				Gps.Add(i)
+			Case Else
+				Other.Add(i)
+		End Select	
+		If Status.UsedInFix(i) Then usedinfix = usedinfix + 1	
+	Next
+	sb.Append($"Beidou ${Beidou.Size} : "$)
+	For i = 0 To Beidou.Size -1
+		sb.Append(Status.Svid(Beidou.Get(i))).Append(" ")
+	Next
+	sb.Append(CRLF)
+	
+	sb.Append($"Galileo ${Galileo.Size} : "$)
+	For i = 0 To Galileo.Size -1
+		sb.Append(Status.Svid(Galileo.Get(i))).Append(" ")
+	Next
+	sb.Append(CRLF)	
+	
+	sb.Append($"Glonass ${Glonass.Size} : "$)
+	For i = 0 To Glonass.Size -1
+		sb.Append(Status.Svid(Glonass.Get(i))).Append(" ")
+	Next
+	sb.Append(CRLF)	
+	
+	sb.Append($"Gps ${Gps.Size} : "$)
+	For i = 0 To Gps.Size -1
+		sb.Append(Status.Svid(Gps.Get(i))).Append(" ")		
+	Next
+	sb.Append(CRLF)
+	
+	sb.Append($"Others : ${Other.Size}"$).Append(CRLF)
+	sb.Append($"Satellites : ${NumberOfSatellites}"$).Append(CRLF)
+	sb.Append($"Used in fix: ${usedinfix}"$).Append(CRLF)
+	lblGnssStatus.Text = sb.ToString
+End Sub
+
+Public Sub LocationChanged(Location1 As Location)
+	lblLat.Text = "Lat = " & Location1.ConvertToMinutes(Location1.Latitude)
+	lblLon.Text = "Lon = " & Location1.ConvertToMinutes(Location1.Longitude)
+	lblSpeed.Text = $"Speed = $1.2{Location1.Speed} m/s "$
+End Sub
+
+
+

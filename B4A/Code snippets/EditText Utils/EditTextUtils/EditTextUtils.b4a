@@ -1,0 +1,341 @@
+﻿Build1=Default,b4a.edittextutils
+File1=longtext.txt
+File2=main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=clipboard
+Library2=core
+Library3=javaobject
+Library4=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: EditTextUtils
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+	#AdditionalJar: com.android.support:support-compat
+
+'Documentation sources:
+'https://developer.android.com/reference/android/view/View
+'https://developer.android.com/reference/android/widget/TextView
+'https://developer.android.com/reference/android/text/Layout#getLineTop(int)
+'https://material.io/design/typography/understanding-typography.html#type-properties
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private edtTest, edtTest2 As EditText
+	Private pnlTest As Panel	'used to show the XY cursor position
+	Private cvsTest As Canvas
+	Private btnSelectLine As Button
+	Private txt As String
+	Private clip As BClipboard
+	Private refTest As Reflector
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	cvsTest.Initialize(pnlTest)
+	
+	txt = "1 Long text" & CRLF
+	txt = txt & "2 Long text" & CRLF
+	txt = txt & "3 Long text" & CRLF
+	txt = txt & "4 Long text" & CRLF
+	txt = txt & "5 Long text" & CRLF
+	txt = txt & "6 Long text" & CRLF
+	txt = txt & "7 Long text"
+
+	edtTest.Text = txt
+	edtTest.RequestFocus
+	setTextIsSelectable(edtTest, True)
+	setCursorVisible(edtTest, True)
+	setHighLightColor(edtTest, Colors.Red)
+'	edtTest.SelectionStart = edtTest.Text.Length
+
+'adds a Click Event for the EditText for SelectLine
+	refTest.Target = edtTest
+	refTest.SetOnClickListener("edtTest_Click")
+End Sub
+
+Private Sub Activity_Resume
+	Log(getLineCount(edtTest))
+	Log(getLastVisibleLine(edtTest))
+	Log(getVisibleLineCount(edtTest))
+	Log(getLineHeight(edtTest))
+	Log(getLineCount(edtTest))
+	Log(getLineHeight(edtTest))
+End Sub
+
+Private Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub btnGoToStart_Click
+	edtTest.SelectionStart = 0
+End Sub
+
+Private Sub btnGoToEnd_Click
+	edtTest.SelectionStart = edtTest.Text.Length
+End Sub
+
+Private Sub btnSelectAll_Click
+	edtTest.RequestFocus
+	edtTest.SelectAll
+End Sub
+
+Private Sub btnSetSelection_Click
+	edtTest.RequestFocus
+	setSelection(edtTest, 2, 6)
+End Sub
+
+'copies the selected text from the given EditText view to the Clipboard
+Private Sub btnCopyToClipboard_Click
+	CopyToClipboard(edtTest)
+End Sub
+
+Private Sub btnGetXYCursor_Click
+	Private xy(2) As Int
+	
+	xy = GetXYCursor(edtTest, "BaseLine")
+	DrawCross(xy)
+End Sub
+
+'used for SelectLine when the EditText has no focus yet
+Private Sub edtTest_FocusChanged (HasFocus As Boolean)
+	If btnSelectLine.Text = "Select line ON" And  HasFocus = True Then
+		SelectLine
+	End If
+End Sub
+
+'used for SelectLine when the EditText has focus
+Private Sub edtTest_Click (Veiw As Object)
+	If btnSelectLine.Text = "Select line ON" Then
+		SelectLine
+	End If
+End Sub
+
+'Copies the selected text from the given EditText view to the Clipboard
+Private Sub CopyToClipboard(edt As EditText)
+	Private txt As String
+	Private i1, i2 As Int
+'	Private clip As BClipboard
+	Private jo = edt As JavaObject
+	i1 = jo.RunMethod("getSelectionStart", Null)
+	i2 = jo.RunMethod("getSelectionEnd", Null)
+	txt = edt.Text.SubString2(i1, i2)
+	clip.setText(txt)
+End Sub
+
+'Gets the selection start index
+Private Sub getSelectionStart(edt As EditText) As Int
+	Private jo = edt As JavaObject
+	Return jo.RunMethod("getSelectionStart", Null)
+End Sub
+
+'Gets the selection end index
+Private Sub getSelectionEnd(edt As EditText) As Int
+	Private jo = edt As JavaObject
+	Return jo.RunMethod("getSelectionEnd", Null)
+End Sub
+
+'Selects the text between the two indexes.
+Private Sub setSelection(edt As EditText, StartIndex As Int, EndIndex As Int)
+	Private jo = edt As JavaObject
+	jo.RunMethod("setSelection", Array As Object(StartIndex, EndIndex))
+End Sub
+
+'Sets the cursor visible or hides it
+Private Sub setCursorVisible(edt As EditText, Visible As Boolean)
+	Private jo = edt As JavaObject
+	jo.RunMethod("setCursorVisible", Array As Object(Visible))
+End Sub
+	
+ 'Sets the text selectable or not selectable
+Private Sub setTextIsSelectable(edt As EditText, Selectable As Boolean)
+	Private jo = edt As JavaObject
+	jo.RunMethod("setTextIsSelectable", Array As Object(Selectable))	
+End Sub
+
+'Gets the line count
+Sub getLineCount(edt As EditText) As Int
+	Private jo = edt As JavaObject
+	Return jo.RunMethod("getLineCount", Null)
+End Sub
+
+'Gets the line index
+Private Sub getLineIndex(edt As EditText) As Int
+	Private joEditText, joLayout As JavaObject
+	Private CursorPosition, LineIndex, LineIndex, LineStart, LineVisibleEnd As Int
+
+	joEditText = edt
+	joLayout = joEditText.RunMethod("getLayout", Null)
+
+	CursorPosition = joEditText.RunMethod("getSelectionStart", Null)
+	LineIndex = joLayout.RunMethod("getLineForOffset", Array As Object(CursorPosition))
+	
+End Sub
+
+'Gets the first visible line
+Private Sub getFirstVisibleLine(edt As EditText) As Int
+	Private Height, ScrollY As Int
+	Private joEdt = edt As JavaObject
+	Private joLayout As JavaObject
+	joLayout = joLayout.InitializeStatic("android.text.Layout")
+	joLayout = joEdt.RunMethod("getLayout", Null)
+	ScrollY = joEdt.RunMethod("getScrollY", Null)
+	Return joLayout.RunMethod("getLineForVertical", Array (ScrollY))
+End Sub
+
+'Gets the last visible line
+Private Sub getLastVisibleLine(edt As EditText) As Int
+	Private Height, ScrollY As Int
+	Private joEdt = edt As JavaObject
+	Private joLayout As JavaObject
+	joLayout = joLayout.InitializeStatic("android.text.Layout")
+	joLayout = joEdt.RunMethod("getLayout", Null)
+	Height = joEdt.RunMethod("getHeight", Null)
+	ScrollY = joEdt.RunMethod("getScrollY", Null)
+	Private Index As Int
+'	Index = joLayout.RunMethod("getLineForVertical", Array (Height + ScrollY))
+'	Return joLayout.RunMethod("getLineForVertical", Array (Height + ScrollY))
+	Return Index
+End Sub
+
+'Gets the visible line count
+Private Sub getVisibleLineCount(edt As EditText) As Int
+	Private Height, ScrollY, FirstVisibleLineNumber, LastVisibleLineNumber As Int
+	Private joEdt = edt As JavaObject
+	Private joLayout As JavaObject
+	joLayout = joLayout.InitializeStatic("android.text.Layout")
+	joLayout = joEdt.RunMethodJO("getLayout", Null)
+	Height = joEdt.RunMethod("getHeight", Null)
+	ScrollY = joEdt.RunMethod("getScrollY", Null)
+'	FirstVisibleLineNumber = joLayout.RunMethod("getLineForVertical", Array (ScrollY))
+'	LastVisibleLineNumber = joLayout.RunMethod("getLineForVertical", Array (Height + ScrollY))
+	Return (LastVisibleLineNumber - FirstVisibleLineNumber)
+End Sub
+
+'Gets the multiplier factor of line spacing
+Private Sub GetLineSpacingMultiplier(lbl As Label) As Float
+	Private jo = lbl As JavaObject
+	Return jo.RunMethod("getLineSpacingMultiplier", Null)
+End Sub
+
+'Gets the line height
+Private Sub getLineHeight(edt As EditText) As Int
+	Private jo = edt As JavaObject
+	Return jo.RunMethod("getLineHeight", Null)
+End Sub
+
+'Sets the highlight color
+Private Sub setHighLightColor(edt As EditText, Color As Int)
+	Private joEdt = edt As JavaObject
+	joEdt.RunMethod("setHighlightColor", Array(Color))
+End Sub
+
+'Gets the highlight color
+Private Sub getHighLightColor(edt As EditText) As Int
+	Private joEdt = edt As JavaObject
+	Return joEdt.RunMethod("getHighlightColor", Null)
+End Sub
+
+'4096 = TYPE_TEXT_FLAG_CAP_CHARACTERS capitalize all characters
+'8192 = TYPE_TEXT_FLAG_CAP_WORDS capitalize the first character of every word
+'16384 = TYPE_TEXT_FLAG_CAP_SENTENCES capitalize the first character of each sentence
+Private Sub setTextInputType(edt As EditText, InputType As Int)
+	edt.InputType = InputType
+End Sub
+
+'4096 = TYPE_TEXT_FLAG_CAP_CHARACTERS capitalize all characters
+'8192 = TYPE_TEXT_FLAG_CAP_WORDS capitalize the first character of every word
+'16384 = TYPE_TEXT_FLAG_CAP_SENTENCES capitalize the first character of each sentence
+Private Sub getTextInputType(edt As EditText) As Int
+	Return edt.InputType
+End Sub
+
+'gets the x and y coordinates, in pixels, of the cursor in an EditText view
+'the Y coordinate is at the base line, on top or on bottom of the line
+'retuens an array of Ints
+'X = xy(0) and Y = xy(1)
+'the reference is the top left corner of the EditText
+'YPosition can be "BaseLine", "TopOfLine", "BottomOfLine"
+Private Sub GetXYCursor(edt As EditText, YPosition As String) As Int()
+	Private joEditText, joLayout As JavaObject
+	Private PaddingLeft, PaddingTop, ScrollY, CursorPosition, LineIndex, LineBaseline, LineTop, LineBottom As Int
+	Private xy(2) As Int
+
+	joEditText = edt
+	PaddingLeft = joEditText.RunMethod("getPaddingLeft", Null)
+	PaddingTop = joEditText.RunMethod("getPaddingTop", Null)
+	ScrollY = joEditText.RunMethod("getScrollY", Null)
+'	pos = edt.SelectionStart
+	CursorPosition = joEditText.RunMethod("getSelectionStart", Null)
+	joLayout = joEditText.RunMethod("getLayout", Null)
+	LineIndex = joLayout.RunMethod("getLineForOffset", Array As Object(CursorPosition))	'line numbsr
+	LineBaseline = joLayout.RunMethod("getLineBaseline", Array As Object(LineIndex))
+	LineTop = joLayout.RunMethod("getLineTop", Array As Object(LineIndex))
+	LineBottom = joLayout.RunMethod("getLineBottom", Array As Object(LineIndex))
+	
+	xy(0) = joLayout.RunMethod("getPrimaryHorizontal", Array As Object(CursorPosition)) + PaddingLeft ' X coordinate
+	Select Case YPosition
+		Case "BaseLine"
+			xy(1) = LineBaseline + PaddingTop - ScrollY	'base line	Y coordinate
+		Case "TopOfLine"
+			xy(1) = LineTop + PaddingTop - ScrollY	'top of the line 	Y coordinate
+		Case "BottomOfLine"
+			xy(1) = LineBottom + PaddingTop - ScrollY 'text bottom line
+	End Select
+	Return xy
+End Sub
+
+Private Sub DrawCross(xy() As Int)
+	Private dx = 8dip As Int
+	Private dy = 5dip As Int
+	Private rct As Rect
+	
+	rct.Initialize(0, 0, pnlTest.Width, pnlTest.Height)
+	cvsTest.DrawRect(rct, Colors.Transparent, True, 1dip)
+
+	cvsTest.DrawLine(xy(0) - dx, xy(1), xy(0) + dx, xy(1), Colors.Red, 1dip)
+	cvsTest.DrawLine(xy(0), xy(1) - dy, xy(0), xy(1) + dy, Colors.Red, 1dip)
+	
+'	cvsTest.DrawText("1", xy(0), xy(1), edtTest.Typeface, edtTest.TextSize, Colors.Red, "LEFT")
+	pnlTest.Invalidate
+End Sub
+
+'Selects the current line
+'CursorPosition = text cursor position
+'LineIndex = index of the line where the cursor is positioned
+'LineStart = text cursor position of the first character in the line
+'LineVisibleEnd = text cursor position of the last visible character in the line
+Private Sub SelectLine
+	Private joEditText, joLayout As JavaObject
+	Private CursorPosition, LineIndex, LineStart, LineVisibleEnd As Int
+	
+	joEditText = edtTest
+	joLayout = joEditText.RunMethod("getLayout", Null)
+	
+	CursorPosition = joEditText.RunMethod("getSelectionStart", Null)
+	LineIndex = joLayout.RunMethod("getLineForOffset", Array As Object(CursorPosition))
+	LineStart = joLayout.RunMethod("getLineStart", Array As Object(LineIndex))
+	LineVisibleEnd = joLayout.RunMethod("getLineVisibleEnd", Array As Object(LineIndex))
+	joEditText.RunMethod("setSelection", Array As Object(LineStart, LineVisibleEnd))
+End Sub
+

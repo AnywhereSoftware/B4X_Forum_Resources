@@ -1,0 +1,348 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266filesystem
+Library3=rtft_espi
+Library4=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+' The Delay between tests is set To 0. The tests run so fast you will need To
+' change the WAIT value below To see what is being plotted!
+ 
+' This sketch uses the GLCD And font 2 only.
+
+' Make sure all the required fonts are loaded by editing the
+' User_Setup.h file in the TFT_eSPI library folder.
+
+'  #########################################################################
+'  ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+'  ######            TO SELECT THE FONTS YOU USE, SEE ABOVE           ######
+'  #########################################################################
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private CENTRE As UInt =240
+	Private wait As UInt = 0
+	Private runtime As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	TFT.begin(0xFF)
+	TFT.setRotation(2)
+	TFT.setRotation(1)
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+	Dim buf(478) As Int
+	Dim x, x2 As Int
+	Dim y, y2 As Int
+	Dim r As Int
+
+	runtime = Millis()
+	'// Clear the screen And draw the frame
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	TFT.fillRect(0, 0, 480, 13, TFT.TFT_RED)
+
+	TFT.fillRect(0, 305, 480, 320, TFT.TFT_GREY)
+	TFT.setTextColor1(TFT.TFT_BLACK,TFT.TFT_RED,False)
+
+	TFT.drawCentreString("* TFT_eSPI *", CENTRE, 3, 1)
+	TFT.setTextColor1(TFT.TFT_YELLOW,TFT.TFT_GREY,False)
+	TFT.drawCentreString("Adapted by Bodmer", CENTRE, 309,1)
+
+	TFT.drawRect(0, 14, 479, 305-14, TFT.TFT_BLUE)
+
+	'// Draw crosshairs
+	TFT.drawLine(239, 15, 239, 304, TFT.TFT_BLUE)
+	TFT.drawLine(1, 159, 478, 159, TFT.TFT_BLUE)
+	For i=9 To 470 Step 10
+	  TFT.drawLine(i, 157, i, 161, TFT.TFT_BLUE)
+	Next
+	For i=19 To 220 Step 10
+	  TFT.drawLine(237, i, 241, i, TFT.TFT_BLUE)
+	Next
+
+	'// Draw Sin-, Cos- And Tan-lines
+	TFT.setTextColor(TFT.TFT_CYAN)
+	TFT.drawString("Sin", 5, 15,2)
+	For i=1 To 478
+	  TFT.drawPixel(i,159+(Sin(((i*1.13)*3.14)/180)*95),TFT.TFT_CYAN)
+	Next
+  
+	TFT.setTextColor(TFT.TFT_RED)
+	TFT.drawString("Cos", 5, 30,2)
+	For i=1 To 478
+	  TFT.drawPixel(i,159+(Cos(((i*1.13)*3.14)/180)*95),TFT.TFT_RED)
+	Next
+
+	TFT.setTextColor(TFT.TFT_YELLOW)
+	TFT.drawString("Tan", 5, 45,2)
+	For i=1 To 478
+	  TFT.drawPixel(i,159+(Tan(((i*1.13)*3.14)/180)),TFT.TFT_YELLOW)
+	Next
+
+	Delay(wait)
+
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+	TFT.drawLine(239, 15, 239, 304,TFT.TFT_BLUE)
+	TFT.drawLine(1, 159, 478, 159,TFT.TFT_BLUE)
+
+	'// Draw a moving sinewave
+	Dim col As Int = 0
+	x=1
+	For i=1 To (477*15)
+	  x= x +1
+	  If (x=478) Then x = 1
+	  If (i>478) Then
+	    If (x=239) Or (buf(x-1)=159) Then
+	      col = TFT.TFT_BLUE
+	    Else
+	      TFT.drawPixel(x,buf(x-1),TFT.TFT_BLACK)
+	    End If
+	    y=159+(Sin(((i*0.7)*3.14)/180)*(90-(i / 100)))
+	    TFT.drawPixel(x,y, TFT.TFT_BLUE)
+	    buf(x-1)=y
+	  End If
+	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some filled rectangles
+	For i=1 To 6
+		Select i
+		Case 1
+			col = TFT.TFT_MAGENTA
+		Case 2
+			col = TFT.TFT_RED
+		Case 3
+			col = TFT.TFT_GREEN
+		Case 4
+			col = TFT.TFT_BLUE
+		Case 5
+			col = TFT.TFT_YELLOW
+    End Select
+		TFT.fillRect(150+(i*20), 70+(i*20), 60, 60,col)
+	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some filled, rounded rectangles
+	For i=1 To 6
+		Select i
+		Case 1:
+			col = TFT.TFT_MAGENTA
+		Case 2:
+			col = TFT.TFT_RED
+		Case 3:
+			col = TFT.TFT_GREEN
+		Case 4:
+			col = TFT.TFT_BLUE
+		Case 5:
+			col = TFT.TFT_YELLOW
+		End Select
+		TFT.fillRoundRect(270-(i*20), 70+(i*20), 60, 60, 3, col)
+	Next
+  
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some filled circles
+	For i=1 To 6
+	  	Select i
+	    Case 1:
+			col = TFT.TFT_MAGENTA
+		Case 2:
+			col = TFT.TFT_RED
+		Case 3:
+			col = TFT.TFT_GREEN
+		Case 4:
+			col = TFT.TFT_BLUE
+		Case 5:
+			col = TFT.TFT_YELLOW
+		End Select
+		TFT.fillCircle(180+(i*20),100+(i*20), 30,col)
+	Next
+  
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some lines in a pattern
+
+	For i=15 To 304 Step 5
+		TFT.drawLine(1, i, (i*1.6)-10, 303, TFT.TFT_RED)
+	Next
+
+	For i=304 To 15 Step -5
+	  	TFT.drawLine(477, i, (i*1.6)-11, 15, TFT.TFT_RED)
+	Next	
+
+	For i=304 To 15 Step -5
+		TFT.drawLine(1, i, 491-(i*1.6), 15, TFT.TFT_CYAN)
+	Next
+
+	For i=15 To 304 Step 5
+	  	TFT.drawLine(477, i, 490-(i*1.6), 303, TFT.TFT_CYAN)
+	Next
+  
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some random circles
+	For i=0 To 100
+	  	x=32+random(0,416)
+		y=45+random(0,226)
+		r=random(0,30)
+		TFT.drawCircle(x, y, r,random(0,0xFFFF))
+ 	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some random rectangles
+	For i=0 To 100
+		x=2+random(0,476)
+		y=16+random(0,289)
+		x2=2+random(0,476)
+		y2=16+random(0,289)
+		If x2 < x Then
+			r=x:x=x2:x2=r
+	    End If
+		If y2 < y Then
+			r=y:y=y2:y2=r
+ 	   End If
+		TFT.drawRect(x, y, x2-x, y2-y,random(0,0xFFFF))
+	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	'// Draw some random rounded rectangles
+	For  i=0 To 100
+	  	x=2+random(0,476)
+		y=16+random(0,289)
+		x2=2+random(0,476)
+		y2=16+random(9,289)
+		If  x2 < x Then
+			r=x:x=x2:x2=r
+	    End If
+		If y2 < y Then
+			r=y:y=y2:y2=r
+	    End If
+		TFT.drawRoundRect(x, y, x2-x, y2-y, 3,random(0,0xFFFF))
+	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	For i=0 To 100
+		x=2+random(0,476)
+		y=16+random(0,289)
+		x2=2+random(0,476)
+		y2=16+random(0,289)
+		col=random(0,0xFFFF)
+		TFT.drawLine(x, y, x2, y2,col)
+	Next
+
+	Delay(wait)
+  
+	TFT.fillRect(1,15,478-1,304-15,TFT.TFT_BLACK)
+
+	For i=0 To 10000
+		TFT.drawPixel(2+random(0,476), 16+random(0,289),random(0,0xFFFF))
+	Next 
+
+	Delay(wait)
+
+	TFT.fillRect(0, 0, 480, 320, TFT.TFT_BLUE)
+
+	TFT.fillRoundRect(160, 70, 319-160, 169-70, 3,TFT.TFT_RED)
+  
+	TFT.setTextColor1(TFT.TFT_WHITE,TFT.TFT_RED,False)
+	TFT.drawCentreString("That's it!", CENTRE, 93,2)
+	TFT.drawCentreString("Restarting in a", CENTRE, 119, 2)
+	TFT.drawCentreString("few seconds...", CENTRE, 132, 2)
+	TFT.setTextColor1(TFT.TFT_GREEN,TFT.TFT_BLUE,False)
+	TFT.drawCentreString("Runtime: (msecs)", CENTRE, 280, 2)
+	TFT.setTextDatum(TFT.TC_DATUM)
+	runtime = Millis()-runtime
+	TFT.drawNumber(runtime, CENTRE, 300,2)
+	TFT.setTextDatum(TFT.TL_DATUM)
+	Delay (10000)
+
+End Sub
+
+Sub random(Mini As ULong, Maxi As ULong) As ULong
+	Dim mm() As ULong = Array As ULong (Mini, Maxi)
+	Return RunNative("getRandom",mm)
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt, Result() As Byte)
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+ Next
+End Sub
+
+#if C 
+	B4R::Object* getRandom(B4R::Object* o) { 
+	  uint32_t rand = random(0,0xFFFF); 
+      B4R::Object* tmp = tmp->wrapNumber(rand);
+  	  return tmp;
+	  } 
+#End If

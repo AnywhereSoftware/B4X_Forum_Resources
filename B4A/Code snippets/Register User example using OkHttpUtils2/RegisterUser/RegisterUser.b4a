@@ -1,0 +1,107 @@
+﻿Version=4
+IconFile=
+NumberOfModules=3
+Module1=Register
+Module2=Login
+Module3=Member
+Build1=Default,my.computerise.registeruser
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=4
+File1=frmLogin.bal
+File2=frmMember.bal
+File3=frmRegister.bal
+File4=frmStart.bal
+NumberOfLibraries=3
+Library1=core
+Library2=httputils2
+Library3=json
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Register User
+	#VersionCode: 2
+	#VersionName: 1.1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim btnLogin As Button
+	Dim btnRegister As Button
+	Dim Panel1 As Panel
+	Dim lblTitle As Label	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("frmStart")
+	TestConnection	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Activity_KeyPress(KeyCode As Int) As Boolean 
+	Dim Answ As Int
+	Dim Txt As String
+	
+	If KeyCode = KeyCodes.KEYCODE_BACK Then	' Checks if the KeyCode is BackKey
+		Txt = "Do you really want to quit the program ?"
+		Answ = Msgbox2(Txt, "A T T E N T I O N", "Yes", "", "No", Null) ' MessageBox 
+		If Answ = DialogResponse.POSITIVE Then	' If return value is Yes then
+			Return False	' the Event will not be consumed			
+		Else				' we leave the program
+			Return True		' the Event will be consumed to avoid 
+		End If				' leaving the program
+	Else
+		Return True			' the Event will be consumed to avoid 
+	End If
+End Sub
+
+Sub btnLogin_Click
+	StartActivity("Login")
+End Sub
+
+Sub btnRegister_Click
+	StartActivity("Register")
+End Sub
+
+Sub TestConnection
+	Dim Connect As HttpJob
+	Connect.Initialize("Connect", Me)
+	Connect.Download("http://kbase.herobo.com/connect.php")
+	ProgressDialogShow("Connecting to server...")
+End Sub
+
+Sub JobDone (Job As HttpJob)
+	ProgressDialogHide
+	If Job.Success = True Then
+		Dim ret As String 
+		ret = Job.GetString 
+		Dim parser As JSONParser
+        parser.Initialize(ret)		
+		If Job.JobName = "Connect" Then
+			Dim act As String = parser.NextValue
+			If act = "Connected" Then
+				ToastMessageShow("Connection success", True)
+			End If		
+		End If
+	Else
+		ToastMessageShow("Error: " & Job.ErrorMessage, True)	
+	End If
+	Job.Release
+End Sub

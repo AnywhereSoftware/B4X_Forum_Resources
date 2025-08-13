@@ -1,0 +1,68 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=inappreview
+ManifestCode=AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~'FOR InAppReview - Also minSdkVersion MUST BE set to 21 (minSdkVersion="21"), check line number 2 in this manifest.~\n~AddApplicationText(<activity~\n~            android:name="com.google.android.play.core.common.PlayCoreDialogWrapperActivity"~\n~            android:exported="false"~\n~            android:stateNotNeeded="true"~\n~            android:theme="@style/Theme.PlayCore.Transparent" />)~\n~		
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12.15
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	'**********************************************************************
+	' PLEASE CHECK MANIFEST - PLEASE CHECK MANIFEST - PLEASE CHECK MANIFEST
+	'**********************************************************************
+	Private InAppReview As InAppReview
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	' UseFakeReviewManager = True - This should only be used For unit or integration tests to verify the behaviour of the app once the review Is completed.
+	' Note: FakeReviewManager does not simulate the UI (no pop-up will be shown). 
+	'       It only fakes the API method result by always providing a fake ReviewInfo object and returning a success status when the in-app review flow is launched.
+	' UseFakeReviewManager = False - Use it for production app.
+	InAppReview.Initialize("InAppReview", False)
+End Sub
+
+Sub Button1_Click
+	InAppReview.LaunchReview
+End Sub
+
+Sub InAppReview_OnComplete
+	' The flow has finished. The API does Not indicate whether the user
+	' reviewed or not, or even whether the review dialog was shown. Thus, no
+	' matter the result, we Continue our app flow.
+	ToastMessageShow("OnComplete", True)
+	Log("OnComplete")
+End Sub
+
+Sub InAppReview_OnError (Error As String)
+	ToastMessageShow("OnError: " & Error, True)
+	Log("OnError: " & Error)
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub

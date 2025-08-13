@@ -1,0 +1,116 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtft_espi
+Library3=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'/*
+'  Example animated analogue meters
+
+'  Needs Font 2 (also Font 4 If using large scale label)
+
+'  Make sure all the display driver And pin connections are correct by
+'  editing the User_Setup.h file in the TFT_eSPI library folder.
+
+'  #########################################################################
+'  ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+'  #########################################################################
+
+'  Requires widget library here:
+'  https://github.com/Bodmer/TFT_eWidget
+'*/
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+
+	Private amps As MeterWidget
+	Private volts As MeterWidget
+	Private ohms As MeterWidget 
+	Private LOOP_PERIOD As Byte = 35	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+
+ 	TFTid = TFT.Initialize(-1,-1)
+	amps.initialize(TFTid)
+	volts.initialize(TFTid)
+	ohms.initialize(TFTid)
+	TFT.begin(0xFF)
+	TFT.setRotation(0)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	
+	'// Colour zones are set As a start And end percentage of full scale (0-100)
+	'// If start And end of a colour zone are the same Then that colour is Not used
+	'//            --Red--  -Org-   -Yell-  -Grn-
+	amps.setZones(75, 100, 50, 75, 25, 50, 0, 25)  '// Example here red starts at 75% And ends at 100% of full scale
+	'/ Meter is 239 pixels wide And 126 pixels high
+	amps.analogMeter(0, 0, 2.0, "mA", "0", "0.5", "1.0", "1.5", "2.0")  '// Draw analogue meter at 0, 0
+
+	'//Colour draw order is red, orange, yellow, green. So red can be full scale with green drawn
+	'// last on top To indicate a "safe" zone.
+	'//             -Red-   -Org-  -Yell-  -Grn-
+	volts.setZones(0, 100, 25, 75, 0, 0, 40, 60)
+	volts.analogMeter(0, 128, 10.0, "V", "0", "2.5", "5", "7.5", "10")  '// Draw analogue meter at 0, 128
+
+	'// No coloured zones If Not defined
+	ohms.analogMeter(0, 256, 100, "R", "0", "", "50", "", "100")   '// Draw analogue meter at 0, 128
+
+	AddLooper ("LocalLoop")
+End Sub
+
+Sub LocalLoop
+	Dim d As Int = 0
+	Dim updateTime As ULong = 0
+
+	If (Millis-updateTime >= LOOP_PERIOD) Then
+ 		updateTime = Millis
+		d = d + 4: If (d > 360) Then d = 0
+
+		'// Create a Sine wave For testing, value is in range 0 - 100
+		Dim value As Double = 50.0 + 50.0 * Sin((d + 0) * 0.0174532925)
+
+		Dim current As Double
+		current = mapValue(value, 0.0, 100.0, 0.0, 2.0)
+		'//Serial.print("I = "); Serial.print(current);
+		amps.updateNeedle(current, 0)
+
+		Dim voltage As Double
+		voltage = mapValue(value, 0.0, 100.0, 0.0, 10.0)
+		'//Serial.print(", V = "); Serial.println(voltage);
+		volts.updateNeedle(voltage, 0)
+    
+		Dim resistance As Double
+		resistance = mapValue(value, 0.0, 100.0, 0.0, 100.0)
+		'//Serial.print(", R = "); Serial.println(resistance);
+		ohms.updateNeedle(resistance, 0)
+  	End If
+End Sub
+
+Sub mapValue(ip As Double, ipmin As Double, ipmax As Double, tomin As Double, tomax As Double) As Double
+
+  Return tomin + (((tomax - tomin) * (ip - ipmin))/ (ipmax - ipmin))
+End Sub
+

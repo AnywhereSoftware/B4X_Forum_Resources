@@ -1,0 +1,586 @@
+﻿Version=2.5
+NumberOfModules=0
+Build1=Default,com.ba4.xui3d
+Build2=ReleaseTest,com.stardust.xui3d,ReleaseTest
+NumberOfFiles=9
+File1=android.png
+File2=card.png
+File3=cat.obj
+File4=cow.obj
+File5=dolphin_small3.obj
+File6=layout1.bil
+File7=logo.png
+File8=silvester.jpg
+File9=tree.obj
+NumberOfLibraries=4
+Library1=icore
+Library2=ixui
+Library3=ibitmapcreator
+Library4=sd_xui_view3d_demo
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Xui3D
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#If DEBUG
+   #CertificateFile: ios_development.cer
+   #ProvisionFile: Development.mobileprovision
+#ELSE If ReleaseTest
+   #CertificateFile: ios_development.cer
+   #ProvisionFile: Development.mobileprovision
+#Else
+    #CertificateFile: ios_distribution.cer
+	#ProvisionFile: general_distribution.mobileprovision 	
+#END IF
+	
+	
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Dim no As NativeObject = App
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+	Private PanelCommand As Panel
+	Private PanelBack As Panel
+	Private Panel As B4XView
+	
+	Private SeekBarY As Slider' SeekBar
+	Private SeekBarX As Slider'SeekBar
+	Private SeekBarZ As Slider'SeekBar
+	Private LabelC As Label
+	Private SpinnerObiect As Button' Spinner
+	Private SpinnerEffect As Button' Spinner
+
+	Private ashSpinnerObiect As ActionSheet' Spinner
+	Private ashSpinnerEffect As ActionSheet' Spinner
+	
+	Private centerX As Int = 50%x
+	Private centerY As Int = 50%y
+	Private CheckBox1 As Switch
+	Private CheckBox2 As Switch
+	
+	Dim xui As XUI
+	
+	Dim P3D As Object3D
+	Dim Zoom As Float = 1
+	Dim ModeDraw As Int = 1
+	Dim LastX,LastY, LX, LY As Int
+	Dim MaxHeight As Int
+	Dim MyColor(7) As Int = Array As Int (xui.Color_Yellow,xui.Color_Green,xui.color_red,xui.Color_White,xui.Color_Cyan,xui.Color_LightGray,xui.Color_Magenta)
+	
+	Dim iv3D As ImageView
+	Dim iv3DXUI As B4XView
+	Private Label4 As Label
+	Private ButtonMenu As Button
+	Private Label3 As Label
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	no.RunMethod("setStatusBarHidden:animated:", Array(True, False))
+	NavControl = Nav
+	NavControl.NavigationBarVisible=False 
+	NavControl.ToolBarVisible=False
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.black
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	Page1.RootPanel.LoadLayout("layout1")
+	ashSpinnerObiect.Initialize("ashSpinnerObject","","Cancel","",Array As String("Cube Line","Cube 3D","Pentagon","Circle","Image","Card","Rubik","Sphere","Statics 1","Statics 2","Tetris","Logo","Function 3D","file OBJ - Dolphin","file OBJ - Tree"))
+	ashSpinnerEffect.Initialize("ashSpinnerEffect","","Cancel","",Array As String("Effect 1","Effect For Rubik","Effect Rubik Mix","Tetris Movement","Quark"))
+	iv3D.Width=Panel.Width
+	iv3D.Height=Panel.Height
+	iv3D.ContentMode=iv3D.MODE_FILL
+	iv3DXUI=iv3D
+	AdaptiveView(SeekBarY,90)
+	AdaptiveView(Label3,90)
+	SeekBarY.Left=15-SeekBarY.Width/2
+	SeekBarY.Top=ButtonMenu.Top+ButtonMenu.Height+170
+	ashSpinnerObject_Click ("Cube Line")
+End Sub
+
+
+Sub SpinnerObiect_Click
+ashSpinnerObiect.Show(Page1.RootPanel)
+End Sub
+
+Sub SpinnerEffect_Click
+ashSpinnerEffect.Show(Page1.RootPanel)
+End Sub
+
+Sub ashSpinnerObject_Click (Item As String)
+	P3D.Initialize
+	SpinnerObiect.Text=Item
+	SeekBarX.Value=0
+	SeekBarY.Value=0
+	SeekBarZ.Value=0
+	Zoom=1
+	centerX=Panel.Width/2
+	centerY=Panel.Height/2
+	
+	Select Item
+		Case "Cube Line"
+			Dim Point1 As Point3D_Type = P3D.ctp(-50,-50,50)
+			Dim Point2 As Point3D_Type = P3D.ctp(50,-50,50)
+			Dim Point3 As Point3D_Type = P3D.ctp(50,50,50)
+			Dim Point4 As Point3D_Type = P3D.CtP(-50,50,50)
+			P3D.AddPolygon(1,Array As Point3D_Type(Point1,Point2,Point3,Point4),MyColor(0),xui.Color_Transparent)
+			
+			Dim Point1 As Point3D_Type = P3D.CtP(-50,-50,-50)
+			Dim Point2 As Point3D_Type = P3D.CtP(50,-50,-50)
+			Dim Point3 As Point3D_Type = P3D.CtP(50,50,-50)
+			Dim Point4 As Point3D_Type = P3D.CtP(-50,50,-50)
+			P3D.AddPolygon(2,Array As Point3D_Type(Point1,Point2,Point3,Point4),MyColor(1),xui.Color_Transparent)
+			'Linee
+			P3D.AddPolygon(3,Array As Point3D_Type(P3D.CtP(-50,-50,50),P3D.CtP(-50,-50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(4,Array As Point3D_Type(P3D.CtP(50,-50,50),P3D.CtP(50,-50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(5,Array As Point3D_Type(P3D.CtP(50,50,50),P3D.CtP(50,50,-50)),MyColor(2),xui.Color_Transparent)
+			P3D.AddPolygon(6,Array As Point3D_Type(P3D.CtP(-50,50,50),P3D.CtP(-50,50,-50)),MyColor(2),xui.Color_Transparent)
+		Case "Cube 3D"
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-50,-50,50) ,P3D.CtP(50,-50,50), P3D.CtP(50,50,50), P3D.CtP(-50,50,50)),xui.Color_Transparent,MyColor(0))
+			P3D.AddPolygon(2,Array As Point3D_Type(P3D.CtP(-50,-50,50) ,P3D.CtP(-50,50,50), P3D.CtP(-50,50,-50), P3D.CtP(-50,-50,-50)),xui.Color_Transparent,MyColor(1))
+			P3D.AddPolygon(3,Array As Point3D_Type(P3D.CtP(-50,-50,-50) ,P3D.CtP(50,-50,-50), P3D.CtP(50,50,-50), P3D.CtP(-50,50,-50)),xui.Color_Transparent,MyColor(2))
+			P3D.AddPolygon(4,Array As Point3D_Type(P3D.CtP(50,-50,50) ,P3D.CtP(50,50,50), P3D.CtP(50,50,-50), P3D.CtP(50,-50,-50)),xui.Color_Transparent,MyColor(3))
+		Case "Pentagon"
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-60,-30,50),P3D.CtP(0,-60,50),P3D.CtP(60,-30,50),P3D.CtP(40,50,50),P3D.CtP(-40,50,50)),xui.Color_Transparent,MyColor(0))			
+			P3D.AddPolygon(1,Array As Point3D_Type(P3D.CtP(-60,-30,-50),P3D.CtP(0,-60,-50),P3D.CtP(60,-30,-50),P3D.CtP(40,50,-50),P3D.CtP(-40,50,-50)),xui.Color_Transparent,MyColor(1))
+		Case "Circle"
+			P3D.AddArcZ(1,0,360,0,0,0,80,MyColor(0), xui.Color_Transparent)
+			P3D.AddArcy(2,0,360,0,0,0,80,MyColor(1),MyColor(1)) ' xui.Color_Transparent)
+			P3D.AddArcx(3,0,360,0,0,0,80,MyColor(2), xui.Color_Transparent)
+		Case "Image"
+			Dim p1,p2,p3,p4 As Point3D_Type
+			
+			p1=P3D.CtP(-50,-50,-50)
+			p2=P3D.CtP(50,-50,-50)
+			p3=P3D.CtP(50,50,-50)
+			p4=P3D.CtP(-50,50,-50)
+			P3D.AddImage(2,xui.LoadBitmap(File.DirAssets,"android.png").Resize(100,100,False),p1,p2,p3,p4)
+	
+			p1=P3D.CtP(-50,-50,50)
+			p2=P3D.CtP(50,-50,50)
+			p3=P3D.CtP(50,50,50)
+			p4=P3D.CtP(-50,50,50)
+			P3D.AddImage(1,xui.LoadBitmap(File.DirAssets,"android.png").Resize(100,100,False),p1,p2,p3,p4)
+		Case "Card"
+			Dim p1,p2,p3,p4 As Point3D_Type
+			
+			p1=P3D.CtP(-93,-135,1)
+			p2=P3D.CtP(93,-135,1)
+			p3=P3D.CtP(93,135,1)
+			p4=P3D.CtP(-93,135,1)
+			P3D.AddImage(1,xui.LoadBitmap(File.DirAssets,"card.png"),p1,p2,p3,p4)
+			
+			P3D.AddPolygon(2,Array As Point3D_Type(P3D.CtP(-93,-135,-2),P3D.CtP(93,-135,-2),P3D.CtP(93,135,-2),P3D.CtP(-93,135,-2)),xui.Color_Transparent,MyColor(2))
+		Case "Rubik"
+			Dim Sp As Int = 60
+			Dim ID As Int = 1
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For x=0 To 2
+					For y=0 To 2		
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(x*Sp-Sp*1.5,y*Sp-Sp*1.5,i*Sp*1.5),P3D.CtP(x*Sp-Sp/2,y*Sp-Sp*1.5,i*Sp*1.5),P3D.CtP(x*Sp-Sp/2,y*Sp-Sp/2,i*Sp*1.5),P3D.CtP(x*Sp-Sp*1.5,y*Sp-Sp/2,i*Sp*1.5)),xui.Color_Black,MyColor(i+1))
+						ID=ID+1
+					Next
+				Next
+			Next
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For z=0 To 2
+					For y=0 To 2
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(i*Sp*1.5,y*Sp-Sp*1.5,z*Sp-Sp*1.5),P3D.CtP(i*Sp*1.5,y*Sp-Sp*1.5,z*Sp-Sp/2),P3D.CtP(i*Sp*1.5,y*Sp-Sp/2,z*Sp-Sp/2),P3D.CtP(i*Sp*1.5,y*Sp-Sp/2,z*Sp-Sp*1.5)),xui.Color_Black,MyColor(i+2))
+						ID=ID+1
+					Next
+				Next
+			Next
+			
+			' ------- face
+			For i=-1 To 1 Step 2
+				For x=0 To 2
+					For z=0 To 2
+						P3D.AddPolygon(ID,Array As Point3D_Type(P3D.CtP(x*Sp-Sp*1.5,i*Sp*1.5,z*Sp-Sp*1.5),P3D.CtP(x*Sp-Sp*1.5,i*Sp*1.5,z*Sp-Sp/2),P3D.CtP(x*Sp-Sp/2,i*Sp*1.5,z*Sp-Sp/2),P3D.CtP(x*Sp-Sp/2,i*Sp*1.5,z*Sp-Sp*1.5)),xui.Color_Black,MyColor(i+5))
+						ID=ID+1
+					Next
+				Next
+			Next
+		Case "Sphere"
+			P3D.AddSpere(1,0,0,0,100,xui.Color_White,xui.Color_Gray)
+		Case "Statics 1"
+			P3D.AddPolygon(0,Array As Point3D_Type(P3D.CtP(-150,0,0),P3D.CtP(150,0,0)),xui.Color_White,xui.Color_Transparent)
+			P3D.AddPolygon(0,Array As Point3D_Type(P3D.CtP(-90,-150,0),P3D.CtP(-90,150,0)),xui.Color_White,xui.Color_Transparent)
+			
+			Dim ID As Int = 0
+			For i=1 To 5
+				Dim CasY As Int = Rnd(-100,100)
+
+				P3D.AddCube(ID,(i-3)*40,0,0,(i-2)*40-5,CasY,-20,xui.Color_Black,Array As Int(MyColor(i-1),xui.Color_LightGray,xui.Color_Gray))
+				ID=ID+6
+			Next
+		Case "Statics 2"
+			Dim Dg As Int = Rnd(190,320)
+			P3D.AddArcZ(0,0,Dg,0,0,0,100, xui.Color_White,MyColor(0))
+			P3D.AddArcZ(1,Dg,360,10,-5,0,100,xui.Color_White,MyColor(2))
+		Case "Tetris"
+			Dim ID As Int = 0
+			
+			For y=0 To 3
+				For x=0 To 9
+					Dim Dg As Int = Rnd(-1,5)
+					If Dg>-1 Then
+						P3D.AddCube(ID,-150+x*30,180-y*30,0,-120+x*30,210-y*30,-30,xui.Color_White,Array As Int(MyColor(Dg)))
+						ID=ID+6
+					End If
+				Next
+			Next
+			
+			P3D.addcube(301,-30,-180,0,0,-210,-30,xui.Color_White,Array As Int(MyColor(6)))
+			P3D.addcube(307,0,-180,0,30,-210,-30,xui.Color_White,Array As Int(MyColor(6)))
+			P3D.addcube(313,30,-180,0,60,-210,-30,xui.Color_White,Array As Int(MyColor(6)))
+			P3D.AddCube(319,0,-150,0,30,-180,-30,xui.Color_White,Array As Int(MyColor(6)))
+		Case "Logo"
+			Dim p1,p2,p3,p4 As Point3D_Type
+			p1=P3D.CtP(-150,-50,0)
+			p2=P3D.CtP(150,-50,0)
+			p3=P3D.CtP(150,50,0)
+			p4=P3D.CtP(-150,50,0)
+			P3D.AddImage(1,xui.LoadBitmap(File.DirAssets,"logo.png"),p1,p2,p3,p4)
+	
+			p1=P3D.CtP(150,-50,-30)
+			p2=P3D.CtP(-150,-50,-30)
+			p3=P3D.CtP(-150,50,-30)
+			p4=P3D.CtP(150,50,-30)
+			P3D.AddImage(2,xui.LoadBitmap(File.DirAssets,"logo.png"),p1,p2,p3,p4)
+			
+			p1=P3D.CtP(-150,-50,0)
+			p2=P3D.CtP(150,-50,0)
+			p3=P3D.CtP(150,-50,-30)
+			p4=P3D.CtP(-150,-50,-30)
+			P3D.AddPolygon(3,Array As Point3D_Type(p1,p2,p3,p4),xui.Color_Gray,xui.Color_LightGray)
+			p1=P3D.CtP(-150,50,0)
+			p2=P3D.CtP(150,50,0)
+			p3=P3D.CtP(150,50,-30)
+			p4=P3D.CtP(-150,50,-30)
+			P3D.AddPolygon(4,Array As Point3D_Type(p1,p2,p3,p4),xui.Color_Gray,xui.Color_LightGray)
+
+			p1=P3D.CtP(-150,-50,0)
+			p2=P3D.CtP(-150,-50,-30)
+			p3=P3D.CtP(-150,50,-30)
+			p4=P3D.CtP(-150,50,0)
+			P3D.AddPolygon(5,Array As Point3D_Type(p1,p2,p3,p4),xui.Color_Gray,xui.Color_LightGray)
+			p1=P3D.CtP(150,-50,0)
+			p2=P3D.CtP(150,-50,-30)
+			p3=P3D.CtP(150,50,-30)
+			p4=P3D.CtP(150,50,0)
+			P3D.AddPolygon(5,Array As Point3D_Type(p1,p2,p3,p4),xui.Color_Gray,xui.Color_LightGray)
+		Case "Function 3D"
+			Dim ID As Int = 0
+			For z=-120 To 120 Step 10
+				For x=-120 To 120 Step 10
+					Dim NewPointList(2) As Point3D_Type
+					Dim y1 As Int =50 * CosD(z*2) * SinD(x*2)
+					Dim y2 As Int =50* CosD(z*2) * SinD(x*2+20)
+					NewPointList(0)=(P3D.CtP(X,y1,z))
+					NewPointList(1)=(P3D.CtP(X+10,y2,z))
+					P3D.AddPolygon(ID,NewPointList,xui.Color_White,xui.Color_Transparent)
+					ID=ID+1
+				Next
+			Next
+			
+			For x=-120 To 120 Step 10
+				For z=-120 To 120 Step 10
+					Dim NewPointList(2) As Point3D_Type
+					Dim y1 As Int =50 * CosD(z*2) * SinD(x*2)
+					Dim y2 As Int =50* CosD(z*2+20) * SinD(x*2)
+					NewPointList(0)=(P3D.CtP(X,y1,z))
+					NewPointList(1)=(P3D.CtP(X,y2,z+10))
+					P3D.AddPolygon(ID,NewPointList,xui.Color_White,xui.Color_Transparent)
+					ID=ID+1
+				Next
+			Next
+		Case "file OBJ - Dolphin"
+			P3D.AddFromObjFile(1,File.DirAssets,"dolphin_small3.obj",xui.Color_Gray,xui.Color_LightGray,0)		
+		Case "file OBJ - Tree"
+			P3D.AddFromObjFile(2,File.DirAssets,"tree.obj",xui.Color_White,xui.Color_Transparent,0)
+			P3D=P3D.Rotate(Null,270,0,0).MoveObj(Null,0,70,0)
+		End Select
+	Draw
+End Sub
+
+Sub ashSpinnerEffect_Click (Item As String)
+	PanelCommand.Visible=False
+	SpinnerEffect.Text=Item
+	Sleep(200)
+	Select Item
+		Case "Effect 1"
+			For i=0 To 360 Step 10
+				P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value+i,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+				Sleep(0)
+			Next
+		Case "Effect For Rubik"
+			For i=0 To 90 Step 15
+				P3D.Rotate(Array As Int(10,11,12,13,14,15,16,17,18),i,0,0).Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+				Sleep(50)
+			Next
+			
+		Case "Effect Rubik Mix"
+			For i=0 To 90 Step 15
+				P3D.Rotate(Array As Int(2,5,8,11,14,17,20,23,26,29,32,35),0,i,0).Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+				Sleep(40)
+			Next
+		Case "Tetris Movement"
+			Dim L As List
+			L.Initialize
+			
+			For i=301 To 324
+				L.Add(i)
+			Next
+			
+			For i=1 To 8
+				P3D.MoveObj(L,0,i*30,0).Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+				Sleep(100)
+			Next
+		Case "Quark"
+			For Q=0 To 1080 Step 10
+				P3D.clear
+				Dim ID As Int = 0
+				For z=-120 To 120 Step 10
+					For x=-120 To 120 Step 10
+						Dim NewPointList(2) As Point3D_Type
+						Dim y1 As Int =50 * CosD(z*2+q) * SinD(x*2)
+						Dim y2 As Int =50 * CosD(z*2+q) * SinD(x*2+20)
+						NewPointList(0)=(P3D.CtP(X,y1,z))
+						NewPointList(1)=(P3D.CtP(X+10,y2,z))
+						P3D.AddPolygon(ID,NewPointList,xui.Color_RGB(190,190,255),xui.Color_Transparent)
+						ID=ID+1
+					Next
+				Next
+				
+				For x=-120 To 120 Step 10
+					For z=-120 To 120 Step 10
+						Dim NewPointList(2) As Point3D_Type
+						Dim y1 As Int =50 * CosD(z*2+q) * SinD(x*2)
+						Dim y2 As Int =50 * CosD(z*2+20+q) * SinD(x*2)
+						NewPointList(0)=(P3D.CtP(X,y1,z))
+						NewPointList(1)=(P3D.CtP(X,y2,z+10))
+						P3D.AddPolygon(ID,NewPointList,xui.Color_RGB(190,190,255),xui.Color_Transparent)
+						ID=ID+1
+					Next
+				Next
+				P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+				Sleep(0)
+			Next
+	End Select	
+End Sub
+
+
+Sub ButtonZP_Click
+	Zoom=Min(Zoom+0.2,10)
+	Draw
+End Sub
+
+Sub ButtonZM_Click
+	Zoom=Max(Zoom-0.2,0.2)
+	Draw
+End Sub
+
+Sub ButtonUP_Click
+	If CheckBox2.value Then 
+		centerY=centerY-10dip
+		Draw
+	Else
+		P3D=P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).MoveObj(Null,0,-20,0)
+		P3D.RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+		SeekBarX.Value=0
+		SeekBarY.Value=0
+		SeekBarZ.Value=0
+	End If
+End Sub
+
+Sub ButtonDW_Click
+	If CheckBox2.Value Then
+		centerY=centerY+10dip
+		Draw
+	Else
+		P3D=P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).MoveObj(Null,0,20,0)
+		P3D.RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+		SeekBarX.Value=0
+		SeekBarY.Value=0
+		SeekBarZ.Value=0
+	End If
+End Sub
+
+Sub ButtonRT_Click
+	If CheckBox2.value Then
+		centerX=centerX+10dip
+		Draw
+	Else
+		P3D=P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).MoveObj(Null,20,0,0)
+		P3D.RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+		SeekBarX.Value=0
+		SeekBarY.Value=0
+		SeekBarZ.Value=0
+	End If
+End Sub
+
+Sub ButtonLF_Click
+	If CheckBox2.value Then
+		centerX=centerX-10dip
+		Draw
+	Else
+		P3D=P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).MoveObj(Null,-20,0,0)
+		P3D.RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+		SeekBarX.Value=0
+		SeekBarY.Value=0
+		SeekBarZ.Value=0		
+	End If
+End Sub
+
+Sub ButtonEmpty_Click
+	PanelBack.Color=Colors.Transparent
+End Sub
+
+Sub ButtonImage_Click
+	'PanelBack..SetBackgroundImage(LoadBitmap(File.DirAssets,"silvester.jpg"))
+End Sub
+
+Sub ButtonMenu_Click
+	PanelCommand.Visible=Not(PanelCommand.Visible)
+End Sub
+#End Region
+
+#Region Touch 
+
+Sub ExpandBar_Click
+	PanelCommand.Height=MaxHeight-PanelCommand.Height
+End Sub
+
+Sub PanelCommand_Touch (Action As Int, X As Float, Y As Float)
+	Dim P As Panel = Sender
+	
+	Select Action
+		Case 0 ' Down
+			LX=X
+			LY=y
+		Case 1 ' Up
+		
+		Case 2 ' Move
+			If Abs(X-LX)>1dip Or Abs(Y-LY)>1dip Then 
+				P.Left=P.Left+(x-LX)
+				P.Top=P.Top+(Y-LY)
+				
+				'LX=X
+				'LY=y
+			End If
+	End Select
+End Sub
+
+Sub Panel_Touch (Action As Int, X As Float, Y As Float)
+	Dim P As Panel = Sender
+	Dim V As Int
+	
+	PanelCommand.Visible=False
+	Select Action
+		Case 0
+			LastX=X
+			LastY=y
+		Case 1
+			If Abs(LastX-X)<2dip And Abs(LastY-Y)<2dip Then
+'				ToastMessageShow($"Face n. ${P3D.PointClick(X,Y,True)}"$,False)
+				Log($"Face n. ${P3D.PointClick(X,Y,True)}"$)
+			End If
+		Case 2
+			If Abs(y-LastY)>3dip Or Abs(x-LastX)>3dip Then
+				If Abs(y-LastY)<Abs(x-LastX) Then ' Move fo x
+					If Y<P.Height/3 Then 
+						V=(360+SeekBarZ.Value+(x-LastX)/1dip)
+						V=v Mod 360
+						SeekBarZ.Value=v
+					else If Y<P.Height*2/3 Then
+						V=(360+SeekBarY.Value+(LastX-x)/1dip)
+						V=v Mod 360
+						SeekBarY.Value=v
+					Else
+						V=(360+SeekBarZ.Value+(LastX-x)/1dip)
+						V=v Mod 360
+						SeekBarZ.Value=v
+					End If
+				Else ' move for y
+					V=(360+SeekBarX.Value+(y-LastY)/1dip)
+					V=v Mod 360
+					SeekBarX.Value=v
+				End If
+				LastX=X
+				LastY=y
+				Draw
+			End If
+	End Select
+End Sub
+
+#End Region
+
+#Region SeekBar
+
+
+Sub SeekBarX_ValueChanged (Value As Float)
+	Draw
+End Sub
+
+Sub SeekBarZ_ValueChanged (Value As Float)
+	Draw
+End Sub
+
+Sub SeekBarY_ValueChanged (Value As Float)
+	Draw
+End Sub
+
+Sub CheckBox1_ValueChanged(Value As Boolean)
+	Draw
+End Sub
+
+Sub CheckBox2_ValueChanged (Value As Boolean)
+	If Value=True Then Label4.Text="Move Center" Else Label4.Text="Move Object"	
+End Sub
+
+
+Sub Draw
+	LogColor("Type Draw:" & ModeDraw, Colors.Red)
+	
+	If CheckBox1.value=False Then 	
+		'P3D.RotateY(Null,SeekBarY.Value).RotateZ(Null,SeekBarZ.Value).RotateX(Null,SeekBarX.Value).RenderToView(Panel,centerX,centerY,Zoom,ModeDraw)
+		P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,ModeDraw)
+	Else
+		P3D.Rotate(Null,SeekBarX.Value,SeekBarY.Value,SeekBarZ.Value).RenderToView(iv3DXUI,centerX,centerY,Zoom,0)
+	End If
+	
+	Log("Rotate in :" & P3D.Rotatetime)
+	Log("Sort in :" & P3D.SortTime)
+	Log("Draw in :" & P3D.DrawTime)
+	LabelC.Text=$"X:${SeekBarX.Value} Y:${SeekBarY.Value} Z:${SeekBarZ.Value}  Zoom:$1.1{Zoom}"$
+End Sub
+
+Sub AdaptiveView(V As View, Degree As String)
+	Dim NaObj As NativeObject = Me
+	NaObj.RunMethod("RotateView::",Array(v,Degree))
+
+#If Objc
+- (void)RotateView: (UIView *) View :(int) degree{
+    View.transform = CGAffineTransformMakeRotation(M_PI*degree/180);
+}
+#End If
+End Sub
+#End Region

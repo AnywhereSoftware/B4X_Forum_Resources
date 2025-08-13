@@ -1,0 +1,263 @@
+﻿Build1=Default,b4a.example
+File1=MAIN.bal
+File2=qr.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=sd_bt_printer
+Library3=runtimepermissions
+Library4=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~AddPermission(android.permission.ACCESS_COARSE_LOCATION)~\n~AddPermission(android.permission.ACCESS_FINE_LOCATION)~\n~AddPermission(android.permission.BLUETOOTH_ADVERTISE)~\n~AddPermission(android.permission.BLUETOOTH_CONNECT)~\n~AddPermission(android.permission.BLUETOOTH_SCAN)~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Bluetooth Printer Sample
+	#VersionCode: 1
+	#VersionName: 1
+	
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private xui As XUI
+	
+	Dim rp As RuntimePermissions
+	
+	' Bluetooth
+	Dim Printer As BT_Printer
+	
+	Private ListView1 As ListView
+	Private Preview As ScrollView
+	
+	Private RadioButtonText As RadioButton
+	Private RadioButtonIMG As RadioButton
+	Private RadioButtonMIX As RadioButton
+	
+	' BLE
+	Dim Ble As BLE_Printer
+	
+	Private PanelBLE As Panel
+	Private LabelInfo As Label
+	Private ButtonSend As Button
+	Private ButtonImage As Button
+	
+	Private NamePrinter As String
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Activity.LoadLayout("MAIN")
+	ListView1.SingleLineLayout.Label.TextSize=14
+	ListView1.SingleLineLayout.ItemHeight=30dip
+	
+	Printer.Initialize(Me,"Printer",Encoding.Windows1252)
+	Preview.Color=Colors.LightGray
+	
+	Ble.Initialize(Me,"Ble",Encoding.UTF8)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+#Region Bluetooth
+
+Sub ButtonAssociated_Click
+	' connect to Associated Printer
+	ListView1.Clear
+	Printer.SelectFromAssociatedPrinter
+End Sub
+
+Sub ButtonScanPrinter_Click
+	' Scan for find Bluetooth Printer
+	ListView1.Clear
+	
+	rp.CheckAndRequest(rp.PERMISSION_ACCESS_COARSE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then
+		ToastMessageShow("No permission...", False)
+		Return
+	End If
+	Printer.SearchNewPrinter
+End Sub
+
+Sub Printer_ListPrinterAssociated (ListNameAndMac As Map)
+	' Return a List of BT associated
+	ListView1.Clear
+	For I=0 To ListNameAndMac.Size-1
+		ListView1.AddSingleLine2(ListNameAndMac.GetKeyAt(I),ListNameAndMac.GetValueAt(I))
+	Next
+End Sub
+
+Sub Printer_DiscoveryNewPrinter (PrinterFound As Map, DeviceClass As Int)
+	' Find new printer
+	Log("DEVICE Class:" & DeviceClass)
+	ListView1.AddSingleLine2(PrinterFound.GetKeyAt(0),PrinterFound.GetValueAt(0))
+End Sub
+
+Sub Printer_DiscoveryFinished
+	Log("Search End")
+End Sub
+
+Sub Printer_DiscoveryNoDeviceFound
+	ToastMessageShow("Device not found",True)
+End Sub
+
+Sub ListView1_ItemClick (Position As Int, Value As Object)
+	' Connect Printer for Mac
+	Printer.SelectFromMac(Value)
+End Sub
+
+Sub Printer_ConnectedToPrint (Success As Boolean)
+	' When is connect
+	If Success Then 
+		ToastMessageShow("Connect to BT PRINTER",False)
+	Else
+		ToastMessageShow("Connection error on BT printer",False)
+	End If
+End Sub
+
+Sub Printer_SendTerminated
+	Log("Finish!!")
+	'Printer.Close
+End Sub
+
+Sub RadioButtonText_CheckedChange(Checked As Boolean)
+	Printer.ClearBuffer
+	Printer.AddBuffer_Writeline(ESC_POS.BoldOn & "Hallo dear" & ESC_POS.DoubleOff)
+	Printer.AddBuffer_Writeline("How are you?")
+	Printer.AddBuffer_Writeline("Fine thank's")
+	Printer.AddBuffer_Writeline("012345678901234567890123456789-F")
+	
+	Preview.Panel.Height=Printer.Preview.Height
+	Preview.Panel.SetBackgroundImage(Printer.Preview)
+End Sub
+
+Sub RadioButtonIMG_CheckedChange(Checked As Boolean)
+	Printer.ClearBuffer
+	Printer.AddBuffer_Bitmap(CreateImage(Chr(0xF209) & " " & Chr(0xF17B),xui.CreateFontAwesome(16)),0)
+	
+	Preview.Panel.Height=Printer.Preview.Height
+	Preview.Panel.SetBackgroundImage(Printer.Preview)
+End Sub
+
+Sub RadioButtonMIX_CheckedChange(Checked As Boolean)
+	Printer.ClearBuffer
+	Printer.AddBuffer_Writeline("TEST - Mixed Text and Image")
+	Printer.AddBuffer_Writeline("012345678901234567890123456789-F")
+	Printer.AddBuffer_Bitmap(LoadBitmap(File.DirAssets,"qr.jpg"),0)
+	Printer.AddBuffer_Writeline("END PRINT")
+	
+	Preview.Panel.Height=Printer.Preview.Height
+	Preview.Panel.SetBackgroundImage(Printer.Preview)
+End Sub
+
+Sub ButtonPrint_Click
+	Printer.flushAllAndClose
+	
+	Preview.Panel.Color=Colors.Transparent
+	
+	RadioButtonIMG.Checked=False
+	RadioButtonMIX.Checked=False
+	RadioButtonText.Checked=False
+End Sub
+
+
+Sub CreateImage(Text As String,Font As B4XFont) As Bitmap
+	Dim Can As B4XCanvas
+	Dim V As B4XView = xui.CreatePanel("")
+	V.SetLayoutAnimated(0,0,0,140,90) 'ignore
+	
+	Can.Initialize(V)
+	Can.DrawRect(Can.TargetRect,xui.Color_White,True,1)
+	Can.DrawText(Text,Can.TargetRect.CenterX,Can.TargetRect.Bottom*0.70,Font,xui.Color_Black,"CENTER")
+	Can.Invalidate
+	Return Can.CreateBitmap
+	
+End Sub
+
+#End Region
+
+#Region Ble
+
+Private Sub ButtonBLE_Click
+	PanelBLE.Visible=True
+End Sub
+
+Private Sub ButtonBth_Click
+	PanelBLE.Visible=False
+End Sub
+
+Private Sub ButtonScan_Click
+	LabelInfo.Text=""
+	Ble.ScanPrinter
+	ButtonSend.Visible=False
+	ButtonImage.Visible=False
+End Sub
+
+Private Sub ButtonSend_Click
+	Ble.InitializePrinter
+	Ble.RightJustify
+	Ble.Writeline(ESC_POS.DoubleOn & "RIGHT PRINT" & ESC_POS.DoubleOff)
+	Ble.CenterJustify
+	Ble.Writeline(ESC_POS.FontA_DoubleHight & "CENTER PRINT" & ESC_POS.FontA_Normal)
+	'Ble.LeftJustify
+	Ble.Writeline("LEFT PRINT")
+End Sub
+
+Private Sub ButtonImage_Click
+	Ble.PrintBitmap(LoadBitmap(File.DirAssets,"qr.jpg"))
+End Sub
+
+Private Sub Ble_PrinterFound(Name As String, ID As String)
+	NamePrinter=Name
+	LabelInfo.Text=$"Found device: ${NamePrinter} ${CRLF}(${ID})"$
+	Ble.connect(ID)
+End Sub
+
+Private Sub Ble_Connected(services As List)
+	LabelInfo.Text=$"Connect to printer: ${NamePrinter}"$
+	ButtonSend.Visible=True
+	ButtonImage.Visible=True
+End Sub
+
+Private Sub Ble_Disconnected
+	LabelInfo.Text="Disconnesso"
+	ButtonSend.Visible=False
+	ButtonImage.Visible=False
+End Sub
+
+Private Sub Ble_ImageWriteComplete
+	LabelInfo.Text="Image Printed "
+End Sub
+
+Private Sub Ble_WriteComplete (Characteristic As String, Success As Boolean)
+	LabelInfo.Text="Printed "
+End Sub
+
+#End Region

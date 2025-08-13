@@ -1,0 +1,137 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,b4a.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=1
+File1=Layout1.bal
+NumberOfLibraries=2
+Library1=core
+Library2=creditsroll
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: CreditsRollViewEx
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#AdditionalRes: ..\Resources
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private credits As CreditsRollView
+	Dim creditsMax As Int = 30000
+	Dim creditsPos As Int = 0
+	Dim tmr As Timer
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	credits.TextColor = Colors.Yellow
+	credits.EndScrollMult = 2.5
+	credits.Text = $"A long time ago,
+in a galaxy far,
+far away....
+
+It is a period of civil war.
+Rebel spaceships, striking
+from a hidden base, have won
+their first victory against
+the evil Galactic Empire.
+
+During the battle, rebel
+spies managed to steal secret
+plans to the Empire's
+ultimate weapon, the DEATH
+STAR, an armored space
+station with enough power to
+destroy an entire planet.
+
+Pursued by the Empire's
+sinister agents, Princess
+Leia races home aboard her
+starship, custodian of the
+stolen plans that can save
+her people and restore
+freedom to the galaxy....
+
+
+	
+	Wrapper-Coding
+	DonManfred
+	
+	
+The Force will be 
+with you, always
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	"$
+	tmr.Initialize("timer",100)
+	tmr.Enabled = True
+End Sub
+
+Sub timer_Tick
+	If creditsPos < creditsMax Then
+		creditsPos = creditsPos +1		
+	End If
+	'Log((creditsPos/1000))
+	If (creditsPos/1000) >= 1 Then
+		tmr.Enabled = False
+	End If
+	credits.ScrollPosition = (creditsPos/1000)
+	credits.DistanceFromText = 50dip
+	credits.Angle = 20
+	credits.Height = 100%y
+	credits.Width = 100%x
+	credits.TextSize = 30
+	
+End Sub
+Sub Activity_Resume
+	credits.ScrollPosition = 0
+	
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

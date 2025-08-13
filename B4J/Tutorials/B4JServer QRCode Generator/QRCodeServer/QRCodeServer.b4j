@@ -1,0 +1,32 @@
+﻿AppType=StandardJava
+Build1=Default,com.puterise.qrcode
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jzxing
+Module1=Index
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	Public AssetFolder As String
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddHandler("", "Index", False)
+	srvr.Start
+	AssetFolder = srvr.StaticFilesFolder
+	If Not(File.Exists(AssetFolder, "img")) Then File.MakeDir(AssetFolder, "img")
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:8080/
+End Sub

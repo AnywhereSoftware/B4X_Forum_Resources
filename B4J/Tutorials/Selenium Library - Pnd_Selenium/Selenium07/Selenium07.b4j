@@ -1,0 +1,100 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+Library4=jstringutils
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200 
+	#MergeLibraries: False	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+    ' How to save (print) page to PDF file (Convert HTML to PDF including links)
+	' Possible parameters for Page.printToPDF
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+			
+	Selenium.AddArgument("--kiosk-print")  ' enable automatically pressing the print button in print preview
+	Selenium.AddArgument("--no-sandbox")   ' disables the sandbox for all process types that are normally sandboxed. Meant to be used as a browser-level switch for testing purposes only.
+	    
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+		
+	Selenium.NavigateTo("https://www.b4x.com/")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+	' Possible parameters from: https://vanilla.aslushnikov.com/?Page.printToPDF
+		
+	' displayHeaderFooter - Boolean - Display header and footer. Defaults to false.
+	' footerTemplate - String - HTML template for the print footer. Should use the same format as the 'headerTemplate'.
+	' headerTemplate - String - HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them: - 'date': formatted print date - 'title': document title - 'url': document location - 'pageNumber': current page number - 'totalPages': total pages in the document For example, '<span class=title></span>' would generate span containing the title.
+	' landscape - Boolean - Paper orientation. Defaults to false.
+	' marginBottom - Double - Bottom margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginLeft - Double - Left margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginRight - Double - Right margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginTop - Double - Top margin in inches. Defaults to 1cm (~0.4 inches).
+	' pageRanges - String - Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are printed in the document order, not in the order specified, and no more than once. Defaults to empty string, which implies the entire document is printed. The page numbers are quietly capped to actual page count of the document, and ranges beyond the end of the document are ignored. If this results in no pages to print, an error is reported. It is an error to specify a range with start greater than end.
+	' paperHeight - Double - Paper height in inches. Defaults to 11 inches.
+	' paperWidth- Double - Paper width in inches. Defaults to 8.5 inches.
+	' preferCSSPageSize - Boolean - Whether or not to prefer page size as defined by css. Defaults to false, in which case the content will be scaled to fit the paper size.
+	' printBackground - Boolean - Print background graphics. Defaults to false.
+	' scale - Double - Scale of the webpage rendering. Defaults to 1.
+	
+	' EXPERIMENTAL:
+	' generateDocumentOutline - Boolean - Whether or not to embed the document outline into the PDF.
+	' generateTaggedPDF - Boolean - Whether or not to generate tagged (accessible) PDF. Defaults to embedder choice.
+	' transferMode - String- return as stream Allowed values: ReturnAsBase64, ReturnAsStream.
+
+	Dim Parameters As Map
+	Parameters.Initialize
+	Parameters.Put("landscape", False)                ' Boolean
+	Parameters.Put("displayHeaderFooter", False)      ' Boolean
+	Parameters.Put("printBackground", True)           ' Boolean
+	Parameters.Put("scale", 0.5)                      ' Double
+	Parameters.Put("paperWidth", 8.5)                 ' Double
+	Parameters.Put("paperHeight", 11.0)               ' Double
+	Parameters.Put("marginTop", 0.4)                  ' Double
+	Parameters.Put("marginBottom", 0.4)               ' Double
+	Parameters.Put("marginLeft", 0.4)                 ' Double
+	Parameters.Put("marginRight", 0.4)                ' Double
+	Parameters.Put("pageRanges", "")                  ' String
+	Parameters.Put("ignoreInvalidPageRanges", False)  ' Boolean
+	Parameters.Put("preferCSSPageSize", False)        ' Boolean
+		
+	Dim RetMap As Map = Selenium.ExecuteCdpCommand("Page.printToPDF", Parameters) ' ExecuteCdpCommand with parameters and get Map in return
+	'Log(RetMap)
+	Dim su As StringUtils
+	Dim DecodedBytes() As Byte = su.decodebase64(RetMap.Get("data"))              ' value of "data" key is Base64 encoded, we need to decode it
+	File.WriteBytes(File.DirApp, "Example.pdf", DecodedBytes)                     ' write bytes to file
+	Log ("File saved: " & File.DirApp & "\Example.pdf")
+	
+	Selenium.Quit
+	Sleep(500)
+	ExitApplication
+End Sub
+

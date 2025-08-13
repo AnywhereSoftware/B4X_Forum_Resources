@@ -1,0 +1,66 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=b4x.png
+File2=frm_main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Module1=|absolute|C:\Users\Schnattern\OneDrive\StolteX\ASMsgBox\ASMsgBox
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=6.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Dim xui As XUI
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("frm_main") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub lbl_show_msg_MouseClicked (EventData As MouseEvent)
+	
+	Private ASMsgBox1 As ASMsgBox
+	
+	ASMsgBox1.Initialize(Me,"ASMsgBox1")
+	ASMsgBox1.InitializeWithoutDesigner(MainForm.RootPane,0xFF2F343A,True,True,False)
+	ASMsgBox1.InitializeBottom("Button1","Button2","Button3")
+	
+	ASMsgBox1.EnableDrag = ASMsgBox1.DragableTop
+	ASMsgBox1.icon_set_icon(xui.LoadBitmap(File.DirAssets,"b4x.png"))
+	ASMsgBox1.CenterDialog(MainForm.RootPane)
+	ASMsgBox1.CloseButtonVisible = True
+	ASMsgBox1.ShowWithText("Hello B4X!",True)
+	
+	
+	Wait For ASMsgBox1_result(res As Int)
+	
+
+	If res = ASMsgBox1.POSITIVE  Then
+		
+		Log("Postive")
+		
+	End If
+	
+	Wait For (ASMsgBox1.Close(True)) Complete (Closed As Boolean)
+	
+End Sub

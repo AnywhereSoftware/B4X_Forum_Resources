@@ -1,0 +1,89 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=ffmpeg-b4xlib
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+#AdditionalJar: jave/jave-core-3.3.1
+#AdditionalJar: jave/jave-nativebin-win64-3.3.1
+#AdditionalJar: jave/slf4j-api-2.0.0
+#AdditionalJar: jave/slf4j-nop-2.0.0
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private Button1 As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	Sleep(0)
+	
+	Dim SourceFile As String = "D:\Portraits.mov"
+	Dim TargetFile As String = "D:\fftest.mp4"
+	
+	Dim AudioAttrs As AudioAttributes
+	AudioAttrs.Initialize
+	AudioAttrs.setCodec("aac")
+	' here 64kbit/s Is 64000
+	AudioAttrs.setBitRate(64000)
+	AudioAttrs.setChannels(2)
+	AudioAttrs.setSamplingRate(44100)
+	
+	Dim VideoAttrs As VideoAttributes
+	VideoAttrs.Initialize
+	VideoAttrs.setCodec("h264")
+	VideoAttrs.setX264Profile(VideoAttrs.X264_PROFILE_BASELINE)
+	' Here 160 kbps video Is 160000
+	VideoAttrs.setBitRate(160000)
+	' More the frames more quality And size, but keep it low based on devices like mobile
+	VideoAttrs.setFrameRate(15)
+	VideoAttrs.setSize(VideoSize_Static.New_VideoSize(400, 300))
+	
+	Dim MO As MultimediaObject
+	MO.Initialize
+	MO.Create(SourceFile,"")
+	
+	Dim EncAttrs As EncodingAttributes
+	EncAttrs.Initialize
+	EncAttrs.SetOutputFormat("mp4")
+	EncAttrs.setAudioAttributes(AudioAttrs)
+	EncAttrs.setVideoAttributes(VideoAttrs)
+	
+	Try
+		Dim Enc As Encoder
+		Enc.Initialize
+		Enc.Encode2(Array(MO),TargetFile,"",EncAttrs)
+	Catch
+		Log("Encoding failed " & LastException)
+	End Try
+	
+End Sub
+
+Private Sub Enc_Event(MethodName As String,Args() As Object)
+	
+	Select MethodName
+		Case "message"
+			Log("Message " & Args(0))
+		Case "progress"
+			Log("Progress " & Args(0))
+		Case "sourceinfo"
+			Log("Source Info " & Args(0))
+	End Select
+End Sub

@@ -1,0 +1,123 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=resp3228cyd
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP3228CYD
+'Description:	Development for the B4R Library rESP3228CYD.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rESP3228CYD Example Basic v20250320"
+
+	'Communication
+	Public Serial1 As Serial
+	Private lcd As ESP3228CYD
+
+	'Helper
+	Private bc As ByteConverter	'ignore
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+
+	Log("[Demo] Display dimensions: w=", lcd.Width,",h=",lcd.Height, ",Font h=", lcd.FontHeight(1),",w=",lcd.FontWidth(1))
+
+	lcd.DisplayRotation = 1
+	Log("[Demo] getrotation=", lcd.DisplayRotation)
+	
+	' Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_GREEN
+	Log("[Demo]backgroundcolor=", bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(lcd.BackgroundColor))))
+
+	' Draw version text at top middle center
+	lcd.DrawText(lcd.Width / 2, 10, VERSION, lcd.TEXT_ALIGN_MIDDLE_CENTER, 1.5, lcd.COLOR_BLUE, lcd.COLOR_GREEN)
+
+	' Draw text bottom left using drawtext
+	lcd.DrawText(10, lcd.Height - lcd.FontHeight(1) - 2, "B4X is great... enjoy", lcd.TEXT_ALIGN_MIDDLE_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_DEFAULT)
+	
+	' Draw some filled shapes	
+	lcd.FillCircle(30, 30, 15, lcd.COLOR_RED)
+	lcd.FillRoundRect(10, 70, 50, 20, 5, lcd.COLOR_RED)
+	
+	' Set cursor at x,y position
+	Dim x,y As ULong
+	x = 100
+	y = 100
+	lcd.SetCursor(x,y)
+
+	' Print text in red at cursor position	
+	lcd.SetTextSize(3)
+	lcd.SetTextColor(lcd.ColorRGB(255,0,0))
+	lcd.Print("HELLO")
+
+	' Print text in white at new cursor position
+	lcd.SetCursor(100,200)
+	lcd.SetTextSize(3)
+	lcd.SetTextColor(lcd.ColorRGB(255,255,255))
+	lcd.Print("World")
+
+	' Draw blue pixel
+	lcd.DrawPixel(50, lcd.Height / 2 , lcd.COLOR_BLUE)
+
+	' Draw lines
+	lcd.DrawLine(60, 60, 100, 100, lcd.ColorRGB(255,0,0))
+	'lcd.DrawLine(10, lcd.Height - 20, lcd.Width - 20, lcd.Height - 20, lcd.COLOR_BLUE)
+	lcd.DrawGradientLine(10, lcd.Height - 20, lcd.Width - 20, lcd.Height - 20, lcd.COLOR_RED, lcd.color_BLACK)
+	lcd.DrawWideLine(10, lcd.Height / 2, lcd.Width / 2, lcd.Height / 2, 5, lcd.COLOR_CYAN)
+
+	'3-point black Bezier curve
+	lcd.drawBezier3(10, 200, 100, 150, 150, 200, lcd.COLOR_BLACK)
+	
+	'Draw circles
+	lcd.DrawCircle(60, 60, 20, lcd.COLOR_BLUE)
+	'lcd.FillCircle(60, 60, 20, lcd.ColorRGB(255,0,0))
+	'Dim c As ULong = Bit.ParseInt("000000FF", 32)
+	'lcd.FillCircle(60, 60, 20, c)
+	'lcd.FillCircle(150, 150, 20, lcd.COLOR_RED)
+
+	' Little triangle
+	lcd.fillTriangle(80, 80, 60, 80, 80, 60, lcd.COLOR_YELLOW)
+	
+	'Draw TextBox
+	lcd.DrawTextBox((lcd.Width / 2) - (100 / 2), 30, 100, 40, "INFO", lcd.COLOR_BLACK, 2, lcd.COLOR_WHITE, lcd.COLOR_RED, 4)
+	lcd.DrawTextBoxMultiLIne(200, 80, 100, 130, "Line1", "Line2", "Line3", lcd.COLOR_BLACK, 0, lcd.COLOR_LIGHTGRAY, lcd.COLOR_RED, 4)
+End Sub

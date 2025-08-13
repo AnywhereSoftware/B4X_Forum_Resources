@@ -1,0 +1,379 @@
+﻿Build1=Default,b4a.TableDemo333
+File1=bmp_down.png
+File2=bmp_up.png
+File3=citylist.db
+File4=citylist_c.csv
+File5=citylist_sc.csv
+File6=commercial_becker_script.ttf
+File7=crysta.ttf
+File8=Main.bal
+File9=persons1.db
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=runtimepermissions
+Library4=scrollview2d
+Library5=sql
+Library6=stringutils
+Library7=xui
+Library8=b4xcollections
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+Module2=Table
+NumberOfFiles=9
+NumberOfLibraries=8
+NumberOfModules=2
+Version=13.1
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TableDemov3_33
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Public lstTableRowIDs As List
+	Public lstFilterRowIDs As List
+	Public Query As String
+	Public CurrentTableRowIndex, CurrentIndex, CurrentRowID As Int
+	Public rc1 As RowCol
+	
+	Public SelectedRow1 = -1 As Int
+	Public SelectedRow2 = -1 As Int
+	Public ColWidth As Int
+	Public Counter As Int
+End Sub
+
+Sub Globals
+	Private Table1, Table2 As Table
+	Private btnHideUnhide As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("Main")
+	
+'	Table1.TableColor = Colors.Red
+'	Table1.LineWidth = 3dip
+'	Table1.FastScroll = True
+'	Table1.FastScrollMinItems = 15
+'	Table1.FastScrollColumnIndex = 2
+'	Table1.SingleLine = False
+'	Table1.RowHeight = 80dip
+
+	'---------------------------
+	'RBS Added
+	'---------------------------
+'	Table1.DoFastSorting = True
+	'Table1.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True) 'this doesn't set the data types
+	Table1.LoadSQLiteDB2(Starter.SQL1, "SELECT * FROM persons", True, Array As String("I", "T", "T", "T", "T", "R"))
+	
+'	Table1.AllowSelection = False
+'	Table1.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", False)
+'	Table1.LoadSQLiteDB4(Starter.SQL1, "SELECT * FROM citylist", True)
+'	Table1.LoadTableFromCSV(File.DirAssets, "citylist_c.csv", True)
+'	Table1.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)	
+'	Table1.SortColumn = True
+'	Private Alignments() As Int
+'	Alignments = Array As Int(Gravity.CENTER, Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL))
+'	Alignments = Array As Int(Gravity.CENTER, Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL))
+'	Table1.SetHeaderAlignments(Alignments)
+'	Table1.SetCellAlignments(Alignments)
+'	Table1.ShowStatusLine = False
+'	Table1.ZeroSelection = True
+	Private tf() As Typeface
+'	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD)
+	tf = Array As Typeface(Typeface.DEFAULT, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.DEFAULT, Typeface.DEFAULT_BOLD, Typeface.CreateNew(Typeface.DEFAULT, Typeface.STYLE_ITALIC))
+'	Table1.SetTypeFaces(tf)
+'	Table1.SetHeaderTypeFaces(tf)
+'	Table1.UseColumnColors = True
+	Table1.SetColumnColors(Array As Int(Colors.Gray, Colors.Black, Colors.Blue, Colors.Red, Colors.Gray, Colors.Black, Colors.Blue, Colors.Red))
+	Table1.SetTextColors(Array As Int(Colors.Black, Colors.White, Colors.Yellow, Colors.Blue, Colors.Black, Colors.White, Colors.Yellow, Colors.Blue))
+'	Table1.RefreshTable
+'	Table1.RefreshLabels
+'	Table1.TextSize = 20
+'	Table1.TextColor = Colors.Green
+'	Table1.SetRowColorN(0, Colors.Red)
+'	Table1.SetRowColorN(12, Colors.Blue)
+'	Table1.SetRowColorN(14, Colors.Gray)
+'	Table1.insertRowAt(1, Array As String("100", "Willy", "NELSON", "Broadway 306", "Los Angeles", "300"))
+'	Table1.JumpToRowAndSelect(4, 12)
+'	Table1.JumpToRow(12)
+'	Table1.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True)
+'	Table1.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)
+'	Table1.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM citylist", True)
+'	Table1.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True)
+'	Table1.FirstColumnFixed = True
+'	Table1.RemoveRow(3)
+'	Table1.hideCol(0)
+'	Table1.hideCol(2)
+'	Table1.hideCol(4)
+'	Table1.hideCol(5)
+'	FormatNumbers(Table1, 5, 2)
+	Private rc As RowCol
+	rc.Row = 2
+	rc.Col = 0
+'	Table1.SelectRow(rc)
+	rc.Row = 3
+	rc.Col = 0
+'	Table1.SelectRow(rc)
+	rc.Row = 4
+	rc.Col = 0
+'	Table1.SelectRow(rc)
+	rc.Row = 5
+	rc.Col = 0
+'	Table1.SelectRow(rc)
+	
+'	For i = 0 To Table1.NumberOfRows - 1
+'		Private rc As RowCol
+'		rc.Col = -1
+'		rc.Row = i
+'		Table1.SelectRow(rc)
+'	Next
+'	Log(Table1.MultiSelect)
+	
+	Table2.Initialize(Me, "Table2")
+	Table2.AddToActivity(Activity, 20dip, 250dip, 300dip, 200dip)
+	
+	'--------------------------
+	'RBS Added
+	'--------------------------
+'	Table2.DoFastSorting = True
+	
+	
+'	Table2.ShowStatusLine = False
+'	Table2.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True)
+'	Dim iColorFore As Int = Colors.Red
+'	Dim iColorBack As Int = Colors.Blue
+'	Dim iColorOtro As Int = Colors.Green
+'	Table2.SetTextColors(Array As Int(iColorFore,iColorFore,iColorFore,iColorFore,iColorOtro,iColorOtro))
+'	Table2.SetColumnColors(Array As Int(iColorBack,iColorBack,iColorBack,iColorBack,iColorFore,iColorFore))
+'	Table2.UseColumnColors = True
+'	Table2.RowHeight = 50dip
+'	Table2.SingleLine = False
+'	Table2.SelectedRowColor = Colors.Black
+'	Table2.SelectedRowTextColor = Colors.White
+	Table2.SortBitmapWidth = 16dip
+'	Table2.SortBitmapColor = Colors.White
+'	Table2.SetSortingBitmaps("bmp_down.png", "bmp_up.png")
+'	Private tf1 As Typeface = Typeface.LoadFromAssets("commercial_becker_script.ttf")
+	Private tf1 As Typeface = Typeface.LoadFromAssets("crysta.ttf")
+	Table2.HeaderTypeFace = tf1
+	Private tf1s(1) As Typeface
+	tf1s(0) = tf1
+	Table2.SetTypeFaces(tf1s)
+	Table2.TextSize = 18
+'	Table2.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True)
+'	Table2.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM citylist", True)
+	Table2.LineWidth = 3dip
+'	Table2.NumberOfFixedColumns = 2
+
+	Table2.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)  'this doesn't set the data types, all will be T
+	
+'	Table2.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", False)
+'	Table2.LoadSQLiteDB(Starter.SQL1, "SELECT * FROM persons", True)
+'	Table2.SetAutomaticWidths
+'	Table2.NumberOfFixedColumns = 2
+'	Table2.SetColumnsWidths(Array As Int(10dip, 40dip, 40dip, 40dip, 40dip, 40dip))
+'	Table2.LoadSQLiteDB3(Starter.SQL1, "SELECT * FROM persons WHERE FirstName = ?", Array As String ("Hans"), True)
+'	Table2.LoadTableFromCSV2(File.DirAssets, "test2.csv", True, ";", True)
+'	Table2.SetColumnDataType(5, "R")
+	Table2.SetColumnDataTypes(Array As String("I", "T", "T", "R", "R"))
+'	Table2.MultiColumnSort = True
+'	Table2.hideCol(3)
+'	Table2.HeaderTypeFace = Typeface.CreateNew(Typeface.DEFAULT, Typeface.STYLE_BOLD_ITALIC)
+'	Table2.SetHeaderTypeFaces(Array As TypeFace(Typeface.CreateNew(Typeface.DEFAULT, Typeface.STYLE_BOLD_ITALIC)))
+
+'	Private bmpA, bmpD As Bitmap
+'	bmpA = LoadBitmapResize(File.DirAssets, "bmp_down.png", 16dip, 8dip, True)
+'	bmpA.Initialize(File.DirAssets, "bmp_down.png")
+'	bmpD.Initialize(File.DirAssets, "bmp_up.png")
+	
+'	Table1.JumpToRowAndSelect(4, 30)
+'	Private lst As List
+'	lst = Table1.SelectedRows
+'	Log(lst.Size)
+
+'	Table2.Visible = False
+'	Table2.hideCol(0)
+'	Table2.hideCol(1)
+'	Table2.hideCol(3)
+'	Table2.hideCol(4)
+'	Table2.hideCol(5)
+	Private rp As RuntimePermissions
+	Private Path As String
+	Private out As OutputStream
+	Private bmp As Bitmap
+	Path = rp.GetSafeDirDefaultExternal("")
+	Log(Path)
+	out = File.OpenOutput(Path, "Test.png", False)
+	bmp = Table2.SnapShot
+	bmp.WriteToStream(out, 100, "PNG")
+	out.Close
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+
+Private Sub Table1_ShowRow(Row As Int, lbls() As Label)
+	If Row = 8 Then
+		For i = 0 To lbls.Length - 1
+			lbls(i).Typeface = Typeface.CreateNew(Typeface.DEFAULT_BOLD, Typeface.STYLE_BOLD_ITALIC)
+		Next
+	End If
+End Sub
+
+Sub btnRemoveRows_Click
+	Private lst As List
+	Private i, row As Int
+	lst = Table1.SelectedRows
+	lst.Sort(True)
+	For i = lst.Size - 1 To 0 Step -1
+		row = lst.Get(i)
+		Table1.RemoveRow(row)
+	Next
+End Sub
+
+Sub btnAddRow_Click
+	Private vals(6) As String
+'	vals = Array As String("90", "Pierre", "ARDITI", "Champs Elisée 34", "Paris", "456")
+	vals = Array As String("90", "Pierre" & Chr(10) & "ARDITI", "ARDITI", "Champs Elisée 34", "Paris", "456")
+	Table1.AddRow(vals)
+End Sub
+
+Sub btnChangeTable_Click
+	
+	Table1.LoadSQLiteDB(Starter.SQL2, "SELECT * FROM citylist", True)
+
+	Counter = Counter + 1
+	If Counter > 2 Then
+		Counter = 0
+	End If
+	Select Counter
+		Case 0
+			Table2.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)
+		Case 1
+			Table2.LoadTableFromCSV2(File.DirAssets, "persons.csv", True, ";", True)
+		Case 2
+			Table2.LoadTableFromCSV2(File.DirAssets, "players.csv", True, ",", True)
+	End Select
+'	Table1.LoadSQLiteDB(Starter.SQL2, "SELECT * FROM citylist", True)
+'	Table1.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)
+
+'	Dim Alignments() As Int
+'	Alignments = Array As Int(Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), _
+'		Bit.Or(Gravity.LEFT, Gravity.CENTER_VERTICAL), _
+'		Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), _
+'		Bit.Or(Gravity.CENTER, Gravity.CENTER_VERTICAL), _
+'		Bit.Or(Gravity.RIGHT, Gravity.CENTER_VERTICAL), _
+'		Bit.Or(Gravity.CENTER, Gravity.CENTER_VERTICAL) )
+'	Table1.SetCellAlignments(Alignments)
+	
+'	Table1.LoadSQLiteDB(Starter.SQL2, "SELECT * FROM citylist", True)
+	
+'	Table2.LoadTableFromCSV2(File.DirAssets, "citylist_sc.csv", True, ";", True)
+End Sub
+
+Private Sub cbxFirstColumnsFixed_CheckedChange(Checked As Boolean)
+	If Checked = True Then
+		Table1.NumberOfFixedColumns = 3
+	Else
+		Table1.NumberOfFixedColumns = 0
+	End If
+End Sub
+
+Sub Table1_CellClick(col As Int, row As Int)
+'	Log("Selected cell: row = " & row & "  col = " & col)
+'	Table1.clearSelection 'this removes the selection and removes the selected row color
+	Log(Table1.GetValue(col, row))
+	SelectedRow1 = row	
+End Sub
+
+Sub Table1_CellLongClick(col As Int, row As Int)
+	Log("Selected cell: row = " & row & "  col = " & col)
+End Sub
+
+Sub Table1_HeaderClick(col As Int)
+	Log ("Selected header: " & col & " / " & Table1.sortingDir)
+End Sub
+
+Sub Table2_CellClick(col As Int, row As Int)
+'	Log("Selected cell: row = " & row & "  col = " & col)
+	If SelectedRow2 >= 0 And SelectedRow2 = row Then
+		Table2.clearSelection 'this removes the selection and removes the selected row color
+		SelectedRow2 = -1
+	Else
+		SelectedRow2 = row
+	End If
+End Sub
+
+'Sub Table2_ShowRow(Row As Int, lbls() As Label)
+'	Private i As Int
+'	i = lbls(0).Text
+'	If i < 10 Then
+'		lbls(0).Color = Colors.Red
+'	End If
+'	If row = 2 Then
+'		lbls(0).TextColor = Colors.Blue
+'	End If
+'End Sub
+
+Sub btnHideUnhide_Click
+	Private Widths() As Int
+	Private col = 4 As Int
+	Private tbl As Table
+	
+	tbl = Table1
+	Widths = tbl.GetColumnWidths
+'	If Widths(col) > 1 Then
+	If Widths(col) > 0 Then	'???
+		tbl.HideCol(col)
+		ColWidth = Widths(col)
+		btnHideUnhide.Text = "Unhide column " & col
+	Else
+		tbl.unHideCol(col, ColWidth)
+		btnHideUnhide.Text = "Hide column " & col
+	End If
+End Sub
+
+Sub btnRemoveColor_Click
+'	Table1.HeaderHeight = 60dip	'for test
+	If SelectedRow1 > -1 Then
+		Table1.UnselectRow(SelectedRow1)
+		Table1.RemoveRowColorN(SelectedRow1)
+	End If
+End Sub
+
+Sub FormatNumbers(tbl As Table, col As Int, NumberOfFractions As Int)
+	Private row As Int
+	For row = 0 To tbl.NumberOfRows - 1
+		Private str As String
+		Private nb As Double
+		nb = tbl.GetValue(col, row)
+		str = NumberFormat2(nb, 1, NumberOfFractions, NumberOfFractions, False)
+		tbl.SetValue(col, row, str)
+	Next
+End Sub
+

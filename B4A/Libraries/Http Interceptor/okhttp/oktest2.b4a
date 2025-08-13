@@ -1,0 +1,108 @@
+﻿Build1=Default,b4a.example,HU2_PUBLIC
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=okhttp
+Library4=okhttputils2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global dimiables will be declared once when the application starts.
+	'These dimiables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global dimiables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	StartHttpUtils2Service
+	SetInterceptor
+	
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download("https://www.b4x.com")
+'	j.GetRequest.SetHeader("User-Agent","okhttputils2")
+	Wait For (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log("OK")
+	Else
+		Log(j.ErrorMessage)
+	End If
+	j.Release
+
+End Sub
+
+Private Sub StartHttpUtils2Service
+	'HU2_PUBLIC
+    #if release
+	If HttpUtils2Service.TempFolder = "" Then
+		Dim jo As JavaObject
+		jo.InitializeNewInstance(Application.PackageName & ".httputils2service", Null)
+		jo.RunMethod("onReceive", Array(Null, Null))
+	End If
+	If HttpUtils2Service.TempFolder <> "" Then Log ("okhttp good to go")
+    #end if
+End Sub
+
+
+Sub SetInterceptor
+	'HU2_PUBLIC
+	Dim jo As JavaObject = HttpUtils2Service.hc
+	Dim builder As JavaObject = jo.RunMethod("sharedInit", Array("hc"))
+'	builder.RunMethod("followRedirects", Array(False))
+'	builder.RunMethod("followSslRedirects", Array(False))
+	Dim ginterceptor As JavaObject
+	ginterceptor.InitializeNewInstance(Application.PackageName & ".main$Ginterceptor",Null)
+	builder.runmethod("addNetworkInterceptor", Array (ginterceptor))
+	jo.SetField("client", builder.RunMethod("build", Null))
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+#if Java
+import java.io.IOException;
+import okhttp3.Request;
+import okhttp3.Headers;
+import okhttp3.Response;
+import okhttp3.Interceptor;
+import okhttp3.Interceptor.Chain;
+
+public static class Ginterceptor implements Interceptor {
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Request request = chain.request();
+
+        BA.Log("outgoing request:\nUrl: " + request.url() + "\nHeaders: " + request.headers().toString() + "\nBody: " + request.body() + "\n");
+
+        return chain.proceed(request);
+    }
+}
+
+#End If

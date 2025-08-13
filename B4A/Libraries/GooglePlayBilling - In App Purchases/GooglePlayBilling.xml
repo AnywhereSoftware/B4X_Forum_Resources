@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.objects.BillingClientWrapper</name>
+        <shortname>BillingClient</shortname>
+        <comment>Wrapper for &lt;link&gt;Google Play Billing Library|https://developer.android.com/google/play/billing/billing_library_overview&lt;/link&gt;.
+ Replaces the InAppBilling3 library which is now deprecated.
+The PurchasesUpdated event will be raised in the module where BillingClient was initialized. The other events should be handled with Wait For.</comment>
+        <owner>process</owner>
+        <event>Connected (Result As BillingResult)</event>
+        <event>SkuQueryCompleted (Result As BillingResult, SkuDetails As List)</event>
+        <event>PurchasesQueryCompleted (Result As BillingResult, Purchases As List)</event>
+        <event>PurchasesUpdated (Result As BillingResult, Purchases As List)</event>
+        <event>ConsumeCompleted (Result As BillingResult)</event>
+        <event>AcknowledgeCompleted (Result As BillingResult)</event>
+        <permission>com.android.vending.BILLING</permission>
+        <method>
+            <name>VerifyPurchase</name>
+            <comment>Tests whether the purchase was signed properly.
+Base64Key - Key from Google Play Console.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Purchase</name>
+                <type>anywheresoftware.b4a.objects.BillingClientWrapper.PurchaseWrapper</type>
+            </parameter>
+            <parameter>
+                <name>Base64Key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializeWithBuilder</name>
+            <comment>Alternative initialization method that accepts a custom client builder.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Builder</name>
+                <type>com.android.billingclient.api.BillingClient.Builder</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Consume</name>
+            <comment>Consumes a product. It will not be "owned" after this call.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>PurchaseToken</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Unused</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AcknowledgePurchase</name>
+            <comment>All purchases must be acknowledged or consumed in 3 days. Call this method to acknowledge the purchase.
+PurchaseToken - The token as retrieved with Purchase.PurchaseToken.
+Unused - (developer payload value is no longer supported).
+
+&lt;code&gt;Wait For (Billing.AcknowledgePurchase(p.PurchaseToken, "")) Billing_AcknowledgeCompleted (Result As BillingResult)&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>PurchaseToken</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Unused</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>QueryPurchases</name>
+            <comment>Gets purchases details for all owned products. Check the purchases state as pending purchases will also be listed.
+ SkuType - "inapp" for regular purchases and "subs" for subscriptions.
+Example:
+&lt;code&gt;
+Wait For (Starter.Billing.ConnectIfNeeded) Billing_Connected (Result As BillingResult)
+If Result.IsSuccess Then
+	Wait For (Starter.Billing.QueryPurchases("inapp")) Billing_PurchasesQueryCompleted (Result As BillingResult, Purchases As List)
+	If Result.IsSuccess Then
+		For Each Purchase As Purchase In Purchases
+			
+		Next
+	End If
+End If&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>SkuType</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>LaunchBillingFlow</name>
+            <comment>Starts the billing flow. Returns a BillingResult. The PurchasesUpdated event will be raised if a purchase was done (successfully or unsuccessfully).
+This method must be called from an Activity or a class with an activity context.
+&lt;code&gt;
+Result = Starter.Billing.LaunchBillingFlow(SkuDetails.Get(0))
+Log("LaunchBillingFlow: " &amp; Result.IsSuccess)&lt;/code&gt;</comment>
+            <returntype>anywheresoftware.b4a.objects.BillingClientWrapper.BillingResultWrapper</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>Sku</name>
+                <type>anywheresoftware.b4a.objects.BillingClientWrapper.SkuDetailsWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>QuerySkuDetails</name>
+            <comment>Gets the details of the specified SKUs.
+SkyType - "inapp" for regular products or "subs" for subscriptions.
+SKUs - List or array with the requested SKU ids.
+
+Example:&lt;code&gt;
+Dim sf As Object = Starter.Billing.QuerySkuDetails("inapp", Array("android.test.purchased"))
+Wait For (sf) Billing_SkuQueryCompleted (Result As BillingResult, SkuDetails As List)
+If Result.IsSuccess And SkuDetails.Size = 1 Then&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>SkuType</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SKUs</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ConnectIfNeeded</name>
+            <comment>Connects to the store service if not already connected. Should always be called before making other requests.
+The Connected event will be raised.
+
+Example from the Starter service:
+&lt;code&gt;Wait For (Billing.ConnectIfNeeded) Billing_Connected (Result As BillingResult)&lt;/code&gt;
+Example from other modules:
+&lt;code&gt;Wait For (Starter.Billing.ConnectIfNeeded) Billing_Connected (Result As BillingResult)
+If Result.IsSuccess Then
+ 
+End If
+&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the billing client.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>SubscriptionsSupported</name>
+            <returntype>boolean</returntype>
+            <comment>Tests whether subscriptions are supported.</comment>
+        </property>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.objects.BillingClientWrapper.SkuDetailsWrapper</name>
+        <shortname>SkuDetails</shortname>
+        <comment>Product details.</comment>
+        <objectwrapper>com.android.billingclient.api.ProductDetails</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <property>
+            <name>Description</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the product description.</comment>
+        </property>
+        <property>
+            <name>Price</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the formatted price with the currency sign for one time purchase offers.</comment>
+        </property>
+        <property>
+            <name>Title</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the product title.</comment>
+        </property>
+        <property>
+            <name>Sku</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the product id.</comment>
+        </property>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.objects.BillingClientWrapper.BillingResultWrapper</name>
+        <shortname>BillingResult</shortname>
+        <comment>Information about the operation result.</comment>
+        <objectwrapper>com.android.billingclient.api.BillingResult</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <property>
+            <name>IsSuccess</name>
+            <returntype>boolean</returntype>
+            <comment>Tests whether the result was successful. Logs the response code and debug string in debug mode when the result was unsuccessful.</comment>
+        </property>
+        <property>
+            <name>ResponseCode</name>
+            <returntype>int</returntype>
+            <comment>Returns the response code. One of the CODE constants.</comment>
+        </property>
+        <property>
+            <name>ResponseCodeString</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the response code as a string.</comment>
+        </property>
+        <property>
+            <name>DebugMessage</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the debug message.</comment>
+        </property>
+        <field>
+            <name>CODE_OK</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_BILLING_UNAVAILABLE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_ITEM_UNAVAILABLE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_SERVICE_DISCONNECTED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_FEATURE_NOT_SUPPORTED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_SERVICE_TIMEOUT</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_ITEM_ALREADY_OWNED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_SERVICE_UNAVAILABLE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_ERROR</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_USER_CANCELED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_DEVELOPER_ERROR</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CODE_ITEM_NOT_OWNED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.objects.BillingClientWrapper.PurchaseWrapper</name>
+        <shortname>Purchase</shortname>
+        <objectwrapper>com.android.billingclient.api.Purchase</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <property>
+            <name>IsAcknowledged</name>
+            <returntype>boolean</returntype>
+            <comment>Tests whether the purchase was acknowledged. All purchases should be acknowledged or consumed in 3 days.</comment>
+        </property>
+        <property>
+            <name>PurchaseTime</name>
+            <returntype>long</returntype>
+            <comment>Returns the time the product was purchased.</comment>
+        </property>
+        <property>
+            <name>PurchaseToken</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns a token that uniquely identifies a purchase for a given time and user pair.</comment>
+        </property>
+        <property>
+            <name>DeveloperPayload</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Deprecated.</comment>
+        </property>
+        <property>
+            <name>Signature</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets the purchase data signature.</comment>
+        </property>
+        <property>
+            <name>OrderId</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns an unique order identifier for the transaction.</comment>
+        </property>
+        <property>
+            <name>Sku</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the product id</comment>
+        </property>
+        <property>
+            <name>OriginalJson</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets the json string that includes the purchase information.</comment>
+        </property>
+        <property>
+            <name>PurchaseState</name>
+            <returntype>int</returntype>
+            <comment>Returns the purchase state. One of the STATE constants.</comment>
+        </property>
+        <property>
+            <name>IsAutoRenewing</name>
+            <returntype>boolean</returntype>
+            <comment>Tests whether the subscription renews automatically.</comment>
+        </property>
+        <field>
+            <name>STATE_PENDING</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STATE_UNSPECIFIED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STATE_PURCHASED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <version>7.01</version>
+    <dependsOn>billing-7.0.0.aar</dependsOn>
+</root>

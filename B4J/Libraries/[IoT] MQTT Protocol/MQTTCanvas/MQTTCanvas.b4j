@@ -1,0 +1,115 @@
+﻿Version=3.7
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=1.bjl
+NumberOfLibraries=5
+Library1=jcore
+Library2=jfx
+Library3=jrandomaccessfile
+Library4=jmqtt
+Library5=jcontrolsfx
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Canvas1 As Canvas
+	Private mqtt As MqttClient
+	Type CircleData (x As Double, y As Double, clr As Int)
+	Private serializator As B4XSerializator
+	Private mytopic As String
+	Private StatusBar1 As StatusBar
+	Private MenuBar1 As MenuBar
+	Private user As String = ""
+	Private password As String = ""
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	Dim clientId As String = Rnd(0, 999999999) & DateTime.Now 'create a unique id
+	mqtt.Initialize("mqtt", "tcp://m11.cloudmqtt.com:16496", clientId)
+	Dim mo As MqttConnectOptions
+	mo.Initialize(user, password)
+	mqtt.Connect2(mo)
+	mytopic = "drawers/" & mqtt.ClientId
+	StatusBar1.Initialize("StatusBar1")
+	MainForm.RootPane.AddNode(StatusBar1, 0, 0, -1, 30)
+	MainForm.RootPane.SetAnchors(StatusBar1, 0, -1, 0, 0)
+End Sub
+
+Sub MainForm_Closed
+	mqtt.Close
+End Sub
+
+Sub mqtt_Connected (Success As Boolean)
+	If Success = False Then 
+		Log(LastException)	
+		StatusBar1.Text = "Error connecting"
+	Else
+		StatusBar1.Text = "Connected"
+		mqtt.Subscribe("drawers/#", 0)
+		mqtt.Subscribe("last", 1)
+		MenuBar1.Enabled = True
+		
+	End If
+End Sub
+
+Private Sub mqtt_Disconnected
+	StatusBar1.Text = "Disconnected"
+	MenuBar1.Enabled = False
+End Sub
+
+Private Sub mqtt_MessageArrived (Topic As String, Payload() As Byte)
+	If Topic = "last" Then
+		Log(BytesToString(Payload, 0, password.Length, "utf8"))
+		Return
+	End If
+	Dim obj As Object = serializator.ConvertBytesToObject(Payload)
+	If obj Is CircleData Then
+		If Topic = mytopic Then Return 'the circle was already drawn
+		Dim cd As CircleData = obj
+		DrawCircleData(cd)
+	Else 'obj is string
+		Dim s As String = obj
+		Select s
+			Case "clear"
+				Canvas1.ClearRect(0, 0, Canvas1.Width, Canvas1.Height)
+			Case "close"
+				MainForm.Close
+		End Select
+	End If
+End Sub
+
+Private Sub DrawCircleData(cd As CircleData)
+	Canvas1.DrawCircle(cd.X, cd.Y, 20dip, fx.Colors.From32Bit(cd.clr), True, 0)
+End Sub
+
+
+Sub Canvas1_MouseDragged (EventData As MouseEvent)
+	If mqtt.Connected = False Then Return
+	Dim cd As CircleData
+	cd.x = EventData.X
+	cd.y = EventData.Y
+	cd.clr = Rnd(0x80000000, -1)
+	DrawCircleData(cd)
+	mqtt.Publish(mytopic, serializator.ConvertObjectToBytes(cd))
+End Sub
+
+Sub MenuBar1_Action
+	Dim item As MenuItem = Sender
+	Select item.Text
+		Case "_Clear"
+			mqtt.Publish(mytopic, serializator.ConvertObjectToBytes("clear"))
+		Case "_Close All"
+			mqtt.Publish(mytopic, serializator.ConvertObjectToBytes("close"))
+	End Select
+End Sub

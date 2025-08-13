@@ -1,0 +1,77 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rsmqttbroker
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private Broker As sMQTTBroker
+	Private time As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("XXXX", "YYYY") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	Log("Broker IP : ",wifi.LocalIp," Port : 1883")
+	Broker.Initialize(1883,True)
+	Log("init Broker done")	
+	Broker.InitCB("OnNewClient","OnRemoveClient","OnPublish","OnLostConnection","OnSubscribe","OnUnSubscribe")
+	Log("all CallBacks created and active")
+	AddLooper("LoopBase")
+	time = Millis
+End Sub
+
+Sub LoopBase
+	Broker.update
+	Dim time2 As ULong = Millis
+	If time2 > time + 10000 Then 
+		Log("Stack : ",StackBufferUsage, " Memory : ",AvailableRAM)
+		Dim TopicNb As ULong = Broker.RetainedTopicCount
+		If TopicNb = 0 Then Log("No Topic added")
+		For i = 0 To TopicNb -1 
+			Log("Topic ",TopicNb," TopicName :", Broker.getRetaiedTopicName(i))
+		Next
+		time = Millis	
+	End If	
+End Sub
+
+Sub OnLostConnection
+	Log("Wifi connection lost")
+	If wifi.IsConnected Then Log("wifi disconnected") Else Log("Wifi still connected")
+End Sub
+Sub OnNewClient(ClientID As ULong, user As String, password As String)
+	Log("New Client Connected, ClientID: ",ClientID," user: ",user, " password: ", password)
+End Sub
+Sub OnRemoveClient(ClientID As ULong)
+	Log("Client Removed, ClientID: ",ClientID)
+End Sub
+Sub OnPublish(ClientID As ULong, Topic As String, Payload As String)
+	Log("New Publish, ClientID: ",ClientID," Topic: ",Topic, " Payload: ", Payload)	
+End Sub
+Sub OnSubscribe(ClientID As ULong, Topic As String)
+	Log("New Subscribe, ClientID: ",ClientID," Topic: ",Topic)
+End Sub
+Sub OnUnSubscribe(ClientID As ULong, Topic As String)
+	Log("New UnSubscribe, ClientID: ",ClientID," Topic: ",Topic)	
+End Sub
+

@@ -1,0 +1,149 @@
+﻿Version=1.5
+AppType=JavaFX
+IconFile=
+NumberOfModules=0
+Package=b4j.example
+UserTypesHint=
+NumberOfFiles=2
+File1=1.fxml
+File2=trom.wav
+NumberOfLibraries=5
+Library1=jaudiotrack
+Library2=jcore
+Library3=jfx
+Library4=jrandomaccessfile
+Library5=threading
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private AT As AudioTrack
+	Private RA As RandomAccessFile
+	Dim SampleRate As Int
+	Dim ChannelConfig As Int
+	Dim InitialFilePath,FileName As String
+	
+	Dim Play As Thread				'Ignore warning
+	Private fileButton As Button
+	Private playButton As Button
+	Private FileNameTxt As Label
+	Private stopButton As Button
+	Private StopPlaying As Boolean
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	Play.Initialise("Play")
+	
+	'Can't load from assets so move it
+	File.Copy(File.DirAssets,"trom.wav",File.DirTemp,"trom.wav")
+	
+	FileNameTxt.Text = File.Combine(File.DirTemp,"trom.wav")
+	
+	'Could get this from wav header, but just enter it
+	SampleRate=44100
+	ChannelConfig=AT.Ch_Conf_Stereo
+	
+	'For file dialog
+
+	InitialFilePath = GetSystemProperty("user.home","")
+	
+
+
+
+End Sub
+Sub MainForm_Closed
+	If AT.IsInitialized Then AT.Release
+End Sub
+Sub Playing									'Ignore warning
+	Log("Playing")
+	Log(RA.Size)
+	
+	Dim BufferSize As Int = AT.BufferSize
+	Dim Pos As Int
+	'File has a wav header we need to ignore
+	Pos=44
+	AT.Start
+	For i = 0 To RA.Size-BufferSize Step BufferSize
+		'Break into buffersize chunks and write to the AudioTrack
+		Dim Dat(BufferSize) As Byte
+		RA.ReadBytes(Dat,0,BufferSize,Pos)
+		Log("Write "&AT.Write(Dat,0,BufferSize))
+		Pos=Pos+Dat.Length
+		If StopPlaying Then Exit
+	Next
+	
+	If Not(StopPlaying) Then
+		'Write the last bit
+		Dim Dat(RA.Size-Pos) As Byte
+		RA.ReadBytes(Dat,0,RA.Size-Pos,Pos)	
+		Log("DL "&Dat.Length)
+		Log("Write "&AT.Write(Dat,0,RA.Size-Pos))
+	End If
+	
+	'Tidy up
+	AT.Flush
+	RA.Close
+	
+End Sub
+Sub Play_Ended(endedOK As Boolean,Error As String)
+	
+	'Log status
+	Log("EndedOK "&endedOK & " " & Error)
+	Log("Playing Finished")
+	
+	'Reset the flag
+	StopPlaying = False
+	
+	'Tidy up
+	AT.Stop
+	playButton.Enabled = True
+End Sub
+Sub fileButton_Action
+
+	'Get a file to play from the user
+	Dim FC As FileChooser
+	
+	FC.Initialize
+	FC.Title="Choose a Wav file"
+	FC.SetExtensionFilter("Wav files",Array As String("*.wav"))
+	FC.InitialDirectory = InitialFilePath
+	Do While True
+		Dim response As String = FC.ShowOpen(MainForm)
+		If response = "" Then Return
+		InitialFilePath = File.GetFileParent(response)
+		FileName =  File.GetName(response)
+		Exit
+	Loop
+	
+	FileNameTxt.Text=File.Combine(InitialFilePath,FileName)
+		
+	playButton.Enabled=True
+	
+End Sub
+
+Sub playButton_Action
+	
+	'Open the file for Random Access
+	RA.Initialize2(FileNameTxt.Text,"",True,True)
+	
+	'Initialize the player
+	AT.Initialize(SampleRate,16,ChannelConfig)
+	
+	'call the playing thread
+	Play.Start(Null,"Playing",Null)
+	playButton.Enabled = False
+	
+End Sub
+Sub stopButton_Action
+	'Set the flag so that the 'Playing' thread can exit
+	StopPlaying = True
+End Sub

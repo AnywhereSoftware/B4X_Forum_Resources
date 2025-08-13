@@ -1,0 +1,283 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=colors.txt
+File3=ListOfColors.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=3
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Private Dialog As B4XDialog
+	Private XUI As XUI
+	Private B4XComboBox1 As B4XComboBox
+	Private btnDate As SwiftButton
+	Private DateTemplate As B4XDateTemplate
+	Private LongTextTemplate As B4XLongTextTemplate
+	Private ColorTemplate As B4XColorTemplate
+	Private Base As B4XView
+	Private InputTemplate As B4XInputTemplate
+	Private btnTime As SwiftButton
+	Private AnimatedCounter1 As AnimatedCounter
+	Private ImageView1 As B4XView
+	Private SignatureTemplate As B4XSignatureTemplate
+	Private AnotherProgressBar1 As AnotherProgressBar
+	Private B4XLoadingIndicator1 As B4XLoadingIndicator
+	Private B4XFloatTextField1 As B4XFloatTextField
+	Private B4XFloatTextField2 As B4XFloatTextField
+	Private ColorLabel As B4XView
+	Private ColorPanel As B4XView
+	Private CustomListView1 As CustomListView 'loaded from ListTemplate
+	Private ListOfColorsPanel As B4XView
+	Private btnSearch As SwiftButton
+	Private SearchTemplate As B4XSearchTemplate
+	Private options As B4XListTemplate
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	Base = Activity
+	Dialog.Initialize (Base)
+	Dialog.Title = "XUI Views"
+	Dim Items As List
+	Items.Initialize
+	For i = 1 To 10
+		Items.Add($"Item #${i}"$)
+	Next
+	B4XComboBox1.SetItems(Items)
+	DateTemplate.Initialize
+	DateTemplate.MinYear = 2016
+	DateTemplate.MaxYear = 2030
+	LongTextTemplate.Initialize
+	ColorTemplate.Initialize
+	InputTemplate.Initialize
+	SignatureTemplate.Initialize
+	'set the search items
+	SearchTemplate.Initialize
+	Dim Items As List
+	Items.Initialize
+	For Each line As String In File.ReadList(File.DirAssets, "colors.txt")
+		Dim s() As String = Regex.Split(":", line)
+		Dim Name As String = s(0)
+		Items.Add(Name)
+	Next
+	SearchTemplate.SetItems(Items)
+	B4XFloatTextField1.NextField = B4XFloatTextField2
+	options.Initialize
+	options.Options = Array("Cat", "Dog", "Fish", "Crocodile")
+	options.AllowMultiSelection = True
+	options.MultiSelectionMinimum = 1
+	
+End Sub
+
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	If Dialog.Visible Then Dialog.Resize(Width, Height)
+End Sub
+
+Sub B4XComboBox1_SelectedIndexChanged (Index As Int)
+	Dialog.Show($"Selected item: ${B4XComboBox1.GetItem(Index)}"$, "OK", "", "")
+End Sub
+
+Sub RoundSlider1_ValueChanged (Value As Int)
+	Log("RoundSlider value: " & Value)
+End Sub
+
+Sub btnDate_Click
+	'only CANCEL needed
+	Wait For (Dialog.ShowTemplate(DateTemplate, "", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		btnDate.xLBL.Text = DateTime.Date(DateTemplate.Date)
+	End If
+End Sub
+
+Sub btnColors_Click
+	Wait For (Dialog.ShowTemplate(ColorTemplate, "OK", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		Base.Color = ColorTemplate.SelectedColor
+	End If
+End Sub
+
+Sub btnTerms_Click
+	LongTextTemplate.Text = $"Lorem ipsum dolor sit amet,
+consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Enim blandit volutpat maecenas volutpat blandit aliquam. In egestas erat imperdiet sed euismod nisi porta.
+Arcu ac tortor dignissim convallis aenean et tortor. Elit pellentesque habitant morbi tristique senectus et netus et malesuada.
+Ut tristique et egestas quis ipsum suspendisse ultrices. Mauris a diam maecenas sed enim ut sem viverra.
+Mauris rhoncus aenean vel elit scelerisque. Volutpat consequat mauris nunc congue nisi vitae suscipit.
+Tempor orci eu lobortis elementum nibh tellus molestie. Eleifend quam adipiscing vitae proin sagittis nisl rhoncus.
+Faucibus turpis in eu mi bibendum neque egestas congue quisque. Vel eros donec ac odio tempor orci dapibus ultrices in.
+Velit egestas dui id ornare arcu. Eget nunc lobortis mattis aliquam faucibus purus in massa. Arcu non sodales neque sodales.
+Elementum nisi quis eleifend quam. Elementum nisi quis eleifend quam."$
+	LongTextTemplate.CustomListView1.DefaultTextBackgroundColor = XUI.Color_White
+	LongTextTemplate.CustomListView1.DefaultTextColor = XUI.Color_Black
+	LongTextTemplate.Text = $"js dlkf jskldfj slkdf
+sdf kjlsdfj lk jwelrkfj welkfj wlekfj wlkef
+wef jlkwe jflkw ejflkwej flkwe jflkwe jflwkef j
+we jflkwe jflwek jflkw efjlkwe f
+
+"$
+	Dialog.ShowTemplate(LongTextTemplate, "OK", "", "")
+End Sub
+
+Sub btnOptions_Click
+	'wrap it with a timed template
+	Dim TimedTemplate As B4XTimedTemplate
+	TimedTemplate.Initialize(options)
+	TimedTemplate.TimeoutMilliseconds = 10000 'close after 10 seconds (this is the default value)
+	Wait For (Dialog.ShowTemplate(TimedTemplate, "OK", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		Dialog.Show($"You selected: ${options.SelectedItems}"$, "OK", "", "")
+	End If
+End Sub
+
+Sub btnTime_Click
+	InputTemplate.lblTitle.Text = "Enter time (HH:MM)"
+	InputTemplate.RegexPattern = "^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$" '<---optional. Remove if not needed
+	Wait For (Dialog.ShowTemplate(InputTemplate, "OK", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		btnTime.xLBL.Text = InputTemplate.Text
+	End If
+End Sub
+
+Sub Activity_Resume
+	'required to continue the animation after the activity is paused.
+	AnotherProgressBar1.Visible = True 
+	B4XLoadingIndicator1.Show
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK And Dialog.Close(XUI.DialogResponse_Cancel) Then Return True
+	Return False
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Dialog.Close (XUI.DialogResponse_Cancel)
+End Sub
+
+
+Sub btnCounter_Click
+	AnimatedCounter1.Value = Rnd(0, 99999)
+	AnotherProgressBar1.Value = Rnd(0, 101)
+End Sub
+
+
+Sub btnSignature_Click
+	Dialog.ButtonsFont = XUI.CreateFontAwesome(20)
+	Dim rs As ResumableSub = Dialog.ShowTemplate(SignatureTemplate, Chr(0xF00C), "", Chr(0xF00D))
+	Dialog.GetButton(XUI.DialogResponse_Positive).TextColor = XUI.Color_Green
+	Dialog.GetButton(XUI.DialogResponse_Cancel).TextColor = XUI.Color_Red
+	Dialog.ButtonsFont = XUI.CreateDefaultBoldFont(15) 'return it to the default font. It will no longer affect the current dialog
+	Wait For (rs) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		ImageView1.SetBitmap(SignatureTemplate.Bitmap.Resize(ImageView1.Width, ImageView1.Height, True))
+		Dim out As OutputStream = File.OpenOutput(File.DirInternal, "signature.png", False) 
+		SignatureTemplate.Bitmap.WriteToStream(out, 100, "PNG")
+		out.Close
+	End If
+End Sub
+
+
+Sub B4XFloatTextField1_EnterPressed
+	Log("Enter pressed")
+End Sub
+
+Sub B4XFloatTextField1_TextChanged (Old As String, New As String)
+	Activity.Title = New
+End Sub
+
+Sub btnSearch_Click
+	Wait For (Dialog.ShowTemplate(SearchTemplate, "", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		btnSearch.xLBL.Text = SearchTemplate.SelectedItem
+	End If
+End Sub
+
+Sub B4XSwitch_ValueChanged (Value As Boolean)
+	'Example of finding all B4XSwitch instances based on the base view tag property. The designer tag goes to B4XSwitch.Tag.
+	For Each v As B4XView In Base.GetAllViewsRecursive
+		If v.Tag Is B4XSwitch Then
+			Dim s As B4XSwitch = v.Tag
+			s.Value = Value
+		End If
+	Next
+End Sub
+
+#Region List Of Colors custom Dialog
+Sub CreateListOfColorsLayout
+	ListOfColorsPanel = XUI.CreatePanel("")
+	ListOfColorsPanel.SetLayoutAnimated(0, 0, 0, 300dip, 300dip)
+	ListOfColorsPanel.LoadLayout("ListTemplate") 'ListTemplate is part of XUI Views library.
+	CustomListView1.sv.SetColorAndBorder(XUI.Color_Transparent, 0, 0, 0)
+	For Each line As String In File.ReadList(File.DirAssets, "colors.txt")
+		Dim s() As String = Regex.Split(":", line)
+		Dim Name As String = s(0)
+		Dim Color As Int = Bit.Or(0xff000000, Bit.ParseInt(s(1), 16))
+		Dim item As B4XView = XUI.CreatePanel("")
+		item.SetLayoutAnimated(0, 0, 0, ListOfColorsPanel.Width, 50dip)
+		CustomListView1.Add(item, Array(Name,Color))
+	Next
+End Sub
+
+'lazy creation of the items.
+Sub CustomListView1_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	For i = Max(0, FirstIndex - 5) To Min(CustomListView1.Size - 1, LastIndex + 5)
+		Dim p As B4XView = CustomListView1.GetPanel(i)
+		If p.NumberOfViews = 0 Then
+			p.LoadLayout("ListOfColors")
+			Dim NameAndValue() As Object = CustomListView1.GetValue(i)
+			ColorLabel.Text = NameAndValue(0)
+			ColorPanel.Color = NameAndValue(1)
+		End If
+	Next
+End Sub
+
+
+Sub btnListOfColors_Click
+	If ListOfColorsPanel.IsInitialized = False Then CreateListOfColorsLayout
+	Wait For (Dialog.ShowCustom(ListOfColorsPanel, "", "", "CANCEL")) Complete (Result As Int)
+	If Result = XUI.DialogResponse_Positive Then
+		Base.Color = ListOfColorsPanel.Tag
+	End If
+End Sub
+
+Sub CustomListView1_ItemClick (Index As Int, Value As Object)
+	Dialog.Close(XUI.DialogResponse_Positive)
+	Dim NameAndValue() As Object = Value
+	ListOfColorsPanel.Tag = NameAndValue(1)
+End Sub
+#End Region
+
+
+Sub B4XSeekBar1_ValueChanged (Value As Int)
+	Activity.Title = "B4XSeekbar value: " & Value
+End Sub

@@ -1,0 +1,374 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp3228cyd
+Library3=resp8266wifi
+Library4=rrandomaccessfile
+Library5=rmqtt
+Module1=Helper
+Module2=Settings
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=2
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP3228CYD
+'Description:	B4R Library rESP3228CYD example showing 4 solar production measurements as indicators (MultiLineTextBox) on a main page. Values are simulated.
+'				Touching on the battery indicator, the battery page is shown with 3 lines Title "Battery", Battery Charge Value 0-100, Battery Unit %. Touching this page brings up the main page.
+'				Network & MQTT credentials are defined in the code module 
+'Date:			20250318
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rESP8266WiFi 1.58 - Network communication
+'rMQTT 1.40 - MQTT communication
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+
+	'Communication
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi
+	Private wificlient As WiFiSocket
+
+	' MQTT
+	Private mqtt As MqttClient
+	' MQTT Topics subscribed
+
+	'Device
+	Private lcd As ESP3228CYD
+	
+	'Data
+	Private PowerFromSolar As UInt
+	Private PowerToHouse As UInt
+	Private PowerToGrid As UInt
+	Private PowerFromGrid As UInt
+	Private powerbattery As Int = 0
+	Private PowerFromBattery As UInt	'ignore
+	Private PowerToBattery As UInt		'ignore
+	Private PowerBatteryChargeState As UInt
+	Private PowerTimeStamp As UInt
+	
+	'Textboxes Solar, House, Grid, Battery x1,y1,x2,y2
+	Private TextBoxSolar() As UInt = Array As UInt(20,24,100,100)
+	Private TextBoxHouse() As UInt = Array As UInt(200,24,100,100)
+	Private TextBoxGrid() As UInt = Array As UInt(20,134,100,100)
+	Private TextBoxBattery() As UInt = Array As UInt(200,134,100,100)
+
+	'Pages - only the pages main and battery are used.
+	Private PageMain=0, PageSolar=1, PageHouse=3, PageGrid=4, PageBattery=5 As Byte	'ignore
+	Private PageSelected As Byte = 0
+
+	'Helpers
+	Private bc As ByteConverter
+	Private FirstTime As Boolean = True
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", Settings.PAGEHEADING)
+
+	'Init display with touch event
+	lcd.Initialize("LCD_TOUCHED")
+	lcd.DisplayRotation = 1
+	
+	'LED OFF
+	lcd.SetRGBLEDOff
+
+	'Draw the main page which will have initial values 0
+	DrawPageMain
+
+	' Connect with wifi by setting SSID and password
+	If wifi.Connect2(Settings.NETWORK_SSID, Settings.NETWORK_PASSWORD) Then
+		Log("[AppStart] Connected to Wireless network with local IP ", wifi.LocalIp)
+	Else
+		Log("[AppStart] Failed to connect to the Wireless network. Check the network parameter.")
+		Return
+	End If
+	
+	' Init MQTT
+	mqtt.Initialize(wificlient.Stream, Settings.MQTT_IP, Settings.MQTT_PORT, Settings.MQTT_CLIENT_ID, "Mqtt_MessageArrived", "Mqtt_Disconnected")
+
+	' Make a connection to the MQTT Broker - ensure its up and running
+	Mqtt_Connect(0)
+End Sub
+
+#Region mqtt
+Sub Mqtt_Connect(unused As Byte)
+	Dim opt As MqttConnectOptions
+	opt.Initialize(Settings.MQTT_USERNAME, Settings.MQTT_PASSWORD)
+	If mqtt.Connect2(opt) = False Then
+		Log("[Mqtt_Connect] Trying to connect to the broker again")
+		CallSubPlus("Mqtt_Connect", 1000, 0)
+		Return
+	End If
+	Log("[Mqtt_Connect] Connected to broker")
+	mqtt.Subscribe(Settings.MQTT_TOPIC_HOMEASSISTANT, 0)
+End Sub
+
+'Handle mqtt new messages. Only payloads with UInt are accepted.
+'The last payload received, timestamp, updates the mainpage.
+Sub Mqtt_MessageArrived (Topic As String, Payload() As Byte)
+'	Log("[Mqtt_MessageArrived] Topic=", Topic, " payload: ", Payload)
+
+	'Value to be displayed
+	Dim value As UInt
+
+	'Get the payload as string and convert toUInt
+	Dim PayLoadStr As String = bc.StringFromBytes(Payload)
+	If IsNumber(PayLoadStr) Then
+		value = PayLoadStr
+	Else
+		Log("[ERROR][Mqtt_MessageArrived] Payload is not a number:", Payload)
+		Return
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_battery_charge_state payload: 100
+	If Topic == "homeassistant/sensor/power_battery_charge_state" Then
+		PowerBatteryChargeState = value 'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_from_solar payload: 1080
+	If Topic == "homeassistant/sensor/power_from_solar" Then
+		PowerFromSolar = value	'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_from_grid payload: 0
+	If Topic == "homeassistant/sensor/power_from_grid" Then
+		PowerFromGrid = value	'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_to_grid payload: 814
+	If Topic == "homeassistant/sensor/power_to_grid" Then
+		PowerToGrid = value	'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_to_battery payload: 0
+	If Topic == "homeassistant/sensor/power_to_battery" Then
+		PowerToBattery = value 'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_from_battery payload: 0
+	If Topic == "homeassistant/sensor/power_from_battery" Then
+		PowerFromBattery = value	'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_to_house payload: 266
+	If Topic == "homeassistant/sensor/power_to_house" Then
+		PowerToHouse = value	'IntFromBytes(Payload)
+	End If
+
+	'[Mqtt_MessageArrived] Topic=homeassistant/sensor/power_timestamp: 1617
+	If Topic == "homeassistant/sensor/power_timestamp" Then
+		PowerTimeStamp = value	'IntFromBytes(Payload)
+		
+		'This is the last mqtt msg arrived, lets update some vars & selected page
+		If PowerToBattery > 0 Then
+			powerbattery = PowerToBattery
+		Else
+			powerbattery = PowerFromBattery * -1
+		End If
+
+		UpdatePage
+	End If
+
+'	Private PowerGrid As Int
+
+End Sub
+
+Sub Mqtt_Disconnected
+	Log("Disconnected")
+	mqtt.Close
+	Mqtt_Connect(0)
+End Sub
+#End Region
+
+#Region Touch
+Private Sub LCD_TOUCHED(x As ULong, y As ULong)
+	If PageSelected == PageMain Then
+		Dim b As Boolean = TouchedTextBoxButton(TextBoxBattery, x, y)
+		Log("[LCD_TOUCHED] battery=", b)
+		If b Then DrawPageBattery
+	Else
+		DrawPageMain
+	End If
+End Sub
+
+Private Sub TouchedTextBoxButton(textbox() As UInt, touchx As ULong, touchy As ULong) As Boolean
+	Dim result As Boolean = False
+	Log("[TouchedTextBoxButton] x,y=",touchx, ",", touchy, ",textbox=",textbox(0),",", textbox(1),",", textbox(2),",", textbox(3))
+	If (touchx >= textbox(0) And touchx <= textbox(0) + textbox(2)) And (touchy >= textbox(1) And touchy <= textbox(1) + textbox(3)) Then
+		result = True
+	End If
+	Return result
+End Sub
+#End Region
+
+#Region UpdatePage
+'Update the selected page
+Private Sub UpdatePage
+	'Log("[UpdatePage] timestamp=", PowerTimeStamp)
+
+'	lcd.StartWrite(True)
+	Select PageSelected
+		Case PageMain
+			DrawPageMain
+		Case PageBattery
+			DrawPageBattery
+	End Select
+'	lcd.EndWrite
+
+End Sub
+#End Region
+
+#Region DrawPages
+Private Sub DrawTextBoxButton(textbox() As UInt, line1 As String, line2 As String, line3 As String, textcolor As ULong, bordercolor As ULong)
+	Dim textsize As Double = 2
+	Dim bordersize As Byte = 6
+	Dim backgroundcolor As ULong = lcd.COLOR_WHITE
+	lcd.DrawTextBoxMultiLine(textbox(0),textbox(1),textbox(2),textbox(3),line1,line2,line3,textcolor,textsize,backgroundcolor,bordercolor,bordersize)
+End Sub
+
+'Draw the page setup with heading & footer
+Private Sub DrawPageSetUp
+
+	lcd.StartWrite(True)
+
+	lcd.Clear
+	lcd.FillScreen(lcd.COLOR_WHITE)
+	lcd.Font = lcd.FONT_DEFAULT
+
+	'Page heading top left
+	lcd.DrawText(10, 10, Settings.PAGEHEADING, lcd.TEXT_ALIGN_MIDDLE_LEFT, 2, lcd.COLOR_BLACK, lcd.BackgroundColor)
+
+	'Timestamp top right
+	lcd.DrawText(lcd.Width, 10, Helper.SetTimeStamp(PowerTimeStamp), lcd.TEXT_ALIGN_MIDDLE_RIGHT, 2, lcd.COLOR_BLACK, lcd.BackgroundColor)
+
+	'Draw red line below the heading
+	lcd.DrawLine(0, 20, lcd.Width, 20, lcd.COLOR_RED)
+
+	'Delay(100)
+	lcd.EndWrite
+End Sub
+
+'Draw the mainpage with 4 TextBoxButtons.
+Private Sub DrawPageMain
+	'Color helper
+	Private color As ULong
+
+	'Set the selected page = used for touch
+	PageSelected = PageMain
+	
+	'Draw the page header & footer
+	DrawPageSetUp
+
+	'If firsttime show waiting message and leave the sub
+	If FirstTime Then
+		FirstTime = False
+		lcd.Font = lcd.FONT_ORBITRON_LIGHT_24
+		lcd.DrawText(lcd.Width/2, lcd.Height/2, Settings.MSG_WAITING, lcd.TEXT_ALIGN_MIDDLE_CENTER, 1, lcd.COLOR_BLACK, lcd.BackgroundColor)
+		lcd.Font = lcd.FONT_DEFAULT
+		Return
+	End If
+
+	'TextBoxButton PowerFromSolar Solar Top Left	
+	If PowerFromSolar < 10 Then
+		color = lcd.COLOR_RED
+	Else
+		color = lcd.COLOR_BLACK
+	End If
+	DrawTextBoxButton(TextBoxSolar, _
+					  "Solar", _ 
+					  PowerFromSolar, _ 
+					  "W", _
+					  color, _ 
+					  lcd.COLOR_YELLOW)
+	
+	'TextBoxButton PowerToHouse Top Right
+	DrawTextBoxButton(TextBoxHouse, "House", PowerToHouse, "W", lcd.COLOR_BLACK, lcd.ColorRGB(50, 205, 50))
+
+	'TextBoxButton PowerTo/FromGrid Bottom Left
+	If PowerToGrid >= 0 Then
+		DrawTextBoxButton(TextBoxGrid,"Grid",PowerToGrid,"W",lcd.COLOR_DARKGREEN,lcd.COLOR_BLACK)
+	Else
+		DrawTextBoxButton(TextBoxGrid,"Grid",PowerFromGrid,"W",lcd.COLOR_DARKGREEN,lcd.COLOR_RED)
+	End If
+
+	'TextBoxButton PowerBatteryChargeState and PowerBattery Bottom Right
+	If PowerBatteryChargeState >= 20 Then
+		color = lcd.COLOR_BLACK
+	Else
+		color = lcd.COLOR_RED
+	End If
+	DrawTextBoxButton(TextBoxBattery,"Battery", _
+		JoinStrings(Array As String(PowerBatteryChargeState,"%")), _
+		JoinStrings(Array As String(powerbattery,"W")), _
+		color, _ 
+		lcd.COLOR_MAGENTA)
+End Sub
+
+Private Sub DrawPageBattery
+	'Color helper
+	Private color As ULong
+
+	'Set the selected page = used for touch
+	PageSelected = PageBattery
+	
+	'Draw the page header & footer
+	DrawPageSetUp
+
+	'Draw the power type in this case the Battery	
+	lcd.DrawText(lcd.Width / 2, lcd.Height / 5, _
+				 "BATTERY", _
+				 lcd.TEXT_ALIGN_MIDDLE_CENTER, _
+				 3, _
+				 lcd.COLOR_BLACK, _
+				 lcd.BackgroundColor)
+
+	'Set color depending charging state
+	If PowerBatteryChargeState >= 20 Then
+		color = lcd.COLOR_BLACK
+	Else
+		color = lcd.COLOR_RED
+	End If
+
+	lcd.DrawText(lcd.Width / 2, lcd.Height / 2, _
+				 JoinStrings(Array As String(PowerBatteryChargeState, "%")), _
+				 lcd.TEXT_ALIGN_MIDDLE_CENTER, _ 
+				 8, _
+				 color, _
+				 lcd.BackgroundColor)
+
+	'Set the charging state
+	If powerbattery >= 0 Then
+		color = lcd.COLOR_BLACK
+	Else
+		color = lcd.COLOR_RED
+	End If
+	lcd.DrawText(lcd.Width / 2, lcd.Height - (lcd.Height / 5), _
+				 JoinStrings(Array As String(powerbattery, "W")), _
+				 lcd.TEXT_ALIGN_MIDDLE_CENTER, _
+				 3, _
+		 		 color, _ 
+				 lcd.BackgroundColor)
+End Sub
+#End Region

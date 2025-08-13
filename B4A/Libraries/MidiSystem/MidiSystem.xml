@@ -1,0 +1,4860 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+  <b4x_version>11.80</b4x_version>
+  <dependsOn>javaobject</dependsOn>
+  <dependsOn>nanotime</dependsOn>
+  <dependsOn>slbytearraybuffer</dependsOn>
+  <dependsOn>slstreams</dependsOn>
+  <dependsOn>threading</dependsOn>
+  <dependsOn>usb</dependsOn>
+  <dependsOn>mididriver2</dependsOn>
+  <dependsOn>android-support-v4</dependsOn>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midisequence_static</name>
+    <shortname>MidiSequence_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="DIVTYPE_PPQ">_divtype_ppq</name>
+      <returntype>float</returntype>
+    </field>
+    <field>
+      <name DesignerName="DIVTYPE_SMPTE_24">_divtype_smpte_24</name>
+      <returntype>float</returntype>
+    </field>
+    <field>
+      <name DesignerName="DIVTYPE_SMPTE_25">_divtype_smpte_25</name>
+      <returntype>float</returntype>
+    </field>
+    <field>
+      <name DesignerName="DIVTYPE_SMPTE_30">_divtype_smpte_30</name>
+      <returntype>float</returntype>
+    </field>
+    <field>
+      <name DesignerName="DIVTYPE_SMPTE_30DROP">_divtype_smpte_30drop</name>
+      <returntype>float</returntype>
+    </field>
+    <method>
+      <name DesignerName="GetSequencer">_getsequencer</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisequencer</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="SetSequencer">_setsequencer</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisequencer</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seqr</name>
+        <type>com.stevel05.midilib.midisequencer</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midilibutils</name>
+    <shortname>MidiLibUtils</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="MICROSECONDS_PER_MINUTE">_microseconds_per_minute</name>
+      <returntype>long</returntype>
+    </field>
+    <method>
+      <name DesignerName="Arraycopy">_arraycopy</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Src</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>SrcPos</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Dst</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>DstPos</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Length</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ConvertTempo">_converttempo</name>
+      <comment>Tempo is BPM or MicrosecondsPerQuarternote(usPQ)
+</comment>
+      <returntype>double</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tempo</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="CopyOfRange">_copyofrange</name>
+      <returntype>byte[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Source</name>
+        <type>byte[]</type>
+      </parameter>
+      <parameter>
+        <name>Offset</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Length</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="DecodeTempo">_decodetempo</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Bytes</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EncodeTempo">_encodetempo</name>
+      <comment>Takes an int and returns a 3 byte array for use with setting the tempo Meta Event
+</comment>
+      <returntype>byte[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MsQN</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="FindPositionNum">_findpositionnum</name>
+      <comment>Find the exact, previous or next number in a sorted list of numbers
+Higher = True for the next highest or False for the next lowest
+Returns the index in the list of the required hit
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Target</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>L</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>Higher</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetAsHexStr">_getashexstr</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Str</name>
+        <type>Object</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InvalidStatus">_invalidstatus</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>L</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Logger">_logger</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Status</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Class</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Message</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="StringFromBytes">_stringfrombytes</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ByteArray</name>
+        <type>byte[]</type>
+      </parameter>
+      <parameter>
+        <name>ChrSet</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ThrowException">_throwexception</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Msg</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="WriteVarInt">_writevarint</name>
+      <comment>@SLHide
+</comment>
+      <returntype>byte[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midiutils</name>
+    <shortname>MidiUtils</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="MICROSECONDS_PER_MINUTE">_microseconds_per_minute</name>
+      <returntype>long</returntype>
+    </field>
+    <method>
+      <name DesignerName="ConvertTempo">_converttempo</name>
+      <comment>Tempo is BPM or MicrosecondsPerQuarternote(usPQ)
+@SLHide
+</comment>
+      <returntype>double</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tempo</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTempoMPQ">_gettempompq</name>
+      <comment>In Microseconds Per Quarter Note
+@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MidiMsg</name>
+        <type>com.stevel05.midilib.midimessage</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsMetaEndOfTrack">_ismetaendoftrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MidiMsg</name>
+        <type>com.stevel05.midilib.midimessage</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ISMetaTempo">_ismetatempo</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MidiMsg</name>
+        <type>com.stevel05.midilib.midimessage</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Microsec2Ticks">_microsec2ticks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>us</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Microsecond2Tick">_microsecond2tick</name>
+      <comment>Given a microsecond time, convert to tick.
+@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>Micros</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Millis2Ticks">_millis2ticks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ms</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Millisecond2Tick">_millisecond2tick</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>Millis</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Tick2Index">_tick2index</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>TTrack</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Tick2Microsecond">_tick2microsecond</name>
+      <comment>Given a tick, convert to microsecond
+@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Tick2Millisecond">_tick2millisecond</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Ticks2Microsec">_ticks2microsec</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Ticks2Millis">_ticks2millis</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midimessage_static</name>
+    <shortname>MidiMessage_Static</shortname>
+    <comment>Code module
+Subs in this code module will be accessible from all modules.
+</comment>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="ALLNOTESOFF">_allnotesoff</name>
+      <returntype>byte[]</returntype>
+    </field>
+    <field>
+      <name DesignerName="SPECIAL_SYSTEM_EXCLUSIVE">_special_system_exclusive</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="SYSTEM_EXCLUSIVE">_system_exclusive</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_ACTIVE_SENSING">_status_active_sensing</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_CHANNEL_PRESSURE">_status_channel_pressure</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_CONTINUE_">_status_continue_</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_CONTROL_CHANGE">_status_control_change</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_END_OF_EXCLUSIVE">_status_end_of_exclusive</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_MIDI_TIME_CODE">_status_midi_time_code</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_NOTE_OFF">_status_note_off</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_NOTE_ON">_status_note_on</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_PITCH_BEND">_status_pitch_bend</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_POLY_PRESSURE">_status_poly_pressure</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_PROGRAM_CHANGE">_status_program_change</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_SONG_POSITION_POINTER">_status_song_position_pointer</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_SONG_SELECT">_status_song_select</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_START">_status_start</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_STOP">_status_stop</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_SYSTEM_RESET">_status_system_reset</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_TIMING_CLOCK">_status_timing_clock</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="STATUS_TUNE_REQUEST">_status_tune_request</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_SEQUENCE_NUMBER">_meta_sequence_number</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_TEXT">_meta_text</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_COPYRIGHT">_meta_copyright</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_SEQ_OR_TRACK_NAME">_meta_seq_or_track_name</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_INSTRUMENT_NAME">_meta_instrument_name</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_LYRIC">_meta_lyric</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_MARKER">_meta_marker</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_CUEPOINT">_meta_cuepoint</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_PROGRAM_NAME">_meta_program_name</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_DEVICE_NAME">_meta_device_name</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_MIDI_CHANNEL_PREFIX">_meta_midi_channel_prefix</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_PORT">_meta_port</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_EOT">_meta_eot</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_TEMPO">_meta_tempo</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_SMTPE_OFFSET">_meta_smtpe_offset</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_TIME_SIGNATURE">_meta_time_signature</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_KEY_SIGNATURE">_meta_key_signature</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="META_SEQUENCER_SPECIFIC">_meta_sequencer_specific</name>
+      <returntype>byte</returntype>
+    </field>
+    <field>
+      <name DesignerName="TYPE_SHORTMESSAGE">_type_shortmessage</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TYPE_METAMESSAGE">_type_metamessage</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TYPE_SYSEXMESSAGE">_type_sysexmessage</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="METAStatus">_metastatus</name>
+      <returntype>int</returntype>
+    </field>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.mididevice_static</name>
+    <shortname>MidiDevice_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="DEVICE_TRANSMITTER">_device_transmitter</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="DEVICE_RECEIVER">_device_receiver</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="DEVICE_SYNTH">_device_synth</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="DRIVER_NONE">_driver_none</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="DRIVER_SYSINTERNAL">_driver_sysinternal</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="DRIVER_USB">_driver_usb</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="DRIVER_INTERNAL">_driver_internal</name>
+      <returntype>int</returntype>
+    </field>
+    <method>
+      <name DesignerName="AddDriverReceiver">_adddriverreceiver</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddDriverTransmitter">_adddrivertransmitter</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddUSBDevice">_addusbdevice</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>USBD</name>
+        <type>com.stevel05.midilib.midiusbmanager_static._midiusbdevicetype</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDefaultReceiverDevice">_getdefaultreceiverdevice</name>
+      <comment>Returns the default receiver Device
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getDeviceList">_getdevicelist</name>
+      <comment>Returns an array of available devices
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDriverReceiver">_getdriverreceiver</name>
+      <returntype>com.stevel05.midilib.midireceiver</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getReceiverDriverMap">_getreceiverdrivermap</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTransmitterDriverMap">_gettransmitterdrivermap</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsInitialized">_isinitialized</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RegisterReceiver">_registerreceiver</name>
+      <comment>Adds a receiver to the device list
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Description</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FriendlyName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RegisterTransmitter">_registertransmitter</name>
+      <comment>Adds a transmitter to the device list
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Description</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FriendlyName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveDriverReceiver">_removedriverreceiver</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+      <parameter>
+        <name>RemoveIfLast</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveDriverTransmitter">_removedrivertransmitter</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+      <parameter>
+        <name>RemoveIfLast</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midietn_static</name>
+    <shortname>MidiETN_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="EMap">_emap</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+    <field>
+      <name DesignerName="CCMap">_ccmap</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+    <field>
+      <name DesignerName="NF">_nf</name>
+      <returntype>com.stevel05.midilib.midietn_static._midietypes</returntype>
+    </field>
+    <field>
+      <name DesignerName="IsInitialized">_isinitialized</name>
+      <returntype>boolean</returntype>
+    </field>
+    <method>
+      <name DesignerName="CCName">_ccname</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ID</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Name">_name</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>EType</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ShortName">_shortname</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>EType</name>
+        <type>int</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midifileformat_static</name>
+    <shortname>MidiFileFormat_Static</shortname>
+    <comment>Code module
+Subs in this code module will be accessible from all modules.
+</comment>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="UNKNOWN_LENGTH">_unknown_length</name>
+      <returntype>int</returntype>
+    </field>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midigeneralmidi_static</name>
+    <shortname>MidiGeneralMidi_Static</shortname>
+    <comment>Subs in this code module will be accessible from all modules.
+</comment>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="ProgNameMap">_prognamemap</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+    <field>
+      <name DesignerName="DrumMap">_drummap</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+    </field>
+    <method>
+      <name DesignerName="GetDrumName">_getdrumname</name>
+      <comment>Get the drum name from it's note number
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>NoteNum</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDrumNames">_getdrumnames</name>
+      <comment>Get a list of available Durm Names
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDrumNoteNum">_getdrumnotenum</name>
+      <comment>Get the drum note number from it's name
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>DrumName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDrumNotes">_getdrumnotes</name>
+      <comment>Get a list of available Drum Note Numbers
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetPatchNames">_getpatchnames</name>
+      <comment>Get a list of patch names defined
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetProgName">_getprogname</name>
+      <comment>Get the General Midi Name for a Program Number (0 based)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ProgNo</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetProgNo">_getprogno</name>
+      <comment>Get the General Midi Program Number from a Name (0 based)
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ProgName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetProgNumbers">_getprognumbers</name>
+      <comment>Get a list or program numbers defined
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midirecordingtrack_static</name>
+    <shortname>MidiRecordingTrack_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <method>
+      <name DesignerName="GetRT">_getrt</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midirecordingtrack</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>RT</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTrack">_gettrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.miditrack</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>RT</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>ch</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midisequencerreceiver_static</name>
+    <shortname>MidiSequencerReceiver_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>@SLHide
+Initialize the Sequencer Receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>RTS</name>
+        <type>com.stevel05.midilib.midirealtimesequencer</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsInitialized">_isinitialized</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Send">_send</name>
+      <comment>For use when recording to a sequence by the SequenceReceiver or user developed transmitters
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Message</name>
+        <type>com.stevel05.midilib.midimessage</type>
+      </parameter>
+      <parameter>
+        <name>TimeStamp</name>
+        <type>long</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midisystem_static</name>
+    <shortname>MidiSystem_Static</shortname>
+    <comment>Subs in this code module will be accessible from all modules.
+</comment>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <method>
+      <name DesignerName="GetMidiDeviceInfo">_getmidideviceinfo</name>
+      <comment>Get an array of mididevice Info
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetSequence">_getsequence</name>
+      <comment>Load a sequence from a File
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>FilePath</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>StrictParser</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetSequenceFromInputStream">_getsequencefrominputstream</name>
+      <comment>Load a sequence from an input Stream
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Stream</name>
+        <type>anywheresoftware.b4a.objects.streams.File.InputStreamWrapper</type>
+      </parameter>
+      <parameter>
+        <name>StrictParser</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetSynthesizer">_getsynthesizer</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisynthesizer</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Helper sub to Initialize midi system
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Loading">_loading</name>
+      <comment>Returns the current loading state
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="WriteSequence">_writesequence</name>
+      <comment>Save a sequence to a file
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>FileType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FilePath</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="WriteSequence1">_writesequence1</name>
+      <comment>Send a sequence to an output stream
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>FileType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Out</name>
+        <type>anywheresoftware.b4a.objects.streams.File.OutputStreamWrapper</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.miditempocache_static</name>
+    <shortname>MidiTempoCache_Static</shortname>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="DEFAULT_TEMPO_MPQ">_default_tempo_mpq</name>
+      <returntype>double</returntype>
+    </field>
+    <method>
+      <name DesignerName="GetSnapshotIndex">_getsnapshotindex</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetSnapshotMicro">_getsnapshotmicro</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTempoMPQAt">_gettempompqat</name>
+      <comment>Get Tempo in Microseconds at tick
+@SLHide
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTempoMPQAt1">_gettempompqat1</name>
+      <comment>@SLHide
+Get Tempo in Microseconds at tick
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>StartTempoMPQ</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetTempos">_gettempos</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetTicks">_getticks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long[]</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InitializeSeq">_initializeseq</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsAvailble">_isavailble</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Refresh">_refresh</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setCurrTempo">_setcurrtempo</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Tempo</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSnapShotIndex">_setsnapshotindex</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>SSI</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSnapShotMicro">_setsnapshotmicro</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>SSM</name>
+        <type>int</type>
+      </parameter>
+    </method>
+  </class>
+  <class b4a_type="StaticCode">
+    <name>com.stevel05.midilib.midiusbmanager_static</name>
+    <shortname>MidiUSBManager_Static</shortname>
+    <comment>Subs in this code module will be accessible from all modules.
+</comment>
+    <owner>activity</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <method>
+      <name DesignerName="Connection">_connection</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbDeviceConnectionWrapper</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDevices">_getdevices</name>
+      <comment>Get attached USB devices
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetInterface">_getinterface</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ud</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetUSBAvailable">_getusbavailable</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InEndPoint">_inendpoint</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InEndPointList">_inendpointlist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Interface">_interface</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbInterfaceWrapper</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsInitialized">_isinitialized</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="NewDevice">_newdevice</name>
+      <returntype>com.stevel05.midilib.midiusbmanager_static._midiusbdevicetype</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="OutEndPoint">_outendpoint</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="OutEndPointList">_outendpointlist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Device</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Process_Globals">_process_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RemoveUSBDevice">_removeusbdevice</name>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>ud</name>
+        <type>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetUSBAvailable">_setusbavailable</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Avail</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="USBDeviceMap">_usbdevicemap</name>
+      <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midisequencer</name>
+    <shortname>MidiSequencer</shortname>
+    <owner>process</owner>
+    <event>Stopped(Reason As Int)</event>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddControllerEventListener">_addcontrollereventlistener</name>
+      <comment>Add a controller event listener
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Controllers</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMetaEventListener">_addmetaeventlistener</name>
+      <comment>Add a meta event listener
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AttachDefaultReceiver">_attachdefaultreceiver</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getBPM" HideFromIDE="true">_getbpm</name>
+      <comment>Get the current BPM of the sequence
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getCurrentMillisecondPosition" HideFromIDE="true">_getcurrentmillisecondposition</name>
+      <comment>Get/Set the current millisecond position of the playback
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getCurrentTick" HideFromIDE="true">_getcurrenttick</name>
+      <comment>Gets the current Midi Tick position in the sequence
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getIsRunning" HideFromIDE="true">_getisrunning</name>
+      <comment>Returns the running stat of the sequencer
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopCount" HideFromIDE="true">_getloopcount</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopEndPoint" HideFromIDE="true">_getloopendpoint</name>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopStartPoint" HideFromIDE="true">_getloopstartpoint</name>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getReceivers" HideFromIDE="true">_getreceivers</name>
+      <comment>Get a list of the receivers currently added to the sequencer
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="getRecordingTracks" HideFromIDE="true">_getrecordingtracks</name>
+      <comment>Get a list of track currently record Enabled
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetSequence">_getsequence</name>
+      <comment>Get the Sequence attached to this sequencer
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTempoFactor" HideFromIDE="true">_gettempofactor</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTempoMPQ">_gettempompq</name>
+      <comment>Returns the current Microsecond Per Quarter Note
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTrackMute">_gettrackmute</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTrackSolo">_gettracksolo</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>AttachDefault</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsRecording">_isrecording</name>
+      <comment>Returns the current recording state
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="RecordDisable">_recorddisable</name>
+      <comment>Disable recording on a track
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RecordEnable">_recordenable</name>
+      <comment>Enable recording on a track
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+      <parameter>
+        <name>Ch</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Release">_release</name>
+      <comment>Stops and Removes all receivers and Transmitters, this should be called when the MidiSystem is finished with.
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RemoveReceiver">_removereceiver</name>
+      <comment>Removes a receiver from the sequencer
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendAllNotesOff">_sendallnotesoff</name>
+      <comment>Sen an AllNotesOff message
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="setBPM" HideFromIDE="true">_setbpm</name>
+      <comment>Set the current BPM of the sequence
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>BPM</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setCurrentMillisecondPosition" HideFromIDE="true">_setcurrentmillisecondposition</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Milliseconds</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setCurrentTick" HideFromIDE="true">_setcurrenttick</name>
+      <comment>Set the next Midi Tick to be played
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopCount" HideFromIDE="true">_setloopcount</name>
+      <comment>Get/Set the loop count
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Count</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopEndPoint" HideFromIDE="true">_setloopendpoint</name>
+      <comment>Get / Set the loop end point
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopStartPoint" HideFromIDE="true">_setloopstartpoint</name>
+      <comment>Get set the current loop start point
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetReceiver">_setreceiver</name>
+      <comment>Set a receiver
+</comment>
+      <returntype>com.stevel05.midilib.midireceiver</returntype>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSequence">_setsequence</name>
+      <comment>Set the sequence to be played
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTempoFactor" HideFromIDE="true">_settempofactor</name>
+      <comment>Get/Set the tempo factor all tempo changes will be affected
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Factor</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTrackMute">_settrackmute</name>
+      <comment>Get / Set the Mute stat of a track By it's track Number
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Mute</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTrackSolo">_settracksolo</name>
+      <comment>Get / Set the solo stat of a track by it's Track Number
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Solo</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Start">_start</name>
+      <comment>Start Playback
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="StartRecording">_startrecording</name>
+      <comment>Start Recording
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Stop">_stop</name>
+      <comment>Stop Playback
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Stopped">_stopped</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Reason</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="StopRecording">_stoprecording</name>
+      <comment>Stop Recording
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <property>
+      <name DesignerName="BPM">_bpm</name>
+      <comment>Get the current BPM of the sequence
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="CurrentMillisecondPosition">_currentmillisecondposition</name>
+      <comment>Get/Set the current millisecond position of the playback
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="CurrentTick">_currenttick</name>
+      <comment>Gets the current Midi Tick position in the sequence
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="IsRunning">_isrunning</name>
+      <comment>Returns the running stat of the sequencer
+</comment>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="LoopCount">_loopcount</name>
+      <comment>Get/Set the loop count
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="LoopEndPoint">_loopendpoint</name>
+      <comment>Get / Set the loop end point
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="LoopStartPoint">_loopstartpoint</name>
+      <comment>Get set the current loop start point
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Receivers">_receivers</name>
+      <comment>Get a list of the receivers currently added to the sequencer
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </property>
+    <property>
+      <name DesignerName="RecordingTracks">_recordingtracks</name>
+      <comment>Get a list of track currently record Enabled
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </property>
+    <property>
+      <name DesignerName="TempoFactor">_tempofactor</name>
+      <comment>Get/Set the tempo factor all tempo changes will be affected
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <field>
+      <name DesignerName="PLAYING_INTERRUPTED">_playing_interrupted</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="PLAYING_FINISHED">_playing_finished</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="RECORDING_FINISHED">_recording_finished</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midimetaeventlistener</name>
+    <shortname>MidiMetaEventListener</shortname>
+    <owner>process</owner>
+    <event>MetaEvent(Event As MidiEvent)</event>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendMessage">_sendmessage</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Event</name>
+        <type>com.stevel05.midilib.midievent</type>
+      </parameter>
+    </method>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midirealtimesequencer</name>
+    <shortname>MidiRealTimeSequencer</shortname>
+    <comment>@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddControllerEventListener">_addcontrollereventlistener</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Listener</name>
+        <type>com.stevel05.midilib.midicontrollereventlistener</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="addMetaEventListener">_addmetaeventlistener</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Listener</name>
+        <type>com.stevel05.midilib.midimetaeventlistener</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ChaseTrackEvents">_chasetrackevents</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TrackNum</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>StartTick</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>EndTick</name>
+        <type>long</type>
+      </parameter>
+      <parameter>
+        <name>DoReindex</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>TempArray</name>
+        <type>byte[][]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="FindTrack">_findtrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Tr</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getControllerEventListeners" HideFromIDE="true">_getcontrollereventlisteners</name>
+      <comment>@SLHide
+@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetCurrentTimeMillis">_getcurrenttimemillis</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopCount" HideFromIDE="true">_getloopcount</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopEndPoint" HideFromIDE="true">_getloopendpoint</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLoopStartPoint" HideFromIDE="true">_getloopstartpoint</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetMetaEventListeners">_getmetaeventlisteners</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMicrosecondLength" HideFromIDE="true">_getmicrosecondlength</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMicrosecondPosition">_getmicrosecondposition</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getPlayLock" HideFromIDE="true">_getplaylock</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.agraham.threading.Threading.SemaphoreWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getRecordingTracks" HideFromIDE="true">_getrecordingtracks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetSequence">_getsequence</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTempoFactor" HideFromIDE="true">_gettempofactor</name>
+      <comment>@SLHide
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTempoInBPM" HideFromIDE="true">_gettempoinbpm</name>
+      <comment>@SLHide
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTempoInMPQ">_gettempoinmpq</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTempoMPQ">_gettempompq</name>
+      <comment>@SLHide
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTickLength" HideFromIDE="true">_getticklength</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTickPos">_gettickpos</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTickPosition">_gettickposition</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTrackCount" HideFromIDE="true">_gettrackcount</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTrackMute">_gettrackmute</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getTrackSolo">_gettracksolo</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="HasCachedTempo">_hascachedtempo</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Seqr</name>
+        <type>com.stevel05.midilib.midisequencer</type>
+      </parameter>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsRecording">_isrecording</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="IsRunning">_isrunning</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="NeedCaching">_needcaching</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="PropogateCaches">_propogatecaches</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RecordDisable">_recorddisable</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RecordEnable">_recordenable</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+      <parameter>
+        <name>Ch</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RecordThread">_recordthread</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RemoveControllerEventListener">_removecontrollereventlistener</name>
+      <comment>@SLHide
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Listener</name>
+        <type>com.stevel05.midilib.midicontrollereventlistener</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveMetaEventListener">_removemetaeventlistener</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Listener</name>
+        <type>com.stevel05.midilib.midimetaeventlistener</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RTH_Ended">_rth_ended</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>endedOK</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>error</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendAllNotesOff">_sendallnotesoff</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="SendNoteOffIfOn">_sendnoteoffifon</name>
+      <comment>chase all events from beginning of Track
+AND Send note off For those events that are active
+In NoteOnCache Array.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+      <parameter>
+        <name>EndTick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetCaches">_setcaches</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="setLoopChaseEvents" HideFromIDE="true">_setloopchaseevents</name>
+      <comment>Determines whether Events are chased when looping
+This should only be used when you are sure patches and controllers are not changed during the loop.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Chase</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopCount" HideFromIDE="true">_setloopcount</name>
+      <comment>Get / set LoopCount
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Count</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopEndPoint" HideFromIDE="true">_setloopendpoint</name>
+      <comment>Get / Set loop end point, set to -1 (LOOP_CONTINUOSLY) to loop continuosly
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setLoopStartPoint" HideFromIDE="true">_setloopstartpoint</name>
+      <comment>Get / Set Loop Start Point
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMicrosecondPosition">_setmicrosecondposition</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Microseconds</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSequence">_setsequence</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTempoFactor" HideFromIDE="true">_settempofactor</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Factor</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTempoInBPM" HideFromIDE="true">_settempoinbpm</name>
+      <comment>Get / Set Tempo IN BPM
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>BPM</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTempoInMPQ">_settempoinmpq</name>
+      <comment>Get / Set Tempo in Microseconds per Quarter Note
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetTempoMPQ">_settempompq</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TempoMPQ</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetTickPosition">_settickposition</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTrackMute">_settrackmute</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Mute</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTrackSolo">_settracksolo</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>TTrack</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Solo</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Start">_start</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="StartRecording">_startrecording</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Stop">_stop</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="StopAndLoad">_stopandload</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="StopRecording">_stoprecording</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Tick2Millis">_tick2millis</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="LoopCount">_loopcount</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="LoopEndPoint">_loopendpoint</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="LoopStartPoint">_loopstartpoint</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="MicrosecondLength">_microsecondlength</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </property>
+    <property>
+      <name DesignerName="PlayLock">_playlock</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.agraham.threading.Threading.SemaphoreWrapper</returntype>
+    </property>
+    <property>
+      <name DesignerName="RecordingTracks">_recordingtracks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </property>
+    <property>
+      <name DesignerName="TempoFactor">_tempofactor</name>
+      <comment>@SLHide
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="TempoInBPM">_tempoinbpm</name>
+      <comment>@SLHide
+</comment>
+      <returntype>float</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>float</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="TickLength">_ticklength</name>
+      <comment>@SLHide
+</comment>
+      <returntype>long</returntype>
+    </property>
+    <property>
+      <name DesignerName="TrackCount">_trackcount</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="LoopChaseEvents">_loopchaseevents</name>
+      <comment>Determines whether Events are chased when looping
+This should only be used when you are sure patches and controllers are not changed during the loop.
+@SLHide
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midisequence</name>
+    <shortname>MidiSequence</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="CreateTrack">_createtrack</name>
+      <returntype>com.stevel05.midilib.miditrack</returntype>
+    </method>
+    <method>
+      <name DesignerName="DeleteTrack">_deletetrack</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getDivisionType" HideFromIDE="true">_getdivisiontype</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetMicrosecondLength">_getmicrosecondlength</name>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetMillisecondLength">_getmillisecondlength</name>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getResolution" HideFromIDE="true">_getresolution</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTickLength">_getticklength</name>
+      <comment>Get the length of the Sequence in MIDI ticks.
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTracks">_gettracks</name>
+      <returntype>com.stevel05.midilib.miditrack[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTracksList">_gettrackslist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>DivisionType</name>
+        <type>float</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="LogSeqInfo">_logseqinfo</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ReadError">_readerror</name>
+      <returntype>boolean</returntype>
+    </method>
+    <property>
+      <name DesignerName="DivisionType">_divisiontype</name>
+      <returntype>float</returntype>
+    </property>
+    <property>
+      <name DesignerName="Resolution">_resolution</name>
+      <returntype>int</returntype>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midimessage</name>
+    <shortname>MidiMessage</shortname>
+    <comment>http://fuseyism.com/classpath/doc/javax/sound/midi/ShortMessage-source.html
+http://fuseyism.com/classpath/doc/javax/sound/midi/MetaMessage-source.html
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Clone">_clone</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midimessage</returntype>
+    </method>
+    <method>
+      <name DesignerName="FASTShortMessage">_fastshortmessage</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Message</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getLength" HideFromIDE="true">_getlength</name>
+      <comment>Gets the total length of the MIDI message in bytes.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMessage" HideFromIDE="true">_getmessage</name>
+      <comment>Gets the MIDI message data. The first byte of the returned byte array is the status byte of the message.
+</comment>
+      <returntype>byte[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMessageType" HideFromIDE="true">_getmessagetype</name>
+      <comment>Returns the type of the message - One of the MidiMessage_Static Constants
+TYPE_SHORTMESSAGE, TYPEMETAMESSAGE or TYPESYSEXMESSAGE
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMetaData" HideFromIDE="true">_getmetadata</name>
+      <comment>Obtains a copy of the data for the meta message. The returned array of bytes does not include the Status byte (Always 0xFF) or the MetaType.
+The length of the data For the Meta Message is the length of the Array. Note that the length of the entire Message includes the status Byte
+and the meta Message Type Byte, and therefore may be longer than the returned Array.
+</comment>
+      <returntype>byte[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetMetaText">_getmetatext</name>
+      <comment>Get the text within this message, returns "" if there is none or the string is empty
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ChrSet</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getMetaType" HideFromIDE="true">_getmetatype</name>
+      <comment>Gets the Meta type of this message, first checks it is a valid metamessage and throws exception if not
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShortMessageChannel" HideFromIDE="true">_getshortmessagechannel</name>
+      <comment>Obtains the MIDI channel associated with this event.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShortMessageCommand" HideFromIDE="true">_getshortmessagecommand</name>
+      <comment>Obtains the MIDI command associated with this event.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShortMessageData1" HideFromIDE="true">_getshortmessagedata1</name>
+      <comment>Obtains the first data byte in the message.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShortMessageData2" HideFromIDE="true">_getshortmessagedata2</name>
+      <comment>Obtains the second data byte in the message.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getShortMessageData3" HideFromIDE="true">_getshortmessagedata3</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getStatus" HideFromIDE="true">_getstatus</name>
+      <comment>Gets the status byte for the MIDI message.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSysexData" HideFromIDE="true">_getsysexdata</name>
+      <comment>Gets a copy of the data for the system exclusive message. The returned array of bytes does not include the status byte.
+</comment>
+      <returntype>byte[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="HasText">_hastext</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsMetaMessage">_ismetamessage</name>
+      <comment>Test the message Type, returns True if this message = MidiMessage_Static.TYPE_METAMESSAGE, false otherwise
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="IsShortMessage">_isshortmessage</name>
+      <comment>Test the message Type, returns True if this message = MidiMessage_Static.TYPE_SHORTMESSAGE, false otherwise
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="IsSysexMessage">_issysexmessage</name>
+      <comment>Test the message Type, returns True if this message = MidiMessage_Static.TYPE_SYSEXMESSAGE, false otherwise
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="SetMetaMessage">_setmetamessage</name>
+      <comment>Sets the message parameters for a MetaMessage.
+The status is automatically set to 0xFF
+MetaType should be a valid MetaData Type
+Data should not include the Status or the MetaType
+For example: To set a message for the EndOfTrack Marker Use
+
+&lt;code&gt;Dim Msg As MidiMessage
+Msg.Initialize
+Msg.setMetaMessage(0x2F,Array As Byte(),0)&lt;/code&gt;
+Then add it to an event with the appropriate tick
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>MetaType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data</name>
+        <type>byte[]</type>
+      </parameter>
+      <parameter>
+        <name>Length</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShortMessage" HideFromIDE="true">_setshortmessage</name>
+      <comment>Sets the parameters for a MIDI message that takes no data bytes.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetShortMessage_Message">_setshortmessage_message</name>
+      <comment>Sets the parameters for a MIDI message that takes no data bytes.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetShortMessage_Message2">_setshortmessage_message2</name>
+      <comment>Sets the parameters for a MIDI message that takes one data byte.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetShortMessage_Message3">_setshortmessage_message3</name>
+      <comment>Sets the parameters for a MIDI message that takes two data bytes.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data2</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetShortMessage_Message4">_setshortmessage_message4</name>
+      <comment>Sets the parameters for a channel message that takes one data byte.
+Command should be in the Format 0xnn
+Channel should be in the range (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Command</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Channel</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetShortMessage_Message5">_setshortmessage_message5</name>
+      <comment>Sets the parameters for a channel message that takes two data bytes.
+Command should be in the Format 0xnn
+Channel should be in the range (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Command</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Channel</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data2</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShortMessageWithChannel1">_setshortmessagewithchannel1</name>
+      <comment>Sets the short message parameters for a channel message which takes up to two data bytes.
+Command should be in the Format 0xnn
+Channel should be in the range (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Command</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Channel</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShortMessageWithChannel2">_setshortmessagewithchannel2</name>
+      <comment>Sets the short message parameters for a channel message which takes up to two data bytes.
+Command should be in the Format 0xnn
+Channel should be in the range (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Command</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Channel</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data2</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShortMessageWithStatus1">_setshortmessagewithstatus1</name>
+      <comment>Sets the parameters for a MIDI message that takes one byte.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setShortMessageWithStatus2">_setshortmessagewithstatus2</name>
+      <comment>Sets the parameters for a MIDI message that takes one or two data bytes.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+Data should be valid for the message type
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data1</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data2</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSysexMessage">_setsysexmessage</name>
+      <comment>Sets the Data For the Message. The first Byte of the Data Array must be a valid system exclusive status Byte (0xF0 OR 0xF7).
+Parameters:
+Data - the system exclusive Message Data including the status Byte
+Length - the Length of the valid Message Data In the Array, including the status Byte.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Data</name>
+        <type>byte[]</type>
+      </parameter>
+      <parameter>
+        <name>Length</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSysexMessage2">_setsysexmessage2</name>
+      <comment>Sets the Data For the Message.
+Parameters:
+Status - the Status Byte For the Message; it must be a valid system exclusive Status Byte (0xF0 OR 0xF7)
+Data - the system exclusive Message Data (without the Status Byte)
+Length - the Length of the valid Message Data In the Array; it should be non-negative AND less than OR equal To Data.length
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Status</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Data</name>
+        <type>byte[]</type>
+      </parameter>
+      <parameter>
+        <name>Length</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Length">_length</name>
+      <comment>Gets the total length of the MIDI message in bytes.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="Message">_message</name>
+      <comment>Gets the MIDI message data. The first byte of the returned byte array is the status byte of the message.
+</comment>
+      <returntype>byte[]</returntype>
+    </property>
+    <property>
+      <name DesignerName="MessageType">_messagetype</name>
+      <comment>Returns the type of the message - One of the MidiMessage_Static Constants
+TYPE_SHORTMESSAGE, TYPEMETAMESSAGE or TYPESYSEXMESSAGE
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="MetaData">_metadata</name>
+      <comment>Obtains a copy of the data for the meta message. The returned array of bytes does not include the Status byte (Always 0xFF) or the MetaType.
+The length of the data For the Meta Message is the length of the Array. Note that the length of the entire Message includes the status Byte
+and the meta Message Type Byte, and therefore may be longer than the returned Array.
+</comment>
+      <returntype>byte[]</returntype>
+    </property>
+    <property>
+      <name DesignerName="MetaType">_metatype</name>
+      <comment>Gets the Meta type of this message, first checks it is a valid metamessage and throws exception if not
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessageChannel">_shortmessagechannel</name>
+      <comment>Obtains the MIDI channel associated with this event.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessageCommand">_shortmessagecommand</name>
+      <comment>Obtains the MIDI command associated with this event.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessageData1">_shortmessagedata1</name>
+      <comment>Obtains the first data byte in the message.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessageData2">_shortmessagedata2</name>
+      <comment>Obtains the second data byte in the message.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessageData3">_shortmessagedata3</name>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="Status">_status</name>
+      <comment>Gets the status byte for the MIDI message.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="SysexData">_sysexdata</name>
+      <comment>Gets a copy of the data for the system exclusive message. The returned array of bytes does not include the status byte.
+</comment>
+      <returntype>byte[]</returntype>
+    </property>
+    <property>
+      <name DesignerName="ShortMessage">_shortmessage</name>
+      <comment>Sets the parameters for a MIDI message that takes no data bytes.
+Status should be in the Format 0xnn - 0xCommand,Channel (0 - 15)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midifilereader</name>
+    <shortname>MidiFileReader</shortname>
+    <comment>@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetSequenceFromInputStream">_getsequencefrominputstream</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+      <parameter>
+        <name>Stream</name>
+        <type>anywheresoftware.b4a.objects.streams.File.InputStreamWrapper</type>
+      </parameter>
+      <parameter>
+        <name>StrictParser</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetSequenceFromMidiFile">_getsequencefrommidifile</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midisequence</returntype>
+      <parameter>
+        <name>FilePath</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>StrictParser</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midifilewriter</name>
+    <shortname>MidiFileWriter</shortname>
+    <comment>@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsFileTypesupported">_isfiletypesupported</name>
+      <comment>Test whether the specified file type is supported
+@SLHide
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>TType</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="MidiFileTypes">_midifiletypes</name>
+      <comment>Obtains the file types that this provider can write.
+@SLHide
+</comment>
+      <returntype>int[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="MidiFileTypes1">_midifiletypes1</name>
+      <comment>Obtains the file types that this provider can write from the Sequence specified.
+@SLHide
+</comment>
+      <returntype>int[]</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Write">_write</name>
+      <comment>Write the sequence to the specified output stream
+@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>TType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Out</name>
+        <type>anywheresoftware.b4a.objects.streams.File.OutputStreamWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="WriteFile">_writefile</name>
+      <comment>Write the sequence to the specified file
+@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+      <parameter>
+        <name>TType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FilePath</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <field>
+      <name DesignerName="Types">_types</name>
+      <returntype>int[]</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midicontrollereventlistener</name>
+    <shortname>MidiControllerEventListener</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddControllers">_addcontrollers</name>
+      <comment>Add an array of controllers to listen to
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Controllers</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getControllers" HideFromIDE="true">_getcontrollers</name>
+      <comment>Get the list of currently listened to controllers
+</comment>
+      <returntype>int[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. Pass the required controller numbers as an Array of Ints to Controllers
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Module</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Controllers</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveControllers">_removecontrollers</name>
+      <comment>Remove an Array of controller
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Controllers</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendMessage">_sendmessage</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Event</name>
+        <type>com.stevel05.midilib.midievent</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Controllers">_controllers</name>
+      <comment>Get the list of currently listened to controllers
+</comment>
+      <returntype>int[]</returntype>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.mididevice_static._midideviceinfo</name>
+    <shortname>MidiDeviceInfo</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Initializes the fields to their default value.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Name</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Description</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Vendor</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Version</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Index</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>Driver</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>USBDeviceType</name>
+      <returntype>com.stevel05.midilib.midiusbmanager_static._midiusbdevicetype</returntype>
+    </field>
+    <field>
+      <name>DevType</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>USBEndP</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbEndpointWrapper</returntype>
+    </field>
+    <field>
+      <name>FriendlyName</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Transmitter</name>
+      <returntype>com.stevel05.midilib.miditransmitter</returntype>
+    </field>
+    <field>
+      <name>Receiver</name>
+      <returntype>com.stevel05.midilib.midireceiver</returntype>
+    </field>
+    <field>
+      <name>Module</name>
+      <returntype>Object</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midietn_static._midietypes</name>
+    <shortname>MidiETypes</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Initializes the fields to their default value.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>ShortName</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Name</name>
+      <returntype>String</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midievent</name>
+    <shortname>MidiEvent</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMessage" HideFromIDE="true">_getmessage</name>
+      <comment>Gets the MIDI message contained in the event.
+</comment>
+      <returntype>com.stevel05.midilib.midimessage</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTick" HideFromIDE="true">_gettick</name>
+      <comment>Get / Set the time-stamp for the event, in MIDI ticks, this is a cumulative DeltaTime
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Msg</name>
+        <type>com.stevel05.midilib.midimessage</type>
+      </parameter>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTick" HideFromIDE="true">_settick</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Tick</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ToString">_tostring</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ChrSet</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ToStringBBT">_tostringbbt</name>
+      <comment>@SLHIDE
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Seq</name>
+        <type>com.stevel05.midilib.midisequence</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Message">_message</name>
+      <comment>Gets the MIDI message contained in the event.
+</comment>
+      <returntype>com.stevel05.midilib.midimessage</returntype>
+    </property>
+    <property>
+      <name DesignerName="Tick">_tick</name>
+      <comment>Get / Set the time-stamp for the event, in MIDI ticks, this is a cumulative DeltaTime
+</comment>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midieventdispatcher._midieventinfo</name>
+    <shortname>MidiEventInfo</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Initializes the fields to their default value.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Event</name>
+      <returntype>com.stevel05.midilib.midievent</returntype>
+    </field>
+    <field>
+      <name>Listeners</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midieventdispatcher</name>
+    <shortname>MidiEventDispatcher</shortname>
+    <comment>Class module
+@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendAudioEvents">_sendaudioevents</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Event</name>
+        <type>com.stevel05.midilib.midievent</type>
+      </parameter>
+      <parameter>
+        <name>Listeners</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <field>
+      <name DesignerName="EventList">_eventlist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </field>
+    <field>
+      <name DesignerName="TH">_th</name>
+      <returntype>anywheresoftware.b4a.agraham.threading.Threading</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midifileformat</name>
+    <shortname>MidiFileFormat</shortname>
+    <comment>Class module
+@SLHide
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getByteLength" HideFromIDE="true">_getbytelength</name>
+      <comment>Get the file length in bytes.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getDivisionType" HideFromIDE="true">_getdivisiontype</name>
+      <comment>Get the file division type.
+</comment>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="getFileType" HideFromIDE="true">_getfiletype</name>
+      <comment>Get the MIDI file type (0, 1, or 2).
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMicrosecondLength" HideFromIDE="true">_getmicrosecondlength</name>
+      <comment>Get the file length in microseconds.
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getResolution" HideFromIDE="true">_getresolution</name>
+      <comment>Get the file timing resolution.  If the division type is PPQ, then this
+value represents ticks per beat, otherwise it's ticks per frame (SMPTE).
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getUNKNOWN_LENGTH" HideFromIDE="true">_getunknown_length</name>
+      <comment>Static int representation for unknown length (-1)
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>FileType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>DivisionType</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Resolution</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Bytes</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Microseconds</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="ByteLength">_bytelength</name>
+      <comment>Get the file length in bytes.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="DivisionType">_divisiontype</name>
+      <comment>Get the file division type.
+</comment>
+      <returntype>float</returntype>
+    </property>
+    <property>
+      <name DesignerName="FileType">_filetype</name>
+      <comment>Get the MIDI file type (0, 1, or 2).
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="MicrosecondLength">_microsecondlength</name>
+      <comment>Get the file length in microseconds.
+</comment>
+      <returntype>long</returntype>
+    </property>
+    <property>
+      <name DesignerName="Resolution">_resolution</name>
+      <comment>Get the file timing resolution.  If the division type is PPQ, then this
+value represents ticks per beat, otherwise it's ticks per frame (SMPTE).
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="UNKNOWN_LENGTH">_unknown_length</name>
+      <comment>Static int representation for unknown length (-1)
+</comment>
+      <returntype>int</returntype>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midireceiver._midiusbwritetype</name>
+    <shortname>MidiUSBWriteType</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Initializes the fields to their default value.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Time</name>
+      <returntype>long</returntype>
+    </field>
+    <field>
+      <name>Message</name>
+      <returntype>byte[]</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midireceiver</name>
+    <shortname>MidiReceiver</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Close">_close</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getDelay" HideFromIDE="true">_getdelay</name>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getDeviceInfo" HideFromIDE="true">_getdeviceinfo</name>
+      <comment>Get the device info for this Receiver
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+    </method>
+    <method>
+      <name DesignerName="getFriendlyName" HideFromIDE="true">_getfriendlyname</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getIsReady" HideFromIDE="true">_getisready</name>
+      <comment>Get the current ready stat for this receiver
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getIsRunning" HideFromIDE="true">_getisrunning</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initialize a receiver, MDI is updated with the receiver that will be used for this device
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="QueueClear">_queueclear</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Send">_send</name>
+      <comment>Send a midi message to this Receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Message</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendRealTimeMessage">_sendrealtimemessage</name>
+      <comment>Send a real time message to this receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Message</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendShortMessage">_sendshortmessage</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Message</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SendSysex">_sendsysex</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Message</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setDelay" HideFromIDE="true">_setdelay</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Delay</name>
+        <type>long</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFriendlyName" HideFromIDE="true">_setfriendlyname</name>
+      <comment>Get / Set a friendly name for this receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTranspose" HideFromIDE="true">_settranspose</name>
+      <comment>St the transposition in semitones for this receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Transpose</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Start">_start</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Stop">_stop</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <property>
+      <name DesignerName="Delay">_delay</name>
+      <returntype>long</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>long</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="DeviceInfo">_deviceinfo</name>
+      <comment>Get the device info for this Receiver
+</comment>
+      <returntype>com.stevel05.midilib.mididevice_static._midideviceinfo</returntype>
+    </property>
+    <property>
+      <name DesignerName="FriendlyName">_friendlyname</name>
+      <comment>Get / Set a friendly name for this receiver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="IsReady">_isready</name>
+      <comment>Get the current ready stat for this receiver
+</comment>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="IsRunning">_isrunning</name>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="Transpose">_transpose</name>
+      <comment>St the transposition in semitones for this receiver
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midirecordingtrack</name>
+    <shortname>MidiRecordingTrack</shortname>
+    <comment>Class module
+@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getChannel" HideFromIDE="true">_getchannel</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTrack" HideFromIDE="true">_gettrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.miditrack</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>T</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+      <parameter>
+        <name>Ch</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setChannel" HideFromIDE="true">_setchannel</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Ch</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Channel">_channel</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Track">_track</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.miditrack</returntype>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midismfparser</name>
+    <shortname>MidiSMFParser</shortname>
+    <comment>@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTracks" HideFromIDE="true">_gettracks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Strict</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="NextTrack">_nexttrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="ReadTrack">_readtrack</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Track1</name>
+        <type>com.stevel05.midilib.miditrack</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setStream" HideFromIDE="true">_setstream</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Stream</name>
+        <type>com.stevel05.streams.sldatainputstream</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setTracks" HideFromIDE="true">_settracks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Count</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Tracks">_tracks</name>
+      <comment>@SLHide
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Stream">_stream</name>
+      <comment>@SLHide
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>com.stevel05.streams.sldatainputstream</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midisynthesizer</name>
+    <shortname>MidiSynthesizer</shortname>
+    <comment>Class module
+@SLHideClass
+</comment>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getFriendlyName" HideFromIDE="true">_getfriendlyname</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getReceiver" HideFromIDE="true">_getreceiver</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midireceiver</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFriendlyName" HideFromIDE="true">_setfriendlyname</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="FriendlyName">_friendlyname</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Receiver">_receiver</name>
+      <comment>@SLHide
+</comment>
+      <returntype>com.stevel05.midilib.midireceiver</returntype>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.miditrack</name>
+    <shortname>MidiTrack</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Add">_add</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Event</name>
+        <type>com.stevel05.midilib.midievent</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Get">_get</name>
+      <comment>Get an event idetified by its order index
+</comment>
+      <returntype>com.stevel05.midilib.midievent</returntype>
+      <parameter>
+        <name>Index</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getEventList" HideFromIDE="true">_geteventlist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="getEventLock" HideFromIDE="true">_geteventlock</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.agraham.threading.Threading.SemaphoreWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getReadError" HideFromIDE="true">_getreaderror</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSize" HideFromIDE="true">_getsize</name>
+      <comment>Get the number events in this track.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getTicks" HideFromIDE="true">_getticks</name>
+      <comment>Get the length of the track in MIDI ticks.
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Remove">_remove</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Event</name>
+        <type>com.stevel05.midilib.midievent</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setReadError" HideFromIDE="true">_setreaderror</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ReadError</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="EventList">_eventlist</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </property>
+    <property>
+      <name DesignerName="EventLock">_eventlock</name>
+      <comment>@SLHide
+</comment>
+      <returntype>anywheresoftware.b4a.agraham.threading.Threading.SemaphoreWrapper</returntype>
+    </property>
+    <property>
+      <name DesignerName="ReadError">_readerror</name>
+      <comment>@SLHide
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Size">_size</name>
+      <comment>Get the number events in this track.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="Ticks">_ticks</name>
+      <comment>Get the length of the track in MIDI ticks.
+</comment>
+      <returntype>long</returntype>
+    </property>
+    <field>
+      <name DesignerName="EOT">_eot</name>
+      <returntype>com.stevel05.midilib.midimessage</returntype>
+    </field>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.miditransmitter</name>
+    <shortname>MidiTransmitter</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getFriendlyName" HideFromIDE="true">_getfriendlyname</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getIsReady" HideFromIDE="true">_getisready</name>
+      <comment>Get the ready state of the transmitter
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getIsRunning" HideFromIDE="true">_getisrunning</name>
+      <comment>Get the current running state of this transmitter (USB Only)
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMidiThru" HideFromIDE="true">_getmidithru</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getReceivers" HideFromIDE="true">_getreceivers</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </method>
+    <method>
+      <name DesignerName="getUSBChannel" HideFromIDE="true">_getusbchannel</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the MidiTransmitter object. The MidiDeviceInfo Trnasmitter is updated with the Transmitter it will use
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RegisterReceiverDevice">_registerreceiverdevice</name>
+      <comment>Register a receiver on this transmitter
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveReceiverDevice">_removereceiverdevice</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>MDI</name>
+        <type>com.stevel05.midilib.mididevice_static._midideviceinfo</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Send">_send</name>
+      <comment>Send a midi message to a non USB device
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>MidiMsg</name>
+        <type>byte[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFriendlyName" HideFromIDE="true">_setfriendlyname</name>
+      <comment>Get / Set a friendly name for this transmitter
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setMidiThru" HideFromIDE="true">_setmidithru</name>
+      <comment>Set / get MidiThru Status, Need to enable if local device(s) are not playing the midi
+Enabled by default
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Thru</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setUSBChannel" HideFromIDE="true">_setusbchannel</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Channel</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Start">_start</name>
+      <comment>Starts a thread on which to listen for incoming USB data, or calls start for used defined module
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Stop">_stop</name>
+      <comment>Stop the listening USB thread, or user defined module
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <property>
+      <name DesignerName="FriendlyName">_friendlyname</name>
+      <comment>Get / Set a friendly name for this transmitter
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="IsReady">_isready</name>
+      <comment>Get the ready state of the transmitter
+</comment>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="IsRunning">_isrunning</name>
+      <comment>Get the current running state of this transmitter (USB Only)
+</comment>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="MidiThru">_midithru</name>
+      <comment>Set / get MidiThru Status, Need to enable if local device(s) are not playing the midi
+Enabled by default
+</comment>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Receivers">_receivers</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </property>
+    <property>
+      <name DesignerName="USBChannel">_usbchannel</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>com.stevel05.midilib.midiusbmanager_static._midiusbdevicetype</name>
+    <shortname>MidiUSBDeviceType</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Initializes the fields to their default value.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Interface</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbInterfaceWrapper</returntype>
+    </field>
+    <field>
+      <name>Device</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbManagerWrapper.UsbDeviceWrapper</returntype>
+    </field>
+    <field>
+      <name>Connection</name>
+      <returntype>anywheresoftware.b4a.objects.usb.UsbDeviceConnectionWrapper</returntype>
+    </field>
+    <field>
+      <name>InEndPointList</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </field>
+    <field>
+      <name>OutEndPointList</name>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+    </field>
+  </class>
+  <version>2.1</version>
+  <author>Steve Laming</author>
+</root>

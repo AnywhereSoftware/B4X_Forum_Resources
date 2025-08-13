@@ -1,0 +1,218 @@
+﻿Build1=Default,b4a.clvdragger_removeitems
+File1=cellitem.bal
+File2=layoutbase.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xcustomlistview
+Library3=xui views
+Library4=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CLVDragger
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: CLVDragger_RemoveItems
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#BridgeLogger: true
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+	
+End Sub
+
+
+Sub Globals
+	
+	Private clv1 As CustomListView			'xCustomListView Library
+	Private Label1 As Label
+	Private Button1 As Button
+	Private CheckBox1 As CheckBox
+	Private xui As XUI						'XUI Views Library
+	Private Dragger As CLVDragger			'CLVDragger Class
+	Private B4XSwitchActions As B4XSwitch	'XUI Views Library
+
+	Private ClvSize As Int = 20 
+	Private lblLeft1 , lblLeft2, lblUpDown1, lblUpDown2 As Label
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("LayoutBase")
+	
+	clv1.DefaultTextBackgroundColor = 0xFF8F8F8F
+	clv1.DefaultTextColor = xui.Color_White
+	
+	
+	For i = 1 To ClvSize
+		clv1.Add(CreateListItem($"Item #${i}"$, clv1.AsView.Width, 60dip), $"Item #${i}"$)
+'		clv1.AddTextItem($"Item #${i}"$, "")
+	Next
+
+
+	Dragger.Initialize(clv1, Me, "Dragger")
+End Sub
+
+
+Sub Activity_Resume
+	
+End Sub
+
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+
+
+Sub CreateListItem(Text As String, Width As Int, Height As Int) As Panel
+	
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, Width, Height)
+	p.LoadLayout("CellItem")
+	Label1.Text = Text
+	Return p
+End Sub
+
+
+'Convert font icons to bitmap:
+Public Sub FontToBitmap (text As String, IsMaterialIcons As Boolean, FontSize As Float, color As Int) As B4XBitmap
+	
+	Dim xui As XUI
+	Dim p As Panel = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, 32dip, 32dip)
+	Dim cvs1 As B4XCanvas
+	cvs1.Initialize(p)
+	Dim t As Typeface
+	If IsMaterialIcons Then t = Typeface.MATERIALICONS Else t = Typeface.FONTAWESOME
+	Dim fnt As B4XFont = xui.CreateFont(t, FontSize)
+	Dim r As B4XRect = cvs1.MeasureText(text, fnt)
+	Dim BaseLine As Int = cvs1.TargetRect.CenterY - r.Height / 2 - r.Top
+	cvs1.DrawText(text, cvs1.TargetRect.CenterX, BaseLine, fnt, color, "CENTER")
+	Dim b As B4XBitmap = cvs1.CreateBitmap
+	cvs1.Release
+	Return b
+End Sub
+
+
+Sub Dragger_RemoveItem(Index As Int)
+	
+	Msgbox2Async("¿Are you sure you want to delete this item?", "Title", "Si", "", "No", Null, False)
+	Wait For MsgBox_Result (Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+					
+		Dim item As CLVItem = clv1.GetRawListItem(Index)
+				
+		'We optionally animate the panel to the left so that the removal of the item is visible:
+		Dim p As Panel = item.Panel
+		p.SetLayoutAnimated(500, -300dip, p.Top, p.Width, p.Height)
+		p.SetVisibleAnimated(500, False)
+		Sleep(500)
+				
+		clv1.RemoveAt(Index)
+
+	Else
+		Dim item As CLVItem = clv1.GetRawListItem(Index)
+		Dim p As Panel = item.Panel
+		p.SetLayoutAnimated(0, 0, p.Top, p.Width, p.Height)
+	End If
+End Sub
+
+
+'CONTROLS:
+Sub Clv1_ReachEnd
+	
+	Log("reach end")
+End Sub
+
+
+Sub Clv1_ItemClick (Index As Int, Value As Object)
+	
+	Activity.Title = Value
+	clv1.AsView.BringToFront
+	
+	ToastMessageShow("Internal item index = " & Index & " and Value = " & Value, False)
+End Sub
+
+
+Private Sub Clv1_ItemLongClick (Index As Int, Value As Object)
+	
+End Sub
+
+
+Sub B4XSwitchActions_ValueChanged (Value As Boolean)
+	
+	If Value Then
+		Dragger.SetDefaults(60dip, xui.Color_Black, xui.Color_White)
+		Dragger.AddDragButtons
+	Else
+		Dragger.RemoveDragButtons
+	End If
+	
+	lblLeft1.Visible = Value
+	lblLeft2.Visible = Value
+	lblUpDown1.Visible = Value
+	lblUpDown2.Visible = Value
+End Sub
+
+
+Sub Button1_Click
+	
+	Dim Index As Int = clv1.GetItemFromView(Sender)
+	Dim text As String = "Button1_Click from " & clv1.GetValue(Index) & " & Internal Index = " & Index
+	Log(text)
+	ToastMessageShow(text, False)
+End Sub
+
+
+Private Sub CheckBox1_CheckedChange(Checked As Boolean)
+	
+	Dim Index As Int = clv1.GetItemFromView(Sender)
+	Dim text As String = "CheckBox1_CheckedChange to " & Checked & " from " & clv1.GetValue(Index) & " & Internal Index = " & Index
+	Log(text)
+	ToastMessageShow(text, False)
+End Sub
+
+
+Private Sub lblAddItem_Click
+	
+	B4XSwitchActions.Value = False
+	B4XSwitchActions_ValueChanged (False)
+	
+	Dragger.RemoveDragButtons
+
+	If clv1.Size > 0 Then clv1.ScrollToItem(clv1.Size - 1)
+	clv1.Add(CreateListItem($"Item #${clv1.Size + 1} $Time{DateTime.Now}"$, clv1.AsView.Width, 60dip), $"Item #${clv1.Size + 1} $Time{DateTime.Now}"$)
+
+	Sleep(0)
+	clv1.ScrollToItem(clv1.Size - 1)
+	
+	
+	'We optionally animate the color of the panel of the created item so that the action of creating it can be seen:
+	Dim p As Panel
+	p = clv1.GetPanel(clv1.Size - 1)
+	p.SetColorAnimated(700, Colors.Red, xui.Color_Transparent)
+
+	Msgbox2Async("", "Remember to save the changes", "OK", "", "", FontToBitmap(Chr(0xE161), True, 30, Colors.White), True)	'Code taken by hand from the designer showing or from this site: https://fonts.google.com/icons?selected=Material+Icons
+End Sub
+
+
+Private Sub lblSave_Click
+	
+	'To save the changes when we save the values ​​in lists and pass them to a file
+	ToastMessageShow("To save the changes when we save the values ​​in lists and pass them to a file", True)
+End Sub

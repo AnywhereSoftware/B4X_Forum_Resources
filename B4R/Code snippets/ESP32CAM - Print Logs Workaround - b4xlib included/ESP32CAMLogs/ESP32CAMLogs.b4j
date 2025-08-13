@@ -1,0 +1,85 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jmqtt
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	
+
+	Dim iCount As Int
+	Dim mq As MqttClient
+	Dim mqco As MqttConnectOptions
+	Private ServerURI As String = "tcp://192.168.15.124:1883"
+	Private username As String = "nikos"
+	Private password As String = "passnikos572160$"
+
+
+
+	Private TextArea1 As TextArea
+	
+	Private str As StringBuilder
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	mqco.Initialize(username, password)
+	str.Initialize
+	
+	ConnectToMqtt
+	
+End Sub
+
+Sub Button1_Click
+	str.Remove(0, str.Length)
+End Sub
+
+
+
+
+
+Sub ConnectToMqtt
+	Log("Connected to mqtt broker")
+	mq.Initialize("mq", ServerURI, "ESP32CAMLogger")
+	mq.Connect2(mqco)
+End Sub
+
+Sub mq_Connected (Success As Boolean)
+	If Success Then
+		Log("Sucessfully connected")
+		mq.Subscribe("/esp32webcam/logs", 0)
+	Else
+		iCount = iCount + 1
+		If iCount = 5 Then Return
+		'Log("Unable to connect to mqtt server")
+		Sleep(5000)
+		ConnectToMqtt
+	End If
+End Sub
+
+
+Sub mq_MessageArrived (Topic As String, Payload() As Byte)
+	str.Append(BytesToString(Payload, 0, Payload.Length, "UTF-8")).Append(CRLF)
+	TextArea1.Text = str.ToString	
+
+	TextArea1.ScrollTopPosition = 10000000
+End Sub

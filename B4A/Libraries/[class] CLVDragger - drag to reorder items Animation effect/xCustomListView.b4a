@@ -1,0 +1,109 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=cellitem.bal
+File3=smiley.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=stringutils
+Library3=xui
+Library4=xcustomlistview
+Library5=xui views
+Library6=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CLVDragger
+Module2=Starter
+NumberOfFiles=3
+NumberOfLibraries=6
+NumberOfModules=2
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#BridgeLogger: true
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Private clv1 As CustomListView
+	Private Label1 As B4XView
+	Private xui As XUI
+	Private dragger As CLVDragger
+	Private B4XSwitch1 As B4XSwitch
+	Type tItemData(Name As String, Num1 As Int, Num2 As Int)
+
+	Private sp As Spinner
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	clv1.DefaultTextBackgroundColor = 0xFF8F8F8F
+	clv1.DefaultTextColor = xui.Color_White
+	For i = 1 To 100
+		clv1.Add(CreateListItem($"Item #${i}"$, clv1.AsView.Width, 60dip), $"Item #${i}"$)
+'		clv1.AddTextItem($"Item #${i}"$, "")
+	Next
+	dragger.Initialize(clv1)
+	sp.Enabled= False
+	sp.Add("None")
+	sp.Add("Shake")
+	sp.Add("Move")
+End Sub
+
+Sub Clv1_ReachEnd
+	Log("reach end")
+	clv1.AddTextItem($"New item: $Time{DateTime.Now}"$, "New Item")
+End Sub
+
+Sub clv1_ItemClick (Index As Int, Value As Object)
+	Activity.Title = Value
+	clv1.AsView.BringToFront
+End Sub
+
+Sub CreateListItem(Text As String, Width As Int, Height As Int) As Panel
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, Width, Height)
+	p.LoadLayout("CellItem")
+	Label1.Text = Text
+	Return p
+End Sub
+
+Sub B4XSwitch1_ValueChanged (Value As Boolean)
+	sp.Enabled = Value
+	If Value Then
+		dragger.SetDefaults(60dip, xui.Color_Black, xui.Color_White)
+		dragger.AddDragButtons
+	Else
+		dragger.RemoveDragButtons
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+Private Sub Sp_ItemClick (Position As Int, Value As Object)
+	dragger.SetAnimationType(Position)
+End Sub

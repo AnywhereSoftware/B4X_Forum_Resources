@@ -1,0 +1,104 @@
+﻿Version=2
+NumberOfModules=1
+Module1=WiFiServer
+Build1=Default,B4RDev
+NumberOfFiles=0
+NumberOfLibraries=6
+Library1=rcore
+Library2=resp8266
+Library3=resp8266wifi
+Library4=rrandomaccessfile
+Library5=reeprom
+Library6=rmqtt
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public WiFi As ESP8266WiFi
+	Public esp As ESP8266
+	Public eeprom As EEPROM
+	Private const MAGIC_EEPROM As Byte = 213
+	Private serializator As B4RSerializator
+	Private ObjectsBuffer(10) As Object
+	Private mqtt As MqttClient
+	Private mqttSocket As WiFiSocket
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	WiFiServer.Start
+	ConnectToNetwork
+End Sub
+
+Public Sub SaveNetworkDetails(Data() As Byte)
+	Log("Saving Network data")
+	Log("data length: ", Data.Length)
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM, Data.Length), 0)
+	eeprom.WriteBytes(Data, 2)
+	ConnectToNetwork
+End Sub
+
+Private Sub ConnectToNetwork
+	WiFi.Disconnect
+	'read settings from EEPROM
+	Dim length As Byte = GetStoredDataLength	
+	If length > 0 Then
+		Dim Data() As Byte = eeprom.ReadBytes(2, length)
+		Dim Objects() As Object = serializator.ConvertBytesToArray(Data, ObjectsBuffer)
+		Log("Reading data: ")
+		For Each o As Object In Objects
+			Log(o)
+		Next
+		Dim SSID As String = Objects(1) 'ignore
+		Dim Password As String = Objects(2) 'ignore
+		Log("Trying to connect to: ", SSID, " password: ", Password)
+		If WiFi.Connect2(SSID, Password) Then
+			Log("Connected successfully to: ", SSID)
+			Log("Local IP: ", WiFi.LocalIp)
+			ConnectToMqtt(Objects)
+		Else
+			Log("Failed to connect.")
+		End If
+	Else
+		Log("Network data not found.")
+	End If
+End Sub
+
+Private Sub ConnectToMqtt (objects() As Object)
+	Log("ConnectToMQTT")
+	Dim mo As MqttConnectOptions
+	mo.Initialize(objects(5), objects(6)) 'ignore
+	Dim port As UInt = objects(4)
+	mqtt.Initialize2(mqttSocket.Stream, objects(3), port, objects(0), "mqtt_MessageArrived", "mqtt_Disconnected") 'ignore
+	Log(mqtt.Connect2(mo))
+End Sub
+
+Sub mqtt_MessageArrived (Topic As String, Payload() As Byte)
+	
+End Sub
+
+Sub mqtt_Disconnected
+	Log("MQTT_Disconnected")
+End Sub
+
+Public Sub GetStoredDataLength As Byte
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	If header(0) = MAGIC_EEPROM Then
+		Return header(1)
+	End If
+	Return 0
+End Sub
+
+
+
+
+
+
+

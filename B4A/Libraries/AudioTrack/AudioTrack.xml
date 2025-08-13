@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.01</doclet-version-NOT-library-version>
+    <class>
+        <name>com.stevel05.audiotrack.AudioTracker</name>
+        <shortname>AudioTrack</shortname>
+        <owner>process</owner>
+        <method>
+            <name>GetNativeOutputSampleRate</name>
+            <comment>Returns the hardware output sample rate</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>streamType</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetPlaybackRate</name>
+            <comment>Sets the playback sample rate for this track.  The valid sample rate range if from 1Hz to 
+ twice the value returned by getNativeOutputSampleRate(int).</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>sampleRateInHz</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetPositionNotificationPeriod</name>
+            <comment>Returns the notification update period expressed in frames.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>SetAuxEffectSendLevel</name>
+            <comment>Sets the send level of the audio track to the attached auxiliary effect attachAuxEffect(int). 
+ The level value range is 0 to 1.0. By default the send level is 0, so even if an effect is attached 
+ to the player this method must be called for the effect to be applied.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>level</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Flush</name>
+            <comment>Flushes the audio data currently queued for playback. Any data that has not been played back will be discarded.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetPositionNotificationPeriod</name>
+            <comment>Sets the period for the periodic notification event.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>periodInFrames</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Stop</name>
+            <comment>Stops playing the audio data.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetPlaybackHeadPosition</name>
+            <comment>Sets the playback head position. The track must be stopped for the position to be changed.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>positionInFrames</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetLoopPoints</name>
+            <comment>Sets the loop points and the loop count. The loop can be infinite.
+ startInFrames - loop start marker expressed in frames
+ endInFrames - loop end marker expressed in frames 
+ loopCount - the number of times the loop is looped. A value of -1 means infinite looping.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>startInFrames</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>endInFrames</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>loopCount</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAudioSessionID</name>
+            <comment>Returns the audio session ID.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetChannelCount</name>
+            <comment>Returns the configured number of channels.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetPlayState</name>
+            <comment>Returns the playback state of the AudioTrack instance. 
+ 
+ 1 = PLAYSTATE_STOPPED
+ 2 = PLAYSTATE_PAUSED
+ 3 = PLAYSTATE_PLAYING</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetPlaybackRate</name>
+            <comment>Returns the current playback rate in Hz.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetAudioFormat</name>
+            <comment>Returns the configured audio data format. See ENCODING_PCM_16BIT and ENCODING_PCM_8BIT.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>ReloadStaticData</name>
+            <comment>Notifies the native resource to reuse the audio data already loaded in the native layer. 
+ This call is only valid with AudioTrack instances that don't use the streaming model.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetMinVolume</name>
+            <comment>Returns the minimum valid volume value. Volume values set under this one will be clamped at this value.</comment>
+            <returntype>float</returntype>
+        </method>
+        <method>
+            <name>Initialize2</name>
+            <comment>Initialize2 AudioTrack:
+ 
+ StreamType - the type of the audio stream. See STREAM_VOICE_CALL, STREAM_SYSTEM, STREAM_RING, STREAM_MUSIC and STREAM_ALARM
+ SampleRate - 44100 is standard and should work on all devices,22050,16000.11025 and 8000 may work on some
+ Channel config - Mono or Stereo depending on available hardware, Mono is the safe option
+ Audio format, 8 or 16 bit encoding
+ Buffer size - the total size (in bytes) of the buffer where audio data is written to during the recording. 
+ Mode	- streaming or static buffer. See MODE_STATIC and MODE_STREAM
+ sessionID - Id of audio session the AudioTrack must be attached to
+ See getMinBufferSize(int, int, int) to determine the minimum required buffer size for the successful 
+ creation of an AudioTrack instance. Using values smaller than getMinBufferSize() will 
+ result in an initialization failure.
+ To use Marker callback you need to create a sub called Audiotrack_MarkerReached in your Main Module and
+  SetNotificationMarkerPosition
+ To use Periodic callback you need to create a sub called Audiotrack_PeriodPassed in your Main Module and
+ and SetPositionNotificationPeriod</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>streamType</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>sampleRateHz</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>channelConfig</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>audioFormat</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>bufferSize</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>mode</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>sessionId</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetStereoVolume</name>
+            <comment>Sets the specified left/right output volume values on the AudioTrack. Values are clamped to 
+ the (getMinVolume(), getMaxVolume()) interval if outside this range.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>leftVolume</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>rightVolume</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetNotificationMarkerPosition</name>
+            <comment>Returns marker position expressed in frames.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>WriteShort</name>
+            <comment>Writes the audio data to the audio hardware for playback. Will block until all 
+ data has been written to the audio mixer. Note that the actual playback of this 
+ data might occur after this function returns. This function is thread safe with respect 
+ to stop() calls, in which case all of the specified data might not be written to the mixer.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>audioData</name>
+                <type>short[]</type>
+            </parameter>
+            <parameter>
+                <name>offsetInShorts</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>sizeInShorts</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialize AudioTrack:
+ 
+ StreamType - the type of the audio stream. See STREAM_VOICE_CALL, STREAM_SYSTEM, STREAM_RING, STREAM_MUSIC and STREAM_ALARM
+ SampleRate - 44100 is standard and should work on all devices,22050,16000.11025 and 8000 may work on some
+ Channel config - Mono or Stereo depending on available hardware, Mono is the safe option
+ Audio format, 8 or 16 bit encoding
+ Buffer size - the total size (in bytes) of the buffer where audio data is written to during the recording. 
+ Mode	- streaming or static buffer. See MODE_STATIC and MODE_STREAM
+ See getMinBufferSize(int, int, int) to determine the minimum required buffer size for the successful 
+ creation of an AudioTrack instance. Using values smaller than getMinBufferSize() will 
+ result in an initialization failure.
+ To use Marker callback you need to create a sub called Audiotrack_MarkerReached in your Main Module and
+  SetNotificationMarkerPosition
+ To use Periodic callback you need to create a sub called Audiotrack_PeriodPassed in your Main Module and
+ and SetPositionNotificationPeriod</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>streamType</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>sampleRateHz</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>channelConfig</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>audioFormat</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>bufferSize</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>mode</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetState</name>
+            <comment>Returns the state of the AudioTrack instance. This is useful after the AudioTrack 
+ instance has been created to check if it was initialized properly. This ensures that 
+ the appropriate hardware resources have been acquired.
+ Returns:
+ STATE_INITIALIZED = 1
+ STATE_NO_STATIC_DATA = 2
+ STATE_UNINITIALIZED = 0</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetStreamType</name>
+            <comment>Returns the type of audio stream this AudioTrack is configured for. 
+ Compare the result against STREAM_VOICE_CALL, STREAM_SYSTEM, STREAM_RING, STREAM_MUSIC 
+ or STREAM_ALARM</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>Play</name>
+            <comment>Starts playing an AudioTrack.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>AttachAuxEffect</name>
+            <comment>Attaches an auxiliary effect to the audio track.
+ Requires API Level 9</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>effectID</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetPlaybackHeadPosition</name>
+            <comment>Returns the playback head position expressed in frames</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetMinBuffersize</name>
+            <comment>Returns the minimum buffer size required for the successful creation of an AudioTrack object 
+ to be created in the MODE_STREAM mode. Note that this size doesn't guarantee a smooth playback 
+ under load, and higher values should be chosen according to the expected frequency at which the 
+ buffer will be refilled with additional data to play.
+ 
+ returns :
+ 
+ ERROR_BAD_VALUE = -2 if an invalid parameter was passed
+ ERROR = -1 if the implementation was unable to query the hardware for its output properties, 
+    or the minimum buffer size expressed in bytes.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>sampleRate</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>channelConfig</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>audioFormat</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Release</name>
+            <comment>Releases the native AudioTrack resources.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>WriteByte</name>
+            <comment>Writes the audio data to the audio hardware for playback. Will block until all 
+ data has been written to the audio mixer. Note that the actual playback of this 
+ data might occur after this function returns. This function is thread safe with respect 
+ to stop() calls, in which case all of the specified data might not be written to the mixer.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>audioData</name>
+                <type>byte[]</type>
+            </parameter>
+            <parameter>
+                <name>offsetInBytes</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>sizeInBytes</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetMaxVolume</name>
+            <comment>Returns the maximum valid volume value. Volume values set above this one will be clamped at this value.</comment>
+            <returntype>float</returntype>
+        </method>
+        <method>
+            <name>SetNotificationMarkerPosition</name>
+            <comment>Sets the position of the notification marker.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>markerInFrames</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetSampleRate</name>
+            <comment>Returns the configured audio data sample rate in Hz</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>Pause</name>
+            <comment>Pauses the playback of the audio data. Data that has not been played back will not be discarded.
+ Subsequent calls to play() will play this data back.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetChannelConfiguration</name>
+            <comment>Returns the configured channel configuration. See CHANNEL_OUT_MONO and CHANNEL_OUT_STEREO.</comment>
+            <returntype>int</returntype>
+        </method>
+        <field>
+            <name>CH_CONF_STEREO</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>SUCCESS</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>CH_CONF_MONO</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ERROR_BAD_VALUE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PLAYSTATE_PAUSED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_MUSIC</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STATE_NO_STATIC_DATA</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STATE_UNINITIALIZED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>MODE_STREAM</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>AF_PCM_8</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>AF_PCM_16</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_ALARM</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PLAYSTATE_PLAYING</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STATE_INITIALIZED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_NOTIFICATION</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_SYSTEM</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_RING</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>STREAM_VOICE_CALL</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ERROR</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PLAYSTATE_STOPPED</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ERROR_INVALID_OPERATION</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>MODE_STATIC</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <version>1.03</version>
+    <author>Steve Laming</author>
+</root>

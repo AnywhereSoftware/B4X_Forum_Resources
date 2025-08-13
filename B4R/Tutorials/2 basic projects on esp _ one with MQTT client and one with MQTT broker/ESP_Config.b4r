@@ -1,0 +1,175 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=reeprom
+Library3=resp8266
+Library4=resp8266wifi
+Library5=rrandomaccessfile
+Library6=rmqtt
+Module1=GStore1
+Module2=WiFiServer
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=2
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public WiFi As ESP8266WiFi
+	Public esp As ESP8266
+	Public eeprom As EEPROM
+	Private const MAGIC_EEPROM As Byte = 213
+	Public mqtt As MqttClient
+	Private mqttSocket As WiFiSocket
+	Private MQTTOpt As MqttConnectOptions
+	Private sr As B4RSerializator
+	Private bc As ByteConverter
+	Private nb As UInt = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	ConnectToNetwork(0)
+End Sub
+
+Public Sub ConnectToNetwork(tag As Byte)
+	WiFi.Disconnect
+	GetStoredData
+	Log("Trying to connect to: [", bc.StringFromBytes(GStore1.Slot0), "] password: [", bc.StringFromBytes(GStore1.Slot1),"]")
+	If WiFi.Connect2(bc.StringFromBytes(GStore1.Slot0),bc.StringFromBytes(GStore1.Slot1)) Then
+		Log("Connected successfully to: ", bc.StringFromBytes(GStore1.Slot0))
+		Log("Local IP: ", WiFi.LocalIp)
+		StopAP
+		CallSubPlus("ConnectToMqtt",500,0)
+	Else
+		Log("WIFI Failed to connect - start WifiServeur")
+		Log("Automatic reset in 5mn")
+		CallSubPlus("ConnectToNetwork",60*1000,0) 'try to connect again after 1mn
+	End If
+	WiFiServer.Start
+End Sub
+
+Private Sub ConnectToMqtt(tag As Byte)
+	mqtt.Initialize2(mqttSocket.Stream, bc.StringFromBytes(GStore1.slot2),bc.StringFromBytes(GStore1.slot3), bc.StringFromBytes(GStore1.slot4), "mqtt_MessageArrived", "mqtt_Disconnected") 'ignore
+	MQTTOpt.Initialize(bc.StringFromBytes(GStore1.Slot5),bc.StringFromBytes(GStore1.slot6))
+	If mqtt.Connect2(MQTTOpt) = False Then
+		Log(" connection error to broker")
+		mqtt_Disconnected
+	Else
+		mqtt.Subscribe(bc.StringFromBytes(GStore1.slot7), 0)		'commandes from mobile
+		Log("new Connexion to broker OK")
+		CallSubPlus("mqtt_MessageSend",5000,0)
+	End If
+'	Log("end MQTT init")
+End Sub
+
+Sub mqtt_MessageArrived(Topic As String, payload()As Byte)
+	Log("Topic recu =",Topic,"  Payload=",payload)
+End Sub
+
+public Sub mqtt_Disconnected
+	Log("MQTT_Disconnected")
+	If WiFi.IsConnected Then
+		Log("Wifi connected")
+		CallSubPlus("ConnectToMqtt",60*1000,0)
+	Else
+		Log("Wifi disconnected")
+		CallSubPlus("ConnectToNetwork",60*1000,0)
+	End If	
+End Sub
+
+Sub mqtt_MessageSend(tag As Byte)
+	Dim t_out As String = bc.StringFromBytes(GStore1.Slot9)
+	Dim p_out As String = "Message from MQTTclient1 Nb"+nb
+	nb = nb + 1
+	If mqttSocket.Connected = True Then
+ 		Log("Topic out=",t_out," / ","payload=",p_out)
+		mqtt.Publish(t_out, p_out)
+	End If
+	CallSubPlus("mqtt_MessageSend",5000,0)
+End Sub
+
+Public Sub SaveNetworkDetails(Data() As Byte)
+'	Log("Saving Network data"," - length: ", Data)
+'	Log("memory=", AvailableRAM)
+'	Log("stack :",StackBufferUsage)
+'	Log("data to eeprom=",Data)
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM, Data.Length), 0)
+	eeprom.WriteBytes(Data, 2)
+End Sub
+
+Public Sub GetStoredDataLength As Byte
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+'	Log("header lu=",header(0),"+",header(1))
+	If header(0) = MAGIC_EEPROM Then
+		Return header(1)
+	End If
+	Return 0
+End Sub
+
+Sub	GetStoredData As bool
+	Dim length As Byte = GetStoredDataLength
+'	Log("length wifi=",length)
+	If length > 0 Then
+		Dim ObjectsBuffer(16) As Object
+		Dim Data() As Byte = eeprom.ReadBytes(2, length)
+		Dim Objects() As Object = sr.ConvertBytesToArray(Data, ObjectsBuffer)
+'		Log("objects length=",Objects.Length)
+		If Objects.Length = 11 Then
+			For i = 0 To 10
+				GStore1.Put(i,Objects(i))
+			Next
+		Else
+			For i = 0 To 10
+			GStore1.Put(i,"_")
+			Next
+		End If
+		Return True
+	Else
+		For i = 0 To 10
+			GStore1.Put(i,"_")
+		Next
+		Return False
+	End If
+End Sub
+
+Public Sub ClearStoredDataLength
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	If header(0) = MAGIC_EEPROM Then
+'		Log("MAGIC_EEPROM header :",header(0),"-",header(1))
+		header(1) = 0
+		eeprom.WriteBytes(header,0)	
+		For i = 0 To 10
+			GStore1.Put(i,"_")
+		Next
+		Log("clear done")
+	End If
+End Sub
+
+Sub esp_reset(tag As Byte)
+	esp.Restart
+End Sub
+
+public Sub StopAP
+	Log("Stop AP")
+	RunNative("stopAP", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopAP (B4R::Object* u) {
+  WiFi.softAPdisconnect(1);
+  }
+#end if
+
+
+
+
+

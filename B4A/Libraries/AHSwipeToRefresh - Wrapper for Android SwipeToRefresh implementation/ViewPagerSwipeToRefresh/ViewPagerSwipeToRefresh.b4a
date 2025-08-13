@@ -1,0 +1,147 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,de.amberhome.viewpagerstrexample
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=core
+Library2=ahviewpager
+Library3=ahswipetorefresh
+Library4=javaobject
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: STR with ViewPager
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+' This example shows how to use a single AHSwipeToRefresh object (called "STR object" from now on)
+' For multiple ListViews In a ViewPager. It demonstrates the use of the STR_CanChildScrollUp event.
+'
+' Because we have four ListViews in this example which can all trigger the refresh the STR object
+' can not exactly decide, when to trigger the refresh so we must help him with the STR_CanChildScrollUp event.
+'
+' The event is always fired when the user tries to scroll any of the views that are added to the STR object.
+' The STR object "asks" if it should trigger the refresh. So we want it to trigger the refresh only, if the
+' ListView of the current page is completely scrolled up. Unfortunately in B4A the ListView does not have
+' a property which represents the scroll state so we have to use Reflection or Javaobject to get the
+' information. 
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Dim tm As Timer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Dim VP As AHViewPager
+	Dim PC As AHPageContainer
+	Dim STR As AHSwipeToRefresh
+
+	Dim LVs(4) As ListView 
+	Dim PageRefreshing As Int
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	STR.Initialize("STR")
+	PC.Initialize
+	VP.Initialize(PC, "")
+	
+	Activity.AddView(STR, 0, 0, 100%x, 100%y)
+	STR.AddView(VP)
+	STR.SetColorScheme2(Array As Int(Colors.Red, Colors.Green, Colors.Blue, Colors.Magenta, Colors.Cyan, Colors.Yellow))
+	
+	'Set up the pages with ListViews
+	For page = 0 To LVs.Length - 1
+		LVs(page).Initialize("")
+		
+		RefreshListView(page, LVs(page))
+		
+		PC.AddPage(LVs(page), "Page " & page)
+	Next	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub STR_Refresh
+	Log("Refresh started for Page " & VP.CurrentPage)
+
+	'Start the timer. Normally you will start your asynchronous job here
+	tm.Initialize("Timer", 3000)
+	tm.Enabled = True
+	
+	'Disable the STR object so we can not start a new refresh process
+	STR.Enabled = False
+	
+	'We have to remember which page caused the refreshing
+	PageRefreshing = VP.CurrentPage
+End Sub
+
+'The timer tick simulates the end of the refreshing process
+Sub Timer_Tick
+	Log("Refresh stopped for Page " & PageRefreshing)
+	
+	'Stop Timer and refresh the listview data
+	tm.Enabled = False
+	RefreshListView(PageRefreshing, LVs(PageRefreshing))
+
+	'Stop the spinning disc and enable the STR object again.
+	STR.Refreshing = False
+	STR.Enabled = True
+End Sub
+
+Sub RefreshListView(page As Int, lv As ListView)
+	lv.Clear
+
+	For i = 0 To 100
+		lv.AddTwoLines("Page: " & page & " - Item: " & i, "Value: " & Rnd(0, 100))
+	Next
+End Sub
+
+' The STR object "asks" if the refresh should be triggered.
+Sub STR_CanChildScrollUp As Boolean
+	'Is the Listview of the current page at top. If yes, we can swipe to refresh, otherwise we have to scroll up first.
+	Dim jo As JavaObject
+	Dim pos, offset As Int
+	
+	' First get the first visible position of the LV from the current page.
+	jo = LVs(VP.CurrentPage)
+	pos = jo.RunMethod("getFirstVisiblePosition", Null)
+	If pos = 0 Then
+		' If the LV is at the first position it may still be partially scrolled down.
+		' We need to get the ChildView and check if the Top is 0
+		jo = jo.RunMethod("getChildAt", Array As Object(pos))
+		offset = jo.RunMethod("getTop", Null)
+		
+		If offset = 0 Then
+			' Ok, the offset of the first item in the LV is 0 so we are sure that the ListView is fully scrolled up.
+			' It can not scroll up any further so we return false (which means that the STR object can now trigger the
+			' refresh.
+			Return False
+		End If
+	End If
+
+	'We are not at the top of the LV. So the LV can scroll up further and we return True here.
+	Return True
+End Sub

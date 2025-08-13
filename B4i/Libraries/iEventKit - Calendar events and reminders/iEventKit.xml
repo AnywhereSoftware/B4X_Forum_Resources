@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4IEventStore</name>
+        <shortname>EventStore</shortname>
+        <comment>Provides access to the device Calendar database. This includes calendar events and reminders.
+You must add the following usage description for each of the features:
+&lt;code&gt;#PlistExtra:&lt;key&gt;NSCalendarsUsageDescription&lt;/key&gt;&lt;string&gt;description here...&lt;/string&gt;
+#PlistExtra:&lt;key&gt;NSRemindersUsageDescription&lt;/key&gt;&lt;string&gt;description here...&lt;/string&gt;&lt;/code&gt;</comment>
+        <event>AuthorizationGrantedEvents (Success As Boolean)</event>
+        <event>AuthorizationGrantedReminders (Success As Boolean)</event>
+        <event>EventsReady (Success As Boolean, Events As List)</event>
+        <event>RemindersReady (Success As Boolean, Reminders As List)</event>
+        <method>
+            <name DesignerName="IsAuthorized">IsAuthorized:</name>
+            <comment>Returns True if the status is AUTHORIZED or FULL_ACCESS</comment>
+            <returntype>BOOL</returntype>
+            <parameter>
+                <name>Status</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Initialize">Initialize::</name>
+            <returntype>void</returntype>
+            <parameter>
+                <name>bi</name>
+                <type>B4I*</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>NSString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RequestAccessEvents">RequestAccessEvents</name>
+            <comment>Requests access to calender events.
+A dialog will be displayed on the first run.
+The AuthorizationGrantedEvents event will be raised with the result.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name DesignerName="RequestAccessReminders">RequestAccessReminders</name>
+            <comment>Requests access to the reminders.
+A dialog will be displayed on the first run.
+The AuthorizationGrantedReminders event will be raised with the result.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name DesignerName="AuthorizationStatusReminders">AuthorizationStatusReminders</name>
+            <comment>Returns the current authorization status.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name DesignerName="AuthorizationStatusEvents">AuthorizationStatusEvents</name>
+            <comment>Returns the current authorization status.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name DesignerName="FindEvents">FindEvents::</name>
+            <comment>Fetches all the calendar events between the specified dates. Note that the maximum date range is 4 years.
+The EventsReady event will be raised.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>StartDate</name>
+                <type>long long</type>
+            </parameter>
+            <parameter>
+                <name>EndDate</name>
+                <type>long long</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetEvent">GetEvent:</name>
+            <comment>Returns the calendar event with the given identifier.</comment>
+            <returntype>B4ICalendarEvent*</returntype>
+            <parameter>
+                <name>Identifier</name>
+                <type>NSString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetReminder">GetReminder:</name>
+            <comment>Returns the reminder with the given identifier.</comment>
+            <returntype>B4IReminder*</returntype>
+            <parameter>
+                <name>Identifier</name>
+                <type>NSString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="FindReminders">FindReminders:::</name>
+            <comment>Fetches all reminders based on the following criterions:
+If Completed is true, it returns all completed reminders with completion date in the specified date range.
+If Completed is false, it returns all uncompleted reminders with due date in the specified date range.
+StartDate and EndDate are optional. Pass 0 for an open range.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>StartDate</name>
+                <type>long long</type>
+            </parameter>
+            <parameter>
+                <name>EndDate</name>
+                <type>long long</type>
+            </parameter>
+            <parameter>
+                <name>Completed</name>
+                <type>BOOL</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemoveEvent">RemoveEvent::</name>
+            <comment>Removes the event.
+IncludeFutureEvents - Whether to also remove all future events (for recurring events).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Event</name>
+                <type>EKEvent*</type>
+            </parameter>
+            <parameter>
+                <name>IncludeFutureEvents</name>
+                <type>BOOL</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SaveEvent">SaveEvent::</name>
+            <comment>Saves the event.
+IncludeFutureEvents - Whether to also update all future events (for recurring events).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Event</name>
+                <type>EKEvent*</type>
+            </parameter>
+            <parameter>
+                <name>IncludeFutureEvents</name>
+                <type>BOOL</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemoveReminder">RemoveReminder:</name>
+            <comment>Removes the reminder.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Reminder</name>
+                <type>EKReminder*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SaveReminder">SaveReminder:</name>
+            <comment>Saves the reminder.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Reminder</name>
+                <type>EKReminder*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="CreateEvent">CreateEvent</name>
+            <comment>Creates a new event.</comment>
+            <returntype>B4ICalendarEvent*</returntype>
+        </method>
+        <method>
+            <name DesignerName="CreateReminder">CreateReminder</name>
+            <comment>Creates a new reminder.</comment>
+            <returntype>B4IReminder*</returntype>
+        </method>
+        <property>
+            <name>AUTHORIZATION_NOT_DETERMINED</name>
+            <comment>The user has not yet denied or granted access. A dialog will be displayed when the RequestAccess method is called.</comment>
+            <returntype>int</returntype>
+        </property>
+        <property>
+            <name>AUTHORIZATION_RESTRICTED</name>
+            <comment>Application is not authorized and user is restricted from changing its state (parental control for example).</comment>
+            <returntype>int</returntype>
+        </property>
+        <property>
+            <name>AUTHORIZATION_DENIED</name>
+            <comment>The user denied access for this application.</comment>
+            <returntype>int</returntype>
+        </property>
+        <property>
+            <name>AUTHORIZATION_AUTHORIZED</name>
+            <comment>The user granted access. On iOS 17+ FULL_ACCESS will be returned instead.</comment>
+            <returntype>int</returntype>
+        </property>
+        <property>
+            <name>AUTHORIZATION_FULL_ACCESS</name>
+            <comment>Replaces AUTHORIZED in iOS 17+.</comment>
+            <returntype>int</returntype>
+        </property>
+    </class>
+    <class>
+        <name>B4ICalendarItem</name>
+        <objectwrapper>EKCalendarItem*</objectwrapper>
+        <method>
+            <name DesignerName="IsInitialized">IsInitialized</name>
+            <comment>Tests whether this object was initialized.</comment>
+            <returntype>BOOL</returntype>
+        </method>
+        <method>
+            <name DesignerName="AddAlarm">AddAlarm:</name>
+            <comment>Adds an alarm to the item.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemoveAlarm">RemoveAlarm:</name>
+            <comment>Removes an alarm.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Tag</name>
+            <comment>Gets or sets the Tag object. This is a placeholder for any object you like to tie to this object.</comment>
+            <returntype>NSObject*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSObject*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Title</name>
+            <comment>Gets or sets the item's title.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Location</name>
+            <comment>Gets or sets the item's location.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Alarms</name>
+            <comment>Returns a list with the set alarms. Modifying the list will not have any effect on the alarms.</comment>
+            <returntype>B4IList*</returntype>
+        </property>
+    </class>
+    <class>
+        <name>B4ICalendarEvent</name>
+        <shortname>CalendarEvent</shortname>
+        <objectwrapper>EKEvent*</objectwrapper>
+        <method>
+            <name DesignerName="IsInitialized">IsInitialized</name>
+            <comment>Tests whether this object was initialized.</comment>
+            <returntype>BOOL</returntype>
+        </method>
+        <method>
+            <name DesignerName="AddAlarm">AddAlarm:</name>
+            <comment>Adds an alarm to the item.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemoveAlarm">RemoveAlarm:</name>
+            <comment>Removes an alarm.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Tag</name>
+            <comment>Gets or sets the Tag object. This is a placeholder for any object you like to tie to this object.</comment>
+            <returntype>NSObject*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSObject*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Title</name>
+            <comment>Gets or sets the item's title.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Location</name>
+            <comment>Gets or sets the item's location.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Alarms</name>
+            <comment>Returns a list with the set alarms. Modifying the list will not have any effect on the alarms.</comment>
+            <returntype>B4IList*</returntype>
+        </property>
+        <property>
+            <name>Identifier</name>
+            <returntype>NSString*</returntype>
+        </property>
+        <property>
+            <name>StartDate</name>
+            <returntype>long long</returntype>
+            <parameter>
+                <name>p</name>
+                <type>long long</type>
+            </parameter>
+        </property>
+        <property>
+            <name>EndDate</name>
+            <returntype>long long</returntype>
+            <parameter>
+                <name>p</name>
+                <type>long long</type>
+            </parameter>
+        </property>
+        <property>
+            <name>AllDay</name>
+            <comment>Gets or sets whether this is an all day event.</comment>
+            <returntype>BOOL</returntype>
+            <parameter>
+                <name>p</name>
+                <type>BOOL</type>
+            </parameter>
+        </property>
+    </class>
+    <class>
+        <name>B4IReminder</name>
+        <shortname>Reminder</shortname>
+        <objectwrapper>EKReminder*</objectwrapper>
+        <method>
+            <name DesignerName="IsInitialized">IsInitialized</name>
+            <comment>Tests whether this object was initialized.</comment>
+            <returntype>BOOL</returntype>
+        </method>
+        <method>
+            <name DesignerName="AddAlarm">AddAlarm:</name>
+            <comment>Adds an alarm to the item.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemoveAlarm">RemoveAlarm:</name>
+            <comment>Removes an alarm.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Alarm</name>
+                <type>B4ICalendarAlarm*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetDueDate">SetDueDate::</name>
+            <comment>Sets the due date.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Date</name>
+                <type>long long</type>
+            </parameter>
+            <parameter>
+                <name>AllDay</name>
+                <type>BOOL</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetStartDate">SetStartDate::</name>
+            <comment>Sets the start date.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Date</name>
+                <type>long long</type>
+            </parameter>
+            <parameter>
+                <name>AllDay</name>
+                <type>BOOL</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Tag</name>
+            <comment>Gets or sets the Tag object. This is a placeholder for any object you like to tie to this object.</comment>
+            <returntype>NSObject*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSObject*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Title</name>
+            <comment>Gets or sets the item's title.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Location</name>
+            <comment>Gets or sets the item's location.</comment>
+            <returntype>NSString*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSString*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Alarms</name>
+            <comment>Returns a list with the set alarms. Modifying the list will not have any effect on the alarms.</comment>
+            <returntype>B4IList*</returntype>
+        </property>
+        <property>
+            <name>Priority</name>
+            <comment>Gets or sets the priority (0 - 9).</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>p</name>
+                <type>int</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Completed</name>
+            <comment>Gets or sets whether the reminder considered completed.</comment>
+            <returntype>BOOL</returntype>
+            <parameter>
+                <name>p</name>
+                <type>BOOL</type>
+            </parameter>
+        </property>
+        <property>
+            <name>CompletedDate</name>
+            <comment>Returns the completed date. Returns 0 if not available.</comment>
+            <returntype>long long</returntype>
+        </property>
+        <property>
+            <name>DueDate</name>
+            <comment>Gets the due date. Returns 0 if there is no due date. Use SetDueDate to set this field.</comment>
+            <returntype>long long</returntype>
+        </property>
+        <property>
+            <name>StartDate</name>
+            <comment>Gets the start date. Returns 0 if there is no start date. Use SetStartDate to set this field.</comment>
+            <returntype>long long</returntype>
+        </property>
+        <property>
+            <name>Identifier</name>
+            <returntype>NSString*</returntype>
+        </property>
+    </class>
+    <class>
+        <name>B4ICalendarAlarm</name>
+        <shortname>CalendarAlarm</shortname>
+        <objectwrapper>EKAlarm*</objectwrapper>
+        <method>
+            <name DesignerName="IsInitialized">IsInitialized</name>
+            <comment>Tests whether this object was initialized.</comment>
+            <returntype>BOOL</returntype>
+        </method>
+        <method>
+            <name DesignerName="InitializeAbsolute">InitializeAbsolute:</name>
+            <comment>Initializes an alarm that fires at the specified absolute time.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Date</name>
+                <type>long long</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="InitializeRelative">InitializeRelative:</name>
+            <comment>Initiaizes an alarm that fires X minutes before the event start time.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Minutes</name>
+                <type>double</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Tag</name>
+            <comment>Gets or sets the Tag object. This is a placeholder for any object you like to tie to this object.</comment>
+            <returntype>NSObject*</returntype>
+            <parameter>
+                <name>p</name>
+                <type>NSObject*</type>
+            </parameter>
+        </property>
+        <property>
+            <name>AbsoluteDate</name>
+            <comment>Gets or sets the absolute time. Returns 0 if there is no absolute time.</comment>
+            <returntype>long long</returntype>
+            <parameter>
+                <name>p</name>
+                <type>long long</type>
+            </parameter>
+        </property>
+        <property>
+            <name>RelativeMinutes</name>
+            <comment>Gets or sets the offset measured in minutes before the start time.</comment>
+            <returntype>double</returntype>
+            <parameter>
+                <name>p</name>
+                <type>double</type>
+            </parameter>
+        </property>
+    </class>
+    <version>1.1</version>
+    <dependsOn>EventKit.framework</dependsOn>
+</root>

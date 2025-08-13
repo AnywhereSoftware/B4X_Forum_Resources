@@ -1,0 +1,127 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=b4a.png
+File2=b4i.png
+File3=b4j.png
+File4=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=sd_flexgrid
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+	#LibraryAuthor: Star-Dust
+	#LibraryName: SD_FlexGrid
+	#LibraryVersion: 0.12
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Dim xui As XUI
+	Private FlexGrid1 As FlexGrid
+	Private Ev As Eval
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	Ev.Initialize(FlexGrid1)
+	FlexGrid1.ColsName=Array As String("","N","On","Name","Img","Digit")
+	FlexGrid1.ColsWidth=Array As Int(100dip,50dip,50dip,120dip,90dip,150dip)
+	FlexGrid1.ColsType=Array As Int(FlexGrid1.TypeButton,FlexGrid1.TypeInt,FlexGrid1.TypeCheck,FlexGrid1.TypeString,FlexGrid1.TypeImage,FlexGrid1.TypeFloat)
+	FlexGrid1.ColsAlignment=Array As String("CENTER","CENTER","CENTER","LEFT","LEFT","RIGHT")
+	
+	FlexGrid1.SetColCustomize(0,0xFF5BC17D,xui.Color_RGB(240,240,240),xui.CreateDefaultFont(14))
+	
+	Dim B As Boolean=False
+	For i=1 To 100
+		B=Not(B)
+		FlexGrid1.AddRow(Array As Object("B" & i,i,B,"User " & i,Null,Rnd(50,100)),True)
+	Next
+	
+	FlexGrid1.SetCellvalue(0,0,100)
+	FlexGrid1.SetCellvalue(0,4,xui.LoadBitmap(File.DirAssets,"b4a.png"))
+	FlexGrid1.SetCellvalue(2,4,xui.LoadBitmap(File.DirAssets,"b4j.png"))
+	FlexGrid1.SetCellvalue(4,4,xui.LoadBitmap(File.DirAssets,"b4i.png"))
+	
+	FlexGrid1.SetCellCustomize(0,3,xui.Color_Black,xui.Color_Cyan,xui.CreateDefaultBoldFont(16))
+	For I=0 To 9
+		FlexGrid1.SetCellCustomize(i,1,xui.Color_Blue,xui.Color_Yellow,xui.CreateDefaultBoldFont(16))
+	Next
+
+	Sleep(2000)
+	FlexGrid1.SetCellValue(0,2,False)
+	FlexGrid1.SetCellValue(0,3,"Totale: " & Ev.Calculate("1+sum(0,1,9,1)"))
+	Log(FlexGrid1.RowCount)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+
+End Sub
+
+
+Sub FlexGrid1_HeadClick(Index As Int)
+	Log("Click Head Col: " & Index)
+	FlexGrid1.Selectcol(Index)
+End Sub
+
+Sub FlexGrid1_CellClick(Row As Int, Col As Int)
+	If Col=0 Then
+		FlexGrid1.SelectRow(Row)
+	Else
+		Select FlexGrid1.GetTypeCol(Col)
+			Case FlexGrid1.TypeCheck
+				Dim B As Boolean = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & B)
+
+			Case FlexGrid1.TypeImage
+				Dim Bm As B4XBitmap = FlexGrid1.GetCellValue(Row,Col)
+				'Log("Cell content: " & Bm.IsInitialized)
+			Case FlexGrid1.TypeInt
+				Dim I As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & I)
+				FlexGrid1.EditCellonsite(Row,Col)
+			Case FlexGrid1.TypeFloat
+				Dim F As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & F)
+			Case FlexGrid1.TypeDouble
+				Dim D As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & D)
+			Case FlexGrid1.TypeString
+				Dim S As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & S)
+				FlexGrid1.EditCellonsite(Row,Col)
+		End Select
+	End If
+End Sub
+
+Sub FlexGrid1_CellLongClick(Row As Int, Col As Int)
+	FlexGrid1.SelectCell(Row,Col,True)
+End Sub
+
+Sub FlexGrid1_Modified(Row As Int, Col As Int)
+	If Col=1 Then
+		Log(FlexGrid1.GetCellValue(Row,Col))
+		FlexGrid1.SetCellValue(0,3,"Totale: " & Ev.Calculate("1+sum(0,1,9,1)"))
+	End If
+End Sub

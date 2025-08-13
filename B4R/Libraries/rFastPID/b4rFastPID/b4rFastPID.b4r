@@ -1,0 +1,80 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rfastpid
+Library3=rcontrollino
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Dim pid As FastPid
+	
+	Dim t As Timer
+	
+	Dim cont As CONTROLLINO
+	Dim potpin As Pin
+	Dim ldrpin As Pin
+	Dim motorpin As Pin
+	Dim ledpin As Pin
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	potpin.Initialize(cont.CONTROLLINO_A1, potpin.MODE_INPUT)
+	ldrpin.Initialize(cont.CONTROLLINO_A0, ldrpin.MODE_INPUT)
+	motorpin.Initialize(cont.CONTROLLINO_D1, motorpin.MODE_OUTPUT)
+	ledpin.Initialize(cont.CONTROLLINO_D0, ledpin.MODE_OUTPUT)
+	
+	t.Initialize("t_tick", 20)
+	Dim kp, ki, kd As Float
+	kp = 0.9
+	ki = 6.0
+	kd = 0.001
+	Dim hz As Float = 50.0
+	Dim bts As Int = 8
+	
+	pid.Initialize(kp, ki, kd, hz, bts, False)
+	pid.setOutputRange(0, 255)
+	
+	
+	t.Enabled = True
+End Sub
+
+Sub t_tick
+	
+	
+	Dim setpoint As Int = potpin.AnalogRead /4
+	Dim feedback As Int = ldrpin.AnalogRead /4
+	Dim before, after As ULong
+	before = Micros()
+	Dim output As UInt = pid.step(setpoint, feedback)
+	after = Micros()
+  
+	ledpin.AnalogWrite(output)
+	motorpin.AnalogWrite(output)
+	Log("runtime: ", after - before)
+
+	Log(" sp: ", setpoint)
+	Log(" fb: ", feedback)
+	Log(" out: ", output)
+	
+	
+	
+End Sub
+
+
