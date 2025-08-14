@@ -1,0 +1,116 @@
+﻿Build1=Default,com.stevel05.pianofml
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=broadcastreceiver
+Library2=core
+Library3=dialogs
+Library4=gestures
+Library5=javaobject
+Library6=usb
+Library7=midisystem
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~AddActivityText(main, <intent-filter>~\n~	<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~</intent-filter>~\n~	<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"~\n~        android:resource="@xml/device_filter" />)
+Module1=Options_Static
+Module2=Utils
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=2
+Version=13.35
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Stevel05 Piano FullMidiLib
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private Seq As MidiSequence
+	Private Seqr As MidiSequencer
+	Private InitialFilePath As String
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private btnStop As Button
+	Private btnPlay As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+			
+	'Initialize the Options Static class and read the initial file path (if one has been saved)
+
+
+End Sub
+
+Sub Activity_Resume
+	Options_Static.Initialize
+	InitialFilePath = Options_Static.getInitialFilePath
+	If InitialFilePath = "" Then InitialFilePath = File.DirDefaultExternal
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+	If Seqr.IsInitialized Then Seqr.Stop
+End Sub
+
+#Region Gui interface clicks
+
+Sub btnStop_Click
+	If Seqr.IsInitialized Then
+		Seqr.Stop
+		btnPlay.Enabled = True
+	End If
+End Sub
+
+Sub btnPlay_Click
+	Seqr.CurrentMillisecondPosition = 0
+	Seqr.Start
+	btnPlay.Enabled = False
+End Sub
+'Respond to a button Load Click
+Sub btnLoad_Click
+	Dim FD As FileDialog
+
+	FD.FilePath = InitialFilePath
+	FD.FileFilter = ".mid,.midi,.kar,.Mid,.Midi.,Kar"
+
+	Do While True
+		Dim Resp As Int = FD.Show("Load a midi file","OK","Cancel","",Null)
+		If Resp = DialogResponse.CANCEL Then Return
+		If FD.ChosenName <> "" Then Exit
+	Loop
+	btnPlay.Enabled = False
+	
+	'Update the options with the current filepath
+	InitialFilePath = FD.FilePath
+	Options_Static.SetInitialFilePath(InitialFilePath)
+	Options_Static.Save
+	
+	DoLoad(FD.FilePath,FD.ChosenName)
+End Sub
+#End Region Gui interface clicks
+
+'The Actual load Sub
+Sub DoLoad(FilePath As String,FileName As String)
+	Dim Seq As MidiSequence = MidiSystem_Static.GetSequence(FilePath,FileName,False)
+	If Not(Seqr.IsInitialized) Then
+		'Attach the default receiver so we can hear the midi played on the internal synth
+		Seqr.Initialize(Seq,Me,"Playing",True)
+	Else
+		Seqr.SetSequence(Seq)
+	End If
+	btnPlay.Enabled = True
+End Sub

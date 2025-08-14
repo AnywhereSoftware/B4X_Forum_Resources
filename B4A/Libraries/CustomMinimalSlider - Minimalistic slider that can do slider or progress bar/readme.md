@@ -1,16 +1,17 @@
 ###  CustomMinimalSlider - Minimalistic slider that can do slider or progress bar by max123
-### 04/15/2025
+### 08/06/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/141213/)
 
 Hi all,  
   
-I've wrote and used this minimalistic slider library in many of my projects, so because I've updated it for a long time and added all custom functionalities I wanted, now I've decided to release it as library.  
+I've wrote and used this minimalistic slider library in many of my projects, so because I've updated it for a long time and I added all custom functionalities I wanted, now I've decided to release it as library.  
   
 Attached there is a library .jar and .xml, (copy these to your Additional Libraries folder) and 2 demo projects to test it, the first is a base project that show the slider **horizzontally** and **vertically**, the second test optional **animations with interpolators**.  
   
 This library was completely developed on B4A and because it is a relatively simple class (simpler than others I wrote) I've decided to release the full source code as most of libraries I've developed. This is the first of a long series of libraries I will release that I've developed in last 10 years with B4X, almost all my B4A libraries have a desktop B4J counterpart, some others I only developed for a specific platform.  
   
-You can find the library source code inline in the demo 1, if you like, you can make modifications and recompile it to a library (depends on AnimationPlus library). This and other free libraries will soon be available next on my github repository here <https://github.com/maxmeli123>  
+You can find the library source code inline in the demo 1, if you like, you can make modifications and recompile it to a library (depends on AnimationPlus library).  
+This and other free libraries will soon be available next on my github repository here <https://github.com/maxmeli123>  
   
 I've developed the same library for B4J and I will release it next.  
   

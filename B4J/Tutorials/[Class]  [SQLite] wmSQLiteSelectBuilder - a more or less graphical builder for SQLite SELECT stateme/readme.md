@@ -1,5 +1,5 @@
 ### [Class]  [SQLite] wmSQLiteSelectBuilder - a more or less graphical builder for SQLite SELECT statements by walt61
-### 08/19/2023
+### 06/23/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/145988/)
 
 As I don't use SQLite (or any other SQL) all the time and am no database expert, it's always a bit of a challenge to get the SELECT syntax right, specifically when relationships between tables (JOINs) come into play. There's that, and the fact that it was fun to develop (and I wanted to have the functionality in another project I've been working on): this class helps to build SELECT statements. I don't think it will be helpful for real end users who have never touched a database, but for developers it could be useful.  
@@ -31,6 +31,7 @@ Is attached to this post. The screenshots were created working with the Chinook 
 - Open a saved specifications file  
   
 **Updates**  
+- 2025-06-23: bug fix in the Arrows class  
 - 2023-08-19: bug fix in handling of filter columns and sort columns (see "This next line added 2023-08-19" in the class for the changes)  
   
 Enjoy!  

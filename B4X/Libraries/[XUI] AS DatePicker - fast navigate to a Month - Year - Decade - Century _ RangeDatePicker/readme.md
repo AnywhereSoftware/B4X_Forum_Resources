@@ -1,5 +1,5 @@
 ###  [XUI] AS DatePicker - fast navigate to a Month - Year - Decade - Century | RangeDatePicker by Alexander Stolte
-### 03/25/2025
+### 08/08/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/139957/)
 
 This is a simple DatePicker, with which you can quickly reach your target date. With a click on the header the view changes.  
@@ -472,6 +472,12 @@ Version: 1.17
 - **1.31**
 
 - BugFix for B4J
+
+- **1.32**
+
+- New MaxViewLevel Desinger Property - Defines the highest level of calendar views the user can navigate to when clicking the header (e.g., from month to year to decade).
+
+- Default: CenturyView
 
 **Github:** [github.com/StolteX/AS\_DatePicker](https://github.com/StolteX/AS_DatePicker)  
   

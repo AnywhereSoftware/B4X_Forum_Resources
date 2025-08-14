@@ -1,5 +1,5 @@
 ###  [XUI] AS WheelPicker - Spinner - a modern single/multiple choice picker view - based on xCustomListView [Payware] by Alexander Stolte
-### 01/12/2025
+### 06/04/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/127505/)
 
 Hello,  
@@ -445,6 +445,14 @@ Version: 3.01
 - **3.24**
 
 - BugFix If you changed the FadeColor, some of the old color remained
+
+- **3.25**
+
+- Removed - SetWheelWidth
+- Changed - Separators are now centered between 2 items, instead of having the full width on only one item
+
+- Everything should now look more centered and neat when working with separators
+- Separators at index -1, i.e. before the 1st item, and separators at the last idnex, i.e. after the last item, use the entire width of the item instead of just half of it
 
 Have Fun :)  
 <https://payhip.com/b/IvqnN>

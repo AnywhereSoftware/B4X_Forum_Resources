@@ -1,5 +1,5 @@
 ### rLovyanGFXEx ESP32 by rwblinn
-### 04/23/2025
+### 06/08/2025
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/166606/)
 
 **B4R Library rLovyanGFXEx ESP32  
@@ -13,23 +13,20 @@ rLovyanGFXEx** is an open source SPI LCD graphics library for selected displays 
 - Enhanced with additional colors, fonts and many functions to set text, the RGB LED and more.
 - 24-bit color codes; selected fonts like Font0 [Default], FREEMONO\_12, FREESANS\_12, TOMTHUMB\_1, FREESERIF\_12 and more.
 - Touch is enabled (depends on the display).
-- Library developed in CPP and compiled using the Arduino IDE 2.3.4 (or Arduino IDE 1.8.9) and the B4Rh2xml tool.
-- Software: B4R 4.00 (64 bit), ESP32 library 3.1.3, LovyanGFX 1.2.0.
+- Library developed in Arduino C++.
+- Software: B4R 4.00 (64 bit), arduino-cli 1.2.2, ESP32 library 3.2.0, LovyanGFX 1.2.7.
 - Hardware: Tested with following displays:
 
 - Sunton ESP32 2.8" TFT, w320xh240, touch, driver ILI9341.
 - SSD1306 0.96" OLED, I2C w128xh64, monochrome, no touch, pins SCL 22, SDA 21, I2C address 0x3C.
 - SH1106 1.3" OLED, I2C w128xh64, monochrome, no touch, pins SCL 22, SDA 21, I2C address 0x3C.
 - diymore ESP32-WROOM-32 0.96" OLED, w128xh64, no touch, pins SCL 22, SDA 21, I2C address 0x3C.
+- ESP32 WIFIKITV3 SSD1306 0.96" OLED , I2C, w128xh64, no touch, pins SCL 18, SDA 17, PWR 21, I2C address 0x3C.
 
 - ESP32 communicates with the TFT Display and Touchscreen using SPI communication protocol.
-- Not wrapped are the classes Sprites (LGFX\_Sprite), Buttons (LGFX\_Button) [not planned].
+- Not wrapped are the classes Sprites (LGFX\_Sprite), Buttons (LGFX\_Button) [not planned to wrap].
 - This library has been developed for personal use only.
 
-**IMPORTANT**  
-This library has been tested with the **Arduino Board Manager ESP32 version 3.1.3**.  
-The ESP32 version **3.2.0** gives **error** after uploading: "E (29) spi: spi\_bus\_initialize(815): no support changing io default level" see [here](https://github.com/lovyan03/LovyanGFX/issues/693).  
-  
 **Notes**  
 The background to develop this library, is using a small TFT display as a [Solar Info Panel](https://www.b4x.com/android/forum/threads/home-assistant-solar-info-panel.166710/#post-1022123) (multi pages touch panel) for the production@home, but of course there are many other use cases.  
 This library is a further development of the [rESP3228CYD](https://www.b4x.com/android/forum/threads/resp3228cyd.166140/) library.  
@@ -40,30 +37,27 @@ This library is a further development of the [rESP3228CYD](https://www.b4x.com/a
 ![](https://www.b4x.com/android/forum/attachments/163392)  
   
 **Files**  
-rLovyanGFXEx.zip archive contains the library and sample projects.  
+rLovyanGFXEx-NNN.zip archive contains the library and sample projects.  
   
 **Install**  
 In the Arduino IDE install the library [LovyanGFX](https://github.com/lovyan03/LovyanGFX) - TFT LCD Graphics driver.  
-From the zip archive rLovyanGFXEx.zip, copy the content of the library folder, to the B4R additional libraries folder keeping the folder structure.  
+From the zip archive rLovyanGFXEx-NNN.zip, copy the content of the library folder, to the B4R additional libraries folder keeping the folder structure.  
   
 **Display Driver**  
-The library includes three display drivers, which are defined in the header files **ESP32\_2432S028.h**, **ESP32\_SSD1306.h** and **ESP32\_SH110x**. Make changes as required (see source comments).  
+The library includes three display drivers, which are defined in the header files ESP32\_2432S028.h, ESP32\_SSD1306.h, ESP32\_SSD1306\_WIFIKITV3.h and ESP32\_SH110x. Make changes as required (see source comments).  
   
-In the B4R code, the display driver must be defined using the project attribute #DefineExtra.  
-The **#DefineExtra** attribute for the displays are:  
+In the B4R code, the **display driver must be defined (mandatory)** using the Project Attribute #DefineExtra.  
 
 - Sunton ESP32 = #define ESP32\_2432S028
 - SSD1306 = #define ESP32\_SSD1306
 - SH1106 = #define ESP32\_SH110x
 - DIYMOREESP32OLED = #define ESP32\_SSD1306
+- ESP32\_SSD1306\_WIFIKITV3.h = #define ESP32\_SSD1306\_WIFIKITV3
 
-If nothing is defined, the default is set to the ESP32\_2432S028 driver.  
-  
 Examples setting the display driver in B4R code for the SSD1306:  
 
 ```B4X
 #Region Project Attributes  
-    …  
     #DefineExtra: #define ESP32_SSD1306  
 #End Region
 ```
@@ -72,12 +66,12 @@ Examples setting the display driver in B4R code for the SSD1306:
   
 **Functions**  
 See the folder examples, but also the chapter **Get Started** below.  
-The folder examples has sub-folders depending the display used: CYD2432S028, DIYMOREESP32OLED, SH110X and SSD1306.  
-Most of the examples are for the Sunton display.  
-For the SH110x and SSD1306, the examples are just the classic Hello World.  
+The folder examples has sub-folders depending the display used: CYD2432S028, DIYMOREESP32OLED, SH110X, SSD1306, SSD1306WIFIKITV3.  
+Most of the examples are for the CYD2432S028 display.  
+For the SH110x, SSD1306, SSD1306WIFIKITV3 the examples are just the classic Hello World.  
 For the DIYMOREESP32OLED. there is an example using the 7-Segment-Font to display a number (max 9999).  
   
-**Examples Sunton**  
+**Examples CYD2432S028**  
 
 - HelloWorld-InlineC - Use the native LovyanGFX library with B4R Inline C. To explore how to use the library prior wrapping.
 - Touch-InlineC - As previous.
@@ -98,7 +92,6 @@ For the DIYMOREESP32OLED. there is an example using the 7-Segment-Font to displa
 - MultiPages - Define multiple pages and select via touch.
 - Helper - Helper methods (B4X code) to be used in own programs.
 
-  
 **B4R Basic Example**  
 
 ```B4X
@@ -106,7 +99,7 @@ For the DIYMOREESP32OLED. there is an example using the 7-Segment-Font to displa
     #AutoFlushLogs: True  
     #CheckArrayBounds: True  
     #StackBufferSize: 600  
-    'Set the display driver. If left out, the default is ESP32_2432S028  
+    'Set the display driver (mandatory)  
     #DefineExtra: #define ESP32_2432S028  
 #End Region  
   

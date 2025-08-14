@@ -1,5 +1,5 @@
 ###  [XUI] AS Chips - Display your Hashtags, Filters or Categories by Alexander Stolte
-### 02/03/2025
+### 06/08/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/139896/)
 
 With this view you can display and interact with your hashtags, filters or categories. The view can expand itself if more chips are added than there is space for. (AutoExpand = True)  
@@ -197,6 +197,17 @@ Version: 1.00**
 
 - Add GetLabelAt - Gets the chip text label
 - Add GetBackgroundAt - Gets the chip background panel
+
+- **1.14**
+
+- New - ShowRemoveIcon added to ASScrollingChips\_ChipProperties type
+- New - xFont and Icon added to ASScrollingChips\_RemoveIconProperties type
+- New - GetChipProperties2 Get the chip props via the tag value of the item
+- New - RemoveChipClicked Event - if the event is used, automatic deletion is deactivated
+
+- **1.15**
+
+- BugFix
 
 **Github:** [github.com/StolteX/AS\_Chips](https://github.com/StolteX/AS_Chips)  
   

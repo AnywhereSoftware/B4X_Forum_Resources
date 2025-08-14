@@ -1,5 +1,5 @@
 ### Tips or Tricks for using Android Emulator by aeric
-### 10/01/2024
+### 07/23/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/158120/)
 
 I want to share a few tricks when using the Android Virtual Device or Emulator.  
@@ -36,9 +36,15 @@ Edit the png file with image editor and save it.
 The clock always follow GMT +0  
 If you change this in Settings->System->Date & time. When the emulator reboots, it will back to default.  
 If you are using bat file to start the emulator, you can specify the timezone parameter.  
-e.g.  
+
+```B4X
 cd /d C:\SDK\emulator  
-emulator -avd 6in\_Phone\_Platform\_34\_google\_apis -timezone Asia/Kuala\_Lumpur  
+emulator -avd 6in_Phone_Platform_34_google_apis -timezone Asia/Kuala_Lumpur
+```
+
+  
+  
+More commands: <https://developer.android.com/studio/run/emulator-commandline>  
   
 **7. Add a keyboard for another language**  
 Invoke the Google keyboard. Click on the gear icon.  
@@ -50,9 +56,14 @@ Make sure you have some apps opened. Click the square button (vertical control o
 The Screenshot function is at the bottom.  
   
 **9. Enable navigation buttons**  
-If you missed the classic navigation buttons (Triangle - Circle - Square) or (Back - Home - Recent Apps) then you can show it by modifying the setting in   
+If you missed the classic navigation buttons (Triangle - Circle - Square) or (Back - Home - Recent Apps) then you can show it by modifying the setting in  
 config.ini inside C:\SDK\B4AEmulator\6in\_Phone\_Platform\_34\_google\_apis\_playstore  
-Set [ICODE]hw.mainKeys=no[/ICODE]  
+Set  
+[ICODE]hw.mainKeys=no[/ICODE]  
+  
+**Update:**  
+This settings can now be set in Display & touch > Navigation mode. Select 3-button navigation.  
+To show only 3 buttons without other shortcut icons, increase the Display size as in tip#1 to 3 out of 4 of the slider.  
   
 **10. Setting location in Google map**  
 Use the 3 dots button to go to the Location setting.  
@@ -75,4 +86,18 @@ Once finished download, create a new emulator from B4A AVD Manager.
 **13. Play Protect**  
 There is no point to enable Play Protect and it's updates. If you are using a Google API Playstore emulator system image, open Play store app and tap on the 3 dots on top right corner and disable any settings that no applicable.  
   
-![](https://www.b4x.com/android/forum/attachments/148860)
+**14. Display problem for API 36**  
+If the emulator exited while booting up, try to use the following command:  
+
+```B4X
+C:\android\sdk\emulator>emulator -avd 6in_Phone_Platform_36_google_apis -gpu swiftshader_indirect
+```
+
+  
+  
+**15. Scale down big window**  
+If the emulator window is too big and appeared on top or out of the desktop screen, drag the emulator window down and press and hold Ctrl + Down keys to scale it down.  
+  
+![](https://www.b4x.com/android/forum/attachments/165514)  
+  
+GitHub: <https://github.com/pyhoon/Tips-or-Tricks-for-using-Android-Emulator>

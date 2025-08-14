@@ -1,12 +1,12 @@
 ### [class] Microsoft OAuth2 by josejad
-### 12/10/2024
+### 07/04/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/164049/)
 
 Hi there:  
   
 I've adapted Erel's [Google Oauth2 class](https://www.b4x.com/android/forum/threads/class-b4x-google-oauth2.79426/) to login with Microsoft, adapting the [code from this post](https://www.b4x.com/android/forum/threads/logging-in-to-ms-365.148816/) (thanks [USER=23847]@stu14t[/USER])  
   
-For now, it's just working on B4A. It works in **B4A and B4J, not tested in B4i.** Probably with [USER=1]@Erel[/USER] help it will work in B4i.  
+For now, it's just working on B4A. It works in **B4A and B4J, not tested in B4i.** Probably with [USER=1]@Erel[/USER]'s help it will work in B4i.  
   
 MicrosoftOAuth2 class takes care of several tasks:  
   
@@ -27,7 +27,7 @@ MicrosoftOAuth2 class takes care of several tasks:
   
 ![](https://www.b4x.com/android/forum/attachments/158480)  
   
-IMPORTANT: Package name (Nombre del paquete in the next image) must be the same that in the IDE  
+IMPORTANT: Package name ("Nombre del paquete" in the next image) must be the same that in the IDE  
 "Sign HASH" ("Hash de firma" in the image) must be your Private key, in base64 format. In the example you will get your private key base64 hash in LOGS if you run the app. Copy it, and paste in the Microsoft page: (code from [this post](https://www.b4x.com/android/forum/threads/get-the-apk-signature-at-runtime.70490/#content))  
   
 
@@ -42,7 +42,7 @@ Use this sha1 base64 sign to register your app in ms: 2pmj9i4rSx0yEb/viWBYkE/ZQr
   
   
   
-Using that code in the microsoft page you will get a “redirection URI” you must use it in order the browse redirects to your app  
+Using that code in the microsoft page you will get a “redirection URI” you must use it in order the browse redirects back to your app after you send your login credentials  
   
 ![](https://www.b4x.com/android/forum/attachments/158482)  
   

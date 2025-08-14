@@ -1,9 +1,9 @@
 ### [Web] WebApiUtils v4 by aeric
-### 05/31/2025
+### 07/14/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/167012/)
 
-Version : 4.60  
-A utility class to simplify the development for server app using project template [**Pakai framework (f.k.a. Web API Server) v4.00**](https://www.b4x.com/android/forum/threads/project-template-web-api-server-v4-beta.167080/).  
+Version : 4.70  
+A utility class to simplify the development for server app using project template [**Pakai framework v4.00**](https://www.b4x.com/android/forum/threads/project-template-web-api-server-v4-beta.167080/) (f.k.a. Web API Server).  
   
 Library:  
 

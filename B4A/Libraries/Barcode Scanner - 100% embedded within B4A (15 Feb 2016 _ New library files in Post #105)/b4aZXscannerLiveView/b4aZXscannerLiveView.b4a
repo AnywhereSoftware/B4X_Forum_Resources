@@ -1,0 +1,107 @@
+﻿Version=5.2
+NumberOfModules=1
+Module1=Starter
+Build1=Default,JHS.zxScannerLiveView
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="17"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true"~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(<uses-feature android:name="android.hardware.telephony" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.flash" android:required="false" />)~\n~'AddPermission("android.permission.ACCESS_COARSE_LOCATION")~\n~AddPermission("android.permission.INTERNET")~\n~AddPermission("android.permission.ACCESS_FINE_LOCATION")~\n~AddPermission("android.permission.WAKE_LOCK")~\n~AddPermission("android.permission.DEVICE_POWER")~\n~'AddPermission("android.permission.ACCESS_COARSE_UPDATES")~\n~AddPermission("android.permission.READ_PHONE_STATE")~\n~AddPermission("android.permission.VIBRATE")~\n~AddPermission("android.permission.CAMERA")~\n~AddPermission("android.permission.FLASHLIGHT")~\n~AddPermission("android.hardware.camera")~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~
+IconFile=
+NumberOfFiles=1
+File1=main.bal
+NumberOfLibraries=2
+Library1=core
+Library2=zxscannerliveview
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: zxScannerLiveView
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private zxslv As zxScannerLiveView
+	Private b1 As Button
+	Private b2 As Button
+	Private l1 As Label
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("main")
+	
+	zxslv.Initialize("zxslv")
+	
+	Activity.AddView(zxslv, 50%x - 45%y, 5%y, 90%y, 90%y)
+
+	zxslv.HudVisible = True
+	zxslv.PlaySound = True
+	zxslv.Visible = False
+	
+End Sub
+
+Sub Activity_Resume
+	
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+	zxslv.Visible = False
+	zxslv.stopScanner
+	
+End Sub
+
+Sub b1_Click
+	
+	zxslv.Visible = True
+	zxslv.startScanner
+	
+End Sub
+Sub b2_Click
+	
+	zxslv.Visible = False
+	zxslv.stopScanner
+	l1.Text = ""
+	
+End Sub
+
+Sub zxslv_scanresult
+	
+	Log(zxslv.ScanResult)
+	l1.Text = zxslv.ScanResult
+	
+End Sub
+
+Sub zxslv_scanner_started
+	
+	Log("Scanner Started")
+	
+End Sub
+
+Sub zxslv_scan_error
+	
+	Log("Scan Error")
+	
+End Sub
+
+Sub zxslv_scanner_stopped
+	
+	Log("Scanner stopped")
+	
+End Sub

@@ -1,0 +1,163 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta name="viewport" content="width=device-width, initial-scale=1"> 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+<style> 
+body { 
+  font-family: "Lato", sans-serif; 
+} 
+.main { 
+  margin-left: 180px; /* Same as the width of the sidenav */ 
+  padding: 0px 10px; 
+} 
+.active { 
+  background-color: grey; 
+  color: white; 
+} 
+.dropdown-container { 
+  display: none; 
+  background-color: #d1d1d1; 
+  padding-left: 1px; 
+} 
+.fa-caret-down { 
+  float: right; 
+  padding-right: 8px; 
+} 
+@media screen and (max-height: 450px) { 
+  .sidenav {padding-top: 15px;} 
+  .sidenav a {font-size: 18px;} 
+} 
+    * { padding:0; margin:0; }  
+    body { color: #333; font: 14px Sans-Serif; padding: 50px; background: #eee; }  
+    h1 { text-align: center; padding: 20px 0 12px 0; margin: 0; }  
+    h2 { font-size: 16px; text-align: center; padding: 0 0 12px 0; } 
+    #container { box-shadow: 0 5px 10px -5px rgba(0,0,0,0.5); position: relative; background: white; }  
+    table { background-color: #F3F3F3; border-collapse: collapse; width: 100%; margin: 15px 0; }  
+    th { background-color: #FE4902; color: #FFF; padding: 5px 10px; }  
+    th small { font-size: 9px; }  
+    td, th { text-align: left; }  
+    td {cursor: pointer; }  
+    a { text-decoration: none; }  
+    td a { color: #663300; display: block; padding: 5px 10px;  }  
+    th a { padding-left: 0 }  
+    th:first-of-Type { padding-left: 35px; }  
+    td:Not(:first-of-Type) a { background-image: none !important; } 
+    tr:nth-of-Type(odd) { background-color: #E6E6E6; }  
+    tr:hover td { background-color:#CACACA; }  
+    tr:hover td a { color: #000; }  
+</style> 
+</head> 
+<body onload="getFSdata();">  
+<div class="main"> 
+    <h1>Directory Contents</h1> 
+<div> <label><b>Current Directory : </b></label> <input Type='text' id='name0' name='name0' value='/' size='40' >  
+ &nbsp;&nbsp;&nbsp;<label>fs Total size:</label> <label id='label1' name='label1'> 0000 </label> 
+ &nbsp;&nbsp;&nbsp;<label>fs Used size:</label> <label id='label2' name='label2'> 0000 </label><div> 
+<table class='sortable' id='mytable'>  
+  <thead id='thead1' name='thead1'>  
+    <tr> <th>Filename</th> <th>Type</th> <th>Size <small>(bytes)</small></th> <th>Date Modified</th> </tr> 
+  </thead> 
+  <tbody id='tbody1' name='tbody1'></tbody> 
+</table>  
+<label>NameOrg  </label> <input type='text' id='name1' name='name1' size='30'> 
+<label>  NameNew  </label> <input type='text' id='name2' name='name2' size='30'> 
+<label> Type </label> <select name='name3' id='name3'> <option value='Dir'>Dir</option> <option value='File'>File</option> </select> 
+	<label>  Dir/File  </label>		
+	<table class='DirActions'>
+	<thead>
+	  <tr>
+	    <td><button onclick="mypost('DOpen')  ;" id="myButton6" style="height:30px;width:100px" class="float-left submit-button" > Dir Open  </button></td>
+	    <td><button onclick="mypost('DClose')  ;" id="myButton6" style="height:30px;width:100px" class="float-left submit-button" > Dir Close  </button></td>
+	    <td><button onclick="mypost('DCreate');" id="myButton5" style="height:30px;width:100px" class="float-left submit-button" > Dir Create  </button></td>
+	    <td><button onclick="mypost('DDelete');" id="myButton4" style="height:30px;width:100px" class="float-left submit-button" > Dir Delete </button></td>
+	    <td><button onclick="mypost('Format');" id="myButton3" style="height:30px;width:100px" class="float-left submit-button" > Eprom Format </button></td>
+	  <tr>
+	</thead>
+	</table>
+	<table class='FileActions'>
+	<thead>	
+      <tr>
+	<form method="post" action = '/filebrowser/upload' enctype="multipart/form-data">
+	<td><input onchange="myupload();" Type="file" id="file1" name="file1"/> <button style="height:30px;width:100px">File Update</button></td>
+	</form>
+	    <td><button onclick="mypost('Download');" id="myButton2" style="height:30px;width:100px" class="float-left submit-button" >File Download</button></td>
+	    <td><button onclick="mypost('Rename');"   id="myButton3" style="height:30px;width:100px" class="float-left submit-button" >File Rename </button></td>
+	    <td><button onclick="mypost('Delete');"   id="myButton4" style="height:30px;width:100px" class="float-left submit-button" >File Delete </button></td>
+	  <tr>
+	</thead>
+	</table>
+
+
+</div> 
+
+
+
+<script> 
+var dropdown = document.getElementsByClassName("dropdown-btn"); 
+var i; 
+for (i = 0; i < dropdown.length; i++) { 
+  dropdown[i].addEventListener("click", function() { 
+  this.classList.toggle("active"); 
+  var dropdownContent = this.nextElementSibling; 
+  if (dropdownContent.style.display === "block") { 
+  dropdownContent.style.display = "none"; 
+  } else { 
+  dropdownContent.style.display = "block"; 
+  } 
+  }); 
+} 
+function myFunction(txt) { var r = confirm(txt+' ?'); return r;  } 
+function getFSdata1() {  
+  document.getElementById('tbody1').innerHTML = ''; 
+  getFSdata(); } 
+function getFSdata() {  
+  var xmlhttp = new XMLHttpRequest(); 
+  xmlhttp.onreadystatechange = function() { 
+    if (xmlhttp.readyState == XMLHttpRequest.DONE && xmlhttp.status == 200){  
+      const parts = xmlhttp.responseText.split(String.fromCharCode(10));  
+      document.getElementById('name0').value = parts[0] ;  
+      document.getElementById('label1').innerHTML = parts[1] ; 
+      document.getElementById('label2').innerHTML = parts[2] ; 
+      var myTable = document.getElementById('mytable').getElementsByTagName('tbody')[0];  
+      for (let pas = 3; pas < parts.length-6; pas++) {  
+        var part = parts[pas].split("|");  
+        var row = myTable.insertRow();  
+        row.innerHTML=  "<tr> <td>"+part[0]+"</td> <td>"+part[1]+"</td>  <td>"+part[2]+"</td> <td>"+"01-Jan-2001 01-01"+ "</td> </tr>;"  
+        row.onclick = (function(){return function(){runMe(this.innerHTML);}})();  
+        if (parts[pas+1] == "[end]") { break;}; 
+      }  
+    } 
+  }; 
+  xmlhttp.open('POST', '/filebrowser/FSload', true); 
+  xmlhttp.send(); 
+} 
+function myupload() {  
+  const ffile = document.getElementById('file1').files[0];  
+  const ffsize= (ffile.size).toString();  
+  file1.name= ffsize;
+  document.getElementById('file1').files[0] = "";  
+}  
+function runMe(text) { 
+  var result = text.replace(/ /g, '');  var result1 = result.replace(/<td>/g, ''); var values = result1.split('</td>'); 
+  name1.value =values[0];  
+  name2.value =values[1];  
+  if (name2.value !== 'Dir'){name3.value = 'File';} else {name3.value = 'Dir';} 
+  name2.value ='';  
+}  
+function mypost(text) { 
+  var xhr = new XMLHttpRequest(); 
+  xhr.open('POST', '/filebrowser/action', true); 
+  xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded'); 
+  xhr.onload = function () { 
+    getFSdata1(); 
+    }; 
+  xhr.send('action='+text+'&'+name1.name+'='+name1.value+'&'+name2.name+'='+name2.value+'&'+name3.name+'='+name3.value); 
+  } 
+function mypostX(text) {  
+ var form = document.createElement('form'); form.action = '/filebrowser/download'; form.method = 'POST';  
+ var input = document.createElement('input');input.type = 'hidden'; input.name = name1.name; input.value = name1.value; form.appendChild(input); 
+document.body.appendChild(form); form.submit(); }  
+</script> 
+</body> 
+</html> 

@@ -1,8 +1,8 @@
 ### [MinimaList] Player Scoreboard by aeric
-### 11/14/2024
+### 06/16/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/164122/)
 
-![](https://www.b4x.com/android/forum/attachments/158593)  
+![](https://www.b4x.com/android/forum/attachments/158593) ![](https://www.b4x.com/android/forum/attachments/164800)  
 This example is a response to [this thread](https://www.b4x.com/android/forum/threads/mind-as-crumbled-need-to-find-the-easiest-way-to-get-winning-player.164073/#post-1006470).  
   
 You can click the labels to edit Player's name and score.  

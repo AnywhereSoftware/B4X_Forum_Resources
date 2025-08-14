@@ -1,5 +1,5 @@
 ###  [XUI] AS Popup Menu by Alexander Stolte
-### 01/08/2025
+### 07/01/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/121832/)
 
 This is a simple cross platform Popup Menu.  
@@ -278,6 +278,10 @@ Version: 1.08**
 - **1.16**
 
 - BugFix If the icon horizontal alignment is set to center and there is no text, the icon is now displayed in the center
+
+- **1.17**
+
+- BugFix on CloseMenu thanks to [USER=98801]@Mike1970[/USER]
 
 Have Fun :)  
 [![](https://www.b4x.com/android/forum/attachments/paypal-donate-button-png-clipart-png.79848/)](https://www.paypal.com/donate/?hosted_button_id=PBJGJWDDSM6ZG)

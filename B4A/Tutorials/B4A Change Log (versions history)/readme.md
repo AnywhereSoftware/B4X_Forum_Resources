@@ -1,6 +1,45 @@
 ### B4A Change Log (versions history) by Erel
-### 01/13/2025
+### 07/16/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/19332/)
+
+**v13.4** - July 16, 2025 - <https://www.b4x.com/android/forum/threads/b4a-v13-4-is-available-for-download.167803/>  
+
+- New command line tools and prepackaged SDK.
+- SDK handling improved.
+- Many internal libraries updated to support updated SDK.
+
+**v13.3**  - June 9, 2025 - <https://www.b4x.com/android/forum/threads/b4a-v13-3-is-available-for-download.167352/>  
+
+- #Macro attribute. Defined in B4XMainPage or Main modules. Format: <type>, <name>, <link>. Type can be *Title* or *After Save*. More to come in the future. Link is based on the comment link feature: <https://www.b4x.com/android/forum/threads/119897/#content>
+Examples:
+
+```B4X
+#Macro: Title, B4XOrderedMap Doc, https://www.b4x.com/android/forum/threads/b4x-b4xorderedmap-get-first-item-nth-item-and-last-item.118642/  
+#Macro: Title, B4XPages Export, ide://run?File=%B4X%\Zipper.jar&Args=Project.zip  
+'open Objects folder after saving project:  
+#Macro: After Save, open objects folder, ide://run?File=%WINDIR%\explorer.exe&Args=%PROJECT%\Objects
+```
+
+- New command line options for the IDE:
+-INI=<ini file path> - allows running the IDE with an alternative INI file. Note that that standard INI file is stored under: C:\Users\<user name>\AppData\Roaming\Anywhere Software\b4xV5.ini
+-INI\_<property key here>=<property value>
+Example:
+
+```B4X
+"c:\Program files\Anywhere Software\b4a\b4a.exe" -INI_CodeTheme=Dark "-INI_TitleNotEmpty=This is the second IDE: $FILE_NAME$"
+```
+
+- New TitleEmpty and TitleNotEmpty INI keys. Can be used to customize the main window title. Support three replacement variables: $PRODUCT$ - B4A/B4J…, $FILE\_NAME$ - project name, $FILE\_PATH$ - project path.
+- New internal keywords: Initialized and NotInitialized:
+
+```B4X
+If Map1 <> Null And Map1.IsInitialized Then … 'boring  
+If Initialized(Map1) Then … 'less boring
+```
+
+- B4XCollections: new helper methods: EmptyList, EmptyMap, MergeMaps, MergeLists, CreateList, CopyOnWriteMap and CopyOnWriteList.
+- Updated internal libraries: XUI Views v2.66, B4XCollections v1.15, Core v13.2.
+- Other bug fixes and minor improvements.
 
 **v13.1** - January 13, 2025 - <https://www.b4x.com/android/forum/threads/b4a-v13-1-is-available-for-download.165079/>  
   

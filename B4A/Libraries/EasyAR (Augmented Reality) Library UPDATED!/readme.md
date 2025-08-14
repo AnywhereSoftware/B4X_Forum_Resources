@@ -1,5 +1,5 @@
 ### EasyAR (Augmented Reality) Library UPDATED! by walterf25
-### 10/27/2024
+### 07/06/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/110018/)
 
 Hello everyone, I would like to introduce this Beta version of my B4AEasyAR Library, i have been trying to wrap an AR Library for some months now but have came across some issues while wrapping some of the functions.  
@@ -58,7 +58,11 @@ Please test the attached APK file, and let me know what device and android versi
 ---
 
   
-  
+[TABLE]  
+[TR]  
+[TD]**Updated library files. jar and xml files version 2.43 can be downloaded** [from here](https://drive.google.com/file/d/1ECHcEyalq6BT5K9uKWdqRomoumsdy74-/view?usp=sharing)[/TD]  
+[/TR]  
+[/TABLE]  
 
 ---
 

@@ -4,21 +4,33 @@ namespace B4R
 {
 	void B4RLOVYANGFXEX::Initialize(SubVoidTouch TouchSub)
 	{
-		// Init the driver instance and log which driver is used.
+		// Check if driver is set
+		#if defined(UNKNOWN_DRIVER)
+			::Serial.println("[ERROR] Display driver not found!");
+		#endif
 
 		#if defined(ESP32_2432S028)
-		::Serial.println("Display Driver: ESP32_2432S028");
-		gfx = new (be) LGFX;
+			::Serial.println("Display Driver: ESP32_2432S028");
+			gfx = new (be) LGFX;
+			// Init the RGB LED (positioned on the back of the device)
+			pinMode(this->redPin, OUTPUT);              
+			pinMode(this->greenPin, OUTPUT);
+			pinMode(this->bluePin, OUTPUT);
 		#endif
 
 		#if defined(ESP32_SSD1306)
-		::Serial.println("Display Driver: ESP32_SSD1306");
-		gfx = new (be) SSD1306;
+			::Serial.println("Display Driver: ESP32_SSD1306");
+			gfx = new (be) SSD1306;
+		#endif
+		
+		#if defined(ESP32_SSD1306_WIFIKITV3)
+			::Serial.println("Display Driver: ESP32_SSD1306_WIFIKITV3");
+			gfx = new (be) SSD1306;
 		#endif
 		
 		#if defined(ESP32_SH110x)
-		::Serial.println("Display Driver: ESP32_SH110x");
-		gfx = new (be) SH110x;
+			::Serial.println("Display Driver: ESP32_SH110x");
+			gfx = new (be) SH110x;
 		#endif
 		
 		// Init the display instance.
@@ -46,14 +58,9 @@ namespace B4R
 		selectedFont = FONT_DEFAULT;
 		gfx->setFont(&Font0);
 
-		// Init the RGB LED (positioned on the back of the device)
-		pinMode(this->redPin, OUTPUT);              
-		pinMode(this->greenPin, OUTPUT);
-		pinMode(this->bluePin, OUTPUT);
-
 		// Check if touch event is set to assign the B4R touch event
 		if (TouchSub != NULL) {
-			::Serial.println("Touch: enabled");
+			::Serial.println("Touch: Enabled");
 			// Assign the touch event
 			this->TouchSub = TouchSub;
 			FunctionUnion fu;

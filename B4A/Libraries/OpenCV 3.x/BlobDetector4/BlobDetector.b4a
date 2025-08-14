@@ -1,0 +1,344 @@
+﻿Build1=Default,com.appiotic.ocv4b4a.samples.blobdetector
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=camera
+Library2=core
+Library3=phone
+Library4=reflection
+Library5=javaobject
+Library6=ahlocale
+Library7=opencv3
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=CameraExClass
+Module2=clBLobDetector
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=2
+Version=9.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: False
+	#ApplicationLabel: OCV BlobDetector
+	#VersionCode: 5
+	#VersionName: 
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+'======================================================================================
+' Version history
+'	1.	-First version
+'	2.	-Forces camera to work 480x640. In previous version it was assuming so, but crashed on devices where it did not happen (Samsung S6)
+'		-(Good practices) All OCV objects needed in the main processing loop (camera preview) are initialized before and reused.
+'	3   -Version 2 solution for camera size was not correct. Fixed
+'======================================================================================
+
+'======================================================================================
+' BlobDetector example
+' 	Point with the camera to a large-enough colored object (better if it has big contrast with the rest of the image) and tap onto it
+' 	Based on its mean color, it will detect the biggest color blob with a similar color and draw a square on it
+'======================================================================================
+
+'Activity module
+Sub Process_Globals
+
+	Private frontCamera As Boolean = False	
+	
+End Sub
+
+Sub Globals
+	
+	Private Panel1 As Panel
+	Private camEx As CameraExClass
+
+	Dim DESIREDCAMERAWIDTH As Int = 640		'Set it to a resolution that your camera supports. 640x480 is more than enough to detect color blobs in most cases.
+	Dim DESIREDCAMERAHEIGHT As Int =480
+
+
+	Dim PreviewWidth As Int				' Preview width and Height related to camera own orientation
+	Dim PreviewHeight As Int
+	Dim PreviewScreenWidth As Int		' Prevew width and height in screen
+	Dim PreviewScreenHeight As Int
+	
+	
+	Dim myBitmap(1) As Bitmap
+	Dim myIV(1) As ImageView
+
+	'OCV	
+	Dim ocl As OCVOpenCVLoader	
+	
+	Dim mCvt As OCVCvType
+	Dim mUtils As OCVUtils
+	Dim mImgProc As OCVImgproc
+	
+	'BLobDetectorActivity	
+	Private mIsColorSelected As Boolean=False
+	Private mYuvImage As OCVMat
+	Private mRgba As OCVMat
+	Private mBlobColorRgba As OCVScalar
+	Private mBlobColorHsv As OCVScalar
+	Private mDetector As clBLobDetector
+	Private mSpectrum As OCVMat
+	Private SPECTRUM_SIZE As OCVSize
+	Private CONTOUR_COLOR As OCVScalar
+	Private ROTATED_CONTOUR_COLOR As OCVScalar
+	
+	Dim sss As OCVScalar
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("1")
+	
+	myIV(0).Initialize("")
+	myIV(0).Gravity=Gravity.FILL
+
+	Dim HI As Int =100%Y
+	Dim WI As Int=HI*DESIREDCAMERAWIDTH/DESIREDCAMERAHEIGHT 'keep aspect ratio
+	Panel1.SetLayout(0, 0,WI,HI)
+	Activity.AddView(myIV(0),0,0,WI,HI)
+
+		
+End Sub
+
+
+Sub Activity_Resume
+	InitializeCamera
+End Sub
+
+Private Sub InitializeCamera
+	camEx.Initialize(Panel1, frontCamera, Me, "Camera1")
+	frontCamera = camEx.Front
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	camEx.Release
+End Sub
+
+
+
+
+Sub Camera1_Ready (Success As Boolean)
+	If Success Then
+		camEx.SetJpegQuality(90)
+	
+		'Force preview size 640x480 since it is not always the default!!!
+		camEx.SetPreviewSize(DESIREDCAMERAWIDTH, DESIREDCAMERAHEIGHT)
+		
+		camEx.CommitParameters
+	
+		PreviewWidth = camEx.PreviewWidth			'640?
+		PreviewHeight = camEx.PreviewHeight
+	
+		'Create the bitmap in display orientatiom
+		'If ((PreviewWidth>PreviewHeight) And (100%X>100%Y)) Or ((PreviewWidth<PreviewHeight) And (100%X<100%Y)) Then
+		If True Then
+			PreviewScreenHeight=PreviewHeight
+			PreviewScreenWidth=PreviewWidth			
+		Else
+			PreviewScreenHeight=PreviewWidth
+			PreviewScreenWidth=PreviewHeight		
+		End If
+
+		Log(camEx.DispRotation)
+	
+		For k=0 To myBitmap.Length-1
+			myBitmap(k).InitializeMutable( PreviewScreenWidth, PreviewScreenHeight )						
+			myIV(k).Bitmap=myBitmap(k)
+		Next
+		
+		' Original Java code
+		'mRgba = new Mat(height, width, CvType.CV_8UC4);
+		'mDetector = new ColorBlobDetector();
+		'mSpectrum = new Mat();
+		'mBlobColorRgba = new Scalar(255);
+		'mBlobColorHsv = new Scalar(255);
+		'SPECTRUM_SIZE = new Size(200, 64);
+		'CONTOUR_COLOR = new Scalar(255,0,0,255);
+		
+		mYuvImage.Initialize2(3*PreviewHeight/2,PreviewWidth,mCvt.CV_8UC1)
+		mRgba.Initialize2(PreviewHeight,PreviewWidth,mCvt.CV_8UC4)
+		mDetector.Initialize
+		mBlobColorRgba.Set(Array As Double(255))
+		mBlobColorHsv.Set(Array As Double(255))
+		SPECTRUM_SIZE.Set(Array As Double(200,64))
+		CONTOUR_COLOR.Set(Array As Double(255,0,255,0))
+		ROTATED_CONTOUR_COLOR.Set(Array As Double(0,255,0,255))
+	
+		camEx.StartPreview
+		Log(camEx.GetPreviewSize)
+	Else
+		ToastMessageShow("Cannot open camera.", True)
+	End If
+End Sub
+
+
+Sub  Activity_Touch (Action As Int, X As Float, Y As Float)
+	
+	Log("Touch:"&X&","&Y)
+	
+#if 0	
+//JAVA original code
+
+       int cols = mRgba.cols();
+        int rows = mRgba.rows();
+
+        int xOffset = (mOpenCvCameraView.getWidth() - cols) / 2;
+        int yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
+
+        int x = (int)event.getX() - xOffset;
+        int y = (int)event.getY() - yOffset;
+
+        Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
+
+        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
+
+        Rect touchedRect = new Rect();
+
+        touchedRect.x = (x>4) ? x-4 : 0;
+        touchedRect.y = (y>4) ? y-4 : 0;
+
+        touchedRect.width = (x+4 < cols) ? x + 4 - touchedRect.x : cols - touchedRect.x;
+        touchedRect.height = (y+4 < rows) ? y + 4 - touchedRect.y : rows - touchedRect.y;
+
+        Mat touchedRegionRgba = mRgba.submat(touchedRect);
+
+        Mat touchedRegionHsv = new Mat();
+        Imgproc.cvtColor(touchedRegionRgba, touchedRegionHsv, Imgproc.COLOR_RGB2HSV_FULL);
+
+        // Calculate average color of touched region
+        mBlobColorHsv = Core.sumElems(touchedRegionHsv);
+        int pointCount = touchedRect.width*touchedRect.height;
+        for (int i = 0; i < mBlobColorHsv.val.length; i++)
+            mBlobColorHsv.val[i] /= pointCount;
+
+        mBlobColorRgba = converScalarHsv2Rgba(mBlobColorHsv);
+
+        Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
+                ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
+
+        mDetector.setHsvColor(mBlobColorHsv);
+
+        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+
+        mIsColorSelected = true;
+
+        touchedRegionRgba.release();
+        touchedRegionHsv.release();
+
+        return false; // don't need subsequent touch events	
+#End If
+
+	Dim cols As Int = mRgba.cols()
+	Dim rows As Int =  mRgba.rows()
+	
+	Dim radius As Int = 20
+	Dim pointX As Int = X*PreviewWidth/myIV(0).Width
+	Dim pointY As Int = Y*PreviewHeight/myIV(0).Height
+	
+	Dim touchedRegionRgba As OCVMat = mRgba.submat(pointY-radius,pointY+radius,pointX-radius,pointX+radius)'Y-10,Y+10,X-10,X+10)
+	Dim touchedRegionHsv As OCVMat 
+	touchedRegionHsv.Initialize
+	mImgProc.cvtColor(touchedRegionRgba,touchedRegionHsv,mImgProc.COLOR_RGB2HSV_FULL,3)
+	
+	Dim mCore As OCVCore
+	mBlobColorHsv = mCore.sumElems(touchedRegionHsv)
+	Dim pointCount As Int = 4*radius*radius
+	For i=0 To mBlobColorHsv.val.Length-1
+		mBlobColorHsv.val(i)=mBlobColorHsv.val(i)/pointCount
+	Next
+	
+	mBlobColorRgba = convertScalarHsv2Rgba(mBlobColorHsv)
+	
+	mDetector.HsvColor=mBlobColorHsv
+	mSpectrum=mSpectrum.zeros(1,1,mCvt.CV_8UC1)
+		
+	Dim mSpectrumTmp As OCVMat = mDetector.Spectrum
+	mImgProc.resize1(mSpectrumTmp,mSpectrum,SPECTRUM_SIZE)
+	
+	mIsColorSelected=True
+End Sub
+
+
+
+Sub Camera1_Preview (PreviewPic() As Byte)
+
+	'prevent queued events from previous camera settings, if any. Just in case
+	If PreviewPic.Length<>(3*myBitmap(0).Width*myBitmap(0).Height/2) Then
+		Log("Preview pic length is: "&PreviewPic.Length)
+		Log("Bitmap size is: w="&myBitmap(0).Width&" h="&myBitmap(0).Height)
+		Log("Not processing")
+		Return
+	End If
+
+	'Dim now As Long = DateTime.Now
+
+	mYuvImage.put4(0,0,PreviewPic)
+	mImgProc.cvtColor(mYuvImage,mRgba,mImgProc.COLOR_YUV2RGBA_NV21,4)
+	
+	If mIsColorSelected=False Then Return
+		
+		
+	mDetector.process(mRgba)
+	Dim contours As List = mDetector.Contours
+	'Log("Contours count: "&contours.Size)
+	
+	Dim colorLabel As OCVMat = mRgba.submat(4,68,4,68)
+	colorLabel.setTo(mBlobColorRgba)
+	
+	Dim spectrumLabel As OCVMat= mRgba.submat(4,4+mSpectrum.rows(),70,70+mSpectrum.cols())
+	mSpectrum.copyTo(spectrumLabel)
+		
+	If contours.Size>0 Then
+
+		Dim mRect As OCVRect = mImgProc.boundingRect(contours.Get(0))
+		Dim mList As List
+		mList.Initialize2(Array(mRect))
+		mImgProc.rectangle(mRgba,mRect.tl,mRect.br,CONTOUR_COLOR,1dip,8,0)
+		
+		Dim myContour0 As OCVMatOfPoint = contours.Get(0)	'OCVMatOfPoint2f in 3.20 version
+		
+		Dim mType As OCVCvType	
+		Dim myContour As OCVMatOfPoint2f	'OCVMatOfPoint2f in 3.20 version
+		myContour.Initialize
+		myContour0.convertTo2(myContour, mType.CV_32F)
+		
+		Dim myContour2 As OCVMatOfPoint2f		'must be 2f or approxPolyDP complains
+		mImgProc.approxPolyDP(myContour,myContour2,0.1,True)
+		Dim myContour3 As OCVMatOfPoint
+		myContour3.Initialize3(myContour2.toArray)
+
+		Log(myContour2.toArray.Length)
+		Dim contour2List As List
+		contour2List.Initialize2(Array As OCVMatOfPoint(myContour3))
+		'contour2List.Add(myContour3)
+		mImgProc.drawContours2(mRgba,contour2List,0,CONTOUR_COLOR)
+
+	End If	
+
+	'Log("Ellapsed: "& (DateTime.Now-now))
+	
+	mUtils.matToBitmap(mRgba,myBitmap(0),False)
+	myIV(0).invalidate	'Refresh the view
+
+End Sub
+
+Private Sub convertScalarHsv2Rgba(hsvColor As OCVScalar) As OCVScalar
+	
+	Dim pointMatRgba As OCVMat
+	pointMatRgba.Initialize
+	Dim pointMatHsv As OCVMat
+	pointMatHsv=pointMatHsv.zeros(1,1,mCvt.CV_8UC3)
+	pointMatHsv.setTo(hsvColor)
+	mImgProc.cvtColor(pointMatHsv,pointMatRgba, mImgProc.COLOR_HLS2RGB_FULL,4)
+	Dim retScalar As OCVScalar
+	
+	Dim d() As Double=pointMatRgba.get5(0,0)
+	retScalar.Set(d)
+	Return retScalar
+	
+End Sub
+

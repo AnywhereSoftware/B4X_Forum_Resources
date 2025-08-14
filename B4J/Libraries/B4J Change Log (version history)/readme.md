@@ -1,7 +1,34 @@
 ### B4J Change Log (version history) by Erel
-### 03/17/2025
+### 06/26/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/37448/)
 
+**v10.3** - June 26, 2025 - <https://www.b4x.com/android/forum/threads/b4j-v10-3-is-available-for-download.167548/>  
+  
+
+- #Macro attribute. Defined in B4XMainPage or Main modules. Format: <type>, <name>, <link>. Type can be *Title* or *After Save*. More to come in the future. Link is based on the comment link feature: <https://www.b4x.com/android/forum/threads/119897/#content>
+Examples:
+
+```B4X
+#Macro: Title, B4XOrderedMap Doc, https://www.b4x.com/android/forum/threads/b4x-b4xorderedmap-get-first-item-nth-item-and-last-item.118642/  
+#Macro: Title, B4XPages Export, ide://run?File=%B4X%\Zipper.jar&Args=Project.zip  
+'Synchronize json-binary layouts.  
+#Macro: After Save, Sync Layouts, ide://run?File=%ADDITIONAL%\..\B4X\JsonLayouts.jar&Args=%PROJECT%&Args=%PROJECT_NAME%  
+#Macro: Title, JsonLayouts folder, ide://run?File=%WINDIR%\explorer.exe&Args=%PROJECT%\JsonLayouts
+```
+
+(JsonLayouts: <https://www.b4x.com/android/forum/threads/b4x-jsonlayouts-synchronize-json-and-binary-layouts.167398/#content>)- New command line options for the IDE:
+-INI=<ini file path> - allows running the IDE with an alternative INI file. Note that that standard INI file is stored under: C:\Users\<user name>\AppData\Roaming\Anywhere Software\b4xV5.ini
+-INI\_<property key here>=<property value>
+Example:
+
+```B4X
+"c:\Program files\Anywhere Software\b4j\b4j.exe" -INI_CodeTheme=Dark "-INI_TitleNotEmpty=This is the second IDE: $FILE_NAME$"
+```
+
+- New TitleEmpty and TitleNotEmpty INI keys. Can be used to customize the main window title. Supports three replacement variables: $PRODUCT$ - B4A/B4J…, $FILE\_NAME$ - project name, $FILE\_PATH$ - project path.
+- Other bug fixes and minor improvements.
+
+  
 **v10.2** - March 17, 2025 - <https://www.b4x.com/android/forum/threads/b4j-v10-2-with-support-for-python-is-available-for-download.166169/>  
   
 
@@ -73,7 +100,7 @@ Note that the previous version, now named jServer3, is available here: <https://
 - Updated internal libraries: jCore (9.30), Json (1.21), B4XPreferencesDialog (1.74), BCTextEngine (1.92), XUI Views (2.53), KeyValueStore (2.31), jRandomAccessFile (2.34)
 - Bug fixes and other minor improvements.
 
-  
+[SPOILER="Older versions"]  
 **v9.10** - July 13, 2021 - <https://www.b4x.com/android/forum/threads/b4j-v9-10-is-available-for-download.132498/>  
   
 This update adds two new language features: IIf and As (inline casting).  
@@ -190,7 +217,7 @@ And:
   
   
   
-[SPOILER="Older versions"]  
+  
 **v7.80** - September 11, 2019 - <https://www.b4x.com/android/forum/threads/b4j-v7-80-is-available-for-download.109466>  
   
 

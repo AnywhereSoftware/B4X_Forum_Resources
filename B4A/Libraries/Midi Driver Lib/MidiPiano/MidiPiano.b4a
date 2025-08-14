@@ -1,0 +1,103 @@
+﻿Build1=Default,stevel05.com.mpdo
+File1=1.bal
+File2=instlist.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=gestures
+Library3=javaobject
+Library4=mididriver2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="12" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~AddActivityText(main, <intent-filter>~\n~	<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~</intent-filter>~\n~	<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"~\n~        android:resource="@xml/device_filter" />)
+Module1=InstrumentList
+Module2=MidiGeneralMidi_Static
+Module3=Piano
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=3
+Version=13.35
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Stevel05 Midi Piano - Driver Only
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim Program As Int = 0
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private Pno As Piano
+	Private spOctave As Spinner
+	Private lblPatchName As Label
+	Private InstList As InstrumentList
+	Private pnlPatchName As Panel
+	Private lblPatch As Label
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+	
+	
+	'Initialize the Piano Gui Class
+	Pno.Initialize(Activity)
+	
+	'Initialize the Instrument List Class
+	InstList.Initialize(Activity,Pno,lblPatchName,pnlPatchName.Left + lblPatch.Width,pnlPatchName.Top,pnlPatchName.Width - lblPatch.Width,pnlPatchName.Height)
+	
+	'Set up the octave spinner
+	For i = -1 To 9 
+		spOctave.Add(i)
+	Next
+	'And set the default
+	spOctave.SelectedIndex = 5
+
+End Sub
+
+Sub Activity_Resume
+	Pno.Start
+	InstList.SendProgramChange(Program)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Pno.Stop
+End Sub
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If InstList.Visible Then
+			InstList.Hide
+			Return True
+		End If
+	End If
+	Return False
+End Sub
+
+#Region Gui interface clicks
+'Respond to Gui interface button clicks
+Sub spOctave_ItemClick (Position As Int, Value As Object)
+	Pno.Octave = Value
+End Sub
+
+Sub lblPatchName_Click
+	If InstList.Visible Then
+		InstList.Hide
+	Else
+		InstList.Show
+	End If
+End Sub
+#End Region Gui interface clicks

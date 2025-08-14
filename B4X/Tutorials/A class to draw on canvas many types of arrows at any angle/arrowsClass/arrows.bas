@@ -90,9 +90,18 @@ Private Sub drawDashes(p0 As point, p1 As point, color As Int)
 End Sub
 
 Private Sub standardize(specs As Map)
+	Dim lst As List
+	lst.Initialize
 	For Each kw As String In specs.keys
-		specs.Put(kw.toLowerCase, specs.Get(kw))	'both original and lower case are indexed
+		lst.Add(kw)
 	Next
+	For Each kw As String In lst
+		specs.Put(kw.ToLowerCase, specs.Get(kw))	'both original and lower case are indexed
+	Next
+	For Each kw As String In specs.keys
+		Log(kw)
+	Next
+	Log(TAB)
 End Sub
 
 Public Sub newPoint (X As Float, y As Float) As point

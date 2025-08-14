@@ -1,5 +1,5 @@
 ### AsyncCanvas, B4XCanvas wrapper with Invalidate for B4J by max123
-### 04/08/2025
+### 08/02/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/148736/)
 
 Hi all,  
@@ -11,7 +11,7 @@ I had necessity to have in B4J the same implementation of B4A B4XCanvas with wor
   
 After I figured that Canvas.Invalidate do nothing on B4J side, I decided to work on this.  
   
-Today I would like to share this, that is a **full wrapper of B4XCanvas with Invalidate function on B4J**.  
+Today I would like to share this, that is a **full wrapper of B4XCanvas with working Invalidate function on B4J**.  
   
 It completely exposes regular B4XCanvas, after this I added some other useful things like draw ovals and more.  
   
@@ -47,10 +47,10 @@ I attached the AsyncCanvas b4xlib with some demo examples, all are B4XPages cros
 Note than in examples you cannot see any differences expecially on fast computers, unless you draw hundreds or thousands of commands and then invalidate them once, but if you just want to see if library is working (just for test) try to draw something with B4J and do not invalidate, you will notice that the canvas do not draw nothing, then test back and try to invalidate it, this time the canvas will show you all the drawings.  
   
 UPDATED: v1.08  
-Add a command to get native Canvas from B4XCanvas, this code now works.  
+Add a command to get native B4XCanvas from AsyncCanvas, this code now works.  
 
 ```B4X
-Dim NativeCanvas As Canvas = b4xCvs.GetNativeCanvas
+Dim NativeCanvas As B4XCanvas = b4xCvs.GetNativeCanvas
 ```
 
   

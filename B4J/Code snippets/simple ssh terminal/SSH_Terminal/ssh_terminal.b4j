@@ -1,0 +1,296 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=pnlTerminal.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jreflection
+Library4=jxui
+Library5=sshj
+Library6=javaobject
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=0
+Version=10.2
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+	#AdditionalJar: slf4j-nop-1.7.25
+	#AdditionalJar: slf4j-api-1.7.25
+	#AdditionalJar: sshj-0.23.0
+	#AdditionalJar: eddsa-0.2.0
+	#AdditionalJar: bcprov-jdk15on-154
+	#MergeLibraries: false 
+#End Region
+
+#Region AdditionalJar to copy
+' bcprov-jdk15on-154.jar 
+' eddsa-0.2.0.jar 
+' FontAwesome.jar
+' JavaObject.jar 
+' jCore.jar 
+' jFX.jar 
+' jReflection.jar 
+' Json.jar 
+' jXUI.jar 
+' slf4j-api-1.7.25.jar 
+' slf4j-nop-1.7.25.jar 
+' SSHJ.jar 
+' sshj-0.23.0.jar 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private xui As XUI 
+	Private MainForm As Form
+	Private APP_NAME As String = "SSH Terminal"
+	Private APP_PATH As String = ""
+
+	Private SSH As SSHJ
+	
+	Private txtScreen As B4XView
+	Private txtCommandline As B4XView
+	Private txtHostname As B4XView
+	Private txtPort As B4XView
+	Private txtUsername As B4XView
+	Private txtPassword As B4XView
+	Private btnConnect As B4XView
+	Private lblIsConnected As B4XView
+	
+	Private History As List
+	Private HistoryIndex As Int = -1
+	Private HistoryFile As String = "History.list"
+	
+	Private ConnectionMap As Map
+	
+	Private Prefix As String = "Server_"
+	Private Suffix As String = ".map"
+	Private cbxConnections As ComboBox
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout( "pnlTerminal")
+	MainForm.SetWindowSizeLimits( 800, 600, fx.PrimaryScreen.MaxX, fx.PrimaryScreen.MaxY)
+	MainForm.Title = APP_NAME
+	MainForm.Show
+	
+	lblIsConnected.Color = xui.Color_Red
+	APP_PATH = SetAppPath( APP_NAME)
+	ConnectionMap.Initialize
+	
+	SetKeyFilter
+	LoadHistoryFile
+	SetCbxConnections
+	
+	SetConnectionFields
+End Sub
+
+Private Sub InitializeSSH
+	SSH.Initialize( "ssh")
+	SSH.LoadKnownHosts
+	SSH.AddHostKeyPromiscuousVerifier
+End Sub
+
+Private Sub SetAppPath( DirName As String) As String
+	xui.SetDataFolder( DirName)
+	Return xui.DefaultFolder
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	SaveHistoryFile
+End Sub
+
+Private Sub GetConnectionServerNames As List
+	Dim ListFiles As List = File.ListFiles( APP_PATH)
+	Dim Files As List
+	Files.Initialize
+	For Each aFile As String In ListFiles
+		If aFile.StartsWith( Prefix) And aFile.EndsWith( Suffix) Then
+			Dim Server As String = aFile.Replace( Prefix, "").Replace( Suffix, "")
+			Files.Add( Server)
+		End If
+	Next
+	Return Files
+End Sub
+
+Private Sub SetCbxConnections
+	Dim LastIndex As Int = cbxConnections.SelectedIndex
+	cbxConnections.Items.Clear
+	cbxConnections.Items.AddAll( GetConnectionServerNames)
+	
+	If cbxConnections.Items.Size > 0 And LastIndex < cbxConnections.Items.Size Then
+		cbxConnections.SelectedIndex = LastIndex
+	End If
+End Sub
+
+Private Sub SetConnectionFields
+	txtHostname.Text = ConnectionMap.GetDefault( "Hostname", "")
+	txtPort.Text     = ConnectionMap.GetDefault( "Port", "22")
+	txtUsername.Text = ConnectionMap.GetDefault( "Username", "")
+	txtPassword.Text = ConnectionMap.GetDefault( "Password", "")
+End Sub
+
+Private Sub GetConnectionFields
+	If ConnectionMap.IsInitialized = False Then ConnectionMap.Initialize
+	ConnectionMap.Put( "Hostname", txtHostname.Text.Trim)
+	ConnectionMap.Put( "Port", txtPort.Text.Trim)
+	ConnectionMap.Put( "Username", txtUsername.Text.Trim)
+	ConnectionMap.Put( "Password", txtPassword.Text.Trim)
+	Log( ConnectionMap)
+End Sub
+
+Private Sub LoadConnection( ServerName As String)
+	Dim ServerFile As String = GetConnectionFile( ServerName)
+	If File.Exists( APP_PATH, ServerFile) = False Then File.WriteMap( APP_PATH, ServerFile, CreateMap())
+	ConnectionMap = File.ReadMap( APP_PATH, ServerFile)
+End Sub
+
+Private Sub SaveConnection( ServerName As String)
+	Dim ServerFile As String = GetConnectionFile( ServerName)
+	File.WriteMap( APP_PATH, ServerFile, ConnectionMap)
+End Sub
+
+Private Sub LoadHistoryFile
+	If File.Exists( APP_PATH, HistoryFile) = False Then File.WriteString( APP_PATH, HistoryFile, "")
+	History = File.ReadList( APP_PATH, HistoryFile)
+	HistoryIndex = History.Size -1
+End Sub
+
+Private Sub SaveHistoryFile
+	File.WriteList( APP_PATH, HistoryFile, History)
+End Sub
+
+Private Sub SetKeyFilter
+	Dim r As Reflector
+	r.Target = txtCommandline ' MainForm.RootPane
+	r.AddEventFilter( "Key", "javafx.scene.input.KeyEvent.KEY_PRESSED")
+End Sub
+
+Private Sub Key_Filter( EventData As Event)
+	Dim jo As JavaObject = EventData
+	Dim code As String = jo.RunMethod( "getCode", Null)
+'	Log( code)
+	Select code
+		Case "UP"
+			HistoryIndex = Max( -1, HistoryIndex -1)
+'			Log( HistoryIndex)
+			HistoryToCommandline
+			EventData.Consume
+			
+		Case "DOWN"
+			HistoryIndex = Min( History.Size , HistoryIndex +1)
+'			Log( HistoryIndex)
+			HistoryToCommandline
+			EventData.Consume
+	End Select
+End Sub
+
+Private Sub HistoryToCommandline
+	If HistoryIndex < 0 Or HistoryIndex >= History.Size Then
+		txtCommandline.Text = ""
+	Else
+		txtCommandline.Text = History.Get( HistoryIndex)
+		txtCommandline.SetSelection( txtCommandline.Text.Length, txtCommandline.Text.Length)
+	End If
+End Sub
+
+Private Sub btnConnect_Click
+	Try
+		InitializeSSH
+
+		SSH.AddAuthPassword( txtPassword.Text)
+		SSH.Connect( txtHostname.Text.Trim, txtPort.Text.Trim, txtUsername.Text.Trim)
+		
+		GetConnectionFields
+		
+	Catch
+		Log( LastException)
+	End Try
+	
+	SetConnectionIndicator
+	GotoCommandline
+	StoreConnection
+End Sub
+
+Private Sub IsConnected As Boolean
+	Return SSH.IsInitialized And SSH.IsConnected
+End Sub
+
+Private Sub SetConnectionIndicator
+	If IsConnected Then
+		lblIsConnected.Color = xui.Color_Green
+	Else
+		lblIsConnected.Color = xui.Color_Red
+	End If
+End Sub
+
+Private Sub GotoCommandline
+	If IsConnected Then
+		txtCommandline.RequestFocus
+	End If
+End Sub
+
+Private Sub StoreConnection
+	If IsConnected Then
+		SaveConnection( txtHostname.Text.Trim)
+		SetCbxConnections
+	End If
+End Sub
+
+Private Sub GetConnectionFile( ServerName As String) As String
+	Return Prefix & ServerName & Suffix
+End Sub
+
+Private Sub bntDisconnect_Click
+	SSH.Close
+	Sleep(0)
+	SetConnectionIndicator
+End Sub
+
+Private Sub cbxConnections_SelectedIndexChanged(Index As Int, Value As Object)
+	Dim ServerName As String = Value
+	If File.Exists( APP_PATH, GetConnectionFile( ServerName)) Then
+		LoadConnection( ServerName)
+		SetConnectionFields
+	End If
+End Sub
+
+Private Sub txtCommandline_TextChanged( Old As String, New As String)
+	If New.EndsWith( CRLF) Then
+		RunCommand( Old)
+		txtCommandline.Text = ""
+	End If
+End Sub
+
+Private Sub RunCommand( cmd As String)
+	If SSH.IsInitialized And SSH.IsConnected Then
+		
+		Private sf As Object = SSH.Exec( cmd, 0)
+
+		Wait For (sf) ssh_ExecFinished(Success As Boolean, Command As String, ExitCode As Int, Output As String, Error As String)
+'		Log("Success: " & Success)
+'		Log("Command: " & Command)
+'		Log("ExitCode: " & ExitCode)
+'		Log("Error: " & Error)
+'		Log("Output: " & CRLF & Output)
+		
+		AddHistory( Command)
+		UpdateScreen( Command, Output)
+	End If
+End Sub
+
+Private Sub AddHistory( Command As String)
+	History.Add( Command)
+	HistoryIndex = History.Size
+	SaveHistoryFile
+End Sub
+
+Private Sub UpdateScreen( Command As String, Output As String)
+	txtScreen.Text = txtScreen.Text &"# "& Command & CRLF
+	txtScreen.Text = txtScreen.Text & Output & CRLF
+	txtScreen.SetSelection( txtScreen.Text.Length, txtScreen.Text.Length)
+End Sub

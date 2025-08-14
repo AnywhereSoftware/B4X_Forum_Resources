@@ -1,5 +1,5 @@
 ###  [XUI] xGauges and xGaugesRect Classes and Libraries by klaus
-### 07/04/2024
+### 06/17/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/98932/)
 
 The xGauges and xGaugesRect Class do also exist as a B4X libary.  
@@ -8,11 +8,11 @@ You need to copy the xGauges.b4xlib and / or the xGaugesRect.b4xlib files to the
 Don’t copy the xGauges.xml nor the xGaugesRect.xml file to the AdditionalLibraries folder, copy them in another folder for all b4xlib xml files.  
 Example: AdditionlLibraries\B4XlibXMLFiles  
 The xGauges.xml and the xGaugesRect.xml file are for help purposes and are useful with the B4X [Help Viewer](https://www.b4x.com/android/forum/threads/b4x-help-viewer.46969/) or the [B4XObjectBrowser](https://www.b4x.com/android/forum/threads/b4a-b4i-b4j-and-b4r-api-documentation-b4x-object-browser.25682/#content).  
-The xGauges.xml and the xGaugesRect.xmland file were generated with this tool: [b4xlib - XML generation](https://www.b4x.com/android/forum/threads/b4x-xml2map-simple-way-to-parse-xml-documents.74848/)  
+The xGauges.xml and the xGaugesRect.xml file were generated with this tool: [b4xlib - XML generation](https://www.b4x.com/android/forum/threads/b4x-xml2map-simple-way-to-parse-xml-documents.74848/)  
   
 **Current versions:  
 xGauges.b4xlib Version 2.0  
-xGaugesRect.b4xlib Version 1.2**  
+xGaugesRect.b4xlib Version 1.3**  
   
 Having seen this thread [fuel gauge](https://www.b4x.com/android/forum/threads/fuel-gauge.98724/#post-622800), it challenged me and I wrote this CustomView xGauges Class.  
 It works on all three products: B4A, B4i and B4J.  
@@ -26,6 +26,12 @@ The shadows in the rectangular gauges look better on the devices than on the ani
 ![](https://www.b4x.com/android/forum/attachments/118113)  
   
 ![](https://www.b4x.com/android/forum/attachments/118114)  
+  
+EDIT: 2025.06.09 Version 2.0 / version 1.3  
+*Only the xGaugesRect customview has changed.*  
+Added CursorValueChanged event  
+Added a third cursor  
+Added the CursorStep property  
   
 EDIT: 2024.07.04 Version 2.0 / version 1.2  
 Added Parent property  
@@ -189,13 +195,18 @@ there is no height property because the height is equal to the width
 **xGaugesRect** only the specific Functions and Properties are shown below.  
   
 **Author:** Klaus CHRISTL  
-**Version: 1.2**  
+**Version: 1.3**  
 
 - **xGaugesRect**
 
 - **Functions:**
 
-- **Cursor2Color** As Int
+- ****Cursor1Color**** As Int
+*sets or gets the Cursor1Color property  
+ it must be an Array of xui.Color*- ****Cursor1ON**** As Boolean
+*sets or gets the Cursor1ON property*- ****Cursor1Value**** As Double
+*sets or gets the Corner1Value  
+ the value must be between ValueMin and ValueMax*- **Cursor2Color** As Int
 *sets or gets the Cursor2Color property  
  it must be an Array of xui.Color*- **Cursor2ON** As Boolean
 *sets or gets the Cursor2ON property*- **Cursor2Value** As Double
@@ -205,4 +216,6 @@ there is no height property because the height is equal to the width
  it must be an Array of xui.Color*- **CursorON** As Boolean
 *sets or gets the CursorON property*- **CursorValue** As Double
 *sets or gets the CornerValue  
- the value must be between ValueMin and ValueMax*
+ the value must be between ValueMin and ValueMax*- **CursorStep** As Double
+*sets or gets the CursorStep property  
+ 0 = no step*

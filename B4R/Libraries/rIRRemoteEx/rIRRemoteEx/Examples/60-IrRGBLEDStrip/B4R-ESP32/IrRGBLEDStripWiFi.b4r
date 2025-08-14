@@ -1,0 +1,151 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266
+Library3=resp8266wifi
+Library4=rrandomaccessfile
+Library5=rirremoteex
+Module1=WiFiServer
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+'File:		IrRGBLEDStripWiFi.b4r
+'Date: 		20250529
+'Author:	Robert W.B. Linn
+'Brief:		Set the color of an IR RGB LED Strip (using NEC protocol) using commands received via WiFi.
+'This solution embeds an HTTP RESTful server and an IR Transmitter.
+'RESTFul server to handle commands using HTTP (like from Browser, B4A/B4J App, Node-RED, Python).
+'HTTP Arguments: address=0-NNNN (ULong) (mandatory), command=0-NNNN (ULong) (mandatory), disconnect=0 or 1 (optional, default 1)
+'The command MUST be in this order, i.e. address first followed by the command and last optional disconnect.
+'The disconnect argument can be used to keep a connection until closed by the client,
+'else the connection is made, the channel and value are set and the connection is closed.
+'
+'The server IP address is fixed - see module WiFiServer.
+'
+'Example Browser HTTP URL controlling TEDi RGB LED Strip using NEC 16-bit address:
+'Command = 3, Set stripe on.
+'http://NNN.NNN.N.NN/address=61184&command=3&disconnect=1
+'Command = 5, Set color green.
+'http://NNN.NNN.N.NN/address=61184&command=5&disconnect=1
+'Note: The connection is disconnected (argument disconnect=1) after every command.
+
+'Example B4J non-ui (snippet) keeping the socket connection (argument disconnect=0)
+'The default port is 80.
+'Sub AppStart (Args() As String)
+'	sock.Initialize("sock")
+'	sock.Connect("NNN.NNN.NNN.NNN", 80, 10000)
+'	StartMessageLoop
+'End Sub
+'
+'Sub sock_Connected (Successful As Boolean)
+'	If Successful Then
+'		astream.Initialize(sock.InputStream, sock.OutputStream, "astream")
+'       Set RGB Strip state ON
+'		astream.Write("address=61184&xcommand=3&disconnect=1".GetBytes("UTF8"))
+'		Sleep(100)
+'		Set RGB Strip color green
+'		astream.Write("address=61184&xcommand=5&disconnect=1".GetBytes("UTF8"))
+'		StopMessageLoop
+'	End If
+'End Sub
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	' Be careful increasing the StackBufferSize else the rIrRemoteEx library could hang when sending command.
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private Const VERSION As String = "IrWiFiBridge v20250529"
+	
+	' Serial line
+	Public SerialLine As Serial
+
+	' WiFi
+	Private Const SSID As String		= "***"
+	Private Const PASSWORD As String	= "***"
+
+	Public esp As ESP8266
+	Public esp_wifi As ESP8266WiFi
+	Public esp_connected As Boolean
+	
+	' IrRemote
+	Private IrSender As IrSender
+	Private IrReceiver As IrReceiver
+
+	' Helper	
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	' Init serialline
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+	
+	' Init IrRemote sender and receiver
+	' Init the sender using the default pin 4.
+	IrSender.Initialize()
+
+	' Init the receiver using the default pin 15.
+	IrReceiver.Initialize("NewData")
+
+	' Give the IR module some time to complete initialization.
+	Delay(100)
+	
+	' Start the wifi server
+	WiFiServer.Start
+	
+	' Connect to the network
+	esp_connected = ConnectToNetwork
+
+	Log("[AppStart] Done")
+End Sub
+
+'Connect to the network using ethernet
+'Return Boolean
+Public Sub ConnectToNetwork As Boolean
+	'Check if wifi connected
+	If esp_wifi.Connect2(SSID, PASSWORD) Then
+		Log("[ConnectToNetwork] Network connected with IP ", esp_wifi.LocalIp)
+		Return True
+	Else
+		Log("[ConnectToNetwork][ERROR] Can not connect to the network.")
+		Return False
+	End If
+End Sub
+
+' Send NEC command using address and command
+Public Sub SendCommand(address As UInt, command As UInt)
+	Log("[SendCommand] address=",address,", command=", command)
+	IrSender.SendNEC(address, command, 0)
+	Delay(100)
+End Sub
+
+' Handle new IR data received for all protocols including UNKNOWN.
+Private Sub NewData(data As IrDecodedData)
+	
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", HexFromByte(data.Command), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",IrReceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	' Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal.
+	Delay(IrReceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+#Region HELPER
+' Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+' Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+' Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region

@@ -1,5 +1,5 @@
 ###  [XUI] AS TimePickerDialog based on B4XDialog and AS_TimePicker by Alexander Stolte
-### 02/01/2025
+### 07/01/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/149354/)
 
 A dialog that prompts the user for the time of day using a [TimePicker](https://www.b4x.com/android/forum/threads/b4x-xui-as-timepicker.140084/).  
@@ -185,6 +185,10 @@ Version: 1.00**
 - Add isPm to AS\_TimePickerDialog\_DialogResponse
 - Add Date to AS\_TimePickerDialog\_DialogResponse
 - If you are using the TimeFormat 12h then the DialogResponse.Hour returns now 0-12 and you need to check with .isPm if it is am or pm
+
+- **1.07**
+
+- New get Dialog - gets the B4XDialog
 
 **Github:** [github.com/StolteX/AS\_TimePickerDialog](https://github.com/StolteX/AS_TimePickerDialog)  
   

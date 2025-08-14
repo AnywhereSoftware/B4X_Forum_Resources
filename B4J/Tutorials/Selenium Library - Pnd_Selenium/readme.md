@@ -1,5 +1,5 @@
 ### Selenium Library - Pnd_Selenium by Pendrush
-### 05/05/2025
+### 06/12/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/145636/)
 
 Selenium automates browsers. That's it!  
@@ -9,7 +9,7 @@ Boring web-based administration tasks can (and should) also be automated as well
   
 Library can be used in UI and Console (Non-UI) app.  
   
-Wrapper is based on Selenium Java v4.32.0 (May 02, 2025) from [HERE](https://www.selenium.dev/downloads/).  
+Wrapper is based on Selenium Java v4.33.0 (23. May 2025.) from [HERE](https://www.selenium.dev/downloads/).  
   
   
 [SIZE=5]**Some things Selenium can do:**[/SIZE]  
@@ -39,7 +39,7 @@ Wrapper is based on Selenium Java v4.32.0 (May 02, 2025) from [HERE](https://www
 > **Pnd\_Selenium  
 >   
 > Author:** Author: Selenium.dev - B4j Wrapper: Pendrush  
-> **Version:** 1.06  
+> **Version:** 1.07  
 >
 > - **Pnd\_Action**
 >
@@ -567,12 +567,7 @@ Wrapper is based on Selenium Java v4.32.0 (May 02, 2025) from [HERE](https://www
   
 **[SIZE=5]Versions:[/SIZE]  
   
-v1.04**  
-
-- Update for Selenium Java to v4.30.0
-
-  
-**v1.05**  
+v1.05**  
 
 - Update for Selenium Java to v4.31.0
 
@@ -580,6 +575,11 @@ v1.04**
 **v1.06**  
 
 - Update for Selenium Java to v4.32.0
+
+  
+**v1.07**  
+
+- Update for Selenium Java to v4.33.0
 
   
   
@@ -707,7 +707,7 @@ v1.04**
 
   
   
-Download library from: <https://mega.nz/file/oQJFmIpT#m4yLLdSFYoyo1SAEIzll2XrhTtsZ9e-r11BFgCJMSlk>  
+Download library from: <https://mega.nz/file/UF5XkCQI#uvA_q_ekRwLJVqJI6vTt1PiNgaOfRubjwuUwCKYkmas>  
   
 To compile app in release mode with #MergeLibraries: True, please check Selenium15 example.  
 To build standalone package, please check Selenium16 example.  
@@ -715,8 +715,8 @@ To build standalone package, please check Selenium16 example.
 When you download Chrome for Testing as well as the Chrome Driver, make sure to extract everything into one folder.  
 **chrome.exe** and **chromedriver.exe** should be in same folder.  
 For Windows use:  
-Chrome For Testing: <https://storage.googleapis.com/chrome-for-testing-public/136.0.7103.49/win64/chrome-win64.zip>  
-Chrome Driver: <https://storage.googleapis.com/chrome-for-testing-public/136.0.7103.49/win64/chromedriver-win64.zip>  
+Chrome For Testing: <https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.70/win64/chrome-win64.zip>  
+Chrome Driver: <https://storage.googleapis.com/chrome-for-testing-public/137.0.7151.70/win64/chromedriver-win64.zip>  
    
 If you are using other OS download Chrome for Testing and Chrome Driver from: <https://googlechromelabs.github.io/chrome-for-testing/>  
-Latest library version is tested with Chrome for Testing and Chrome Driver v136.0.7103.49
+Latest library version is tested with Chrome for Testing and Chrome Driver v137.0.7151.70

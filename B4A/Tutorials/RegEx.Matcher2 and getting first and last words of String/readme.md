@@ -1,4 +1,4 @@
-### RegEx.Matcher2 and getting first and last words of String by mfstuart
+### RegEx.Matcher2 and getting first and last words of String by Mark Stuart
 ### 05/18/2023
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/147973/)
 

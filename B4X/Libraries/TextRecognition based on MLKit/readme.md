@@ -1,5 +1,5 @@
 ###  TextRecognition based on MLKit by Erel
-### 11/28/2024
+### 07/06/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/161210/)
 
 This is a B4A + B4i solution. It recognizes text in images based on Google ML Kit.  
@@ -29,7 +29,7 @@ Support for non-Latin languages added. There are 5 language models: Latin, Chine
 Recognizing non-Latin languages requires some configuration:  
 
 - Initialize the recognizer with the correct model.
-- B4A: add reference with #AdditionalJar: com.google.android.gms:play-services-mlkit-text-recognition-chinese (replace *chinese* with the relevant lowercased model name).
+- B4A: add reference with #AdditionalJar: [plain]com.google.android.gms:play-services-mlkit-text-recognition-chinese[/plain] (replace *chinese* with the relevant lowercased model name).
 - B4i: add the bundle of the relevant model: <https://www.b4x.com/b4i/files/MLKit_Bundles.zip>
 
 Note that B4i MLKit package for local mac was updated as well as the #AdditionalLib list.

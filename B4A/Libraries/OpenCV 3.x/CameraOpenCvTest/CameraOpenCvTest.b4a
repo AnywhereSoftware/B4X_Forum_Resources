@@ -1,0 +1,156 @@
+﻿Build1=Default,com.appiotic.ocv4b4a.samples.cameratest
+Group=Default Group
+IconFile=
+Library1=core
+Library2=phone
+Library3=javaobject
+Library4=opencv3
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~<uses-permission android:name="android.permission.CAMERA" />	)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: False
+	#ApplicationLabel: Camera OCVforB4A
+	#VersionCode: 7
+	#VersionName: 
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+'======================================================================================
+' Version history
+'	1.	-First version
+'	2.	-Forces camera to work 480x640. In previous version it was assuming so, but crashed on devices where it did not happen (Samsung S6)
+'		-(Good practices) All OCV objects needed in the main processing loop (camera preview) are initialized before and reused.
+'   3	-Fixes protrait mode since layout has been designed for portrait
+'	4	-Bug fix. In some devices only first screen appeared because of an error in CameraEx module.
+'   5	-Example ported from cameraEx to OCVJavaCameraView. Simplified and much faster. Again in landscape
+'	6	-Code does not rely on intended preview size (640x480) but on the real one.
+'======================================================================================
+
+'======================================================================================
+' CameraOpenCVTest
+' 	Based on camera preview, this example outputs 4 windows as result of different processes
+'	1. Canny operator
+'	2. Feature detector
+'	3. Color space conversion
+'	4. We can draw on OCVMats
+'======================================================================================
+ 
+'Activity module
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim ocl As OCVOpenCVLoader				'Needs to be here before declaring Mat objects
+	
+	Private P As Panel
+	Dim mOpenCvCameraView As OCVJavaCameraView
+
+	Dim PREVIEW_WIDTH As Int = 640			'Set it to a resolution that your camera supports. 640x480 is more than enough to detect color blobs in most cases.
+	Dim PREVIEW_HEIGHT As Int =480
+
+	'OCV
+	Dim mUtils As OCVUtils
+	Dim mImgProc As OCVImgproc
+	Dim mCore As OCVCore
+	Dim cvt As OCVCvType
+	
+	Dim mGrayImage,mImage,mColorSwappedImage As OCVMat
+	Dim mFeaturesDetector As OCVFeatureDetector
+	Dim startTime As Long
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	P.Initialize("")					' The panel where the camera surfaceview will be placed
+	Activity.AddView(P,0,0,100%X,100%Y)
+	mOpenCvCameraView.Initialize("frameprocessor",P,mOpenCvCameraView.CAMERA_ID_BACK)
+	mOpenCvCameraView.setMaxFrameSize(PREVIEW_WIDTH,PREVIEW_HEIGHT)	'Select maximum preview size. 
+
+
+
+End Sub
+
+Sub Activity_Resume
+	mOpenCvCameraView.connectCamera(P.Width,P.Height)
+	startTime = DateTime.now
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	mOpenCvCameraView.disconnectCamera
+End Sub
+
+' This Sub will be called from another thread. 
+' Here we process myMat and put results in the same OCVMat object. 
+' Its contents will be drawn on the camera sufaceView
+Public Sub frameprocessor_newFrame(myMat As OCVMat)
+	
+	'Log("processing..." )
+	
+	' Canny operator.
+	mImgProc.cvtColor1(myMat,mGrayImage,mImgProc.COLOR_RGBA2GRAY)
+	mImgProc.Canny3(mGrayImage,mGrayImage,20,40)
+
+	' Feature detection
+	mImgProc.cvtColor1(myMat,mImage,mImgProc.COLOR_RGBA2BGR)	'need 3channel (not 4) for feature deection
+	Dim mMatOfKeyPoints As OCVMatOfKeyPoint
+	mMatOfKeyPoints.Initialize
+	
+	mFeaturesDetector.detect1(mImage,mMatOfKeyPoints)
+	Dim mFeatures2D As OCVFeatures2d
+	Dim mScalar As OCVScalar
+	mScalar.Set(Array As Double(0,255,0))
+	mFeatures2D.drawKeypoints(mImage,mMatOfKeyPoints,mImage,mScalar,0)
+	
+	' Color swap RGB -> BGR
+	mImgProc.cvtColor1(myMat,mColorSwappedImage,mImgProc.COLOR_RGBA2BGRA)	
+
+	'----------------------------------------------------------------
+	' Now we will compose everything into the original Mat (1/4th each)
+	'----------------------------------------------------------------
+	
+	Dim WW As Int = myMat.cols
+	Dim HH As Int = myMat.rows
+	
+	
+	Dim quarterSize As OCVSize							' the size of each quarter (of the original Mat)
+	quarterSize.Initialize2(Array As Double(WW/2,HH/2))	'order: width, height
+	Dim myScaled As OCVMat
+	Dim myMat_ROI As OCVMat
+	
+	' Copy (and scale) canny result into Top-Left quarter	
+	mImgProc.cvtColor1(mGrayImage,mGrayImage,mImgProc.COLOR_GRAY2RGBA)
+	mImgProc.resize1(mGrayImage,myScaled,quarterSize)
+	myMat_ROI = myMat.submat(0,HH/2,0,WW/2) ' Note that we don't make a copy, it is a reference to that zone. Saves time
+	myScaled.copyTo(myMat_ROI)	'Copy the scaled image to the defined region of the original MAt
+
+	' Copy (and scale) feature detection result into Top-right quarter
+	mImgProc.resize1(mImage,myScaled,quarterSize)
+	mImgProc.cvtColor1(myScaled,myScaled,mImgProc.COLOR_BGR2RGBA)
+	myMat_ROI = myMat.submat(0,HH/2,WW/2,WW)
+	myScaled.copyTo(myMat_ROI)
+	
+	' Copy (and scale) color swap result into bottom-left quarter
+	mImgProc.resize1(mColorSwappedImage,myScaled,quarterSize)
+	myMat_ROI = myMat.submat(HH/2,HH,0,WW/2)
+	myScaled.copyTo(myMat_ROI)
+
+
+	' Finally, bottom-right quarter will have a moving circle depending on ellapsed time
+	myMat_ROI = myMat.submat(HH/2,HH,WW/2,WW)
+
+	Dim ellapsed As Long = DateTime.Now - startTime
+	Dim colorScalar As OCVScalar
+	colorScalar.Initialize4(194+63*CosD(72*ellapsed/1500),192+63*SinD(72*ellapsed/500),0,255)
+	Dim center As OCVPoint 
+	center.Initialize(WW/4 + WW/16*CosD(72*ellapsed/1000),HH/4+HH/12*SinD(72*ellapsed/1000))	' centered in the middle of the correpsonding quarter
+	Dim radius As Int = HH/12 + 20*CosD( 36*ellapsed / 1000 )
+	mImgProc.circle( myMat_ROI, center, radius, colorScalar, 2,1,0)
+
+End Sub

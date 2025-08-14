@@ -1,5 +1,5 @@
 ### ExoPlayer (media3) - video player by Erel
-### 08/26/2024
+### 08/06/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/158204/)
 
 ExoPlayer is a powerful media player created by Google: <https://developer.android.com/guide/topics/media/exoplayer>  
@@ -8,7 +8,7 @@ This version is based on Media3 ExoPlayer v1.2. It replaces ExoPlayer 2: <https:
 The underlying SDK isn't backward compatible so calls with JavaObject may not work without modifications.  
   
 Setup:  
-1. Download the attached library and copy to the additional libraries folder.  
+1. Download the attached library and copy to the additional libraries folder. ExoPlayer is an internal library, starting with B4A v13.4.  
 2. Download the additional dependencies and copy to the additional libraries folder: <https://www.b4x.com/android/files/exoplayer3_additional.zip>  
   
 Usage instructions:  
@@ -31,5 +31,7 @@ Note that you can use SMM to manage and load videos: [[B4X] SimpleMediaManager (
   
   
 Updates:  
-v3.02 - Updated dependencies. **Requires B4A v13.0+ with an updated Android SDK.**  
+v3.11 - Added missing dependency (androidx.core:core-ktx)  
+v3.10 - Updated dependencies. Requires B4A v13.4+ with an updated SDK. **This is an internal library now.**  
+v3.02 - Updated dependencies.   
 v3.01 - Fixes a compatibility issue with Firebase libraries. The dependencies package was updated as well (step #2 above).

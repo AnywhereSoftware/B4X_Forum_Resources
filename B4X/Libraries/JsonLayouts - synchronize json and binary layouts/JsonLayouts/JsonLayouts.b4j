@@ -1,0 +1,208 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=b4xcollections
+Library2=byteconverter
+Library3=jcore
+Library4=jrandomaccessfile
+Library5=json
+Library6=jsql
+Library7=jstringutils
+Library8=javaobject
+Module1=BalConverter
+NumberOfFiles=0
+NumberOfLibraries=8
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#AdditionalJar: sqlite-jdbc-3.7.2
+#CommandLineArgs: C:\Users\H\Downloads\projects\aa\B4A aa
+Sub Process_Globals
+	Private BALFolder As String
+	Private JSONFolder As String
+	Private sql As SQL
+	Private const version As String = "0.9"
+	Private BALs As Map
+	Private JSONs As Map
+	Private BALExtension As String
+	Private JSONExtension As String = ".json"
+	Private BAL_OWNER = 1, JSON_OWNER = 2 As Int
+	Type LayoutMetadata (NameLower As String, NameNotLower As String, BalFileTime As Long, JsonFileTime As Long, BalDBTime As Long, JsonDBTime As Long, Owner As Int, _
+		BalFile As String, JsonFile As String)
+	Type LayoutFile (Name As String, LastModified As Long)
+	Private Converter As BalConverter
+	Private Desktop As JavaObject
+	Private TempFile As String = "temp.bin"
+	Private EMPTY_LAYOUT_FILE As LayoutFile
+End Sub
+
+Sub AppStart (Args() As String)
+	Log($"JsonLayouts v${version}"$)
+	Dim ProjectFolder As String = Args(0)
+	BALFolder = File.Combine(ProjectFolder, "Files")
+	JSONFolder = File.Combine(ProjectFolder, "JsonLayouts")
+	For Each extension As String In  Array(".b4a", ".b4j", ".b4i")
+		If File.Exists(ProjectFolder, Args(1) & extension) Then
+			BALExtension =".b" & extension.CharAt(3) & "l"
+			Exit
+		End If
+	Next
+	If BALExtension = "" Then
+		Log("Project file not found!")
+		ExitApplication2(1)
+	End If
+	File.MakeDir(JSONFolder, "")
+	CreateDBIfNeeded
+	BALs = ReadLayouts(BALFolder, BALExtension)
+	JSONs = ReadLayouts(JSONFolder, JSONExtension)
+	Converter.Initialize(BALExtension = ".bil")
+	Dim Desktop As JavaObject
+	Desktop = Desktop.InitializeStatic("java.awt.Desktop").RunMethodJO("getDesktop",Null)
+	ProcessLayouts(FillMetas)
+	Log("Done.")
+End Sub
+
+Private Sub CreateDBIfNeeded
+	sql.InitializeSQLite(JSONFolder, "layouts.db", True)
+	sql.ExecQuerySingleResult("PRAGMA journal_mode = delete")
+	sql.ExecNonQuery($"CREATE TABLE IF NOT EXISTS layouts 
+		(name_lower TEXT PRIMARY KEY, name_not_lower TEXT,
+		bal_layout_time INTEGER,
+		json_layout_time INTEGER,
+		owner INTEGER)
+	"$)
+End Sub
+
+Private Sub ReadLayouts(Folder As String, Extension As String) As Map
+	Dim res As Map = CreateMap()
+	For Each f As String In File.ListFiles(Folder)
+		If f.EndsWith(Extension) Then
+			Dim name As String = f.SubString2(0, f.Length - Extension.Length)
+			res.Put(name.ToLowerCase, CreateLayoutFile(name, File.LastModified(Folder, f)))
+		End If
+	Next
+	Return res
+End Sub
+
+Private Sub FillMetas As List
+	Dim metas As List
+	metas.Initialize
+	For Each BAL As String In BALs.Keys
+		Dim lf As LayoutFile = BALs.Get(BAL)
+		Dim time As Long = lf.LastModified
+		Dim JsonTime As Long = JSONs.GetDefault(BAL, EMPTY_LAYOUT_FILE).As(LayoutFile).LastModified
+		metas.Add(CreateLayoutMetadata(lf.Name, time, JsonTime))
+	Next
+	For Each JSON As String In JSONs.Keys
+		If BALs.ContainsKey(JSON) = False Then
+			Dim lf As LayoutFile = JSONs.Get(JSON)
+			metas.Add(CreateLayoutMetadata(lf.Name, 0, lf.LastModified))
+		End If
+	Next
+	Return metas
+End Sub
+
+Private Sub ProcessLayouts (Metas As List)
+	For Each meta As LayoutMetadata In Metas
+		If meta.BalFileTime > 0 And meta.JsonFileTime = 0 Then
+			'bal file only.
+			If meta.Owner = JSON_OWNER Then
+				Delete(meta)
+			Else
+				ConvertToJson (meta)
+			End If
+		Else If meta.JsonFileTime > 0 And meta.BalFileTime = 0 Then
+			'json file only
+			If meta.Owner = BAL_OWNER Then
+				Delete(meta)
+			Else
+				ConvertToBal(meta)
+			End If
+		Else
+			'both files exist
+			If meta.JsonDBTime = meta.JsonFileTime And meta.BalDBTime = meta.BalFileTime Then
+				'nothing to do
+			Else If meta.JsonDBTime = meta.JsonFileTime And meta.BalDBTime < meta.BalFileTime Then
+				'bal was updated
+				ConvertToJson(meta)
+			Else If meta.BalDBTime = meta.BalFileTime And meta.JsonDBTime < meta.JsonFileTime Then
+				'json was updated
+				ConvertToBal(meta)
+			Else
+				Log($"Conflict! Delete one of ${meta.NameNotLower} layout files"$)
+				'remove from db:
+				sql.ExecNonQuery2("DELETE FROM layouts WHERE name_lower = ?", Array(meta.NameLower))
+			End If
+		End If
+	Next
+End Sub
+
+Private Sub ConvertToBal (meta As LayoutMetadata)
+	Log("Converting to binary: " & meta.NameNotLower)
+	Converter.ConvertJsonToBalInMemory(File.ReadString(JSONFolder, meta.JsonFile).As(JSON).ToMap, JSONFolder, TempFile)
+	File.Copy(JSONFolder, TempFile, BALFolder, meta.BalFile)
+	File.Delete(JSONFolder, TempFile)
+	UpdateDB(meta, JSON_OWNER)
+End Sub
+
+Private Sub ConvertToJson (meta As LayoutMetadata)
+	Log("Converting to json: " & meta.NameNotLower)
+	Dim m As Map = Converter.ConvertBalToJsonInMemory(BALFolder, meta.BalFile)
+	File.WriteString(JSONFolder, meta.JsonFile, m.As(JSON).ToString)
+	UpdateDB(meta, BAL_OWNER)
+End Sub
+
+Private Sub UpdateDB (meta As LayoutMetadata, owner As Int)
+	sql.ExecNonQuery2($"
+		REPLACE INTO layouts (name_lower, name_not_lower, bal_layout_time, json_layout_time, owner)
+		VALUES (?, ?, ?, ?, ?)"$, _
+	Array(meta.NameLower, meta.NameNotLower, File.LastModified(BALFolder, meta.BalFile), File.LastModified(JSONFolder, meta.JsonFile), owner))
+End Sub
+
+
+Private Sub Delete (meta As LayoutMetadata)
+	Log("Moving to recycle bin: " & meta.NameNotLower)
+	Recycle(BALFolder, meta.BalFile)
+	Recycle(JSONFolder, meta.JsonFile)
+	sql.ExecNonQuery2("DELETE FROM layouts WHERE name_lower = ?", Array(meta.NameLower))
+End Sub
+
+Private Sub Recycle (Folder As String, FileName As String)
+	If File.Exists(Folder, FileName) Then
+		Dim jo As JavaObject	
+		jo.InitializeNewInstance("java.io.File", Array(File.Combine(Folder, FileName)))
+		Desktop.RunMethod("moveToTrash",Array(jo))
+	End If
+End Sub
+
+Public Sub CreateLayoutMetadata (Name As String, BalTime As Long, JsonTime As Long) As LayoutMetadata
+	Dim t1 As LayoutMetadata
+	t1.Initialize
+	t1.NameNotLower = Name
+	t1.NameLower = Name.ToLowerCase
+	t1.BalFileTime = BalTime
+	t1.JsonFileTime = JsonTime
+	Dim rs As ResultSet = sql.ExecQuery2("SELECT * FROM layouts WHERE name_lower = ?", Array(t1.NameLower))
+	If rs.NextRow Then
+		t1.BalDBTime = rs.GetLong("bal_layout_time")
+		t1.JsonDBTime = rs.GetLong("json_layout_time")
+		t1.Owner = rs.GetInt("owner")
+	End If
+	t1.BalFile = Name & BALExtension
+	t1.JsonFile = Name & JSONExtension
+	rs.Close
+	Return t1
+End Sub
+
+Public Sub CreateLayoutFile (Name As String, LastModified As Long) As LayoutFile
+	Dim t1 As LayoutFile
+	t1.Initialize
+	t1.Name = Name
+	t1.LastModified = LastModified
+	Return t1
+End Sub

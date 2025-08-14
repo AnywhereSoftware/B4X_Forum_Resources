@@ -1,5 +1,5 @@
 ### rIRRemoteEx by rwblinn
-### 05/26/2025
+### 06/06/2025
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/166899/)
 
 **B4R Library rIRRemoteEx  
@@ -14,7 +14,7 @@ rIRRemoteEx** is an open source library for sending & receiving of infra-red (IR
 - Protocols supported: NEC/NEC2/Onkyo/Apple, Panasonic/Kaseikyo, Denon/Sharp, Sony, RC5, RC6, LG, JVC, Samsung, FAST, Whynter, Lego Power Functions, Bosewave, MagiQuest, Universal Pulse Distance Width, Hash.
 - Remote Controls (RC) used for testing (brackets protocol): NEC (NEC), SONY (SONY), Samsung (Samsung), Philips (RC6).
 - Library developed in CPP, compiled using the Arduino-CLI and the B4Rh2xml tool. Exploring sketched with the Arduino IDE 2.3.6.
-- Software: B4R 4.00 (64 bit), Arduino-CLI 1.2.2, IRremote 4.4.1.
+- Software: B4R 4.00 (64 bit), Arduino-CLI 1.2.2, IRremote 4.4.2.
 - Hardware: Arduino UNO (AVR board), ESP32 (ESP32-WROOM-32), IR Modules Keyes KY-022 (IR Receiver) and KY-005 (IR-Transmitter).
 
 **Notes**  
@@ -31,11 +31,11 @@ The transmitting LED
 - should be connected with a resistor: power supply 3,3V=120Ω, 5V=220Ω.
 
 **Files**  
-rIRRemoteEx.zip archive contains the library and sample projects.  
+rIRRemoteEx-NNN.zip archive contains the library and sample projects.  
   
 **Install**  
 In the Arduino IDE 2.x install the library [IRremote](https://github.com/Arduino-IRremote/Arduino-IRremote).  
-From the zip archive rIRRemoteEx.zip, copy the content of the library folder, to the B4R additional libraries folder keeping the folder structure.  
+From the zip archive rIRRemoteEx-NNN.zip, copy the content of the library folder, to the B4R additional libraries folder keeping the folder structure.  
   
 **Functions**  
 See the folder examples.  
@@ -52,6 +52,7 @@ List of some examples receiving, sending and both.
 - IrReceiverSenderNECRawWithMicroseconds
 - IrReceiverSenderMultipleProtocols
 - IrSenderNEC
+- IrRGBLEDStrip
 - Make Project [make-ir-frame-visualizer](https://www.b4x.com/android/forum/threads/ir-frame-visualizer.167155/#post-1024746)
 
 **B4R Basic Example IR Receiver**  
@@ -160,7 +161,6 @@ End Sub
 **To-Do**  
 
 - Deeper dive in protocol PULSE\_DISTANCE (analyze timings using JT-LCR-T7).
-- Update as soon as IRremote 4.4.2 is available, because of improvements related to the PulseDistanceWidthProtocol.
 
 **Credits**  
 

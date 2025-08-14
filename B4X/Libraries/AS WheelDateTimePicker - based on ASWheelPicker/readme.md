@@ -1,5 +1,5 @@
 ###  AS WheelDateTimePicker - based on ASWheelPicker by Alexander Stolte
-### 01/21/2025
+### 06/04/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/141588/)
 
 This is a date and time picker in IOS picker design.  
@@ -208,6 +208,10 @@ Version: 1.17**
 - **1.18**
 
 - B4A BugFix
+
+- **1.19**
+
+- Adjustments for [AS\_WheelPicker V3.25](https://www.b4x.com/android/forum/threads/b4x-xui-as-wheelpicker-spinner-a-modern-single-multiple-choice-picker-view-based-on-xcustomlistview-payware.127505/)
 
 Have Fun :)  
 [![](https://www.b4x.com/android/forum/attachments/paypal-donate-button-png-clipart-png.79848/)](https://www.paypal.com/donate/?hosted_button_id=PBJGJWDDSM6ZG)

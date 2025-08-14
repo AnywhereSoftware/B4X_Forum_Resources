@@ -10,6 +10,9 @@
 #include <SPI.h>
 #include <LovyanGFX.hpp>
 
+// VSPI_HOST = SPI2_HOST , HSPI_HOST = SPI3_HOST 
+// #define SPI_HOST_ID SPI3_HOST
+
 #define LCD_MOSI 13
 #define LCD_MISO 12
 #define LCD_SCK 14
@@ -40,7 +43,8 @@ class LGFX : public lgfx::LGFX_Device
 				auto cfg 		= _bus_instance.config(); // Get the structure for bus settings.
 
 				// SPI bus settings
-				cfg.spi_host 	= HSPI_HOST;	// Select the SPI to use (VSPI_HOST or HSPI_HOST)
+				//* Due to the ESP-IDF upgrade, the description of VSPI_HOST , HSPI_HOST will be deprecated, so if you get an error, use SPI2_HOST , SPI3_HOST instead.
+				cfg.spi_host 	= SPI2_HOST; 	// Select SPI to use ESP32-S2,C3: SPI2_HOST or SPI3_HOST / ESP32: VSPI_HOST or HSPI_HOST
 				cfg.spi_mode 	= 0; 			// Set the SPI communication mode (0 to 3)
 				cfg.freq_write 	= 40000000; 	// SPI clock when transmitting (Maximum 80MHz, rounded to an integer value of 80MHz)
 				cfg.freq_read 	= 16000000; 	// SPI clock when receiving

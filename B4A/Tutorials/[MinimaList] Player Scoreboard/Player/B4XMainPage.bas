@@ -49,7 +49,11 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	ShowResult
 End Sub
 
+#If B4J
+Private Sub LblPlayer_MouseClicked (EventData As MouseEvent)
+#Else
 Private Sub LblPlayer_Click
+#End If
 	Dim lbl As Label = Sender
 	Wait For (ShowInputNameDialog(lbl)) Complete (Name As String)
 	AllPlayers.Find(lbl.Tag).Put("Name", Name)
@@ -57,7 +61,11 @@ Private Sub LblPlayer_Click
 	ShowResult
 End Sub
 
+#If B4J
+Private Sub LblScore_MouseClicked (EventData As MouseEvent)
+#Else
 Private Sub LblScore_Click
+#End If
 	Dim lbl As Label = Sender
 	Wait For (ShowInputScoreDialog(lbl)) Complete (Score As Int)
 	AllPlayers.Find(lbl.Tag).Put("Score", Score)

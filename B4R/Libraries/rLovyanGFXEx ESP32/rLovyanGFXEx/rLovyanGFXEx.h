@@ -4,7 +4,7 @@
 // This library is partial wrapped from the LovyanGFX library https://lovyangfx.readthedocs.io/en/master/02_using.html.
 // Enhanced with constants for fonts, colors and drawing functions.
 // There is minimal error handling. This should be done in the B4R code.
-// Date: 20250413
+// Date: 20250602
 // Author: Robert W.B. Linn
 
 // Credits
@@ -20,6 +20,7 @@
 // Displays Supported
 // * Sunton ESP32 2.8" TFT, w320xh240, touch, driver ILI9341, Define ESP32_2432S028.
 // * SSD1306 0.96" OLED, I2C w128xh64, monochrome, no touch, pins SCL 22, SDA 21, I2C address 0x3C, Define ESP32_SSD1306.
+// * SSD1306_WIFIKITV3, 0.96" OLED, I2C w128xh64, monochrome, no touch, pins SCL 15, SDA 4, I2C address 0x3C, Define ESP32_SSD1306_WIFIKITV3.
 // * SH1106 1.3" OLED, I2C w128xh64, monochrome, no touch, pins SCL 22, SDA 21, I2C address 0x3C, Define ESP32_SH110x.
 
 // Includes - ensure the LovyanGFX library is installed using the Arduin IDE.
@@ -30,27 +31,35 @@
 // Must be in the same folder as the rLovyanGFX header file.
 // Default driver: ESP32_2432S028 (Sunton ESP32).
 
-// Display SSD1306
+// Display ESP32_SSD1306
 // Set in B4R #define ESP32_SSD1306
 #if defined(ESP32_SSD1306)
 #include "ESP32_SSD1306.h"
+
+// Display ESP32_SSD1306_WIFIKITV3
+// Set in B4R #define ESP32_SSD1306_WIFIKITV3
+#elif defined(ESP32_SSD1306_WIFIKITV3)
+#include "ESP32_SSD1306_WIFIKITV3.h"
 
 // Display SH110x
 // Set in B4R #define ESP32_SH110x
 #elif defined(ESP32_SH110x)
 #include "ESP32_SH110x.h"
 
-#else
 // Display Sunton ESP32 2.8 inch TFT (ESP-WROVER-KIT).
-// Set in B4R #define ESP32_2432S028 or leave out to use as default
-#define ESP32_2432S028
+// Set in B4R #define ESP32_2432S028
+#elif defined(ESP32_2432S028)
 #include "ESP32_2432S028.h"
+
+// Display unknown
+#else
+#define UNKNOWN_DRIVER
 #endif
 
 // Convert color code 16-bit RGB565 to 24-bit RGB888 - used by the color defines, a color has type ULong.
 #define RGB565_TO_RGB888(c) ((((c >> 8) & 0xF8) << 16) | (((c >> 3) & 0xFC) << 8) | ((c << 3) & 0xF8))
 
-//~Version: 1.00
+//~Version: 1.10
 namespace B4R
 {
 	// Callback touch event
@@ -62,12 +71,19 @@ namespace B4R
 	{
 		private:
 			// Define the LovyanGFX instance based on the display driver defined previous
+			// If no driver specified, then compile error.
+						
 			#if defined(ESP32_2432S028)
 			LGFX* gfx;
 			uint8_t be[sizeof(LGFX)];
 			#endif
 
 			#if defined(ESP32_SSD1306)
+			SSD1306* gfx;
+			uint8_t be[sizeof(SSD1306)];
+			#endif
+
+			#if defined(ESP32_SSD1306_WIFIKITV3)
 			SSD1306* gfx;
 			uint8_t be[sizeof(SSD1306)];
 			#endif
@@ -102,7 +118,7 @@ namespace B4R
 			/**
 			* Initializes the object with optional touch event.
 			* The display to use is defined by the preprocessor directive #DefineExtra: #define DISPLAY.
-			* Set DISPLAY to: ESP32_2432S028 for the Sunton, ESP32_SSD1306 for the OLED SSD1306
+			* Example set DISPLAY to: ESP32_2432S028 for the Sunton, ESP32_SSD1306 for the OLED SSD1306
 			* TouchSub (SubVoidTouch) - Name of the touch event. Set NULL to disable touch.
 			*/
 			void Initialize(SubVoidTouch TouchSub);

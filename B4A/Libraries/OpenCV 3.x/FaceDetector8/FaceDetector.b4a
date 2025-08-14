@@ -1,0 +1,200 @@
+﻿Build1=Default,com.appiotic.ocv4b4a.samples.facedetector
+Group=Default Group
+IconFile=
+Library1=camera
+Library2=core
+Library3=phone
+Library4=reflection
+Library5=javaobject
+Library6=opencv3
+Library7=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~	<uses-permission android:name="android.permission.CAMERA" />	~\n~	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />		~\n~	)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=7
+NumberOfModules=0
+Version=9.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: FaceDetector OCVforB4A
+	#VersionCode: 8
+	#VersionName: 
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+'======================================================================================
+' Version history
+'	1.	-First version
+'	2.	-Forces camera to work 480x640. In previous version it was assuming so, but crashed on devices where it did not happen (Samsung S6)
+'		-(Good practices) All OCV objects needed in the main processing loop (camera preview) are initialized before and reused.
+'	3   -Version 2 solution for camera size was not correct. Fixed
+'	4	-Using JavaCameraView instead of cameraEx. Code simplified a lot. No need to tap to start detecting
+'   5   -Added a Global var option (Dim drawRectangle as Boolean) that allows, if set to True, to draw a square instead of glasses.
+'        By default, is set to false.
+'======================================================================================
+
+'======================================================================================
+' FaceDetector example
+' 	The app will try to detect your face (it is using front camera)
+' 	If it succeeds, will place glasses in front of your eyes or draw a square rectangle.
+'======================================================================================
+
+'Activity module
+Sub Process_Globals
+
+	Dim cascadeFile As String = "lbpcascade_frontalface.xml"
+	'Dim cascadeFile As String = "cascadg.xml"
+	'Dim cascadeFile As String = "case.xml"
+	'Dim cascadeFile As String = "haarcascade_lowerbody.xml"
+End Sub
+
+
+Sub Globals
+
+	Private Panel1 As Panel
+
+	'OCV
+	Dim ocl As OCVOpenCVLoader				'BETA version. Needs to be here before declaring Mat objects
+	
+	Dim mOpenCvCameraView As OCVJavaCameraView	
+	Dim mFaceDetector As OCVCascadeClassifier
+	
+	Dim mCvt As OCVCvType				'Static modules utilities
+	Dim mUtils As OCVUtils
+	Dim mImgProc As OCVImgproc
+	Dim mCore As OCVCore
+	Dim mOriginalGLasses As OCVMat
+	
+	'FACEDETECTOR
+	Private mRgba As OCVMat
+	Private mGray As OCVMat
+	
+	Private mRelativeFacesize As Float = 0.2f
+	Private mAbsoluteFaceSize As Float 
+	
+	Dim drawRectangle As Boolean=True
+	Dim rp As RuntimePermissions
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	'------------------------------------------------------------------
+	' Initialize Panel where cameraView surface will be placed
+	'------------------------------------------------------------------
+	Panel1.Initialize("")
+	Activity.AddView(Panel1,0,0,100%X,100%Y)
+	mOpenCvCameraView.Initialize("frameprocessor",Panel1,mOpenCvCameraView.CAMERA_ID_BACK)
+	'------------------------------------------------------------------
+	' Copy frontface classifier to DirInternal, since we can't access it from DirAssets
+	'------------------------------------------------------------------
+	If Not(File.Exists(File.DirInternal,cascadeFile)) Then
+		File.Copy(File.DirAssets,cascadeFile,File.DirInternal,cascadeFile)
+	End If
+	mAbsoluteFaceSize =480*mRelativeFacesize		'Minimum face size to detect
+	mFaceDetector.Initialize1
+	mFaceDetector.load(File.Combine(File.DirInternal,cascadeFile))
+	If mFaceDetector.empty Then
+		Msgbox("Failed to load cascade classifier file.","OpenCV for B4A")
+		Activity.Finish
+	End If
+	
+	'--------------------------------------------------------------------
+	' Init the glasses Mat from a bitmap. Will use it later, scaling and placing it on the detected face
+	'--------------------------------------------------------------------
+	mOriginalGLasses.Initialize
+	mUtils.bitmapToMat( LoadBitmap(File.DirAssets,"thug.png"),mOriginalGLasses,False)
+
+End Sub
+
+
+Sub Activity_Resume
+
+	rp.CheckAndRequest(rp.PERMISSION_CAMERA)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then
+		MsgboxAsync("No Camera permission granted", "")
+	Else
+		mOpenCvCameraView.setMaxFrameSize(640,480)
+		mOpenCvCameraView.connectCamera(Panel1.Width,Panel1.Height)
+	End If
+
+End Sub
+
+
+Sub Activity_Pause (UserClosed As Boolean)
+	mOpenCvCameraView.disconnectCamera
+End Sub
+
+
+'---------------------------------------------------------------------------------------
+' This Sub will be called from another thread. DO NOT ACCESS UI ELEMENTS FROM HERE
+' Here we process myMat and put results in the same OCVMat object. 
+' Its contents will be drawn on the camera sufaceView
+'---------------------------------------------------------------------------------------
+Public Sub frameprocessor_newFrame(myMat As OCVMat) 
+	
+	'Log("processing..." )
+	
+	'mCore.flip(myMat,myMat,1)	'As it is front camera, we flip image horizontally for mirror effect-
+	
+	mImgProc.cvtColor(myMat,mGray,mImgProc.COLOR_RGBA2GRAY,1)	'Will use this one to procees	
+	mRgba = myMat	'We are just getting the reference, so any changes made to mRgba will be made to Mat
+	
+	
+	Dim faces As OCVMatOfRect
+	faces.Initialize	
+	Dim mSize As OCVSize
+	mSize.set(Array As Double(mAbsoluteFaceSize,mAbsoluteFaceSize))		'Tell the detector minimum size to detect
+	Dim mSize2 As OCVSize
+	'mFaceDetector.detectMultiScale(mGray,faces,1.1,2,2,mSize,mSize2)		
+	mFaceDetector.detectMultiScale(mGray,faces,1.1,10,2,mSize,mSize2)
+
+
+	' Check detected faces, if any. 
+	Dim facesArray() As OCVRect = faces.toArray
+	'If facesArray.Length>0 Then		'We are only interested in first detection
+	For k=0 To facesArray.Length-1
+		
+		If drawRectangle=True Then 
+			
+			Dim myColorScalar As OCVScalar
+			myColorScalar.Initialize4(0,255,0,255)	'Order is R,G,B,A. In this case we are drawing a red rectangle
+			mImgProc.rectangle1(mRgba,facesArray(k).tl,facesArray(0).br,myColorScalar,4)
+		Else
+
+			'The detected face rectangle size is: W_face x H_face
+			Dim W_glasses As Int = facesArray(0).width	' Will rescale our original glasses Mat width to W_face,
+			Dim H_glasses As Int = W_glasses/3			' keep its original aspect ratio (3:1)
+			Dim mScaledGlasses As OCVMat
+			mScaledGlasses.Initialize
+			Dim scaledGlassesSize As OCVSize
+			scaledGlassesSize.Initialize2( Array As Double( W_glasses,H_glasses))
+
+			mImgProc.resize1( mOriginalGLasses, mScaledGlasses,scaledGlassesSize)
+
+			'Now apply the effect to the full color image. 
+			
+			Dim mBGRA_ROI As OCVMat = mRgba.submat( _		'This does NOT create a copy, but a reference to a region of interest
+				facesArray(0).tl.y + facesArray(0).height/4, _
+				facesArray(0).tl.y + facesArray(0).height/4+H_glasses, _
+				facesArray(0).tl.x, _
+				facesArray(0).br.x)
+			
+			' We want to copy the glasses to the selected region of the face
+			' As the square containing them has some transparent pixels, we use them as a mask
+			Dim glassesMask As OCVMat
+			glassesMask.Initialize
+			mCore.extractChannel(mScaledGlasses,glassesMask,3)	'Use alpha (channel 3) from overlay image to define the mask to be used for copy
+			mScaledGlasses.copyTo1(mBGRA_ROI, glassesMask)
+
+		End If
+
+	'End If	
+	Next
+End Sub
+
+Sub Activity_Click
+	drawRectangle = Not(drawRectangle)
+End Sub

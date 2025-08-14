@@ -1,4 +1,4 @@
-### Navigation Side Menu by mfstuart
+### Navigation Side Menu by Mark Stuart
 ### 08/23/2022
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/142514/)
 

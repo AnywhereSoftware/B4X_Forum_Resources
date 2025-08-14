@@ -1,5 +1,5 @@
 ### Handle the soft keyboard with the IME library by Erel
-### 08/27/2024
+### 07/06/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/14832/)
 
 Android has very good support for custom input method editors (IMEs).  
@@ -93,4 +93,5 @@ Note that this is only a simple filter. It will accept the following input (whic
   
 **Updates:**  
   
-The example was updated and is now based on B4XPages. Note that additional code in the Main module (<https://www.b4x.com/android/forum/threads/b4x-b4xpages-cross-platform-and-simple-framework-for-managing-multiple-pages.118901/post-745090>) and don't miss the manifest editor code.
+- targetSdkVersion set to 35 and edge to edge feature is disabled: <https://www.b4x.com/android/forum/threads/targetsdkversion-35-and-opting-out-of-edge-to-edge-enforcement.167109/#content>  
+- The example was updated and is now based on B4XPages. Note that additional code in the Main module (<https://www.b4x.com/android/forum/threads/b4x-b4xpages-cross-platform-and-simple-framework-for-managing-multiple-pages.118901/post-745090>) and don't miss the manifest editor code.

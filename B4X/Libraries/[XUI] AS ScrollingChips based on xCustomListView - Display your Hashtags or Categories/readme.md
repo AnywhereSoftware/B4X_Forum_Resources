@@ -1,5 +1,5 @@
 ###  [XUI] AS ScrollingChips based on xCustomListView - Display your Hashtags or Categories by Alexander Stolte
-### 04/09/2025
+### 06/03/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/123425/)
 
 I removed the old code and took the code from the [AS\_Chips](https://www.b4x.com/android/forum/threads/b4x-xui-as-chips-display-your-hashtags-filters-or-categories.139896/) to make this view even better.  
@@ -245,6 +245,13 @@ Version: 2.00
 - **2.11**
 
 - BugFix - The chips are now resized when you call RefreshChips, if you change text etc.
+
+- **2.12**
+
+- New - ShowRemoveIcon added to ASScrollingChips\_ChipProperties type
+- New - xFont and Icon added to ASScrollingChips\_RemoveIconProperties type
+- New - GetChipProperties2 Get the chip props via the tag value of the item
+- New - RemoveChipClicked Event - if the event is used, automatic deletion is deactivated
 
 **Github:** [github.com/StolteX/AS\_ScrollingChips](https://github.com/StolteX/AS_ScrollingChips)  
   

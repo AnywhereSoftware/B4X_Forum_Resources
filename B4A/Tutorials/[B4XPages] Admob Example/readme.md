@@ -1,5 +1,5 @@
 ### [B4XPages] Admob Example by asales
-### 09/25/2024
+### 07/21/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/113586/)
 
 **Check this other [excellent example](https://www.b4x.com/android/forum/threads/adshelper-extension-for-traditional-b4a-apps-more.131798/#content) from [USER=10835]@Jack Cole[/USER].**  
@@ -11,11 +11,15 @@ Any code and sample to improve this example are welcome.
 Follow these instructions to start:  
 1. Integrating Firebase Services  
 - <https://www.b4x.com/android/forum/threads/integrating-firebase-services.67692/>  
-2. FirebaseAdMob - Admob ads integrated with Firebase backend  
-- <https://www.b4x.com/android/forum/threads/firebaseadmob-admob-ads-integrated-with-firebase-backend.67710/#content>  
-3. FirebaseAdMob v1.6  
-- <https://www.b4x.com/android/forum/threads/firebaseadmob-v1-6.108552/>  
-4. B4A 9.90 and SDK Manager up to date.  
+2. FirebaseAdMob2 - Admob ads integrated with Firebase backend  
+- <https://www.b4x.com/android/forum/threads/firebaseadmob2-google-mobile-ads-sdk-v20.129609/>  
+3. B4A 13.40 and SDK Manager up to date.  
+  
+Update **7.0:**  
+- Adaptive inline banner with Customlistview  
+- SDK 35  
+- AdsHelper class updated  
+- new sub GetAutoHeightBannerSize: auto height to banner inline adaptative  
   
 Update **6.0:**  
 - Adaptive banner with customlistview  

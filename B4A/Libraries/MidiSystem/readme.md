@@ -1,5 +1,5 @@
 ### MidiSystem by stevel05
-### 09/17/2022
+### 07/17/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/50106/)
 
 OK, here is the culmination of many months of work, it is a port of a large part of the javax MidiSystem, written entirely in Basic4Android.  
@@ -14,9 +14,9 @@ I will post some complete examples so you can see how the System works in the Ex
   
 **The library depends on these libraries** which should be in your additional libs folder:  
   
-[threading](https://www.b4x.com/android/forum/threads/threading-library.6775/), javaobject, [slbytearraybuffer](https://www.b4x.com/android/forum/threads/bytearraybuffer.34306/), [mididriver](https://www.b4x.com/android/forum/threads/midi-driver-lib.48923/), [usb](https://www.b4x.com/android/forum/threads/usb-host-library.11290/), [slstreams](https://www.b4x.com/android/forum/threads/slstreams.50105/), [nanotime](https://www.b4x.com/android/forum/threads/nanotime.50104/), android-support-v4  
+[threading](https://www.b4x.com/android/forum/threads/threading-library.6775/), javaobject, [slbytearraybuffer](https://www.b4x.com/android/forum/threads/bytearraybuffer.34306/), [mididriver](https://www.b4x.com/android/forum/threads/midi-driver-lib.48923/), [usb](https://www.b4x.com/android/forum/threads/usb-host-library.11290/), [slstreams](https://www.b4x.com/android/forum/threads/slstreams.50105/), [nanotime](https://www.b4x.com/android/forum/threads/nanotime.50104/)  
   
-if you don't already have it, android-support-v4 has to be downloaded using the Android SDK Manager. Add the extras/Android Support package, then copy the jar file from <SDK root folder>\extras\android\support\v4 to your addl libs folder.  
+**You can alternatively download the SupportLibs.zip file from the GithubPage [here](https://github.com/stevel05/MidiSystem/blob/main/Files/SupportLibs.zip). and the [threading](https://www.b4x.com/android/forum/threads/threading-library.6775/) library**  
   
 This is a large library, although I have tested it as thoroughly as possible, I am sure there will be some bugs in there somewhere, please treat it as Beta software and test any app using it thoroughly yourself prior to release.  
   
@@ -26,6 +26,15 @@ Updated to v1.01 as post#2
 Update to V2 to allow newer android versions to access the midi driver. (You also need the [mididriver2](https://www.b4x.com/android/forum/threads/midi-driver-lib.48923/) Lib)  
 Update to V2.1 Added getShortMessageData3 To MidiMessage  
   
-MidiLibNew contains the B4a source code for the library.  
+MidiLibNew contains the B4a source code for the library. This is here for completeness, and will not work if built as a b4xlib, there is a lot of threading in the library. Please use the library files provided in MidiSystem2.zip.  
   
-Enjoy
+Enjoy  
+  
+**2025-07-15:** Created a [github project](https://github.com/stevel05/MidiSystem)  
+  
+Related Links:  
+
+- [Midi Driver lib](https://www.b4x.com/android/forum/threads/midi-driver-lib.48923/#content)
+- [Play a Midi file](https://www.b4x.com/android/forum/threads/midi-system-example-play-a-midi-file.50107/#content)
+- [Accessing devices via USB](https://www.b4x.com/android/forum/threads/midi-usb-device-manager.41118/#content)
+- [Midi Monitor2](https://www.b4x.com/android/forum/threads/midi-monitor2.167812/)

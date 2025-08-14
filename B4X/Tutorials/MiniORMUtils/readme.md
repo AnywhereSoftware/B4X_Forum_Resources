@@ -1,5 +1,5 @@
 ###  MiniORMUtils by aeric
-### 05/25/2025
+### 07/11/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
@@ -89,8 +89,8 @@ Insert rows
 
 ```B4X
 DB.Columns = Array("category_name")  
-DB.Insert2(Array As String("Hardwares"))  
-DB.Insert2(Array As String("Toys"))
+DB.Insert2(Array("Hardwares"))  
+DB.Insert2(Array("Toys"))
 ```
 
   
@@ -123,9 +123,9 @@ Update row
 
 ```B4X
 DB.Table = "tbl_products"  
-DB.Columns = Array As String("category_id", "product_code", "product_name", "product_price")  
+DB.Columns = Array("category_id", "product_code", "product_name", "product_price")  
 DB.Id = 2  
-DB.Save2(Array As String(Category_Id, Product_Code, Product_Name, Product_Price))
+DB.Save2(Array(Category_Id, Product_Code, Product_Name, Product_Price))
 ```
 
   

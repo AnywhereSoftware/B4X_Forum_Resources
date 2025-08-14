@@ -1,0 +1,76 @@
+﻿Version=6.5
+NumberOfModules=1
+Module1=Starter
+Build1=Default,b4a.example.cameraView
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~	<uses-permission android:name="android.permission.CAMERA" />	)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=core
+Library2=javaobject
+Library3=gps
+Library4=opencv320forb4a_beta004
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: JavaCameraView OpenCVforB4A 
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim ocl As OCVOpenCVLoader	
+	
+	Dim P As Panel
+	Dim mOpenCvCameraView As OCVJavaCameraView
+	Dim mCore As OCVCore
+	Dim mImgProc As OCVImgproc	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	P.Initialize("")
+	Activity.AddView(P,0,0,100%X,100%Y)
+	mOpenCvCameraView.Initialize("frameprocessor",P,mOpenCvCameraView.CAMERA_ID_FRONT)
+	mOpenCvCameraView.setMaxFrameSize(640,480)
+End Sub
+
+Sub Activity_Resume
+	mOpenCvCameraView.connectCamera(P.Width,P.Height)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	mOpenCvCameraView.disconnectCamera
+End Sub
+
+' This Sub will be called from another thread. 
+' Here we process myMat and put results in the same OCVMat object. 
+' Its contents will be drawn on the camera sufaceView
+Public Sub frameprocessor_newFrame(myMat As OCVMat)
+	'Log("processing..." )
+	mImgProc.cvtColor1(myMat,myMat,mImgProc.COLOR_RGBA2GRAY)
+	mCore.flip(myMat,myMat,1)
+	mImgProc.Canny3(myMat,myMat,16,50)
+	
+End Sub
+
+
+
+
+

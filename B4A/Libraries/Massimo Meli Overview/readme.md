@@ -1,5 +1,5 @@
 ### Massimo Meli Overview by max123
-### 04/08/2025
+### 08/05/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/144941/)
 
 **[SIZE=5]B4A-B4J-B4R[/SIZE]** [SIZE=5]**Libraries, Classes,**[/SIZE] **[SIZE=5]Code Snippets[/SIZE]**  
@@ -47,4 +47,6 @@ Code Snippets**
 [Make a simple 3D game with WebGL library, with gravity and collisions in less than 300 lines of code](https://www.b4x.com/android/forum/threads/make-a-simple-3d-game-with-webgl-library-with-gravity-and-collisions-in-less-than-300-lines-of-code.166075/)  
 [WebGL library, working with physics engines - Part 1](https://www.b4x.com/android/forum/threads/webgl-library-working-with-physics-engines-part-1.166164/)  
 [WebGL library, working with physics engines - Part 2](https://www.b4x.com/android/forum/threads/webgl-library-working-with-physics-engines-part-2.166414/)  
-[WebGL library, working with static and animated models](https://www.b4x.com/android/forum/threads/webgl-library-working-with-static-and-animated-models.166523/)
+[WebGL library, working with static and animated models](https://www.b4x.com/android/forum/threads/webgl-library-working-with-static-and-animated-models.166523/)  
+[WebGL library, working with fog](https://www.b4x.com/android/forum/threads/webgl-library-working-with-fog.168091/)  
+[Develop full 3D games with WebGL library](https://www.b4x.com/android/forum/threads/develop-full-3d-games-with-webgl-library.167783/)

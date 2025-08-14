@@ -1,7 +1,9 @@
 ### Android database encryption with SQLCipher library by Erel
-### 03/03/2024
+### 07/20/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/14965/)
 
+**Edit: this library isn't compatible with the 16KB page size requirement. Don't use it.**  
+  
 [SQLCipher](http://sqlcipher.net/) is an open source project that extends SQLite and adds full database encryption.  
 License: <https://www.zetetic.net/sqlcipher/open-source/>  
   

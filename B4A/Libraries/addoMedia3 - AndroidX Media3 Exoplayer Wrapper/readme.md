@@ -1,5 +1,5 @@
 ### addoMedia3 - AndroidX Media3 Exoplayer Wrapper by Addo
-### 10/15/2024
+### 07/09/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/147560/)
 
 This library is wrapper for the new AndroidX Media3 Library which is based on Exoplayer You can still use my [previous wrapper](https://www.b4x.com/android/forum/threads/exoplayer-2-18-5-streams-player.141854/#post-899123).  
@@ -160,7 +160,8 @@ in this update addoMedia3 and ********addoMedia3TexureView has a new method and 
 #AdditionalJar: androidx.customview:customview-poolingcontainer  
 #AdditionalJar: androidx.media:media  
 #AdditionalJar: com.google.guava:listenablefuture  
-  
+#AdditionalJar: androidx.tracing:tracing-android  
+#AdditionalJar: androidx.collection:collection  
 #End Region
 ```
 

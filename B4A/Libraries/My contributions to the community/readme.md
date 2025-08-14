@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 03/24/2025
+### 07/13/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -61,7 +61,7 @@ B4A***
 [rSPI.b4xlib - Arduino SPI communication library port to B4R. It contains the necessary functionality + some additions](https://www.b4x.com/android/forum/threads/rspi.127250/)  
 [rXDM.b4xlib Set analog resolutions (read/write) in Seeeduino Xiao and Arduino Due, Arduino Maker](https://www.b4x.com/android/forum/threads/rxdm-set-analog-resolutions-read-write-in-seeeduino-xiao-and-arduino-due-arduino-maker.125114/)  
 [rESP8266Tone.b4xlib - Play sounds in a passive buzzer in ESP8266](https://www.b4x.com/android/forum/threads/play-tone-in-esp8266.123199/)  
-[rESP8266OTA - Update to the original library by @Siam](https://www.b4x.com/android/forum/threads/esp8266-ota-updater.101387/post-844113)  
+[rESP8266OTA - Update to the original library by @Siam](https://www.b4x.com/android/forum/threads/esp8266-ota-updater.101387/post-1028251) (new update at 2025-07-10)  
   
 ***B4J***  
 [NHEnvirnomentVariables - Get all environment variables of a linux distribution](https://www.b4x.com/android/forum/threads/nhenvironentvariables-get-a-map-with-all-environment-variables-of-a-linux-distribution-does-not-break-in-windows-and-macos.158264/)  
@@ -139,6 +139,10 @@ B4R***
 [Starting with Raspburry Pi 4 - All in one video tutorial](https://www.b4x.com/android/forum/threads/starting-with-raspbury-pi-4-all-in-one-video-tutorial.122840/#post-768855)  
 [Create shared folders in virtual box Ubuntu 20.04 machine to transfer files to compile in linux your b4j apps and how to use B4J Bridge](https://www.b4x.com/android/forum/threads/create-shared-folders-in-virtual-box-ubuntu-20-04-machine-to-transfer-files-to-compile-in-linux-your-b4j-apps.124724/)  
   
+***B4Χ***  
+[Show an image with an IDE Link in the IDEs. Also B4J created Program Starter.](https://www.b4x.com/android/forum/threads/b4x-show-image-in-ide-link-b4j-created-program-starter.167763/)  
+[Using B4X tool JsonLayouts, add in a B4i layout "n" image files selected out of "N" from B4A layout where n>>1 and N>>n.](https://www.b4x.com/android/forum/threads/b4x-jsonlayouts-synchronize-json-and-binary-layouts.167398/post-1026283)  
+  
 ***General tutorials***  
 [Protect a drone from being taken by thief](https://www.b4x.com/android/forum/threads/delivery-drone-project.162177/#post-994797)  
 [Chat GPT on EU's Cyber Resiliance Act](https://www.b4x.com/android/forum/threads/frustrated-enough.160718/post-986685)  
@@ -170,4 +174,7 @@ B4R***
 ***B4J***  
 [Sql Server - Convert Sql Server datetime value to unix datetime and vice versa](https://www.b4x.com/android/forum/threads/sql-server-convert-sql-server-datetime-value-to-unix-datetime-and-vice-versa.143939/)  
 [RSA256 encryption in @aeric 's JWT project](https://www.b4x.com/android/forum/threads/solved-javaobject-problem-jwt-with-rsa256.143234/post-907556)  
-[Pdf to text with pdfbox app 3.0.4 - Free of vulnerabilities (for the time being today Feb 9th, 2025)](https://www.b4x.com/android/forum/threads/pdf-to-text-with-pdfbox-app-3-0-4-free-of-vulnerabilities-for-the-time-being-today-feb-9th-2025.165524/)
+[Pdf to text with pdfbox app 3.0.4 - Free of vulnerabilities (for the time being today Feb 9th, 2025)](https://www.b4x.com/android/forum/threads/pdf-to-text-with-pdfbox-app-3-0-4-free-of-vulnerabilities-for-the-time-being-today-feb-9th-2025.165524/)  
+  
+***B4Χ***  
+[Show an image with an IDE Link in the IDEs. Also B4J created Program Starter.](https://www.b4x.com/android/forum/threads/b4x-show-image-in-ide-link-b4j-created-program-starter.167763/)

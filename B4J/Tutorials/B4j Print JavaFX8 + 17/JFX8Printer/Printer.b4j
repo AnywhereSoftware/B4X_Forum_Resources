@@ -1,0 +1,159 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=cssutils
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jxui
+Module1=JobSettings
+Module10=PrinterJob_Static
+Module2=PageLayout
+Module3=PageOrientation_Static
+Module4=Paper
+Module5=Paper_Static
+Module6=Printer
+Module7=Printer_Static
+Module8=PrinterAttributes
+Module9=PrinterJob
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=10
+Version=10.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400
+	
+#End Region
+
+#if version
+	0.8 Enums now return string values instead of ENum objects.
+	0.9 Added JobSettings.SetOutputPath (Javafx 17+)
+		GetPrinterByName to Printer_Static
+		SearchPrinters to Printer_Static
+		Added MaintainAspectRatio to the ScaleOutput example method
+#End If
+
+Sub Process_Globals
+	Private fx As JFX
+	Private XUI As XUI
+	Private MainForm As Form
+	Private lblTest As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	
+'	Sleep(0)
+	For Each n As Node In MainForm.RootPane.GetAllViewsRecursive
+		If n Is TextArea Then
+			CSSUtils.SetBackgroundColor(n, fx.Colors.white)
+			Dim Content As Node = n.As(JavaObject).RunMethod("lookup",Array(".content"))
+			CSSUtils.SetBackgroundColor(Content, fx.Colors.White)
+		
+		else If n Is TextField Then
+			CSSUtils.SetBackgroundColor(n, fx.Colors.White)
+		End If
+	Next
+	
+	'Enable checking of scaled output
+	Dim BGColor As Int = MainForm.RootPane.As(B4XView).Color
+	MainForm.RootPane.As(B4XView).Color = 0xFFFFE7A4
+
+	
+' Print with dialogs Example
+'
+'	Dim PJ As PrinterJob = PrinterJob_Static.CreatePrinterJob
+'	If PJ.ShowPageSetupDialog(Null) Then
+'		If PJ.ShowPrintDialog(Null) Then
+	''			PJ.PrintPage(MainForm.RootPane)
+'			PJ.PrintPage(ScaleOutput(PJ.GetPrinter,MainForm.RootPane))
+'			PJ.EndJob
+'		Else
+'			PJ.CancelJob
+'		End If
+'	Else
+'		PJ.CancelJob
+'	End If
+
+
+' Print without dialogs Example
+'	
+'	Dim P As Printer = Printer_Static.GetDefaultPrinter
+'	Dim PJ As PrinterJob = PrinterJob_Static.CreatePrinterJob2(P)
+'	PJ.PrintPage(lblTest)
+'	PJ.EndJob
+
+
+'Printer by Name Example
+'
+	Dim P As Printer = Printer_Static.GetPrinterByName("Microsoft Print to PDF")
+	If Initialized(P) Then
+		Dim PJ As PrinterJob = PrinterJob_Static.CreatePrinterJob2(P)
+		PJ.GetJobSettings.SetOutputFile("D:\Test.pdf")
+		PJ.PrintPage(ScaleOutput(P,MainForm.RootPane, True))
+		PJ.PrintPage(lblTest)
+		PJ.EndJob
+	Else
+		Log("Printer Not found")
+	End If
+	
+	MainForm.RootPane.As(JavaObject).Runmethod("getTransforms",Null).as(List).Clear
+	
+	'Remove background for scaled output check
+	MainForm.RootPane.As(B4XView).Color = BGColor
+
+
+' Search Printer Example
+'
+'	Dim L As List = Printer_Static.SearchPrinters("PDF")
+'	
+
+'	If L.Size = 0 Then
+'		Log("Printer Not found")
+'	Else If L.Size > 1 Then
+
+'
+'		Could offer selection
+' 		Alternatively you could select the first printer in the list
+' 		if you don't care which printer driver is used.
+
+'		Log("Multile Printers found")
+'		
+'	Else
+'		Dim P As Printer = L.Get(0)
+'		If Initialized(P) Then
+'			Dim PJ As PrinterJob = PrinterJob_Static.CreatePrinterJob2(P)
+'			PJ.GetJobSettings.SetOutputFile("D:\Test.pdf")
+'			PJ.PrintPage(ScaleOutput(P,MainForm.RootPane, True))
+'			PJ.PrintPage(lblTest)
+'			PJ.EndJob
+'		Else
+'			Log("Printer Not found")
+'		End If
+'	End If
+
+
+End Sub
+
+Sub ScaleOutput(P As Printer, N As Node, MaintainAspectRatio As Boolean) As Node
+	Dim PL As PageLayout = P.GetDefaultPageLayout
+	Dim ScaleX,ScaleY As Double
+	Dim NJO As JavaObject = N
+	Dim JO As JavaObject = N
+	ScaleX = PL.GetPrintableWidth / JO.RunMethodJO("getBoundsInParent",Null).RunMethod("getWidth",Null)
+	ScaleY = PL.GetPrintableHeight / JO.RunMethodJO("getBoundsInParent",Null).RunMethod("getHeight",Null)
+	If MaintainAspectRatio Then
+		ScaleX = Min(ScaleX, ScaleY)
+		ScaleY = ScaleX
+	End If
+	Dim SJO As JavaObject
+	SJO.InitializeNewInstance("javafx.scene.transform.Scale",Array(ScaleX,ScaleY))
+	NJO.RunMethodJO("getTransforms",Null).RunMethod("add",Array(SJO))
+	Return NJO
+End Sub

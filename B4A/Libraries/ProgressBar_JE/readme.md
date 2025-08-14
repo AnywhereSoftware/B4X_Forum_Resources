@@ -1,5 +1,5 @@
 ### ProgressBar_JE by Jerryk
-### 02/20/2025
+### 07/19/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/165649/)
 
 New ProgressBar library that displays values (in % or real values). You can choose the direction of the Bar movement. You can set an alarm for a certain value, when the Bar color changes or an event is triggered.  
@@ -7,7 +7,7 @@ New ProgressBar library that displays values (in % or real values). You can choo
   
 **ProgressBar\_JE  
 Author: Jerryk  
-Version: 1.2  
+Version: 1.3  
   
 Methods:**  
 
@@ -32,6 +32,10 @@ realvalue - in real value
 color1, color2 - set new gradient color  
   
 **Properties:**  
+
+- **Percentage** As Float
+
+Displays Bar in percentage value  
 
 - **Direction** As String
 
@@ -81,3 +85,4 @@ Triggered when is clicked on ProgressBar.
 **Changelog:**  
 
 - 1.2 - added Click event
+- 1.3 - added Percenage properties

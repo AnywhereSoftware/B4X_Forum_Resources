@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RESP32LEDControl</name>
+        <shortname>ESP32LEDControl</shortname>
+        <comment>Notes
+ For non-blocking fade-in/out effects, use B4R's CallSubPlus and a custom timer loop in your B4R code.
+ Example in B4R:
+   CallSubPlus("FadeStep", 20, 0)</comment>
+        <property>
+            <name>DutyCycle</name>
+            <comment>Get or Set the actual duty cycle.
+duty - between 0-255.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>value</name>
+                <type>Byte</type>
+            </parameter>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initialize LEDC pin with given frequency and resolution.
+PWM is not available on all ESP32 pins. Pins like 0, 2, 4, 12–15, 25–27, 32–33 are safe for LEDC.
+pin - LEDC pin.
+frequency - frequency of pwm.
+resolution - resolution for LEDC channel (1-20 bits for ESP32).
+Returns true (OK) or false (error).
+Example (Private led As ESP32LEDControl):&lt;code&gt;
+Dim result As Boolean = led.Initialize(ledpin, ledc.FREQUENCY_DEFAULT, ledc.RESOLUTION_DEFAULT)
+If Not(result) Then
+	Log("[ERROR][Initialize] LED not initialized. Check log.")
+	Return
+End If
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>frequency</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>resolution</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Write">Write</name>
+            <comment>Set the value of the LED.
+value - dutycycle 0-255.
+Returns true (OK) or false (error).
+Example (Private led As ESP32LEDControl):&lt;code&gt;
+led.Write(255)
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="WritePercentage">WritePercentage</name>
+            <comment>Set brightness as percentage (0-100%).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>percent</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Off">Off</name>
+            <comment>Turn LED Off.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="On">On</name>
+            <comment>Turn LED On with max dutycycle 255.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="IsOn">IsOn</name>
+            <comment>Check if the LED is on.
+Returns true (On) or false (Off).</comment>
+            <returntype>bool</returntype>
+        </method>
+        <field>
+            <name DesignerName="DUTY_MIN">DUTY_MIN</name>
+            <comment>DutyCycle min and max</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="DUTY_MAX">DUTY_MAX</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_DEFAULT">FREQUENCY_DEFAULT</name>
+            <comment>PWM Frequency with default (5000Hz), min (10Hz) and max 40MHz (40000000Hz)</comment>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_MIN">FREQUENCY_MIN</name>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_MAX">FREQUENCY_MAX</name>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_DEFAULT">RESOLUTION_DEFAULT</name>
+            <comment>Resolution for ESP32 specific with default 8, min 1 and max 20 bits</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_MIN">RESOLUTION_MIN</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_MAX">RESOLUTION_MAX</name>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+    <author>Robert W.B. Linn</author>
+</root>

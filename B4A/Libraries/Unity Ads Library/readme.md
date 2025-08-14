@@ -1,9 +1,9 @@
 ### Unity Ads Library by Pendrush
-### 04/20/2025
+### 06/11/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/120648/)
 
 Original library: <https://github.com/Unity-Technologies/unity-ads-android>  
-Based on Unity Ads Library v4.14.2 (16 Apr 2025).  
+Based on Unity Ads Library v4.15.0 (28 May 2025).  
 Banner, Interstitial and Rewarded Video.  
   
 If you have problem compiling app please check **[**THIS**](https://www.b4x.com/android/forum/threads/unity-ads-library.120648/page-2#post-1021660)** post.  
@@ -16,7 +16,7 @@ Tutorial for AdMob mediation: [AdMob mediation - UnityAds (not tested)](https://
 > **UnityAds  
 >   
 > Author:** Author: Unity - B4a Wrapper: Pendrush  
-> **Version:** 4.91  
+> **Version:** 4.92  
 >
 > - **UnityAdsBanner**
 >
@@ -219,15 +219,7 @@ AddApplicationText(<activity
   
 **Versions:  
   
-v4.89**  
-
-- Fixed bug in library: when you show banner once and close page/activity, you are not able to show banner again.
-- Added missing permission: android.permission.ACCESS\_ADSERVICES\_AD\_ID.
-- Updated example app.
-- OkHttp library need to be included in project, check example app.
-
-  
-**v4.90**  
+v4.90**  
 
 - Added new banners: 300x250, 300x300 and 450x450.
 - Updated example app.
@@ -235,8 +227,13 @@ v4.89**
   
 **v4.91**  
 
-- Update for original library. [Changelog](https://docs.unity.com/ads/en-us/manual/Changelog#Version_4.14.2_-_released_2025-04-16).
+- Update for original library. [Changelog](https://docs.unity.com/grow/en-us/ads/changelog).
 - Updated example app (Manifest changes).
 
   
-Download library from: <https://mega.nz/file/UcwwnDDY#IhKJrDeGOkC4BdHJMEPEKlCZlifRxifaUMFrskWfdvk>
+**v4.92**  
+
+- Update for original library. [Changelog](https://docs.unity.com/grow/en-us/ads/changelog).
+
+  
+Download library from: <https://mega.nz/file/MBxQGQjT#qFjWMIaOk7Umxn74nsBHqT7x-eorzbSBpd6Ue2AUWFU>

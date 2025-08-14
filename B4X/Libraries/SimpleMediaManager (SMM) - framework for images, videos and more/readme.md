@@ -1,5 +1,5 @@
 ###  SimpleMediaManager (SMM) - framework for images, videos and more by Erel
-### 05/13/2024
+### 07/02/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/134716/)
 
 This is a simple to use, cross platform library, that does many complex things under the hood.  
@@ -156,6 +156,13 @@ Notes:
 Start with the two examples. More information next week.  
   
 **Updates**  
+  
+- v1.18 - New REQUEST\_CORNERS\_RADIUS option. Sets the images corners radius.  
+
+```B4X
+MediaManager.SetMediaWithExtra(Panel1,url, "", CreateMap(MediaManager.REQUEST_CORNERS_RADIUS: 10dip, MediaManager.REQUEST_RESIZE_MODE: "FILL_NO_DISTORTIONS"))
+```
+
   
 - v1.17 - New MaxImageFileSize property that sets the maximum size of image files that will be loaded. Default value is 8mb.  
 - v1.16 - Allows adding headers to the http requests. This is done with the new REQUEST\_HEADERS extra field: <https://www.b4x.com/android/forum/threads/b4x-simplemediamanager-smm-framework-for-images-videos-and-more.134716/post-984079>  

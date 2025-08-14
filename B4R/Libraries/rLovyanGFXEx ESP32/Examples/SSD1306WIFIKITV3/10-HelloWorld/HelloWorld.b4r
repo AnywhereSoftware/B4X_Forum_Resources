@@ -1,0 +1,164 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	ESP32_SSD1306_WIFIKITV3.h example HelloWorld with deepsleep disabled.
+'				Recommended to set the font to FONT0 or FONT2 with text size 1 (use the size by the font defined).
+'				Colors supported are BLACK and WHITE.
+'Hardware:		SSD1306 I2C w128xh64, monochrome, no touch, pins OLED_SCL 18, OLED_SDA 17, OLED_PWR 21, I2C address 0x3C.
+'				Heltec WiFi Kit 32(V3) with COM port driver Silicon Labs CP210x USB to UART Bridge.
+'DefineExtra: 	#define ESP32_SSD1306_WIFIKITV3
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'Heltec WiFi Kit 32(V3)
+'IMPORTANT: The Heltec goes into deepsleep after 30 seconds.
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring (onboard)
+'SSD1306 = ESP32
+'VCC = 3V3
+'GND = GND
+'SCL = 18
+'SDA = 17
+'PWR = 21
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+
+	'Define the display driver
+	#DefineExtra: #define ESP32_SSD1306_WIFIKITV3
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx HELLOWORLD v20250602"
+
+	'Communication
+	Public Serial1 As Serial
+	
+	'LovyanGFX instance
+	Private lcd As LovyanGFXEx
+	Private LCD_BACKGROUND_COLOR As ULong
+	Private LCD_TEXT_COLOR As ULong
+
+	'Helper
+	Private bc As ByteConverter	'ignore
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+	
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	Log("[Demo] display w=", lcd.Width,",h=",lcd.Height)
+
+	lcd.DisplayRotation = 0
+
+	LCD_BACKGROUND_COLOR = lcd.COLOR_BLACK
+	LCD_TEXT_COLOR = lcd.COLOR_WHITE
+
+	lcd.BackgroundColor = LCD_BACKGROUND_COLOR
+		
+	ShowRuler
+	ShowHelloWorld
+End Sub
+
+Sub ShowRuler
+	' Cursor position
+	Dim x,y As ULong
+	' Textsize
+	Dim textsize As Int = 1
+
+	' Set font, textsize & color
+	lcd.Font = lcd.FONT_FONT0
+	lcd.SetTextSize(textsize)
+	lcd.SetTextColor(LCD_TEXT_COLOR)
+
+	' Top row
+	x = 0
+	y = 0
+	' Loop over the 16 columns and display 012345678990123456 with font width 8px.
+	For i = 1 To 16
+		x = (i - 1) * lcd.FONT_HEIGHT_DEFAULT
+		lcd.SetCursor(x, y)
+		If i <= 9 Then
+			lcd.Print(NumberFormat(i, 0, 0))
+		Else
+			lcd.Print(NumberFormat(i - 10, 0, 0))
+		End If
+	Next
+
+	' Left col
+	x = 0
+	y = 0
+	' Loop over the 8 rows using font height 8px.
+	For i = 1 To 8
+		y = (i - 1) * lcd.FONT_HEIGHT_DEFAULT
+		lcd.SetCursor(x, y)
+		lcd.Print(NumberFormat(i, 0, 0))
+	Next
+	Log("[ShowRuler] font w=", lcd.FontWidth * textsize,",h=", lcd.FontHeight * textsize)
+End Sub
+
+'Display Hello World with textcolor white and background black.
+'Use FONT2 and textsize 1 gives good result.
+Sub ShowHelloWorld
+	' Set cursor at x,y position
+	Dim x,y As ULong
+	' Textsize
+	Dim textsize As Int = 1
+
+	' Set font
+	lcd.Font = lcd.FONT_FONT2
+	lcd.SetTextSize(textsize)
+	
+	x = lcd.Width / 2
+	y = lcd.Height / 4
+	lcd.SetCursor(x,y)
+	lcd.SetTextSize(1)
+	lcd.SetTextColor(LCD_TEXT_COLOR)
+	lcd.DrawRightString(x,y,"HELLO")
+
+	x = lcd.Width / 2 + 10
+	y = lcd.Height - (lcd.Height / 2)
+	lcd.SetCursor(x,y)
+	lcd.SetTextSize(1)
+	lcd.SetTextColor(LCD_TEXT_COLOR)
+	lcd.DrawCenterString(x,y,"World!")
+
+	x = lcd.Width / 2
+	y = lcd.Height - (lcd.FONT_HEIGHT_DEFAULT)
+	lcd.SetCursor(x,y)
+	lcd.SetTextColor(LCD_TEXT_COLOR)
+	lcd.Font = lcd.FONT_TOMTHUMB_1
+	lcd.SetTextSize(1)
+	lcd.DrawCenterString(x,y,"B4X is cool")
+
+	Log("[ShowHelloWorld] font w=", lcd.FontWidth*textsize,",h=",lcd.FontHeight*textsize,",textlength=",lcd.TextLength("HELLO"),",textwidth=",lcd.TextWidth("HELLO"))
+	Log("[ShowHelloWorld] font w=", lcd.FontWidth*textsize,",h=",lcd.FontHeight*textsize,",textlength=",lcd.TextLength("World!"),",textwidth=",lcd.TextWidth("World!"))
+End Sub

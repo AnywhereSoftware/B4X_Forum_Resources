@@ -1,5 +1,5 @@
 ### [algorithm] Bresenham Line Algorithm. Linear interpolation. by max123
-### 01/19/2023
+### 07/03/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/145218/)
 
 Hi developers, Happy New Year !!!  
@@ -13,7 +13,8 @@ This algorithm is widely used in various platforms to calculate linear interpola
   
 I have found many libraries that make use of this algorithm, including libraries for drawing on screen, it is the basis of many Arduino libraries that handle TFTs, OLEDs and so on.  
   
-It is also widely used to manage cartesian CNC machines movements, such as 3D printers, CNC milling machines, laser cutters, foam cutters, plasma cutters, etc… Almost all of these machines use stepper motors (with microsteps) to generate precise rotational movements which, coupled with worms or belts transfer rotary motion into linear motion. In some of these machines there are only 2 axes, X and Y movement, and linear interpolation is calculated on the two cartesian axes, in other machines there is an addictional Z axis which allows the three-dimensionality of the machined object, in this case 3 axes are interpolated at same time, for example it is completely legal to move to any 3D point and everything will be done by creating an imaginary line from the starting XYZ point to the end XYZ point and the machine will move the 3 axes simultaneously interpolating them. That said, there are more complex CNCs that use up to 5 axes of linear motion, even with rotational axis.  
+It is also widely used to manage cartesian CNC machines movements, such as 3D printers, CNC milling machines, laser cutters, foam cutters, plasma cutters, etc… Almost all of these machines use stepper motors (with microsteps) to generate precise rotational movements which, coupled with worms or belts transfer rotary motion into linear motion. In some of these machines there are only 2 axes, X and Y movement, and linear interpolation is calculated on the two cartesian axes. On other machines there is an addictional Z axis which allows the three-dimensionality of the machined object, in this case 3 axes are interpolated at same time, for example it is completely legal to move to any 3D point and everything will be done by creating an imaginary line from the starting XYZ point to the end XYZ point and the machine will move the 3 axes simultaneously interpolating them, not just axis by axis.  
+This is a simple CNC machine, out there there are more complex CNCs that use up to 5 axes of linear motion, even with rotational axis.  
   
 The CNC topic is very vast and it is not my intention to go into it on this topic, instead I want to focus on the algorithm itself.  
   

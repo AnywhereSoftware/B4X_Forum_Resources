@@ -34,23 +34,13 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 		
 		AS_Chips1.ChipPropertiesGlobal.BackgroundColor = xui.Color_White
 		AS_Chips1.ChipPropertiesGlobal.TextColor = xui.Color_Black
-		AS_Chips1.AddChip("Test " & i,AS_Chips1.FontToBitmap(Chr(0xE0C8),True,30,xui.Color_Black),"")
+		AS_Chips1.AddChip("Test " & i,AS_Chips1.FontToBitmap(Chr(0xE0C8),True,30,xui.Color_Black),"Value" & i)
 		'AS_Chips1.AddChip("#Test " & i,Null,"")
 		
 	Next
 	Sleep(0)
 	AS_Chips1.RefreshChips
-	
-	'After 4 seconds, change the Background color of a chip
-	Sleep(4000)
-	
-	Dim Props As ASChips_ChipProperties = AS_Chips1.GetChipProperties(2)
-	Props.BackgroundColor = xui.Color_Red
-	
-	AS_Chips1.SetChipProperties(2,Props) 'sets the new background color for the chip with index 2
-	
-	AS_Chips1.RefreshChips 'apply the settings
-	
+
 End Sub
 
 Private Sub B4XPage_Resize (Width As Int, Height As Int)
@@ -106,4 +96,9 @@ Private Sub xswitch_ShowIcons_ValueChanged (Value As Boolean)
 		End If
 	Next
 	AS_Chips1.RefreshChips
+End Sub
+
+
+Private Sub AS_Chips1_CustomDrawChip(Item As ASChips_CustomDraw)
+
 End Sub
