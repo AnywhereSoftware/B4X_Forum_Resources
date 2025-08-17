@@ -1,0 +1,298 @@
+﻿Build1=Default,b4a.xGraphDemo
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=|relative|..\B4J\xGraph
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=2
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: xGraphDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private SameScaleIndex = 1 As Int
+	Private Samples As Int
+End Sub
+
+Sub Globals
+	Private xui As XUI
+	Private xGraph1 As xGraph
+	Private rbtAuto, rbtManu, rbtSameScales(), rbtSameScales0, rbtSameScales1, rbtSameScales2, rbtSameScales3, btnUnZoom, btnZoom As B4XView
+	Private ckbDrawCursorValues As CheckBox
+	Private btnAddCursor, btnRemoveCursor As B4XView
+	Private cbxDisplayCurve, cbxSuperposCurves As B4XComboBox
+	Private pnlToolbox As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Main")
+
+	rbtSameScales = Array As B4XView (rbtSameScales0, rbtSameScales1, rbtSameScales2, rbtSameScales3)
+	
+	InitGraph
+'	InitGraphX1
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub InitGraph
+	Private i As Int
+	
+	xGraph1.CurveYName(0) = "Temperature"
+	xGraph1.CurveYUnit(0) = "°C"
+	xGraph1.CurveYName(1) = "Pressure"
+	xGraph1.CurveYUnit(1) = "bar"
+	xGraph1.CurveYName(2) = "Acceleration"
+	xGraph1.CurveYUnit(2) = "m/s2"
+	xGraph1.CurveYName(3) = "Speed"
+	xGraph1.CurveYUnit(3) = "m/s"
+	xGraph1.CurveYName(5) = "Acceleretion"
+	xGraph1.CurveYUnit(5) = "m/s2"
+	
+	cbxSuperposCurves.cmbBox.Add("0, 1")
+	cbxSuperposCurves.cmbBox.Add("0, 1, 2")
+	cbxSuperposCurves.cmbBox.Add("0, 1, 2, 3")
+	cbxSuperposCurves.cmbBox.Add("0, 2")
+	cbxSuperposCurves.cmbBox.Add("0, 3")
+	cbxSuperposCurves.cmbBox.Add("1, 2, 3")
+	cbxSuperposCurves.cmbBox.Add("0, 1, 3")
+	cbxSuperposCurves.cmbBox.Add("5, 6, 7")
+	cbxSuperposCurves.cmbBox.Add("6, 8")
+	cbxSuperposCurves.SelectedIndex = 2
+
+	xGraph1.CurvesToDisplay.Initialize2(Array As Int(0, 1, 2, 3))
+
+'	Private x0 = -320 As Int
+	Private x0 = 0 As Int
+	Samples = 300
+	xGraph1.NbSamples = Samples + 1
+	For i = 0 To Samples
+		xGraph1.CurveX(i) = (i + x0) * 0.001
+		xGraph1.CurveY(0, i) = 90 * SinD(i * 9)
+		xGraph1.CurveY(1, i) = 48 * CosD(i * 12) + 50
+		xGraph1.CurveY(2, i) = 45 * -SinD(i * 6) - 50
+		xGraph1.CurveY(3, i) = 45 * -CosD(i * 15)
+		If i Mod 100 < 50 Then
+			xGraph1.CurveY(5, i) = 30
+		Else
+			xGraph1.CurveY(5, i) = -30
+		End If
+	Next
+
+	xGraph1.CalcSum2Curves(0, 1, 4, False)
+	xGraph1.CurveYUnit(4) = ""
+'	xGraph1.SetCurveUnit(4, "", False)
+	
+	xGraph1.CalcIntegral(5, 6, 0, False)
+	xGraph1.CalcIntegral(6, 7, 0, False)
+	xGraph1.CalcDerivative(7, 8, False)
+
+	For i = 0 To xGraph1.NbMaxCurves - 1
+		cbxDisplayCurve.cmbBox.Add(i & " : " & xGraph1.CurveYName(i))
+	Next
+	cbxDisplayCurve.SelectedIndex = 0
+
+'	xGraph1.Title = "Test"
+'	xGraph1.SetZoomIndexes(5, 295)
+'	xGraph1.ScaleYValues = "1!3!10"
+'	xGraph1.DisplayCurveUnit = False
+'	xGraph1.DisplayCurveIndex = False
+
+	xGraph1.SetCursor(30, 0, xui.Color_Gray)
+	xGraph1.DrawGraph
+	xGraph1.SetCursor(130, 1, xui.Color_RGB(165, 70, 70))
+	
+	rbtSameScales0.TextColor =  xui.Color_Red
+	rbtSameScales1.TextColor =  xui.Color_Blue
+	rbtSameScales2.TextColor =  xui.Color_Magenta
+	rbtSameScales3.TextColor =  xui.Color_RGB(0, 153, 0)
+End Sub
+
+Private Sub rbtScale_CheckedChange(Selected As Boolean)
+	Private rbt As RadioButton
+	
+	If Selected = True Then
+		rbt = Sender
+		Select rbt.Tag
+			Case "Auto"
+				xGraph1.AutomaticYScales = True
+				rbtAuto.TextColor = xui.Color_RGB(50, 205, 50)
+				rbtManu.TextColor = xui.Color_Red
+			Case "Manu"
+				xGraph1.AutomaticYScales = False
+				rbtAuto.TextColor = xui.Color_Red
+				rbtManu.TextColor = xui.Color_RGB(50, 205, 50)
+		End Select
+	End If
+	SameScaleIndex = -1
+End Sub
+
+Private Sub rbtSameScales_CheckedChange(Selected As Boolean)
+	Private rbt As RadioButton
+	
+	If Selected = True Then
+		rbt = Sender
+		SameScaleIndex = rbt.Tag
+		xGraph1.SetSameScale(xGraph1.CurvesToDisplay.Get(SameScaleIndex))
+	End If
+End Sub
+
+Private Sub cbxDisplayCurve_SelectedIndexChanged(Index As Int)
+	Private lst As List
+	
+	lst.Initialize
+	lst.Add(Index)
+	xGraph1.CurvesToDisplay = lst
+	
+	xGraph1.DrawGraph
+End Sub
+
+Private Sub cbxSuperposCurves_SelectedIndexChanged(Index As Int)
+	Private lst As List
+	Private i, CurveIndex As Int
+	Private Value, txt() As String
+	
+	Value = cbxSuperposCurves.GetItem(Index)
+	txt = Regex.Split(", ", Value)
+	lst.Initialize
+	For i = 0 To txt.Length - 1
+		CurveIndex = txt(i)
+		lst.Add(CurveIndex)
+	Next
+	xGraph1.CurvesToDisplay = lst
+	
+	For i = 1 To lst.Size - 1
+		rbtSameScales(i).Visible = True
+	Next
+	For i = lst.Size To 3
+		rbtSameScales(i).Visible = False
+	Next
+	
+	xGraph1.DrawGraph
+End Sub
+
+Private Sub btnZoom_Click
+	xGraph1.SetZoomMode
+	btnUnZoom.Visible = True
+End Sub
+
+Private Sub btnUnZoom_Click
+	xGraph1.SetZoomIndexes(0, Samples)
+	btnUnZoom.Visible = False
+End Sub
+
+Private Sub Snapshot
+	Private bmp As B4XBitmap
+	Private Out As OutputStream
+	xui.SetDataFolder("GraphDemo")
+	Out = File.OpenOutput(xui.DefaultFolder, "Graph.jpg", False)
+'	Log(xui.DefaultFolder)
+	bmp = xGraph1.Snapshot
+	bmp.WriteToStream(Out, 100, "JPEG")
+	Out.Close
+End Sub
+
+Private Sub InitGraphX1
+	Private i As Int
+   
+	xGraph1.CurveYName(0) = "Voltage RMS"
+	xGraph1.SetScaleManu(0, 220, 270)
+	xGraph1.CurveYName(1) = "Frequency Hz"
+	xGraph1.SetScaleManu(1, 48.5, 51.5)
+	
+	xGraph1.CurvesToDisplay.Initialize2(Array As Int(0, 1))
+   
+	Private x0 = -120 * 30 As Int
+'	Samples = NWServ.NO_SAMPLES
+	Samples = 300
+	xGraph1.NbSamples = Samples + 1
+	For i = 0 To Samples
+		xGraph1.CurveX(i) = (i + x0) / 30
+		xGraph1.CurveY(0, i) = 5 * SinD(i * 2) + 247
+		xGraph1.CurveY(1, i) = 0.5 * CosD(i * 2) + 50
+	Next
+   
+
+	'    xGraph1.Title = "Test"
+	'    xGraph1.SetZoomIndexes(5, 295)
+	'    xGraph1.ScaleYValues = "1!3!10"
+	'    xGraph1.DisplayCurveUnit = False
+	'    xGraph1.DisplayCurveIndex = False
+
+	xGraph1.DrawGraph
+	
+End Sub
+
+'Add a cursor by touching the graph
+Private Sub btnAddCursor_Click
+	xGraph1.AddCursor(xui.Color_Gray)
+	If xGraph1.NumberOfCursors = 2 Then
+		btnAddCursor.Visible = False
+	End If
+	btnRemoveCursor.Visible = True
+End Sub
+
+'Removes the last selected cu
+Private Sub btnRemoveCursor_Click
+	xGraph1.RemoveCursor(1)
+	If xGraph1.NumberOfCursors = 0 Then
+		btnRemoveCursor.Visible = False
+	Else
+		btnRemoveCursor.Visible = True
+	End If
+	btnAddCursor.Visible = True
+End Sub
+
+Private Sub ckbDrawCursorValues_CheckedChange(Checked As Boolean)
+	xGraph1.DrawCursorValues = Checked
+End Sub
+
+Private Sub xGraph1_Touch (PT As TouchParameters)
+	Select PT.Action
+		Case 0	'Down
+'			Log("Down")
+		Case 1	'Up
+'			Log("Up")
+		Case 2	'Move
+'			Log(PT.XIndex)
+'			Log("Move x = " & PT.X & " y = " & PT.Y)
+
+			'you can also claulate the XIndex
+'			Private Index As Int
+'			Index = xGraph1.XIndexBegin + PT.X / xGraph1.GraphWidth * (xGraph1.XIndexEnd - xGraph1.XIndexBegin) + 0.5
+'			Log(Index)
+	End Select
+End Sub
+
+Private Sub xGraph1_CursorPositionChanged (CursorIndex As Int, XIndex As Int)
+'	Private i, CurveIndex As Int
+'	Log(CursorIndex & " / " & XIndex)
+'	For i = 0 To xGraph1.CurvesToDisplay.Size - 1
+'		CurveIndex = xGraph1.CurvesToDisplay.Get(i)
+'		Log(xGraph1.CurveY(CurveIndex, XIndex))
+'	Next
+End Sub

@@ -1,0 +1,163 @@
+﻿AppType=JavaFX
+Build1=Default,eu.dgc.dgswitchesdemo
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=|relative|..\dgSwitches
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private myswitch As dgSwitches
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	myswitch.Initialize
+End Sub
+
+'Show current switches state by Value and by a string of 0s (OFF state) and 1s (ON state)
+Sub LogCurrentState
+	Dim aLong As Long = myswitch.GetValue(myswitch.SWLONG, 0)
+	Log($"Value: ${aLong}${CRLF}Switches: ${myswitch.SwToString(myswitch.SWLONG, aLong)}"$)
+End Sub
+
+Sub Button1_Click
+	#Region setting state
+	Log("*** Setting initial state of the switches ***")
+	myswitch.SetAllBits								'all switches ON
+	LogCurrentState
+	myswitch.UnsetAllBits							'all switches OFF
+	LogCurrentState
+	'Set all switches according to a given configuration. Using an easy to read pattern
+	'Pattern: 1111111100000000000000000000000000000000000000000000000011111111
+	Dim value As Long = 0xFF000000000000FF			
+	myswitch.SetAllFromValue(value)
+	LogCurrentState
+	
+	'Set switches according to a given configuration. A few alternatives for the same pattern  are shown
+	'Pattern: 0000000010001111000000001000011100000000100000110000000010000001
+	'Dim value As Long = 0x008F008700830081
+	'myswitch.SetAllFromValue(value)
+	'LogCurrentState
+	myswitch.SetAllFromValue(0x008F008700830081)
+	LogCurrentState
+	'myswitch.SetAllFromValue(40251501498794113)	
+	'LogCurrentState
+	'myswitch.SwFromString("0000000010001111000000001000011100000000100000110000000010000001")
+	'LogCurrentState
+	Log("**********************************************************************************************")
+	#end region
+	
+	#Region reading state
+	'Reading switches' current state
+	Log("")
+	Log("*** Reading current state of the switches in a numeric variable ***")
+	Log("******* LONG ************")
+	Dim aLong As Long = myswitch.GetValue(myswitch.SWLONG, 0)
+	Log($"Value: ${aLong}${CRLF}Switches: ${myswitch.SwToString(myswitch.SWLONG, aLong)}"$)
+	
+	Log("******* INTs ************")
+	For banks = 1 To 0 Step -1
+		Dim anInt As Int = myswitch.GetValue(myswitch.SWINT, banks)
+		Log($"Bank: ${banks} *** Value: ${anInt} *** Switches: ${myswitch.SwToString(myswitch.SWINT, anInt)}"$)
+	Next
+	
+	Log("******* SHORTs ************")
+	For banks = 3 To 0 Step -1
+		Dim aShort As Short = myswitch.GetValue(myswitch.SWSHORT, banks)
+		Log($"Bank: ${banks} *** Value: ${aShort} *** Switches: ${myswitch.SwToString(myswitch.SWSHORT, aShort)}"$)
+	Next
+	
+	Log("******* BYTEs ************")
+	For banks = 7 To 0 Step -1
+		Dim aByte As Byte = myswitch.GetValue(myswitch.SWBYTE, banks)
+		Log($"Bank: ${banks} *** Value: ${aByte} *** Switches: ${myswitch.SwToString(myswitch.SWBYTE, aByte)}"$)
+	Next
+	Log("**********************************************************************************************")
+	Log("")
+	#end region
+	
+	#Region operating on single bits/switches
+	'Working with single bits. We use the 8 leftmost ones (so, bank 7)
+	Log("*** Working with a single switch at time ***")
+	myswitch.UnsetAllBits									'turn off all the bits
+	'Set the 6th bit of bank7, looking at it as the 62nd bit of the whole bank of 64 allowed switches
+	myswitch.SetSingleBit(62)
+	'Set the 5th bit of bank7, looking at it as the 5th in its own byte group
+	myswitch.SetSingleBit2(myswitch.SWBYTE,7,5)
+	'Now bank7 is 01100000
+	Dim aByte As Byte = myswitch.GetValue(myswitch.SWBYTE, 7)
+	Log($"Value: ${aByte} *** Switches: ${myswitch.SwToString(myswitch.SWBYTE, aByte)}"$)
+	
+	'Test if 6th bit of bank7 is set
+	Log(myswitch.IsSetBit(62))								'test as part of the whole 64bits bank
+	Log(myswitch.IsSetBit2(myswitch.SWBYTE,7,6))			'test in its own bank (bank 7)
+	
+	'Unset 6th bit of bank7 - Now bank7 is 00100000
+	myswitch.UnSetSingleBit2(myswitch.SWBYTE,7,6)
+	'Get current value of bank7 alone as a byte value and show it as a binary string too
+	Dim aByte As Byte = myswitch.GetValue(myswitch.SWBYTE, 7)
+	Log($"Value: ${aByte} *** Switches: ${myswitch.SwToString(myswitch.SWBYTE, aByte)}"$)
+	
+	'Test if 6th bit of bank7 is set
+	Log(myswitch.IsSetBit(62))								'test as part of the whole 64bits bank
+	Log(myswitch.IsSetBit2(myswitch.SWBYTE,7,6))			'test in its own bank (bank 7)
+	Log("**********************************************************************************************")
+	Log("")
+	#end region
+	
+	#Region operating on multiple/group of switches
+	'Working with a group of bits.
+	Log("*** Working with multiple switche at the same time ***")
+	'Using a list/array to indicate which bits to set; all others keep their current state
+	myswitch.UnsetAllBits
+	'myswitch.SwFromList(Array As Byte(63,61,59,2,1,0))
+	myswitch.SwFromList(Array As Byte(55,51,50,49,48,39,34,33,32,23,17,16,7,0))
+	LogCurrentState
+	
+	'Using a long value representing the bits to set (ON); all keep their current state
+	myswitch.UnsetAllBits
+	myswitch.SetBits(0x0100000000000000)		'00000001 ... 00000000
+	myswitch.SetBits(0x8000000000000001)		'10000000 ... 00000001
+	myswitch.SetBits(12)						'00000000 ... 00001100
+	LogCurrentState
+	
+	'Setting bits of a given bank by numeric value. Here we work on a BYTE level on bank 7 (the leftmost one)
+	'Set multiple bits at the same time (in this case bit0, bit1 and bit7) - Now bank7 is 10000011
+	myswitch.UnsetAllBits
+	myswitch.SetBits2(myswitch.SWBYTE,7,131)
+	Dim aByte As Byte = myswitch.GetValue(myswitch.SWBYTE, 7)
+	Log($"Value: ${aByte} *** Switches: ${myswitch.SwToString(myswitch.SWBYTE, aByte)}"$)
+	
+	'Setting bits of a given bank by string. Here we work on a SHORT level on banks 3 (the leftmost one)
+	'All the bits in other banks are zeroed (look at the rightmost byte to see what happens to its bits)
+	myswitch.UnsetAllBits
+	myswitch.SetBits(12)													'00000000 ... 00001100
+	myswitch.SwFromString2(myswitch.SWSHORT, 3, "0000000010000110", False)	'bits in other banks are zeroed
+	LogCurrentState
+	
+	'Same as above, but keeping switches' state for untouched bits
+	myswitch.UnsetAllBits
+	myswitch.SetBits(12)													'00000000 ... 00001100
+	myswitch.SwFromString2(myswitch.SWSHORT, 3, "0000000010000110", True)	'bits in other banks keep their state
+	myswitch.SwFromString2(myswitch.SWSHORT, 2, "1111111111111111", True)	'same as above
+	LogCurrentState
+	#end region
+End Sub

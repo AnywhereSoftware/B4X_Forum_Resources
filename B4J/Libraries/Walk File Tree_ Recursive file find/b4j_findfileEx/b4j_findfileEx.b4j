@@ -1,0 +1,85 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=findfiles
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=javaobject
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 900
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Dim ff As walkFileTree
+	Private ListView1 As ListView
+	Private TextField1 As TextField
+	Private TextField2 As TextField
+	Private cbDrives As ComboBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	ff.Initialize
+	Dim rootList As List
+	rootList.Initialize
+	rootList=ListRoots
+	For i=0 To rootList.Size -1
+		cbDrives.Items.Add(rootList.Get(i))
+	Next
+	Log(rootList)
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Dim foundFiles As List
+	foundFiles.Initialize
+	ListView1.Items.Clear
+	foundFiles= ff.search(TextField1.Text, TextField2.Text)
+	If foundFiles.Size > 0 Then
+		For i = 0 To  foundFiles.Size -1
+			ListView1.Items.Add(foundFiles.Get(i))
+		Next
+	End If
+End Sub
+
+'how To list the system accessible hard drives:
+For Each drive As String In ListRoots
+   Log(drive)
+Next
+
+Sub ListRoots As List
+	Dim jo As JavaObject
+	Dim o() As Object = jo.InitializeStatic("java.io.File").RunMethod("listRoots", Null)
+	Return o
+End Sub
+
+Private Sub cbDrives_ValueChanged (Value As Object)
+	
+End Sub
+
+Private Sub cbDrives_SelectedIndexChanged(Index As Int, Value As Object)
+	
+End Sub
+
+Private Sub ListView1_SelectedIndexChanged(Index As Int)
+   Try
+		fx.ShowExternalDocument($"file://${ListView1.Items.Get(Index)}"$)
+   Catch
+   	    fx.Msgbox(MainForm,LastException.Message,"Error")	
+   End Try			
+
+End Sub

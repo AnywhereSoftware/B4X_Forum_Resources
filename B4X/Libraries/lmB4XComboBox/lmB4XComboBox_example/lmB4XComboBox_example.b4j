@@ -1,0 +1,65 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Chinook_Sqlite.sqlite
+File2=layMain.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsql
+Library4=b4xtable
+Library5=xui views
+Library6=lmb4xcombobox
+Module1=modDB
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes
+    #MainFormWidth: 600
+    #MainFormHeight: 600
+#End Region
+
+#AdditionalJar: sqlite-jdbc-3.30.1.jar
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private lmcbArtists As lmB4XComboBox
+	Private xtblAlbums As B4XTable
+	Private btnFillCombo As Button
+	Private lblArtistID As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("layMain")
+	MainForm.Title = "lmB4XComboBox test"
+	MainForm.Show
+	
+	modDB.Init
+	
+	btnFillCombo.Text = $"lmcbArtists.SetItemsFromSQLite(modDB.DB, "Artist", "Name", "ArtistID", "Int")"$
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub lmcbArtists_SelectedChanged2 (Text As String, Value As Object)
+	Log("Artist: " & Text)
+	Log("ArtistID: " & Value)
+	lblArtistID.Text = "ArtistID selected: " & Value
+	Dim lstData As List = modDB.GetAlbumsByArtistID(Value)
+	xtblAlbums.SetData(lstData)
+End Sub
+
+Sub btnFillCombo_Click
+	If xtblAlbums.Columns.Size > 0 Then Return
+	xtblAlbums.AddColumn("Album", xtblAlbums.COLUMN_TYPE_TEXT)
+	lmcbArtists.SetItemsFromSQLite(modDB.DB, "Artist", "Name", 15, "ArtistID", "Int")
+End Sub

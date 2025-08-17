@@ -1,5 +1,5 @@
 ### WebGL library, working with static and animated models by max123
-### 08/12/2025
+### 04/11/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166523/)
 
 Hello everyone,  
@@ -14,7 +14,7 @@ In this demo in particular I will show you how to load static and/or animated de
 Each model will have none, just one, or many animations, actions that the model (let's call it an Actor) can perform (let's call it an Action).  
   
 When you load an Actor with animations you can decide what Action it should perform, for example, a man could walk, run, sit and many other things.  
-In this sense it is possible to decide various things on the code, first of all what action an Actor should perform, at what speed, whether to use a loop and other things.  
+In this sense it is possible to decide various things via code, first of all what action an Actor should perform, at what speed, whether to use a loop and other things.  
   
 What is important to note is that each Action of an Actor is completely independent from the actions of the other actors in the scene, so we could for example speed up, or slow down the action of an actor without influencing that of the other actors at all.  
   
@@ -25,7 +25,7 @@ You don't necessarily have to use a CAD to do this, there are some websites wher
   
 The user can list by code all actions saved in the model, so decide what actions the model exposes, and play them.  
   
-This demo code also shows how to simulate a cloth by code, with a custom class that simplifies the work, in this case I used a cloth with the B4X logo on it, it is simply a texture. If it is in PNG format, you can also use the Alpha channel for transparency. **Note that the cloth and the wind are calculated via code in real time and it is possible to modify various parameters, such as the strength or direction of the wind**.  
+This demo code also shows how to simulate a cloth by code, with a custom class that simplifies the work, in this case I used a cloth with the B4X logo on it, it is simply a texture. If it is in PNG format, you can also use the Alpha channel for transparency. Note that the cloth and the wind are calculated via software in real time and it is possible to modify various parameters, such as the strength or direction of the wind.  
   
 In this demo project there are 2 demo scenes, **DemoScene1** and **DemoScene2**. Make sure to uncomment only one of the two calls for the scene and comment the other accordingly.  
 - DemoScene1 shows you the complete scene with all the characters you can animate. (Note: it will take some seconds to load, because detailed models and a lots of polygons used).  

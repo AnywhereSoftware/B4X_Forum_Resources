@@ -1,0 +1,117 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jcanvasext
+Module1=Ball
+Module2=PhysicsUtils
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 900
+	#MainFormHeight: 650
+#End Region
+
+'https://github.com/gtiwari333/java-collision-detection-source-code
+
+Sub Process_Globals
+	
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Public cv As Canvas
+	Public cve As CanvasExt
+	Dim ballList As List
+	Dim t As Timer
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	cve.Initialize(cv)
+	ballList.Initialize
+	t.Initialize("t", 20)
+	
+	Dim bal As Ball
+	bal.Initialize(100, 410, 25, 3, 34, fx.Colors.YELLOW)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(80, 350, 15, 2, -114, fx.Colors.YELLOW)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(530, 400, 30, 3, 14, fx.Colors.GREEN)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(400, 400, 12, 3, 14, fx.Colors.GREEN)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(400, 50, 15, 1, -47, fx.Colors.Red)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(480, 320, 17, 4, 47, fx.Colors.Red)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(0, 150, 22, 1, -114, fx.Colors.LightGray)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(100, 240, 25, 2, 60, fx.Colors.Magenta)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(250, 380, 18, 3, -42, fx.Colors.Blue)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(500, 170, 30, 6, -42, fx.Colors.Blue)
+	ballList.Add(bal)
+	Dim bal As Ball
+	bal.Initialize(200, 80, 40, 6, -84, fx.Colors.Cyan)
+	ballList.Add(bal)
+	
+	t.Enabled = True
+	
+End Sub
+
+Sub t_tick
+	
+	cv.ClearRect(0, 0, cv.Width, cv.Height)
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	updatePositionAndDirection
+	
+	For Each cball As Ball In ballList
+		cve = cball.draw(cve)
+    Next
+	
+End Sub
+
+public Sub updatePositionAndDirection
+	
+	' Check collision between the balls And the box
+	For Each aBallsL1 As Ball In ballList
+		PhysicsUtils.collisionWithWall(cv, aBallsL1)
+	Next
+
+	'Check collision between two balls
+	For i = 0 To ballList.size - 1
+		For j = 0 To ballList.size - 1
+			If (i < j)  Then
+				PhysicsUtils.intersect(ballList.get(i), ballList.get(j))
+		    End If
+	     Next
+	Next
+
+	'update positions increments
+	For Each aBallsL As Ball In ballList
+		aBallsL.update(1)
+    Next
+    
+End Sub
+

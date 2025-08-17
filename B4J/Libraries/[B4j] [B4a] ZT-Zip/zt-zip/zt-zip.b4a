@@ -1,0 +1,178 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module10=ZT_New
+Module2=ByteSource
+Module3=FileSource
+Module4=ZipEntry
+Module5=ZipEntry_Static
+Module6=ZipEntrySource
+Module7=Zips
+Module8=ZipUtils
+Module9=ZT_AHW
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=10
+Version=8.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger:True
+
+#AdditionalJar: zt-zip-1.13
+#AdditionalJar: slf4j-api-1.7.25
+#AdditionalJar: slf4j-jdk14-1.7.25
+
+#LibraryAuthor: Stevel05
+#LibraryVersion: 0.1
+#LibraryName: ZT-Zip
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+
+
+	Dim Zip As Zips = ZT_New.NewZips
+	'Set the target zip file
+	Zip.Destination(File.DirInternal,"Temp.zip")
+	
+	'Add String as a text file
+	Zip.AddEntry(ZT_New.NewByteSource("docs\test.txt","Test String".GetBytes("UTF8")))
+	
+	'Process these commands
+	Zip.Process
+	
+	Sleep(0)
+	Log("***")
+	
+	'List the file entries
+	IterateZip(File.DirInternal,"Temp.zip")
+	
+
+	'Get the existing Zip File
+	Dim Zip As Zips = ZT_New.NewZipsExisting(File.DirInternal,"Temp.zip")
+	
+	'Add String as a text file
+	Zip.AddEntry(ZT_New.NewByteSource("test2.txt","Test String2".GetBytes("UTF8")))
+	
+	'Process these commands
+	Zip.Process
+	
+	Log("***")
+	
+	'List the file entries
+	IterateZip(File.DirInternal,"Temp.zip")
+	
+	
+	
+	'Get the zip file
+	Dim Zip As Zips = ZT_New.NewZipsExisting(File.DirInternal,"Temp.zip")
+	
+	'Set a new destination folder
+	Zip.Destination(File.DirInternal,"Temp")
+	
+	'Unpack the zip file to the destination
+	Zip.Unpack
+	
+	'Process these commands
+	Zip.Process
+	
+	
+	Log("***")
+	'Remove an entry
+	
+	'Get the existing Zip File
+	Dim Zip As Zips = ZT_New.NewZipsExisting(File.DirInternal,"Temp.zip")
+	Zip.RemoveEntry("docs\test.txt")
+	Zip.Process
+	
+	'List the file entries
+	IterateZip(File.DirInternal,"Temp.zip")
+	
+	
+	'Static Methods (ZipUtils)
+	
+	Log("***")
+	
+	'Unzip a single file to a byte array
+	Dim B() As Byte = ZipUtils.UnpackEntry(File.DirInternal,"Temp.zip","test2.txt")
+	Log(BytesToString(B,0,B.Length,"UTF8"))
+	
+	'Add a new file from a string
+	ZipUtils.AddOrReplaceEntries(File.DirInternal,"Temp.zip",Array(ZT_New.NewByteSource("newtest.txt","Newtest".GetBytes("UTF8"))))
+	
+	Log("***")
+	'Unpack one entry to a byte array
+	Dim B() As Byte = ZipUtils.UnpackEntry(File.DirInternal,"Temp.zip","newtest.txt")
+	Log(BytesToString(B,0,B.Length,"UTF8"))
+	
+	
+	'Replace an Entry with a file from a string
+	ZipUtils.AddOrReplaceEntries(File.DirInternal,"Temp.zip",Array(ZT_New.NewByteSource("newtest.txt","Newtest2".GetBytes("UTF8"))))
+	
+	Log("***")
+	Dim B() As Byte = ZipUtils.UnpackEntry(File.DirInternal,"Temp.zip","newtest.txt")
+	Log(BytesToString(B,0,B.Length,"UTF8"))
+	
+		
+	'Copy the zip file and replace an entry at the same time
+	ZipUtils.AddOrReplaceEntries2(File.DirInternal,"Temp.zip",Array(ZT_New.NewByteSource("newtest.txt","Newtest3".GetBytes("UTF8"))),File.DirInternal,"Temp1.zip")
+	
+	Log("***")
+	Dim B() As Byte = ZipUtils.UnpackEntry(File.DirInternal,"Temp1.zip","newtest.txt")
+	Log(BytesToString(B,0,B.Length,"UTF8"))
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+
+Private Sub IterateZip(ZipDir As String, ZipFile As String)
+	Private Zip As Zips
+	Zip.Initialize
+	Zip.Get(ZipDir,ZipFile)
+	Zip.Iterate(Me,"Zip")
+	Zip.Process
+End Sub
+
+Private Sub Zip_Item(ZEntry As ZipEntry)
+	Log(ZEntry.GetName)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

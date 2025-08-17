@@ -1,5 +1,5 @@
 ###  WebGL Library by max123
-### 08/12/2025
+### 05/18/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/164553/)
 
 Hi all,  
@@ -60,7 +60,7 @@ With this library you can:
 - The threejs library already have a lots of classes to help you to do anything, but even **can be expanded** by creating more custom classes and/or integrate any JS code or JS external libraries and ES6 exported modules.  
 - The library have some useful methods to transform **JS arrays to B4X List** **and viceversa** and to transform **JS objects to B4X maps and viceversa**.  
 - The library have a **Console** command to output on JS console and **Alert** command to show JS alert boxes.  
-- The official threejs site offer a very good, clear and detailed documentation on methods of most classes, sometime with code and sometime even with iteractive inline 3D views. Refer to the official [Documentation](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Scroll down the long list on the left or search on top what you need. You will noticed that docs even support more languages, I'm happy to see it even support italian.  
+- The official threejs site offer a very good and detailed informations on methods of most classes, sometime with code and sometime even with iteractive inline 3D views. Refer to the official [Documentation](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Scroll down the long list on the left or search on top what you need. You will noticed that docs even support more languages, I'm happy to see it even support italian.  
 - If you encounter some issues during development you can ask to [Mentor ChatGPT](https://chatgpt.com/g/g-jGjqAMvED-three-js-mentor) that is expert on THREEJS, or just join to **Discord** or **StackOverflow** officials threejs forums. You can find more infos on threejs site.  
 - The web is full of threejs tutorials, even there are online developer tools where you can write threejs code and see the final results. One of most popular is [codepen](https://codepen.io/collection/AKNpyq). All these codes will work on B4J WebGL library.  
 - The web is full of sites where you can find free or paid detailed 3D models, without or with textures, without or with animations. One of most popular is [sketchfab](https://sketchfab.com/).  
@@ -68,7 +68,7 @@ With this library you can:
 - **More secure**. All is managed internally using XmlHttpRequests and modern techniques where the security is at top level.  
 - Come with **step by step simple setup guide** and with **5 demo projects**, fully commented and disposed as small tutorial to start with it.  
   
-**How to setup WebGL library** **(Step by step)**  
+**How to use WebGL library** **(Step by step)**  
 
 1. Download the attached jWebGL.zip file
 2. Extract jWebGL.jar and jWebGL.xml files to your Additional Libraries folder
@@ -82,7 +82,7 @@ With this library you can:
 4. Go to THREEJS github page and download the distribution zip file. Note that I have tested it on version r164, but because it's community is very active, it will continue to evolve, improve, fix small bugs etc… You can just download the latest version (at moment I wrote this, the r171) or search old versions on the history. Searching very old versions (like r120-r130) helped on old devices that not fully support WebGL, but break some compatibility with new code. Here the github page where you can download the latest library version: <https://github.com/mrdoob/three.js>
 5. After you download the zip file named three.js-dev.zip, open it, you will find a three.js-dev folder inside, **double click and open it**
 6. Select all files and folders of threejs distibution, you will have to copy/paste inside the already created B4XWebGL folder
-7. Ensure you have Archiver 1.1 library installed
+7. Download latest jServer library (4.02) from [here](https://www.b4x.com/android/forum/threads/solved-getting-jserver-logs-and-show-it-on-the-ide-logs.162402/) on post #2 and put .xml and .jar files to your Internal Library folder replacing the existing ones or creating a backup.
 8. **Done setup complete !!!** **At this point you are able to use B4J WebGL library :p**
 9. Extract the Demos.zip examples in a place where you have your projects.
 10. Open the B4J IDE, open the first demo project example jWebGL\_Demo1
@@ -182,7 +182,4 @@ CopyResourcesFromZipFileToSingleFolder (DestFolder As String, ZipFileName As Str
 ```
 
   
-- Updated accordly all demo projects. To avoid confusion about small code changes in the library initialization, you will just remove old demo projects and use the new zip file.  
-  
-**Updated to 1.25**  
-- added an option to overwrite resources using CopyResourceFile, CopyResourcesFromZipFile and CopyResourcesFromZipFileToSingleFolder. If Overwrite is True, always resources will be overwritten, if False, the library just check for first file existence, if this exists do nothing, if this do not exists will copy relative resources. If you still develop and change files from time to time you can set it always True, put it False otherwise or in final production.
+- Updated accordly all demo projects. To avoid confusion about small code changes in the library initialization, you will just remove old demo projects and use the new zip file.

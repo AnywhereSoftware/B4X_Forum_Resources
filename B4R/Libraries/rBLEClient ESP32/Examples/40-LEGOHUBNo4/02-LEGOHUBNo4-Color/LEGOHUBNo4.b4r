@@ -1,0 +1,113 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleclient
+Module1=|relative|..\LEGOHUBNo4Controller
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rBLEClient
+' Brief:	Example connecting to the LEGOHUBNo4 brick and get the color from distance/color sensor connected to port A (index 0).
+'			LEGO Battery Box Powered Up Bluetooth HUB NO.4 (Hub 88009). BLE adertised name is HUB NO.4.
+'			Color & Distance Sensor (88007 / 45605).
+'			Handle notifications with the event NewData.
+'
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-08-01
+' License:	MIT — see LICENSE file.
+
+' MCU:		ESP-WROOM-32, B4R IDE ESP32 Dev Module, Arduino Boards Manager ESP32 3.0.0.
+' 			IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+' Wiring:	No additional wiring
+
+' Log:
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 800
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String 		= "rBLEClient LEGOHUBNo4 Color v20250801"
+	Public Serial1 As Serial
+
+	' BLE -  Peripheral LEGOHUBNo4
+	Private NAME As String			= "LEGOHUBNo4"
+	Private MAC As String 			= "90:84:2b:c1:94:79" ' MAC address in lowercase!
+    Private Client As BLEClient
+	Private PortId As Byte
+
+	' Timer for polling the distance
+	Private TimerPoll As Timer
+	Private TimerPollInterval As ULong = 250
+	Private TimerPollCounter As ULong = 0
+	Private TimerPollCounterMax As ULong = 80
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+	Log("[AppStart] ", VERSION)
+
+	' Set distance sensor port id
+	PortId = LEGOHUBNo4Controller.PORT_A
+
+	' Poll every NNN ms
+	TimerPoll.Initialize("TimerPoll_Tick", TimerPollInterval)
+	TimerPoll.Enabled = False
+
+    ' Initialize the BLE client with MAC, Service UUID, Characteristic UUID
+	Client.Initialize(MAC, _
+        		   	  LEGOHUBNo4Controller.UUID_SERVICE, _ 
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+        		   	  "Client_NewData", "Client_Error", _
+					  True)
+
+	Log("[AppStart] Connecting to ", NAME)
+	If Client.Connect Then
+		Log("[AppStart] Connected to ", NAME)
+
+		' Subscribe
+		Log("[AppStart] Notify color on port A")
+		LEGOHUBNo4Controller.NotifyColor(Client, PortId)
+
+		' Enable the distance poller
+		TimerPoll.Enabled = True
+    Else
+		Log("[AppStart] Connection failed to ", NAME)
+    End If
+End Sub
+
+Sub TimerPoll_Tick
+	TimerPollCounter = TimerPollCounter + 1
+
+	LEGOHUBNo4Controller.PortValueRequest(Client, PortId)
+
+	If TimerPollCounter > TimerPollCounterMax Then
+		Log("[TimerPoll_Tick] Distance polling stopped.")
+		TimerPoll.Enabled = False
+		Log("[TimerPoll_Tick] Disconnected from ", NAME)
+		Client.Disconnect
+	End If
+End Sub
+
+' Callback when data is received from BLE
+Sub Client_NewData(data() As Byte)
+	LEGOHUBNo4Controller.MessageLogger(data)
+End Sub
+
+' Callback when BLE error occurs
+Sub Client_Error(code As Byte)
+	Log("[Client_Error] code=", code) 
+End Sub

@@ -1,0 +1,416 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=devices.bjl
+File2=Layout1.bjl
+File3=off.png
+File4=offRed.png
+File5=on.png
+File6=onRed.png
+File7=settings.png
+File8=settingsoff.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+Group=Default Group
+Library1=b4jsoundsystem
+Library10=simplemediamanager
+Library2=borderimage
+Library3=designerutils
+Library4=dialogs
+Library5=jcore
+Library6=jfx
+Library7=jshell
+Library8=json
+Library9=jxui
+Module1=ItemControl
+NumberOfFiles=8
+NumberOfLibraries=10
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1280
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private xui As XUI
+	Private MainForm As Form
+	Private clvDevices As CustomListView
+	Private MediaManager As SimpleMediaManager
+	Private dd As DDD
+	Public Sound As SoundSystem
+	Private DeviceDirection As String
+	Private DeviceType As String
+	Private DirectionType As String
+	
+	
+	Private btnTypeDevices As Button
+	Private btnTypeSubunits As Button
+	Private btnTypeApplications As Button
+	Private btnDirectionRender As Button
+	Private btnDirectionCapture As Button
+	
+
+	
+	Private sldLeftMeter As Slider
+	Private sldRightMeter As Slider
+
+	Public scrControls As ScrollPane
+	Private paneLevels As Pane
+	Public paneControls As Pane
+	Public lblControls As Label
+	
+	Private itemControls(20) As ItemControl
+	
+	
+	Private LineFriendlyId As String
+	
+	Private lineControls As  List
+	
+	
+	Private btnSoundSettings As Button
+	Public lblSpatial As Label
+	Public cbbSpatial As ComboBox
+	Public chbListenTo As CheckBox
+	Private txtBitsDepth, txtSampleRate, txtChannels As TextField
+	Private btnSetFormat, btnDefautFormat As Button
+	
+	Private chbAllowExclusive As CheckBox
+	Private chbSetExclusive As CheckBox
+	Private jsPlay As Shell
+	Private isPlaying As Boolean=False
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	DeviceDirection="Render"
+	DeviceType="Device"
+	DirectionType="Playback Devices"
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	dd.Initialize
+	xui.RegisterDesignerClass(dd)
+	MainForm.Show
+	Sound.Initialize("Sound",File.DirApp)
+	Sound.Start
+	scrControls.InnerNode=paneLevels
+	cbbSpatial.Items.AddAll(Array As String("Disabled","Windows Sonic For Headphones"))
+	cbbSpatial.SelectedIndex=0
+	getDevices(DeviceDirection)
+
+End Sub
+
+Sub MainForm_Closed
+	Log("Exiting...")
+	Sound.Release
+	Stop
+	ExitApplication
+End Sub
+Sub MainForm_CloseRequest (EventData As Event)
+	MainForm.Close
+End Sub
+
+
+Sub Sound_Stereo(peak() As Float, rms() As Float)
+	sldLeftMeter.Value=rms(0)*100
+	sldRightMeter.Value=rms(1)*100
+End Sub
+
+Public Sub getDevices(direction As String)
+	Dim parser As JSONParser
+	'Dim Devices As String=Sound.getDevices("/sjson")
+	'parser.Initialize(Devices)
+	Sound.SaveDevices("/sjson",True,True)
+	Sleep(100)
+	parser.Initialize(File.ReadString(File.DirApp,"devices.json"))
+	clvDevices.Clear
+	Dim list As List=parser.NextArray
+	For i=0 To list.Size-2
+		For j=i+1 To list.Size-1
+			Dim map1 As Map=list.Get(i)
+			Dim map2 As Map=list.Get(j)
+			Dim state1 As String=map1.Get("Device State")
+			Dim state2 As String=map2.Get("Device State")
+			If state1.CompareTo(state2)>0 Then
+				list.Set(i,map2)
+				list.Set(j,map1)
+			End If
+			
+		Next
+	Next
+	Log(DeviceType)
+	For i=0 To list.Size-1
+		Dim map As Map=list.Get(i)
+		If map.Get("Direction")="Render"  And DirectionType.Contains("Playback") Then
+			If map.get("Type")="Device" Then
+				LoadClvDevices(map)
+			End If
+		Else if map.Get("Direction")="Capture" And DirectionType.Contains("Recording") Then
+			If map.get("Type")="Device" Then'Or  map.get("Type")="Application" And Not(map.Get("Device Name")="Realtek(R) Audio") Then
+				LoadClvDevices(map)
+			End If
+		End If
+	Next
+	RefreshDevices
+End Sub
+Public Sub RefreshDevices()
+	Dim itemsCount As Int=0
+	Dim parser As JSONParser
+	'Dim Devices As String=Sound.getDevices("/sjson")
+	'parser.Initialize(Devices)
+	'Log(Devices)
+	'Return
+	Sound.SaveDevices("/sjson",False,False)
+	Sleep(100)
+	parser.Initialize(File.ReadString(File.DirApp,"devices.json"))
+	Dim list As List=parser.NextArray
+	paneLevels.RemoveAllNodes
+	lblControls.Initialize("paneLevels")
+	lblControls.Text="  " & DirectionType & "  "
+	Dim lbl As B4XView=lblControls
+	lbl.SetColorAndBorder(xui.Color_White,1,xui.Color_Black,5)
+	If lbl.Text.Contains("Playback") Then
+		lbl.Color=xui.Color_Green
+		lbl.TextColor=xui.Color_Black
+	Else if lbl.Text.Contains("Recording") Then
+		lbl.Color=xui.Color_Red
+		lbl.TextColor=xui.Color_White
+	End If
+	If lbl.Text.Contains("Applications") Then
+		lbl.TextColor=xui.Color_Black
+		If DeviceDirection="Render" Then
+			lbl.Color=xui.Color_Yellow
+		Else
+			lbl.Color=xui.Color_ARGB(255,255,168,0)
+		End If
+
+	End If
+	
+	paneLevels.AddNode(lblControls,10,10,-1,40)
+	lineControls.Initialize
+	For i=list.Size-1 To 0 Step-1
+		Dim map As Map=list.Get(i)
+			If map.Get("Direction")=DeviceDirection Then 'And map.Get("Device State")="Active" Then
+				If map.Get("Type")=DeviceType Then
+					If Not(map.Get("Name")="System Sounds" )Then
+						itemControls(itemsCount).Initialize("Item")
+						itemControls(itemsCount).AddTo(paneLevels,itemsCount*150+30,50,110,200)
+						itemControls(itemsCount).UpdateControl(map)
+						itemsCount=itemsCount+1
+						paneLevels.PrefWidth=itemsCount*160 +10
+					End If
+				End If
+			End If
+	Next
+	
+End Sub
+
+
+
+
+
+
+
+Private Sub LoadClvDevices(map As Map)
+	clvDevices.Add(CreateListItem(map,clvDevices.AsView.Width, 60),map.Get("Command-Line Friendly ID"))
+End Sub
+Private Sub CreateListItem(map As Map,Width As Int,height As Int) As B4XView
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, Width, height)
+	p.LoadLayout("devices")
+	'Note that we call DDD.CollectViewsData in devices designer script. This is required if we want to get views with dd.GetViewByName.
+
+	dd.GetViewByName(p, "Name").Text=map.Get("Name")
+	dd.GetViewByName(p, "Device_Name").Text=map.Get("Device Name")
+	Dim deviceState As String=map.get("Device State")
+	Dim p1 As Pane=dd.GetViewByName(p, "logoState")
+	If deviceState="Active" Then
+		dd.GetViewByName(p, "btnEnable").Text="Disable"
+		dd.GetViewByName(p, "btnEnable").Visible=True
+		CSSUtils.SetBackgroundImage(p1,File.DirAssets, "on.png")
+	Else if deviceState="Inactive" Then
+		dd.GetViewByName(p, "btnEnable").Text="Enable"
+		dd.GetViewByName(p, "btnEnable").Visible=True
+		CSSUtils.SetBackgroundImage(p1,File.DirAssets, "onRed.png")
+	Else
+		dd.GetViewByName(p, "btnEnable").Visible=True
+		CSSUtils.SetBackgroundImage(p1,File.DirAssets, "onRed.png")
+	End If
+	dd.GetViewByName(p, "btnEnable").Tag=map.Get("Command-Line Friendly ID")
+	Return p
+End Sub
+
+
+Private Sub clvDevices_ItemClick (Index As Int, value As Object)
+		LineFriendlyId =value 									  'value=map.Get("Command-Line Friendly ID")
+End Sub
+
+Private Sub btnEnable_Click
+	Dim btn As Button=Sender
+	Dim p As B4XView=btn.Parent
+	Log(btn.Tag & " Clicked")
+	Sound.DisableEnable(btn.Tag)
+	Dim p1 As Pane=p.GetView(0)
+	If btn.Text="Disable" Then
+		btn.Text="Enable"
+		CSSUtils.SetBackgroundImage(p1,File.DirAssets, "off.png")
+	Else
+		btn.Text="Disable"
+		CSSUtils.SetBackgroundImage(p1,File.DirAssets, "on.png")
+	End If
+	Log(p1)
+	Sound.Stop
+	RefreshDevices
+	Sound.Start
+End Sub
+
+Private Sub btnType_Click
+	Dim btn As Button
+	btn=Sender
+	DeviceType=btn.Tag
+	If DeviceDirection="Render" Then DirectionType="Playback " & btn.Tag & "s"
+	If DeviceDirection="Capture" Then DirectionType="Recording " & btn.Tag & "s"
+	getDevices(DeviceDirection)
+End Sub
+Private Sub btnDirection_Click
+	Dim btn As Button
+	btn=Sender
+	DeviceDirection=btn.Tag
+	If btn.Tag="Render" Then DirectionType="Playback " & DeviceType & "s"
+	If btn.Tag="Capture" Then DirectionType="Recording " & DeviceType & "s"
+	paneControls.Visible=False
+	getDevices(DeviceDirection)
+End Sub
+
+
+Private Sub btnLoadProfile_Click
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.InitialDirectory=File.DirApp
+	fc.SetExtensionFilter("Profile",Array As String("*.spr"))
+	fc.InitialFileName="profile"
+	Dim response As String=fc.ShowOpen(MainForm)
+	If response="" Then Return
+	Log(response)
+	Sound.LoadProfile1(response)
+	getDevices(DeviceDirection)
+End Sub
+
+Private Sub btnSaveProfile_Click
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.InitialDirectory=File.DirApp
+	fc.SetExtensionFilter("Profile",Array As String("*.spr"))
+	
+	Dim response As String=fc.ShowSave(MainForm)
+	If response="" Then Return
+	Log(response)
+	Sound.SaveProfile1(response)
+End Sub
+Private Sub btnRefreshDevices_Click
+	getDevices(DeviceDirection)
+End Sub
+
+Private Sub btnSoundSettings_Click
+	'"C:\Windows\System32\rundll32.exe Shell32.dll,Control_RunDLL Mmsys.cpl,,0
+	Sound.openSoundSettings
+End Sub
+
+Private Sub chbListenTo_CheckedChange(Checked As Boolean)
+	Dim p As Pane=chbListenTo.Parent
+	Sound.Stop
+	Sound.listenDevice(p.Tag,Checked)
+	Sound.Start
+End Sub
+
+
+Private Sub cbbSpatial_ValueChanged (Value As Object)
+	Dim p As Pane=cbbSpatial.Parent
+	If Value="Disabled" Then Value=""
+	Sound.Stop
+	Sound.setSpatial(p.Tag,Value)
+	Sound.Start
+End Sub
+
+Private Sub btnSetFormat_Click
+	Dim p As Pane=btnSetFormat.Parent
+	Sound.Stop
+	Sound.setDefaultFormat(p.Tag,txtBitsDepth.text,txtSampleRate.Text, txtChannels.Text)
+	Sound.Start
+End Sub
+
+Private Sub btnDefaultFormat_Click
+	txtBitsDepth.Text=24
+	txtSampleRate.Text=48000
+	txtChannels.Text=2
+End Sub
+
+
+
+
+
+Private Sub paneControls_MouseClicked (EventData As MouseEvent)
+	paneControls.Visible=False	
+End Sub
+
+
+
+
+
+Private Sub chbAllowExclusive_CheckedChange(Checked As Boolean)
+	Dim p As Pane=chbAllowExclusive.Parent
+	If Checked Then
+		chbSetExclusive.Enabled=True
+	Else
+		chbSetExclusive.Enabled=False
+	End If
+	Sound.AllowExclusive(p.Tag,Checked)
+End Sub
+
+Private Sub chbSetExclusive_CheckedChange(Checked As Boolean)
+	Dim p As Pane=chbSetExclusive.Parent
+	Sound.ExclusivePriority(p.Tag,Checked)
+End Sub
+
+
+
+Private Sub btnPlay_MouseClicked (EventData As MouseEvent)
+	If isPlaying=True Then
+		Return
+	Else
+		Play
+	End If
+End Sub
+
+Private Sub Play
+	File.Delete(File.DirApp,"play.bat")
+	Dim url As String="https://stream-icy.bauermedia.pt/m80.mp3"
+	Dim playerApp As String="start wmplayer.exe"
+	Dim cmd As String=playerApp & " " & url
+	File.WriteString(File.DirApp,"play.bat", cmd)
+	Dim flag As Boolean=False
+	Do Until flag=True
+		flag=File.Exists(File.DirApp,"play.bat")
+	Loop
+	jsPlay.Initialize("",File.DirApp & "/play.bat",  Null)
+	jsPlay.WorkingDirectory=File.DirApp
+	jsPlay.RunWithOutputEvents(-1)
+	isPlaying=True
+End Sub
+
+Private Sub btnStop_Click
+	Stop
+End Sub
+
+private Sub Stop
+	Dim jsStop As Shell
+	jsStop.Initialize("","cmd.exe", Array("/c taskkill /IM " & "wmplayer.exe" & " /t /f" ))
+	jsStop.Run(-1)
+	isPlaying=False
+End Sub

@@ -1,0 +1,1482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+  <b4x_version>12.50</b4x_version>
+  <dependsOn>ime</dependsOn>
+  <dependsOn>xui</dependsOn>
+  <dependsOn>javaobject</dependsOn>
+  <class>
+    <name>b4a.example.flexgrid._head_type</name>
+    <shortname>Head_Type</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Name</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>FeetString</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Width</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>TP</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>HeaderAlignment</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Alignment</name>
+      <returntype>String</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.flexgrid._cell_type</name>
+    <shortname>Cell_Type</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>TextColor</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>BackgroundColor</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>TextFont</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</returntype>
+    </field>
+    <field>
+      <name>Alignment</name>
+      <returntype>String</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.flexgrid._flexorder_type</name>
+    <shortname>FlexOrder_Type</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Key</name>
+      <returntype>Object</returntype>
+    </field>
+    <field>
+      <name>Value</name>
+      <returntype>Object</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.flexgrid</name>
+    <shortname>FlexGrid</shortname>
+    <owner>activity</owner>
+    <event>HeadClick(Index as int)</event>
+    <event>FeetClick(Index as int)</event>
+    <event>CellClick(Row as int, Col as int)</event>
+    <event>CellLongClick(Row as int, Col as int)</event>
+    <event>Modified(Row as int, Col as int)</event>
+    <event>ScrollY(Position As Double)</event>
+    <event>ScrollX(Position As Double)</event>
+    <designerProperty>Key: ColsCount, DisplayName: Cols Count, FieldType: Int, DefaultValue: 4, Description: Numbers of cols</designerProperty>
+    <designerProperty>Key: HeadVisible, DisplayName: Header Visible, FieldType: Boolean, DefaultValue: True</designerProperty>
+    <designerProperty>Key: HeadTextColor, DisplayName: Head Text Color, FieldType: Color, DefaultValue: 0xFF00008B, Description: Head Text color</designerProperty>
+    <designerProperty>Key: HeadBackgroundColor, DisplayName: Head BackGroud Color, FieldType: Color, DefaultValue: 0xFFADD8E6, Description: Head Background color of Grid</designerProperty>
+    <designerProperty>Key: FeetVisible, DisplayName: Feet Visible, FieldType: Boolean, DefaultValue: False</designerProperty>
+    <designerProperty>Key: FeetTextColor, DisplayName: Feet Text Color, FieldType: Color, DefaultValue: 0xFF00008B, Description: Head Text color</designerProperty>
+    <designerProperty>Key: FeetBackgroundColor, DisplayName: Feet BackGround Color, FieldType: Color, DefaultValue: 0xFFADD8E6, Description: Head Background color of Grid</designerProperty>
+    <designerProperty>Key: TextColor, DisplayName: Text Color, FieldType: Color, DefaultValue: 0xFFFFFFFF, Description: Text color</designerProperty>
+    <designerProperty>Key: BackgroundColor, DisplayName: BackGround Color, FieldType: Color, DefaultValue: 0xFF000000, Description: Background color of Grid</designerProperty>
+    <designerProperty>Key: BorderColor, DisplayName: Border Cell Color, FieldType: Color, DefaultValue: 0xFFD3D3D3, Description: Border Cell color</designerProperty>
+    <designerProperty>Key: SingleLine, DisplayName: SingleLine, FieldType: Boolean, DefaultValue: False, Description: Cells of type text in single line or multiline</designerProperty>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddRow">_v6</name>
+      <comment> eg. Flexgrid.AddRow(Array As Object(i,B,"User ","Description " ,100.00), True)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+      <parameter>
+        <name>Refresh</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddRow2">_v7</name>
+      <comment> eg. Flexgrid.AddRow(Array As Object(i,B,"User ","Description " ,100.00),40dip,True)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+      <parameter>
+        <name>HeightRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Refresh</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddRowAt">_v0</name>
+      <comment> eg. Flexgrid.AddRow(2,Array As Object(i,B,"User ","Description " ,100.00), True)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>index</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+      <parameter>
+        <name>Refresh</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddRowCustomize">_vv1</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+      <parameter>
+        <name>Text_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Background_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextFont</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+      <parameter>
+        <name>Refresh</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddToParent">_vv2</name>
+      <comment> Parent is Panel to Add Grid
+ eg. Flexgrid.AddToParent(Activity,0,0,100%x,100%y,5)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Parent</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper</type>
+      </parameter>
+      <parameter>
+        <name>Left</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Top</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>ColsNumber</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ClearRows">_vv4</name>
+      <comment> erase all rows contents
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ClearSelection">_vv5</name>
+      <comment> cell no longer be selected.
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="DesignerCreateView">_designercreateview</name>
+      <comment>Base type must be Object
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Base</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>Lbl</name>
+        <type>anywheresoftware.b4a.objects.LabelWrapper</type>
+      </parameter>
+      <parameter>
+        <name>Props</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditCell">_vvv5</name>
+      <comment> eg. Flexgrid.EditCell(1,1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditCellOnSite">_vvv6</name>
+      <comment> eg. Flexgrid.EditCell(1,1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getBase" HideFromIDE="true">_getvvvvvvvvvvvvv7</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetCellBackgroundColor">_vvvv1</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetCellCol">_vvvv2</name>
+      <comment>eg. Dim S() as String = Flexgrid.GetCellCol(1)
+eg. Dim B() as Boolean = Flexgrid.GetCellCol(2)
+</comment>
+      <returntype>Object[]</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetCellRow">_vvvv4</name>
+      <comment> eg Dim Row() as Object = Flexgrid.GetCellRow(1)
+</comment>
+      <returntype>Object[]</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetCellTextColor">_vvvv5</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetCellTextFont">_vvvv6</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetCellValue">_vvvv7</name>
+      <comment> eg. Dim I as int = Flexgrid.GetCellValue(1,1)
+ eg. Dim S as String = FlexGrid.GetCellValue(2,2)
+</comment>
+      <returntype>Object</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getColCount" HideFromIDE="true">_getvvvvvvvvvvvvv0</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getColsName" HideFromIDE="true">_getvvvvvvvvvvvvvv1</name>
+      <returntype>String[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="getFootValue" HideFromIDE="true">_getvvvvvvvvvvvvvv2</name>
+      <returntype>String[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="getHeadVisible" HideFromIDE="true">_getvvvvvvvvvvvvvv3</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getHeight" HideFromIDE="true">_getvvvvvvvvvvvvvv4</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getRowCount" HideFromIDE="true">_getvvvvvvvvvvvvvv5</name>
+      <comment> Dim Size as int = Flexgrid.RowCount
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getScrollX" HideFromIDE="true">_getvvvvvvvvvvvvvv6</name>
+      <returntype>double</returntype>
+    </method>
+    <method>
+      <name DesignerName="getScrollY" HideFromIDE="true">_getvvvvvvvvvvvvvv7</name>
+      <returntype>double</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSelectCell" HideFromIDE="true">_getvvvvvvv0</name>
+      <returntype>Object[]</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSelectedColumnEnd" HideFromIDE="true">_getvvvvvvvvvvvvvv0</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSelectedColumnStart" HideFromIDE="true">_getvvvvvvvvvvvvvvv1</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSelectedRowEnd" HideFromIDE="true">_getvvvvvvvvvvvvvvv2</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getSelectedRowStart" HideFromIDE="true">_getvvvvvvvvvvvvvvv3</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTypeCol">_vvvvvv5</name>
+      <comment> eg. If Flexgrid.GetTypeCol(1)=Flexgrid.TypeInt Then .....
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getWidth" HideFromIDE="true">_getvvvvvvvvvvvvvvv4</name>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Callback</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Invalidate">_vvvvvv0</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RemoveRow">_vvvvvvv4</name>
+      <comment> Row (0...n-1)
+ eg. Flexgrid.RemoveRow(1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ResetCustomizeCell">_vvvvvvv5</name>
+      <comment> eg. Flexgrid.ResetCustomizeCell(1,1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SearchInColumn">_vvvvvvv6</name>
+      <comment>Search for text in the indicated column starting from the start row.
+If the start row is 0 it will check the entire column.
+It will return the position of the line containing the text
+ &lt;code&gt;Dim Col As Int = 5
+Dim Row As Int = FlexGied1.SearchInColumn("My text",Col,0, False, True)
+if Row&gt;-1 then Log("Find in row " &amp;  Row) Else log("Don't find")
+&lt;/code&gt;
+</comment>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FromRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>exactly</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>IgnoreCap</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SearchInColumn2">_vvvvvvv7</name>
+      <comment>Search for text in the indicated column starting from the start row.
+If the start row is 0 it will check the entire column.
+It will return the list of position of the line containing the text
+ &lt;code&gt;Dim Col As Int = 5
+Dim IndexFinded As List = FlexGied1.SearchInColumn2("My text",Col,0, False, True)
+if IndexFinded.Size&gt;0 then Log("Find in row " &amp;  Row) Else log("Don't find")
+&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FromRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>exactly</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>IgnoreCap</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SelectCell">_vvvvvvv0</name>
+      <comment> eg. Flexgrid.SelectCell(1,1,True)
+ If Mobile is True, the selectable area can be enlarged by touching and dragging it to the desired box.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Mobile</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SelectCells">_vvvvvvvv1</name>
+      <comment> eg. Flexgrid.SelectCell(1,1,5,4,True)
+ If Mobile is True, the selectable area can be enlarged by touching and dragging it to the desired box.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>FromRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FromCol</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>ToRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>ToCol</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Mobile</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SelectCol">_vvvvvvvv2</name>
+      <comment> eg. Flexgrid.SelectCol(1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SelectRow">_vvvvvvvv3</name>
+      <comment> eg. Flexgrid.SelectRow(1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setBackgroundColor" HideFromIDE="true">_setvvvvvvvvvvvvvvv5</name>
+      <comment> eg. Flexgrid.BackgroundColor=XUI.Color_White
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Color</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetCellCustomize">_vvvvvvvv6</name>
+      <comment> eg. Flexgrid.SetCellCustomize(1,1,XUI.Color_Black,XUI.Color_White,XUi.CreateDefaultFont(12))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Text_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Background_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextFont</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetCellListIndex">_vvvvvvvv7</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Index</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetCellValue">_vvvvvvvv0</name>
+      <comment> eg. Flexgrid.SetCellValue(1,1,True)
+ eg. Flexgrid.SetCellValue(2,2,"OK")
+ eg. Flexgrid.SetCellValue(3,3,3)
+ eg. Flexgrid.SetCellValue(Row,Col,"A,B,C,D,E") for TypeList
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Value</name>
+        <type>Object</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColAlignment">_vvvvvvvvv1</name>
+      <comment> Index (0..n-1)
+ eg. SetColAlignment(0,"CENTER")
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ColumnIndex</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Alignment</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColCustomize">_vvvvvvvvv2</name>
+      <comment> eg. Flexgrid.SetColCistomize(1,XUI.Color_Black,XUI.Color_White,XUi.CreateDefaultFont(12))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Text_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Background_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextFont</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColName">_vvvvvvvvv3</name>
+      <comment> Index (0..n-1)
+ eg. Flexgrid.SetColName(1,"Help")
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ColumnIndex</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Name</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColorSelectedArea" HideFromIDE="true">_setvvvvvvvvvvvvvvv6</name>
+      <comment>Set the color of the selected area
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>c</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColorSelectingArea" HideFromIDE="true">_setvvvvvvvvvvvvvvv7</name>
+      <comment> Set the color of the area during the selection phase
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>C</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColsAlignment" HideFromIDE="true">_setvvvvvvvvvvvvvvv0</name>
+      <comment> eg. setColsAlignment(Array As String ("LEFT","CENTER","CENTER","RIGHT"))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Alignment</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColsName" HideFromIDE="true">_setvvvvvvvvvvvvvv1</name>
+      <comment> eg. Flexgrid.ColName=array As String ("First","Second")
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Name</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColsNumber">_vvvvvvvvv0</name>
+      <comment> Reset Grid and Change  Cols Number
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ColumnNumber</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColsType" HideFromIDE="true">_setvvvvvvvvvvvvvvvv1</name>
+      <comment> eg. ColsType=Array As Int(FlexGrid1.TypeInt,FlexGrid1.TypeCheck,FlexGrid1.TypeString,FlexGrid1.TypeString,FlexGrid1.TypeFloat)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Typ</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setColsWidth" HideFromIDE="true">_setvvvvvvvvvvvvvvvv2</name>
+      <comment> eg. SetColsWìdth(Array As Int (100dip,50dip,100dip,100dip))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Width</name>
+        <type>int[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColType">_vvvvvvvvvv3</name>
+      <comment> Index (0..n-1)
+ eg. SetColType(0,FlexGrid.TypeInt)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ColumnIndex</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Typ</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetColWidth">_vvvvvvvvvv4</name>
+      <comment> Index (0..n-1)
+ eg. SetColWidth(0,100dip)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ColumnIndex</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetDataRow">_vvvvvvvvvv5</name>
+      <comment> eg. Flexgrid.SetRow(Row,Array As Object(i,B,"User ","Description " ,100.00))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetDataRow2">_vvvvvvvvvv6</name>
+      <comment> eg. Flexgrid.SetRow2(Row,Array As Object(i,B,"User ","Description " ,100.00),40dip)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Cell</name>
+        <type>Object[]</type>
+      </parameter>
+      <parameter>
+        <name>HeightRow</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetFeetHeight">_vvvvvvvvvv7</name>
+      <comment> Set Header Height
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFont" HideFromIDE="true">_setvvvvvvvvvvvvvvvv3</name>
+      <comment> eg. Flexgrid.Font=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>F</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFootColValue">_vvvvvvvvvvv1</name>
+      <comment> eg. Flexgrid.FeetValue=array As String ("First","Second")
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Fv</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFootFont" HideFromIDE="true">_setvvvvvvvvvvvvvvvv4</name>
+      <comment> eg. Flexgrid.FeetFont=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>F</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFootValue" HideFromIDE="true">_setvvvvvvvvvvvvvv2</name>
+      <comment> eg. Flexgrid.FeetValue=array As String ("First","Second")
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Fv</name>
+        <type>String[]</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setFootVisible" HideFromIDE="true">_setvvvvvvvvvvvvvvvv5</name>
+      <comment> eg. FG.FeetVisible=True
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setHeaderAlignment">_vvvvvvvvvvv5</name>
+      <comment> eg. Flexgrid.HeaderAlignment="CENTER"
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Col</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Alignment</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setHeaderFont" HideFromIDE="true">_setvvvvvvvvvvvvvvvv6</name>
+      <comment> eg. Flexgrid.HeaderFont=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>F</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setHeaderVisible" HideFromIDE="true">_setvvvvvvvvvvvvvvvv7</name>
+      <comment> eg. FG.HeadVisible=True
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetHeadHeight">_vvvvvvvvvvv0</name>
+      <comment> Set Header Height
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setHeight" HideFromIDE="true">_setvvvvvvvvvvvvvv4</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>H</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetPadding">_vvvvvvvvvvvv2</name>
+      <comment> eg. FlexGrid1.SetPadding(10dip,0,10dip,0)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Left</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Top</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Right</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Bottom</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetRowCustomize">_vvvvvvvvvvvv3</name>
+      <comment> eg. Flexgrid.SetRowCustomize(1,XUI.Color_Black,XUI.Color_White,XUi.CreateDefaultFont(12))
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Row</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Text_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Background_Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>TextFont</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetRowHeight">_vvvvvvvvvvvv4</name>
+      <comment> IndexRow (0..Size-1)
+ eg. setRowHeight(0,60dip)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>IndexRow</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetRowsHeight">_vvvvvvvvvvvv5</name>
+      <comment> Set all Rows Height
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setScrollToCol" HideFromIDE="true">_setvvvvvvvvvvvvvvvv0</name>
+      <comment> eg. Flexgrid.ScroolToCol=50 (Col= 0..Size-1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>C</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setScrollToRow" HideFromIDE="true">_setvvvvvvvvvvvvvvvvv1</name>
+      <comment> eg. Flexgrid.ScroolToRow=50 (Row= 0..Size-1)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>R</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setScrollX" HideFromIDE="true">_setvvvvvvvvvvvvvv6</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Position</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setScrollY" HideFromIDE="true">_setvvvvvvvvvvvvvv7</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Position</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetSingleLine">_vvvvvvvvvvvvv2</name>
+      <comment> To set the cells to single or multiple lines
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>SLine</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setWidth" HideFromIDE="true">_setvvvvvvvvvvvvvvv4</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>W</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SortForCol">_vvvvvvvvvvvvv5</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Column</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Base">_vvvvvvvvvvvvv7</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </property>
+    <property>
+      <name DesignerName="ColCount">_vvvvvvvvvvvvv0</name>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ColsName">_vvvvvvvvvvvvvv1</name>
+      <comment> eg. Flexgrid.ColName=array As String ("First","Second")
+</comment>
+      <returntype>String[]</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String[]</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="FootValue">_vvvvvvvvvvvvvv2</name>
+      <comment> eg. Flexgrid.FeetValue=array As String ("First","Second")
+</comment>
+      <returntype>String[]</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String[]</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Height">_vvvvvvvvvvvvvv4</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="RowCount">_vvvvvvvvvvvvvv5</name>
+      <comment> Dim Size as int = Flexgrid.RowCount
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="ScrollX">_vvvvvvvvvvvvvv6</name>
+      <returntype>double</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>double</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ScrollY">_vvvvvvvvvvvvvv7</name>
+      <returntype>double</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>double</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="SelectedColumnEnd">_vvvvvvvvvvvvvv0</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="SelectedColumnStart">_vvvvvvvvvvvvvvv1</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="SelectedRowEnd">_vvvvvvvvvvvvvvv2</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="SelectedRowStart">_vvvvvvvvvvvvvvv3</name>
+      <comment> return -1 if not selected
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="Width">_vvvvvvvvvvvvvvv4</name>
+      <returntype>int</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ColorSelectedArea">_vvvvvvvvvvvvvvv6</name>
+      <comment>Set the color of the selected area
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ColorSelectingArea">_vvvvvvvvvvvvvvv7</name>
+      <comment> Set the color of the area during the selection phase
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ColsAlignment">_vvvvvvvvvvvvvvv0</name>
+      <comment> eg. setColsAlignment(Array As String ("LEFT","CENTER","CENTER","RIGHT"))
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String[]</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ColsType">_vvvvvvvvvvvvvvvv1</name>
+      <comment> eg. ColsType=Array As Int(FlexGrid1.TypeInt,FlexGrid1.TypeCheck,FlexGrid1.TypeString,FlexGrid1.TypeString,FlexGrid1.TypeFloat)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int[]</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ColsWidth">_vvvvvvvvvvvvvvvv2</name>
+      <comment> eg. SetColsWìdth(Array As Int (100dip,50dip,100dip,100dip))
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int[]</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Font">_vvvvvvvvvvvvvvvv3</name>
+      <comment> eg. Flexgrid.Font=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="FootFont">_vvvvvvvvvvvvvvvv4</name>
+      <comment> eg. Flexgrid.FeetFont=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="FootVisible">_vvvvvvvvvvvvvvvv5</name>
+      <comment> eg. FG.FeetVisible=True
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="HeaderFont">_vvvvvvvvvvvvvvvv6</name>
+      <comment> eg. Flexgrid.HeaderFont=xui.CreateDefaultFont(12)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>anywheresoftware.b4a.objects.B4XViewWrapper.B4XFont</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="HeaderVisible">_vvvvvvvvvvvvvvvv7</name>
+      <comment> eg. FG.HeadVisible=True
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ScrollToCol">_vvvvvvvvvvvvvvvv0</name>
+      <comment> eg. Flexgrid.ScroolToCol=50 (Col= 0..Size-1)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="ScrollToRow">_vvvvvvvvvvvvvvvvv1</name>
+      <comment> eg. Flexgrid.ScroolToRow=50 (Row= 0..Size-1)
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <field>
+      <name DesignerName="TypeInt">_vvvvvvvvvvvvvvvvvv1</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeFloat">_vvvvvvvvvvvvvvvvvv2</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeDouble">_vvvvvvvvvvvvvvvvvv3</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeString">_vvvvvvvvvvvvvvvvvv4</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeCheck">_vvvvvvvvvvvvvvvvvv5</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeImage">_vvvvvvvvvvvvvvvvvv6</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeButton">_vvvvvvvvvvvvvvvvvv7</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="TypeList">_vvvvvvvvvvvvvvvvvv0</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="EditTextColor">_vvvvvvvvvvvvvvvvvvv1</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="EditBackgroundColor">_vvvvvvvvvvvvvvvvvvv2</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.eval._parsednode</name>
+    <shortname>ParsedNode</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Operator</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name>Left</name>
+      <returntype>b4a.example.eval._parsednode</returntype>
+    </field>
+    <field>
+      <name>Right</name>
+      <returntype>b4a.example.eval._parsednode</returntype>
+    </field>
+    <field>
+      <name>NodeType</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>Value</name>
+      <returntype>double</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.eval._orderdata</name>
+    <shortname>OrderData</shortname>
+    <owner>process</owner>
+    <method>
+      <name>Initialize</name>
+      <comment>Inizializza i campi al loro valore predefinito.</comment>
+      <returntype>void</returntype>
+    </method>
+    <field>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </field>
+    <field>
+      <name>Index</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>Level</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name>Added</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <class>
+    <name>b4a.example.eval</name>
+    <shortname>Eval</shortname>
+    <comment>version 2.00
+ Eval Method By Erel: https://www.b4x.com/android/forum/threads/b4x-eval-expressions-evaluator.54629/
+</comment>
+    <owner>activity</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Calculate">_vvvvvvvvvvvvvvvvvvvvvvvv2</name>
+      <returntype>double</returntype>
+      <parameter>
+        <name>Expression</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>FG</name>
+        <type>b4a.example.flexgrid</type>
+      </parameter>
+    </method>
+    <field>
+      <name DesignerName="Error">_vvvvvvvvvvvvvvvvvvvvvvvvv5</name>
+      <returntype>boolean</returntype>
+    </field>
+  </class>
+  <version>0.45</version>
+  <author>Star-Dust</author>
+</root>

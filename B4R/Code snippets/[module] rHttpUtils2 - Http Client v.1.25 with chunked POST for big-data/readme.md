@@ -1,5 +1,5 @@
 ### [module] rHttpUtils2 - Http Client v.1.25 with chunked POST for big-data by peacemaker
-### 06/26/2025
+### 08/13/2025
 [B4X Forum - B4R - Code snippets](https://www.b4x.com/android/forum/threads/167557/)
 
 Updated [Erel's module](https://www.b4x.com/android/forum/threads/module-rhttputils2-http-client.74785): for big data sending to a server i have added the sending POST request by chunks.  
@@ -329,6 +329,7 @@ Public Sub PostChunkedSend(Buffer() As Byte, Length As Int)
     astream.Write(hexLength).Write(EOL)  
     astream.Write2(Buffer, 0, Length).Write(EOL)  
     Log("Chunk is sent")  
+    chunkLength = 512    'UPD: restore the initial full buffer size  
 End Sub  
   
 Public Sub PostChunkedFinish  

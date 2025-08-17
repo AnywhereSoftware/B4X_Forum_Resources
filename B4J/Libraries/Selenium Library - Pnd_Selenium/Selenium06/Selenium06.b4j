@@ -1,0 +1,63 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200
+	#MergeLibraries: False
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+    ' How to find all images on the page with FindByXPathList or FindByTagNameList
+    ' How to find src, class and other attributes for every image on the page
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+	
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+		
+	Selenium.NavigateTo("https://picsum.photos/")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+	'Dim AllImgTagsList As List = Selenium.FindByTagNameList("img")          ' img HTML tag look like this: <img class="resize" src="/id/237/536/354">
+	Dim AllImgTagsList As List = Selenium.FindByXPathList("//img")           ' we are looking to find every IMG tag in the page, AllImgTagsList now represent List of IMG tags
+	For Each OneImgtag As Pnd_WebElement In AllImgTagsList                   ' OneImgtag now represent one IMG tag from <img to >
+		Dim ImageClassName As String = OneImgtag.GetDomAttribute("class")    ' get ImageClassName from "class"
+		Dim ImageLink As String = OneImgtag.GetDomProperty("src")            ' get ImageLink from "src"
+		If ImageLink.ToLowerCase.StartsWith("http") Then                     ' to exclude base64 encoded images like: data:image/svg+xml;base64,PHN2XRj... - this can be done with FindByXPathList, but this is just an example
+			Log("ImageLink: " & ImageLink)
+			Log("ImageClassName: " & ImageClassName)
+			Log(" ")
+		End If
+	Next
+	
+	Selenium.Quit
+	Sleep(500)
+	ExitApplication
+End Sub
+

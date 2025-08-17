@@ -1,0 +1,133 @@
+﻿Build1=Default,it.tecnomedia.flexgrid
+File1=b4a.png
+File2=b4i.png
+File3=b4j.png
+File4=Layout1.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=isd_flexgrid
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+	
+	'	#If DEBUG
+		   #CertificateFile: ios_developement.cer
+		   #ProvisionFile: Developement.mobileprovision
+	'	#ELSE If RELEASE
+	'	   #CertificateFile: ios_distribution.cer
+	'	   #ProvisionFile: distribution.mobileprovision
+	'	#END IF
+	
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private xui As XUI
+	Private FlexGrid1 As FlexGrid
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("Layout1")
+	
+	FlexGrid1.ColsName=Array As String("","N","On","Name","Img","Digit")
+	FlexGrid1.ColsWidth=Array As Int(75dip,50dip,50dip,100dip,60dip,100dip)
+	FlexGrid1.ColsType=Array As Int(FlexGrid1.TypeButton,FlexGrid1.TypeInt,FlexGrid1.TypeCheck,FlexGrid1.TypeString,FlexGrid1.TypeImage,FlexGrid1.TypeFloat)
+	FlexGrid1.ColsAlignment=Array As String("CENTER","CENTER","CENTER","LEFT","LEFT","RIGHT")
+	
+	FlexGrid1.SetColCustomize(0,0xFF5BC17D,xui.Color_RGB(240,240,240),xui.CreateDefaultFont(14))
+	
+	Dim B As Boolean=False
+	For i=1 To 100
+		B=Not(B)
+		FlexGrid1.AddRow(Array As Object("B" &i,i,B,"User " & i,Null,Rnd(50,10000)/100),True)
+	Next
+	
+	Dim Cs As CSBuilder
+	Cs.Initialize.Color(xui.Color_Red).Append("User").Pop.Color(xui.Color_Blue).Append(" 200").PopAll
+	
+	FlexGrid1.SetCellvalue(0,0,100)
+	FlexGrid1.SetCellvalue(1,3,Cs)
+	FlexGrid1.SetCellvalue(0,4,LoadBitmap(File.DirAssets,"b4a.png"))
+	FlexGrid1.SetCellvalue(2,4,LoadBitmap(File.DirAssets,"b4j.png"))
+	FlexGrid1.SetCellvalue(4,4,LoadBitmap(File.DirAssets,"b4i.png"))
+	
+	FlexGrid1.SetCellCustomize(3,14,xui.Color_Blue,xui.Color_Yellow,xui.CreateDefaultBoldFont(16))
+	FlexGrid1.SetCellCustomize(3,15,xui.Color_Black,xui.Color_Cyan,xui.CreateDefaultBoldFont(16))
+	FlexGrid1.SetCellCustomize(3,16,xui.Color_white,xui.Color_Red,xui.CreateDefaultBoldFont(16))
+
+	Sleep(2000)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+Sub FlexGrid1_HeadClick(Index As Int)
+	Log("Click Head Col: " & Index)
+	FlexGrid1.Selectcol(Index)
+End Sub
+
+Sub FlexGrid1_CellClick(Row As Int, Col As Int)
+	If Col=0 Then
+		FlexGrid1.SelectRow(Row)
+	Else
+		Select FlexGrid1.GetTypeCol(Col)
+			Case FlexGrid1.TypeCheck
+				Dim B As Boolean = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & B)
+			Case FlexGrid1.TypeImage
+				Dim Bm As Bitmap = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & Bm)
+			Case FlexGrid1.TypeInt
+				Dim I As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & I)
+			Case FlexGrid1.TypeFloat
+				Dim F As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & F)
+			Case FlexGrid1.TypeDouble
+				Dim D As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & D)
+			Case FlexGrid1.TypeString
+				Dim S As String = FlexGrid1.GetCellValue(Row,Col)
+				Log("Cell content: " & S)
+				FlexGrid1.EditCellonsite(Row,Col)
+		End Select
+	End If
+End Sub
+	
+Sub FlexGrid1_CellLongClick(Row As Int, Col As Int)
+	FlexGrid1.SelectCell(Row,Col,True)
+End Sub

@@ -1,0 +1,145 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=320x200.png
+File2=Layout1.bjl
+File3=pen.png
+File4=sd.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Nuovo Gruppo
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsd_wacomdemo
+Library4=jxui
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormHeight: 600 
+	#MainFormWidth: 600
+#End Region
+
+	#VirtualMachineArgs: -Djava.library.path="C:\Program Files (x86)\Wacom STU SDK\Java\jar\x64"
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Dim moving As Boolean = False
+	
+	Private PaneMain As B4XView
+	Private PaneTablet As B4XView
+	Private PanePen As B4XView	
+	Private ImagePen As ImageView
+	Private LabelInfo As B4XView
+	
+	Dim wr As  wacom
+	Dim CanTablet,CanPen As B4XCanvas
+	Private ImageSign As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	CanTablet.Initialize(PaneTablet)
+	CanPen.Initialize(PanePen)
+	wr.Initialize(Me,"wr")
+	move(-ImagePen.Height)
+End Sub
+
+Private Sub ButtonCapture_Click
+	If wr.isConnect=False Then
+		'wr.CaptureStart(xui.LoadBitmap(File.DirAssets,"sd.png"),Array As String("Ok","Clear","Cancel"))
+		wr.CaptureStart(Null,Array As String("Ok","Clear","Cancel"))
+		Wait For wr_CaptureStart(Success As Boolean)
+		Log("Start capture: " & Success)
+		If Success Then 
+			'wr.PenWrite=false
+			CanTablet.ClearRect(CanTablet.TargetRect)
+			LabelInfo.Color=xui.Color_Green
+			LabelInfo.Text="Connected"
+		Else
+			LabelInfo.Color=xui.Color_Red
+			LabelInfo.Text="Not connected"
+		End If
+	End If
+End Sub
+
+Private Sub ButtonCaptureStop_Click
+	wr.CaptureStop
+	CanPen.ClearRect(CanPen.TargetRect)
+	move(-ImagePen.Height)
+	LabelInfo.Color=xui.Color_RGB(255,150,0)
+	LabelInfo.Text="Disconnect"
+End Sub
+
+Private Sub ButtonClear_Click
+	If wr.isConnect Then 
+		wr.CaptureClearScreen
+		CanTablet.ClearRect(CanTablet.TargetRect)
+	End If
+End Sub
+
+Private Sub wr_PenPoint (PenData As PenRoute)
+	Log($"${PenData.Sw} - ${PenData.Rdy} ${PenData.Pressure} X:${PenData.x} y:${PenData.y} "$)
+	Dim x As Int = (PenData.X/wr.Info.ScreenWidth)*CanTablet.TargetRect.Width
+	Dim y As Int = (PenData.y/wr.Info.ScreenHeight)*CanTablet.TargetRect.Height
+	
+	If PenData.Sw=1 And PenData.Rdy=1 Then ' pen down
+		CanPen.ClearRect(CanPen.TargetRect)
+		Dim Pen As Int = Max(1dip,PenData.Pressure/150)
+		Dim c As Int = 255-(PenData.Pressure/4)
+		CanTablet.DrawCircle(X,Y,1dip,xui.Color_RGB(C,C,C),False,Pen)
+		CanTablet.Invalidate
+		move(0)
+	Else if PenData.Sw=0 And PenData.Rdy=1  Then ' distance 1cm
+		CanPen.ClearRect(CanPen.TargetRect)
+		CanPen.DrawCircle(X,Y,1dip,xui.Color_ARGB(50,255,0,0),False,10dip)
+		CanPen.DrawCircle(X,Y,1dip,xui.Color_Red,False,2dip)
+		CanPen.Invalidate
+		move(-ImagePen.Height*0.33)
+	else if PenData.Sw=0 And PenData.Rdy=0 And PenData.X=0 And PenData.Y=0 Then ' out 
+		CanPen.ClearRect(CanPen.TargetRect)
+		move(-ImagePen.Height)
+	Else ' distance 2 cm
+		CanPen.ClearRect(CanPen.TargetRect)
+		CanPen.DrawCircle(X,Y,1dip,xui.Color_aRGB(50,255,150,0),False,20dip)
+		CanPen.DrawCircle(X,Y,1dip,xui.Color_RGB(255,150,0),False,4dip)
+		CanPen.Invalidate
+		move(-ImagePen.Height*0.66)
+	End If
+End Sub
+
+Private Sub move(top As Int) ' animated pen
+	Dim vel As Int= 100
+	If moving=False And ImagePen.Top<>top Then 
+		moving=True
+		ImagePen.SetLayoutAnimated(vel,0,top,ImagePen.Width,ImagePen.Height)
+		Sleep(vel)
+		moving=False
+	End If
+End Sub
+
+Private Sub wr_ButtonClick(Name As String) ' event
+	Log("Click: " & Name)
+	Select Name
+		Case "Ok"
+			ImageSign.SetBitmap(CanTablet.CreateBitmap)
+			CanTablet.ClearRect(CanTablet.TargetRect)
+			wr.CaptureStop
+		Case "Clear"
+			CanTablet.ClearRect(CanTablet.TargetRect)
+			wr.CaptureClearScreen
+		Case "Cancel"
+			wr.CaptureStop
+			ImageSign.SetBitmap(Null)
+			CanTablet.ClearRect(CanTablet.TargetRect)
+	End Select
+End Sub

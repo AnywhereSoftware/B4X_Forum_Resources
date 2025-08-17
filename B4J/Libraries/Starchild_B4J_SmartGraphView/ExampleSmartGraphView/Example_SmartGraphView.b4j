@@ -1,0 +1,143 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=test.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=starchild_b4j_smartgraphview
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 640
+	#MainFormHeight: 480
+	
+	#AdditionalJar: Starchild_B4J_Extras
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Dim Demonstrate_TimeOfDay As Boolean = False
+
+	Private Graph As Starchild_B4J_SmartGraphView
+	Private TestLBL As Label
+	Private DemonstrateBT As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("test") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_MousePressed (EventData As MouseEvent)
+	'do nothing
+End Sub
+
+Sub DemonstrateBT_Click
+	TestLBL.Text = "Try Resizing the Form."
+
+	'or, you can try this built-in TEST graph.
+	'Graph.TestGraph
+	'Return
+	
+	Graph.OVERLAY_TEXT = "Starchild"
+	Graph.OVERLAY_COLOUR = fx.Colors.ARGB(80,0,0,0)
+	Graph.OVERLAY_SIZE = 100
+
+	Graph.SHOW_MARKER = True
+	Graph.DATA_BAR_WIDTH = 0   'auto bar width
+	Graph.DATA_POINT_SIZE = 0  'auto point size
+	Graph.AXIS_TEXT_SIZE = 0   'auto axis text size
+	
+	If Demonstrate_TimeOfDay Then
+		Graph.TITLE_TEXT = "TOD Graph"
+		Dim Begin As Long = DateTime.Now
+		Dim StepSize As Long = DateTime.TicksPerHour/2
+		Dim Finish As Long = Begin+DateTime.TicksPerHour*5
+		Begin = Begin - (Begin Mod StepSize)
+		Graph.SetAxisX("Time of Day",Begin,Finish,0,StepSize,2,"h:mma")
+	Else
+		Graph.TITLE_TEXT = "Numerical Data"
+		Graph.SetAxisX("The X-Axis",3,100,10,10,1,"")
+	End If
+	
+	Graph.SetAxisY("The Y-Axis",4,0,0,1,1,2)
+	Graph.Clear
+	
+	If Demonstrate_TimeOfDay Then
+		Dim I As Long
+		Dim C As Double
+		For I = Begin To Finish Step StepSize
+			C=Rnd(-500,15567)/1000
+			Graph.Plot(I,C)
+		Next
+	Else
+		Graph.Plot(30,-5)
+		Graph.Plot(-23,-10.7)
+		Graph.Plot(10,3.3)
+		Graph.Plot(40,4)
+		Graph.Plot(70,2)
+		Graph.Plot(80,6)
+		Graph.Plot(-10,8)
+		Graph.Plot(50,-1)
+		Graph.Plot(60,2)
+		Graph.SortAllDataX
+	End If
+	
+	Graph.AutoRescale(True,True)
+	
+	Sleep(300)
+	
+	Graph.DropShadow = Not(Graph.DropShadow)
+	If Graph.DropShadow Then
+		Graph.OVERLAY_TEXT = "Has Shadow"
+	Else
+		Demonstrate_TimeOfDay = Not(Demonstrate_TimeOfDay)
+		Graph.OVERLAY_TEXT = "No Shadow"
+	End If
+	
+	Graph.RenderAllNow
+End Sub
+
+Private Sub Graph_MouseMoving(X As Double, Y As Double)
+	If Graph.GetTimeFormatX = "" Then
+		Graph.MARKER_TEXT = " X= " & X & " " & CRLF & " Y= " & Y & " "
+	Else
+		DateTime.TimeFormat = Graph.GetTimeFormatX
+		Graph.MARKER_TEXT = " X= " & DateTime.Time(X).ToLowerCase & " " & CRLF & " Y= " & NumberFormat(Y,1,2) & " "
+	End If
+
+	Graph.RenderTitleOnly
+End Sub
+
+Private Sub Graph_MouseEntering
+	'Graph.OVERLAY_TEXT = "The Overlay"
+	'Graph.RenderAllNow
+End Sub
+
+Private Sub Graph_MouseLeaving
+	'Graph.TITLE_TEXT = "MyGraphs"
+	Graph.OVERLAY_TEXT = "Starchild"
+	Graph.RenderAllNow
+End Sub
+
+Private Sub Graph_MouseClicked(X As Double, Y As Double)
+	If Graph.GetTimeFormatX = "" Then
+		TestLBL.Text = "Selected:  X= " & X & "    Y= " & Y
+	Else
+		DateTime.TimeFormat = Graph.GetTimeFormatX
+		TestLBL.Text = "Selected:  X= " & DateTime.Time(X).ToLowerCase & "    Y = " & NumberFormat(Y,1,2)
+		fx.Clipboard.SetImage(Graph.Snapshot2)
+	End If
+End Sub

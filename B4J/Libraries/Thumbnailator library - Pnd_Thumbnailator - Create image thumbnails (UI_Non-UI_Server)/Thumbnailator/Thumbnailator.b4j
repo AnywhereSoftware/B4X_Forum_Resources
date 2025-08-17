@@ -1,0 +1,38 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=pnd_thumbnailator
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	Dim Thumbnailator As Pnd_Thumbnailator
+	Thumbnailator.Initialize(File.DirApp & "\1-test-image.jpg")
+	Thumbnailator.AllowOverwrite = True
+	Thumbnailator.Size(600, 600)
+	Thumbnailator.Rotate(90.0)
+	Thumbnailator.Watermark(50, 150, File.DirApp & "\2-watermark.png", 0.80)
+	Thumbnailator.OutputQuality(0.90)
+	Thumbnailator.ToFile(File.DirApp & "\thumbnail.jpg")
+	
+	' Dim OutStream As OutputStream = Thumbnailator.ToOutputStream
+	' File.WriteBytes(File.DirApp , "thumbnail.jpg", OutStream.ToBytesArray)
+
+	Log("Thumbnailator file: " & File.DirApp & "\thumbnail.jpg")
+	
+	ExitApplication
+End Sub

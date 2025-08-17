@@ -1,0 +1,150 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleclient
+Module1=|relative|..\NumConv
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rBLEClient
+' Brief:	Example reading GVH5075 sensor data.
+'			The Govee 5075 temperature & Humidity monitor is a wireless Bluetooth Low Energy (BLE) sensor node that sends current readings temperature & humidity & battery health every 2 seconds.
+'			Handle notifications with the event NewData and parse the data to get temperature C, humidity RH & battery %
+'			The same UUID CHARACTERISTIC is used for TX and RX.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-07-31
+' License:	MIT — see LICENSE file.
+
+' MCU:		ESP-WROOM-32, B4R 4.00 (64 bit), IDE ESP32 Dev Module, Arduino Board Manager ESP32 3.0.0.
+' 			IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+' Wiring:	No additional wiring
+
+' Log:
+'			[AppStart] rBLEClient GVH5075 v20250728
+'			[AppStart] MAC Address=a4:c1:38:4c:30:22
+'			[AppStart] Starting passive scan once
+'			[Client_NewData] data=A4C1384C302288EC000352564800
+'			[Client_NewData] t=21.7686 °C,h=68.6000 %RH,b=72 %
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEClient GVH5075 v20250731"
+    Public Serial1 As Serial
+
+	' BLE -  Peripheral GVH5075
+	' Type structure holding the sensor data.
+	Type TGVH5075 (Temperature As Float, _
+				   Humidity As Float, _
+				   Battery As Int)
+	
+	Private MAC As String 					= "a4:c1:38:4c:30:22"						' MAC address must be in lowercase!	
+	Private UUID_SERVICE As String 			= "494e5445-4c4c-495f-524f-434b535f4857"	' Custom 128 bit UUID for primary service
+	Private UUID_CHARACTERISTIC  As String	= "494e5445-4c4c-495f-524f-434b535f2012" 	' Command/Write characteristic (read/write/notify, write type: write request)
+    Private Client As BLEClient
+	Private GHV5075Data As TGVH5075
+
+	' Helper	
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+	Log("[AppStart] ", VERSION)
+    Log("[AppStart] MAC Address=", MAC)
+
+	' Initialize the BLE Client
+	Client.Initialize(MAC, _
+        		   	  UUID_SERVICE, _
+					  UUID_CHARACTERISTIC, _
+        		   	  UUID_CHARACTERISTIC, _
+        		   	  "Client_NewData", "Client_Error", _
+					  False)
+
+	' Example passive scan
+'	Dim scantime As Int = 60
+'	Dim timeout As Int = 90
+'	Log(Millis, "[AppStart] Starting passive scan for ", scantime, " s.")
+'	Client.PassiveScan(scantime, False, timeout)
+
+	' Example passive scan once
+	Log("[AppStart] Starting passive scan once")
+	Dim timeout As Byte = 10
+	Dim result As Boolean = Client.passiveScanOnce(timeout)
+	If Not(result) Then
+		Log("[AppStart] GVH5075 with MAC address ", MAC, " not found.")
+	End If
+End Sub
+
+#Region Callback Events
+' Callback when data is received from BLE
+' For the GVH5075 the manufacturer data is received.
+' [ble_NewData] data=A4C1384C302288EC000385494900
+Sub Client_NewData(data() As Byte)
+	Log("[Client_NewData] data=", bc.HexFromBytes(data))
+	If ParseRawData(data) Then
+		Log("[Client_NewData] t=", GHV5075Data.temperature, " °C,h=",GHV5075Data.humidity," %RH,b=",GHV5075Data.battery, " %")
+	End If
+End Sub
+
+' Callback for BLE errors
+Sub Client_Error(code As Byte)
+	Log(Millis, "[Client_Error] code=", code)
+End Sub
+#End Region
+
+#Region Parse Data
+' GVH5075 parse raw data hex string as byte array.
+' Data example:		A4 C1 38 4C 30 22 88 EC 00 03 85 49 49 00
+'					0  1  2  3  4  5  6  7  8  9  10 11 12 13
+' Data length:		14 bytes
+' Byte 0-5 (6):		MAC Address A4:C1:38:4C:30:22. Matches the pattern of a BLE MAC address. Many devices broadcast their MAC or parts of it.
+' Byte 6-7 (2):		Manufacturer Key EC88 as little endian
+' Byte 8-13 (6):	Sensor data 00 03 85 49 49 00
+' Sensor Data Calculation
+' Byte 8-11 (4):	The temp+hum are calculated from the first 4 bytes:
+'					The data bytes 0-4 = HEX 00 03 85 49 > DEC 230729
+'					temperature = 230729 / 10000 = 23.1 °C (Round, 1)
+'					humidity    = 230729 % 1000 = 729 / 10 = 72.9 %RH
+' Byte 12 (1):		battery     = data byte 5 = 49 > DEC 49%
+Sub ParseRawData(data() As Byte) As Boolean
+	' Check data length
+	If data.Length < 14 Then
+		Log("[ParseRawData][ERROR] Invalid data length: ",  data.Length, " (expect 14)")
+		Return False
+	End If
+	
+	' Define the temp + hum data array 4 bytes
+	Dim temphumdata(4) As Byte
+
+	' Copy 4 bytes from the data array
+	bc.ArrayCopy2(data, 8, temphumdata, 0, 4)
+
+	' Convert 4 bytes to long
+	Dim temphum As Long = NumConv.FourBytesToLong(temphumdata)
+
+	' Calculate temp + hum
+	GHV5075Data.Temperature = temphum / 10000
+	GHV5075Data.Humidity	= (temphum Mod 1000) / 10
+	
+	' Set battery value
+	GHV5075Data.Battery 	= data(12)
+	
+	'Log(Millis, "[ParseRawData] t=", GHV5075Data.temperature, ",h=",GHV5075Data.humidity,",b=",GHV5075Data.battery)
+	Return True
+End Sub
+#End Region

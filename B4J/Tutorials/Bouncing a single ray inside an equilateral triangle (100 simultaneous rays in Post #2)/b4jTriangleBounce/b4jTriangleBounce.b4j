@@ -1,0 +1,313 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 650
+	#MainFormHeight: 650
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private cv As Canvas
+	Type PVector(x As Double, y As Double)
+	
+	Dim triAngleTop As PVector
+	Dim triAngleLeftBottom As PVector
+	Dim triAngleRightBottom As PVector
+	Dim triAngleCentre As PVector
+	Dim triAngleBottomCentre As PVector
+	Dim pos As PVector
+	Dim speed As PVector
+	Dim oldPos As PVector
+	
+	Dim jump As Int
+	
+	Dim slope As Double
+	
+	Dim nativeMe As JavaObject
+	Dim cnt As Int
+	
+	
+
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	nativeMe.InitializeStatic("javafx.scene.paint.Color")
+	
+	cnt = 0
+	
+	triAngleTop.Initialize
+	triAngleLeftBottom.Initialize
+	triAngleRightBottom.Initialize
+	triAngleCentre.Initialize
+	triAngleBottomCentre.Initialize
+	pos.Initialize
+	speed.Initialize
+	oldPos.Initialize
+	
+	Dim startAngle As Double = 135
+	
+	jump = 1
+	
+	'distance travelled in any single timer tick = 3
+	speed.x = jump * Cos (2 * cPI * startAngle/360)
+	speed.y = - jump * Sin(2 * cPI * startAngle/360)
+	
+	triAngleCentre.x = cv.Width/2
+	triAngleCentre.y = cv.Height/2
+	
+	triAngleTop.x = triAngleCentre.x
+	triAngleTop.y = triAngleCentre.y - 200
+	
+	triAngleBottomCentre.x = cv.Width/2
+	triAngleBottomCentre.y = triAngleCentre.y + (triAngleCentre.y - triAngleTop.y)
+	
+	Dim verticalLength As Double = triAngleBottomCentre.y - triAngleTop.y
+	
+	Dim sideLength As Double = verticalLength/Sin(2*cPI*60/360)
+
+	triAngleLeftBottom.x = triAngleBottomCentre.x - sideLength/2
+	triAngleLeftBottom.y = triAngleBottomCentre.y
+	
+	triAngleRightBottom.x = triAngleBottomCentre.x + sideLength/2
+	triAngleRightBottom.y = triAngleBottomCentre.y
+	
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	cv.DrawCircle(triAngleTop.x, triAngleTop.y, 2dip, fx.Colors.Red, True, 1dip)
+	cv.DrawCircle(triAngleCentre.x, triAngleCentre.y, 2dip, fx.Colors.Blue, True, 1dip)
+	cv.DrawCircle(triAngleBottomCentre.x, triAngleBottomCentre.y, 2dip, fx.Colors.Green, True, 1dip)
+	cv.DrawCircle(triAngleLeftBottom.x, triAngleLeftBottom.y, 2dip, fx.Colors.Magenta, True, 1dip)
+	cv.DrawCircle(triAngleRightBottom.x, triAngleRightBottom.y, 2dip, fx.Colors.Yellow, True, 1dip)
+	
+	cv.DrawLine(triAngleTop.x, triAngleTop.y, triAngleLeftBottom.x, triAngleLeftBottom.y, fx.Colors.White, 1dip)
+	cv.DrawLine(triAngleLeftBottom.x, triAngleLeftBottom.y, triAngleRightBottom.x, triAngleRightBottom.y, fx.Colors.White, 1dip)
+	cv.DrawLine(triAngleRightBottom.x, triAngleRightBottom.y, triAngleTop.x, triAngleTop.y, fx.Colors.White, 1dip)
+	
+	pos.x = triAngleCentre.x
+	pos.y = triAngleCentre.y
+	cv.DrawCircle(pos.x, pos.y, 3dip, fx.Colors.Cyan, True, 1dip)
+	
+	draw
+	
+End Sub
+
+
+Sub draw
+	
+	Dim aa As Double = 1.0                               'for HSB color
+	Dim dub As Double = cnt                              'for hsb color
+	Dim col As JavaObject
+	col = nativeMe.RunMethod("hsb", Array(dub, aa, aa))  'get the hsb color
+	
+	Dim check As Boolean  = ptInTriangle(pos, triAngleLeftBottom, triAngleTop, triAngleRightBottom)
+
+	If check = True And pos.y <= triAngleBottomCentre.y Then
+
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+	
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		slope = -1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope0 = " & slope)
+	
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+
+	Else if check = False And pos.y >= triAngleBottomCentre.y Then
+
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.y = -1 * speed.y
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		slope = -1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope1 = " & slope)
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+	'we are going left bottom to right top and have hit the right of the triangle 	
+	else if check = False And pos.x > oldPos.x And pos.y < oldPos.y And pos.x > triAngleBottomCentre.x  Then
+		Dim outAngle As Double = 180 - slope - 60
+		outAngle = 90 + 30 + outAngle
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		'we are going right bottom to left top and have hit the left of the triangle
+	else if check = False And pos.x < oldPos.x And pos.y < oldPos.y And pos.x < triAngleBottomCentre.x  Then
+		
+		slope = 1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope2 = " & slope)
+		Dim outAngle As Double = 60 + slope
+		outAngle = 180 + 60 + outAngle
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		'we are going right top to left bottom and have hit the left of the triangle
+	else if check = False And pos.x < oldPos.x And pos.y > oldPos.y Then
+		
+		slope = -1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope3 = " & slope)
+		Dim outAngle As Double = slope + (60 - slope) + 30 + 90 + 60 + (60 - slope)
+		
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+	
+		'we are going left bottom to right top and have hit the left of the triangle
+	else if check = False And pos.x > oldPos.x And pos.y < oldPos.y And pos.x < triAngleBottomCentre.x Then
+		
+		slope = -1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope4 = " & slope)
+		Dim outAngle As Double = slope - 2 * (180 - (180 - slope + 60))
+		
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		'we are going left top to right bottom and have hit the right of the triangle
+	else if check = False And pos.x > oldPos.x And pos.y > oldPos.y And pos.x > triAngleBottomCentre.x Then
+		
+		slope = 1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope5 = " & slope)
+		Dim outAngle As Double = 360 - (60 + 60 - slope)
+		
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		
+		'we are going right bottom to left top and have hit the right of the triangle
+	else if check = False And pos.x < oldPos.x And pos.y < oldPos.y And pos.x > triAngleBottomCentre.x Then
+		
+		slope = 1 * 360 * (ATan((pos.y - oldPos.y)/(pos.x - oldPos.x)))/(2 * cPI)
+		'Log("slope6 = " & slope)
+		Dim outAngle As Double = 180 - (180 - slope + 60) +90 + 30
+		
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = 1 * jump * Cos (2 * cPI * outAngle/360)
+		speed.y = -1 * jump * Sin(2 * cPI * outAngle/360)
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		
+		'we are going from triangle centre to dead centre top of the triangle
+	else if check = False And pos.y < triAngleTop.y Then
+	
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.y = -1 * speed.y
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+		
+		
+		
+		'we are going from triangle centre to dead centre top of the triangle
+	else if check = False And Abs(slope) = 0 Then
+	
+		oldPos.x = pos.x
+		oldPos.y = pos.y
+		
+		speed.x = -1 * speed.x
+		
+		pos.x = pos.x + speed.x
+		pos.y = pos.y + speed.y
+		
+		cv.DrawLine(oldPos.x, oldPos.y, pos.x, pos.y, col, 1dip)
+			
+	End If	
+	
+	Sleep (10)
+	
+	cnt = cnt + 1
+	CallSubDelayed(Me, "draw")
+	 
+End Sub
+
+Sub ptInTriangle(p As PVector, p0 As PVector, p1 As PVector, p2 As PVector) As Boolean
+    Dim dX As Double = p.x-p2.x
+    Dim dY As Double = p.y-p2.y
+    Dim dX21 As Double = p2.x-p1.x
+    Dim dY12 As Double = p1.y-p2.y
+    Dim D As Double = dY12*(p0.x-p2.x) + dX21*(p0.y-p2.y)
+    Dim s As Double = dY12*dX + dX21*dY
+    Dim t1 As Double = (p2.y-p0.y)*dX + (p0.x-p2.x)*dY
+
+    If (D<0) Then
+		Return (s<=0 And t1<=0 And s+t1>=D)
+	Else 
+    	Return (s>=0 And t1>=0 And s+t1<=D)
+	End If
+	
+End Sub
+

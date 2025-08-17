@@ -1,0 +1,203 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaxprint-b4xlib
+Library2=jcore
+Module1=AwtGui
+Module2=Print_Utils
+Module3=PrintBook
+Module4=PrintImage_DocPrintJob
+Module5=PrintImage_PrinterJob
+Module6=PrintText
+Module7=PrintText_TextArea
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=7
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#VirtualMachineArgs: --add-opens java.desktop/sun.print=ALL-UNNAMED --add-opens java.desktop/sun.awt.windows=ALL-UNNAMED
+#PackagerProperty: VMArgs = --add-opens java.desktop/sun.print=b4j --add-opens java.desktop/sun.awt.windows=b4j
+
+'Archive Project Modules - before creating B4xLib
+'Archive Modules: ide://run?File=C:\Java\jdk1.8.0_271\bin\java.exe&Args=-jar&Args=C:\NoInstApps\B4j\ArchiveProjectModules\ArchiveProjectModules.jar&Args=%PROJECT%\%PROJECT_NAME%.b4j
+
+
+#If Notes
+	For PrintRequestAttributeSet there seems to be no consistent way of specifying a destination file for a	PDF printer.
+'	
+	"Microsoft Print to PDF" responds silently to PRA.Add(Attributes.Destination_File("D:\test.pdf"))
+	Whereas "Bullzip PDF Printer" produces a Postscript file.
+	there will be no prompt to enter a file unless it already exists, you can use AWTPrintUtils.GetIncrementalFileName to ensure it doesnt,
+	neither will an error be raised if the file is invalid.
+	
+	If configured for silent running and a default file location is set, "Bullzip PDF Printer" responds to 
+	PRA.Add(Attributes.JobName("Test.pdf",Null)) (to the default file location) with no dialog.
+	Whereas "Microsoft Print to PDF"  ignores it and displays a file save dialog.
+	
+	My printer names used for testing: 
+	
+	"Microsoft Print to PDF"
+	"Canon MG5700 series Printer"
+	"Microsoft XPS Document Writer"
+	"Generic / Text Only"
+	
+	To set a custom form size for the Microsoft XPS Document Writer
+	see 'https://answers.microsoft.com/en-us/windows/forum/all/custom-paper-size-for-xps-printer/2e62385e-7129-4368-9ae6-fb44dadee29d
+	
+	Loading a compressed image file i.e. jpg, the reported width and height of the loaded file may differ to the width and height
+	reported by the file system. This may also give a different aspect ratio.  When printing compressed files using MaintainAspectRatio 
+	may lead to unexpected results. It is better to set the page output with the margins and size you know will be correct.
+#End If
+
+Sub Process_Globals
+	Private PrinterName As String = "Microsoft Print to PDF"		'ignore
+	Private SelectedButton As JavaObject
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim Gui As AwtGui
+	Gui.Initialize(Me,"Gui")
+	StartMessageLoop
+End Sub
+
+Private Sub Gui_Click(Btn As Object)
+	SelectedButton = Btn
+	Dim Text As String = SelectedButton.RunMethod("getText",Null)
+	Log(Text & " Clicked")
+	SelectedButton.RunMethod("setEnabled",Array(False))
+	Select Text
+		Case "Print Text"
+			PrintTextDo
+		Case "Dump Text"
+			DumpTextDo
+		Case "Print Image Pj"
+			PrintImagePrinterJobDo
+		Case "Print Image Dpj"
+			PrintImageDocPrintJobDo
+		Case "Print Book"
+			PrintBookDo
+	End Select
+	
+End Sub
+
+Public Sub EnableSelectedButton
+	#If Not(Non_ui)
+	SelectedButton.Enabled = True
+	#Else
+	SelectedButton.RunMethod("setEnabled",Array(True))
+	#End If
+End Sub
+
+Private Sub DumpTextDo			'ignore
+	
+	Dim DT As PrintText_TextArea
+	DT.Initialize
+	DT.SetTextColor(AWTColors.Blue)
+	
+	DT.SetTextContent(GetText)
+	
+	Wait For(DT.Print) Complete (Result As String)
+		
+	Log("DumpText Complete " & Result)
+	
+	EnableSelectedButton
+End Sub
+
+Private Sub PrintTextDo			'ignore
+	Log("PrintText ...............")
+	Dim PT As PrintText
+	PT.Initialize
+	PT.SetTextContent(GetText)
+	PT.SetUnderlineColor(AWTColors.GRAY)
+	Wait For(PT.Print) Complete (Result As String)
+		
+	Log("PrintText Complete " & Result)
+	
+	EnableSelectedButton
+End Sub
+
+Private Sub PrintBookDo			'ignore
+	
+	Dim PB As PrintBook
+	PB.Initialize
+	PB.SetTextContent("test")
+	Wait For (PB.Print) Complete (Result As String)
+	Log("PrintBook Complete " & Result)
+	
+	EnableSelectedButton
+End Sub
+
+Private Sub PrintImagePrinterJobDo			'ignore
+	Log("Process PIPJ ...............")
+	Dim PI As PrintImage_PrinterJob
+	PI.Initialize
+	
+	PI.SetImageFileName(File.Combine(File.DirAssets,"202010200415.jpg"))
+	PI.SetPageMargins(10,10,10,10)
+
+	
+	'Attributes for Printer selection
+'	Dim PSAS As PrintServiceAttributeSet = NewInstanceJavax.PrintServiceAttributeSet
+'	PSAS.Add(Attributes.PrinterName(PrinterName, Null))
+'	PI.SetPrintServiceAttributeSet(PSAS)
+
+	'Attributes for printing
+	Dim PRAS As PrintRequestAttributeSet
+	PRAS.Initialize
+	PRAS.add(Attributes.ORIENTATIONREQUESTED_REVERSE_LANDSCAPE)
+	
+	PI.SetPrintRequestAttributeSet(PRAS)
+
+	Wait For (PI.Print) Complete (Result As String)
+		
+	Log("PrintImagePrinterJob Complete " & Result)
+	
+	EnableSelectedButton
+	
+End Sub
+
+Private Sub PrintImageDocPrintJobDo			'ignore
+	Log("Process PIDP ...............")
+	Dim PI As PrintImage_DocPrintJob
+	PI.Initialize
+	
+	PI.SetImageFileName(File.Combine(File.DirAssets,"202010200415.jpg"))
+	PI.SetPageMargins(0,10,0,10)
+
+	'Attributes for printing
+	Dim PRAS As PrintRequestAttributeSet
+	PRAS.Initialize
+	PRAS.add(Attributes.ORIENTATIONREQUESTED_REVERSE_LANDSCAPE)
+	
+	PI.SetPrintRequestAttributeSet(PRAS)
+
+	Wait For (PI.Print) Complete (Result As String)
+		
+	Log("PrimtImageDocPrint Complete " & Result)
+	
+	EnableSelectedButton
+
+End Sub
+
+
+
+Private Sub GetText As String
+	Return $"Lorem ipsum dolor sit amet,
+consectetur adipiscing elit, sed do 
+eiusmod tempor incididunt ut labore et 
+dolore magna aliqua. Ut enim ad minim veniam, 
+quis nostrud exercitation ullamco
+laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in
+voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.
+Excepteur sint occaecat
+cupidatat non proident,
+sunt in culpa qui officia
+deserunt mollit anim id est laborum."$
+End Sub

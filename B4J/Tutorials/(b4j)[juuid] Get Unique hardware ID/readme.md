@@ -1,5 +1,5 @@
 ### (b4j)[juuid] Get Unique hardware ID by behnam_tr
-### 08/06/2025
+### 05/11/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/132277/)
 
 Get Unique hardware ID in b4j  
@@ -147,8 +147,6 @@ Next
 
   
   
-how enable wmic option on win11  
-<https://techcommunity.microsoft.com/blog/windows-itpro-blog/how-to-install-wmic-feature-on-demand-on-windows-11/4189530>  
   
 Any function that has no result returns a null value  
 lib (jar and xml files) atteched.

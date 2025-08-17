@@ -1,0 +1,87 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+Library4=jstringutils
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200 
+	#MergeLibraries: False	
+	#IgnoreWarnings: 19
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+	' How to handle error: org.openqa.selenium.NoSuchElementException: no such element: Unable to locate element...
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+			
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+		
+	Selenium.NavigateTo("https://www.selenium.dev/selenium/web/dynamic.html")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+	' the line of code below will crash app with error: org.openqa.selenium.NoSuchElementException: no such element: Unable to locate element: {"method":"css selector","selector":"#nonexistent"}
+	' Dim NonExistentElement As Pnd_WebElement = Selenium.FindById("nonexistent")
+	
+	
+	' First solution: Try Catch, check is WebElement.IsInitialized:
+	Dim NonExistentWebElement As Pnd_WebElement
+	Try
+		NonExistentWebElement = Selenium.FindById("nonexistent")
+	Catch
+		'Log(LastException)
+	End Try
+	If NonExistentWebElement.IsInitialized Then
+		Log(NonExistentWebElement.GetText) ' WebElement is found on the page
+	Else
+		Log("WebElement not found")
+	End If
+	
+	
+	' Second solution: Try Catch:
+	Try
+		Dim NonExistentWebElement As Pnd_WebElement = Selenium.FindById("nonexistent")
+		Log(NonExistentWebElement.GetText) ' WebElement is found on the page
+	Catch
+		Log("WebElement not found")
+	End Try
+	
+	
+	' Third solution: use FindBy_List
+	' if element is not found WebElementList will be empty
+	Dim WebElementList As List = Selenium.FindByIdList("nonexistent")
+	For Each WebElement As Pnd_WebElement In WebElementList
+		Log(WebElement.GetText) ' WebElement is found on the page
+	Next
+
+
+	Selenium.Quit
+	Sleep(500)
+	ExitApplication
+End Sub
+

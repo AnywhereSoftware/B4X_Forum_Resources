@@ -398,7 +398,8 @@ Some examples:
       <comment>Helper to asynchronously copy single resource file (Assets) to the destination folder.
 
 Destination: The file path where resource file will be copied (without the ProjectFolder prefix)
-ForceOverwrite:  If True and destination file already exist, the file will be ovewrited (eg. use this after you change it and copy again with same name). If False and destination file already exist, the library just will return success and avoid to overwrite it.
+ForceOverwrite:  If True and destination file already exist, the file will be ovewrited (eg. use this after you change it and copy again with same name)
+                              If False and destination file already exist, the library just will return success and avoid to overwrite it.
 
 NOTES:
 - Destination folder will be created if not exist.
@@ -444,7 +445,6 @@ Destination folders will be created if not exist.
 ResourcesList:  A list containing the path where files will be unzipped (without the ProjectFolder prefix)
 ZipFileName:  Zip file name, should be in Assets folder
 BufferSize:  The size of buffer used while unzip files (2048, 4096, 8192, 16384 and more)
-ForceOverwrite:  If True and destination file already exist, the file will be ovewrited (eg. use this after you change it and copy again with same name). If False and destination file already exist, the library just will return success and avoid to overwrite it.
 
 IMPORTANT NOTES: 1) The sub just check for the first file existence in the list (first element of passed List) to know if all files already exists.
                                           If the first element exist, then it supposes that all resource files already exists and avoid to unzip.
@@ -465,7 +465,7 @@ files.AddAll(Array As String("models/obj/Cars/MonsterTruck.obj", _
 	                           "sounds/Animals/Birds.wav", _
 	                           "textures/woods/wood1.png"))
 
-Wait For (gl.CopyResourcesFromZipFile(files, "resources.zip", 8192, False)) Complete (Success As Boolean)
+Wait For (gl.CopyResourcesFromZipFile(files, "resources.zip", 8192)) Complete (Success As Boolean)
 If Success Then
    Log("All resources copied")
 Else
@@ -486,10 +486,6 @@ End If
         <name>BufferSize</name>
         <type>int</type>
       </parameter>
-      <parameter>
-        <name>ForceOverwrite</name>
-        <type>boolean</type>
-      </parameter>
     </method>
     <method>
       <name DesignerName="CopyResourcesFromZipFileToSingleFolder">_copyresourcesfromzipfiletosinglefolder</name>
@@ -500,13 +496,12 @@ Destination folder will be created if not exist.
 DestFolder:  Should contain all full path where files will be unzipped (without the ProjectFolder prefix)
 ZipFileName:  Zip file should be in Assets folder
 BufferSize:  The size of buffer used while unzip files (2048, 4096, 8192, 16384 and more)
-ForceOverwrite:  If True and destination file already exist, the file will be ovewrited (eg. use this after you change it and copy again with same name). If False and destination file already exist, the library just will return success and avoid to overwrite it.
 
 Example:
 
 This will copy all models inside mymodels.zip (Assets) to models/Animals/Rabbit/ inside ProjectFolder:
 &lt;code&gt;
-Wait For (gl.CopyResourcesFromZipFileToSingleFolder("models/Animals/Rabbit", "mymodels.zip", 8192, False)) Complete (Success As Boolean)
+Wait For (gl.CopyResourcesFromZipFileToSingleFolder("models/Animals/Rabbit", "mymodels.zip")) Complete (Success As Boolean)
 If Success Then
    Log("Resources copied")
 Else
@@ -526,10 +521,6 @@ End If
       <parameter>
         <name>BufferSize</name>
         <type>int</type>
-      </parameter>
-      <parameter>
-        <name>ForceOverwrite</name>
-        <type>boolean</type>
       </parameter>
     </method>
     <method>
@@ -1430,6 +1421,6 @@ NOTE: You can access not only from a development machine, but from any local dev
       <returntype>String</returntype>
     </method>
   </class>
-  <version>1.25</version>
+  <version>1.24</version>
   <author>Massimo Meli</author>
 </root>

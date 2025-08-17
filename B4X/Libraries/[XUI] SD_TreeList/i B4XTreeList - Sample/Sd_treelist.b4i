@@ -1,0 +1,93 @@
+﻿Build1=Default,it.tecnomedia.treelist
+File1=main.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=isd_treelist
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=6
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+	
+	#If DEBUG
+	   #CertificateFile: ios_developement.cer
+	   #ProvisionFile: Developement.mobileprovision
+	#ELSE If RELEASE
+	   #CertificateFile: ios_distribution.cer
+	   #ProvisionFile: distribution.mobileprovision
+	#END IF
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private xui As XUI
+	Private B4XTree1 As B4XTree
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	
+	Page1.RootPanel.LoadLayout("main")
+
+	B4XTree1.AddBranch("Branch 1","B1","",Chr(0xF0F9),Colors.Gray)
+	B4XTree1.AddLeaf("Leaf A","","LA","B1")
+	B4XTree1.AddLeaf("Leaf B","Info","LB","B1")
+	B4XTree1.AddBranch("Sub Branch1","S1","B1",Chr(0xF29D),Colors.RGB(200,50,50))
+	B4XTree1.AddLeaf("Leaf Sub 1","","LS1","S1")
+	B4XTree1.AddLeaf("Leaf Sub 2","","LS2","S1")
+	B4XTree1.AddBranch("3 level Branch1","T1","S1",Chr(0xF29D),Colors.Blue)
+	B4XTree1.AddLeaf("Leaf 3 L","Info","L3","T1")
+	
+	B4XTree1.Add("Branch 2","B2",Chr(0xF0E9),0xFF566DFF,Array As String("Sub A","Sub B","Sub C"))
+	B4XTree1.Add("Branch 3","B3",Chr(0xF0F5),0xFF1B8921,Array As String("Leaf D","Leaf E","Leaf F"))
+	B4XTree1.Add("Branch 4","B4",Chr(0xF1B9),Colors.red,Array As String("Leaf D","Leaf E","Leaf F"))
+	B4XTree1.Add("Branch 5","B5",Chr(0xF2B5),Colors.Yellow,Array As String("Leaf D","Leaf E","Leaf F"))
+	B4XTree1.Add("Branch 6","B6",Chr(0xF0EB),Colors.Blue,Array As String("Leaf D","Leaf E","Leaf F"))
+	
+	'B4XTree1.ExpandAllBranch
+	B4XTree1.ExpandBranch("B1")
+	B4XTree1.ExpandBranch("S1")
+	B4XTree1.ExpandBranch("T1")
+	B4XTree1.ExpandBranch("B3")
+
+	Sleep(1000)
+	B4XTree1.MoveLeaf("LS2","T1")
+	
+	'Instruction useful only for the compiler to load FontAwesone
+	Dim BF As B4XFont= xui.CreateFontAwesome(14) 'ignore
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Private Sub B4XTree1_Click (IDLeaf As String, LeafName As String)
+	Log($"ID Leaf:${IDLeaf}  LeafName:${LeafName}"$)
+End Sub
+
