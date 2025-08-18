@@ -1,0 +1,93 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private FileList As List
+	Private LibList As List
+	Private ModuleList As List
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim Filepath As String= File.DirApp
+	Dim filename As String 
+	
+	For Each FN As String In File.ListFiles(File.dirapp)
+		If FN.EndsWith(".b4a") Or FN.EndsWith(".b4i") Or FN.EndsWith(".b4j") Or FN.EndsWith(".b4r") Then
+			filename=FN
+			Exit
+		End If
+	Next
+	
+	FileList.Initialize
+	LibList.Initialize
+	ModuleList.Initialize
+	Dim Modfile As List = File.ReadList(Filepath,filename)
+	
+	Dim TextReader1 As TextReader
+	TextReader1.Initialize(File.OpenInput(Filepath, filename))
+	Dim line As String
+	line = TextReader1.ReadLine
+	Do While line <> Null
+		If line.StartsWith("File") And Not(line.StartsWith("FileGroup")) Then
+			Dim f As String
+			f=line.SubString(line.IndexOf("=")+1)
+			If FileList.IndexOf(f)=-1 Then FileList.Add(f)
+			Modfile.RemoveAt(Modfile.IndexOf(line))
+		End If
+		
+		If line.StartsWith("Library") Then
+			Dim f As String
+			f=line.SubString(line.IndexOf("=")+1)
+			If LibList.IndexOf(f)=-1 Then LibList.Add(f)
+			Modfile.RemoveAt(Modfile.IndexOf(line))
+		End If
+		
+		If line.StartsWith("Module") Then
+			Dim f As String
+			f=line.SubString(line.IndexOf("=")+1)
+			If ModuleList.IndexOf(f)=-1 Then ModuleList.Add(f)
+			Modfile.RemoveAt(Modfile.IndexOf(line))
+		End If
+		
+		If line.StartsWith("NumberOfFiles") Or line.StartsWith("NumberOfLibraries") Or line.StartsWith("NumberOfModules") Then
+			Modfile.RemoveAt(Modfile.IndexOf(line))
+		End If
+		line = TextReader1.ReadLine
+	Loop
+	TextReader1.Close
+	
+	
+	Dim InsertLine As Int = 1
+	
+	For i =0 To FileList.Size-1
+		Modfile.InsertAt(InsertLine,"File" & (i+1) & "=" & FileList.Get(i))
+		InsertLine=InsertLine+1
+	Next
+	
+	For i =0 To LibList.Size-1
+		Modfile.InsertAt(InsertLine,"Library" & (i+1) & "=" & LibList.Get(i))
+		InsertLine=InsertLine+1
+	Next
+	
+	For i =0 To ModuleList.Size-1
+		Modfile.InsertAt(InsertLine,"Module" & (i+1) & "=" & ModuleList.Get(i))
+		InsertLine=InsertLine+1
+	Next
+	
+	Modfile.InsertAt(InsertLine,"NumberOfFiles=" & FileList.Size)
+	Modfile.InsertAt(InsertLine,"NumberOfLibraries=" & LibList.Size)
+	Modfile.InsertAt(InsertLine,"NumberOfModules=" & ModuleList.Size)
+	File.WriteList(File.DirApp,filename,Modfile)
+End Sub

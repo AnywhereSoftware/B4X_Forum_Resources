@@ -1,0 +1,110 @@
+﻿Version=4
+IconFile=
+NumberOfModules=0
+Build1=Default,Jhs.IceZxing1
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~'AddManifestText(~\n~'<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~'<supports-screens android:largeScreens="true" ~\n~'    android:normalScreens="true" ~\n~'    android:smallScreens="true" ~\n~'    android:anyDensity="true"/>)~\n~'SetApplicationAttribute(android:icon, "@drawable/icon")~\n~'SetApplicationAttribute(android:label, "$LABEL$")~\n~'AddApplicationText(<activity android:name="ice.zxing.CaptureActivity"~\n~'			android:screenOrientation="portrait" android:configChanges="orientation|keyboardHidden"~\n~'			android:theme="@android:style/Theme.NoTitleBar.Fullscreen"~\n~'			android:windowSoftInputMode="stateAlwaysHidden">~\n~'		</activity>)~\n~'End of default text.~\n~~\n~~\n~~\n~'This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="17"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true"~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(<uses-feature android:name="android.hardware.telephony" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.flash" android:required="false" />)~\n~'AddPermission("android.permission.ACCESS_COARSE_LOCATION")~\n~AddPermission("android.permission.INTERNET")~\n~AddPermission("android.permission.ACCESS_FINE_LOCATION")~\n~AddPermission("android.permission.WAKE_LOCK")~\n~AddPermission("android.permission.DEVICE_POWER")~\n~'AddPermission("android.permission.ACCESS_COARSE_UPDATES")~\n~AddPermission("android.permission.READ_PHONE_STATE")~\n~AddPermission("android.permission.VIBRATE")~\n~AddPermission("android.permission.CAMERA")~\n~AddPermission("android.permission.FLASHLIGHT")~\n~AddPermission("android.hardware.camera")~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~AddApplicationText(<activity android:name="ice.zxing.CaptureActivity"~\n~			android:screenOrientation="portrait" android:configChanges="orientation|keyboardHidden"~\n~			android:theme="@android:style/Theme.NoTitleBar.Fullscreen"~\n~			android:windowSoftInputMode="stateAlwaysHidden">~\n~		</activity>)
+NumberOfFiles=4
+File1=B4A.png
+File2=JhsIceZxing1.jar
+File3=JhsIceZxing1.xml
+File4=main.bal
+NumberOfLibraries=2
+Library1=core
+Library2=jhsicezxing1
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: zxdemonew
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim zx As JhsIceZxing1
+	Private Button1 As Button
+	
+	Dim bm As Bitmap
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Activity.LoadLayout("main")
+	bm.Initialize(File.DirAssets,"B4A.png") 
+	
+End Sub
+ Sub Button1_Click
+ 
+    zx.isportrait = True
+	zx.useFrontCam = False
+	'set the timeoutDuration to a very high value (such as 2000000000) if you dont want it to time out
+	'2000000000 = 63 years
+	zx.timeoutDuration = 30
+	
+	'change these factors between 0 and 1 to change the size of the viewfinder rectangle
+	'the library will limit the minimum size to 240 x 240 pixels and the maximum to (screen width) x (screen height pixels)
+    zx.theViewFinderXfactor = 0.7
+	zx.theViewFinderYfactor = 0.5
+	
+	zx.theFrameColor = Colors.Blue
+	zx.theLaserColor = Colors.Yellow
+	zx.theMaskColor = Colors.argb(95, 0, 0, 255)
+	zx.theResultColor = Colors.Green
+	zx.theResultPointColor = Colors.Red
+	
+	'set the prompt messages
+	zx.theTopPromptMessage = "This was done......"
+	zx.theTopPromptTextSize = 5%y                            'text size in pixels
+	zx.topPromptColor = Colors.Red
+	zx.topPromptDistanceFromTop = 1%y                        'pixel distance from top
+	
+	zx.theBottomPromptMessage = "Just for fun......"
+	zx.theBottomPromptTextSize = 5%y                         'text size in pixels
+	zx.bottomPromptColor = Colors.Blue
+	zx.bottomPromptDistanceFromBottom = 5%y                  'pixel distance from top
+	
+	'add a bitmap
+	zx.theBitMap = bm
+	zx.theBitMapLeft = 40%x
+	zx.theBitMapTop = 10%y
+	zx.theBitMapWidth = 20%x 
+	zx.theBitMapHeight = 20%x
+	
+	zx.BeginScan("myzx")	
+	
+End Sub
+
+Sub myzx_result(atype As String,Values As String)
+	Log("type:" & atype &  "Values:" & Values)
+	Msgbox(Values,"type:" & atype)
+
+End Sub
+Sub myzx_noscan(atype As String,Values As String)
+	Log("type:" & atype &  "Values:" & Values)
+	Msgbox(Values,"type:" & atype)
+
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+

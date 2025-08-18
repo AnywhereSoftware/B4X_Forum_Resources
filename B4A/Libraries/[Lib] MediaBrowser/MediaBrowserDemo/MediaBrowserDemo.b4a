@@ -1,0 +1,406 @@
+﻿Build1=Default,flm.mediabrowser.demo
+File1=btnpict.png
+File10=btnvideo_inactif.png
+File11=mediagallery.bal
+File2=btnpict_inactif.png
+File3=btnplay.png
+File4=btnplay_clic.png
+File5=btnson.png
+File6=btnson_inactif.png
+File7=btnstop.png
+File8=btnstop_clic.png
+File9=btnvideo.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=mediabrowser
+Library3=reflection
+Library4=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE) 'Allows an application to read from external storage.~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")
+Module1=ClsCheckList
+NumberOfFiles=11
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.7
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: MediaBrowser demo
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#IgnoreWarnings: 33, 34
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Public CurrentMediaTab As Int
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim MB As MediaBrowser
+	Dim tabMedias As TabHost
+	Dim pnlAudio, pnlImage, pnlVideo As Panel
+	Dim svAudio, svImage, svVideo As ScrollView
+	Dim lstAudio, lstImage, lstVideo As ClsCheckList
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	' Initializations
+	Activity.LoadLayout("MediaGallery")
+
+	MB.Initialize("MB")
+	
+	pnlAudio.Initialize("")
+	tabMedias.AddTabWithIcon2("Audio", CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnson_inactif.png"), 32, 32), _
+										CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnson.png"), 32, 32), pnlAudio)
+	pnlImage.Initialize("")
+	tabMedias.AddTabWithIcon2("Image", CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnpict_inactif.png"), 32, 32), _
+										CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnpict.png"), 32, 32), pnlImage)
+	pnlVideo.Initialize("")
+	tabMedias.AddTabWithIcon2("Video", CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnvideo_inactif.png"), 32, 32), _
+										CreateScaledBitmap(LoadBitmap(File.DirAssets, "btnvideo.png"), 32, 32), pnlVideo)
+End Sub
+
+Sub Activity_Resume
+	' Refresh the current media list
+	If tabMedias.CurrentTab <> CurrentMediaTab Then
+		tabMedias.CurrentTab = CurrentMediaTab
+	Else
+		RefreshMediaList
+	End If
+End Sub
+
+Sub Activity_Pause(UserClosed As Boolean)
+	' Stop playing music
+	If MB.MediaIsPlaying Then MB.MediaStop
+End Sub
+
+Sub ReadAudios
+	' Read the audio list from the MediaStore and populate the ScrollView
+	ProgressDialogShow2("Please wait...", False)
+	DoEvents
+	Dim m As Map
+	m = MB.GetMediaAudioList(True, MB.FIELD_ARTIST & " COLLATE UNICODE, " & MB.FIELD_DISPLAY_NAME & " COLLATE UNICODE")
+	lstAudio.Initialize(Me, svAudio, "", "Audio_Click", "", 0)
+	lstAudio.ExtensionColor = Colors.ARGB(50, 255, 255, 255)
+	DoEvents
+	Dim Artist, DernArtist As String
+	For i = 0 To (m.Size / 9) - 1
+		Artist = m.Get("Artist" & i)
+		If Artist <> DernArtist Then
+			lstAudio.AddHeader(Artist)
+			DernArtist = Artist
+		End If
+		lstAudio.AddItemNoChkbx(m.Get("ID" & i), m.Get("Title" & i), m.Get("Location" & i), Null)
+	Next
+	lstAudio.ResizePanel
+	ProgressDialogHide
+End Sub
+
+Sub ReadImages
+	' Read the image list from the MediaStore and populate the ScrollView
+	ProgressDialogShow2("Please wait...", False)
+	DoEvents
+	Dim m As Map
+	m = MB.GetMediaImageList(True, MB.FIELD_DISPLAY_NAME & " COLLATE UNICODE")
+	lstImage.Initialize(Me, svImage, "", "Image_Click", "", 0)
+	lstImage.ExtensionColor = Colors.ARGB(50, 255, 255, 255)
+	DoEvents
+	For i = 0 To (m.Size / 7) - 1
+		Dim bmp As Bitmap
+		bmp = MB.GetImgThumbnailByID(m.Get("ID" & i), False)
+		lstImage.AddItemNoChkbx(m.Get("ID" & i), m.Get("DisplayName" & i), m.Get("Location" & i), bmp)
+	Next
+	lstImage.ResizePanel
+	ProgressDialogHide
+End Sub
+
+Sub ReadVideos
+	' Read the video list from the MediaStore and populate the ScrollView
+	ProgressDialogShow2("Please wait...", False)
+	DoEvents
+	Dim m As Map
+	m = MB.GetMediaVideoList(True, MB.FIELD_DISPLAY_NAME & " COLLATE UNICODE")
+	lstVideo.Initialize(Me, svVideo, "", "Video_Click", "", 0)
+	lstVideo.ExtensionColor = Colors.ARGB(50, 255, 255, 255)
+	DoEvents
+	For i = 0 To (m.Size / 6) - 1
+		Dim bmp As Bitmap
+		bmp = MB.GetVideoThumbnailByID(m.Get("ID" & i), True)
+		If bmp.IsInitialized Then bmp = MB.GetVideoThumbnailByID(m.Get("ID" & i), False)
+		lstVideo.AddItemNoChkbx(m.Get("ID" & i), m.Get("DisplayName" & i), m.Get("Location" & i), bmp)
+	Next
+	lstVideo.ResizePanel
+	ProgressDialogHide
+End Sub
+
+Sub RefreshMediaList
+	' Stop playing music
+	If MB.MediaIsPlaying Then MB.MediaStop
+
+	' Read the media list and populate the visible Scrollview
+	Select Case CurrentMediaTab
+		Case 0: 'Audio
+			If Not(svAudio.IsInitialized) Then
+				svAudio.Initialize(0)
+				pnlAudio.AddView(svAudio, 0, 0, pnlAudio.Width, pnlAudio.Height)
+			End If
+			ReadAudios
+		Case 1: 'Images
+			If Not(svImage.IsInitialized) Then
+				svImage.Initialize(0)
+				pnlImage.AddView(svImage, 0, 0, pnlImage.Width, pnlImage.Height)
+			End If
+			ReadImages
+		Case 2: 'Vidéos
+			If Not(svVideo.IsInitialized) Then
+				svVideo.Initialize(0)
+				pnlVideo.AddView(svVideo, 0, 0, pnlVideo.Width, pnlVideo.Height)
+			End If
+			ReadVideos
+	End Select
+End Sub
+
+Sub tabMedias_TabChanged
+	' Tab change -> refresh
+	CurrentMediaTab = tabMedias.CurrentTab
+	RefreshMediaList
+End Sub
+
+Sub CreateScaledBitmap(Original As Bitmap, Width As Int, Height As Int) As Bitmap
+	Dim r As Reflector
+	Dim b As Bitmap
+	b = r.RunStaticMethod("android.graphics.Bitmap", "createScaledBitmap", _
+			Array As Object(Original, Width, Height, True), _
+			Array As String("android.graphics.Bitmap", "java.lang.int", "java.lang.int", "java.lang.boolean"))
+	Return b
+End Sub
+
+Sub SD_BtnPlay As StateListDrawable
+	' Création d'un bouton Play à 2 états
+	Dim sld As StateListDrawable
+	sld.Initialize
+	Dim bd, bd_clic As BitmapDrawable
+	bd.Initialize(LoadBitmap(File.DirAssets, "btnplay.png"))
+	bd_clic.Initialize(LoadBitmap(File.DirAssets, "btnplay_clic.png"))
+	sld.AddState(sld.State_Pressed, bd_clic)
+	sld.AddCatchAllState(bd)
+	Return sld
+End Sub
+
+Sub btnPlay_Click
+	' Play the selected audio file
+	Dim btn As Button
+	btn = Sender
+	If MB.MediaIsPlaying Then
+		MB.MediaStop
+		btn.Background = SD_BtnPlay
+	Else
+		MB.Tag = btn
+		MB.MediaAudioPlay(True, btn.Tag)
+		MB.MediaSetLooping(False)
+		Dim sld As StateListDrawable
+		sld.Initialize
+		Dim bd, bd_clic As BitmapDrawable
+		bd.Initialize(LoadBitmap(File.DirAssets, "btnstop.png"))
+		bd_clic.Initialize(LoadBitmap(File.DirAssets, "btnstop_clic.png"))
+		sld.AddState(sld.State_Pressed, bd_clic)
+		sld.AddCatchAllState(bd)
+		btn.Background = sld
+	End If
+End Sub
+
+Sub Audio_Click(pnl As Panel, ID As Object)
+	' Display album, composer, track, year and duration of the audio file
+	If MB.MediaIsPlaying Then MB.MediaStop
+	If lstAudio.HasExtraContent And lstAudio.ExtendedItemID = ID Then
+		lstAudio.CollapseItem
+		Return
+	End If
+	Dim lblLoc As Label
+	lblLoc = pnl.GetView(1)
+	Dim m As Map, pnlInfo As Panel, lbl As Label
+	m = MB.GetAudioFileInfoByID(True, ID)
+	pnlInfo.Initialize("")
+	lbl.Initialize("")
+	lbl.Gravity = Gravity.TOP
+	lbl.TextColor = lblLoc.TextColor
+	lbl.TextSize = lblLoc.TextSize
+	If m.Size > 0 Then
+		Dim Composer As String = MB.GetAudioFieldByID(True, ID, MB.FIELD_COMPOSER)
+		Dim Content As StringBuilder: Content.Initialize
+		Dim Dur As Long, DurStr As String
+		If IsNumber(m.Get("Duration" & 0)) Then
+			Dur = m.Get("Duration" & 0)
+			DurStr = NumberFormat(DateTime.GetMinute(Dur), 2, 0) & ":" & NumberFormat(DateTime.GetSecond(Dur), 2, 0)
+		End If
+		Content.Append("Album").Append(" = ").Append(m.Get("Album" & 0))
+		Content.Append(CRLF).Append("Composer").Append(" = ").Append(Composer)
+		Content.Append(CRLF).Append("Track").Append(" = ").Append(m.Get("Track" & 0))
+		Content.Append(CRLF).Append("Year").Append(" = ").Append(m.Get("Year" & 0))
+		Content.Append(CRLF).Append("Duration").Append(" = ").Append(DurStr)
+		lbl.Text = Content.ToString
+		pnlInfo.AddView(lbl, 40dip, 0, lstAudio.getWidth - 95dip, 100dip)
+		Dim su As StringUtils
+		lbl.Height = Max(su.MeasureMultilineTextHeight(lbl, lbl.Text) + 2dip, 50dip)
+
+		' Add play button
+		Dim btnPlay As Button
+		btnPlay.Initialize("btnPlay")
+		btnPlay.Tag = ID
+		btnPlay.Background = SD_BtnPlay
+		pnlInfo.AddView(btnPlay, lstAudio.getWidth - 55dip, 0, 50dip, 50dip)
+	Else
+		lbl.Text = "No info available"
+		pnlInfo.AddView(lbl, 40dip, 0, lstAudio.getWidth - 40dip, 25dip)
+	End If
+	lstAudio.ExtendItem(ID, pnlInfo, lbl.Height)
+End Sub
+
+Public Sub RescaleImg(bmp As Bitmap, iv As ImageView, MaxWidth As Int, MaxHeight As Int) As Bitmap
+	If Not(bmp.IsInitialized) Then Return Null
+	If bmp.Height <= MaxHeight And bmp.Width <= MaxWidth Then
+		' The image is smaller than the ImgView -> we just center it
+		iv.Gravity = Gravity.CENTER
+	Else
+		Dim RatioBmp, RatioImg As Float
+		RatioBmp = bmp.Width / bmp.Height
+		RatioImg = MaxWidth / MaxHeight
+		If NumberFormat(RatioBmp, 1, 2) = NumberFormat(RatioImg, 1, 2) Then
+			' Same aspect ratio -> the image can fill the ImgView
+			iv.Gravity = Gravity.FILL
+		Else
+			' The image and its container have different ratios -> resizing of the image
+			Dim Diviseur As Float
+			If RatioImg > RatioBmp Then
+				Diviseur = bmp.Height / MaxHeight
+				bmp = CreateScaledBitmap(bmp, Round(bmp.Width / Diviseur), MaxHeight)
+			Else
+				Diviseur = bmp.Width / MaxWidth
+				bmp = CreateScaledBitmap(bmp, MaxWidth, Round(bmp.Height / Diviseur))
+			End If
+			iv.Gravity = Gravity.NO_GRAVITY
+		End If
+	End If
+	Return bmp
+End Sub
+
+Sub Image_Click(pnl As Panel, ID As Object)
+	' Display a bigger thumbnail (not squared)
+	If lstImage.HasExtraContent And lstImage.ExtendedItemID = ID Then
+		lstImage.CollapseItem
+		Return
+	End If
+	Try
+		Dim pnlVign As Panel, bmp As Bitmap, iv As ImageView
+		pnlVign.Initialize("")
+		iv.Initialize("")
+		Dim MaxSize As Int: MaxSize = 200dip
+		bmp = RescaleImg(MB.GetImgThumbnailByID(ID, True), iv, MaxSize, MaxSize)
+		iv.Bitmap = bmp
+		pnlVign.AddView(iv, 40dip, 0, MaxSize, Min(bmp.Height, MaxSize))
+		
+		' Add date, size, dimensions, orientation & GPS coordinates
+		Dim lbl, lblLoc As Label
+		If pnl.GetView(1) Is Label Then
+			lblLoc = pnl.GetView(2)
+		Else
+			lblLoc = pnl.GetView(3)
+		End If
+		lbl.Initialize("")
+		lbl.Gravity = Gravity.TOP
+		lbl.TextColor = lblLoc.TextColor
+		lbl.TextSize = lblLoc.TextSize
+		Dim m As Map
+		m = MB.GetExtImageFileInfo(lblLoc.Text)
+		If m.Size > 0 Then
+			DateTime.DateFormat = DateTime.DeviceDefaultDateFormat
+			Dim ImgDate As Long
+			If m.Get("DateTaken0") = Null Then
+				ImgDate = MB.GetImageFieldByID(True, ID, MB.FIELD_DATE_ADDED) * 1000
+			Else
+				ImgDate = m.Get("DateTaken0")
+			End If
+			lbl.Text = DateTime.Date(ImgDate) & " / " & m.Get("Size0") & " bytes"
+
+			Dim ImageLocation As String = m.Get("Location0")
+			m = MB.GetImageDimensions(lblLoc.Text)
+			If m.Size > 0 Then
+				lbl.Text = lbl.Text & CRLF & m.Get("Width") & "x" & m.Get("Height") & " / Orientation: "
+				Try
+					Dim Orientation As Int = MB.GetExifAttribute(ImageLocation, "Orientation")
+					If Orientation = 0 Then
+						lbl.Text = lbl.Text & "undefined"
+					Else If Orientation = 1 Then
+						lbl.Text = lbl.Text & "normal"
+					Else If Orientation = 2 Or Orientation = 4 Then
+						lbl.Text = lbl.Text & "flipped"
+					Else
+						lbl.Text = lbl.Text & "rotated"
+					End If
+				Catch
+					lbl.Text = lbl.Text & "null"
+				End Try
+			End If
+
+			Dim LatLong(2) As Float
+			If MB.GetExifLatLong(ImageLocation, LatLong) Then
+				lbl.Text = lbl.Text & CRLF & "Lat=" & LatLong(0) & ", Long=" & LatLong(1)
+				pnlVign.AddView(lbl, 40dip, iv.Height, lstImage.getWidth - 40dip, 62dip)
+			Else
+				pnlVign.AddView(lbl, 40dip, iv.Height, lstImage.getWidth - 40dip, 45dip)
+			End If
+		End If
+		lstImage.ExtendItem(ID, pnlVign, iv.Height + pnlVign.Height + lbl.Height)
+	Catch
+		Msgbox(LastException.Message, "Oooops")
+	End Try
+End Sub
+
+Sub Video_Click(pnl As Panel, ID As Object)
+	' Display a bigger thumbnail (not squared)
+	If lstVideo.HasExtraContent And lstVideo.ExtendedItemID = ID Then
+		lstVideo.CollapseItem
+		Return
+	End If
+	Try
+		Dim pnlVign As Panel, bmp As Bitmap, iv As ImageView
+		pnlVign.Initialize("")
+		iv.Initialize("")
+		Dim MaxSize As Int: MaxSize = 200dip
+		bmp = RescaleImg(MB.GetVideoThumbnailByID(ID, True), iv, MaxSize, MaxSize)
+		If bmp.IsInitialized Then
+			iv.Bitmap = bmp
+			pnlVign.AddView(iv, 40dip, 0, MaxSize, Min(bmp.Height, MaxSize))
+		Else
+			pnlVign.AddView(iv, 40dip, 0, 0, 25dip)
+		End If
+		lstVideo.ExtendItem(ID, pnlVign, iv.Height)
+	Catch
+		Msgbox(LastException.Message, "Oooops")
+	End Try
+End Sub
+
+Sub MB_MediaCompleted
+	' End of song -> back to Play icon
+	Dim btn As Button
+	btn = MB.Tag
+	btn.Background = SD_BtnPlay
+End Sub

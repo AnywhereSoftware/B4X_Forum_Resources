@@ -1,0 +1,58 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterBasic.b4r
+'Example B4R B4XLib rRFXMeter. The B4XLib contains the code module RFXMeter which does not need to be declared in Process_Globals.
+'Send random generated value to the Domoticz RFXMeter device:
+'IDX=384, Hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, Type=RFXMeter, SubType=RFXMeter counter, Data=NNNN
+'The device type is set as Counter.
+'Additional Libraries: rRFXMeter (rRFXMeter.b4xlib)
+'20220405 rwbl
+#End Region
+
+#Region Wiring
+'433Mhz Transmitter = Arduino
+'VCC = 5v
+'Signal = #7
+'GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	Private RFXMeter_Address As Byte = 0x09	'Address of the Domoticz RFXMeter used for the Send method (multiple addresses can be used)
+	Private TX_PINNR As Byte = 7			'433 Mhz transmitter data pin
+	Private LED_PINNR As Byte = 13			'LED to indicate data is transmitted
+	Private Timer_Test As Timer
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	RFXMeter.Initialize(TX_PINNR, LED_PINNR)
+	RFXMeter.Logging = True
+	Timer_Test.Initialize("Timer_Test_Tick", 15000)
+	Timer_Test.Enabled = True
+	Timer_Test_Tick
+End Sub
+
+Sub Timer_Test_Tick
+'	Example: RFXMeter with address=9, value=14307615 is converted to SendCommand: data=09F9511FDA01 (length=6 bytes)
+	Dim value As ULong = Rnd(0, RFXMeter.MAX_VALUE - 1)
+
+	'Send the value to the Domoticz RFXMeter device with the given address.
+	RFXMeter.SendValue(RFXMeter_Address, value)
+	Log("***")
+End Sub

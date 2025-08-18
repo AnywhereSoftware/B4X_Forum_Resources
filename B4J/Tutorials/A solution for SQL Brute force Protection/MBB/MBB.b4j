@@ -1,0 +1,193 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=a1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+Library4=javaobject
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=7
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 300 
+#End Region
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Public timer1 As Timer
+	Dim shl As Shell
+	Dim errsource As String
+	Dim errdate As String
+	Dim errdesc As String
+	Dim rulecount As Long
+	Private Label1 As Label
+	Private Label2 As Label
+End Sub
+
+Sub AppStart (form1 As Form,Args() As String)
+	
+	DateTime.TimeFormat = "HH:mm:ss"
+	DateTime.DateFormat = "yyyy-MM-dd"
+	MainForm = form1
+	MainForm.RootPane.LoadLayout("a1")
+	
+	MainForm.Title="MBB for MySQL/MariaDB"
+	MainForm.show
+	
+
+	shl.Initialize("sh1","delpol.bat", Null)
+	shl.WorkingDirectory = File.DirApp
+	shl.Run(-1)
+
+	
+	timer1.Initialize("timers1",1000)
+	timer1.Enabled=True
+
+
+End Sub
+
+Sub timers1_tick
+	timer1.Enabled=False
+	'Log("search for new events...")
+
+	
+	shl.Initialize("sh1","apperr.bat", Null)
+	shl.WorkingDirectory = File.DirApp
+	shl.Run(-1)
+
+	Dim inp As InputStream
+	inp = File.OpenInput(File.DirApp,"apperr.txt")
+	Dim b As Int
+	Dim my_buf(inp.BytesAvailable) As Byte
+	b = inp.ReadBytes(my_buf,0,inp.BytesAvailable)
+	inp.Close
+	Dim data As String = BytesToString(my_buf,0,b,"cp1253") ' might be cp1253
+
+	Dim inp As InputStream
+	inp = File.OpenInput(File.DirApp,"apperr.bak")
+	Dim b As Int
+	Dim my_buf(inp.BytesAvailable) As Byte
+	b = inp.ReadBytes(my_buf,0,inp.BytesAvailable)
+	inp.Close
+	Dim data2 As String = BytesToString(my_buf,0,b,"cp1253") ' might be cp1253
+
+	If data<>data2 Then
+	
+	errdate=data.SubString2(data.IndexOf("Date:")+5,data.IndexOf2(CRLF,data.IndexOf("Date:")+5)).trim
+	errsource=data.SubString2(data.IndexOf("Source:")+7,data.IndexOf2(CRLF,data.IndexOf("Source:")+7)).trim
+	errdesc=data.SubString(data.LastIndexOf("Description:")+12).trim
+
+
+	Log(errdate)
+	Log(errsource)
+	Log(errdesc)
+	If errsource="MySQL" Then
+	If errdesc.StartsWith("Access denied for user")=True Then
+		Dim checkip As String=errdesc.SubString2(errdesc.IndexOf("@'")+2 , errdesc.LastIndexOf("'"))
+		checkandblock(checkip.trim)
+	End If
+	End If
+	
+	
+	End If
+
+
+	timer1.Enabled=True
+
+End Sub
+
+Sub getip(ip As String) As String
+	shl.Initialize("sh1","ping1.bat",Array As String(ip))
+	shl.WorkingDirectory = File.DirApp
+	shl.Run(10000)
+	Dim newip As String=File.ReadString(File.DirApp,"ip.txt")
+	If newip.indexof("[")>1 Then
+		Return newip.SubString2(newip.indexof("[")+1,newip.indexof("]"))
+	Else
+		Return ip
+	End If 
+End Sub
+
+Sub blockip(ip As String)
+	'worked:
+	
+	' use windows firewall
+	' netsh advfirewall firewall add rule name="IP Block" dir=in interface=any action=block remoteip=192.169.0.10/32
+	shl.Initialize("shl", "netsh", _
+     Array As String("advfirewall", "firewall", "add", "rule","name="&Chr(30)&"MBB IP BLOCK" & Chr(30),"dir=in","interface=any","action=block","remoteip=" & ip & "/32"))
+	' use ipsec
+	
+	shl.Run(-1) 'set a timeout of 10 seconds
+	'StartMessageLoop 'need to call this as this is a console app.
+End Sub
+
+Sub checkandblock(ip As String)
+
+	Dim whatip As String=getip(ip)
+
+
+	Dim stream As OutputStream = File.OpenOutput(File.dirapp,"accessdenied.log",True)
+	Dim LogString As String
+	LogString = DateTime.Date(DateTime.Now) & " | " & DateTime.time(DateTime.Now) &  " | " & whatip & " | " & errdesc.Replace(Chr(13)," ") & Chr(13) & Chr(10)
+	Dim Data() As Byte
+	Data = LogString.GetBytes("UTF8")
+	stream.WriteBytes(Data,0,Data.Length)
+	stream.Close
+	
+	If IsNumber(whatip.Replace(".",""))=True Then
+			rulecount=rulecount+1
+			Label2.Text = rulecount
+			blockipsec(whatip.Trim,rulecount)
+	End If
+	
+	whatip=Null
+	ip=Null
+
+End Sub
+
+Sub blockipsec(ip As String, rule As Int)
+
+	'MBB 1
+
+	Dim r As String
+	r=rule
+	
+	' use ipsec
+	shl.Initialize("sh1", "blockip.bat", Array As String(r.trim,ip.trim))
+	shl.WorkingDirectory = File.DirApp
+
+	shl.Run(10000)
+
+	
+End Sub
+
+Sub deleterule(rule As Int)
+	Dim r As String
+	r=rule
+	shl.Initialize("shl", "delrule.bat", _
+     Array As String(r.Trim))
+	shl.Run(10000)
+End Sub
+
+
+Sub shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		Log("Success")
+		Log(StdOut)
+	Else
+		Log("Error: " & StdErr)
+	End If
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

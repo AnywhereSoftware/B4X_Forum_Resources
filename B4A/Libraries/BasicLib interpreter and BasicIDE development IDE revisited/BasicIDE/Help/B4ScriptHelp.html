@@ -1,0 +1,1111 @@
+﻿<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>
+<html>
+<body>
+<a name='top'></a>
+B4SCRIPT V1.3 HELP CONTENTS<br><br>
+<a href='#overview'>Overview</a><p><br>
+<a href='#programming'>Programming</a><p><br>
+<a href='#subs'>Subs</a><p><br>
+<a href='#variables'>Variables</a><p><br>
+<a href='#operators'>Operators</a><p><br>
+<a href='#conditions'>Conditions</a><p><br>
+<a href='#arguments'>Arguments</a><p><br>
+<a href='#general'>General Keywords</a><p><br>
+<a href='#math'>Math Keywords</a><p><br>
+<a href='#string'>String Keywords</a><p><br>
+<a href='#time'>Date and Time Keywords</a><p><br>
+<a href='#ccolor'>Color Constants</a><p><br>
+<a href='#cdatetime'>Date and Time Constants</a><p><br>
+<a href='#cgeneral'>General Constants</a><p><br>
+<a href='#cmath'>Math Constants</a><p><br>
+<a href='#csort'>Sort Constants</a><p><br>
+<a href='#cstring'>String Constants</a><p><br>
+<a name='overview'></a>
+<b>OVERVIEW</b><p>
+Welcome to B4Script<br>
+<br>
+B4Script is based upon the syntax of Basic4ppc, a .NET based development tool for Windows desktop and Windows Mobile device software development.<br>
+B4Script is a runtime scripting language intended for incorporation into applications written using Basic4Android. It is a sub-set of the full Basic4ppc language with only minor variations in syntax. <br>
+Basic4Android and Basic4ppc are products of Anywhere Software and details may be found at http://www.basic4ppc.com.<br>
+Thanks to Erel Uziel at Anywhere Software for permitting this help file to be based upon the help for Basic4ppc.<br>
+<br>
+Version 5.0 (c) Erel Uziel & Andrew Graham : 2012-2018<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='programming'></a>
+<b>PROGRAMMING</b><p>
+In B4Script statements, operations and names are case-insensitive.<br>
+A program starts with an initial code section at the beginning of the program. All Subs must follow this code section. Execution commences at the first line of the program and ends when AppClose is executed or if the code tries to run off the end of this initial section into the first Sub.<br>
+<br>
+Variable and Sub names must start with a letter and may contain letters, numbers, underscores ( _ ) and sharps ( # ). Variables, except for arrays, do not need to be explicitly declared. Any variables used in the initial (non Sub) section of code are global variables and are accessible from within any Sub. Any variables used for the first time in a Sub that are not global are local to that Sub. A local variable name may not be the same as a global variable name so, because parameter names are local names, if a global name is used as a parameter name in a Sub definition then an error occurs. Global variables can of course be passed as parameters and all parameters are passed as values.<br>
+<br>
+All global variables can be Dimmed as multi-dimension arrays of up to three dimensions as many times as required anywhere in the program. Variable "A()" or "A" is always equivalent "A(0)" , "A(0, 0)", "A(0, 0, 0)"or "A()". Where an array reference, as opposed to the value of an array element, is required then A or A() or A(x) are all accepted. Local variables can never be arrays. Multi-dimensioned arrays may also be accessed as single dimensioned arrays using the length returned by ArrayTotalLen or GetTotalLen when an array name is passed as a parameter.<br>
+<br>
+For convenience arrays may be addressed by the "." convention, Array.Variable, where the variable contains the required index into the array. Variables used in this way may be any local or global variables. This facility is provided to emulate the Basic4pp structure and the Dim Type(...) statement is also provided. However despite the syntax being the same as Basic4ppc the implementation differs. In Basic4ppc the indexer names declared by "Type" are constants associated only with that array. In B4Script the indexers are in fact true local or global variables with their values automatically assigned so care needs to be taken not to unwittingly use the indexer names as normal variable names unless this is what is really intended.<br>
+<br>
+Although arrays, as opposed to the value of a single item of an array, cannot be passed as parameters the same functionality can be achieved by passing the array name and then using GetItem, GetLen, GetRank, GetTotalLen and SetItem which provide indirect access to an array specified at runtime.
+<br>
+There is a pre-defined global array, Args(), that contains an argument array passed to the script at runtime. <br>
+<br>
+Strings can be either single or double quotes delimited. The opening delimiter is matched with the closing delimiter allowing the use of the other delimiter within a string literal.<br>
+var = "a 'string' within a string"<br>
+var = 'a "string" within a string'<br>
+<br>
+Literal numbers are accepted in decimal form with an optional decimal point or can be specified in scientific or hexadecimal notation. For reference note that a hex format string can be obtained from a number by invoking Format(number, "x").<br>
+var = 1.234<br>
+var = 123.4E-2<br>
+var = 0x1234<br>
+<br>
+Only multi-line If statements are allowed. That is:<br>
+If Something Then<br>
+	DoSomething<br>
+End If<br>
+<br>
+Single line If statements like this are not supported:<br>
+If Something Then DoSomething<br>
+<br>
+Rem is provided for comments but must start a statement on a new line.<br>
+# is also provided for comments but must start a statement on a new line.<br>
+<br>
+The colon statement separator is not supported. Only one statement per line is allowed.<br>
+<br>
+Global variables are always cleared to an empty string at the the start of program execution. Local variables are not guaranteed to be be cleared and so should always be explicitly initialised by the program if this is important.<br>
+<br>
+Select ... End Select structures cannot be directly nested. That is code in a Case may not contain another Select ... End Select although it is permissible to call a Sub that does contain another Select ... End Select structure.<br>
+<br>
+Goto can only be used to jump within a scope or to an outer scope. That is it cannot be used to jump into a For...Next, Do...Loop, If...End If or Select ... End Select structure. It is permissible to jump over or out of such structures but not land within them.<br>
+<br>
+Errors are reported back to the host application and will usually be reported to the user. Most errors are self-explanatory but if the error is "Index was outside the bounds of the array" and it does not seem to be associated with an actual array access statement then an unterminated string is the likely cause.<br>
+For historical reasons there are two date/time format specifiers, DateFormat used by  the DateParse subroutine and TimeFormat used by the TimeParse subroutine. In the present implementation of the interpreter DateParse and TimeParse function identically and both can parse both dates and times. In the BasicLib C# library parsing is done according to the rules used by the .NET Framework DateTime structure Parse() method. In the Java BasicLib library parsing is according to the rules used by the Java SimpleDateFormat class parse() method.<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='subs'></a>
+<b>SUBS</b><p>
+Subs declarations start with Sub SubName (Parameters) and end with "End Sub".<br>
+If there are no parameters for the sub, then write "Sub SubName" without the parentheses. Because parameter names are local names  if a global name is used as a parameter name in a Sub definition then an error occurs.<br>
+There are no functions in B4Script but instead every Sub can return a value with the keyword "Return".<br>
+All parameters are passed by value. That is if an assignment is made to a parameter variable it only alters the value of that local variable and not that of the original variable.<br>
+"EndSub" is also accepted in place of "End Sub"<br>
+<br>
+Calling a sub<br>
+<br>
+To call a sub, write its name followed by an opening parenthesis and the parameters separated by "," followed by a closing parenthesis. If there are no parameters then do not write any parentheses.<br>
+Example:<br>
+<br>
+Sub ShowMean<br>
+	Msgbox("The mean of 20 and 30 is " & crlf &  Mean(20,30))<br>
+End Sub<br>
+<br>
+Sub Mean (a, b)<br>
+	Return (a+b)/2<br>
+End Sub<br>
+<br>
+Result: A message box that displays 25.<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='variables'></a>
+<b>VARIABLES</b><p>
+All simple variables are variant variables. Which means that any variable can store any type of number or a string. Variables can be global or local. Local variable values can be used only while their parent sub is executing. Global variable values can be used everywhere.<br>
+<br>
+Variable names must begin with a letter, 'A' to 'Z' or 'a' to 'z' or an underscore '_'. Names can include letters, numbers underscores and sharps, '#'.<br>
+<br>
+Except for array variables, there is no need to declare a variable before using it.<br>
+<br>
+Global variables are variables that are declared or used outside a Sub in the main code body, all other variables are local. Global variables are variables that are declared or used outside a Sub in the main code body, all other variables are local. A point to beware of is that the same variable names may be unwittingly, particularly if simply named like i or j, used as local variables. Normally the fact that these are global is immaterial but if, for example, i is used as a For loop index in the initial code block and so becomes global, and a Sub called by an event uses i as a For loop index and a Sub called within that For loop also uses i as a For loop index then problems will arise. It is recommended to use some prefix for global variables that identify them as such to avoid such problems.<br>
+<br>
+To pass data between Subs you could use global variables, or better, you can pass the data as parameters. When using parameters the variable is not passed, but its value is copied. Remember that if you change a local variable value in one place (even if it had received its data from a parameter), then the change will not affect any other variable outside the current sub.<br>
+<br>
+Array Variables<br>
+<br>
+B4Script supports arrays with up to three dimensions. All global variables can be Dimmed as multi-dimension arrays of up to three dimensions as many times as required anywhere in the program. Variable "A()" or "A"  is always equivalent "A(0)" , "A(0, 0)", "A(0, 0, 0)"or "A()". Where an array reference, as opposed to the value of an array element, is required then A or A() or A(x) are all accepted. Local variables can never be arrays. Multi-dimensioned arrays may also be accessed as single dimensioned arrays using the length returned by ArrayTotalLen or GetTotalLen when an array name is passed as a parameter.<br>
+<br>
+Although arrays, as opposed to the value of a single item of an array, cannot be passed as parameters the same functionality can be achieved by passing the array name and then using GetItem, GetLen, GetRank, GetTotalLen and SetItem which provide indirect access to an array specified at runtime. <br>
+Declare array variables with the "Dim" keyword.<br>
+<br>
+See "Array" for a convenient method of initializing arrays. The same array can be declared again with a different size and rank any number of times during the program.<br>
+<br>
+An array index starts from 0 and its last index is array dimensions - 1.<br>
+Example:<br>
+<br>
+Dim Books (20)<br>
+Dim Buffer (100)<br>
+<br>
+Result: Declares an array of 20 items starting from Books(0) and up to Books(19) and an array of items starting from Buffer(0) and up to Buffer(99)<br>
+<br>
+When you need to reference an entire array (not one item in the array) write the array name alone or followed by ().<br>
+<br>
+Example:<br>
+Array(buffer(),1 ,2 ,3)<br>
+or<br>
+Array(buffer,1 ,2 ,3)<br>
+<br>
+Structure Variables<br>
+<br>
+Structure are actually arrays with a convenient access mechanism for the rightmost dimension of the arrays. They are declared using "Dim Type" and may have an additional two dimensions specified in addition to the dimension implied by the indexing variables.<br>
+<br>
+For convenience any array may be addressed by the "." convention, "Array.Variable", where the variable contains the required index into the array. Variables used in this way may be any local or global variables. The "Dim Type(...) "statement is provided to automatically define and initialise variables for this use but any non-array variable may be used. These indexer variables are local or global variables, depending upon where the Type statement is invoked. and whether a global variable of that name already exists. Once their values are automatically assigned by "Dim Type" care needs to be taken not to unwittingly assign different values to the indexer variables unless this is what is really intended.<br>
+<br>
+See the help entry for "Dim Type" under "Keywords -> General" for more information.<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='operators'></a>
+<b>OPERATORS</b><p>
+B4Script supports the following operators:<br>
+<br>
+	^ 		Exponent (power) operator<br>
+	+,-,*,/  		Basic math operators<br>
+	Mod 		Modulus operator<br>
+	& 		String concatenation<br>
+	AND		Logical AND of logical values<br>
+	OR		Logical OR of logical values<br>
+	BitAnd		Bitwise AND of integer values<br>
+	BitOr		Bitwise OR of integer values<br>
+	BitXor		Bitwise XOR of integer values<br>
+	Rem 		Remarks, the line is ignored<br>
+<br>
+The precedence of operators, including the conditional operators  is as follows, highest first. All operators listed on the same line associate left to right. Parentheses can be used to group expressions to force a different order of evaluation. Such parenthesised expressions can be nested and are evaluated from inner to outer.  In fact it is good practice to not rely upon operator precedence for more complex expressions but to explicitly parenthesise those expressions to explicitly indicate the required order of execution.<br>
+<br>
+1)	 ^<br>
+2)	* / Mod<br>
+3)	& + - BitAnd BitOr BitXor<br>
+4)	< > = <> >= <=<br>
+5)	AND OR<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='conditions'></a>
+<b>CONDITIONS</b><p>
+The conditional operators supported are <br>
+<br>
+	< 	Less than<br>
+	>	Greater than<br>
+	<>	Not equal<br>
+	=	Equal<br>
+	<=	Less than or equal<br>
+	>=	Great than or equal<br>
+<br>
+Two binary operators are supported: AND and OR, and one unary operator is supported: NOT.<br>
+<br>
+A simple condition expression evaluates to one of the boolean values: true or false. The simple conditions can be combined into a more complex condition using the logical operators and using parentheses. Conditions are NOT "short-circuit" conditions. This means that the expressions will always be evaluated in full even if they cannot affect the result.<br>
+<br>
+Note that the internal values for true and false are "true" and "false", both lower case. The keywords True and False without quotes and regardless of case return the strings "true" and "false" respectively. So<br>
+Var = TRUE<br>
+Var = true<br>
+Var = "true"<br>
+are all true for comparison purposes but<br>
+Var = "True"<br>
+is not as it is not a lower case string.<br>
+<br>
+Boolean values can be used directly.<br>
+Enable = true<br>
+Example:If Enable then ...<br>
+Example: If True then ...<br>
+<br>
+The NOT operator is a function and must have its target included within parentheses.<br>
+Enable = true<br>
+Example: If NOT (a = b OR a = b/2) Then ...<br>
+Example: If NOT (Enable) Then ...<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='arguments'></a>
+<b>ARGUMENTS</b><p>
+Reading the arguments passed to the script at runtime is done using a special built-in array named Args.<br>
+<br>
+Use "Arraylen" to find the number of arguments available.<br>
+<br>
+Example:<br>
+For i = 0 To ArrayLen(args())-1<br>
+	Msgbox(args(i))<br>
+Next<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='general'></a>
+<b>GENERAL KEYWORDS</b><p>
+<b>AppClose</b><br>
+Terminates the program<br>
+<br>
+Syntax: AppClose<br>
+<br>
+<b>ARGB</b><br>
+Returns the number that represents a certain color. <br>
+<br>
+Syntax: ARGB (A, R, G, B) <br>
+<br>
+Example: <br>
+White = ARGB (255, 255,255,255)<br>
+<br>
+<b>Array</b><br>
+The Array keyword is used to initialize arrays and structures with the specified data. It supports arrays of one dimension only. <br>
+<br>
+Syntax: Array (DestArray, Array Elements)<br>
+<br>
+Example:<br>
+Array(Primes, 1,2,3,5,7,11,13,17,19)<br>
+Rem Primes is now an array of length 9<br>
+<br>
+<b>ArrayCopy</b><br>
+Copies part of the source array to the target array.<br>
+<br>
+Syntax: ArrayCopy (Source Array, Source Start, Count, Target Array, Target Start)<br>
+Source Array - The items will be copied from this array.<br>
+Source Start - The first item that will be copied.<br>
+Count - Number of items to copy.<br>
+Target Start - The position in the target of the first copied item.<br>
+<br>
+Example:<br>
+ArrayCopy (buffer(), 0, ArrayLen (buffer()), target(), 0)<br>
+<br>
+<b>ArrayLen</b><br>
+Returns the length (size) of a single specified dimension of an array. If the dimension is omitted the default is 1, the leftmost dimension.<br>
+<br>
+Syntax: ArrayLen (Array [, Dimension])<br>
+<br>
+Example:<br>
+Dim items(5,10)<br>
+...<br>
+i = ArrayLen (items)<br>
+<br>
+<b>ArrayRank</b><br>
+Returns the number of dimensions of an array. Possible values are 1, 2 or 3.<br>
+<br>
+Syntax: ArrayRank (Array)<br>
+<br>
+Example:<br>
+Dim items(5,10)<br>
+...<br>
+i = ArrayRank(items)<br>
+<br>
+<b>ArrayTotalLen</b><br>
+Returns the total length (size) of an array including all the dimensions. This is the length used to access the array as a single dimension array.<br>
+<br>
+Syntax: ArrayTotalLen (Array)<br>
+<br>
+Example:<br>
+Dim arr(5,10)<br>
+...<br>
+For i = 0 To ArrayTotalLen (items) -1<br>
+  arr(i) = i<br>
+Next<br>
+<br>
+<b>CallHostSub</b><br>
+The CallHostSub statement and function allow Basic4android host program subroutines to be directly called from within a B4Script. However if the script is not running on the main thread of the application subroutines that manipulate Graphical User Interface elements must not be directly called using CallHostSub. In this case CallHostGuiSub must be used. If this help file has been supplied with a finished Basic4android application then there should be other documentation supplied that will detail the subroutine names that may be used by CallHostSub together with their parameters and a description of their functionality.<br>
+<br>
+Syntax: CallHostSub (Sub Name [, Arguments List]) <br>
+Sub Name - A string that holds the target sub name. <br>
+Arguments List - List of arguments passed to the sub (separated by commas). <br>
+<br>
+Example statement:<br>
+CallHostSub("SubWithOneParam", 12345)<br>
+<br>
+Example function:<br>
+ret = CallHostSub("DoSomethingWithThis", 12345)<br>
+<br>
+<b>CallHostGuiSub</b><br>
+The CallHostGuiSub statement and function allows Basic4android host program subroutines that manipulate Graphical User Interface elements to be directly called from within a B4Script  if the script is not running on the main thread of the application but necessarily provides somewhat lower performance than using CallHostSub. If this help file has been supplied with a finished Basic4android application then there should be other documentation supplied that will detail the subroutine names that may be used by CallHostGuiSub together with their parameters and a description of their functionality.<br>
+<br>
+It is not possible to obtain a return value from a Sub called by CallHostGuiSub.<br>
+<br>
+Syntax: CallHostGuiSub (Sub Name [, Arguments List]) <br>
+Sub Name - A string that holds the target sub name. <br>
+Arguments List - List of arguments passed to the sub (separated by commas). <br>
+<br>
+Example statement:<br>
+CallGuiHostSub("SubWithOneParam", 12345)<br>
+<br>
+<b>CallSub</b><br>
+CallSub allows you to dynamically call a sub, which means that the called sub is only known at runtime. <br>
+<br>
+Syntax: CallSub (Sub Name [, Arguments List]) <br>
+Sub Name - A string that holds the target sub name. <br>
+Arguments List - List of arguments passed to the sub (separated by commas). <br>
+<br>
+Example: <br>
+For i = 1 to 3 <br>
+  If CallSub("SomeSub" & i, arg1, arg2, arg3) > 10 Then<br>
+    ... <br>
+  End If<br>
+Next<br>
+<br>
+<b>Dim</b><br>
+Declares array variables. When declaring arrays, remember that the array's index starts from 0 and its last index is array length - 1. Array variables and structures can only be global and therefore must first be declared in the initial source code block. Array variables can then be re-declared anywhere in any Sub in the program. The same array can be re-declared many times and its size can be changed. You can use ArrayLen to find the length (size) of an array. Arrays of up to three dimensions may be declared.<br>
+<br>
+While arrays cannot be passed as parameters to Sub and received as return values they can be indirectly accessed by GetItem, GetLength and SetItem which accept an array name as a string to identify the array. This allows an array name to be passed as a parameter to a Sub to define the array that the Sub should manipulate.<br>
+<br>
+Syntax: Dim VariableName(Length1[, Length2 [, Length3]] )<br>
+<br>
+Example:<br>
+Dim items(10, 3, 2)<br>
+<br>
+<b>Dim Type</b><br>
+Declares structure variables, which are actually arrays. The Dim Type(...) statement is provided to automatically define and initialise indexer variables for use with the array.variable syntax that can be used to access array elements. These indexer variables are local or global variables, depending upon where the Type statement is invoked. and whether a global variable of that name already exists. Once their values are automatically assigned by Type care needs to be taken not to unwittingly assign different values to the indexer variables unless this is what is really intended.<br>
+The leftmost variable in the Type statement corresponds to index 0 into the array, the next index one and so on. The array length is the number of indexers declared in the Type statement. Arrays of up to two dimensions of structures may be declared.<br>
+<br>
+While arrays cannot be passed as parameters to Sub and received as return values they can be indirectly accessed by GetItem, GetLength and SetItem which accept an array name as a string to identify the array. This allows an array name to be passed as a parameter to a Sub to define the array that the Sub should manipulate.<br>
+<br>
+Syntax: Dim Type(indexer0, indexer1 ...)VariableName[(Length1[, Length2])]<br>
+<br>
+Example:<br>
+Dim Type(name, address1, address2)items(10, 2)<br>
+...<br>
+mailitem.name(3, 1) = "Fred"<br>
+<br>
+<b>Do</b><br>
+Do ... Loop While | Until is similar to Do While | Until ... Loop with the difference that the condition is checked at the end of the loop and not at the beginning.<br>
+The loop will be executed at least once.<br>
+<br>
+Syntax:<br>
+Do<br>
+...<br>
+Loop While | Until conditon<br>
+<br>
+Example:<br>
+Do<br>
+	i = i + 1<br>
+Loop Until i = 10<br>
+<br>
+<b>Do Until</b><br>
+Loops until a condition is true.<br>
+<br>
+Syntax:<br>
+Do Until condition<br>
+	...<br>
+	...<br>
+Loop<br>
+<br>
+Example:<br>
+Do Until i = 10<br>
+	i = i + 1<br>
+Loop<br>
+<br>
+<b>Do While</b><br>
+Loops while a condition is true.<br>
+<br>
+Syntax:<br>
+Do While condition<br>
+	...<br>
+	...<br>
+Loop<br>
+<br>
+Example:<br>
+Do While i < 10<br>
+	i=i+1<br>
+Loop<br>
+<br>
+<b>Exit</b><br>
+Exits For, While, Until loops.<br>
+In case of nested loops Exit will exit only the last level.<br>
+<br>
+Syntax: Exit<br>
+<br>
+Example:<br>
+For n = 1 to 100<br>
+	If n = 50 Then<br>
+		 Exit<br>
+	End If<br>
+Next<br>
+<br>
+<b>For</b><br>
+Loop statement that changes a variable value. The loop ends when the variable is greater than the end value if Step is positive or less than the end value if Step is negative. Step may be omitted in which case the step value is 1.<br>
+<br>
+Syntax: For variable = Value To Value [Step Value]<br>
+<br>
+Example:<br>
+For i = 10 To 0 Step -1<br>
+	Msgbox (i)<br>
+Next<br>
+Result: It will display a countdown from 10 to 0<br>
+<br>
+<b>GetItem</b><br>
+GetItem allows you to dynamically access the elements of an array determined at runtime rather than at compile time. It accepts the name of the array as a string or variable together with the index of the required element. GetItem treats a multi-dimension array as a single dimension array. Array indices for multi-dimensioned arrays may be calculated using GetRank,  and get GetLen. GetTotalLen returns the total size of the array when regarded as a single dimensioned array. <br>
+<br>
+Syntax: GetItem(ArrayName, Index)<br>
+<br>
+Example:<br>
+arr = "array1"<br>
+index = 23<br>
+val = GetItem(arr, index)<br>
+<br>
+<b>GetLen</b><br>
+Returns the length (size) of a single specified dimension of an array specified at runtime. If the dimension is omitted the default is 1, the leftmost dimension.<br>
+<br>
+Syntax: GetLen (ArrayName [, Dimension])<br>
+<br>
+Example:<br>
+Dim items(5,10)<br>
+...<br>
+i = GetLen ("items")<br>
+<br>
+<b>GetTotalLen</b><br>
+GetTotalLen allows you to dynamically access the total number of elements of an array specified at runtime rather than at compile time. It accepts the name of the array as a string or variable and returns the length of that array. It returns the same value as ArrayTotalLen.<br>
+<br>
+Syntax: GetTotalLen(ArrayName)<br>
+<br>
+Example:<br>
+arr = "array1"<br>
+len = GetTotalLen(arr)<br>
+<br>
+<b>GetRank</b><br>
+Returns the number of dimensions of an array specified at runtime. Possible values are 1, 2 or 3.<br>
+<br>
+Syntax: GetRank (ArrayName)<br>
+<br>
+Example:<br>
+Dim items(5,10)<br>
+...<br>
+i = GetRank("items")<br>
+<br>
+<b>GetA, GetR, GetG, GetB</b><br>
+These four functions each return one of the four components of a color.<br>
+<br>
+Syntax: GetR(Color) <br>
+<br>
+Example:<br>
+A = GetA(Color) ' Alpha<br>
+R = GetR(Color) ' Red<br>
+G = GetG(Color) ' Green<br>
+B = GetB(Color) ' Blue<br>
+<br>
+<b>Goto</b><br>
+Goto causes the execution of the program to move to a predefined label. Label syntax is a word starting with a letter and ending with a colon. When the program reaches the Goto keyword execution will move to the specified line of code. B4Script doesn't allow jumps between different subs, and the target label must be in a scope equal or wider to the calling Goto. That is it cannot be used to jump into a For...Next, Do...Loop or If...End If structure. It is permissible to jump over such structures but not land within them.<br>
+Syntax: Goto Label<br>
+Label - the destination line of code of the jump identified as a name as the fist word of the line of code terminated by a colon. Further code can follow on the same line if required.<br>
+<br>
+Example:<br>
+Sub Button1_Click<br>
+	...<br>
+StartingPlace:<br>
+	...<br>
+	Goto StartingPlace<br>
+End Sub<br>
+<br>
+<b>If</b><br>
+If statements must be multiline.  Multiple "Else If" intermediate conditions are supported. "ElseIf" and "EndIf" are also accepted in place of "Else If" and "End If".<br>
+<br>
+Syntax:<br>
+If Condition Then<br>
+	...<br>
+Else If Condition Then<br>
+	...<br>
+Else If AnotherCondition Then<br>
+	...<br>
+Else<br>
+	...<br>
+End If<br>
+<br>
+<b>Msgbox</b><br>
+The Msgbox statement takes one or two parameters and passes them to the host application. The result of that depends upon how that applications decides to deal with the data passed to it. Usually this action will be to display a message box to the user with the first parameter as the message and the second parameter, if any, as the message box title. Examples in this help file using the Msgbox statement assume this.<br>
+<br>
+Syntax: MsgBox(Data1 [,Data2])<br>
+<br>
+Not<br>
+<br>
+Returns the opposite of the given value.<br>
+<br>
+Syntax: Not (True | False)<br>
+<br>
+Example:<br>
+Checked = True<br>
+Checked = Not (Checked)<br>
+Rem Checked is now False<br>
+<br>
+<b>Print</b><br>
+The Print statement formats a string and passes the result to the host application. The result of that depends upon how that application decides to deal with the data passed to it. Print accepts multiple items to print separated by either a semi-colon or a comma. Semi-colon causes the following item to be concatenated with the previous item, comma inserts a space character between items. The CRLF constant can be used to insert line breaks in the resulting string. The traditional "?" is also provided as a synonym for Print.<br>
+<br>
+Syntax: Print Data1[,|; Data2 ...]<br>
+<br>
+<b>Rem</b><br>
+The Rem keyword is used to preface a comment line and must always occur at the beginning of a line. A # character placed at the beginning of a line is interpreted as Rem.<br>
+<br>
+Syntax: Rem some comment<br>
+or<br>
+# some comment<br>
+<br>
+<b>Return</b><br>
+Ends the current sub and returns to the calling sub. If Return is followed by a value, then the value will be passed to the calling sub.<br>
+<br>
+Syntax: Return [Value]<br>
+<br>
+Example:<br>
+Sub SomeSub<br>
+	If IsInteger (a) = true Then<br>
+		 b=a<br>
+	End If<br>
+End Sub<br>
+<br>
+Sub IsInteger (x)<br>
+	If x = Int(x) Then<br>
+		 Return true<br>
+	 Else<br>
+		 Return false<br>
+	End If<br>
+End Sub<br>
+<br>
+<b>Rnd</b><br>
+Generates a random integer larger or equal to the minimum value and smaller than the maximum value.<br>
+<br>
+Syntax: Rnd (Minimum Value, Maximum Value)<br>
+<br>
+Example:<br>
+i = Rnd (30, 60)<br>
+<br>
+<b>Select</b><br>
+Select is used to test one value with several values. Only the first case that matches will execute. "EndSelect" is also accepted in place of "End Select".<br>
+Syntax: <br>
+Select value <br>
+	Case Value1<br>
+		... <br>
+	Case Value2,Value3,Value4 (True if one of the values matches) <br>
+		... <br>
+	Case Else <br>
+		... <br>
+End Select <br>
+<br>
+Example: <br>
+Select StrToLower(Var) <br>
+	Case "" <br>
+		Return <br>
+	Case "one" <br>
+		num = 1<br>
+	Case "2" <br>
+		num = 2<br>
+	Case Else <br>
+		num = -1<br>
+End Select <br>
+<br>
+<b>SetItem</b><br>
+SetItem allows you to dynamically assign the elements of an array determined at runtime rather than at compile time. It accepts the name of the array as a string or variable together with the index of the required element and the new value. SetItem treats a multi-dimension array as a single dimension array. Array indices for multi-dimensioned arrays may be calculated using GetRank,  and get GetLen. GetTotalLen returns the total size of the array when regarded as a single dimensioned array. <br>
+<br>
+Syntax: SetItem(ArrayName, Index, Value)<br>
+<br>
+Example:<br>
+arr = "array1"<br>
+index = 23<br>
+val  = 1.2345<br>
+SetItem(arr, index, val)<br>
+<br>
+<b>Sleep</b><br>
+Causes the script to wait for the specified time (milliseconds) without using any processor resources and allowing other programs to run.<br>
+<br>
+Syntax: Sleep (Milliseconds) <br>
+<br>
+Example:<br>
+Sleep(1000) 'The program will pause for one second.<br>
+<br>
+<b>Sys</b><br>
+Sys is a convenient short synonym for CallHostSub.<br>
+<br>
+<b>SysGui</b><br>
+SysGui is a convenient short synonym for CallHostGuiSub.<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='math'></a>
+<b>MATH KEYWORDS</b><p>
+<b>Abs</b><br>
+Returns the absolute value of a given number.<br>
+<br>
+Syntax: Abs (Number)<br>
+<br>
+Example: x = Abs (-4)<br>
+Result: x = 4<br>
+<br>
+<b>ACos</b><br>
+Returns the angle (in radians) that correlate with a given number.<br>
+<br>
+Syntax: ACos (Number)<br>
+To convert from radians to degrees, multiply by 180 / cPI<br>
+<br>
+<b>ASin</b><br>
+Returns the angle (in radians) that correlate with a given number.<br>
+<br>
+Syntax: ASin (Number)<br>
+To convert from radians to degrees, multiply by 180 / cPI<br>
+<br>
+<b>ATan</b><br>
+Returns the angle (in radians) that correlate with a given number.<br>
+<br>
+Syntax: ATan (Number)<br>
+To convert from radians to degrees, multiply by 180 / cPI<br>
+<br>
+<b>Cos</b><br>
+Returns the number correlated with a given angle (in radians).<br>
+<br>
+Syntax: Cos (Radians)<br>
+To convert from degrees to radians multiply by cPI / 180<br>
+<br>
+<b>Int</b><br>
+Returns the integer part  from a number.<br>
+<br>
+Syntax: Int (Number)<br>
+<br>
+Example: a = Int (4.8)<br>
+Result: a = 4<br>
+<br>
+<b>Ln</b><br>
+Returns the base e logarithm of a given number.<br>
+<br>
+Syntax: Ln (Number)<br>
+<br>
+<b>Log</b><br>
+Returns the base 10 logarithm of a specified number.<br>
+<br>
+Syntax: Log (Number)<br>
+<br>
+<b>Max</b><br>
+Returns the larger of two numbers.<br>
+<br>
+Syntax: Max (Number, Number)<br>
+<br>
+Example: a = Max (12, 33)<br>
+Result: a = 33<br>
+<br>
+<b>Min</b><br>
+Returns the smaller number of two numbers.<br>
+<br>
+Syntax: Min (Number, Number)<br>
+<br>
+Example: a = Min (12,33)<br>
+Result: a = 12<br>
+<br>
+<b>Round</b><br>
+Returns a rounded number from a number with an optional parameter specifying the number of digits. The default number of digits is 0.<br>
+<br>
+Syntax: Round (Number [,Number of digits])<br>
+<br>
+Example: Msgbox (Round (4.8))<br>
+Result: Displays 5<br>
+<br>
+<b>Sin</b><br>
+Returns the number correlated with the given angle (in radians).<br>
+<br>
+Syntax: Sin (Radians)<br>
+To convert from degrees to radians multiply with cPI / 180<br>
+<br>
+<b>Sqrt</b><br>
+Returns the square root of the given number.<br>
+Syntax: Sqrt (Number)<br>
+<br>
+Example:<br>
+Msgbox(Sqrt(16))<br>
+<br>
+Will display 4.<br>
+<br>
+<b>Tan</b><br>
+Returns the number correlated with a given angle (in radians).<br>
+<br>
+Syntax: Tan (Radians)<br>
+To convert from degrees to radians multiply by cPI / 180<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='string'></a>
+<b>STRING KEYWORDS</b><p>
+<b>Asc</b><br>
+Returns the ASCII or Unicode number of the first character in the string.<br>
+<br>
+Syntax: Asc (String)<br>
+<br>
+Example: I = Asc ("0")<br>
+Rem I = 45<br>
+<br>
+<b>Chr</b><br>
+Returns the Unicode character represented by the given number. Unlike ASCII the number can have values greater than 255.<br>
+<br>
+Syntax: Chr (Integer)<br>
+<br>
+Example:<br>
+Msgbox (Chr(34) & "Hello" & Chr(34)) <br>
+<br>
+This example shows a message box with : "Hello" (including the quotes).<br>
+<br>
+<b>Format</b><br>
+Returns a string representing a given number in a specific format.<br>
+<br>
+A format consists of a pattern and a set of symbols. Many characters in a pattern are taken literally; they are matched during parsing and are written out unchanged during formatting. On the other hand, special characters stand for other characters, strings, or classes of characters. For example, the '#' character is replaced by a localized digit. Often the replacement character is the same as the pattern character; in the U.S. locale, the ',' grouping character is replaced by ','. Some special characters affect the behavior of the formatter by their presence; for example, if the percent character is seen, then the value is multiplied by 100 before being displayed.<br>
+<br>
+A pattern contains a postive and negative subpattern, for example, "#,##0.00;(#,##0.00)". Each subpattern has a prefix, a numeric part and a suffix. If there is no explicit negative subpattern, the negative subpattern is the localized minus sign prefixed to the positive subpattern. That is, "0.00" alone is equivalent to "0.00;-0.00". If there is an explicit negative subpattern, it serves only to specify the negative prefix and suffix; the number of digits, minimal digits, and other characteristics are ignored in the negative subpattern. This means that "#,##0.0#;(#)" produces precisely the same result as "#,##0.0#;(#,##0.0#)".<br>
+<br>
+0  represents a digit.<br>
+#  represents a digit, leading zeroes are not shown.<br>
+.   represents the decimal separator or monetary decimal separator.<br>
+-  represents the minus sign. <br>
+,  represents a grouping separator. <br>
+E separates mantissa and exponent in scientific notation.<br>
++  prefix positive exponents with localized plus sign.<br>
+;  separates positive and negative subpatterns. <br>
+% multiply by 100 and show as percentage. <br>
+' used to quote special characters in a prefix or suffix, for example, "'#'#" formats 123 to "#123". To create a single quote itself, use two in a row: "# o''clock". <br>
+<br>
+The formatting rules are those for an Android DecimalFormat object.<br>
+http://developer.android.com/reference/java/text/DecimalFormat.html<br>
+<br>
+Syntax: Format (Number, Format String)<br>
+<br>
+Example:<br>
+Msgbox (Format(1234.5678,",##0.##"))<br>
+Will display: 1,234.57<br>
+<br>
+<b>IsDigit</b><br>
+Returns true if the first character in the string is a digit.<br>
+<br>
+Syntax: IsDigit (String)<br>
+<br>
+Example:<br>
+If IsDigit (StrAt (Text,2)) = True Then ...<br>
+It will be true if the third character is a digit.<br>
+<br>
+<b>IsLetter</b><br>
+Returns true if the first character in the string is a letter.<br>
+<br>
+Syntax: IsLetter (String)<br>
+<br>
+Example:<br>
+If IsLetter (StrAt (Text,2)) = True Then ...<br>
+It will be true if the third character is a letter.<br>
+<br>
+<b>IsNumber</b><br>
+Return true if the string is a number.<br>
+<br>
+Syntax: IsNumber (String)<br>
+<br>
+Example:<br>
+If IsNumber(Text) = true Then<br>
+	Msgbox (TextBox1.Text * 20)<br>
+End If<br>
+<br>
+<b>IsPunctuation</b><br>
+Returns true if the first character in the string is a punctuation symbol.<br>
+<br>
+Syntax: IsPunctuation (String)<br>
+<br>
+Example:<br>
+If IsPunctuation (StrAt (Text,2)) = True Then ...<br>
+It will be true if the third character is a punctuation symbol.<br>
+<br>
+<b>StrAt</b><br>
+Returns the character at a specific position. Index starts from 0 to String length - 1.<br>
+<br>
+Syntax: StrAt (String, Index)<br>
+<br>
+Example: a = StrAt ("abcdef" , 3)<br>
+Result: a = "d"<br>
+<br>
+<b>StrCompare</b><br>
+Compares two string and returns a value depending on the lexical order of the strings. It returns a number less than zero if the first string is less than the second string. It returns zero if the strings are equal and a number greater than zero if the first string is greater than the second string. If the Compare Constant is omitted, the comparison will be not case sensitive.<br>
+<br>
+Note that the lexical order under Android may differ from that under Windows Mobile because of the different underlying operating systems.<br>
+<br>
+Syntax: StrCompare (String, String [,Compare Constant])<br>
+Compare Constant can be: cCaseSensitive or cCaseUnsensitive.<br>
+<br>
+Example:<br>
+i = StrCompare (TextBox1.Text, TextBox2.Text, cCaseSensitive)<br>
+If i = 0 Then<br>
+	Msgbox("Both equal")<br>
+Else If i<0 Then<br>
+	Msgbox("TextBox1 is smaller")<br>
+Else<br>
+	Msgbox("TextBox2 is smaller")<br>
+End If<br>
+<br>
+<b>StrIndexOf</b><br>
+Returns the index of the first letter in the matching string, starting from a given index.<br>
+If the matching string isn't found then it will return -1. Value is the string that is searched for in String.<br>
+<br>
+Syntax: StrIndexOf (String, Value, StartIndex)<br>
+<br>
+Example:<br>
+Msgbox (StrIndexOf ("abcdef" , "cd",0))<br>
+Result : Displays 2.<br>
+<br>
+Example:<br>
+Msgbox (StrIndexOf ("abcdef" , "ab",1))<br>
+Result: Displays -1 (not found)<br>
+<br>
+<b>StrInsert</b><br>
+Returns a  new string after inserting a string to the old string.<br>
+<br>
+Syntax: StrInsert (String, StartIndex, Value)<br>
+<br>
+Example:<br>
+Old = "12567"<br>
+New = StrInsert (Old,2,"34")<br>
+<br>
+Result: New = "1234567"<br>
+<br>
+<b>StrJoin</b><br>
+Returns a  new string after concatenating all the strings in an array each string being delimited by the provided Delimiter apart from the final one<br>
+<br>
+Syntax: StrJoin (Array, Delimiter)<br>
+<br>
+Example:<br>
+Joined = StrJoin (AnArray, ", ")<br>
+<br>
+<b>StrLength</b><br>
+Returns the length of a string (number of characters).<br>
+<br>
+Syntax: StrLength (String)<br>
+<br>
+Example: Msgbox (StrLength ("B4Script"))<br>
+Result: Displays 8<br>
+<br>
+<b>StrRemove</b><br>
+Returns a  new string after removing some characters from the old string.<br>
+<br>
+Syntax: StrRemove (String, StartIndex, Count)<br>
+<br>
+Example:<br>
+Old = "B4Script"<br>
+New = StrRemove (Old ,3,4)<br>
+Result: New = "B4St"<br>
+<br>
+<b>StrReplace</b><br>
+Returns a new string after replacing the old value (in the old string) with the new value. Like all the other string keywords it doesn't change the old string value.<br>
+<br>
+Syntax: StrReplace (String , Old Value, New Value)<br>
+<br>
+Example:<br>
+s1 = "The sun is bright"<br>
+s2 = StrReplace (s," ","")  'remove white spaces<br>
+<br>
+Result: s2 = "Thesunisbright"<br>
+s1 is unchanged.<br>
+<br>
+<b>StrSplit</b><br>
+Splits a string into an array of strings. If the Separators string is an empty string then all white characters will be used as the separators. <br>
+<br>
+Syntax: SrtSplit (DestArray, RawString, Separators) <br>
+DestArray - The array that will receive the result<br>
+RawString - The string that will be split. <br>
+Separators - Zero or more characters that act as the separators. <br>
+<br>
+Example: <br>
+Dim words(0) as string<br>
+Nma= "$GPGGA,161229.487,3723.2475,N,12158.3416,W,1,07,1.0,9.0,M,,,,0000*18" <br>
+StrSplit(words(), Nma, ",") <br>
+for i = 0 to ArrayLen(words())-1 <br>
+	msgbox(words(i)) <br>
+next <br>
+<br>
+<b>StrToLower</b><br>
+Returns a new string  from the old string with all the letters in lower case.<br>
+<br>
+Syntax: StrToLower (string)<br>
+<br>
+Example: Msgbox (StrToLower("AbCdE"))<br>
+Result: Displays "abcde"<br>
+<br>
+<b>StrToUpper</b><br>
+Returns a new string  from the old string with all the letters in uppercase.<br>
+<br>
+Syntax: StrToUpper (string)<br>
+<br>
+Example: Msgbox (StrToUpper("AbCdE"))<br>
+Result: Displays "ABCDE"<br>
+<br>
+<b>SubString</b><br>
+Returns a  new string that is made of part of an old string. If the length of the new string is beyond the length of the original string then white spaces will be added to it.<br>
+<br>
+Syntax: SubString (String, StartIndex, Count)<br>
+<br>
+Example:<br>
+Old = "B4Script"<br>
+New = SubString (old,1, 2)<br>
+<br>
+Result: New = "4S"<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='time'></a>
+<b>DATE AND TIME KEYWORDS</b><p>
+</>Time and Date Overview</b><br>
+<br>
+Time and date values are stored as their number of "Ticks" since January 1st 1970, 00:00 GMT.<br>
+Each tick is 1/1,000 of a second.<br>
+Keyword Date returns a date string from a ticks value.<br>
+Keyword Time returns a time string from a ticks value.<br>
+Date and Time are formatted using DateFormat and TimeFormat keywords.<br>
+You can use TimeAdd / DateAdd or the time and date constants to do time and date manipulation.<br>
+<br>
+<b>Date</b><br>
+Return a date string from a ticks value.<br>
+<br>
+Syntax: Date (Ticks)<br>
+<br>
+Example:<br>
+Msgbox (Date(Now))<br>
+<br>
+Displays the current date. <br>
+<br>
+<b>DateAdd</b><br>
+Returns the ticks value of the given ticks + years + months + days.<br>
+<br>
+Syntax: DateAdd (Ticks, Years, Months, Days)<br>
+<br>
+Example:<br>
+x = Now<br>
+tomorrow = DateAdd(x, 0, 0, 1)<br>
+<br>
+<b>DateDay</b><br>
+Returns the day (starting from the beginning of the month) component from a ticks value.<br>
+<br>
+Syntax: DateDay (Ticks)<br>
+<br>
+<b>DateDayOfWeek</b><br>
+Returns an integer representing the day in the week from a ticks value. Sunday is 1, Monday is 2, aand so on. Saturday is 7.<br>
+<br>
+Syntax: DateDayOfWeek (Ticks)<br>
+<br>
+<b>DateDayOfYear</b><br>
+Returns the day (starting from the beginning of the year) component from a ticks value.<br>
+<br>
+Syntax: DateDayOfYear (Ticks)<br>
+<br>
+<b>DateFormat</b><br>
+Changes the format of showing and parsing dates. Default value is: "mm/dd/yyyy" (If you do not use the DateFormat keyword then the date format will be this value.)<br>
+<br>
+Syntax: DateFormat (Format String)<br>
+<br>
+Example:<br>
+x = DateParse ("04/25/2006")<br>
+DateFormat ("dddd - mmmm - yy")<br>
+Msgbox(Date(x))<br>
+<br>
+This example will show: Tuesday - April - 06<br>
+<br>
+<b>DateMonth</b><br>
+Returns the month (starting from the beginning of the year) component from a ticks value.<br>
+<br>
+Syntax: DateMonth (Ticks)<br>
+<br>
+<b>DateParse</b><br>
+Returns the ticks value of a date string.<br>
+The date string must be formatted exactly as the date format. (Default "mm/dd/yyyy")<br>
+<br>
+Syntax: DateParse (Date String)<br>
+<br>
+Example:<br>
+T = DateParse ("01/30/2012")<br>
+<br>
+<b>DateYear</b><br>
+Returns the year component from a ticks value.<br>
+<br>
+Syntax: DateYear (Ticks)<br>
+<br>
+<b>Now<br></b>
+Returns the ticks value of the current date and time.<br>
+<br>
+Syntax: Now<br>
+<br>
+Example:<br>
+Msgbox(Date(Now)) 'Shows the current date formatted as a date string<br>
+<br>
+<b>Time</b><br>
+Return a time string from the ticks value.<br>
+<br>
+Syntax: Time (Ticks)<br>
+<br>
+Example:<br>
+Msgbox(Time(Now))<br>
+<br>
+Displays the current time. <br>
+<br>
+<b>TimeAdd</b><br>
+Returns the ticks value of the given ticks + hours + minutes + seconds.<br>
+<br>
+Syntax: TimeAdd (Ticks, Hours, Minutes, Seconds)<br>
+<br>
+Example:<br>
+x = Now<br>
+tomorrow = TimeAdd(x, 24, 0, 0)<br>
+<br>
+<b>TimeFormat</b><br>
+Changes the format of showing and parsing times.<br>
+<br>
+Syntax: TimeFormat (Format String)<br>
+Default value is: "HH:mm" (If you do not use the TimeFormat keyword then the time format will be this value.)<br>
+"H" - 24 hours format.<br>
+"h" - 12 hours format.<br>
+"tt" - AM / PM<br>
+TimeFormat can be used any number of times inside an application.<br>
+<br>
+Example:<br>
+TimeFormat ("HH:mm:ss")<br>
+x = TimeParse ("23:15:23")<br>
+TimeFormat ("hh:mm tt")<br>
+Msgbox(Time(x))<br>
+<br>
+This example will show: 11:15 PM<br>
+<br>
+<b>TimeHour</b><br>
+Returns the hour (starting from the beginning of the day) component from the ticks value.<br>
+<br>
+Syntax: TimeHour (Ticks)<br>
+<br>
+<b>TimeMinute</b><br>
+Returns the minute (starting from the beginning of the hour) component from the ticks value.<br>
+<br>
+Syntax: TimeMinute (Ticks)<br>
+<br>
+<b>TimeParse</b><br>
+Returns the ticks value of the time string. The ticks value returned is the time entered plus the ticks value for the current date. The time string must be formatted exactly as the time format. (Default "HH:mm")<br>
+<br>
+Syntax: TimeParse (TimeString)<br>
+<br>
+Example:<br>
+T = TimeParse ("21:34")<br>
+<br>
+<b>TimeSecond</b><br>
+Returns the second (starting from the beginning of the minute) component from the ticks value.<br>
+<br>
+Syntax: TimeSecond (Ticks)<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='ccolor'></a>
+<b>COLOR CONSTANTS</b><p>
+cBeige <br>
+cBlack <br>
+cBlue <br>
+cBrown <br>
+cCyan <br>
+cGold <br>
+cGreen <br>
+cGray <br>
+cOrange <br>
+cPink <br>
+cPurple <br>
+cRed <br>
+cSilver <br>
+cWhite <br>
+cYellow<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='cdatetime'></a>
+<b>DATE AND TIME CONSTANTS</b><p>
+cTicksPerDay - Number of ticks per day<br>
+cTicksPerHour - Number of ticks per hour<br>
+cTicksPerMinute - Number of ticks per minute<br>
+cTicksPerSecond - Number of ticks per second<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='cgeneral'></a>
+<b>GENERAL CONSTANTS</b><p>
+Version - The version of the B4Script library<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='cmath'></a>
+<b>MATH CONSTANTS</b><p>
+cE (e)<br>
+cPI<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='csort'></a>
+<b>SORT CONSTANTS</b><p>
+cCaseSensitive<br>
+cCaseUnsensitive<br>
+<br>
+<a href='#top'>Contents</a><br><br>
+<a name='cstring'></a>
+<b>STRING CONSTANTS</b><p>
+cTab<br>
+crlf (New Line)<br>
+<br>
+<br>
+</body>
+</html>

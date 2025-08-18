@@ -1,0 +1,114 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterReedSwitch.b4r - Sample project for the B4R Library rRFXMeter
+'The Arduino sends Reed switch state via the 433Mhz Transmitter To the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+'The data is received by a RFXMeter device, parsed into switch state and a switch device is updated.
+'Hardware:
+'Arduino UNO with connected modules 433Mhz Transmitter And dht22 sensor.
+'Domoticz Configuration:
+'Device RFXMeter (name RFXMeter) connected To the hardware RFXCOM RFXtrx433e:
+'IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMeter, Type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+'Device Light/Switch (name RFXMeterSwitch) connected To the Dummy (Virtual Sensors) hardware:
+'IDX=386, Hardware=VirtualSensors, ID=000141D2, Unit=1, Name=RFXMeterSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+'
+'Additional Libraries: rRFXMeter, rDHTEX
+'20220405 rwbl
+#End Region
+
+#Region TODO
+'Consider using delta time in milliseconds between state changes to avoid multiple state changes within short timeframe.
+#End Region
+
+#Region Wiring
+'RX 433 Transmitter = Arduino UNO
+'VCC = 5v
+'Signal = #7
+'GND = GND
+'
+'Reed Switch = Arduino UNO
+'Signal = #4
+'VCC = 5v
+'GND = GND
+'Note: This Reed module has 3 pins with internal resistor.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	'RFXMeter & 433 TX Module
+	Private RFX_DEVADDR As Byte	= 0x09				'RFXMeter address which is used as Domoticz ID
+	Private RFX_PINTX As Byte 	= 7					'Transmi pin
+	Private RFX_PINLED As Byte	= 13				'Internal Arduino UNO LED
+	'Reed Switch
+	Private reedPin As Pin							'
+	Private REED_PINNR As UInt = 4					'Reed signal connected pin D4
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log("Reed Switch State to Domoticz")
+	RFXMeter.Initialize(RFX_PINTX, RFX_PINLED)
+	RFXMeter.Logging = False
+	'Init the reed pin and add a listener
+	reedPin.Initialize(REED_PINNR, reedPin.MODE_INPUT_PULLUP)
+	reedPin.AddListener("ReedPin_StateChanged")
+	'Set the initial state
+	ReedPin_StateChanged(reedPin.DigitalRead)
+End Sub
+
+'Listen to Reed pin state changes.
+'State: 1(true)=Off, 0(false)=On which is converted to 0=Off, 1=On and sent to the RFXMeter.
+Sub ReedPin_StateChanged(State As Boolean)
+	Dim devState As Byte = IIf(State, 0, 1)
+	Log("Reed Switch State Changed: ", State, ", sent as ", devState, " (0=Off, 1=On)")
+	RFXMeter.SendValueToIDX(RFX_DEVADDR, 386, devState)
+End Sub
+
+'Domoticz Automation Event
+'--[[
+'    rfxmeterreedswitch.dzvents - Explore Arduino_RFXCOM.
+'    20220405 rwbl
+']]--
+'
+'local RFXMeter = 384
+'local rfxmeterswitch = 386
+'
+'Return {
+'	on = { devices = { RFXMeter } },
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERREEDSWITCH', },
+'	execute = function(domoticz, device)
+'	    -- Example: device.sValue=133860: 1=LeadingNumber,3=Length IDX,386=IDX,0=Reed Switch State (0=Off,1=On)
+'		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+'        -- Convert the value To a given idx And update the device nValue
+'        -- IDX=386, Hardware=VirtualSensors, ID=000141D2, Unit=1, Name=RFXMeterSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+'        -- Method string.sub extracts a piece of the string s, from the i-th To the j-th character inclusive. In Lua, the first character of a string has index 1
+'        -- The switch device is updated via HTTP: Processing device-adapter For RFXHumidity: Humidty device adapter
+'        -- RFXMeter: OpenURL: url = http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=386&nvalue=0&svalue=0&parsetrigger=False
+'        -- Get the length of the idx at pos 2
+'        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+'        -- Get the idx starting at pos 3 of the sValue
+'        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+'        -- The switch State On Or Off is set As nValue
+'        local nvalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+'        local svalue = 0    -- Not used, just For completeness
+'        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+'        -- Update the device If idx Not 0. 
+'        If (idx ~= 0) Then 
+'            domoticz.devices(idx).setValues(nvalue, svalue)
+'        End
+'    End
+'}

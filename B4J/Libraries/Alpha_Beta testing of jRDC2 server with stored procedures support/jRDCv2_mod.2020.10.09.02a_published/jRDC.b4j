@@ -1,0 +1,282 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=config.properties
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jsql
+Library4=jrandomaccessfile
+Library5=javaobject
+Module1=RDCConnector
+Module2=RDCHandler
+Module3=TestHandler
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=3
+Version=8.5
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+'For stored procedures, if wanting to use named variables, then:
+
+'1.   set the connection's noAccessToProcedureBodies=true property
+'    For example As Part of the connection string:
+'    jdbc:mysql://IPAddress:3306/test?noAccessToProcedureBodies=True
+'    The JDBC driver will Then create "INOUT" strings For the arguments without requiring meta data like the exception says.
+'2.   Grant Select privileges on mysql.proc To the database user
+'    For example in the mysql prompt:
+'    GRANT Select ON mysql.proc To 'user'@'localhost';
+'    Of course this would allow the application To read the entire mysql.proc table that contains information about all stored procedures in all databases (including source code).
+'Source: https://stackoverflow.com/a/4609800
+
+'2020/10/06 Start working on stored procedures (for real)
+'SQL/Java type information
+'https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
+'https://docs.microsoft.com/en-us/sql/connect/jdbc/using-basic-data-types?view=sql-server-ver15
+
+'Oracle example for CURSOR and STRUCT as out parameter (future support?)
+'Plus it shows other Types that may be available (hint: give user choise of static class for types)
+'https://www.journaldev.com/2502/callablestatement-in-java-example
+
+'Hint that named parameters have to be in order
+'https://info.michael-simons.eu/2012/07/23/oracle-jbdc-callablestatements-and-named-parameters/
+
+'Code for checking if parameters are supported and what parameters there are
+'https://www.ibm.com/developerworks/data/library/techarticle/dm-0802tiwary/index.html
+
+'NOTE: according to docs, prepareCall should only be called once and the returned CallableStatement instance
+'should be re-used. How does this affect setting parameters?
+'https://docs.oracle.com/cd/E17952_01/connector-j-5.1-en/connector-j-usagenotes-statements-callable.html
+
+'Some JDBC drivers may bomb when a parameter is set to null
+'https://stackoverflow.com/questions/43163521/callablestatement-setint-named-parameter-exception
+
+
+'Good info on parameters. Read up on how they can be skipped (if defaults are set)
+'https://informix.hcldoc.com/12.10/help/index.jsp?topic=%2Fcom.ibm.jdbc.doc%2Fids_jdbc_098.htm
+
+
+
+
+'2020/05/28 Removed show-stopping bug in /test handler. Cannot close DB if it is SQLite.
+'
+'2020/04/24 Changes:
+'
+'Updated source to match updates/features of jRDC2 2.22
+'
+'Added ability to use "simple" stored procedures. Modified DBRequestManager to allow usage of
+'new feature. This was done with the help of @Chris Guanzon.
+'In config properties, set up SQL statement to call stored procedure
+'[code]
+'sql.sLogin=CALL sLogin(?,?)
+'[/code]
+'Usage sample on client side (using updated DBRequestManager):
+'
+'[code]
+'Dim req As DBRequestManager = CreateRequest
+'Dim cmd As DBCommand = CreateCommand("sLogin", Array(EditText1.Text, EditText2.Text))
+'Wait For (req.ExecuteQuery(cmd, 0, Null)) JobDone (j As HttpJob)
+'If j.Success Then
+'	req.HandleJobAsync(j, "req")
+'	Wait For (req) req_Result (res As DBResult)
+'	'work with result
+'	req.PrintTable(res)
+'Else
+'	Log("ERROR: " & j.ErrorMessage)
+'End If
+'j.Release
+'[/code]
+'******
+'2017/10/30 Update
+'******
+'Main module changes:
+'-------------------
+'Added the logging of one of the IP addresses that the server is bound to. The method.
+' to retrieve the IP address is similar to ServerSocket's GetMyIP method. It was adapted
+' from https://issues.apache.org/jira/browse/JCS-40.
+'Added ability to assign server to a specific IP address.
+
+'RDCConnector changes:
+'--------------------
+'Added IPAddress configuration option. Allows to set the jRDC server's IP address. An un-bindable
+' address will crash the server.
+'Added HasIPAddress and GetIPAddress to access IPAddress configuration.
+'Added support for SQLite. If the DriverClass contains SQLite (case insensitive), then jRDC
+' is configured for SQLite usage. SQLite does not use pools. Pool/non-pool handling gleaned
+' from DBM.bas module of ABMaterial.
+'Added CreateFile configuration option. This option is used for the SQLite backend
+' (if used). If set to True or set to 1, then the SQLite database will be created in
+' case it does not exist yet. Any other settings are interpreted as False.
+'Added PoolSize configuration option. This is the size of the pool that should be used
+' for pooled JDBC databases. This option was gleaned from the DBM.bas module of ABMaterial.
+'Modified GetCommand to return empty string ("") when no command found.
+'Modified GetConnection to handle non-pool SQL connections (SQLite).
+
+'RDCHandler changes:
+'Modified Handler to not close the databas connection in case a pool is not used, else SQLite
+' will not function properly
+'Modified ExecuteQuery2 and ExecuteBatch2 to check cmd.Parameters for Null. This removed a
+' Null pointer exception error message in case cmd.Parameters was Null. Also call
+' ExecQuery/ExecNonQuery when no cmd.Parameters are given.
+'Modified ExecuteQuery2 and ExecuteBatch2 to check for valid command. If no valid command found,
+' return 500 error with proper response. This takes care of a syntax exception error for the DB.
+' in case of MySQL it looks something like this:
+'  com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: You have an error in your SQL syntax;
+'   check the manual that corresponds to your MySQL server version for the right syntax to use near 'null' at line 1
+'Modified Try/Catch block in ExecuteBatch2. Moved the code below the End Try that dealt with
+' converting the DBResult object and sending it to the client into end of the Try block. This
+' took care of an java.lang.IllegalStateException: WRITER exception caused by OutputStream when
+' called after the Catch's SendError.
+'Added Try/Catch block to ExecuteQuery2. This should prevent the following on the B4X client
+' side: java.io.EOFException: Unexpected end of ZLIB input stream
+'Removed all jRDC v1 functionality.
+
+'Miscellaneous notes:
+'The config.properties contains sql. directives that pertain to a jRDC version of the DBUtils
+' demo.
+'Per usual, please ensure you have the proper #AdditionalJar set for the database backend
+' of your choice (even for SQLite).
+
+
+
+'change as required
+#AdditionalJar: mysql-connector-java-5.1.49-bin
+'#AdditionalJar: sqlite-jdbc-3.7.2
+'#AdditionalJar: postgresql-9.4.1207
+
+Sub Process_Globals
+	Public srvr As Server
+	Public rdcConnector1 As RDCConnector
+	Public const VERSION As Float = 2.22
+	Public IPAddress As String
+	Public SQLDataTypeClasses As Map
+	Public SQLDataTypeClassNames As Map
+	Type DBCommand (Name As String, Parameters() As Object)
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	SQLDataTypeClasses.Initialize
+	Dim SQLDataTypeClassNames As Map = CreateMap("JDBC":"java.sql.Types")
+	For Each classType In SQLDataTypeClassNames.Keys
+		Dim joDataTypeClass As JavaObject
+		joDataTypeClass.InitializeStatic(SQLDataTypeClassNames.Get(classType))
+		SQLDataTypeClasses.Put(classType, joDataTypeClass)
+	Next
+	
+	srvr.Initialize("")
+	rdcConnector1.Initialize
+	srvr.Port = rdcConnector1.serverPort
+	srvr.AddHandler("/test", "TestHandler", False)
+	srvr.AddHandler("/rdc", "RDCHandler", False)
+	' https://www.b4x.com/android/forum/threads/could-jetty-listen-on-an-explicit-ip.67270/#post-426004
+	Dim jo As JavaObject = srvr
+	If rdcConnector1.HasIPAddress Then
+		'This try catch will not keep server from "crashing" with an IP address that cannot be
+		' bound. As of yet... 
+		Try
+			jo.SetField("host", rdcConnector1.GetIPAddress)
+		Catch
+			Log($"jRDC ERROR: Failed setting IP address: ${rdcConnector1.GetIPAddress}"$)
+		End Try
+	End If
+	'Get server's IP address
+	IPAddress = jo.GetField("host")
+	If IPAddress.EqualsIgnoreCase("null") Then
+		'We have multiple network interfaces, fetch an IP address
+		Log("Fetching IP address via getLocalHostLANAddress")
+		Dim jMe As JavaObject = Me
+		IPAddress = jMe.RunMethod("getLocalHostLANAddress", Null)
+	End If
+	srvr.Start
+	Log($"Modified jRDC is running (version = $1.2{VERSION})"$)
+	Log("Note: jRDC is running without V1 support")
+	Log($"Bound to: ${IPAddress}:${srvr.Port}"$)
+	StartMessageLoop
+End Sub
+
+#if java
+/**
+ * Adapted from: https://issues.apache.org/jira/browse/JCS-40
+ */
+import java.io.IOException;
+//import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+/**
+ * Returns an <code>InetAddress</code> object encapsulating what is most likely the machine's LAN IP address.
+ * <p/>
+ * This method is intended for use as a replacement of JDK method <code>InetAddress.getLocalHost</code>, because
+ * that method is ambiguous on Linux systems. Linux systems enumerate the loopback network interface the same
+ * way as regular LAN network interfaces, but the JDK <code>InetAddress.getLocalHost</code> method does not
+ * specify the algorithm used to select the address returned under such circumstances, and will often return the
+ * loopback address, which is not valid for network communication. Details
+ * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4665037">here</a>.
+ * <p/>
+ * This method will scan all IP addresses on all network interfaces on the host machine to determine the IP address
+ * most likely to be the machine's LAN address. If the machine has multiple IP addresses, this method will prefer
+ * a site-local IP address (e.g. 192.168.x.x or 10.10.x.x, usually IPv4) if the machine has one (and will return the
+ * first site-local address if the machine has more than one), but if the machine does not hold a site-local
+ * address, this method will return simply the first non-loopback address found (IPv4 or IPv6).
+ * <p/>
+ * If this method cannot find a non-loopback address using this selection algorithm, it will fall back to
+ * calling and returning the result of JDK method <code>InetAddress.getLocalHost</code>.
+ * <p/>
+ *
+ * @throws UnknownHostException If the LAN address of the machine cannot be found.
+ */
+public static String getLocalHostLANAddress() throws UnknownHostException {
+    try {
+        InetAddress candidateAddress = null;
+        // Iterate all NICs (network interface cards)...
+        for (Enumeration ifaces = NetworkInterface.getNetworkInterfaces(); ifaces.hasMoreElements();) {
+            NetworkInterface iface = (NetworkInterface) ifaces.nextElement();
+            // Iterate all IP addresses assigned to each card...
+            for (Enumeration inetAddrs = iface.getInetAddresses(); inetAddrs.hasMoreElements();) {
+                InetAddress inetAddr = (InetAddress) inetAddrs.nextElement();
+                if (!inetAddr.isLoopbackAddress()) {
+
+                    if (inetAddr.isSiteLocalAddress()) {
+                        // Found non-loopback site-local address. Return it immediately...
+                        return inetAddr.getHostAddress();
+                    }
+                    else if (candidateAddress == null) {
+                        // Found non-loopback address, but not necessarily site-local.
+                        // Store it as a candidate to be returned if site-local address is not subsequently found...
+                        candidateAddress = inetAddr;
+                        // Note that we don't repeatedly assign non-loopback non-site-local addresses as candidates,
+                        // only the first. For subsequent iterations, candidate will be non-null.
+                    }
+                }
+            }
+        }
+        if (candidateAddress != null) {
+            // We did not find a site-local address, but we found some other non-loopback address.
+            // Server might have a non-site-local address assigned to its NIC (or it might be running
+            // IPv6 which deprecates the "site-local" concept).
+            // Return this non-loopback candidate address...
+            return candidateAddress.getHostAddress();
+        }
+        // At this point, we did not find a non-loopback address.
+        // Fall back to returning whatever InetAddress.getLocalHost() returns...
+        InetAddress jdkSuppliedAddress = InetAddress.getLocalHost();
+        if (jdkSuppliedAddress == null) {
+            throw new UnknownHostException("The JDK InetAddress.getLocalHost() method unexpectedly returned null.");
+        }
+        return jdkSuppliedAddress.getHostAddress();
+    }
+    catch (Exception e) {
+        UnknownHostException unknownHostException = new UnknownHostException("Failed to determine LAN address: " + e);
+        unknownHostException.initCause(e);
+        throw unknownHostException;
+    }
+}
+#End If

@@ -1,0 +1,226 @@
+﻿Build1=free,www.sagital.tiled,free
+Build2=store,www.sagital.gpong,store
+File1=level1.tmx
+File2=super_mario.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=ispritekit
+Library3=itiled
+Module1=Functions
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: TileMap
+	#Version: 0.2
+	#iPhoneOrientations: Portrait
+	#iPadOrientations: Portrait
+	#PlistExtra: <key>UIViewControllerBasedStatusBarAppearance</key><false/>
+	#PlistExtra:<key>NSLocationWhenInUseUsageDescription</key>
+	#PlistExtra:<key>NSLocationUsageDescription</key>
+	#MinVersion: 9.0
+	#ATSEnabled: False
+	#QueriesSchemes: youtube
+	#QueriesSchemes: whatsapp	
+#End Region
+
+#If store
+#CertificateFile: ios_distribution.cer
+#ProvisionFile: PublishToStore.mobileprovision
+#End If
+
+#if free
+#CertificateFile: ios_development.cer
+#ProvisionFile: IOSdev.mobileprovision 
+#End If 
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private GameSize As Size
+	Private GameView As SKView
+	Private GameScene As SKScene
+	Private vpW, vpH As Float
+	Private scaleFont As Float
+	Private myTileNode As SKNode
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Nav.ShowPage(Page1)
+	Nav.NavigationBarVisible = False
+	
+	Dim no As NativeObject = App
+	no.RunMethod("setStatusBarHidden:animated:", Array(True, False))
+		
+	GameView.Initialize("GameView")
+	GameView.ShowsFPS = True
+	Page1.RootPanel.AddView(GameView,0,0,0,0)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	If scaleFont > 0 Then Return
+	vpW = 320
+	vpH = 568
+	scaleFont = GetDeviceLayoutValues.DeviceApproximateScreenSize / 4
+	GameSize.Initialize(vpW,vpH)
+	SetUpGameScene(GameSize)
+	GameView.PresentScene(GameScene)
+	GameView.SetLayoutAnimated(1,0.9,0,0,Width,Height)
+End Sub
+
+Sub SetUpGameScene(aSize As Size) As SKScene
+	GameScene.Initialize("GameScene")
+	GameScene.SceneWithSize(aSize)
+	GameScene.ScaleMode = GameScene.SKSceneScaleModeAspectFit
+	GameScene.BackgroundColor = Colors.RGB(31,31,31)
+	GameScene.PhysicsWorld.Gravity = Functions.CreateVector(0,0)
+	
+	'Initialize Skspritenode
+	myTileNode.Initialize("myTileNode")
+	myTileNode.Position = Functions.CreatePoint(0,0)
+	
+	'SetUp TileMap (TILED)
+	iTiled.initialize("level1.tmx",myTileNode)
+	
+	For i = 0 To iTiled.ObjectList.Size -1
+		Log("#### OBJECT " & i & " #####")
+		Log("")
+		
+		Dim myobj As TileObj = iTiled.ObjectList.Get(i)
+		Log("Object Type: " & myobj.objtype)
+		
+		If myobj.myproperties.Size > 0 Then ' show custom properties
+			For Each key As String In myobj.myproperties.Keys
+				Log(key & " - " & myobj.myproperties.Get(key))
+			Next
+		End If
+		
+		If myobj.objtype = "polyline" Then
+			Dim shape As SKShapeNode
+			shape.Initialize("")
+			shape.ShapeNodeWithPath(myobj.vertices)
+			shape.Position = myobj.centroid
+			shape.FillColor = Colors.Blue
+			shape.StrokeColor = Colors.Transparent
+			shape.ZPosition = 10
+			GameScene.AddChild(shape)
+		else if myobj.objtype = "polygon" Then
+			Dim shape As SKShapeNode
+			shape.Initialize("")
+			shape.ShapeNodeWithPath(myobj.vertices)
+			shape.Position = myobj.centroid
+			shape.FillColor = Colors.Magenta
+			shape.StrokeColor = Colors.Transparent
+			shape.ZPosition = 10
+			GameScene.AddChild(shape)
+		else if myobj.objtype = "ellipse" Then
+			Dim shape As SKShapeNode
+			shape.Initialize("")
+			shape.ShapeNodeWithEllipseOfSize(Functions.CreateSize(myobj.width,myobj.height))
+			shape.Position = myobj.centroid
+			shape.FillColor = Colors.Cyan
+			shape.StrokeColor = Colors.Transparent
+			shape.ZPosition = 10
+			GameScene.AddChild(shape)
+		else if myobj.objtype = "rect" Then
+			Dim shape As SKShapeNode
+			shape.Initialize("")
+			shape.ShapeNodeWithRectOfSize(Functions.CreateSize(myobj.width,myobj.height))
+			shape.Position = myobj.centroid
+			shape.FillColor = Colors.Green
+			shape.StrokeColor = Colors.Transparent
+			shape.ZPosition = 10
+			GameScene.AddChild(shape)
+		End If
+		
+		Log("")
+		Log("#### END #####")
+	Next
+ 
+	GameScene.AddChild(myTileNode)
+ 
+	Return GameScene
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Private Sub Application_Foreground
+
+End Sub
+
+Sub GameScene_ToucheMoved(aTouch As Touch)
+
+End Sub
+
+Sub GameScene_ToucheEnded (aTouch As Touch)
+
+End Sub
+
+Sub GameScene_ToucheBegan(aTouch As Touch)
+
+End Sub
+
+Sub GameScene_Update (CurrentTime As Int)
+
+End Sub
+
+Sub GameScene_DidEndContact(aContact As SKPhysicsContact)
+'	Dim xValue, realContactX As Float
+'	If aContact.BodyA.CategoryBitMask = Category_Ball And aContact.BodyB.CategoryBitMask = Category_Pad Or aContact.BodyB.CategoryBitMask = Category_Ball And aContact.BodyA.CategoryBitMask = Category_Pad Then
+'	Log("LBLBLBLB")
+'		realContactX = aContact.ContactPoint.X
+'		xValue = mapping(Min(Abs(realContactX),40),0,40,0,4)
+'		Ball.PhysicsBody.Velocity = CreateVector(0,0)
+'		If realContactX < 0 Then Ball.PhysicsBody.ApplyImpulse(CreateVector(xValue*-1,ballspeed)) Else Ball.PhysicsBody.ApplyImpulse(CreateVector(xValue,ballspeed))
+'	End If	
+End Sub
+
+Sub GameScene_DidBeginContact(aContact As SKPhysicsContact)	
+'	If aContact.BodyA.CategoryBitMask = Category_Ball Or aContact.BodyB.CategoryBitMask = Category_Ball Then 
+'		GameScene.RunAction(hit)
+'	End If
+End Sub
+
+
+
+	
+'	'SET UP FRAME OF GAMESCENCE
+'	Dim frame As SKPhysicsBody
+'	frame.Initialize 
+'	frame.BodyWithEdgeLoopFromRect(GameScene.Frame)
+'	frame.Dynamic = False
+'	frame.AllowsRotation = False
+'	frame.Restitution = 1
+'	frame.Friction = 0
+'	GameScene.PhysicsBody = frame
+	
+	
+'	Dim ball As SKShapeNode
+'	ball.Initialize("")
+'	ball.ShapeNodeWithCircleOfRadius(10)
+'	ball.FillColor = Colors.White
+'	ball.Position = Functions.CreatePoint(vpW/2,vpH/2)
+'	
+'	Dim ballbody As SKPhysicsBody
+'	ballbody.Initialize
+'	ballbody.BodyWithCircleOfRadius(10)
+'	ballbody.AllowsRotation = True
+'	ballbody.AffectedByGravity = True
+'	ballbody.Restitution = 0.5
+'	ballbody.Friction = 0.3
+'	ballbody.Density = 1
+'	ballbody.AngularDamping = 0
+'	ballbody.LinearDamping = 0
+'	ball.PhysicsBody = ballbody
+'	GameScene.AddChild(ball)
+'	ball.PhysicsBody.ApplyImpulse(Functions.CreateVector(10,10))

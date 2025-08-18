@@ -1,0 +1,232 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=byteconverter
+Library2=encryption
+Library3=jcore
+Library4=jfx
+Library5=gmtformatter
+Module1=AWS_S3
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	
+	Type KeyValueType(key As String, value As String)
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+    '
+	'   The latest form of AWS_S3 determines date and time internally and uses GMTFormatter
+	'   to do appropriate extraction of GMT without changing time zones
+	'
+	'   Therefor to reproduce AWS documentation signature calculations (as below) which depend 
+	'   on a specific date/time we have to do a fiddle in AWS_S3.Initialize - see the comments
+	'   in AWS_S3.Initialize
+	'   
+	'   Be sure to undo the fiddle before using AWS_S3 in any production
+	'
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	
+	'   AWS_URI_Is_Path_Style
+	'       True = URI is "path style", e.g.:
+	'              https://<endpoint>/<bucketname>/<filename>
+	'       False = URI is "virtual hosted style", e.g.:
+	'               https://<bucketname>.<endpoint>/<filename>
+	'	AWS_Access_Key_ID
+	'	AWS_Secret_Access_Key
+	'	AWS_Region
+	'       where S3 bucket resides, as per:
+	'       http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	'       e.g.:
+	'           ap-southeast-2
+	'	AWS_End_Point
+	'       where S3 bucket can be accessed, as per:
+	'       http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+	'       e.g.:
+	'           s3-ap-southeast-2.amazonaws.com
+	'	AWS_S3_Bucket_Name
+	'	AWS_S3_File_Name
+	'       full name of file in bucket, including any pseudo folders, e.g.:
+	'           examplefile.txt
+	'           pseudofolder1/pseudofolder2/examplefile.txt
+	'	AWS_S3_HttpMethod
+	'       "GET", "PUT" or "DELETE"
+	'	AWS_S3_Query_map
+	'       map of URI query parameter key, value pairs
+	'       e.g:
+	'            URI is:
+	'                https://s3.amazonaws.com/examplebucket?prefix=somePrefix&marker=someMarker&Max-keys=20
+	'            URI query parameter key, value pairs:
+	'                "prefix", "somePrefix"
+	'                "marker", "someMarker"
+	'                "max-keys", "20"
+	'       e.g:
+	'            URI is:
+	'                https://s3.amazonaws.com/examplebucket?acl
+	'            URI query parameter key, value pairs:
+	'                "acl", ""
+	'       e.g:
+	'            URI does not include a "?"
+	'                AWS_S3_Query_map is Null
+	'	AWS_S3_Payload
+	'   AWS_S3_Content_Type
+	'       type of AWS_S3_Payload, typically "application/x-www-form-urlencoded" if
+	'       byte payload or "" if no payload
+	'	AWS_S3_OtherHeader_map
+	'       map of other request header key, value pairs - exclude following
+	'       headers which are added automatically:
+	'             host
+	'             content-type - if AWS_S3_Content_Type is defined
+	'             x-amz-content-sha256
+	'             x-amz-date
+	'       following headers must be added to this map:
+	'             any other x-amz-* headers
+	'       consider including all other headers in order to prevent data tampering
+
+	'************************************************************************************
+	
+	Private AWS_S3_test As AWS_S3
+	
+	'Example 1 as per:
+	'http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+	'Examples: Signature Calculations
+	'Example: GET Object
+	
+	AWS_S3_test.Initialize
+	AWS_S3_test.AWS_URI_Is_Path_Style = False
+	AWS_S3_test.AWS_Access_Key_ID = "AKIAIOSFODNN7EXAMPLE"
+	AWS_S3_test.AWS_Secret_Access_Key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	AWS_S3_test.AWS_Region = "us-east-1"
+	AWS_S3_test.AWS_End_Point = "s3.amazonaws.com"
+	AWS_S3_test.AWS_S3_Bucket_Name = "examplebucket"
+	AWS_S3_test.AWS_S3_File_Name = "test.txt"
+	AWS_S3_test.AWS_S3_HttpMethod = "GET"
+
+	AWS_S3_test.AWS_S3_Query_map.Clear
+
+	Private null_bytes() As Byte
+	AWS_S3_test.AWS_S3_Payload = null_bytes
+'	AWS_S3_test.AWS_S3_Content_Type = ""
+
+	AWS_S3_test.AWS_S3_OtherHeader_map.Clear
+	AWS_S3_test.AWS_S3_OtherHeader_map.Put("range", "bytes=0-9")
+	
+	Log("Example 1")
+	Log(AWS_S3_test.Signature)
+	Log("f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41")
+	
+	'************************************************************************************
+
+	'Example 2 as per:
+	'http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+	'Examples: Signature Calculations
+	'Example: PUT Object
+	
+	AWS_S3_test.Initialize
+	AWS_S3_test.AWS_URI_Is_Path_Style = False
+	AWS_S3_test.AWS_Access_Key_ID = "AKIAIOSFODNN7EXAMPLE"
+	AWS_S3_test.AWS_Secret_Access_Key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	AWS_S3_test.AWS_Region = "us-east-1"
+	AWS_S3_test.AWS_End_Point = "s3.amazonaws.com"
+	AWS_S3_test.AWS_S3_Bucket_Name = "examplebucket"
+	AWS_S3_test.AWS_S3_File_Name = "test$file.text"
+	AWS_S3_test.AWS_S3_HttpMethod = "PUT"
+
+	AWS_S3_test.AWS_S3_Query_map.Clear
+
+	AWS_S3_test.AWS_S3_Payload = "Welcome to Amazon S3.".GetBytes("UTF8")
+'	AWS_S3_test.AWS_S3_Content_Type = ""
+
+	AWS_S3_test.AWS_S3_OtherHeader_map.Clear
+	AWS_S3_test.AWS_S3_OtherHeader_map.Put("date", "Fri, 24 May 2013 00:00:00 GMT")
+	AWS_S3_test.AWS_S3_OtherHeader_map.Put("x-amz-storage-class", "REDUCED_REDUNDANCY")
+	
+	Log("Example 2")
+	Log(AWS_S3_test.Signature)
+	Log("98ad721746da40c64f1a55b78f14c238d841ea1380cd77a1b5971af0ece108bd")
+
+	'************************************************************************************
+
+	'Example 3 as per:
+	'http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+	'Examples: Signature Calculations
+	'Example: GET Bucket Lifecycle
+	
+	AWS_S3_test.Initialize
+	AWS_S3_test.AWS_URI_Is_Path_Style = False
+	AWS_S3_test.AWS_Access_Key_ID = "AKIAIOSFODNN7EXAMPLE"
+	AWS_S3_test.AWS_Secret_Access_Key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	AWS_S3_test.AWS_Region = "us-east-1"
+	AWS_S3_test.AWS_End_Point = "s3.amazonaws.com"
+	AWS_S3_test.AWS_S3_Bucket_Name = "examplebucket"
+	AWS_S3_test.AWS_S3_File_Name = ""
+	AWS_S3_test.AWS_S3_HttpMethod = "GET"
+
+	AWS_S3_test.AWS_S3_Query_map.Clear
+	AWS_S3_test.AWS_S3_Query_map.Put("lifecycle", "")
+
+	Private null_bytes() As Byte
+	AWS_S3_test.AWS_S3_Payload = null_bytes
+'	AWS_S3_test.AWS_S3_Content_Type = ""
+
+	AWS_S3_test.AWS_S3_OtherHeader_map.Clear
+	
+	Log("Example 3")
+	Log(AWS_S3_test.Signature)
+	Log("fea454ca298b7da1c68078a5d1bdbfbbe0d65c699e0f91ac7a200a0136783543")
+
+	'************************************************************************************
+
+	'Example 4 as per:
+	'http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+	'Examples: Signature Calculations
+	'Example: Get Bucket (List Objects)
+	
+	AWS_S3_test.Initialize
+	AWS_S3_test.AWS_URI_Is_Path_Style = False
+	AWS_S3_test.AWS_Access_Key_ID = "AKIAIOSFODNN7EXAMPLE"
+	AWS_S3_test.AWS_Secret_Access_Key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+	AWS_S3_test.AWS_Region = "us-east-1"
+	AWS_S3_test.AWS_End_Point = "s3.amazonaws.com"
+	AWS_S3_test.AWS_S3_Bucket_Name = "examplebucket"
+	AWS_S3_test.AWS_S3_File_Name = ""
+	AWS_S3_test.AWS_S3_HttpMethod = "GET"
+
+	AWS_S3_test.AWS_S3_Query_map.Initialize
+	AWS_S3_test.AWS_S3_Query_map.Clear
+	AWS_S3_test.AWS_S3_Query_map.Put("max-keys", "2")
+	AWS_S3_test.AWS_S3_Query_map.Put("prefix", "J")
+
+	Private null_bytes() As Byte
+	AWS_S3_test.AWS_S3_Payload = null_bytes
+'	AWS_S3_test.AWS_S3_Content_Type = ""
+
+	AWS_S3_test.AWS_S3_OtherHeader_map.Clear
+	
+	Log("Example 4")
+	Log(AWS_S3_test.Signature)
+	Log("34b48302e7b5fa45bde8084f4b7868a86f0a534bc59db6670ed5711ef69dc6f7")
+
+	'************************************************************************************
+
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

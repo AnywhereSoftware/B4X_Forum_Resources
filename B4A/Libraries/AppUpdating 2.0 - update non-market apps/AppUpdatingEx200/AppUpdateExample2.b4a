@@ -1,0 +1,188 @@
+﻿Build1=Default,b4a.example.appupdate2
+File1=Layout1.bal
+File2=updating.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=appupdating
+Library2=core
+Library3=phone
+Library4=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~AddReceiverText(eu.dgconsulting.appupdating.newinst2,~\n~  <intent-filter>~\n~  <action android:name="android.intent.action.PACKAGE_REPLACED" />~\n~    <data android:scheme="package" />~\n~  </intent-filter>)~\n~~\n~' Starting from Android 7 (API 24) we pass a file uri using a FileProvider~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <files-path name="name" path="shared" />~\n~)~\n~~\n~AddManifestText(<uses-permission~\n~	android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~	android:maxSdkVersion="18" />~\n~)~\n~~\n~AddPermission(android.permission.REQUEST_INSTALL_PACKAGES)~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AppUpdating Example
+	#VersionCode: 2
+	#VersionName: 2.01
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private btnPackage As Button
+	Private btnCurVer As Button
+	Private btnWebVer As Button
+	Private btnCompare As Button
+	Private btnDwnld As Button
+	Private btnInstall As Button
+	Private ButtonUpdate As Button
+	Private EditText1 As EditText
+	Dim apkupdt As cl_appupdate
+	Private phone As Phone
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	EditText1.Color=Colors.White
+	EditText1.TextColor=Colors.Black
+	EditText1.Text=$"Step by Step library usage${CRLF}"$
+	If FirstTime Then
+    	apkupdt.Initialize(Me,"update")			'initializes the class
+		apkupdt.Verbose = True  				'this one affects the verbosity of the logs
+	End If	
+  	'ALWAYS NEEDED - this is your app's package name (see "Project/BuilConfigurations/Package")
+  	apkupdt.PackageName = "b4a.example.appupdate2"
+  	'ALWAYS NEEDED - this is the complete path to the info text file holding the newer version number   
+	apkupdt.NewVerTxt = "http://www.dgconsulting.eu/free_apk/AppUpdateExample2.inf"
+  	'ALWAYS NEEDED - this is the complete path to your newer apk 
+	apkupdt.NewVerApk = "http://www.dgconsulting.eu/free_apk/AppUpdateExample2.apk"
+	'OPTIONAL - Set credentials to access a protected folder. Not needed for this example
+	apkupdt.setCredentials("test","test")
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+'STEP 0: which is apk's package name?
+'Can be called at any time not necessarily as step 0 as shown here
+Sub btnPackage_Click
+	'Show package name
+	EditText1.Text=$"${EditText1.Text}Package name: ${apkupdt.PackageName}${CRLF}"$
+End Sub
+
+'STEP 1: which is apk's current version number? 
+'Can be called at any time not necessarily as step 1 as shown here
+Sub btnCurVer_Click
+	'Read version number of currently executing apk
+	apkupdt.ReadCurVN  'send out command; async result in update_UpdateComplete
+End Sub
+	
+'STEP 2: just curious about eventual availability of a newer apk version, so we simply check for it
+'Can be called at any time not necessarily as step 2 as shown here
+Sub btnWebVer_Click
+	'Read version number as showed in txt file on webserver
+	apkupdt.ReadWebVN  'send out command; async result in update_UpdateComplete
+End Sub
+
+'STEP 3: compares current version number to the one reported by the webserver
+'Must follows steps 1 and 2. Assuming no errors in steps 1 and 2
+Sub btnCompare_Click
+	If apkupdt.CurVN < apkupdt.WebVN Then
+		EditText1.Text=$"${EditText1.Text}Newer version available${CRLF}"$
+  	Else
+		EditText1.Text=$"${EditText1.Text}No newer version available${CRLF}"$
+	End If
+End Sub
+
+'STEP 4: let's download the apk published on the webserver. No check on its version; just download it
+'Can be called at any time not necessarily as step 4 as shown here
+Sub btnDwnld_Click
+  	'download apk from webserver raising appropriate errors when problems arise
+	apkupdt.DownloadApk  'send out command; async result in update_UpdateComplete
+End Sub
+
+'STEP 5: let's ask the user to install an apk's newer version, previously downloaded
+'Must follow step 4. 
+Sub btnInstall_Click
+	Wait For (CheckInstallationRequirements) Complete (Result As Boolean)
+	apkupdt.InstallApk(Result)  'send out command; async result in update_UpdateComplete
+End Sub
+
+'Do it all (steps 1 to 5) with a single call
+Sub ButtonUpdate_Click
+	EditText1.Text=$"A single sub call does it all${CRLF}"$
+	Wait For (CheckInstallationRequirements) Complete (Result As Boolean)
+  	'OPTIONAL - if you like to show a splash screen while checking for a newer apk goes on
+	apkupdt.SetAndStartSplashScreen(Activity,LoadBitmap(File.DirAssets, "updating.jpg")) 
+  	'NEEDED - this is the one you need if you want to perform "automatic" updating of your apk
+	apkupdt.UpdateApk(Result) 'checks for newer apk, downloads it and asks the user to install it                                                    
+End Sub
+
+'This subs gets called after each command is executed
+Sub update_UpdateComplete
+	LogColor($"UpdateComplete - time: ${DateTime.Time(DateTime.Now)}"$, 0xFF556B2F)
+ 	apkupdt.StopSplashScreen
+	'too lazy to manage error conditions..check apkupdt.ERR_xxx codes if you like
+	Select apkupdt.Status
+		Case apkupdt.OK_CURVER
+			EditText1.Text=$"${EditText1.Text}Running apk version: ${apkupdt.CurVN}${CRLF}"$
+		Case apkupdt.OK_WEBVER
+			EditText1.Text=$"${EditText1.Text}Webserver apk version: ${apkupdt.WebVN}${CRLF}"$
+			EditText1.Text=$"${EditText1.Text}Optional Change Log data: ${apkupdt.WebChangeLog}${CRLF}"$
+			EditText1.Text=$"${EditText1.Text}Optional FileSize Log data: ${apkupdt.WebFileSize}${CRLF}"$
+		Case apkupdt.OK_NEWERAPK
+			EditText1.Text=$"${EditText1.Text}Newer version available${CRLF}"$
+		Case apkupdt.NO_NEWERAPK
+			EditText1.Text=$"${EditText1.Text}No newer version available${CRLF}"$
+		Case apkupdt.OK_DOWNLOAD
+			EditText1.Text=$"${EditText1.Text}Newer version downloaded${CRLF}"$
+		Case apkupdt.OK_INSTALL
+			EditText1.Text=$"${EditText1.Text}User asked to install newer version${CRLF}"$
+		Case apkupdt.ERR_NOPERM
+			Log("No permission to install")
+			EditText1.Text=$"${EditText1.Text}User gave no permission to install${CRLF}"$
+		Case Else
+			EditText1.Text=$"${EditText1.Text}Status: ${apkupdt.Status}${CRLF}"$
+	End Select
+End Sub
+
+#Region version-safe-apk-installation
+'https://www.b4x.com/android/forum/threads/version-safe-apk-installation.87667/
+
+'Check whether we already have permission for install other apps. 
+'If not we open the relevant settings page
+'then wait for Activity_Resume and check the value of CanRequestPackageInstalls again
+Private Sub CheckInstallationRequirements As ResumableSub
+	If File.ExternalWritable = False Then
+		MsgboxAsync("Storage card not available. Make sure that your device is not connected in USB storage mode.", "")
+		Return False
+	Else If phone.SdkVersion >= 26 And apkupdt.CanRequestPackageInstalls = False Then
+		MsgboxAsync("Please allow me to install applications.", "")
+		Wait For Msgbox_Result(Result As Int)
+		Dim in As Intent
+		in.Initialize("android.settings.MANAGE_UNKNOWN_APP_SOURCES", "package:" & Application.PackageName)
+		StartActivity(in)
+		Wait For Activity_Resume '<-- wait for Activity_Resume
+		Return apkupdt.CanRequestPackageInstalls
+	Else If apkupdt.CheckNonMarketAppsEnabled = False Then
+		MsgboxAsync("Please enable installation of non-market applications." & CRLF & "Under Settings - Security - Unknown sources" _
+			 & CRLF & "Or Settings - Applications - Unknown sources", "")
+		Return False
+	Else
+		Return True
+	End If
+End Sub
+#End Region

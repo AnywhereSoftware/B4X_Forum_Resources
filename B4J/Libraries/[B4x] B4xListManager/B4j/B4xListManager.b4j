@@ -1,0 +1,110 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=b4xlistmanager
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private Options As List
+	Private Dialog As B4XDialog
+	Dim B4xListManager1 As B4xListManager
+	Private ReservedItems As List
+	
+	'B4j
+	Private B4XComboBox1 As B4XComboBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	Dialog.Initialize(MainForm.RootPane)
+	Options.Initialize
+	
+	'SetReservedOptions
+	ReservedItems.Initialize
+	ReservedItems.AddAll(Array As String("Default"))
+	Options.Add("Default")
+	
+	'Set initial Data
+	For i = 0 To 9
+		Options.Add("Option " & i)
+	Next
+	
+	ShowOptions(Options)
+	
+End Sub
+
+Private Sub MainForm_Resize(Width As Double,Height As Double)
+	If Dialog.Visible Then Dialog.Resize(Width,Height)
+End Sub
+
+
+Sub btnEditList_Click
+	
+	Dim CD As B4XView = xui.CreatePanel("")
+	CD.SetLayoutAnimated(0,0,0,300dip,300dip)
+	CD.LoadLayout("b4xlistmanagerlayout")
+	
+	Sleep(0)
+	
+	Dialog.Title = "Manage List"
+	
+	'Either an arbitrary list
+'	B4xListManager1.List = Options
+	'Or manage combobox items directly
+	Dim L As List
+	L.Initialize
+	
+	For i = 0 To B4XComboBox1.Size - 1
+		L.Add(B4XComboBox1.GetItem(i))
+	Next
+	
+	B4xListManager1.List = L
+	
+	Dim SC As Object = Dialog.ShowCustom(CD,"Done","","Cancel")
+	
+	Wait For (SC) Complete (resp As Int)
+	
+	If resp = xui.DialogResponse_Positive Then
+		Options.Clear
+		'Revised list is available from B4xListManager1.List
+		Options.AddAll(B4xListManager1.List)
+		ShowOptions(Options)
+	End If
+	
+End Sub
+
+Private Sub ShowOptions(Opts As List)
+	
+	Dim SelectedItem As String
+	If B4XComboBox1.SelectedIndex > -1 Then SelectedItem = B4XComboBox1.SelectedItem
+	B4XComboBox1.SetItems(Opts)
+	'Select the first item if no current selection or the item is removed, otherwise maintain the selection
+	B4XComboBox1.SelectedIndex = Max(0,B4XComboBox1.IndexOf(SelectedItem))
+	
+End Sub
+
+'Disallow removal of specific items from the list
+Private Sub B4xListManager1_ReservedItem(Text As String) As Boolean
+	If ReservedItems.IndexOf(Text) > -1 Then Return True
+	Return False
+End Sub

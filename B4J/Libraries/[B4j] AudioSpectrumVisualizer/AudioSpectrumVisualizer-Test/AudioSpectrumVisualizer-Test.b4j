@@ -1,0 +1,85 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=audiospectrumvisualizer-b4xlib
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private BtnPlay As B4XView
+	Private MP As MediaPlayer
+	Private AudioSpectrumVisualizer1 As AudioSpectrumVisualizer
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	BtnPlay.Enabled = True
+End Sub
+
+Sub btnPlay_Click
+	If MP.IsInitialized Then
+		If MP.Position = MP.Duration Then
+			MP.Position = 0
+		End If
+		AudioSpectrumVisualizer1.Freeze = False
+		MP.Play
+	End If
+End Sub
+
+Private Sub btnPause_Click
+	If MP.IsInitialized Then
+		MP.Pause
+		AudioSpectrumVisualizer1.Reset
+	End If
+End Sub
+
+Private Sub btnStop_Click
+	If MP.IsInitialized Then
+		MP.Stop
+		AudioSpectrumVisualizer1.Reset
+	End If
+End Sub
+
+Sub btnLoadFile_Click
+	If MP.IsInitialized Then MP.Stop
+	'XML File Open
+	Dim FC As FileChooser
+	FC.Initialize
+	FC.Title = "Load Audio file"
+	FC.SetExtensionFilter("Audio File",Array("*.wav","*.mp3"))
+	Dim FileName As String = FC.ShowOpen(MainForm)
+	If FileName = "" Then Return
+	
+	MP.Initialize("MP",File.GetUri(File.GetFileParent(FileName),File.GetName(FileName)))
+	AudioSpectrumVisualizer1.SetMediaplayer(MP)
+	BtnPlay.enabled = True
+End Sub
+
+Private Sub MP_Complete
+	Log("Complete")
+	AudioSpectrumVisualizer1.Reset
+End Sub
+
+
+
+Private Sub btnFreeze_Click
+	AudioSpectrumVisualizer1.Freeze = Not(AudioSpectrumVisualizer1.Freeze)
+End Sub

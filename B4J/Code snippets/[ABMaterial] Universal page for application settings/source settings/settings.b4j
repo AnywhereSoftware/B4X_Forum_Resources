@@ -1,0 +1,91 @@
+﻿AppType=StandardJava
+Build1=Default,com.ab.template
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=abmaterial
+Library4=javaobject
+Library5=jsql
+Module1=ABMApplication
+Module10=home
+Module11=Settings
+Module2=ABMCacheControl
+Module3=ABMCacheScavenger
+Module4=ABMCustomComponentTemplate
+Module5=ABMErrorHandler
+Module6=ABMRootFilter
+Module7=ABMShared
+Module8=ABMUploadHandler
+Module9=DBM
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=11
+Version=9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 	
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+	Dim ABM As ABMaterial 'ignore
+	Dim port As Int = 80
+	Public config As Map
+	Public FileConfig As String = "config.txt"
+End Sub
+
+Sub AppStart (Args() As String)
+	' the user needs to login
+	'ABMShared.NeedsAuthorization = True
+	
+	' Build the Theme
+	ABMShared.BuildTheme("mytheme")	
+	
+	If File.Exists(File.DirApp,"config.txt") Then
+		config= File.ReadMap(File.DirApp, FileConfig)
+	Else
+		Log("confog file not found")
+		ExitApplication2(1)
+	End If
+	
+	' create the app
+	Dim myApp As ABMApplication
+	myApp.Initialize
+		
+	' create the pages
+	Dim set1 As Settings
+	set1.Initialize		
+	Dim home1 As home
+	home1.Initialize
+		
+	' add the pages to the app
+	myApp.AddPage(set1.page)
+	myApp.AddPage(home1.page)
+		
+	' start the server
+	myApp.StartServer(srvr, "srvr", port)	
+			
+	'ABMShared.RedirectOutput(File.DirApp, "logs.txt")
+	
+	#If DEBUG
+		' in debug mode, start the browser and open the app on all devices (DOES NOT WORK IF EDGE IS YOUR DEFAULT BROWSER!)
+'		ABM.ViewerOpenAllDevices("http://localhost:" & port & "/" & ABMShared.AppName & "/", 100)
+		
+		' or open a specific device as default (DOES NOT WORK IF EDGE IS YOUR DEFAULT BROWSER!)
+		'ABM.ViewerOpenDevice("http://localhost:" & port & "/" & ABMShared.AppName & "/", 300, ABM.VIEWER_TABLET)
+		
+		' or just open de browser, no multiple devices
+		'ABM.ViewerOpen("http://localhost:" & port & "/" & ABMShared.AppName & "/")
+	#End If
+			
+	StartMessageLoop
+End Sub
+
+
+
+
+
+
+

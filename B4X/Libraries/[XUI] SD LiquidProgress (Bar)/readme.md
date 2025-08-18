@@ -1,13 +1,15 @@
 ###  [XUI] SD LiquidProgress (Bar) by Star-Dust
-### 02/27/2025
-[B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/103509/)
+### 07/27/2021
+[B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/103518/)
 
-Made entirely with B4X with XUI  
+Made entirely with B4i with XUI  
   
-**SD\_LiquidProgress  
+Download **[Here](https://www.b4x.com/android/forum/threads/b4x-xui-sd-liquidprogress-bar.103509/#post-648787)   
+  
+iSD\_LiquidProgress  
   
 Author:** Star-Dust  
-**Version:** 0.14  
+**Version:** 0.09  
 
 - **LiquidProgress**
 
@@ -19,20 +21,21 @@ Author:** Star-Dust
 - **Invalidate**
 - **IsInitialized** As Boolean
 *Verifica se l'oggetto sia stato inizializzato.*- **Wait** (Milliseconds As long)
- *Eg. use:  
- SD\_LiquidProgress1.Wait(2000)  
+*Eg. use:  
+SD\_LiquidProgress1.Wait(2000)  
  Sleep(2000)*
 - **Properties:**
 
 - **BackgroundColor** As Int
 - **BackgroundWaveColor** As Int
-- **BubbleEffectEnable** As Boolean
-- **BubbleIntensity** As Int [0..255]
 - **TextSize** As Int
 - **TextVisible** As Boolean
 - **Value** As Int
- *Value 0 to 100*- **WaveColor** As Int
+*Value 0 to 100*- **WaveColor** As Int
 - **CircleLightEffect** As Boolean
 
   
-![](https://www.b4x.com/android/forum/attachments/90790) ![](https://www.b4x.com/android/forum/attachments/128609)![](https://www.b4x.com/android/forum/attachments/142310)
+The library is now moved **here**, you will find libraries and examples to download:  
+<https://www.b4x.com/android/forum/threads/b4x-xui-sd-liquidprogress-bar.103509/>  
+  
+![](https://www.b4x.com/android/forum/attachments/90795)

@@ -1,0 +1,58 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.wmRaspbeeGWdemoUI
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=okhttp
+Library4=jstringutils
+Library5=json
+Library6=jokhttputils2
+Library7=byteconverter
+Module1=|absolute|C:\Users\walter\Documents\_WM\Dropbox\B4X\_B4XsharedModules\DateUtils
+Module2=|absolute|C:\Users\walter\Documents\_WM\Dropbox\B4X\_B4XsharedModules\wmRaspbeeGateway
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=2
+Version=8.5
+@EndOfDesignText@
+#Region  Project Attributes
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+	#LibraryAuthor: walt61
+	#LibraryName: wmRaspbeeGWdemoUI
+	#LibraryVersion: 1.00
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Public MainForm As Form
+	Private TextArea1 As TextArea ' Designer view
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main") 'Load the layout file.
+	MainForm.Show
+
+	InitRaspbeeGW("xxx.xxx.xxx.xxx", "xxxxxxxx") ' <----- ENTER YOUR VALUES HERE
+
+End Sub
+
+Sub InitRaspbeeGW(IP As String, APIkey As String)
+
+	Dim rb As wmRaspbeeGateway
+	rb.Initialize(IP, APIkey, False)
+
+	Wait For (rb.GetAllLights) Complete (result As Map)
+	If result.Get("error") = "" Then
+		TextArea1.Text = result.Get("value")
+	Else
+		TextArea1.Text = result.Get("error")
+	End If
+
+End Sub

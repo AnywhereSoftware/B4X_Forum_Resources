@@ -1,0 +1,51 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=test.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=universalchardet
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private jUniversalCharDet As UniversalCharDet
+	Private Button2 As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	jUniversalCharDet.Initialize
+End Sub
+
+Sub Button1_Click
+	Dim InStream As InputStream = File.OpenInput(File.DirAssets, "test.txt")
+	Dim Encoding As String = jUniversalCharDet.DetectCharsetFromInputStream(InStream)
+	Log("Detected: " & Encoding)
+	If Encoding = "" Then
+		Encoding = "UTF-8"
+	End If
+	xui.MsgboxAsync(Encoding, "Detect Charset From InputStream")
+End Sub
+
+Private Sub Button2_Click
+	Dim Encoding As String = jUniversalCharDet.DetectCharsetFromString("test")
+	xui.MsgboxAsync(Encoding, "Detect Charset From String")
+End Sub

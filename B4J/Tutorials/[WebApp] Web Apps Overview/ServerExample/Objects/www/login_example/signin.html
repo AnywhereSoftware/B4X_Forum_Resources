@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+ <title>B4J - System login example</title>
+ <link rel="stylesheet" type="text/css" href="signin.css" />
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+ </head>
+ <body>
+	
+	<form id="registerForm">
+		<h1>Sign in or <a href="index.html">register as a new user</a></h1>
+	    <div>
+			<label for="name">Name:</label>
+			<input type="text" name="username" />
+		</div>
+		<div>
+			<label for="password">Password:</label>
+			<input type="password" name="password" id="password" />
+		</div>
+		
+		<br/>
+	  <div id="btnSign">
+			<button type="submit">Sign In</button>
+		</div>
+	</form>
+	<script>
+	$( document ).ready(function() {
+		
+		$("#btnSign").click(function(e) {
+			e.preventDefault();
+			$.ajax({
+				type: "POST",
+				url: "signinHelper",
+				data: $("#registerForm").serialize(), 
+			   success: function(result)
+			   {
+				   if (result.success) {
+						window.location  = 'members/index.html';
+				   }
+				   else {
+						alert(result.errorMessage);
+				   }
+			   },
+				error: function (xhr, ajaxOptions, thrownError) {
+					alert(thrownError);
+				}
+			});
+			
+		});
+	});
+	</script>
+
+ </body>

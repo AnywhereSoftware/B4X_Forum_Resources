@@ -1,0 +1,170 @@
+﻿Build1=Default,anywheresoftware.b4i.example
+File1=1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ible
+Library3=xcustomlistview
+Library4=ixui
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=6.3
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait
+	#iPadOrientations: Portrait
+	#PlistExtra: <key>NSBluetoothAlwaysUsageDescription</key><string>Bluetooth used to connect to ...</string>
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private btnReadData As Button
+	Private btnScan As Button
+	Private lblDeviceStatus As Label
+	Private lblState As Label
+	Private manager As BleManager
+	Private ConnectedName As String
+	Private ConnectedServices As List
+	Private ActivityIndicator1 As ActivityIndicator
+	Private clv As CustomListView
+	Private btnDisconnect As Button
+	Private ActivityIndicator2 As ActivityIndicator
+	Private xui As XUI
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	manager.Initialize("manager")
+	Dim top As Int = btnReadData.top + btnReadData.Height + 4
+	Page1.RootPanel.AddView(clv.AsView, 0, top, _
+		100%x, 100%y - top)
+End Sub
+
+Sub Page1_Resize (Width As Float, Height As Float)
+End Sub
+
+Sub Manager_StateChanged (State As Int)
+	Dim msg As String
+	Select State
+		Case manager.STATE_UNKNOWN
+			msg = "UNKNOWN"
+		Case manager.STATE_POWERED_OFF
+			msg = "POWERED OFF"
+		Case manager.STATE_POWERED_ON
+			msg = "POWERED ON"
+		Case manager.STATE_RESETTING
+			msg = "RESETTING"
+		Case manager.STATE_UNAUTHORIZED
+			msg = "UNAUTHORIZED"
+		Case manager.STATE_UNSUPPORTED
+			msg = "UNSUPPORTED"
+	End Select
+	btnScan.Enabled = (State = manager.STATE_POWERED_ON)
+	lblState.Text = msg
+End Sub
+
+Sub btnScan_Click
+	manager.Scan(Null)	
+	ActivityIndicator1.Visible = True
+End Sub
+
+Sub btnDisconnect_Click
+	manager.Disconnect
+End Sub
+
+
+Sub Manager_DeviceFound (Name As String, Id As String, AdvertisingData As Map, RSSI As Double)
+	Log("Found: " & Name & ", " & Id & ", RSSI = " & RSSI & ", " & AdvertisingData) 'ignore
+	ConnectedName = Name
+	manager.StopScan
+	manager.Connect(Id)
+	
+End Sub
+
+Sub SetState (connected As Boolean)
+	btnDisconnect.Enabled = connected
+	btnScan.Enabled = Not(connected)
+	ActivityIndicator1.Visible = False
+	ActivityIndicator2.Visible = False
+	btnReadData.Enabled = connected
+End Sub
+
+Sub Manager_Disconnected
+	Log("Disconnected: " & LastException)
+	SetState(False)
+	lblDeviceStatus.Text = "Not connected"
+End Sub
+
+Sub Manager_Connected (services As List)
+	lblDeviceStatus.Text = "Connected - " & ConnectedName
+	ConnectedServices = services
+	SetState(True)
+End Sub
+
+Sub btnReadData_Click
+	ActivityIndicator2.Visible = True
+	clv.Clear
+	For Each s As String In ConnectedServices
+		manager.ReadData(s)
+	Next
+End Sub
+
+Sub Manager_DataAvailable (Service As String, Characteristics As Map)
+	ActivityIndicator2.Visible = False
+	clv.Add(CreateServiceItem(Service), "")
+	For Each id As String In Characteristics.Keys
+		clv.Add(CreateCharacteristicItem(id, Characteristics.Get(id)), "")
+	Next
+End Sub
+
+Sub CreateServiceItem (service As String) As Panel
+	Dim pnl As B4XView = xui.CreatePanel("")
+	pnl.SetLayoutAnimated(0, 0, 0, clv.AsView.Width, 30dip)
+	pnl.Color = 0xFF808080
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = service
+	lbl.TextAlignment = lbl.ALIGNMENT_CENTER
+	lbl.Font = Font.DEFAULT_BOLD
+	pnl.AddView(lbl, 0, 0, clv.AsView.Width, 30)
+	Return pnl
+End Sub
+
+Sub CreateCharacteristicItem(Id As String, Data() As Byte) As Panel
+	Dim pnl As B4XView = xui.CreatePanel("")
+	pnl.SetLayoutAnimated(0, 0, 0, clv.AsView.Width, 40dip)
+	pnl.Color = Colors.White
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = Id
+	lbl.Font = Font.DEFAULT
+	pnl.AddView(lbl, 0, 0, clv.AsView.Width, 20)
+	Dim lbl2 As Label
+	lbl2.Initialize("")
+	Try
+		lbl2.Text = BytesToString(Data, 0, Data.Length, "UTF8")
+	Catch
+		Log(LastException)
+		lbl2.Text = "Error reading data as string"
+	End Try
+	lbl2.TextColor = 0xFF909090
+	lbl2.Font = Font.CreateNew(14)
+	pnl.AddView(lbl2, 0, 20, clv.AsView.Width, 20)
+	Return pnl
+End Sub

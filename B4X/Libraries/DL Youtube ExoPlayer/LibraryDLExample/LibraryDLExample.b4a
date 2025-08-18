@@ -1,0 +1,101 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=dlyoutube
+Library3=exoplayer
+Library4=xui
+Library5=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private player1 As SimpleExoPlayer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim DL As DLinkYouTube
+	Dim ke_y As String = $"YOUR API KEY YOUTUBE"$
+	Private B4XImageView1 As B4XImageView
+	Private Button1 As Button
+	Private SimpleExoPlayerView1 As SimpleExoPlayerView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+		
+End Sub
+
+Private Sub Button1_Click
+	DL.Initialize(ke_y)
+	
+	'Put ID YouTube
+	Wait For(DL.DirectLinkYT($"EynXt2GVpTg"$)) Complete (Result As Map)
+	'Log("Result: " & Result)
+	Dim state As String =  Result.Get("state_movie")
+	Dim link_movie As String = Result.Get("link_movie")
+	Dim pic As String = Result.Get("link_immagine")
+	Dim movie_mute As String = Result.Get("link_movie_mute")
+	If state = "UNPLAYABLE" Then
+		Log("Result: Video non disponibile")
+	Else
+		'Load DL Youtube
+		'Log($"${link_movie}"$)
+		player1.Initialize("player")
+		Dim sources As List
+		sources.Initialize
+		sources.Add(player1.CreateUriSource($"${link_movie}"$))
+		'.....
+		player1.Prepare(player1.CreateListSource(sources))
+		SimpleExoPlayerView1.Player = player1
+		player1.Play
+		'Load Imagine YouTube
+		DownloadImage(pic, B4XImageView1)
+	End If
+End Sub
+
+
+'Per Caricare immagine singola
+Sub DownloadImage(Link As String, iv As B4XImageView)
+	Dim job As HttpJob
+	job.Initialize("", Me) 'note that the name parameter is no longer needed.
+	job.Download(Link)
+	
+	Wait For (job) JobDone(job As HttpJob)
+	If job.Success Then
+		'iv.SetImage (job.GetBitmap) 'replace with iv.Bitmap = job.GetBitmap in B4A / B4i
+		iv.Bitmap = job.GetBitmap
+	End If
+	job.Release
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

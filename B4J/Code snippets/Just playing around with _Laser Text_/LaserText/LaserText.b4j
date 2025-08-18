@@ -1,0 +1,150 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jbitmapcreator
+Library3=jcore
+Library4=jfx
+Library5=jxui
+Library6=byteconverter
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private cvs As B4XCanvas
+	Dim RPane As B4XView
+	Dim  cvsRect, bbRect As B4XRect
+	Private rct As B4XRect
+	Private BC As BitmapCreator
+	Private MyFont As Font
+	Private refX, refY As Double			'Position of hidden text
+	Private MyText As String="B4X forever!"
+	Dim Debug As Boolean=False
+	Dim scale As Int=10						'Scale up factor
+	Dim Offset As Int=scale/2				'
+	Dim LaserTextColor As Int = xui.Color_Blue
+	Dim LaserColor As Int=xui.Color_Red
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MaximizeStage(MainForm)		'maximise window
+	MainForm.Show
+	RPane = MainForm.RootPane
+	cvs.Initialize(RPane)
+	
+	'Remeber 0,0 is top left on canvas
+		
+	MyFont=fx.CreateFont("Arial",20,False,False)	'Arial Bold
+	refX=100	'here we hide the text
+	refY=20
+	
+	'Text color #FFFFFFFE= -2
+	'Log(HexToColor("#FFFFFFFE"))
+	cvs.DrawText(MyText,refX,refY,MyFont,-2,"CENTER")
+	
+	
+	MeasureText(MyText,MyFont)
+	DrawBoundingBox				'Get coordinates of boundary box of text
+	
+	BC.Initialize(RPane.Width, RPane.Height)
+	BC.CopyPixelsFromBitmap(RPane.Snapshot)
+		
+	Dim c,x,y As Int
+		
+	For i=bbRect.Right To bbRect.Left Step -1		'work backwards so we do not get in the laser path
+		For j=bbRect.Top To bbRect.Bottom
+			c=BC.GetColor(i,j)
+						
+			If c<>0 Then		'If its not white, then its text
+				
+				'Calculate new position based on scale			
+				x=((RPane.Width-(bbRect.Width*scale))/2) + ((i-bbRect.Left)*scale)
+				y=((RPane.Height-(bbRect.Height*scale))/2) + ((j-bbRect.Top)*scale)
+				
+				cvsRect.Left=x
+				cvsRect.Top=y-Offset
+				cvsRect.Right=x+Offset
+				cvsRect.Bottom=y
+				'Draw laser
+				cvs.DrawLine(0,RPane.Height,x,y,LaserColor,0.5)
+				cvs.DrawLine(0,0,x,y,LaserColor,0.5)
+				'burn text
+				cvs.DrawRect(cvsRect, LaserTextColor,True,0.5)			'rectangle
+				'cvs.DrawCircle(x,y,scale/2,LaserTextColor,True,1)		'circle
+				Sleep(25)
+				'Remove laser
+				cvs.DrawLine(0,RPane.Height,x,y,xui.Color_White,2)		
+				cvs.DrawLine(0,0,x,y,xui.Color_White,2)
+			End If
+			
+		Next
+	Next
+	
+End Sub
+
+Sub MeasureText(Text As String, Font1 As B4XFont)
+	
+	rct=cvs.MeasureText(Text,Font1)	'Values returned are relative to the middle point of the text
+	
+'	Log("Text properties")
+'	Log("Height: " & rct.Height)
+'	Log("Width: " & rct.Width)
+'	Log("Top: " & rct.Top)
+'	Log("Bottom: " & rct.Bottom)
+'	Log("Left: " & rct.Left)
+'	Log("Right: " & rct.Right)
+'	Log("refX: " & refX)
+'	Log("refY: " & refY)
+End Sub
+	
+Sub DrawBoundingBox	
+	'Draw a bounding box
+	bbRect.Left=refX-(rct.Width/2)
+	bbRect.Top=rct.Top+refY
+	bbRect.Right=refX+(rct.Width/2)
+	bbRect.Bottom=rct.Bottom+refY
+'	cvs.DrawRect(bbRect, xui.Color_Red,False,0.5)
+
+If Debug Then
+	Log(" ")
+	Log("Bounding box:")
+	Log("Left: " & bbRect.Left)
+	Log("Top: " & bbRect.Top)
+	Log("Right: " & bbRect.Right)
+	Log("Bottom: " & bbRect.Bottom)
+	Log("Height: " & bbRect.Height)
+	Log("Width: " & bbRect.Width)
+	Log(" ")
+End If
+End Sub
+
+
+'set your screen to maximize mode
+Sub MaximizeStage(frm As Form)
+	Dim jmf As JavaObject = frm
+	Dim stage As JavaObject = jmf.GetField("stage")
+	stage.RunMethod("setMaximized", Array As Object(True))
+End Sub
+
+Private Sub HexToColor(Hex As String) As Int
+	Dim BCon As ByteConverter
+	If Hex.StartsWith("#") Then
+		Hex = Hex.SubString(1)
+	Else If Hex.StartsWith("0x") Then
+		Hex = Hex.SubString(2)
+	End If
+	Dim ints() As Int = BCon.IntsFromBytes(BCon.HexToBytes(Hex))
+	Return ints(0)
+End Sub

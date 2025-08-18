@@ -1,0 +1,100 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.bluetooth
+File1=1.bal
+File2=2.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=randomaccessfile
+Library3=serial
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=ChatActivity
+Module2=Starter
+Module3=BluetoothManager
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=3
+Version=8
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Bluetooth Example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	Private rp As RuntimePermissions
+End Sub
+
+Sub Globals
+	Private btnSearchForDevices As Button
+	Private btnAllowConnection As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	UpdateState
+End Sub
+
+Public Sub UpdateState
+	btnSearchForDevices.Enabled = Starter.Manager.BluetoothState
+	btnAllowConnection.Enabled = Starter.Manager.BluetoothState
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+
+Sub btnSearchForDevices_Click
+	rp.CheckAndRequest(rp.PERMISSION_ACCESS_COARSE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then
+		ToastMessageShow("No permission...", False)
+		Return
+	End If
+	Dim success As Boolean = Starter.Manager.SearchForDevices
+	If success = False Then
+		ToastMessageShow("Error starting discovery process.", True)
+	Else
+		ProgressDialogShow2("Searching for devices...", False)
+	End If
+End Sub
+
+Public Sub DiscoverFinished
+	ProgressDialogHide
+	If Starter.Manager.foundDevices.Size = 0 Then
+		ToastMessageShow("No device found.", True)
+	Else
+		Dim l As List
+		l.Initialize
+		For Each nm As NameAndMac In Starter.Manager.foundDevices
+			l.Add(nm.Name)
+		Next
+		InputListAsync(l, "Choose device to connect", -1, True)
+		Wait For InputList_Result (Index As Int)
+		If Index <> DialogResponse.CANCEL Then
+			Dim device As NameAndMac = Starter.Manager.foundDevices.Get(Index)
+			Starter.Manager.ConnectTo(device)
+			ProgressDialogShow2($"Trying to connect to: ${device.Name} (${device.Mac})"$, False)
+		End If
+	End If
+End Sub
+
+Public Sub AfterConnect (Success As Boolean)
+	ProgressDialogHide
+End Sub
+
+
+Sub btnAllowConnection_Click
+	Starter.Manager.ListenForConnections
+End Sub
+

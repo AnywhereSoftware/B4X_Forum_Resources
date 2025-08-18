@@ -1,0 +1,138 @@
+
+REM An array for general use
+Dim data(0)
+
+setactivitytitle("Array Test")
+
+REM Scale controls to screen size. The script assumes 320 x 480
+rem Note that fonts are scaled according to density by Android
+
+d = getlayoutvalues
+strsplit(data, d, ",")
+d = data(0)  / 320
+
+REM let the activity window paint empty to look like somethings happened immediately
+rem otherwise you carry on seeing the IDE window
+
+calldoevents
+
+REM Add the views
+
+addbutton("btn1", 5*d, 5*d, 65*d, 65*d, "")
+settext("btn1", "Go")
+
+
+REM End of inital program block
+
+Sub fillarraytest
+	Dim data(10)
+	msg = " "
+	fillarray("data", 0, arraylen(data), "A")
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	msgbox(msg, "FillArray")	
+End Sub
+
+Sub sortarraytest0
+	array(data, "Zero", "One", "Two", "Three", "Four", "Five", "six", "seven", "eight")
+	msg = ""
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	sortarray("data", ccaseunsensitive)
+	msg = msg & crlf
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	msgbox(msg, "Sort String Array cCaseUnsensitive")	
+End Sub
+
+Sub sortarraytest1
+	array(data, "Zero", "One", "Two", "Three", "Four", "Five", "six", "seven", "eight")
+	msg = ""
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	sortarray("data", ccasesensitive)
+	msg = msg & crlf
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	msgbox(msg, "Sort String Array cCaseSensitive")	
+End Sub
+
+Sub searcharraytest
+	array(data, "Zero", "One", "Two", "Three", "Four", "Five")
+	sortarray("data", ccasesensitive)
+	msg = ""
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	posn = searcharray("data", "Two")
+	msgbox(msg & crlf & "Two is at index " & posn, "Search Array")
+End Sub
+
+Sub sortnumarraytest
+	array(data, 4, 3, 0, 5, 2, 1, 11, 41, 22)
+	msg = ""
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	sortarray("data", cnumbers)
+	msg = msg & crlf
+	for i = 0 to arraylen(data) - 1
+		msg = msg & data(i) & " "
+	next
+	msgbox(msg, "Sort Array cNumbers")	
+End Sub
+
+Sub dimensiontest
+  dim data(3,3,3)
+  for k = 0 to 2
+    for j = 0 to 2
+      for i = 0 to 2
+        data (k,j,i) = k & j & i
+      next
+    next
+  next
+  msg = ""
+  for i = 0 to 26
+    msg = msg  & data(i) & " "
+  next
+ 	msgbox(msg, "Test Dimensions")
+End sub	
+ 
+Sub ranktest
+  dim data(30,20,10)
+  msg = "Rank = " & arrayrank(data) & ": "
+  for i = 1 to 3
+    msg = msg & arraylen(data, i) & " "
+  next
+ 	msgbox(msg, "Test Rank")
+End sub	
+
+
+REM VIew events
+
+Sub button_click(who)
+	select who
+		case "btn1"
+			fillarraytest
+			sortnumarraytest
+			sortarraytest0
+			sortarraytest1
+			searcharraytest
+      dimensiontest
+      ranktest
+			res = inputfile(FileDirRootExternal, "SomeFile", "", "Choose a file", "OK", "Cancel", "")
+			ip = getinput
+			msgbox(ip, "You entered")			
+			res = inputnumber(true, 3, -12, "Enter a number", "OK", "Cancel", "")
+			ip = getinput
+			msgbox(ip, "You chose") 
+	end select
+End Sub 
+
+
+	

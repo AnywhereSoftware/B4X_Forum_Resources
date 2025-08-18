@@ -1,0 +1,154 @@
+﻿Build1=Default,b4a.example
+File1=myfont.ttf
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=appcompat
+Library3=alimo_basedialog
+Library4=xui
+ManifestCode=AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~	~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'''''''''''''''''''''''''''''''Theme AppCompat'''''''''''''''''''''''''''~\n~SetApplicationAttribute(android:theme, "@style/MyAppThemeDayNight")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppThemeDayNight" parent="Theme.AppCompat.Light">~\n~        <item name="colorAccent">#000000</item>~\n~		<item name="colorPrimary">#000000</item>~\n~		<item name="android:textColorPrimary">#000000</item>~\n~        <item name="colorPrimaryDark">#EF394F</item>~\n~		<item name="android:textColor">#444444</item>~\n~		~\n~		<!-- <item name="android:colorBackgroundFloating">#6E8723</item> -->~\n~		~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~    </style>~\n~</resources>~\n~)~\n~''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Alimo_BaseDialog
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Dim Alimo_BaseDialog As Alimo_BaseDialog
+	Private Toolbar As ACToolBarLight
+	Public MyTypeFace As Typeface=Typeface.LoadFromAssets("myfont.ttf")
+	Dim LblCustomDialog As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Toolbar.Initialize("Toolbar")
+	Toolbar.Color=0xFFEF394F
+	Toolbar.Title=Application.LabelName
+	Toolbar.TitleTextColor=Colors.White
+	Toolbar.Elevation=6dip
+	Activity.AddView(Toolbar,0,0,-1,56dip)
+	Toolbar.NavigationIconDrawable=FontToDrawable(MyTypeFace,Chr(0xF2B9),24,Colors.White)
+	
+	
+	
+	Dim Description As Label
+	Description.Initialize("Description")
+	Description.Padding=Array As Int(10dip,10dip,10dip,10dip)
+	Description.Text="🤔 Why should we use this library?"&CRLF&"😍 With this library, you can create any dialoge model you like with any width, height And movement."&CRLF&"😍 If you create a dialoge manually To display your dialoge, you will have trouble changing the color of the status bar."&CRLF&"😍 When you use this library, we will automatically fix all issues such As relocation when displaying the keyboard, etc."&CRLF&"😍 You have four event for onShow , onCancel , onDissmiss And onKey for manage your dialog ..."
+	Description.Gravity=Gravity.TOP+Gravity.LEFT
+	Description.TextSize=18
+	Activity.AddView(Description,0,Toolbar.Height,-1,60%y-Toolbar.Height)
+	
+	
+	Dim ShowDialog As Label
+	ShowDialog.Initialize("ShowDialog")
+	ShowDialog.Padding=Array As Int(10dip,10dip,10dip,10dip)
+	ShowDialog.Text="Click me for show dialog 😎"
+	ShowDialog.TextSize=24
+	ShowDialog.TextColor=Colors.Magenta
+	ShowDialog.Gravity=Gravity.CENTER
+	Activity.AddView(ShowDialog,0,Description.Top+Description.Height,-1,100%y-(Description.Top+Description.Height))
+	
+	LblCustomDialog.Initialize("LblCustomDialog")
+	Dim ColorDrawable As ColorDrawable
+	ColorDrawable.Initialize(0xFFFAFAFA,25)
+	LblCustomDialog.Background=ColorDrawable
+	LblCustomDialog.Gravity=Gravity.CENTER
+	LblCustomDialog.TextColor=Colors.Black
+	LblCustomDialog.Tag=True
+	LblCustomDialog.Text="Click me 🥰"
+	Alimo_BaseDialog.Initialize("AlimoBaseDialog")
+	Alimo_BaseDialog.setContentView(LblCustomDialog)
+	Alimo_BaseDialog.SetMargins(0,0,0,0)
+	'Alimo_BaseDialog.SetGravity(Gravity.TOP+Gravity.LEFT)
+	LblCustomDialog.Width=10%x
+	LblCustomDialog.Height=10%y
+End Sub
+Sub AlimoBaseDialog_onShow
+	Log("Show")
+End Sub
+Sub AlimoBaseDialog_onCancel
+	Log("Cancel")
+End Sub
+Sub AlimoBaseDialog_onDismiss
+	Log("Dismiss")
+End Sub
+Sub AlimoBaseDialog_onKey (KeyCode As Int) As Boolean
+	If KeyCode=KeyCodes.KEYCODE_BACK Then
+		'Return True
+	End If
+	Return False
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+Sub ShowDialog_Click
+	Alimo_BaseDialog.show
+End Sub
+Sub LblCustomDialog_Click
+	If LblCustomDialog.Width>99%x And LblCustomDialog.Height>99%y Then
+		LblCustomDialog.Tag=False
+	Else If LblCustomDialog.Width<11%x And LblCustomDialog.Height<11%y Then
+		LblCustomDialog.Tag=True
+	End If
+	If LblCustomDialog.Tag Then
+		LblCustomDialog.Width=LblCustomDialog.Width+10%x
+		LblCustomDialog.Height=LblCustomDialog.Height+10%y
+	Else
+		LblCustomDialog.Width=LblCustomDialog.Width-10%x
+		LblCustomDialog.Height=LblCustomDialog.Height-10%y
+	End If
+End Sub
+Sub Toolbar_NavigationItemClick
+	Dim ACPopupMenu As ACPopupMenu
+	ACPopupMenu.Initialize("ACPopupMenu",Toolbar)
+	ACPopupMenu.AddMenuItem(0,"Contact us by email",FontToDrawable(Typeface.MATERIALICONS,Chr(0xE0BE),22,Colors.DarkGray))
+	ACPopupMenu.AddMenuItem(1,"Contact us in telegram",FontToDrawable(Typeface.FONTAWESOME,Chr(0xF2C6),20,Colors.DarkGray))
+	ACPopupMenu.AddMenuItem(2,"Join our telegram chanel",FontToDrawable(Typeface.FONTAWESOME,Chr(0xF0A1),20,Colors.DarkGray))
+	ACPopupMenu.Show
+End Sub
+Sub ACPopupMenu_ItemClicked (Item As ACMenuItem)
+	Dim Intent As Intent
+	Select Item.Id
+		Case 0
+			Intent.Initialize("android.intent.action.SENDTO","mailto:AliMoeini308@gmail.com")
+		Case 1
+			Intent.Initialize(Intent.ACTION_VIEW,"https://t.me/AliMoeini_Alimo")
+		Case 2
+			Intent.Initialize(Intent.ACTION_VIEW,"https://t.me/AlimoPt")
+	End Select
+	StartActivity(Intent)
+End Sub
+Public Sub FontToDrawable(YourTypeface As Typeface,FontText As String,size As Float,color As Int) As BitmapDrawable
+	Dim xui As XUI
+	Dim PanelFont As Panel = xui.CreatePanel("")
+	PanelFont.SetLayoutAnimated(0, 0, 0, 32dip, 32dip)
+	Dim cvs1 As B4XCanvas
+	cvs1.Initialize(PanelFont)
+	Dim fnt As B4XFont = xui.CreateFont(YourTypeface, size)
+	Dim r As B4XRect = cvs1.MeasureText(FontText, fnt)
+	Dim BaseLine As Int = cvs1.TargetRect.CenterY - r.Height / 2 - r.Top
+	cvs1.DrawText(FontText, cvs1.TargetRect.CenterX, BaseLine, fnt, color, "CENTER")
+	Dim b As B4XBitmap = cvs1.CreateBitmap
+	Dim bd As BitmapDrawable
+	bd.Initialize(b)
+	cvs1.Release
+	Return bd
+End Sub

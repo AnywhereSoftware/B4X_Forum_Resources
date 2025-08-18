@@ -1,0 +1,275 @@
+﻿Build1=Default,alimo.bottom.navigation.sample
+File1=myfont.ttf
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=alimo_bottomnavigation
+Library3=xui
+Library4=appcompat
+ManifestCode=AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~''''''''''''''''''''''''''''''Theme AppCompat'''''''''''''''''''''''''''~\n~SetApplicationAttribute(android:theme, "@style/Theme.AppCompat")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="Theme.AppCompat" parent="Theme.AppCompat.Light.NoActionBar">~\n~	    <item name="colorPrimary">#2F2F2F</item>~\n~        <item name="colorPrimaryDark">#EF394F</item>~\n~        <item name="colorAccent">#FF1381</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~	    <item name="android:textColorPrimary">#000000</item>~\n~	    <item name="android:windowDisablePreview">true</item>~\n~    </style>~\n~</resources>~\n~)~\n~'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel:Alimo_BottomNavigation_Sample
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+Sub Process_Globals
+End Sub
+
+Private Sub Globals
+	Private Toolbar As ACToolBarLight
+	Dim MyTypeFace As Typeface=Typeface.LoadFromAssets("myfont.ttf")
+	Dim ThemColor As Int=0xFFEF394F
+	Dim ActivityColor As Int=0xFFF5F5F5
+	Dim AlimoBottomNavigation As Alimo_BottomNavigation
+	Dim Labeles(6) As Label
+	Dim SeekBars(6) As SeekBar
+	Dim SeekBarsDescriptions() As String=Array As String("BottomNavigationHeight : ","BezierViewWidth : ","BezierViewHeight : ","Elevation : ","CircleViewSize : ","CircleViewTop : ")
+	Dim RadioButtons(3) As RadioButton
+	Dim RadioButtonsDescriptions() As String=Array As String("SimpleMode","MorphMode","MeowMode")
+	Dim LblDescriptionPage As Label
+	Dim DescriptionsPages() As String=Array As String("Orders box","Shopping cart","Home","Search","Categories")
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Color=ActivityColor
+	Toolbar.Initialize("Toolbar")
+	Toolbar.Color=ThemColor
+	Toolbar.Title=Application.LabelName
+	Toolbar.TitleTextColor=Colors.White
+	Toolbar.Elevation=6dip
+	Activity.AddView(Toolbar,0,0,-1,56dip)
+	Toolbar.NavigationIconDrawable=FontToDrawable(MyTypeFace,Chr(0xF2B9),24,Colors.White)
+
+	AlimoBottomNavigation.Initialize(Me,"AlimoBottomNavigation",Activity,0,100%y-75dip,100%x,75dip)
+	AlimoBottomNavigation.SetCircleViewColor(ThemColor)
+	AlimoBottomNavigation.setBottomNavigationcolor(ActivityColor)
+	AlimoBottomNavigation.SetBezirViewColor(Colors.White)
+	AlimoBottomNavigation.SetContentBottomNavigationColor(Colors.White)
+	
+	
+	AlimoBottomNavigation.AddItem(FontToDrawable(MyTypeFace,Chr(0xF2A3),24,Colors.Gray))
+	AlimoBottomNavigation.AddItem(FontToDrawable(MyTypeFace,Chr(0xF037),24,Colors.Gray))
+	AlimoBottomNavigation.AddItem(FontToDrawable(MyTypeFace,Chr(0xF103),24,Colors.Gray))
+	AlimoBottomNavigation.AddItem(FontToDrawable(MyTypeFace,Chr(0xF461),24,Colors.Gray))
+	AlimoBottomNavigation.AddItem(FontToDrawable(MyTypeFace,Chr(0xF036),24,Colors.Gray))
+	
+
+	AlimoBottomNavigation.SetBottomNavigationMode(AlimoBottomNavigation.MorphMode,Round(AlimoBottomNavigation.ItemCount/2)-1)
+	
+	For x=0 To RadioButtons.Length-1
+		RadioButtons(x).Initialize("RadioButtons")
+		RadioButtons(x).Tag=x
+		RadioButtons(x).Text=RadioButtonsDescriptions(x)
+		RadioButtons(x).Width=32%x
+		RadioButtons(x).SingleLine=True
+		RadioButtons(x).Ellipsize="END"
+		Activity.AddView(RadioButtons(x),3%x+(x*RadioButtons(x).Width),Toolbar.Top+Toolbar.Height+5%y,RadioButtons(x).Width,7%y)
+		If x=1 Then RadioButtons(x).Checked=True
+	Next
+	
+	
+	
+	
+	For i=0 To Labeles.Length-1
+		Labeles(i).Initialize("")
+		Labeles(i).Text=i
+		Labeles(i).TextSize=10
+		Labeles(i).TextColor=Colors.Black
+		Labeles(i).SingleLine=True
+		Labeles(i).Ellipsize="MIDDLE"
+		Labeles(i).Gravity=Gravity.CENTER_VERTICAL+Gravity.LEFT
+		Activity.AddView(Labeles(i),RadioButtons(0).Left,(i*10%y)+(RadioButtons(0).Top+RadioButtons(0).Height)+5%y,40%x,8%y)
+		SeekBars(i).Initialize("SeekBars")
+		SeekBars(i).Tag=i
+		Activity.AddView(SeekBars(i),Labeles(i).Left+Labeles(i).Width,Labeles(i).Top,100%x-Labeles(i).Left-(Labeles(i).Left+Labeles(i).Width),Labeles(i).Height)
+		Select i
+			Case 0
+				SeekBars(i).Max=130dip
+				SeekBars(i).Value=AlimoBottomNavigation.BottomNavigation.Height
+			Case 1
+				SeekBars(i).Max=100%x
+				SeekBars(i).Value=AlimoBottomNavigation.getbezierViewWidth
+			Case 2
+				SeekBars(i).Max=AlimoBottomNavigation.BottomNavigation.Height
+				SeekBars(i).Value=AlimoBottomNavigation.getbezierViewHeight
+			Case 3
+				SeekBars(i).Max=10dip
+				SeekBars(i).Value=AlimoBottomNavigation.GetBezierViewShadow
+			Case 4
+				SeekBars(i).Max=100dip
+				SeekBars(i).Value=AlimoBottomNavigation.GetCircleViewSize
+			Case 5
+				SeekBars(i).Max=AlimoBottomNavigation.BottomNavigation.Height
+				SeekBars(i).Value=AlimoBottomNavigation.GetCircleViewTop
+		End Select
+		Labeles(i).Text=SeekBarsDescriptions(i)&(IntToDIP(SeekBars(i).Value))&" Dip"
+	Next
+	
+	LblDescriptionPage.Initialize("")
+	LblDescriptionPage.Typeface=Typeface.DEFAULT_BOLD
+	LblDescriptionPage.TextColor=Colors.Black
+	LblDescriptionPage.SingleLine=True
+	LblDescriptionPage.Ellipsize="START"
+	LblDescriptionPage.Gravity=Gravity.LEFT+Gravity.CENTER_VERTICAL
+	Activity.AddView(LblDescriptionPage,Labeles(Labeles.Length-1).Left,SeekBars(SeekBars.Length-1).Top+SeekBars(SeekBars.Length-1).Height+1%y,100%x-(Labeles(Labeles.Length-1).Left*2),5%y)
+End Sub
+Sub Activity_Click
+	
+End Sub
+Sub Activity_Resume
+
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+Sub SeekBars_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged Then
+		Dim SeekBar As SeekBar=Sender
+		Select SeekBar.Tag
+			Case 0
+				AlimoBottomNavigation.BottomNavigation.Height=Value
+				AlimoBottomNavigation.BottomNavigation.Top=100%y-AlimoBottomNavigation.BottomNavigation.Height
+				AlimoBottomNavigation.ChangeBezierView(AlimoBottomNavigation.getbezierViewWidth,AlimoBottomNavigation.getbezierViewHeight)
+			Case 1
+				If Value>AlimoBottomNavigation.GetCircleViewSize Then
+					AlimoBottomNavigation.ChangeBezierView(Value,AlimoBottomNavigation.getbezierViewHeight)
+				Else
+					AlimoBottomNavigation.ChangeBezierView(0,0)
+					SeekBars(2).Value=0
+				End If
+			Case 2
+				AlimoBottomNavigation.ChangeBezierView(AlimoBottomNavigation.getbezierViewWidth,Value)
+			Case 3
+				AlimoBottomNavigation.ChangeShadow(Value,Colors.Gray)
+			Case 4
+				AlimoBottomNavigation.SetCircleViewSize(Value)
+			Case 5
+				AlimoBottomNavigation.SetCircleViewTop(Value)
+		End Select
+		Labeles(SeekBar.Tag).Text=SeekBarsDescriptions(SeekBar.Tag)&(IntToDIP(SeekBars(SeekBar.Tag).Value))&" Dip"
+	End If
+End Sub
+Sub RadioButtons_CheckedChange(Checked As Boolean)
+	Dim RadioButton As RadioButton=Sender
+	Select RadioButton.Tag
+		Case 0
+			AlimoBottomNavigation.SetBottomNavigationMode(AlimoBottomNavigation.SimpleMode,Round(AlimoBottomNavigation.ItemCount/2)-1)
+		Case 1
+			AlimoBottomNavigation.SetBottomNavigationMode(AlimoBottomNavigation.MorphMode,Round(AlimoBottomNavigation.ItemCount/2)-1)
+			AlimoBottomNavigation.SetBezirViewColor(Colors.White)
+		Case 2
+			AlimoBottomNavigation.SetBottomNavigationMode(AlimoBottomNavigation.MeowMode,Round(AlimoBottomNavigation.ItemCount/2)-1)
+			AlimoBottomNavigation.SetBezirViewColor(ActivityColor)
+	End Select
+End Sub
+Sub IntToDIP(Value As Int) As Int
+	Return Round(Value/DipToCurrent(100)*100)
+End Sub
+Public Sub FontToDrawable(YourTypeface As Typeface,FontText As String,size As Float,color As Int) As BitmapDrawable
+	Dim xui As XUI
+	Dim PanelFont As Panel = xui.CreatePanel("")
+	PanelFont.SetLayoutAnimated(0, 0, 0, 32dip, 32dip)
+	Dim cvs1 As B4XCanvas
+	cvs1.Initialize(PanelFont)
+	Dim fnt As B4XFont = xui.CreateFont(YourTypeface, size)
+	Dim r As B4XRect = cvs1.MeasureText(FontText, fnt)
+	Dim BaseLine As Int = cvs1.TargetRect.CenterY - r.Height / 2 - r.Top
+	cvs1.DrawText(FontText, cvs1.TargetRect.CenterX, BaseLine, fnt, color, "CENTER")
+	Dim b As B4XBitmap = cvs1.CreateBitmap
+	Dim bd As BitmapDrawable
+	bd.Initialize(b)
+	cvs1.Release
+	Return bd
+End Sub
+
+Sub AlimoBottomNavigation_ItemLongClicked (Position As Int)
+	If AlimoBottomNavigation.IsShowingBadgeAtIndex(Position)=False Then
+		AlimoBottomNavigation.SetBadgeAtIndex(Position,Colors.Red,Colors.White,9,Typeface.DEFAULT_BOLD,15dip)
+		AlimoBottomNavigation.ChangeBadgeAtIndex(Position,Rnd(1,9))
+	Else
+		AlimoBottomNavigation.HideBadgeAtIndex(Position)
+	End If
+End Sub
+Sub AlimoBottomNavigation_ItemClicked (Position As Int)
+	Log("ItemClicked "&Position)
+	If Position<>AlimoBottomNavigation.CurentItem Then
+		AlimoBottomNavigation.GoToPage(Position,True)
+	End If
+End Sub
+Sub AlimoBottomNavigation_PageChanged (Position As Int)
+	Log("PageChanged "&Position)
+	RefreshIcons
+	Dim IconColor As Int
+	If AlimoBottomNavigation.CircleViewEnabled Then
+		IconColor=Colors.White
+	Else
+		IconColor=Colors.Black
+	End If
+	Select Position
+		Case 0
+			AlimoBottomNavigation.ChangeIconAtIndex(Position,FontToDrawable(MyTypeFace,Chr(0xF13D),24,IconColor))
+		Case 1
+			AlimoBottomNavigation.ChangeIconAtIndex(Position,FontToDrawable(MyTypeFace,Chr(0xF039),24,IconColor))
+		Case 2
+			AlimoBottomNavigation.ChangeIconAtIndex(Position,FontToDrawable(MyTypeFace,Chr(0xF100),24,IconColor))
+		Case 3
+			AlimoBottomNavigation.ChangeIconAtIndex(Position,FontToDrawable(MyTypeFace,Chr(0xF0F9),24,IconColor))
+		Case 4
+			AlimoBottomNavigation.ChangeIconAtIndex(Position,FontToDrawable(MyTypeFace,Chr(0xF038),24,IconColor))
+	End Select
+	LblDescriptionPage.Text="Alimo bottom navigation selected item : "&DescriptionsPages(Position)
+End Sub
+Sub AlimoBottomNavigation_BezierViewRefreshed
+	Labeles(1).Text=SeekBarsDescriptions(1)&(IntToDIP(AlimoBottomNavigation.GetBezierViewWidth)&" Dip")
+	Labeles(2).Text=SeekBarsDescriptions(2)&(IntToDIP(AlimoBottomNavigation.GetBezierViewHeight)&" Dip")
+End Sub
+Sub RefreshIcons
+	For i=0 To AlimoBottomNavigation.ItemCount-1
+		Select i
+			Case 0
+				AlimoBottomNavigation.ChangeIconAtIndex(i,FontToDrawable(MyTypeFace,Chr(0xF2A3),24,Colors.Gray))
+			Case 1
+				AlimoBottomNavigation.ChangeIconAtIndex(i,FontToDrawable(MyTypeFace,Chr(0xF037),24,Colors.Gray))
+			Case 2
+				AlimoBottomNavigation.ChangeIconAtIndex(i,FontToDrawable(MyTypeFace,Chr(0xF103),24,Colors.Gray))
+			Case 3
+				AlimoBottomNavigation.ChangeIconAtIndex(i,FontToDrawable(MyTypeFace,Chr(0xF461),24,Colors.Gray))
+			Case 4
+				AlimoBottomNavigation.ChangeIconAtIndex(i,FontToDrawable(MyTypeFace,Chr(0xF036),24,Colors.Gray))
+		End Select
+	Next
+End Sub
+Sub Toolbar_NavigationItemClick
+	Dim ACPopupMenu As ACPopupMenu
+	ACPopupMenu.Initialize("ACPopupMenu",Toolbar)
+	ACPopupMenu.AddMenuItem(0,"Contact us by email",FontToDrawable(Typeface.MATERIALICONS,Chr(0xE0BE),22,Colors.DarkGray))
+	ACPopupMenu.AddMenuItem(1,"Contact us in telegram",FontToDrawable(Typeface.FONTAWESOME,Chr(0xF2C6),20,Colors.DarkGray))
+	ACPopupMenu.AddMenuItem(2,"Join our telegram chanel",FontToDrawable(Typeface.FONTAWESOME,Chr(0xF0A1),20,Colors.DarkGray))
+	ACPopupMenu.Show
+End Sub
+Sub ACPopupMenu_ItemClicked (Item As ACMenuItem)
+	Dim Intent As Intent
+	Select Item.Id
+		Case 0
+			Intent.Initialize("android.intent.action.SENDTO","mailto:AliMoeini308@gmail.com")
+		Case 1
+			Intent.Initialize(Intent.ACTION_VIEW,"https://t.me/AliMoeini_Alimo")
+		Case 2
+			Intent.Initialize(Intent.ACTION_VIEW,"https://t.me/AlimoPt")
+	End Select
+	StartActivity(Intent)
+End Sub

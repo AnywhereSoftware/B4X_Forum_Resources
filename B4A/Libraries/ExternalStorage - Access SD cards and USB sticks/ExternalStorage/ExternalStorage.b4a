@@ -1,0 +1,138 @@
+﻿Build1=Default,b4a.example3
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=externalstorage
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=11.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: androidx.legacy:legacy-support-core-utils
+
+Sub Process_Globals
+	Private Storage As ExternalStorage
+	Private FoldersStack As List
+	Private UpItem As ExternalFile
+End Sub
+
+Sub Globals
+	Private chkUsePreviouslySelected As CheckBox
+	Private ListView1 As ListView
+	Private ImageView1 As ImageView
+	Private lblPath As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		Storage.Initialize (Me, "Storage")
+		FoldersStack.Initialize
+		UpItem.Initialize
+	End If
+	Activity.LoadLayout("1")
+End Sub
+
+
+Sub btnPickFolder_Click
+	Storage.SelectDir(chkUsePreviouslySelected.Checked)
+	Wait For Storage_ExternalFolderAvailable
+	FoldersStack.Clear
+	EnterFolder(Storage.Root)
+End Sub
+
+
+Private Sub EnterFolder (folder As ExternalFile)
+	FoldersStack.Add(folder)
+	Dim sb As StringBuilder
+	sb.Initialize
+	For Each f As ExternalFile In FoldersStack
+		If f = Storage.Root Then
+			sb.Append("Root")
+		Else
+			sb.Append(" / ").Append(f.Name)
+		End If
+	Next
+	lblPath.Text = sb.ToString
+	ListView1.Clear
+	
+	If FoldersStack.Size > 1 Then
+		ListView1.AddSingleLine2("..", UpItem)
+	End If
+	For Each f As ExternalFile In Storage.ListFiles(folder)
+		If f.IsFolder Then
+			ListView1.AddSingleLine2($"[${f.Name}]"$, f)
+		Else If IsImageFile(f.Name) Then
+			Dim cs As CSBuilder
+			cs.Initialize.Append(f.Name).Append(" ").Color(0xFF00EEFF).Append("(click)").PopAll
+			ListView1.AddSingleLine2(cs, f)
+		Else
+			ListView1.AddSingleLine2(f.Name, f)
+		End If
+	Next
+End Sub
+
+Private Sub ListView1_ItemClick (Position As Int, Value As Object)
+	Dim f As ExternalFile = Value
+	If f = UpItem Then
+		'remove the current folder
+		FoldersStack.RemoveAt(FoldersStack.Size - 1)
+		'get the parent folder which is now the topmost folder
+		Dim folder As ExternalFile = GetCurrentFolder
+		'remove it and enter it again
+		FoldersStack.RemoveAt(FoldersStack.Size - 1)
+		EnterFolder(folder)
+		
+	Else
+		If f.IsFolder Then
+			EnterFolder(f)
+		Else If IsImageFile(f.Name) Then
+			Dim in As InputStream = Storage.OpenInputStream(f)
+			'We can open the image directly with Bitmap.Initialize2 however it will not allow us to use LoadBitmapResize
+			'so instead we copy it to a temporary file.
+			Dim out As OutputStream = File.OpenOutput(File.DirInternal, "temp", False)
+			File.Copy2(in, out)
+			out.Close
+			ImageView1.SetBackgroundImage(LoadBitmapResize(File.DirInternal, "temp", ImageView1.Width, ImageView1.Height, True))
+		End If
+	End If
+End Sub
+
+Private Sub GetCurrentFolder As ExternalFile
+	Return FoldersStack.Get(FoldersStack.Size - 1) 'get the last item
+End Sub
+
+
+Private Sub IsImageFile (Name As String) As Boolean
+	Dim n As String = Name.ToLowerCase
+	For Each extension As String In Array(".jpg", ".png", ".gif", ".bmp")
+		If n.EndsWith(extension) Then Return True
+	Next
+	Return False
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

@@ -1,0 +1,34 @@
+--[[
+    rfxmeterdevice.dzvents - Explore Arduino_RFXCOM.
+    20220405 rwbl
+]]--
+
+local rfxmeter = 384
+local rfxmetertemphum = 385
+
+return {
+	on = { devices = { rfxmeter } },
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERHUMIDITY385', },
+	execute = function(domoticz, device)
+		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+        -- Convert the value to a given idx and update the device sValue
+        -- 385, VirtualSensors,	141D1, 1, RFXHumidity, Humidity, LaCrosse TX3, Humidity 50 %
+        -- Method string.sub extracts a piece of the string s, from the i-th to the j-th character inclusive. In Lua, the first character of a string has index 1
+        -- The humidity device is updated via HTTP: Processing device-adapter for RFXHumidity: Humidty device adapter
+        -- RFXMETER: OpenURL: url = http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=385&nvalue=81&svalue=0&parsetrigger=false
+        
+        -- Get the length of the idx at pos 2
+        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+        -- Get the idx starting at pos 3 of the sValue
+        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+        -- The humidity is set as nValue. If the device is a Temp+Humidity then the temperature is set as sValue.
+        local nvalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+        -- Update the device if idx not 0. The humidity status is not updated but set to 0 (=normal)
+        if (idx ~= 0) then 
+            domoticz.devices(idx).setValues(nvalue, 0)
+            domoticz.log(("%d: nValue=%d, sValue=%s"):format(idx, domoticz.devices(idx).nValue, domoticz.devices(idx).sValue))
+        end
+
+    end
+}

@@ -1,0 +1,78 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=linechartcolors.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Module1=linechart
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#AdditionalJar: javafx.controls
+
+'SEE THE CSS FILE IN THE /FILES FOLDER FOR STYLES THAT ARE USED FOR THE LINE CHART
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+
+	Dim lc1 As linechart
+	Dim myLineChart As JavaObject
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	'the name of the CSS file in use for the line chart is "linechartcolors.css"
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "linechartcolors.css"))
+	'Initialize the chart
+	lc1.Initialize
+	'set the title - see the css file for setting the title color
+	lc1.Title = "Some Arbitrary Data"
+	
+	'set the x-axis "values"
+	lc1.Xvalues = Array As String("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+	lc1.XAxisTitle = "Months of the year"
+
+	'set series 1 y-axis data
+	lc1.Yvalues_1 = Array As Float(153.7, 144.3, 198.5, 177.3, 145.8, 201.6, 113.8, 174.2, 112.5, 133.8, 199.7, 113.1)
+	lc1.SeriesName_1 = "Series A"
+	
+	'set series 2 y-axis data
+	lc1.Yvalues_2 = Array As Float(443.7, 434.3, 488.5, 467.3, 435.8, 491.6, 453.8, 464.2, 42.5, 423.8, 489.7, 43.1)
+	lc1.SeriesName_2 = "Series B"
+	
+	'set series 3 y-axis data
+	lc1.Yvalues_3 = Array As Float(-233.7, -224.3, -298.5, -257.3, -225.8, -281.6, -243.8, -254.2, -208.5, -213.8, -279.7, -207.1)
+	lc1.SeriesName_3 = "Series C"
+	
+	'set series 4 y-axis data
+	lc1.Yvalues_4 = Array As Float(33.7, 24.3, 98.5, 57.3, 25.8, 81.6, 43.8, 54.2, 8.5, 13.8, 79.7, 7.1)
+	lc1.SeriesName_4 = "Series D"
+	
+	'set series 5 y-axis data
+	lc1.Yvalues_5 = Array As Float(233.7, 224.3, 298.5, 257.3, 225.8, 281.6, 243.8, 254.2, 208.5, 213.8, 279.7, 207.1)
+	lc1.SeriesName_5 = "Series E"
+
+	'draw the chart and then get it as a java object
+	myLineChart = lc1.drawLineChart
+	'add the line chart object to the root pane
+	MainForm.RootPane.AddNode(myLineChart,0,0,600,500)
+	
+End Sub

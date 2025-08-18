@@ -1,0 +1,77 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtm1637ex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+' blinking_number.b4r
+' Sample project for the B4R Library rTM1637EX - Seven Segment Display
+' Additional Libraries: rTM1637Ex
+' 20220409 rwbl
+#End Region
+
+#Region Wiring
+'TM1637 = ESP8266 NodeMCU 1.0
+'CLK = Pin D2 GPIO4 (Blue)
+'DIO = Pin D5 GPIO14 (Pink)
+'GND = Pin GND (Black)
+'VCC = Pin 3.3v Or VIN (Red)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rTM1637Ex - Blinking Number v20220409"
+	Public serialLine As Serial
+	Private tmDisplay As TM1637Display
+	Private PINCLK As Byte = 4		'GPIO4 = Pin D2 (Blue)
+	Private PINDIO As Byte = 14		'GPIO14 = Pin D5 (Pink)
+	Private BRIGHTNESS As Byte = 7
+	Private timerBlinking As Timer
+	Private TIMERBLINKING_INTERVAL As ULong = 2000
+	Private displayOn As Boolean = False
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init display with pin clk and dio
+	tmDisplay.Initialize(PINCLK, PINDIO)
+	' Set the blnking timer
+	timerBlinking.Initialize("TimerBlinking_Tick", TIMERBLINKING_INTERVAL)
+	timerBlinking.Enabled = True
+	TimerBlinking_Tick
+End Sub
+
+Sub TimerBlinking_Tick
+	Dim numberValue As Int
+	displayOn = Not(displayOn)
+
+	' Set the display brightness and turn the display ON or OFF
+	tmDisplay.Clear
+	tmDisplay.SetBrightness(BRIGHTNESS, displayOn)
+	
+	' Show two digit random number NN with length 2 at the right
+	numberValue = Rnd(0,99)
+	tmDisplay.ShowNumberDec2(numberValue, False, 2, 2)
+
+	' Show two digit random number NNNN with leading zeros from left to right
+	' numberValue = Rnd(0,1001)
+	' tmDisplay.ShowNumberDec2(numberValue, True, 4, 0)
+
+	' Show four digit random number NNNN with leading zeros from left to right with semicolon between NN:NN
+	' numberValue = Rnd(1,1001)
+	' tmDisplay.ShowNumberDec3(numberValue, True, 4, 0, 0xFF)
+
+	Log(numberValue, " = " , displayOn)
+
+End Sub

@@ -1,0 +1,61 @@
+﻿Build1=Default,b4a.wvswipetorefresh
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=webviewswipetorefresh
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: WebViewSwipeToRefresh_Test
+	#VersionCode: 1
+	#VersionName: 0.17
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Dim Start_URL As String = "https://b4x.com"
+End Sub
+
+Sub Globals
+	Private Swipe As WVSwipe
+	Private WebView1 As WebView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	Activity.Title = Application.LabelName
+	
+	Swipe.Initialize(WebView1)
+	'Swipe.Progress_Color = Colors.Red	'setup as you need
+	WebView1.LoadUrl(Start_URL)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub WebView1_OverrideUrl (Url As String) As Boolean
+	Swipe.Pull_Immediately
+	Return False
+End Sub
+
+Sub WebView1_PageFinished (Url As String)
+	Swipe.RefreshCompleted '<-- call to exit refresh mode
+End Sub

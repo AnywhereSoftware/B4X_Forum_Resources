@@ -1,0 +1,164 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmagicimage
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 540 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private bthMetadata As Button
+	Private btnToJpeg As Button
+	Private btnToPng As Button
+	Private btnToTiff As Button
+	Private btnToGif As Button
+	Private btnToBmp As Button
+	Private btnGrayImage As Button
+	Private btnNegativeImage As Button
+	Private btnSharpenImage As Button
+	Private btnBlurImage As Button
+	Private btnGaussianBlurImage As Button
+	Private ImageView1 As ImageView
+	Private MagicImage1 As jMagicImage
+	Private btnBinaryImage As Button
+	Private btnCropImage As Button
+	Private btnResizeImage As Button
+	Private btnShrinkImage As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show	
+	MagicImage1.Initialize	
+End Sub
+
+Private Sub bthMetadata_Click		
+	Dim JsonData As String = MagicImage1.ReadMetadataFromFile(File.Combine(File.DirApp, "nasa.png"))
+	Log(JsonData)
+End Sub
+
+Private Sub btnGrayImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.GrayImage
+	Dim PngFilePathGrey As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-gray.png"))
+	Log("PngFilePathGrey: " & PngFilePathGrey)
+	SetImage
+End Sub
+
+Private Sub btnNegativeImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.NegativeImage
+	Dim PngFilePathNegative As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-negative.png"))
+	Log("PngFilePathNegative: " & PngFilePathNegative)
+	SetImage
+End Sub
+
+Private Sub btnSharpenImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim SharpenLevel As Float = 3
+	MagicImage1.SharpenImage(SharpenLevel)
+	Dim PngFilePathSharpen As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-sharpen.png"))
+	Log("PngFilePathSharpen: " & PngFilePathSharpen)
+	SetImage
+End Sub
+
+Private Sub btnBlurImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim BlurLevel As Int = 20
+	MagicImage1.BlurImage(BlurLevel)
+	Dim PngFilePathBlur As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-blur.png"))
+	Log("PngFilePathBlur: " & PngFilePathBlur)
+	SetImage
+End Sub
+
+Private Sub btnGaussianBlurImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim GaussianBlurLevel As Int = 30
+	MagicImage1.GaussianBlur(GaussianBlurLevel)
+	Dim PngFilePathGaussianBlur As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-gaussian-blur.png"))
+	Log("PngFilePathGaussianBlur: " & PngFilePathGaussianBlur)
+	SetImage
+End Sub
+
+Private Sub btnToJpeg_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim Quality As Float = 0.5
+	Dim JpegFilePath As String = MagicImage1.ExportToJPEG(File.Combine(File.DirApp, "nasa1.jpg"), Quality)
+	Log("JpegFilePath:" & JpegFilePath)
+End Sub
+
+Private Sub btnToPng_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim PngFilePath As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2.png"))
+	Log("PngFilePath: " & PngFilePath)
+End Sub
+
+Private Sub btnToTiff_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim Quality As Float = 0.1
+	Dim TiffFilePath As String = MagicImage1.ExportToTIFF(File.Combine(File.DirApp, "nasa3.tiff"), Quality, True)
+	Log("TiffFilePath: " & TiffFilePath)
+End Sub
+
+Private Sub btnToGif_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim GifFilePath As String = MagicImage1.ExportToGIF(File.Combine(File.DirApp, "nasa4.gif"))
+	Log("GifFilePath: " & GifFilePath)
+End Sub
+
+Private Sub btnToBmp_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	Dim BmpFilePath As String = MagicImage1.ExportToBMP(File.Combine(File.DirApp, "nasa5.bmp"))
+	Log("BmpFilePath: " & BmpFilePath)
+End Sub
+
+Private Sub SetImage
+	Dim Image As Image
+	Image.Initialize2(MagicImage1.GetImageAsInputStream)
+	ImageView1.SetImage(Image)
+End Sub
+
+Private Sub btnBinaryImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.BinaryImage()
+	Dim PngFilePathBinaryImage As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-binary.png"))
+	Log("PngFilePathBinaryImage: " & PngFilePathBinaryImage)
+	SetImage
+End Sub
+
+Private Sub btnCropImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.Crop(200, 200, 50, 50)
+	Dim PngFilePathCropImage As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-crop.png"))
+	Log("PngFilePathCropImage: " & PngFilePathCropImage)
+	SetImage
+End Sub
+
+Private Sub btnResizeImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.Resize(1000, 10, False, False)
+	Dim PngFilePathResize As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-resize.png"))
+	Log("PngFilePathResize: " & PngFilePathResize)
+	SetImage
+End Sub
+
+Private Sub btnShrinkImage_Click
+	MagicImage1.LoadImage(File.Combine(File.DirApp, "nasa.png"))
+	MagicImage1.Shrink(100, 100, 1)
+	Dim PngFilePathShrink As String = MagicImage1.ExportToPNG(File.Combine(File.DirApp, "nasa2-shrink.png"))
+	Log("PngFilePathShrink: " & PngFilePathShrink)
+	SetImage
+End Sub

@@ -1,0 +1,116 @@
+﻿Version=0.1
+IconFile=
+NumberOfModules=0
+Build1=Default,anywheresoftware.b4i.example
+NumberOfFiles=1
+File1=2.bil
+NumberOfLibraries=2
+Library1=icore
+Library2=ilocation
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#PlistExtra:<key>NSLocationWhenInUseUsageDescription</key><string>Used to display the current navigation data.</string>
+	#PlistExtra:<key>NSLocationUsageDescription</key><string>Used to display the current navigation data.</string>
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private LocManager As LocationManager
+	Private lblAccuracy As Label
+	Private lblAltitude As Label
+	Private lblBearing As Label
+	Private lblEnable As Label
+	Private lblHeading As Label
+	Private lblLL As Label
+	Private lblSpeed As Label
+	Private lblTime As Label
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("2")
+	NavControl.ShowPage(Page1)
+	LocManager.Initialize("LocManager")
+End Sub
+
+Private Sub LocManager_AuthorizationStatusChanged (Status As Int)
+	lblEnable.Visible = (LocManager.AuthorizationStatus = LocManager.AUTHORIZATION_DENIED _
+		OR LocManager.AuthorizationStatus = LocManager.AUTHORIZATION_RESTRICTED)
+	StartLocationUpdates
+End Sub
+
+Private Sub StartLocationUpdates
+	'if the user allowed us to use the location service or if we never asked the user before then we call LocationManager.Start.
+	If LocManager.IsAuthorized OR LocManager.AuthorizationStatus = LocManager.AUTHORIZATION_NOT_DETERMINED Then
+		LocManager.Start(0)
+	End If
+	LocManager.StartHeading
+End Sub
+
+Private Sub Application_Foreground
+	StartLocationUpdates
+End Sub
+
+Private Sub Application_Background
+	LocManager.Stop
+	LocManager.StopHeading
+End Sub
+
+Private Sub LocManager_HeadingChanged (MagneticHeading As Double, TrueHeading As Double)
+	If TrueHeading >= 0 Then
+		lblHeading.Text = NumberFormat(TrueHeading, 1, 0) & Chr(176) & " (true north)"
+	Else
+		lblHeading.Text = NumberFormat(MagneticHeading, 1, 0) & Chr(176) & " (magnetic)"
+	End If
+	
+End Sub
+Sub LocManager_AllowCalibration As Boolean
+	Return
+End Sub
+
+Private Sub LocManager_LocationError
+	Log("Error: " & LastException.Description)
+End Sub
+
+Private Sub LocManager_LocationChanged (Location1 As Location)
+	If Location1.VerticalAccuracy >= 0 Then
+		lblAltitude.Text =	NumberFormat(Location1.Altitude, 1, 1) & "m"
+	Else
+		lblAltitude.Text = "N/A"
+	End If
+	lblBearing.Text = ValueOrNA (Location1.Bearing, 1, Chr(176))
+	If Location1.Accuracy >= 0 Then
+		lblLL.Text = NumberFormat(Location1.Latitude, 2, 4) & " / " & NumberFormat(Location1.Longitude, 2, 4)
+	Else
+		lblLL.Text = "N/A"
+	End If
+	lblSpeed.Text = ValueOrNA(Location1.Speed, 1, "m/s")
+	lblTime.Text = DateTime.Time(Location1.Time)
+	lblAccuracy.Text = ValueOrNA(Location1.Accuracy, 2, "m")
+End Sub
+
+Private Sub ValueOrNA(value As Double, NumberOfFractions As Int, unit As String) As String
+	If value < 0 Then
+		Return "N/A"
+	Else
+		Return NumberFormat(value, 1, NumberOfFractions) & unit
+	End If
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+

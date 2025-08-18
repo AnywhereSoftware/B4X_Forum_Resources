@@ -1,0 +1,107 @@
+﻿Build1=Default,b4a.example3
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+Library3=runtimepermissions
+Library4=phone
+Library5=contentresolver
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~AddManifestText(<uses-permission~\n~	android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~	android:maxSdkVersion="18" />~\n~)~\n~~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <files-path name="name" path="shared" />~\n~)~\n~~\n~
+Module1=Starter
+Module2=|absolute|C:\Users\H\Documents\B4A Samples\FileProvider\FileProvider
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=8.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private ion As Object
+	Private const tempImageFile As String = "tempimage.jpg"
+	Private lastPicture As Bitmap
+End Sub
+
+Sub Globals
+	Private ImageView1 As ImageView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	If lastPicture.IsInitialized Then ImageView1.Bitmap = lastPicture
+End Sub
+
+Sub Button1_Click
+	TakePicture
+End Sub
+
+Sub TakePicture
+	Dim i As Intent
+	i.Initialize("android.media.action.IMAGE_CAPTURE", "")
+	File.Delete(Starter.provider.SharedFolder, tempImageFile)
+	Dim u As Object = Starter.provider.GetFileUri(tempImageFile)
+	i.PutExtra("output", u) 'the image will be saved to this path
+	Try
+		StartActivityForResult(i)
+	Catch
+		ToastMessageShow("Camera is not available.", True)
+		Log(LastException)
+	End Try
+End Sub
+
+'result arrives here
+Sub ion_Event (MethodName As String, Args() As Object) As Object
+	If Args(0) = -1 Then
+		Try
+			Dim in As Intent = Args(1)
+			If File.Exists(Starter.provider.SharedFolder, tempImageFile) Then
+				lastPicture = LoadBitmapSample(Starter.provider.SharedFolder, tempImageFile, ImageView1.Width, ImageView1.Height)
+				ImageView1.Bitmap = lastPicture
+			Else If in.HasExtra("data") Then 'try to get thumbnail instead
+				Dim jo As JavaObject = in
+				lastPicture = jo.RunMethodJO("getExtras", Null).RunMethod("get", Array("data"))
+			End If
+		Catch
+			Log(LastException)
+		End Try
+	End If
+	If lastPicture.IsInitialized Then ImageView1.Bitmap = lastPicture
+	Return Null
+End Sub
+
+
+Sub StartActivityForResult(i As Intent)
+   Dim jo As JavaObject = GetBA
+   ion = jo.CreateEvent("anywheresoftware.b4a.IOnActivityResult", "ion", Null)
+   jo.RunMethod("startActivityForResult", Array As Object(ion, i))
+End Sub
+
+Sub GetBA As Object
+   Dim jo As JavaObject
+   Dim cls As String = Me
+   cls = cls.SubString("class ".Length)
+   jo.InitializeStatic(cls)
+   Return jo.GetField("processBA")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub

@@ -1,0 +1,134 @@
+﻿Version=4.5
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=Main.bjl
+NumberOfLibraries=3
+Library1=jcore
+Library2=jfx
+Library3=jjasperreports
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+	#AdditionalJar: itext-2.1.7.js1
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private btnReportExport As Button
+	Private btnReportFromDotJasper As Button
+	Private btnReportFromDotJrxml As Button
+	Private btnReportWithSubReports As Button
+	Private btnSQLite As Button
+	Private btnMySQL As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub btnReportWithSubReports_Click
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	
+	jasper.InitializeParameters
+	report = jasper.CompileXML(File.Combine(File.DirApp, "RepName.jrxml"))
+	jasper.CompileXMLToFile3(File.Combine(File.DirApp, "SubRepName1.jrxml"), File.Combine(File.DirApp, "SubRepName1.jasper"))
+	jasper.CompileXMLToFile3(File.Combine(File.DirApp, "SubRepName2.jrxml"), File.Combine(File.DirApp, "SubRepName2.jasper"))
+	jasper.CompileXMLToFile3(File.Combine(File.DirApp, "SubRepName3.jrxml"), File.Combine(File.DirApp, "SubRepName3.jasper"))
+	conn = jasper.getConnectionSQLServer("ServerName or ServerIP", "Port", "Instance", "Database Name", "Database Username", "Database Password")
+	print = jasper.Print(report, jasper.parameters, conn)
+	jasper.JasperViewer(print)
+End Sub
+
+Sub btnReportFromDotJrxml_Click
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	
+	jasper.InitializeParameters
+	report = jasper.CompileXML(File.Combine(File.DirApp, "RepName.jrxml"))
+	conn = jasper.getConnectionSQLServer("ServerName or ServerIP", "Port", "Instance", "Database Name", "Database Username", "Database Password")
+	print = jasper.Print(report, jasper.parameters, conn)
+	jasper.JasperViewer(print)
+End Sub
+
+Sub btnReportFromDotJasper_Click
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	Dim rep As String
+	
+	jasper.InitializeParameters
+	rep = jasper.CompileXMLToFile(File.Combine(File.DirApp, "RepName.jasper"))
+	report = jasper.LoadJRReport(rep)
+	conn = jasper.getConnectionSQLServerNoInstance("ServerName or ServerIP", "Port", "Database Name", "Database Username", "Database Password")
+	print = jasper.Print(report, jasper.parameters, conn)
+	jasper.JasperViewer(print)
+End Sub
+
+Sub btnReportExport_Click
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	
+	jasper.InitializeParameters
+	report = jasper.CompileXML(File.Combine(File.DirApp, "RepName.jrxml"))
+	conn = jasper.getConnectionSQLServer("ServerName or ServerIP", "Port", "Instance", "Database Name", "Database Username", "Database Password")
+	print = jasper.Print(report, jasper.parameters, conn)
+	File.MakeDir(File.DirApp, "temp")
+	jasper.ExportReportToPDFFile(print, File.Combine(File.DirApp & "\temp\", "RepName.pdf"))
+	fx.ShowExternalDocument(File.Combine(File.DirApp & "\temp\", "AddressLabels.pdf"))
+End Sub
+
+Sub btnSQLite_Action
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	
+	jasper.InitializeParameters
+	report = jasper.CompileXML(File.Combine(File.DirApp, "sqlite_test2.jrxml"))
+	conn = jasper.getConnectionSQLite(File.Combine(File.DirApp, "jasperTest.db"))
+	print = jasper.Print(report, jasper.parameters, conn)
+	jasper.JasperViewer(print)
+End Sub
+
+Sub btnMySQL_Action
+	Dim jasper As JasperReports
+	Dim report As JasperReport
+	Dim print As JasperPrint
+	Dim conn As JasperConnection
+	Dim design As JasperDesign
+	Dim query As JasperDesignQuery
+	
+	jasper.InitializeParameters
+	jasper.InitializeJasperDesign
+	jasper.GetResourceAsStream(File.Combine(File.DirApp, "mysql_example.jrxml"))
+	jasper.LoadJRXml(jasper.in)
+	jasper.InitializeJRDesignQuery
+	jasper.SetText("select reference, code, name, pricesell from products where name like '%SQL' order by name asc")
+	query = jasper.query
+	jasper.SetJRDesingQuery(query)
+	design = jasper.design
+	report = jasper.CompileXML2(design)
+	conn = jasper.getConnectionMySQL("localhost", "3306", "schema", "username", "password.,", False) 'useSSL = true or false
+	print = jasper.Print(report, jasper.parameters, conn)
+	jasper.JasperViewer(print)
+End Sub

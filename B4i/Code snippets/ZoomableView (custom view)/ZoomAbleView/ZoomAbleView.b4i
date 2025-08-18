@@ -1,0 +1,123 @@
+﻿Build1=Default,com.quickmen
+File1=Image1.jpg
+File2=SafeArea.bil
+File3=ZoomAble.bil
+File4=ZoomAblePanel.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=icore
+Module1=ZoomAbleView
+NumberOfFiles=4
+NumberOfLibraries=1
+NumberOfModules=1
+Version=7.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes
+    #ApplicationLabel: B4i Example
+    #Version: 1.0.0
+    'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+    #iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+    #iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+    #Target: iPhone, iPad
+    #ATSEnabled: True
+    #MinVersion: 9
+
+   #CertificateFile    : ios_development.cer
+   #ProvisionFile      : XCodeFirebase.mobileprovision
+#End Region
+
+Sub Process_Globals
+    'These global variables will be declared once when the application starts.
+    'Public variables can be accessed from all modules.
+
+    Public  App                                                                 As Application
+    Public  NavControl                                                          As NavigationController
+
+    Private byteRegime                                                          As Byte = 1
+    Private labelScale                                                          As Label
+    Private labelZoomMe                                                         As Label
+    Private pageInstance                                                        As Page
+    Private panelSafeArea                                                       As Panel
+    Private panelZoomAble                                                       As Panel
+    Private rectSafeArea                                                        As Rect
+    Private zoomAbleViewInstance                                                As ZoomAbleView
+
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+
+    NavControl = Nav
+    pageInstance.Initialize ("pageInstance")
+    NavControl.ShowPage (pageInstance)
+
+End Sub
+
+Private Sub pageInstance_Resize (floatPageWidth As Float, floatPageHeight As Float)
+
+    pageInstance.RootPanel.LoadLayout ("SafeArea")
+    rectSafeArea = pageInstance.SafeAreaInsets
+    panelSafeArea.SetLayoutAnimated (0, 1, rectSafeArea.Left, rectSafeArea.Top, floatPageWidth - rectSafeArea.Left - rectSafeArea.Right, floatPageHeight - rectSafeArea.Top - rectSafeArea.Bottom)
+
+    CreateLayout
+
+End Sub
+
+Private Sub CreateLayout
+
+    panelSafeArea.LoadLayout ("ZoomAble")
+    zoomAbleViewInstance.BackgroundColor = Colors.Black ' Default : Colors.Transparent
+    If byteRegime = 0 Then
+        pageInstance.Title = "Zoomable Bitmap"
+        zoomAbleViewInstance.HorizontalAlgnment = "CENTER"
+        zoomAbleViewInstance.VerticalAlgnment = "BOTTOM"
+        zoomAbleViewInstance.ContentImage = LoadBitmap (File.DirAssets, "Image1.jpg") ' Set the image last to prevent unnecessary redrawing
+    Else
+        pageInstance.Title = "Zoomable View (Panel)"
+        panelZoomAble.Initialize ("")
+        panelZoomAble.SetLayoutAnimated (0, 1, 0, 0, 300, 500)
+        panelZoomAble.LoadLayout ("ZoomAblePanel")
+        zoomAbleViewInstance.HorizontalAlgnment = "CENTER"
+        zoomAbleViewInstance.VerticalAlgnment = "TOP"
+        zoomAbleViewInstance.ContentView = panelZoomAble
+    End If
+
+End Sub
+
+Private Sub pageInstance_BarButtonClick (Tag As String)
+    byteRegime = 1 - byteRegime
+    CreateLayout
+End Sub
+
+' Events from zoomAbleView
+
+Private Sub zoomAbleViewInstance_WillBeginZooming (ScrollView As Object, WithView As Object)
+    labelScale.Text = ""
+End Sub
+Private Sub zoomAbleViewInstance_DidZoom (ScrollView As Object)
+End Sub
+Private Sub zoomAbleViewInstance_DidEndZooming (ScrollView As Object, WithView As Object)
+    labelScale.Text = "Scale: " & NumberFormat (zoomAbleViewInstance.ZoomScale, 1, 2)
+End Sub
+Private Sub zoomAbleViewInstance_ImageClicked
+    Log ("Tap on image")
+End Sub
+
+'*************************************************************************************************
+
+' Events from zoomAblePanel views
+
+Private Sub TextView1_TextChanged (OldText As String, NewText As String)
+	Log ("TextView1 : NewText = " & NewText)
+End Sub
+
+Private Sub TextField1_TextChanged (OldText As String, NewText As String)
+	Log ("TextField1 : NewText = " & NewText)
+End Sub
+
+Private Sub Button1_Click
+	Log ("Button1 Click")
+End Sub

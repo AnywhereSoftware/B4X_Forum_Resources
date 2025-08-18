@@ -1,0 +1,805 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.makenotificationpng
+File1=compiletime.txt
+File2=listfa.txt
+File3=listmi.txt
+File4=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=cssutils
+Library10=xui views
+Library2=javaobject
+Library3=jbitmapcreator
+Library4=jcore
+Library5=jfx
+Library6=jgauges
+Library7=jshell
+Library8=jxui
+Library9=xresizeandcrop
+NumberOfFiles=4
+NumberOfLibraries=10
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes
+	#MainFormWidth: 790
+	#MainFormHeight: 540
+	#LibraryName: MakeNotificationPng
+	#LibraryAuthor: walt61
+	#LibraryVersion: 1.3
+#End Region
+
+' Changes:
+' v1.2 - 2021-08-05:
+' - added RedirectOutput
+' v1.3 - 2022-03-23:
+' - dragging flipped characters produced very bizarre results (not sure if this is OpenJDK11-related)
+' - added checkbox 'Enable dragging'
+' - used smaller labels for the characters as an OpenJDK bug caused exceptions with the 600dip-sized ones
+' - replaced the 'move 1/10' buttons with arrows and a textfield for a user-defined distance
+' - added ButtonRestart
+' - clicking a character now selects it for moving/flipping
+' - after saving the png file, the user is now offered to open its folder/directory
+' - 'flip' radiobuttons changed to buttons as radiobuttons could be confusing
+' - made code more concise by e.g. adding tags to views and assigning them common event names
+' - additional small changes
+
+' Usage:
+' - Select a character in at least one of the ComboBoxes in the top left corner
+' - Use the TextField to filter the right hand side Combobox descriptions
+' - Use the RadioButtons to choose FontAwesome or Material Icons for the right hand side Combobox
+' - The 'Restart' Button lets you restart afresh
+' In the top right pane:
+' - Select which character(s) to manipulate (the left one or the right, or both)
+' - Move the selected character(s) left/right/up/down with the arrow Buttons
+' - Move either character by dragging it (if checkbox 'Enable dragging' is checked; dragging the right hand side character may be erratic; I didn't find a bulletproof solution for this issue so if that happens, use the 'move' buttons instead)
+' - Flip the selected character(s) horizontally or vertically (may not work depending on the OS and JDK version)
+' - Rotate the selected character(s) 30 degrees at a time
+' - Use the ComboBox to change the left character's font
+' - Change the font size of the selected character(s)
+' - Use the CheckBoxes to set/unset Bold and Italic for the left character's font
+' - Use the yellow handles to crop the image (thank you Klaus :)
+' - Save the image as png (and make it read-only) in a B4A app's Objects\res\drawable folder, from where it can be used as a Notification icon
+' Android app TestNotificationPng is a small app for testing the generated files
+
+' Files folder contents:
+' - listfa.txt: a copy of C:\Program Files (x86)\Anywhere Software\B4J\FontAwesomeList.txt
+' - listmi.txt: a copy of C:\Program Files (x86)\Anywhere Software\B4J\MaterialIcons.txt
+
+' Library dependencies:
+' - JavaObject, jCore, jFX, jGauges, jShell, jXUI: core libraries by Erel
+' - xResizeAndCrop: by Klaus - https://www.b4x.com/android/forum/threads/b4x-xui-xresizeandcrop.100109
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+	''''''''''''''''''''''''
+	' Designer Views - start
+	''''''''''''''''''''''''
+
+	Private PaneProgress As Pane
+	Private Gauge1 As Gauge
+	Private LabelGauge As Label
+
+	Private PaneSelect As Pane
+	Private RadioButtonFA As RadioButton
+	Private RadioButtonMI As RadioButton
+	Private TextFieldFilterFont As TextField
+	Private ComboBoxAscii As ComboBox
+	Private ComboBoxFA As ComboBox
+	Private ComboBoxMI As ComboBox
+	Private ButtonRestart As Button
+
+	Private PaneAction As Pane
+	Private RadioButtonLeft As RadioButton
+	Private RadioButtonRight As RadioButton
+	Private RadioButtonBoth As RadioButton
+	Private xResizeAndCrop1 As xResizeAndCrop
+	Private TextFieldDistance As TextField
+	Private CheckBoxDragging As CheckBox
+	Private ButtonSave As Button
+	Private ButtonFlipHoriz As Button
+	Private ButtonFlipVert As Button
+	Private ButtonFlipNone As Button
+	Private ButtonRotate As Button
+	Private TextFieldFontSize As TextField
+	Private LabelAsciiFont As Label
+	Private ComboBoxFont As ComboBox
+	Private CheckBoxBold As CheckBox
+	Private CheckBoxItalic As CheckBox
+
+	Private PaneCroppedImage As Pane
+
+	Private PaneOutput As Pane
+	Private LabelAscii As Label
+	Private LabelFA As Label
+	Private LabelMI As Label
+
+	''''''''''''''''''''''
+	' Designer Views - end
+	''''''''''''''''''''''
+
+	Private FileChooser1 As FileChooser
+	Private shl As Shell
+
+	Private FAlist As List
+	Private MIlist As List
+
+	Private sleepDelay As Int = 2
+	Private selectedLabel As Label
+	Private selectedFontFamily As String = "DEFAULT"
+	Private leftFlippedHorizontal As Boolean = False
+	Private rightFlippedHorizontal As Boolean = False
+	Private leftFlippedVertical As Boolean = False
+	Private rightFlippedVertical As Boolean = False
+	Private dragPressedX As Int
+	Private dragPressedY As Int
+	Private Const defaultFontSize As Int = 250
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+#If RELEASE
+	RedirectOutput(File.DirData("MakeNotificationPng"), "stdx.log", False, True, True)
+#End If
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Resizable = False
+	MainForm.Show
+	MainForm.Title = "MakeNotificationPng v1.3"
+
+	Inits
+
+End Sub
+
+Public Sub RedirectOutput(Dir As String, FileName As String, append As Boolean, stdout As Boolean, stderr As Boolean)
+
+	' Code based on https://www.b4x.com/android/forum/threads/redirect-the-output-to-a-file.65165
+
+	If (stdout = False) And (stderr = False) Then Return
+
+	If (append = False) And File.Exists(Dir, FileName) Then
+		Try
+			File.Delete(Dir, FileName)
+		Catch
+			Log("RedirectOutput: " & LastException)
+		End Try
+	End If
+
+	Dim out As OutputStream = File.OpenOutput(Dir, FileName, False) 'Set to True to append the logs
+	Dim ps As JavaObject
+	ps.InitializeNewInstance("java.io.PrintStream", Array(out, True, "utf8"))
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.lang.System")
+	If stdout Then jo.RunMethod("setOut", Array(ps))
+	If stderr Then jo.RunMethod("setErr", Array(ps))
+
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	Log("Application Error - Exception: " & Error.Message)
+	Log("")
+	Log("StackTrace: ")
+	Log("")
+	Log(StackTrace)
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+	Return True
+
+End Sub
+
+Sub InitComboBoxes
+
+	Dim i As Int
+	Dim iEnd As Int
+	Dim tf1Text As String = TextFieldFilterFont.Text.ToLowerCase
+
+	InitComboBoxesDone(False)
+
+	LabelGauge.Text = "Populating FontAwesome ComboBox (" & FAlist.Size & " entries)..."
+	Sleep(sleepDelay)
+	ComboBoxFA.Items.Clear
+	ComboBoxFA.Items.Add("(clear)")
+	iEnd = FAlist.Size - 1
+	For i=0 To (iEnd)
+		If i Mod 5 = 0 Then
+			Gauge1.Value = i * 100 / iEnd
+			Sleep(sleepDelay)
+		End If
+		Dim s As String = FAlist.Get(i)
+		If tf1Text = "" Then
+			ComboBoxFA.Items.Add(s)
+		Else If s.ToLowerCase.Contains(tf1Text) Then
+			ComboBoxFA.Items.Add(s)
+		End If
+	Next
+	ComboBoxFA.SelectedIndex = -1
+	SetText(LabelFA, "")
+
+	LabelGauge.Text = "Populating Material Icons ComboBox (" & MIlist.Size & " entries)..."
+	Sleep(sleepDelay)
+	ComboBoxMI.Items.Clear
+	ComboBoxMI.Items.Add("(clear)")
+	iEnd = MIlist.Size - 1
+	For i=0 To iEnd
+		If i Mod 5 = 0 Then
+			Gauge1.Value = i * 100 / iEnd
+			Sleep(sleepDelay)
+		End If
+		Dim s As String = MIlist.Get(i) ' Note: the icons are showing up in the ComboBox, the texts don't (they do in the FontAwesome ComboBox)
+		If tf1Text = "" Then
+			ComboBoxMI.Items.Add(s)
+		Else If s.ToLowerCase.Contains(tf1Text) Then
+			ComboBoxMI.Items.Add(s)
+		End If
+	Next
+	ComboBoxMI.SelectedIndex = -1
+	SetText(LabelMI, "")
+
+	Gauge1.Value = 0
+
+	InitComboBoxesDone(True)
+
+End Sub
+
+Sub InitComboBoxesDone(done As Boolean)
+
+	PaneProgress.Visible = Not(done)
+	BringToFront(PaneProgress)
+	PaneSelect.Visible = done
+
+	EnablePaneAction
+
+End Sub
+
+Public Sub BringToFront(n As Node)
+
+	' Code from https://www.b4x.com/android/forum/threads/pane-bringtofront.70149
+
+	Dim joNode As JavaObject = n
+	joNode.RunMethod("toFront", Null)
+
+End Sub
+
+Private Sub ButtonRestart_Click
+
+	Inits
+
+End Sub
+
+Private Sub Inits
+
+	Dim i As Int
+
+	PaneAction.Visible = False
+	TextFieldFilterFont.Text = ""
+	SetText(LabelAscii, "")
+	SetText(LabelFA, "")
+	SetText(LabelMI, "")
+
+	leftFlippedHorizontal = UnFlipLabelIfFlipped(LabelAscii, "H", leftFlippedHorizontal)
+	leftFlippedVertical = UnFlipLabelIfFlipped(LabelAscii, "V", leftFlippedVertical)
+	UnFlipLabelIfFlipped(LabelFA, "H", rightFlippedHorizontal)
+	rightFlippedHorizontal = UnFlipLabelIfFlipped(LabelMI, "H", rightFlippedHorizontal)
+	UnFlipLabelIfFlipped(LabelFA, "V", rightFlippedVertical)
+	rightFlippedVertical = UnFlipLabelIfFlipped(LabelMI, "V", rightFlippedVertical)
+
+	' Fill ComboBoxAscii with all printable ASCII characters - extend this to include more Unicode characters if desired
+	ComboBoxAscii.Items.Clear
+	ComboBoxAscii.Items.Add("(clear)")
+	For i=32 To 126
+		ComboBoxAscii.Items.Add(Chr(i))
+	Next
+	For i=128 To 254
+		ComboBoxAscii.Items.Add(Chr(i))
+	Next
+	ComboBoxAscii.SelectedIndex = -1
+
+	ComboBoxFont.Items.Clear
+	ComboBoxFont.Items.AddAll(fx.GetAllFontFamilies)
+	ComboBoxFont.SelectedIndex = -1
+
+	LabelGauge.Text = "Reading the FontAwesome file..."
+	Sleep(sleepDelay)
+	FAlist.Initialize2(File.ReadList(File.DirAssets, "listfa.txt"))
+
+	' Add a space between the character and the description
+	For i=0 To (FAlist.Size - 1)
+		Dim s As String = FAlist.Get(i)
+		s = s.SubString2(0, 1) & " " & s.SubString(1)
+		FAlist.Set(i, s)
+	Next
+
+	LabelGauge.Text = "Reading the Material Icons file..."
+	Sleep(sleepDelay)
+	MIlist.Initialize2(File.ReadList(File.DirAssets, "listmi.txt"))
+
+	' Add a space between the character and the description
+	For i=0 To (MIlist.Size - 1)
+		Dim s As String = MIlist.Get(i)
+		s = s.SubString2(0, 1) & " " & s.SubString(1)
+		MIlist.Set(i, s)
+	Next
+
+	InitComboBoxes
+
+	FileChooser1.Initialize
+
+	selectedLabel = LabelAscii
+	LabelAscii.TextSize = defaultFontSize
+	LabelAscii.Top = 0
+	LabelAscii.Left = 0
+
+	TextFieldFontSize.Text = defaultFontSize
+
+	LabelFA.TextSize = defaultFontSize
+	LabelFA.Top = 0
+	LabelFA.Left = LabelAscii.Width
+
+	LabelMI.TextSize = defaultFontSize
+	LabelMI.Top = 0
+	LabelMI.Left = LabelAscii.Width
+
+	RadioButtonLeft.Selected = True
+	RadioButtonRight.Selected = False
+	RadioButtonBoth.Selected = False
+
+End Sub
+
+Sub ComboBoxCharacter_SelectedIndexChanged(Index As Int, Value As Object)
+
+	Dim cb As ComboBox = Sender
+	Dim lbl As Label
+	Dim rb As RadioButton
+
+	Select Case cb.Tag.As(String).ToUpperCase
+		Case "ASCII"
+			lbl = LabelAscii
+			rb = RadioButtonLeft
+		Case "FA"
+			lbl = LabelFA
+			rb = RadioButtonRight
+			LabelMI.Visible = False
+		Case Else
+			lbl = LabelMI
+			rb = RadioButtonRight
+			LabelFA.Visible = False
+	End Select
+
+	If cb.SelectedIndex = 0 Then
+		cb.SelectedIndex = -1
+		SetText(lbl, "")
+		rb.Selected = False
+	Else If cb.SelectedIndex > 0 Then
+		Dim s As String = cb.Items.Get(cb.SelectedIndex)
+		SetText(lbl,s.SubString2(0, 1))
+		rb.Selected = True
+	End If
+
+	EnablePaneAction
+
+End Sub
+
+Sub SetText(lbl As Label, txt As String)
+
+	lbl.Visible = True
+	lbl.Text = txt
+
+	SetCroppedView
+
+End Sub
+
+Private Sub LabelCharacter_MouseClicked (EventData As MouseEvent)
+
+	If Sender.As(Label).Tag.As(String).ToUpperCase = "ASCII" Then
+		RadioButtonLeft.Selected = True
+	Else
+		RadioButtonRight.Selected = True
+	End If
+
+End Sub
+
+Sub ComboBoxFont_SelectedIndexChanged(Index As Int, Value As Object)
+
+	selectedFontFamily = Value
+	LabelAscii.Font = fx.CreateFont(selectedFontFamily, LabelAscii.TextSize, CheckBoxBold.Checked, CheckBoxItalic.Checked)
+	SetText(LabelAscii, LabelAscii.Text)
+
+End Sub
+
+Sub RadioButtonFont_SelectedChange(Selected As Boolean)
+
+	ComboBoxFA.Visible = RadioButtonFA.Selected
+	LabelFA.Visible = RadioButtonFA.Selected
+	ComboBoxMI.Visible = Not(RadioButtonFA.Selected)
+	LabelMI.Visible = Not(RadioButtonFA.Selected)
+	ComboBoxMI.SelectedIndex = -1
+	ComboBoxFA.SelectedIndex = -1
+
+	EnablePaneAction
+
+End Sub
+
+Sub EnablePaneAction
+
+	If (ComboBoxAscii.SelectedIndex >= 0) Or (ComboBoxFA.SelectedIndex >= 0) Or (ComboBoxMI.SelectedIndex >= 0) Then
+		PaneAction.Visible = True
+		SetCroppedView
+	Else
+		PaneAction.Visible = False
+	End If
+
+End Sub
+
+Sub TextFieldFilterFont_Action
+
+	InitComboBoxes
+
+End Sub
+
+Sub RadioButtonMove_SelectedChange(Selected As Boolean)
+
+	LabelAsciiFont.Visible = Not(RadioButtonRight.Selected)
+	ComboBoxFont.Visible = Not(RadioButtonRight.Selected)
+	CheckBoxBold.Visible = Not(RadioButtonRight.Selected)
+	CheckBoxItalic.Visible = Not(RadioButtonRight.Selected)
+
+	If RadioButtonRight.Selected Then
+		If RadioButtonFA.Selected Then
+			selectedLabel = LabelFA
+		Else
+			selectedLabel = LabelMI
+		End If
+	Else
+		selectedLabel = LabelAscii
+	End If
+
+	TextFieldFontSize.Text = selectedLabel.Font.Size
+
+End Sub
+
+Sub TextFieldFontSize_TextChanged (Old As String, New As String)
+
+	' Based on https://www.b4x.com/android/forum/threads/textfield-numeric-input-only.98147/#content
+
+	Dim update As Boolean = False
+
+	Try
+		Dim text As String = Regex.Replace("\D", New, "")
+		If New <> text Then update = True
+	Catch
+		Log("TextFieldFontSize_TextChanged: " & LastException.Message)
+	End Try
+
+	If update Then
+		TextFieldFontSize.Text = text
+		TextFieldFontSize.SetSelection(text.Length, text.Length)
+	End If
+
+End Sub
+
+Sub TextFieldFontSize_FocusChanged (HasFocus As Boolean)
+
+	If HasFocus = False Then ChangeFontSize
+
+End Sub
+
+Sub TextFieldFontSize_Action
+
+	ChangeFontSize
+
+End Sub
+
+Sub ChangeFontSize
+
+	Try
+		If RadioButtonBoth.Selected Then
+			LabelAscii.TextSize = TextFieldFontSize.Text
+			LabelFA.TextSize = TextFieldFontSize.Text
+			LabelMI.TextSize = TextFieldFontSize.Text
+		Else
+			selectedLabel.TextSize = TextFieldFontSize.Text
+		End If
+		SetBoldOrItalic
+		SetCroppedView
+	Catch
+		fx.Msgbox2(MainForm, LastException, "Couldn't change the font size", "", "Cancel", "", fx.MSGBOX_ERROR)
+		TextFieldFontSize.Text = ""
+	End Try
+
+End Sub
+
+Sub CheckBoxBold_CheckedChange(Checked As Boolean)
+
+	SetBoldOrItalic
+
+End Sub
+
+Sub CheckBoxItalic_CheckedChange(Checked As Boolean)
+
+	SetBoldOrItalic
+
+End Sub
+
+Sub SetBoldOrItalic
+
+	LabelAscii.Font = fx.CreateFont(selectedFontFamily, LabelAscii.TextSize, CheckBoxBold.Checked, CheckBoxItalic.Checked)
+	SetCroppedView
+
+End Sub
+
+Private Sub TextFieldDistance_TextChanged (Old As String, New As String)
+
+	' Based on https://www.b4x.com/android/forum/threads/textfield-numeric-input-only.98147/#content
+
+	Dim update As Boolean = False
+
+	Try
+		Dim text As String = Regex.Replace("\D", New, "")
+		If New <> text Then update = True
+	Catch
+		Log("TextFieldDistance_TextChanged: " & LastException.Message)
+	End Try
+
+	If update Then
+		TextFieldDistance.Text = text
+		TextFieldDistance.SetSelection(text.Length, text.Length)
+	End If
+
+End Sub
+
+Sub ButtonMove_Click
+
+	Dim direction As String = Sender.As(Button).Tag.As(String).ToUpperCase
+
+	If RadioButtonBoth.Selected Then
+		Move(direction, LabelAscii)
+		Move(direction, LabelFA)
+		Move(direction, LabelMI)
+	Else
+		Move(direction, selectedLabel)
+	End If
+
+	SetCroppedView
+
+End Sub
+
+Sub Move(direction As String, lbl As Label)
+
+	Dim dist As Double = 1dip * TextFieldDistance.Text
+
+	Select Case direction
+		Case "U"
+			lbl.Top = lbl.Top - dist
+		Case "D"
+			lbl.Top = lbl.Top + dist
+		Case "L"
+			lbl.Left = lbl.Left - dist
+		Case "R"
+			lbl.Left = lbl.Left + dist
+	End Select
+
+End Sub
+
+Sub ButtonRotate_Click
+
+	If RadioButtonBoth.Selected Then
+		RotateNode(LabelAscii, 30)
+		RotateNode(LabelFA, 30)
+		RotateNode(LabelMI, 30)
+	Else
+		RotateNode(selectedLabel, 30)
+	End If
+
+	SetCroppedView
+
+End Sub
+
+Sub RotateNode(n As Node, Degree As Double)
+
+	' Code from https://www.b4x.com/android/forum/threads/rotate-label.53659/#post-336319
+	' and https://www.b4x.com/android/forum/threads/javaobject-getrotation.45530/#post-280054
+
+	Dim jo As JavaObject = n
+	Dim newRotation As Double = jo.RunMethod("getRotate", Null) + Degree
+	If newRotation >= 360 Then newRotation = newRotation - 360
+	jo.RunMethod("setRotate", Array(newRotation))
+
+End Sub
+
+Sub ButtonSave_Click
+
+	Dim fPath As String
+
+	FileChooser1.SetExtensionFilter("PNG files", Array As String("*.png"))
+	FileChooser1.Title = "Save your file"
+	fPath = FileChooser1.ShowSave(MainForm)
+	If fPath = "" Then Return
+
+	If File.Exists(fPath, "") Then File.Delete(fPath, "")
+
+	Dim out As OutputStream = File.OpenOutput(fPath, "", False)
+	xResizeAndCrop1.CroppedImage.WriteToStream(out, 100, "PNG")
+	out.Close
+
+	' Make the file read-only so that it can be copied to a B4A app's 'Objects\res\drawable' folder without having to do that.
+	' Remember that the B4A compiler cleans the 'drawable' folder and files that are not read-only will be deleted.
+	Try
+		shl.Initialize("", "c:\windows\system32\attrib.exe", Array As String("+r", fPath))
+		shl.RunSynchronous(-1)
+	Catch
+		Log("ButtonSave_Click: " & LastException)
+	End Try
+
+	If fx.Msgbox2(MainForm, "Open the png file's location?", "Saved", "Yes", "", "No", fx.MSGBOX_INFORMATION) = fx.DialogResponse.POSITIVE Then OpenFileManager(File.GetFileParent(fPath))
+
+End Sub
+
+Public Sub OpenFileManager(path As String)
+
+	fx.ShowExternalDocument(path)
+
+End Sub
+
+Private Sub ButtonFlip_Click
+
+	Dim btn As Button = Sender
+	Dim direction As String = btn.Tag.As(String)
+
+	Select Case direction
+		Case "H", "V"
+			' Ok
+		Case Else
+			direction = ""
+	End Select
+
+	If RadioButtonLeft.Selected Or RadioButtonBoth.Selected Then
+		leftFlippedHorizontal = UnFlipLabelIfFlipped(LabelAscii, "H", leftFlippedHorizontal)
+		leftFlippedVertical = UnFlipLabelIfFlipped(LabelAscii, "V", leftFlippedVertical)
+	End If
+
+	If RadioButtonRight.Selected Or RadioButtonBoth.Selected Then
+		UnFlipLabelIfFlipped(LabelFA, "H", rightFlippedHorizontal)
+		rightFlippedHorizontal = UnFlipLabelIfFlipped(LabelMI, "H", rightFlippedHorizontal)
+		UnFlipLabelIfFlipped(LabelFA, "V", rightFlippedVertical)
+		rightFlippedVertical = UnFlipLabelIfFlipped(LabelMI, "V", rightFlippedVertical)
+	End If
+
+	If direction = "" Then
+		SetCroppedView
+		Return
+	End If
+
+	If RadioButtonLeft.Selected Or RadioButtonBoth.Selected Then
+		If direction = "H" Then
+			leftFlippedHorizontal = FlipLabel(LabelAscii, direction, leftFlippedHorizontal)
+		Else
+			leftFlippedVertical = FlipLabel(LabelAscii, direction, leftFlippedVertical)
+		End If
+	End If
+
+	If RadioButtonRight.Selected Or RadioButtonBoth.Selected Then
+		If direction = "H" Then
+			FlipLabel(LabelFA, direction, rightFlippedHorizontal)
+			rightFlippedHorizontal = FlipLabel(LabelMI, direction, rightFlippedHorizontal)
+		Else
+			FlipLabel(LabelFA, direction, rightFlippedVertical)
+			rightFlippedVertical = FlipLabel(LabelMI, direction, rightFlippedVertical)
+		End If
+	End If
+
+	SetCroppedView
+
+End Sub
+
+Sub UnFlipLabelIfFlipped(lbl As Label, direction As String, isFlipped As Boolean) As Boolean
+
+	If isFlipped Then FlipLabel(lbl, direction, True)
+	Return False
+
+End Sub
+
+Sub FlipLabel(theNode As Node, direction As String, isFlipped As Boolean) As Boolean
+
+	' Based on code by moster67 - https://www.b4x.com/android/forum/threads/flip-imageview-and-flip-bitmaps-images.103053
+
+	Dim joNode As JavaObject = theNode
+	Dim joRotate As JavaObject
+
+	joRotate.InitializeNewInstance("javafx.scene.transform.Rotate",Null)
+
+	If isFlipped Then
+		If direction = "H" Then
+			joNode.RunMethod("setRotationAxis",Array(joRotate.GetField("Y_AXIS")))
+		Else If direction = "V" Then
+			joNode.RunMethod("setRotationAxis",Array(joRotate.GetField("X_AXIS")))
+		Else
+			joNode.RunMethod("setRotationAxis",Array(joRotate.GetField("Z_AXIS")))
+		End If
+		joNode.RunMethod("setRotate",Array(0.00))
+	Else
+		Dim joBounds As JavaObject = joNode.RunMethod("getBoundsInLocal",Null)
+		Dim bW As Double = joBounds.RunMethod("getWidth",Null)/2.0
+		joNode.RunMethod("setTranslateZ",Array(bW))
+		If direction = "H" Then
+			joNode.RunMethod("setRotationAxis",Array(joRotate.GetField("Y_AXIS")))
+		Else If direction = "V" Then
+			joNode.RunMethod("setRotationAxis",Array(joRotate.GetField("X_AXIS")))
+		End If
+		joNode.RunMethod("setRotate",Array(180.00))
+	End If
+
+	Return Not(isFlipped)
+
+End Sub
+
+Sub SetCroppedView
+
+	SetBorders(0)
+	Sleep(sleepDelay)
+
+	Try
+		xResizeAndCrop1.Image = PaneOutput.Snapshot2(fx.Colors.Transparent)
+		xResizeAndCrop1.CroppedView = PaneCroppedImage
+	Catch
+		Log("SetCroppedView: " & LastException)
+	End Try
+
+	SetBorders(1)
+	Sleep(sleepDelay)
+
+End Sub
+
+Sub SetBorders(borderWidth As Double)
+
+	CSSUtils.SetBorder(PaneOutput, borderWidth, fx.Colors.Black, 0)
+	CSSUtils.SetBorder(LabelAscii, borderWidth, fx.Colors.Blue, 0)
+	CSSUtils.SetBorder(LabelFA, borderWidth, fx.Colors.Red, 0)
+	CSSUtils.SetBorder(LabelMI, borderWidth, fx.Colors.Red, 0)
+
+End Sub
+
+Sub LabelCharacter_MousePressed (EventData As MouseEvent)
+
+	dragPressedX = EventData.X
+	dragPressedY = EventData.Y
+
+End Sub
+
+Sub LabelCharacter_MouseDragged (EventData As MouseEvent)
+
+	If CheckBoxDragging.Checked = False Then Return
+
+	Dim isLeftLabel As Boolean = (Sender.As(Label).Tag.As(String) = "ASCII")
+	Dim lbl As Label = IIf(isLeftLabel, LabelAscii, IIf(RadioButtonFA.Selected, LabelFA, LabelMI))
+	Dim hFactor As Double = 1
+	Dim vFactor As Double = 1
+
+	If isLeftLabel And leftFlippedHorizontal Then
+		hFactor = -1
+	Else If (isLeftLabel = False) And rightFlippedHorizontal Then
+		hFactor = -1
+	End If
+	lbl.Left = lbl.Left + hFactor * (EventData.X - dragPressedX)
+
+	If isLeftLabel And leftFlippedVertical Then
+		vFactor = -1
+	Else If (isLeftLabel = False) And rightFlippedVertical Then
+		vFactor = -1
+	End If
+	lbl.Top = lbl.Top + vFactor * (EventData.Y - dragPressedY)
+
+	SetText(lbl, lbl.Text)
+
+End Sub

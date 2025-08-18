@@ -1,0 +1,61 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=cmdtwaincv-b4xlib
+Library2=jcore
+Library3=jfx
+Library4=jxui
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private CTF As CmdTwainForm
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	xui.SetDataFolder("CmdTwain")
+	
+	CTF.Initialize
+	CTF.AddEventListener(Me,"Scan")
+	
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	MainForm.Title = "CmdTwain - Gui Demo"
+		
+End Sub
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	If CTF.Visible Then
+		CTF.Hide
+	End If
+End Sub
+
+Private Sub btnScanDialog_Click
+	If CTF.Visible Then
+		CTF.Hide
+	Else
+		CTF.Show
+	End If
+End Sub
+
+Private Sub Scan_Event(EventName As String)
+	Log("Scan " & EventName)
+	If EventName <> CTF.EVENT_START Then
+		Log(CTF.GetCmdTwain.GetLastCommandLineArgs)
+	End If
+End Sub

@@ -1,0 +1,100 @@
+﻿Version=6.31
+NumberOfModules=0
+Build1=Default,b4a.example
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~SetApplicationAttribute(android:theme, "@style/LightTheme")~\n~CreateResource(values-v20, theme.xml,~\n~<resources>~\n~  <style~\n~  name="LightTheme" parent="@android:style/Theme.Material.Light">~\n~  </style>~\n~</resources>~\n~)~\n~CreateResource(values-v14, theme.xml,~\n~<resources>~\n~  <style~\n~  name="LightTheme" parent="@android:style/Theme.Holo.Light">~\n~  </style>~\n~</resources>~\n~)
+IconFile=
+NumberOfFiles=4
+File1=0.bal
+File2=1.bal
+File3=2.bal
+File4=ic_small.png
+NumberOfLibraries=2
+Library1=core
+Library2=stdactionbar
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#AdditionalJar: com.android.support:support-v4 
+
+Sub Process_Globals
+	Private currentTab As Int
+End Sub
+
+Sub Globals
+	Dim bar As StdActionBar
+	Private panel1, panel2, panel3 As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	bar.Initialize("bar")
+	bar.NavigationMode = bar.NAVIGATION_MODE_TABS 'change to list to see the other mode
+	bar.SetListItems(Array As String("Dropdown 1", "Dropdown 2", "Dropdown 3"))
+	bar.Subtitle = "This is the subtitle"
+	bar.ShowUpIndicator = True
+	Activity.Title = "This is the title"
+	Activity.AddMenuItem3("MenuItem", "mi", LoadBitmap(File.DirAssets, "ic_small.png"), True)
+	panel1.Initialize("")
+	panel2.Initialize("")
+	panel3.Initialize("")
+	bar.AddTab("Tab 1").Tag = panel1
+	bar.AddTab("Tab 2").Tag = panel2
+	
+	If bar.NavigationMode = bar.NAVIGATION_MODE_TABS Then
+		'Add icon to tab 3
+		Dim tb As StdTab = bar.AddTab("Tab 3")
+		tb.Tag = panel3
+		Dim bd As BitmapDrawable
+		bd.Initialize(LoadBitmap(File.DirAssets, "ic_small.png"))
+		tb.Icon = bd
+
+		'set the current selected tab
+		bar.SelectedIndex = currentTab
+		If currentTab = 0 Then bar_TabChanged(currentTab, bar.SelectedTab)
+	End If
+End Sub
+
+Sub Activity_ActionBarHomeClick
+	Log("ActionBarHome_Click") 'will only fire if the up indicator is visible
+End Sub
+
+
+Sub bar_ListItemSelected (Index As Int, Value As String)
+	Log("Selected value: " & Value)
+End Sub
+
+Sub bar_TabChanged(Index As Int, STab As StdTab)
+	Activity.RemoveAllViews
+	Dim pnl As Panel = STab.Tag
+	Dim height As Int
+	If 100%y > 100%x Then
+		height = 100%y - 48dip
+	Else
+		height = 100%y
+	End If
+	Activity.AddView(pnl, 0, 0, 100%x, height)
+	If pnl.NumberOfViews = 0 Then
+		pnl.LoadLayout(Index)
+	End If
+End Sub
+
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If bar.SelectedTab.IsInitialized Then currentTab = bar.SelectedTab.Position
+	'it will not be initialized if the mode is not tabs mode.
+End Sub
+
+

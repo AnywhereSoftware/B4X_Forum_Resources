@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.agraham.ime2.IME2</name>
+        <shortname>IME2</shortname>
+        <owner>activity</owner>
+        <event>HandleAction As Boolean</event>
+        <event>HeightChanged(NewHeight As Int, OldHeight As Int)</event>
+        <method>
+            <name>IsActive</name>
+            <comment>Returns True if the current view has any editable views (such as EditText) inflated.
+If False then the keyboard will never be shown.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetWindowRect</name>
+            <comment>Gets the location and dimensions of the Activity's window as a Rect.
+These values are absolute pixel values relative to the physical display screen.
+They define the size and location of the visible portion of the activity on the physical screen.
+This can be called at any time to establish the state of the app window.</comment>
+            <returntype>android.graphics.Rect</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the object and specifies the Subs that will handle the events.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ShowKeyboard</name>
+            <comment>Sets the focus to the given view and opens the soft keyboard.
+The keyboard will only show if the view has received the focus.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>view</name>
+                <type>android.view.View</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddHandleActionEvent</name>
+            <comment>Adds the HandleAction event to the given EditText.
+The HandleActionEvent can override the default behavior of the action button (the button that shows Next or Done).
+This event is similar to EditText_EnterPressed event. However it is more powerful.
+It  allows you to handle the Next button and also to consume the message (and keep the keyboard opened and the focus on the current EditText).
+You can use the Sender keyword to get the EditText that raised the event.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EditText</name>
+                <type>android.widget.EditText</type>
+            </parameter>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsSplitMode</name>
+            <comment>Returns True if the activity is running in split screen mode.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetLengthFilter</name>
+            <comment>Sets a filter that limits the maximum length of text in the given EditText to the specified value.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>editText</name>
+                <type>android.widget.EditText</type>
+            </parameter>
+            <parameter>
+                <name>MaxLength</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetCustomFilter</name>
+            <comment>SetCustomFilter allows you to both set the keyboard input type and also to set the accepted characters.
+Note that this is only a simple filter. It only determines the valid characters and not their number or position.
+
+EditText - The target EditText.
+DefaultInputType - Sets the keyboard input type mode.
+AcceptedCharacters - The accepted characters.
+
+Example: Create a filter that will accept IP addresses (numbers with multiple dots)
+IME.SetCustomFilter(EditText1, EditText1.INPUT_TYPE_NUMBERS, "0123456789.")</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>editText</name>
+                <type>android.widget.EditText</type>
+            </parameter>
+            <parameter>
+                <name>DefaultInputType</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>AcceptedCharacters</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddHeightChangedEvent</name>
+            <comment>Enables the HeightChanged event. This event is raised when the soft keyboard state changes.
+You can use this event to resize other views to fit the new screen size.
+Note that this event will not be raised in full screen activities (an Android limitation).
+This event may not be raised in split screen mode depending upon the location of the activity on the screen.
+Unless absolutely necessary it is probably best to ignore HeightChanged events in split mode.
+Note that in split mode where the app is the lower app in device portrait mode the Window Rect values are not valid
+on entry to this event if the keyboard has opened and shifted the app window upwards. A Sleep(50) on entry fixes this.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsAcceptingText</name>
+            <comment>Returns true if any of the editable views have the focus.
+It's possible for an editable view to have focus while the keyboard is not displayed.
+For example having tapped on an EditText and then pressing Back to close the keyboard.
+For this reason it does not necessarily indicate the on-screen presence of the keyboard.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetKeyboardRect</name>
+            <comment>Gets the assumed location and dimensions of the soft keyboard as a Rect by assuming that it must 
+occupy the area between the bottom of the window and the bottom of the display.
+This can be called at any time to establish the state of the keyboard.
+Note that the values are relative to the full screen and not to the Activity.
+It is calculated by Rect.Initialize(Display.Left, Window.Bottom, Display.Right, Display.Bottom)
+The values are not valid in screen split mode as the underlying assumption of the calculation is invalid.</comment>
+            <returntype>android.graphics.Rect</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDisplayRect</name>
+            <comment>Gets the dimensions of the Display on which the activity is being drawn as a Rect.
+These values are absolute pixel values, Left and Top are always 0.
+   'When not in split screen mode these values reflect those of the full physical display.
+In screen split mode they define the size of the smaller logical display hosting the activity.
+This can be called at any time to establish the state of the display.</comment>
+            <returntype>android.graphics.Rect</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HideKeyboard</name>
+            <comment>Hides the soft keyboard if it is visible.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ChangeKeyboard</name>
+            <comment>Shows the IME selection popup to select one of the input methods available to the system.
+Using this allows a user to quickly select a different keyboard.</comment>
+            <returntype>void</returntype>
+        </method>
+    </class>
+    <version>1.0</version>
+    <comment>IME2 includes several utilities that will you help you manage the soft keyboard.
+It is a strict superset of the original IME library but includes the following additional methods.
+
+IsActive
+IsAcceptingText
+IsSplitMode
+GetDisplayRectangle
+GetKeyboardRectangle
+GetWindowRectangle
+ChangeKeyboard
+   
+IsActive is True if there are any editable views (such as EditText) inflated.
+   
+IsAcceptingText is True if an inflated editable view (such as EditText) has the focus.
+It's possible for an editable view to have focus while the keyboard is not displayed.
+For example having tapped on an EditText and then pressing Back to close the keyboard.
+
+IsSplitMode returns True if the activity is running in split screen mode.
+Many of these methods are not valid to use if the activity is running in split screen mode.
+Those that are not valid in split screen mode are indicated in the method comment.
+Unless absolutely necessary it is probably best to ignore HeightChanged events in split mode.
+
+Inexplicably Android provides no direct way to determine whether the soft keyboard is shown or not.
+GetKeyboardRectangle provides a way of determining whether it is shown or not without waiting for an event.
+GetKeyboardRectangle compares the display size to the current window size in order to determine what
+the size and location of the keyboard could be. Checking the height of this Rect is an alternative way
+of determining if the keyboard is shown than comparing NewHeight and OldHeight in the HeightChanged event.
+Note that although termed 'Height' the HeightChanged event parameters appear to actually be the Top value of the keyboard location.
+
+GetDisplayRectangle gets the dimensions of the Display on which the activity is being drawn as a Rect.
+These values are absolute pixel values, Left and Top are always 0.
+   'When not in split screen mode these values reflect those of the full physical display of the device.
+In split mode they define the size of a smaller logical display hosting the activity.
+
+GetWindowRectangle gets the location and dimensions of the Activity's window as a Rect.
+These values are absolute pixel values relative to the physical display screen.
+They define the size and location on screen of the visible portion of the activity.
+
+ChangeKeyboard shows the IME selection popup to select one of the input methods available to the system.
+Invoking this allows a user to quickly select a keyboard.
+
+A tutorial with a working example for the original IME library is available &lt;link&gt;here|http://www.basic4ppc.com/forum/basic4android-getting-started-tutorials/14832-handle-soft-keyboard-ime-library.html&lt;/link&gt;.</comment>
+</root>

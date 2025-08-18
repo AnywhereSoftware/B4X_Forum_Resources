@@ -1,0 +1,67 @@
+﻿Build1=Default,b4i.example2
+File1=1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=iui8
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4.4
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#End Region
+#MinVersion: 8
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private VideoPlayer1 As VideoPlayer
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	VideoPlayer1.LoadVideoUrl("https://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
+	Wait For VideoPlayer1_Ready (Success As Boolean)
+	If Success Then
+		VideoPlayer1.Play 'to start playing automatically
+	End If
+End Sub
+
+Sub VideoPlayer1_Complete
+	Log("complete")
+	'disable ATS if trying to load http video.
+	VideoPlayer1.LoadVideoUrl("https://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")
+	Wait For VideoPlayer1_Ready (Success As Boolean)
+	If Success Then
+		Log("starting next video...")
+		VideoPlayer1.Play
+	End If
+End Sub
+
+Sub Page1_Click
+	Log(VideoPlayer1.Position)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub

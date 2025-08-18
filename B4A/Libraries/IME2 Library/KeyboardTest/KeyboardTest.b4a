@@ -1,0 +1,267 @@
+﻿Build1=Default,anywheresoftware.b4a.agraham.keyboardtest
+File1=layout.bal
+File2=somecode.b4s
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=ime2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~~\n~AddManifestText(<edtSource android:imeOptions="flagNoExtractUi|flagNoFullscreen" />)
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Keyboard Test
+	#VersionCode: 410
+	#VersionName: 4.10
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+	#IgnoreWarnings: 7, 12 
+#End Region
+
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Public Version As Double = 1.00
+	
+	' saved values on Pause to restore on Resume
+	Dim SaveSource, SaveTitle, SaveBreakLine As String
+	Dim SaveStep, SaveBreak, SaveShrink, SaveWrap As Boolean
+	
+	Dim DefaulTitle As String = Activity.Title & " v" & NumberFormat2(Version, 1, 2, 2, False)
+	Dim DefaultTextSize As Int = 16
+	Dim SmallTextSize As Int = 6
+	Dim LargeTextSize As Int = DefaultTextSize
+	
+	Dim IMEIsOpen As Boolean = False ' global as we use it to see id keyboard was open on rotate
+	Dim SplitModeRecreate As Boolean = True
+	
+End Sub
+
+'This app is to demonstrate keyboard handling on device rotation and adapting an app to the presence of the keyboard.
+'Rotating a device with the soft keyboard open can lead to corrupted layouts in both normal and split mode.
+'Different soft keyboards and different devices give different erroneous results.
+'So far this seems to work on all my devices in normal and split mode.
+'This app resizes an EditText to fit within the new Activity size so all of it can be accessed.
+
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim IME As IME2
+
+	Dim btnRun As Button
+	Dim chkBreak As CheckBox
+	Dim chkStep As CheckBox
+	Dim edtSource As EditText
+	Dim btnLineNum As Button
+	Dim lblLine As Label
+	Dim chkWrap As CheckBox
+	Private chkShrink As CheckBox
+	
+	' Used to detect if lower portrait split mode has moved on screen when the keyboard opens
+	Private DefWindowRect As Rect
+	Private WindowShifted As Boolean = False
+	
+End Sub
+
+#Region Activity Events
+
+Sub Activity_Create(FirstTime As Boolean)
+	SaveTitle = DefaulTitle
+	' Add SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden) to manifest
+	' otherwise AddHeightChangedEvent doesn't fire after an activity pause and resume
+	IME.Initialize("IME")
+	IME.AddHeightChangedEvent
+	Log("Loading layout")
+	Activity.LoadLayout("Layout") 
+	
+	edtSource.Color = Colors.White ' this hides the horizontal line at the bottom of the EditText
+	Dim jo As JavaObject
+	' keep edtSource visible in landscape
+	jo = edtSource
+	jo.RunMethod("setImeOptions", Array(33554432)) ' IME_FLAG_NO_FULLSCREEN
+	edtSource.Wrap = False
+	
+	'We set some padding to make it look a bit better
+	Dim Args(4) As Object
+	Dim Types(4) As String
+	Args(0) = 6dip
+	Args(1) = 6dip
+	Args(2) = 6dip
+	Args(3) = 6dip
+	Types(0) = "java.lang.int"
+	Types(1) = "java.lang.int"
+	Types(2) = "java.lang.int"
+	Types(3) = "java.lang.int"
+	jo = edtSource
+	jo.RunMethod("setPadding", Args)
+	
+	SaveSource = File.ReadString(File.DirAssets, "somecode.b4s")
+	edtSource.TextSize = 16
+
+End Sub
+
+Sub Activity_Resume
+	Activity.Title = SaveTitle
+	lblLine.Text = SaveBreakLine
+	chkBreak.Checked = SaveBreak
+	chkStep.Checked = SaveStep
+	chkShrink.Checked= SaveShrink
+	If chkShrink.Checked Then
+		edtSource.TextSize = SmallTextSize
+	Else
+		edtSource.TextSize = LargeTextSize
+	End If
+	chkWrap.Checked = SaveWrap
+	edtSource.Text = SaveSource
+	' If the device is rotated with the keyboard open the new layout can be wrong
+	' We detect if this was so and recreate the layout with the keyboard now closed
+	' As we don't always know in split mode if it was open we always recreate
+	If IME.IsSplitMode Then
+		If SplitModeRecreate Then
+			SplitModeRecreate = False
+			RecreateActivity
+		Else
+			SplitModeRecreate = True
+		End If		
+	Else If IMEIsOpen Then
+		IMEIsOpen = False
+		RecreateActivity
+	End If
+	Dim w As Rect = IME.GetWindowRect
+	DefWindowRect = w ' save the normal WindowRect top
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	SaveTitle = Activity.Title
+	SaveBreak = chkBreak.Checked
+	SaveBreakLine = lblLine.Text
+	SaveStep = chkStep.Checked
+	SaveShrink = chkShrink.Checked
+	SaveWrap = chkWrap.Checked
+	SaveSource = edtSource.Text
+	IME.HideKeyboard
+End Sub
+
+'In split mode start an activity in the other window
+Sub StartActivityAlongSide(act As Object)
+	Dim ctxt As JavaObject
+	ctxt.InitializeContext
+	Dim jin As JavaObject
+	Dim in As Intent = jin.InitializeNewInstance("android.content.Intent", Array(ctxt, act))
+	'add flags here
+	' Manifest must target API 29 if both activities are to be focussed
+	in.Flags = in.Flags + 0x00001000 +  0x10000000 ' FLAG_ACTIVITY_LAUNCH_ADJACENT + FLAG_ACTIVITY_NEW_TASK
+	StartActivity(in)
+End Sub
+
+'This code is the same as IME.IsSplitMode
+Sub IsSplitMode As Boolean
+	Dim jo As JavaObject
+	jo.InitializeContext
+	Try
+		Return jo.RunMethod("isInMultiWindowMode", Null)
+	Catch
+		Return False
+	End Try
+End Sub
+
+Sub IsPortrait As Boolean
+	Dim jo As JavaObject
+	jo.InitializeContext
+	jo = jo.RunMethod("getResources", Null)
+	jo = jo.RunMethod("getConfiguration", Null)
+	Dim i As Int = jo.GetField("orientation")
+	If i = 2 Then
+		Return False
+	End If
+	Return True
+End Sub
+
+'Recreates this activity.
+'Activity.Finish : StartActivity(Me) ends split mode, recreate keeps it
+Sub RecreateActivity
+	LogColor("Recreating", Colors.Red)
+	Dim jo As JavaObject
+	jo.InitializeContext
+	jo.RunMethod("recreate", Null)
+End Sub
+
+Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)	
+	' Different keyboards seem to cause different strange effects if open when the device is rotated in split mode
+	' Different Android versions seem to cause different strange effects keyboard is open when the device is rotated in split mode
+	If Activity.Height = 0 Or NewHeight > Activity.Height Then
+		' Microsoft SwiftKey Keyboard in particular causes this on rotation
+		RecreateActivity
+		Return
+	End If
+	'GetWindowRect does not seem to be fully updated at this time so we let it complete
+	Sleep(50)
+	Dim w As Rect = IME.GetWindowRect
+	Dim r As Rect = IME.GetKeyboardRect	
+		
+	If IME.IsSplitMode Then
+		Log(w.Left & " " & DefWindowRect.Left)
+		Log(w.top & " " & DefWindowRect.top)
+		Log(w.Right & " " & DefWindowRect.Right)
+		Log(w.Bottom & " " & DefWindowRect.Bottom)
+		'check if a lower app window in device portrait split has shifted up on keyboard open
+		' we reset some values to those expecteed
+		If w.Top < DefWindowRect.Top Then
+			WindowShifted = True
+			NewHeight = lblLine.Top - 7dip
+			r.Height = 1				
+		Else If WindowShifted Then
+			WindowShifted = False
+			r.Height = 0
+		End If
+	End If
+	Log("Keyboard height = " & r.Height)
+	
+	If r.Height > 0 Then ' important to ignore heights < 0
+		IMEIsOpen = True
+		edtSource.TextSize = LargeTextSize
+		edtSource.Height = NewHeight
+		Log("Editor IME opened height = " & edtSource.Height)
+	Else
+		IMEIsOpen = False
+		If lblLine.Top - 7dip > 0 Then 	edtSource.Height = lblLine.Top - 7dip
+		Log("Editor IME closed height = " & edtSource.Height)		
+		If chkShrink.Checked Then
+			edtSource.TextSize = SmallTextSize
+		End If
+	End If
+	LogColor("IME NewHeight = " & NewHeight & " OldHeight = " & OldHeight & " Activity.Height = " & Activity.Height, Colors.Blue)
+	'Log("IsSplitMode = " & IME.IsSplitMode & ", " & "IsActive = " & IME.IsActive & ", IsAcceptingText = " & IME.IsAcceptingText)
+	Log("Keyboard size = " & r.Width & " x " & r.Height & ", Posn = " & r.Left & " : " & r.Top & ", IMEIsOpen = " & IMEIsOpen)
+	Log("DisplayRect = " & IME.GetDisplayRect)
+	Log("WindowRect = " & IME.GetWindowRect)
+	Log("KeyboardRect = " & IME.GetKeyboardRect)
+	Log("WindowsShifted = " & WindowShifted)
+End Sub
+
+'Choose a new soft keyboard
+Sub btnLineNum_Click
+	Dim r As Rect = IME.GetKeyboardRect
+	LogColor("Keyboard size = " & r.Width & " x " & r.Height & ", Posn = " & r.Left & " : " & r.Top & ", IMEIsOpen = " & IMEIsOpen, 0xff006000)
+	'Log("IsActive = " & IME.IsActive & ", IsAcceptingText = " & IME.IsAcceptingText)
+	Log((btnLineNum.Top + btnLineNum.Height) & " " & Activity.Height & " " & IME.IsSplitMode)
+	Log("DisplayRect = " & IME.getDisplayRect)
+	Log("WindowRect = " & IME.getWindowRect)
+	Log("KeyboardRect = " & IME.GetKeyboardRect)
+	IMEIsOpen = True
+End Sub
+
+'Log some data whenever required
+Sub btnRun_Click
+	IME.ChangeKeyboard	
+End Sub

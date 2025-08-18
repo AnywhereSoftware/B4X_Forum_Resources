@@ -1,0 +1,146 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Android128.png
+File10=layMain.bjl
+File2=AnywhereNew.png
+File3=AppleIOS.png
+File4=arduino.png
+File5=B4AText.png
+File6=B4IText.png
+File7=B4JText.png
+File8=B4RText.png
+File9=java.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+NumberOfFiles=10
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private ivAnywhere As ImageView
+	Private ivB4A As ImageView
+	Private ivB4I As ImageView
+	Private ivB4J As ImageView
+	Private ivB4R As ImageView
+	Private lstIVs As List
+
+	Private ivB4AText As ImageView
+	Private ivB4JText As ImageView
+	Private ivB4IText As ImageView
+	Private ivB4RText As ImageView
+	Private lstIVTexts As List
+
+	Private mOrigLeft, mOrigTop, mOrigWidth, mOrigHeight As Double
+	
+	Private Pane1 As Pane
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("layMain") 'Load the layout file.
+	MainForm.Show
+	mOrigLeft = ivAnywhere.Left
+	mOrigTop = ivAnywhere.Top
+	mOrigWidth = ivAnywhere.Width
+	mOrigHeight = ivAnywhere.Height
+
+	ivAnywhere.SetImage(fx.LoadImage(File.DirAssets, "AnywhereNew.png"))
+	ivAnywhere.SetAlphaAnimated(0, 0)
+
+	ivB4A.SetImage(fx.LoadImage(File.DirAssets, "Android128.png"))
+	ivB4A.SetAlphaAnimated(0, 0)
+	ivB4AText.SetImage(fx.LoadImage(File.DirAssets, "B4AText.png"))
+
+	ivB4J.SetImage(fx.LoadImage(File.DirAssets, "java.png"))
+	ivB4J.SetAlphaAnimated(0, 0)
+	ivB4JText.SetImage(fx.LoadImage(File.DirAssets, "B4JText.png"))
+
+	ivB4I.SetImage(fx.LoadImage(File.DirAssets, "AppleIOS.png"))
+	ivB4I.SetAlphaAnimated(0, 0)
+	ivB4IText.SetImage(fx.LoadImage(File.DirAssets, "B4IText.png"))
+
+	ivB4R.SetImage(fx.LoadImage(File.DirAssets, "arduino.png"))
+	ivB4R.SetAlphaAnimated(0, 0)
+	ivB4RText.SetImage(fx.LoadImage(File.DirAssets, "B4RText.png"))
+	
+	lstIVs.Initialize2(Array As Object(ivB4A, ivB4J, ivB4I, ivB4R))
+	lstIVTexts.Initialize2(Array As Object(ivB4AText, ivB4JText, ivB4IText, ivB4RText))
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_MouseClicked (EventData As MouseEvent)
+	Start
+End Sub
+
+Sub Start
+	Pane1.Visible = False
+	Restore
+	ivAnywhere.SetAlphaAnimated(500, 1)
+	Sleep(2000)
+	ivAnywhere.SetAlphaAnimated(500, 0)
+	Sleep(700)
+	
+	For i = 0 To lstIVs.Size - 1
+		Anim(lstIVs.Get(i), lstIVTexts.Get(i))
+		Sleep(2000)
+	Next
+End Sub
+
+Sub Anim(IV As ImageView, IVText As ImageView)
+	Dim Moltiplier As Float = 1
+	If IV = ivB4A Then
+		Moltiplier = 0.45
+	End If
+	Dim Left, Top, Width, Height As Double
+	Width = ivB4A.Width * Moltiplier
+	Height = Width
+
+	IV.SetAlphaAnimated(650, 1)
+	Sleep(650)
+	Left = IV.Left + (mOrigWidth - Width) / 2
+	Top = IV.Top
+	IV.SetLayoutAnimated(500, Left, Top, Width, Height)
+	IVText.SetLayoutAnimated(500, mOrigLeft, mOrigTop + mOrigHeight - ivB4AText.Height, ivB4AText.Width, ivB4AText.Height)
+	Sleep(1000)
+	IV.SetAlphaAnimated(300, 0)
+	IVText.SetAlphaAnimated(300, 0)
+End Sub
+
+Sub Restore
+	ivAnywhere.SetAlphaAnimated(0, 0)
+	
+	For i = 0 To lstIVs.Size - 1
+		Dim iv As ImageView = lstIVs.Get(i)
+		iv.SetAlphaAnimated(0, 0)
+		iv.Visible = True
+		iv.SetLayoutAnimated(0, mOrigLeft, mOrigTop, mOrigWidth, mOrigHeight)
+		Dim ivText As ImageView = lstIVTexts.Get(i)
+		ivText.Top = Pane1.Top + Pane1.Height
+		ivText.SetAlphaAnimated(0, 1)
+		ivText.Visible = True
+	Next
+End Sub

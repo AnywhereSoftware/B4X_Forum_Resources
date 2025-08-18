@@ -1,0 +1,149 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=logo.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xlutils
+Library5=xui views
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+#IgnoreWarnings: 15
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private WD As WordUtils
+	Private Label1 As B4XView
+	Private AnotherProgressBar1 As AnotherProgressBar
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	WD.Initialize
+	xui.SetDataFolder("word example")
+	Dim n As Long = DateTime.Now
+	Dim doc As WordDocument = CreateDocument
+	Dim f As String = doc.SaveAs(xui.DefaultFolder, "Report.docx", True)
+	Log(DateTime.Now - n)
+	Log($"Document saved: ${f}"$)
+	'if MS Word is installed:
+	Label1.Text = "Creating PDF..."
+	'this step can be a bit slow. Comment it during development.
+'	Wait For (WD.PowerShellConvertToPdf(f, File.Combine(xui.DefaultFolder, "Report.pdf"), True)) Complete (Success As Boolean)
+	Label1.Text = "Opening word"
+	Wait For (WD.OpenWord(f)) Complete (Success As Boolean)
+	Label1.Text = "Report created: " & f
+	AnotherProgressBar1.Visible = False
+End Sub
+
+Private Sub CreateDocument As WordDocument
+	Dim Document As WordDocument = WD.CreateDocument
+'	Document.DebugLog = True
+	Document.Append($"
+[header]
+	[p alignment=left]$Date{DateTime.Now}[/p]
+	[p alignment=right][img dir=assets filename=logo.png width=30 height=30/][/p]
+[/header]
+[footer]
+	[p][u][color=blue][url=https://www.b4x.com]www.b4x.com[/url][/color][/u][/p]
+[/footer]"$)
+	Document.Append($"[p alignment=center][bookmark=top/][TextSize=22][b]Table Of Contents[/b][/TextSize]
+
+[/p]"$)
+	For page = 1 To 10
+		Dim sb As StringBuilder
+		sb.Initialize
+		Dim number As String = page + 1
+		sb.Append("Page ").Append(page)
+		Do While sb.Length < 80 - number.Length
+			sb.Append(".")
+		Loop
+		sb.Append(number)
+		'SimSun is a monospaced font
+		Document.Append($"[p][Font=SimSun][url=bookmark://page_${page}]${sb.ToString}[/url][/Font][/p]"$)
+	Next
+	For page = 1 To 10
+		Document.Append($"
+	[p PageBreak=true alignment=center][bookmark=page_${page}/][TextSize=22][u][highlight=yellow]Page #${page}[/highlight][/u][/TextSize][/p]
+[p]This Is an example of generating report using XLUtils.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas vel auctor nisl, id sollicitudin erat.
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+Pellentesque varius, mi sit amet dictum scelerisque, turpis nisl hendrerit mauris, et porta magna sem in eros. Morbi lobortis at ex at pretium. Curabitur ut commodo nulla.
+Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Sed dapibus sollicitudin dolor, cursus tincidunt enim dictum vel. Sed dignissim mi at mi ultrices dictum. 
+[/p]
+[p][font=Arial]Another paragraph with different font[/font], we can use [font="Ink Free"][TextSize=18]multiple fonts[/TextSize][/font] easily.[/p]
+
+This text will Not appear As it Is Not inside a paragraph.
+${CreateTable}
+
+[p][color=blue][TextSize=25][url=bookmark://top]🔝[/url][/TextSize][/color][/p]
+	"$)
+	Next
+
+	Return Document
+End Sub
+
+
+Private Sub CreateTable As String
+	
+	Dim items As List
+	items.Initialize
+	For i = 1 To 10
+		items.Add(Array("Item " & i, Rnd(1, 100), Rnd(100, 1000)))
+	Next
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim TitleCellStyle As String = "color=black width=75 VerticalAlignment=center"
+	Dim TitlePStyle As String = "[p alignment=center][color=white][b]"
+	sb.Append($"
+	[table Alignment=Center rows=${2 + items.Size} cols=4]
+		this is the header row
+		[row RepeatHeader=True height=25]
+			[cell color=0xFF6D6D6D width=100 VerticalAlignment=center ColSpan=4]
+				[p alignment=center][color=white][b][u]Cell with ColSpan = 4[/u][/b][/color][/p]
+			[/cell]
+		[/row]
+		[row RepeatHeader=True]
+			*** note that there is a space in the "empty" cell. The document will be corrupted without it. ***
+			[cell ${TitleCellStyle}]${TitlePStyle} [/b][/color][/p][/cell]
+			[cell ${TitleCellStyle}]${TitlePStyle}Item Id[/b][/color][/p][/cell]
+			[cell ${TitleCellStyle}]${TitlePStyle}Amount[/b][/color][/p][/cell]
+			[cell ${TitleCellStyle}]${TitlePStyle}Price[/b][/color][/p][/cell]
+		[/row]
+	"$)
+	For i = 0 To items.Size - 1
+		Dim row() As Object = items.Get(i)
+		Dim FirstCell As String
+		If i Mod 5 = 0 Then
+			FirstCell = $"[cell RowSpan=5 VerticalAlignment=Center][p Alignment=Center]${(i + 1)} - ${(i + 5)}[/p][/cell]"$
+		Else
+			FirstCell = $"[cell][p] [/p][/cell]"$
+		End If
+		sb.Append($"
+		[row height=10]
+			${FirstCell}
+			[cell][p alignment=center]${row(0)}[/p][/cell]
+			[cell][p alignment=center]${row(1)}[/p][/cell]
+			[cell][p alignment=center]$${row(2)}[/p][/cell]
+		[/row]
+		"$)
+	Next
+	sb.Append("[/table]")
+	Return sb.ToString
+	
+End Sub

@@ -1,0 +1,180 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.fxml
+File2=Tile-Blue.png
+File3=Tile-Green.png
+File4=Tile-Red.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jokhttputils2
+Library4=json
+Library5=jxui
+NumberOfFiles=4
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+' Version 1.02 - 23/04/2022  by Hamied Abou Hulaikah (original V1.00 by Erel - V1.01 by A.Ismail)
+' Updated code to fix root name conflict with B4XPages
+ 
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private xui As XUI
+	Private MainForm As Form
+	Private txtJson As TextArea
+	Private txtCode As TextArea
+	Private tree As TreeView
+	Private btnParse As Button
+	Private txtUrl As TextField
+	'Private msg As Msgboxes
+	Private imgMap, imgList, imgValue As Image
+	Private fc As FileChooser
+	Private btnUrl As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	MainForm.Title = "JsonTree (v1.02)"
+	btnParse.Enabled = False
+	imgMap = fx.LoadImage(File.DirAssets, "Tile-Green.png")
+	imgList = fx.LoadImage(File.DirAssets, "Tile-Blue.png")
+	imgValue = fx.LoadImage(File.DirAssets, "Tile-Red.png")
+	fc.Initialize
+End Sub
+
+Sub btnFile_Action
+	Dim f As String = fc.ShowOpen(MainForm)
+	If f <> "" Then
+		txtJson.Text = File.ReadString("", f)
+	End If
+End Sub
+Sub btnParse_Action
+	Try
+		Dim parser As JSONParser
+		parser.Initialize(txtJson.Text)
+		tree.Root.Children.Clear
+		Dim squareBracketFound As Boolean
+		'check whether we need to call NextArray or NextObject
+		For i = 0 To txtJson.Text.Length
+			If txtJson.Text.CharAt(i) = "[" Then
+				squareBracketFound = True
+				Exit
+			Else If txtJson.Text.CharAt(i) = "{" Then
+				Exit
+			End If
+		Next
+		Dim code As StringBuilder
+		code.Initialize
+		code.Append("Dim parser As JSONParser").Append(CRLF)
+		code.Append("parser.Initialize(<text>)").Append(CRLF)
+		code.Append("Dim jroot As ")
+		If squareBracketFound Then
+			code.Append("List = parser.NextArray").Append(CRLF)
+			BuildTree(parser.NextArray, tree.Root, code, "jroot", "", False, "")
+		Else
+			code.Append("Map = parser.NextObject").Append(CRLF)
+			BuildTree(parser.NextObject, tree.Root, code, "jroot", "", False, "")
+		End If
+		txtCode.Text = code.ToString
+	Catch
+		xui.MsgboxAsync("Error parsing string:" & CRLF & LastException.Message, "Json Tree")
+		'msg.Show("Error parsing string:" & CRLF & LastException.Message, "")
+	End Try
+End Sub
+
+Sub BuildTree(element As Object, parent As TreeItem, code As StringBuilder, _
+	parentName As String, GetFromMap As String, BuildList As Boolean, indent As String)
+	code.Append(indent)
+	If element Is Map Then
+		indent = WriteCodeHelper("Map", code, parentName, GetFromMap, BuildList, indent)
+		parent.Image = imgMap
+		Dim m As Map = element
+		For Each k As String In m.Keys
+			Dim ti As TreeItem
+			ti.Initialize("", k)
+			parent.Children.Add(ti)
+			BuildTree(m.Get(k), ti, code, k, parentName & ".Get(""" & k & """)", False, indent)
+		Next
+	Else If element Is List Then
+		indent = WriteCodeHelper("List", code, parentName, GetFromMap, BuildList, indent)
+		parent.Image = imgList
+		Dim l As List = element
+		Dim index As Int = 0
+		For Each e As Object In l
+			Dim ti As TreeItem
+			ti.Initialize("", index)
+			parent.Children.Add(ti)
+			Dim stubCode As StringBuilder
+			'only write the code for the first item
+			If index = 0 Then stubCode = code Else stubCode.Initialize
+			BuildTree(e, ti, stubCode, "col" & parentName ,"", index = 0, indent)
+			index = index + 1
+		Next
+	Else
+		Dim objectType As String
+		If element Is Int Then
+			objectType = "Int"
+		Else If element Is Double Then
+			objectType = "Double"
+		Else
+			objectType = "String"
+		End If
+		indent = WriteCodeHelper(objectType, code, parentName, GetFromMap, BuildList, indent)
+		parent.Image = imgValue
+		parent.Text = parent.Text & ": " & element
+	End If
+	If BuildList Then
+		code.Append(indent.SubString(1)).Append("Next").Append(CRLF)
+	End If
+	parent.Expanded = True
+End Sub
+Sub WriteCodeHelper (ObjectType As String, code As StringBuilder, _
+	parentName As String, GetFromMap As String, BuildList As Boolean, indent As String) As String
+	
+	If GetFromMap.Length > 0 Then
+		code.Append("Dim " & parentName & " As " & ObjectType & " = " & GetFromMap).Append(CRLF)
+	Else If BuildList Then
+		code.Append("For Each " & parentName & " As " & ObjectType & " In " & parentName.SubString(3)).Append(CRLF)
+		indent = indent & TAB
+	End If
+	Return indent
+End Sub
+Sub txtJson_TextChanged (Old As String, New As String)
+	btnParse.Enabled = New.Length > 0
+End Sub
+
+Sub txtUrl_Action
+	btnUrl_Action
+End Sub
+
+Sub btnUrl_Action
+	Dim j As HttpJob
+	j.Initialize("j", Me)
+	j.Download(txtUrl.Text)
+End Sub
+
+Sub txtUrl_TextChanged (Old As String, New As String)
+	btnUrl.Enabled = New.Length > 0
+End Sub
+
+Sub JobDone(j As HttpJob)
+	If j.Success Then
+		txtJson.Text = j.GetString
+	Else
+		xui.MsgboxAsync("Error: " & CRLF & j.ErrorMessage, "Json Tree")
+		'msg.Show("Error: " & CRLF & j.ErrorMessage, "")
+	End If
+	j.Release
+End Sub

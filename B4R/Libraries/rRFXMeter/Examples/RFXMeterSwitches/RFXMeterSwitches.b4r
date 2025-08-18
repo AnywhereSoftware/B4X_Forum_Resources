@@ -1,0 +1,123 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterSwitches.b4r
+'Example B4R B4XLib rRFXMeter
+'Send the state 0 or 1 of 7 switches. 7 is max else value overflow because max 8 numbers with 1 as leading number (ULong 3 bytes = 16777215) 
+'Domoticz RFXMeter device
+'IDX=384, Hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, Type=RFXMeter, SubType=RFXMeter counter, Data=6864
+'Domoticz Switch device(s)
+'IDX=386, Hardware=VirtualSensors, ID=00082385, Unit=0, Name=RFXSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+'Additional Libraries: rRFXMeter (rRFXMeter.b4xlib)
+'20220405 rwbl
+#End Region
+
+#Region Wiring
+'433Mhz Transmitter = Arduino
+'VCC = 5v
+'Signal = #7
+'GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private DEVADDR As Byte = 0x09
+	Private PINTX As Byte = 7
+	Private PINLED As Byte = 13
+	Private SWITCHES_COUNT As Byte = 7	'7 is max else value overflow
+	Public serialLine As Serial
+	Private Timer_Test As Timer
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log("AppStart")
+	'The B4XLib contains the code module RFXMeter which does not need to be declared in Process_Globals.
+	RFXMeter.Initialize(PINTX, PINLED)
+	Timer_Test.Initialize("Timer_Test_Tick", 15000)
+	Timer_Test.Enabled = True
+	Timer_Test_Tick
+End Sub
+
+Sub Timer_Test_Tick
+	'Switches state Long starting with leading 1
+	Dim SwitchesState As Long = 1
+	'Add the switch state 0 or 1 (random generated) to the switchesState
+	For i = 0 To SWITCHES_COUNT - 1
+		Dim n As Byte = IIf(Rnd(0,11) <= 5, 0, 1)
+		'Changing 10 to 2 will pack in binary (base 2) rather than decimal (base 10) = 3x as many switches
+		SwitchesState = SwitchesState * 10 + n
+		'Log("Switch ", i, "=", n)
+	Next
+	'Sent the long value to Domoticz which is handled by an automation event
+	Log("Sending ", SWITCHES_COUNT, " switches (State 0 or 1)=", SwitchesState, " (ULong with leading 1)")
+	If SwitchesState <= RFXMeter.MAX_VALUE Then
+		RFXMeter.SendValue(DEVADDR, SwitchesState)
+	Else
+		Log("[ERROR] RFXMeter value above max ", RFXMeter.MAX_VALUE)
+		Timer_Test.Enabled = False
+	End If
+End Sub
+
+'Domoticz Automation Event dzVents
+'--[[
+'    rfxmeterswitches.dzvents - Explore Arduino_RFXCOM.
+'    20220405 rwbl
+']]--
+'
+'local RFXMeter = 384
+'local rfxmeterswitch = 386
+'
+'-- Convert a number To N bits.
+'-- value - number To convert (integer Or long with Bit pattern 0|1).
+'-- Return table with N Bit entries.
+'local function convert_to_bits(value)
+'    local result = {}
+'    For letter in value:gmatch(".") Do 
+'        table.insert(result, letter)
+'    End
+'    Return result
+'End
+'
+'Return {
+'	on = {
+'		devices = { RFXMeter }
+'	},
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETER', },
+'	execute = function(domoticz, device)
+'		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+'        -- Convert the sValue from string To number
+'		local value = tonumber(device.sValue)
+'        -- Convert Long Number To N Bits And assign To Domoticz Virtual Sensor Switches
+'        -- The first Bit is leading And Not used.
+'        -- Example: Value contains 6 bits 101011 split into table {"1", "0", "1", "0", "1", "1"}
+'		-- The bits 2 To 6 hold the switch status On(1) Or Off(0)
+'        local data = convert_to_bits(device.sValue)
+'        -- Log & set the switches state starting at Bit #2 because bit #1 is the leading bit
+'        For i = 2, #data do
+'            domoticz.log(("Switch ID%d=%d"):format(i - 1, data[i]))
+'            -- Assign the values To a Domoticz device depending switch ID And state 0=Off, 1=On
+'			-- For TESTS only the first switch (i=2) is triggered.
+'            If i == 2 Then 
+'                If tonumber(data[i]) == 1 Then
+'                    domoticz.devices(rfxmeterswitch).switchOn()
+'                Else
+'                    domoticz.devices(rfxmeterswitch).switchOff()
+'                End
+'            End
+'        End
+'    End
+'}

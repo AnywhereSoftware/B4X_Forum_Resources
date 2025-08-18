@@ -1,0 +1,114 @@
+﻿Build1=Default,com.quickmen
+File1=Page1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+NumberOfFiles=1
+NumberOfLibraries=1
+NumberOfModules=0
+Version=6.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+	#IgnoreWarnings  : 12
+#End Region
+
+	#CertificateFile : ios_development.cer
+	#ProvisionFile   : XCodeFireBase.mobileprovision
+	
+Sub Process_Globals
+	Public  App              As Application
+	Public  NavControl       As NavigationController
+	Private Page1            As Page	
+	Private ImageView1       As ImageView
+	Private timer1           As Timer
+  	Type tagAnimationInfo (xPos1, yPos1, radius1, xPos2, yPos2, radius2 As Float, startTime, finishTime As Long)
+	Private udtAnimationInfo As tagAnimationInfo
+	Private Button1, Button2 As Button
+	Private Label1           As Label
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	
+	
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("Page1")	
+	NavControl.ShowPage(Page1)
+	
+	Dim noMe As NativeObject = Me
+	noMe.RunMethod ("createThread:", Array ("Something"))
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)			
+	timer1.Enabled = False
+End Sub
+
+Private Sub DrawAnimatedCircle (duration As Int, xPos1 As Float, yPos1 As Float, radius1 As Float, xPos2 As Float, yPos2 As Float, radius2 As Float)
+	
+	udtAnimationInfo.xPos1     = xPos1
+	udtAnimationInfo.yPos1     = yPos1
+	udtAnimationInfo.radius1   = radius1
+	udtAnimationInfo.xPos2     = xPos2
+	udtAnimationInfo.yPos2     = yPos2
+	udtAnimationInfo.radius2   = radius2
+	udtAnimationInfo.startTime = DateTime.Now
+	udtAnimationInfo.finishTime = DateTime.Now + duration	
+	timer1.Initialize ("timer1", 40)
+	timer1.Enabled = True
+	timer1_tick	
+	
+End Sub
+
+Private Sub timer1_tick
+	Dim currentTime As Long = DateTime.Now
+	Dim Coef As Double = Min ((currentTime - udtAnimationInfo.startTime) / (udtAnimationInfo.finishTime - udtAnimationInfo.startTime), 1.0)	
+	Dim radius As Float = udtAnimationInfo.radius1 + Coef * (udtAnimationInfo.radius2 - udtAnimationInfo.radius1)
+	Dim xPos As Float = udtAnimationInfo.xPos1 + Coef * (udtAnimationInfo.xPos2 - udtAnimationInfo.xPos1)
+	Dim yPos As Float = udtAnimationInfo.yPos1 + Coef * (udtAnimationInfo.yPos2 - udtAnimationInfo.yPos1)	
+	ImageView1.Visible = True	
+	ImageView1.SetBorder (0, Colors.Transparent, radius)
+	ImageView1.SetLayoutAnimated (0, 1, xPos - radius, yPos - radius, 2 * radius, 2 * radius)
+	If currentTime >= udtAnimationInfo.finishTime Then timer1.Enabled = False 
+End Sub
+
+Sub Button1_Click
+	DrawAnimatedCircle (1000, Page1.RootPanel.Width / 2, Page1.RootPanel.Height / 2, 0.05 * Min (Page1.RootPanel.Height, Page1.RootPanel.Width), Page1.RootPanel.Width / 2, Page1.RootPanel.Height / 2, 0.2 * Min (Page1.RootPanel.Height, Page1.RootPanel.Width))
+End Sub
+
+Sub Button2_Click
+	DrawAnimatedCircle (1000, Page1.RootPanel.Width / 2, 0.2 * Page1.RootPanel.Height, 0.2 * Min (Page1.RootPanel.Height, Page1.RootPanel.Width), Page1.RootPanel.Width / 2, 0.8 * Page1.RootPanel.Height, 0.2 * Min (Page1.RootPanel.Height, Page1.RootPanel.Width))
+End Sub
+
+Sub ThreadBody ' Additional thread
+		
+	Dim i, j As Int
+	Dim s As Double
+	Dim noMe As NativeObject = Me
+	For j = 1 To 2000
+		noMe.RunMethod ("threadInfo:", Array ("j = " & j))
+		For i = 1 To 1000000
+	       s = s + i * j			
+		Next
+	Next
+	noMe.RunMethod ("threadInfo:", Array ("Finished"))
+	
+End Sub
+
+Sub ThreadInfo (someObject As Object)	' Main thread	
+	Label1.Text = someObject	
+End Sub
+
+#IF OBJC
+- (void) createThread: (NSObject *) someObject { [self performSelectorInBackground: @selector(threadBody:) withObject: someObject]; }
+- (void) threadBody:   (NSObject *) someObject { @autoreleasepool { [self _threadbody]; } }
+- (void) threadInfo:   (NSObject *) someObject { [self performSelectorOnMainThread: @selector (_threadinfo:) withObject: someObject waitUntilDone: NO]; }
+#End If

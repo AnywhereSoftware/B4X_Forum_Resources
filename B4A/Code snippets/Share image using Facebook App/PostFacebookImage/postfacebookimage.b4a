@@ -1,0 +1,91 @@
+﻿Version=4.3
+IconFile=
+NumberOfModules=0
+Build1=Default,b4a.example.postfacebook
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=1
+File1=Layout1.bal
+NumberOfLibraries=3
+Library1=core
+Library2=contentresolver
+Library3=phone
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Post Facebook
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private PostButton As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub PostButton_Click
+	PostImageFacebook
+End Sub
+
+Sub PostImageFacebook
+	'1. copy the image to File.DirDefaultExternal
+	File.Copy(File.DirAssets, "android.jpg", File.DirDefaultExternal, "android.jpg")
+	
+	'2. select the image
+	Dim u As Uri
+	u.Parse("file://" & File.Combine(File.DirDefaultExternal,"android.jpg"))
+
+	Dim pm As PackageManager
+	Dim fb1 As String
+	
+	'3. select the intent of facebook to share image
+	Dim i As Intent
+	i.Initialize(i.ACTION_SEND,"")
+	i.SetType("image/jpg")
+	
+	For Each cn As String In pm.QueryIntentActivities(i)
+		If cn.SubString2(0,20) = "com.facebook.katana/" Then
+  			fb1 = cn 
+			Exit
+		End If
+	Next
+
+	i.SetComponent(fb1) 
+	i.PutExtra("android.intent.extra.STREAM",u)
+
+	'4. start intent
+	Try
+		StartActivity(i)
+	Catch
+		ToastMessageShow("Error!",False)
+	End Try	
+End Sub

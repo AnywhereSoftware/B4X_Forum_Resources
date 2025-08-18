@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>ScaleImageView</title>
+	<style type="text/css">
+		body{
+			background-color:#E1DEE6;
+			color:#222;
+			font-family:Arial,Helvetica,sans-serif;
+			font-size:14px;
+			margin:0;
+			padding:0;
+		}
+		h3{
+			background-color:#869BBF;
+			margin:0;
+			padding:5px;
+		}
+		ul{
+			list-style:none;
+			margin:5px;
+			padding:0;
+		}
+		ul li{
+			background-color:#FFF;
+			border:1px solid #666;
+			margin:0;
+			padding:5px;
+		}
+		ul li:first-child, h3{
+			border-top-left-radius:5px;
+			border-top-right-radius:5px;
+		}
+		ul li:last-child, h3{
+			border-bottom-left-radius:5px;
+			border-bottom-right-radius:5px;
+		}
+		ul h3:first-child{
+			background-color:#869BDF;
+			margin-bottom:5px;
+		}
+	</style>
+</head>
+<body><h3>ScaleImageView</h3>
+<ul><i>This is a custom image view designed for displaying huge images.
+It includes all the standard gestures for zooming and panning images
+and provides some extra useful features for animating the image position and scale.
+The aim of this library is to solve some of the common problems when displaying large images in Android.
+This view extends View and so inherits all the normal View methods.
+This view doesn't extend ImageView and isn't intended as a general purpose replacement for it.
+It is specialised for the display of photos and other large images, not the display of 9-patches,
+shapes and the other types of drawable that ImageView supports.	 
+Supported gestures are:
+One finger drag to pan, Two finger pinch to zoom and double tap to zoom in and out.
+Pan while zooming, seamless switch between pan and zoom and fling momentum after panning.
+Quick scale (one finger zoom - quick double tap then drag)	 
+Events Click and LongClick are provided whose co-ordinates may be accessed in the event code.
+ClickViewX, ClickViewY return the position of the Click or LongClick on the view.
+ClickImageX and ClickImageY return the position of the Click or LongClick on the source image.
+The OnDraw event provides a Canvas that can be used to draw on the view whenever it is redrawn.
+The view can draw a circle at a defined position on the original image.
+The circle can either have a fixed size that is a fraction of the screen width
+or a variable size that always covers the same area of the original size as it is zoomed.
+The associated file, ScaleImage.jar, must be located in the Additional Libraries folder.
+The line '#AdditionalJar: ScaleImage' must be added to the Main module.
+This library uses code from 
+https://github.com/davemorrissey/subsampling-scale-image-view
+That code and this library are licensed under the Apache License 2.0
+   Copyright [2015] [Dave Morrissey]
+   Copyright [2018] [Andrew Graham]
+Licensed under the Apache License, Version 2.0 (the "License")
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</i></ul>
+<ul><li><h3>Classes</h3>
+<ul><li><A href="#0">ScaleImageView</A></li>
+</ul></li></ul>
+<ul><A id="0"/>
+<li><h3>ScaleImageView</h3>
+<ul><i></i></ul>
+<h3>Events:</h3>
+<ul><li><b>Click</b>  'The user has tapped on the view. Use ClickImage or ClickView for the coordinates.</li>
+<li><b>LongClick</b>  'The user has long pressed the view. Use ClickImage or ClickView for the coordinates.</li>
+<li><b>OnDraw</b> (viewcanvas <span style='color:blue'>As</span> <span style='color:#008B8B'>Canvas</span>) 'The view is being redrawn. Use viewcanvas to draw on it.</li>
+</ul>
+<h3>Functions:</h3>
+<ul><li><b>BringToFront</b>  
+<br/><i></i>
+</li><li><b>DesignerCreateView</b> (base <span style='color:blue'>As</span> <span style='color:#008B8B'>Panel</span>, lw <span style='color:blue'>As</span> <span style='color:#008B8B'>Label</span>, props <span style='color:blue'>As</span> <span style='color:#008B8B'>Map</span>) 
+<br/><i></i>
+</li><li><b>Initialize</b> (arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>) 
+<br/><i></i>
+</li><li><b>Invalidate</b>  
+<br/><i></i>
+</li><li><b>Invalidate2</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>android.graphics.Rect</span>) 
+<br/><i></i>
+</li><li><b>Invalidate3</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg2 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg3 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) 
+<br/><i></i>
+</li><li><b>IsInitialized</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>Recycle</b>  
+<br/><i>Releases all resources the view is using and resets the state, nulling any fields that use significant memory.<BR/>
+After you have called this method, the view can be re-used by setting a new image.<BR/>
+Settings are remembered but state (scale and center) is forgotten.</i>
+</li><li><b>RemoveView</b>  
+<br/><i></i>
+</li><li><b>RequestFocus</b>  <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>ResetScaleAndCenter</b>  
+<br/><i>Zooms the image out to minimum scale and centers it on the screen according to the view's settings.</i>
+</li><li><b>SendToBack</b>  
+<br/><i></i>
+</li><li><b>SetBackgroundImage</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>android.graphics.Bitmap</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>BitmapDrawable</span>
+<br/><i></i>
+</li><li><b>SetColorAnimated</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg2 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) 
+<br/><i></i>
+</li><li><b>SetLayout</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg2 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg3 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) 
+<br/><i></i>
+</li><li><b>SetLayoutAnimated</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg2 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg3 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg4 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) 
+<br/><i></i>
+</li><li><b>SetScaleAndCenter</b> (scale <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>, x <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>, y <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>, duration <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) 
+<br/><i>Set the zoom of the displayed image and center it on the point (x,y).<BR/>
+x and y are width and height factor values of the full image size between 0 and 1.<BR/>
+PanLimit should be set to PAN_LIMIT_CENTER if any point is to be centered.<BR/>
+Duration sets the duration of the transition in milliseconds.<BR/>
+Returns False if the image is not ready and the transition was not made otherwise True.</i>
+</li><li><b>SetScaleAndCenterPixels</b> (scale <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>, x <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, y <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, duration <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Set the zoom of the displayed image and center it on the point (x,y).<BR/>
+x and y are full image size x and y pixel values.<BR/>
+PanLimit should be set to PAN_LIMIT_CENTER if any point is to be centered.<BR/>
+Duration sets the duration of the transition in milliseconds.<BR/>
+Returns False if the image is not ready and the transition was not made otherwise True.</i>
+</li><li><b>SetVisibleAnimated</b> (arg0 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, arg1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>) 
+<br/><i></i>
+</li><li><b>SourceXYtoViewXY</b> (sourcex <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, sourcey <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float()</span>
+<br/><i>Returns a Float array containing the X and Y pixel position on the view of the specified point of the full size image.<BR/>
+If the image coordinates are currently off screen, the view coordinates will also be outside the view<BR/>
+Index 0 of the array contains the X coordinate and index 1 the Y coordinate.</i>
+</li><li><b>ViewXYtoSourceXY</b> (viewx <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>, viewy <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>) <span style='color:blue'>As</span> <span style='color:#008B8B'>Float()</span>
+<br/><i>Returns a Float array containing the X and Y pixel position on the full size image of the specified point of the view.<BR/>
+Index 0 of the array contains the X coordinate and index 1 the Y coordinate.</i>
+</li></ul>
+<h3>Properties:</h3>
+<ul><li><b>Background</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>android.graphics.drawable.Drawable</span>
+<br/><i></i>
+</li><li><b>CenterX</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Gets the X pixel value of the full image point which is at the centre of the view.<BR/>
+Can only be set programatically by SetScaleAndCenter or SetScaleAndCenterPixels</i>
+</li><li><b>CenterY</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Gets the Y pixel value of the full image point which is at the centre of the view.<BR/>
+Can only be set programmatically by SetScaleAndCenter or SetScaleAndCenterPixels</i>
+</li><li><b>CircleColor</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i>Gets or sets the colour of the inner ring of the circle.<BR/>
+The default is 0xff20b2aa - LightSeaGreen.</i>
+</li><li><b>CircleDrawnRadius</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Gets the radius of the circle in pixels as last drawn regardless of the state of EnableCircleScale.<BR/>
+This can be used to position other drawn items relative to the circle.</i>
+</li><li><b>CircleMinimumRadius</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the minimum radius of the circle as a factor between 0 and 1 of the width of the view.<BR/>
+This prevents the circle being drawn vanishingly small when zoomed out if EnableCircleScale is True.<BR/>
+The default is 0.02.</i>
+</li><li><b>CircleRadius</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the radius of the circle as a factor between 0 and 1 of the width of the view or of the full image.<BR/>
+If EnableCircleScale is True the factor is that of the full size image width.<BR/>
+If EnableCircleScale is False the factor is that of the width of the view.<BR/>
+The default is 0.002 which is appropriate if EnableCircleScale is True.</i>
+</li><li><b>CircleWidth</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the width of stroke used to draw the circle (not the radius).<BR/>
+The value is a factor between 0 and 1 of the radius of the circle as drawn. The default is 0.2.</i>
+</li><li><b>CircleX</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the X position factor of the point on the full image at which to draw the circle.<BR/>
+The default is 0.5, the centre of the image.</i>
+</li><li><b>CircleXPixels</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the X position in pixels of the point on the full image at which to draw the circle.<BR/>
+The default is the centre of the image.</i>
+</li><li><b>CircleY</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the Y position factor of the point on the full image at which to draw the circle.<BR/>
+The default is 0.5, the centre of the image.</i>
+</li><li><b>CircleYPixels</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or sets the Y position in pixels of the point on the full image at which to draw the circle.<BR/>
+The default is the centre of the image.</i>
+</li><li><b>ClickImageX</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>When accessed in a Click or LongClick event gets the X pixel position on the full size image of the point clicked.</i>
+</li><li><b>ClickImageY</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>When accessed in a Click or LongClick event gets the Y pixel position on the full size image of the point clicked.</i>
+</li><li><b>ClickViewX</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>When accessed in a Click or LongClick event gets the X pixel position on the view of the point clicked.</i>
+</li><li><b>ClickViewY</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>When accessed in a Click or LongClick event gets the Y pixel position on the view of the point clicked.</i>
+</li><li><b>Color</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [write only]
+<br/><i></i>
+</li><li><b>DoubleTapZoomDuration</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [write only]
+<br/><i>Sets the duration of a double tap zoom animation, in milliseconds. The default is 500ms.</i>
+</li><li><b>EnableCircle</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Gets or sets whether a circle will be drawn at the image coordinates specified by CircleX and CircleY.<BR/>
+The default is False.</i>
+</li><li><b>EnableCircleScale</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i>Gets or sets whether the size of the circle will increase and decrease when the image is zoomed.<BR/>
+If True the circle will resize to bound the same features on the image whatever the zoom.<BR/>
+If False the circle will maintain a fixed size on the screen of the device.<BR/>
+The default is True.</i>
+</li><li><b>Enabled</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>Height</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i></i>
+</li><li><b>Image</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>android.graphics.Bitmap</span> [write only]
+<br/><i>Load an existing Bitmap into the view.<BR/>
+This is unsuitable for large images because it bypasses subsampling and may cause OutOfMemoryErrors.<BR/>
+This is an easy way to add pan and zoom functionality to an image already in memory.</i>
+</li><li><b>ImageFile</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span> [write only]
+<br/><i>Load an image from a file saved on the device file system into the view.<BR/>
+This method can display JPG and PNG images of any size.<BR/>
+In order to support huge images without running out of memory, a sub-sampled base layer is first loaded.<BR/>
+Higher resolution tiles are loaded for the visible area as the user zooms in.</i>
+</li><li><b>IsReady</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span> [read only]
+<br/><i>Gets whether the view is initialised, has dimensions and will display an image.<BR/>
+Returns True if the view is ready to display an image and accept touch gestures.</i>
+</li><li><b>Left</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i></i>
+</li><li><b>MaxZoom</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>
+<br/><i>Gets or set the maximum permitted zoom level of the displayed image. The default is 2.0.<BR/>
+The minimum zoom level is set automatically to fit the entire image to the view.</i>
+</li><li><b>Orientation</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i>Gets or set the orientation of the image relative to the source file.<BR/>
+Valid values for orientation are 0, 90, 180, 270 and -1 or one of the ORIENTATION values.</i>
+</li><li><b>ORIENTATION_0</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Display the image file in its native orientation. Value is 0.</i>
+</li><li><b>ORIENTATION_180</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Rotate the image 180 degrees. Value is 180.</i>
+</li><li><b>ORIENTATION_270</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Rotate the image 270 degrees clockwise. Value is 270.</i>
+</li><li><b>ORIENTATION_90</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Rotate the image 90 degrees clockwise. Value is 90.</i>
+</li><li><b>ORIENTATION_USE_EXIF</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Attempt to use EXIF information on the image to rotate it. Value is -1.</i>
+</li><li><b>Padding</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int()</span>
+<br/><i></i>
+</li><li><b>PAN_LIMIT_CENTER</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Allow the image to be panned until a corner reaches the center of the screen but no further.<BR/>
+Useful when you need to pan any spot on the image to the exact center of the screen.</i>
+</li><li><b>PAN_LIMIT_INSIDE</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Don't allow the image to be panned off screen.<BR/>
+As much of the image as possible is always displayed, centered in the view when it is smaller.</i>
+</li><li><b>PAN_LIMIT_OUTSIDE</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Allow the image to be panned until it is just off screen, but no further.<BR/>
+The edge of the image will stop when it is flush with the screen edge.</i>
+</li><li><b>PanLimit</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [write only]
+<br/><i>Sets the image pan limit to one of the PAN_LIMIT values.<BR/>
+The default is 3 = PAN_LIMIT_CENTER.</i>
+</li><li><b>Parent</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Object</span> [read only]
+<br/><i></i>
+</li><li><b>Scale</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span> [read only]
+<br/><i>Get the current scale of the image as set by the user.<BR/>
+Can only be set programmatically by SetScaleAndCenter or SetScaleAndCenterPixels.</i>
+</li><li><b>SrcHeight</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Get the height of the current full size image in pixels.<BR/>
+Note that this does not take the applied rotation into account.</i>
+</li><li><b>SrcWidth</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [read only]
+<br/><i>Get the width of the current full size image in pixels.<BR/>
+Note that this does not take the applied rotation into account.</i>
+</li><li><b>Tag</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Object</span>
+<br/><i></i>
+</li><li><b>TileBackgroundColor</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span> [write only]
+<br/><i>Default none. Renders a background color behind tiles. Useful when rendering a transparent PNG.<BR/>
+Note: transparent PNGs require double the memory of PNGs with no alpha layer, and may cause out of memory errors.<BR/>
+The default is none.</i>
+</li><li><b>Top</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i></i>
+</li><li><b>Visible</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>
+<br/><i></i>
+</li><li><b>Width</b> <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>
+<br/><i></i>
+</li></ul>
+</li>
+</ul>
+<ul><li><h3>Author: Andrew Graham</h3></li></ul>
+<ul><li><h3>Version: 2.2</h3></li></ul>
+</body>
+</html>

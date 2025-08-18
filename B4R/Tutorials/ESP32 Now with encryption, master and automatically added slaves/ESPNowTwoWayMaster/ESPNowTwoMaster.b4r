@@ -1,0 +1,291 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=resp8266wifi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.7
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 5000
+	#DefineExtra: #include "rCore.h"
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Public bc As ByteConverter
+	
+	Public slavemac(6) As Byte
+	Public mymac(6) As Byte
+	Public key(16) As Byte
+	Public channel As Int
+	Public encrypt As Boolean
+	Dim MacWithoutColons(12) As Byte
+	
+	Dim devices(60) As Byte
+	
+	Public mess(32) As Byte
+	Public messreceived() As Byte
+	
+	Private WiFiAstream As AsyncStreams
+	Public red, green, blue As Byte
+	
+	Private WiFi As ESP8266WiFi
+	Private server As WiFiServerSocket
+	
+	
+	Private Port As UInt = 52000
+	
+	Private ser As B4RSerializator
+	
+	Private AsyncConnected As Boolean
+	
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	Dim KeyText() As Byte = "1234567890123456"
+	bc.ArrayCopy2(KeyText,0,key,0,KeyText.Length)
+	
+	Log("Starting ESP NOW")
+	RunNative("StartESPNow", Null)
+	
+	channel=0
+	encrypt=True
+	'Same key is used for LMK and PMK
+	
+	Log("My Mac is: ",bc.HexFromBytes(mymac))
+	Log("Scanning for devices...")
+	
+	'All slaves start an AP with an SSID name starting with "ESP32SL:" and ending with their mac address.
+	'The master scans all Wifi networks, gets the mac address from the SSID and adds it as a node
+	ScanAndAddSlaves
+	
+	'Start own AP so that another app (e.g. B4J) can connect to the master and get the messages
+	WiFi.StartAccessPoint(JoinStrings(Array As String("ESP32M",bc.HexFromBytes(mymac))))
+	
+	For i=1 To 10
+		Log("Connecting to WiFi...")
+		Log(i)
+		
+		If WiFi.Connect2("SSIDOfYourRouter","PW") Then 
+			Log("Connected to wireless network.")
+			Log("Router ip: ", WiFi.LocalIp)
+			Log("My AP ip: ", WiFi.AccessPointIp)
+			Exit
+		Else
+			Log("Failed to connect...")
+		End If
+	Next
+	server.Initialize(Port, "server_NewConnection")
+	server.Listen
+	Log("Listening on port ",Port)
+
+End Sub
+
+Sub ScanAndAddSlaves
+	
+	Dim Pos As Int
+	Dim DevNr As Int
+	Dim SSID As String
+	Dim numberOfNetworks As Byte = WiFi.Scan
+	Log("Found: ", numberOfNetworks, " networks.")
+	For i = 0 To numberOfNetworks - 1
+		SSID=WiFi.ScannedSSID(i)
+		If bc.StartsWith(SSID,"ESP32SL:") Then 
+			Pos=0
+			Log("Candidate SSDI:",SSID)
+			For l=8 To SSID.Length-2 Step 3
+				If bc.SubString2(SSID,l,l+1)<>":" Then
+					bc.ArrayCopy2(bc.SubString2(SSID,l,l+2),0,MacWithoutColons,Pos,2)
+					Pos=Pos+2
+				End If
+			Next
+			Dim SM As String = bc.StringFromBytes(MacWithoutColons)
+			Log("Slave Mac: ",SM)
+			bc.ArrayCopy2(bc.HexToBytes(SM),0,slavemac,0,6)
+			RunNative("AddSlave", Null)
+			
+			bc.ArrayCopy2(bc.HexToBytes(SM),0,devices,DevNr,DevNr+6)
+			DevNr=DevNr+6
+		End If
+	Next
+	
+End Sub
+
+Sub Server_NewConnection (NewSocket As WiFiSocket)
+	Log("Client connected...",NewSocket.RemoteIp)
+	WiFiAstream.Initialize(NewSocket.Stream, "WiFiastream_NewData", "WiFiastream_Error")
+	AsyncConnected=True
+End Sub
+
+Sub WifiAStream_Error
+	Log("Connection lost. Listening for new connections...")
+	AsyncConnected=False
+	server.Listen
+End Sub
+
+Sub WiFiAStream_NewData (Buffer() As Byte)
+	Dim be(10) As Object
+	Dim data() As Object = ser.ConvertBytesToArray(Buffer, be)
+	Log("Received:")
+	For Each o As Object In data
+		Log(o)
+	Next
+	
+	Select be(0)
+		'React to messages here
+	End Select
+End Sub
+
+private Sub messagesent(res As Int)
+	Log("Result:",res)
+End Sub
+
+private Sub delivery(res As Int)
+	Log("Delivery:",res)
+End Sub
+
+private Sub newmessage
+	Log("New message arrived: ",messreceived)
+	If AsyncConnected Then 
+		WiFiAstream.Write(ser.ConvertArrayToBytes(Array("Mess", messreceived)))
+	End If
+End Sub
+
+
+#if C
+
+
+#include <esp_now.h>
+#include <WiFi.h>
+
+
+// REPLACE WITH YOUR RECEIVER MAC Address
+uint8_t broadcastAddress[6];
+
+esp_now_peer_info_t peerInfo;
+
+
+// Structure example to send data
+// Must match the receiver structure
+typedef struct struct_message {
+  char a[32];
+  int b;
+  float c;
+  String d;
+  bool e;
+} struct_message;
+
+// Create a struct_message called myData
+struct_message myData;
+
+
+// callback when data is sent
+  void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+  //b4r_main::_delivery(status);
+}
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+ 
+  Serial.println("Data received....");
+  memcpy(&myData, incomingData, sizeof(myData));
+  
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("Device: ");
+  Serial.println(myData.a);
+  
+  Serial.print("Int: ");
+  Serial.println(myData.b);
+  Serial.print("Float: ");
+  Serial.println(myData.c);
+  Serial.print("String: ");
+  Serial.println(myData.d);
+  Serial.print("Bool: ");
+  Serial.println(myData.e);
+  Serial.println("--------------------------------------------------------");
+  
+  b4r_main::_messreceived->data = myData.a;
+  b4r_main::_messreceived->length = sizeof(myData.a);
+  
+  b4r_main::_newmessage();
+  
+}
+
+
+
+void StartESPNow(B4R::Object* o) {
+      
+   WiFi.mode(WIFI_MODE_APSTA);
+   Serial.print("Wifi channel: ");
+   Serial.println(WiFi.channel());
+   
+  byte mymac[6]; 
+  WiFi.macAddress(mymac); 
+  memcpy(b4r_main::_mymac->data, mymac,6);
+   
+   uint8_t key[16];
+   memcpy(key, b4r_main::_key->data, 16);
+
+// Init ESP-NOW
+   if (esp_now_init() != ESP_OK) {
+      Serial.println("Error initializing ESP-NOW");
+      return;
+      }
+	  
+  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
+     
+}
+void AddSlave(B4R::Object* o) {
+
+  uint8_t key[16];
+  memcpy(key, b4r_main::_key->data, 16);
+  memcpy(broadcastAddress, b4r_main::_slavemac->data, 6);
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  Serial.println("Adding slave to peer...");
+  
+    
+  peerInfo.channel = b4r_main::_channel;  
+  peerInfo.encrypt = b4r_main::_encrypt;
+  
+  memcpy(peerInfo.lmk, key, 16);
+  esp_now_set_pmk(key);
+  
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+
+}
+
+void SendMessage(B4R::Object* o) {
+
+  memcpy(myData.a, b4r_main::_mess->data, 32);
+  myData.b = random(1,20);
+  myData.c = 1.2;
+  myData.d = "Hello";
+  myData.e = false;
+   
+ 
+ // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
+  b4r_main::_messagesent(result);
+}
+
+#End If

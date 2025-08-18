@@ -1,0 +1,118 @@
+﻿Build1=Default,hk.b4a.imgur.examples
+File1=64bit.png
+File2=Imgur_Icon_2018.png
+File3=Layout.bal
+File4=smile.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=okhttputils2
+Library3=stringutils
+Library4=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddPermission("android.permission.WRITE_EXTERNAL_STORAGE")~\n~AddPermission("android.permission.READ_EXTERNAL_STORAGE")~\n~AddPermission(android.permission.INTERNET)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=clsImgurApi
+Module2=Starter
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Imgur
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#DebuggerForceStandardAssets: true
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Button1 As Button
+	Private Button2 As Button
+	Private Button3 As Button
+	Private obj As clsImgurApi
+	Private Button4 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Activity.Title = "B4A Imgur"
+	If FirstTime Then
+		
+	End If
+	Button1.Text = "POST"
+	Button2.Text = "GET"
+	Button3.Text = "POST2"
+	Button4.Text = "OAuth"
+	obj.Initialize
+End Sub
+
+Sub Activity_Resume
+	copyimage
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	'xui.MsgboxAsync("Hello world!", "B4X")
+	Wait For (obj.sendPostRequest) Complete(res As Boolean)
+	Log("Post: " & res)
+End Sub
+
+Private Sub Button2_Click
+	Wait For (obj.sendGetRequest) Complete(res As Boolean)
+	Log("Get: " & res)
+End Sub
+
+Private Sub Button3_Click
+	Wait For (obj.sendPostRequest2) Complete(res As Boolean)
+	Log("Post2: " & res)
+End Sub
+
+Private Sub Button4_Click
+	Wait For (obj.sendOAuthRequest) Complete(res As Boolean)
+	Log("OAuth2: " & res)
+End Sub
+' Copy samples images from asset to default folder
+Sub copyimage()
+	If File.Exists(File.DirRootExternal, "b4ximgur") = False Then
+		File.MakeDir(File.DirRootExternal, "b4ximgur")
+	End If
+	If File.Exists(File.DirRootExternal & "/b4ximgur", "images") = False Then
+		File.MakeDir(File.DirRootExternal & "/b4ximgur", "images")
+	End If
+	Dim lstImage As List = Array As String("64bit.png", "smile.png", "Imgur_Icon_2018.png")
+	
+	For Each im As String In lstImage
+		If File.Exists(File.DirRootExternal & "/b4ximgur/images", im) = True Then
+			Continue
+		End If
+		If File.Exists(File.DirAssets, im) = False Then
+			Continue
+		End If		
+		Try
+			File.Copy(File.DirAssets, im, File.DirRootExternal & "/b4ximgur/images", im)
+		Catch
+			Log(LastException)
+		End Try		
+	Next	
+End Sub

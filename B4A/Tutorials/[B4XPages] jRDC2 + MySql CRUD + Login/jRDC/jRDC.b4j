@@ -1,0 +1,47 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=config.properties
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jsql
+Library4=jrandomaccessfile
+Library5=javaobject
+Module1=RDCConnector
+Module2=RDCHandler
+Module3=TestHandler
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=3
+Version=8.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+'change based on the jdbc jar file
+#AdditionalJar: mysql-connector-java-5.1.44-bin
+'#AdditionalJar: postgresql-9.4.1207
+
+Sub Process_Globals
+	Public srvr As Server
+	Public rdcConnector1 As RDCConnector
+	Public const VERSION As Float = 2.22
+	Type DBCommand (Name As String, Parameters() As Object)
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("")
+	rdcConnector1.Initialize
+	srvr.Port = rdcConnector1.serverPort
+	srvr.AddHandler("/test", "TestHandler", False)
+	srvr.AddHandler("/rdc", "RDCHandler", False)
+	srvr.Start
+	Log($"jRDC is running (version = $1.2{VERSION})"$)
+	StartMessageLoop
+End Sub
+

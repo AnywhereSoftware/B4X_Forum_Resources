@@ -1,0 +1,104 @@
+﻿Build1=Default,b4a.zsk.ExportRingtone
+File1=mainico.png
+FileGroup1=New Group
+Group=Default Group
+Library1=core
+Library2=ringtoneexporter
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText~\n~(~\n~	<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~	<supports-screens android:largeScreens="true" ~\n~    				  android:normalScreens="true" ~\n~    				  android:smallScreens="true" ~\n~    				  android:anyDensity="true"/>~\n~)~\n~AddApplicationText~\n~(~\n~	<activity android:name="b4a.zsk.FileList.FileListActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"/>~\n~)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ExportRingtone
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private MyRingtoneExporter As RingtoneExporter
+End Sub
+
+Sub Globals
+	Dim LabelType As Label
+	Dim LabelUri As Label
+	Dim SpinnerType As Spinner
+	Dim ButtonPlay As Button
+	Dim ButtonSave As Button
+	Dim ButtonExit As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	MyRingtoneExporter.Initialize("MyRingtoneExporter")
+	InitLayout
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub SpinnerType_ItemClick (Position As Int, Value As Object)
+	If Position = 2 Then
+		LabelUri.Text = "Uri = " & MyRingtoneExporter.setRingtoneType(Position + 2)			'TYPE_ALARM = 4
+	Else
+		LabelUri.Text = "Uri = " & MyRingtoneExporter.setRingtoneType(Position + 1)			'TYPE_RINGTONE = 1, TYPE_NOTIFICATION = 2
+	End If
+End Sub
+
+Sub ButtonPlay_Click
+	MyRingtoneExporter.PlayRingtone
+End Sub
+
+Sub ButtonSave_Click
+	MyRingtoneExporter.SaveRingtone															'BAProcess.applicationContext.getExternalCacheDir()无须权限
+End Sub
+
+Sub ButtonExit_Click
+	Activity.Finish
+	ExitApplication
+End Sub
+
+Sub InitLayout()
+	LabelType.Initialize("")
+	LabelUri.Initialize("")
+	SpinnerType.Initialize("SpinnerType")
+	ButtonPlay.Initialize("ButtonPlay")
+	ButtonSave.Initialize("ButtonSave")
+	ButtonExit.Initialize("ButtonExit")
+	
+	LabelType.Text = "铃声类型"
+	LabelType.TextSize = 14
+	
+	SpinnerType.AddAll(Array As String("RINGTONE", "NOTIFICATION", "ALARM"))				'https://developer.android.google.cn/reference/kotlin/android/media/RingtoneManager?hl=en#type_all
+	
+	LabelUri.Text = "Uri = " & MyRingtoneExporter.setRingtoneType(1)
+	LabelUri.TextSize = 14
+	LabelUri.SingleLine = False
+	
+	ButtonPlay.Text = "播放"
+	ButtonPlay.TextSize = 16
+	
+	ButtonSave.Text = "导出"
+	ButtonSave.TextSize = 16
+	
+	ButtonExit.Text = "退出"
+	ButtonExit.TextSize = 16
+	
+	Activity.AddView(LabelType,     5%X,  7%Y, 20%X, 12%X)
+	Activity.AddView(LabelUri,      5%X, 20%Y, 90%X, 12%X)
+	Activity.AddView(SpinnerType,  30%X,  5%Y, 65%X, 12%X)
+	Activity.AddView(ButtonPlay,    5%X, 35%Y, 90%X, 12%Y)
+	Activity.AddView(ButtonSave,    5%X, 50%Y, 90%X, 12%Y)
+	Activity.AddView(ButtonExit,    5%X, 65%Y, 90%X, 12%Y)
+End Sub

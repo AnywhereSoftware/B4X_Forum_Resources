@@ -1,0 +1,257 @@
+﻿Build1=Default,b4a.tagcsbuilder
+File1=android.png
+File10=windows.png
+File2=flash.png
+File3=Layout1.bal
+File4=light.png
+File5=load.png
+File6=page1.bal
+File7=Page2.bal
+File8=page3.bal
+File9=page4.bal
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=reflection
+Library4=tabstripviewpager
+Library5=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="22"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~	~\n~~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+Module2=TagCSBuilder
+NumberOfFiles=10
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TagCSBuilder Example
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: true
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	Private Label2 As Label
+	Private lblCheckBox As Label
+	Private TabStrip1 As TabStrip
+	Private lblRadio As Label
+	Private lbltext As Label
+	Private lblBmp As Label
+	
+	Dim const latin As String = "Voluit liceret meo est niteretur ignoscendum de ignosco est necessitati omni quemquam acerbo cum atque atque si descensurum excusationem utrum vel quemquam"
+
+	Private lblMargin As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout1")
+	TabStrip1.LoadLayout("page1","Margin")
+	TabStrip1.LoadLayout("page2","Color/font/bullet")
+	TabStrip1.LoadLayout("page3","Clickable text")
+	TabStrip1.LoadLayout("page4","bmp")
+	TabStrip1_PageSelected(0)
+	Dim cs As TagCSBuilder
+	Activity.Title = cs.Initialize.ATS("<o info,40>   <C red>Tag<p><c blue>CSbuilder<P> demo").getCS
+End Sub
+
+Sub Activity_Resume
+	DisplayExample
+	DisplayMap
+	Checkbox_Click(0)
+	Radio_Click(0)
+	DisplayTextLink
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub displayImage
+	Dim cs As TagCSBuilder
+	cs.Initialize
+	cs.ATS("<AC><G white><c black> Icon Margin demo <PA><L2><c white>")
+	cs.ImageMargin(LoadBitmap(File.DirAssets,"flash.png"),10dip).ANS(latin).ATS("<P><L2>")
+	cs.ImageMargin(LoadBitmap(File.DirAssets,"light.png"),10dip).ANS(latin).ATS("<P><L2>")
+	cs.ImageMargin(LoadBitmap(File.DirAssets,"windows.png"),10dip).ANS(latin).ATS("<P><L2>")
+	
+	'
+	cs.ATS("<AC><G white><c black> Superscript AND Suscript demo <PA><L2><c white>")
+	cs.ATS("1<X+>st<P> example, 2<x+>nd<p> example<L>")
+	cs.ATS("Formula for water is H<X-><S10>2<P2>O, the ions are H<X+><S10>+<P2> and OH<X+><S10>-<P2><L>")
+	cs.ATS("Earth moon distance = 3.84 x 10<x+><s10>5<p2> km")
+	lblBmp.Text = cs.GetCS
+End Sub
+
+Sub DisplayTextLink
+	Dim cs As TagCSBuilder
+	cs.Initialize.InitLink(Me,"text",lbltext)
+	cs.ATS("<H1,click> under one of the <H2, underlined words> to make a <H3,toastmessage> appear")
+	cs.ATS("<L2>")
+	lbltext.Text = cs.GetCS
+End Sub
+
+Sub text_click (id  As String)
+	Dim cs As TagCSBuilder
+	ToastMessageShow(cs.Initialize.Image(LoadBitmap(File.DirAssets,"light.png"), 40, 40 ,True ).ATS($"  <C blue>you have click on word ${id}"$).GetCS, False)
+End Sub
+
+Sub DisplayExample
+Dim quotetag As String =$"<M20><Q${Colors.RGB(10,90,30)}><cgray>"$
+Dim txt As String = "Possumus me ego non inquam non homines offendit admodum  falli"
+Dim cs As TagCSBuilder
+cs.Initialize
+
+' tabstop example with different character attribtes, and smart string 
+cs.ATS( _ 
+$"<AC><U>TABSTOP + TEXT ATTRIBUTES EXAMPLES<P2><L><L><T60><T150><T230><G red><c white><T> Title 1 <T> Title 2<T> Title 3 <P2>
+<t>a 1<t>b 1<t>c1
+<c white>row2<t><k>a 2<P><T><u>b 2<p><T><c yellow>c2<P2> 
+<c#10FFFF>row3<T><O1,10> a3<T><O2,10> b3<T><O5,10> c3<pa>"$)
+
+'Margin example : simple, doule margin (first line, other line) 
+cs.ATS("<S14><c10><L><L><AC><U>SIMPLE OR DOUBLE MARGIN EXAMPLE<P2><L>text witout margin<L>")
+cs.ATS("<M40>simple margin 40 a b c d e f g h i j k l m n  o p q r s t u v w x y z<P><L2>")
+
+cs.ATS("<M40, 60>1) double margin first line 40 other lines 60" & txt & "<L>")
+cs.ATS("2) " & txt & txt & "<pa>")
+
+' quote example with smarstring for insert variable value 
+cs.ATS($"<L><L><AC><U>QUOTE EXAMPLE<PA><L><s12>${quotetag}${txt}<L>${txt}<PA>"$)
+
+'set the label1 in one shot
+lblMargin.Text = cs.GetCS
+	
+
+End Sub
+
+Sub DisplayMap
+	Dim cs As TagCSBuilder
+	' iterate with keys
+	cs.Initialize.ATS("<AC><g white><c black> DEFAULT BULLETSMAP <p3><L><c white><T200><U><B>tag<T>display<P2><L>")
+	For Each bullet As String  In cs.BulletsMap.keys ' iterate with key
+		cs.ATS($"<<>O ${bullet}<>> <t> <O ${bullet}> <L>"$)
+	Next
+	' change bullet and typeface for bullet
+	cs.BulletsMap = CreateMap ( "mybullet1" : Chr(0xEB3B), "mybullet2" : Chr(0xE190))
+	cs.BulletTypeFace = Typeface.MATERIALICONS
+	cs.ATS("<PA><L><AC><g red><c black> AFTER  CHANGING BULLLETSMAP <P3><L><T150><T200><U><B>tag<T>tag<T>DISPLAY<P2><L>")
+	'iterate with index
+	For i = 0 To cs.BulletsMap.size-1
+		'cs.ANS($"<O ${cs.BulletsMap.GetKeyAt(i)}>"$).ATS("<t>").ANS($"<O ${i}>"$).ATS($"<t><O ${i}><L>"$)
+		cs.ATS($"<<>O ${cs.BulletsMap.GetKeyAt(i)}<>><t><<>O ${i}<>><t><O ${i}><L>"$)
+	Next
+
+	cs.ATS("<AC><O 0, 25><O 0,20><O 0,15><O 0,10><O 0,15><O 0,20><O 0,25><L>")
+	cs.ATS("<PA><L><AC><g white><c black> DEFAULT COLORSMAP <p3><L><T10><T90><T170><T250>")
+	' colors
+	For i=0 To cs.ColorsMap.Size-1
+		If i Mod 4 = 0 Then cs.GetCS.Append(CRLF)
+		cs.ATS($"<T><C${i}>${i}<p>"$)
+	Next
+	Label2.Text = cs.GetCS
+
+
+End Sub
+
+Sub Checkbox_Click (tagv As Object)
+	Dim cs As TagCSBuilder
+	cs.Initialize.InitLink(Me,"Checkbox",lblCheckBox)
+	Dim i As Int = tagv
+'	If i = 0 Then
+'		cs.ATS("<T30><T120><H1><F1><0xF0A4><T>Ckick Me!<t><c lightgray><O square-o,18><P>")
+'	Else 
+'		cs.ATS("<T30><T120><H0><F1><0xF0A4><T><c red>Ckick Me!<t><C green><O check-square-o,18><P>")
+'	End If
+'	lblCheckBox.Text = cs.GetCS
+
+	If i = 0 Then
+		cs.ATS("<T30><T120><H1><F1><0xF0A4><T>Ckick Me!<t><c lightgray><O 0xF204,30><P>")
+	Else
+		cs.ATS("<T30><T120><H0><F1><0xF0A4><T><c red>Ckick Me!<t><C green><O 0xF205,30><P>")
+	End If
+	lblCheckBox.Text = cs.GetCS
+
+	
+End Sub
+
+Sub Radio_Click(id  As String)
+	Dim cs As TagCSBuilder
+	cs.Initialize.InitLink(Me,"Radio",lblRadio)
+	cs.ATS("<S16><V35>")	
+If id ="1" Then
+	cs.ATS(	"<H1><c green><O2><P> selection 1<p><L>")
+Else
+	cs.ATS(	"<H1><O3> selection 1<p><L>")
+End If
+If id="2" Then
+		cs.ATS(	"<H2><c green><O2><P>< selection 2<P><L>")
+Else
+		cs.ATS(	"<H2><O3> selection 2<P><L>")
+End If
+If id="3" Then
+		cs.ATS(	"<H3><c green><O2><p> selection 3<P><L>")
+Else
+		cs.ATS(	"<H3><O3> selection 3<P><L>")
+End If
+
+lblRadio.Text = cs.getcs
+End Sub
+
+
+
+
+Public Sub GetAllTabLabels (tabstrip As TabStrip) As List
+	Dim jo As JavaObject = tabstrip
+	Dim r As Reflector
+	r.Target = jo.GetField("tabStrip")
+	Dim tc As Panel = r.GetField("tabsContainer")
+	Dim res As List
+	res.Initialize
+	For Each v As View In tc
+		If v Is Label Then res.Add(v)
+	Next
+	Return res
+End Sub
+
+
+
+Sub TabStrip1_PageSelected (Position As Int)
+
+   Dim i As Int
+   Dim cs As TagCSBuilder
+   cs.Initialize
+   Dim format As String 
+   For Each lbl As Label In GetAllTabLabels(TabStrip1)
+	If i = Position Then format = "<C green><O2><L>" Else format ="<C gray><O3><L>"
+	lbl.SingleLine = False
+	Select Case i 
+			Case 0 : lbl.text = cs.ATS("<S14>" & format & "margin<L>tab - quote").GetCS
+			Case 1 : lbl.text = cs.ATS("<S14>"& format & "Default<L>Bullet, color").GetCS
+			Case 2 : lbl.text = cs.ATS("<S14>" & format & "Clickable<L>text").GetCS
+			Case 3 : 
+				lbl.text = cs.ATS("<S14>" & format & "Icon<L>Margin").GetCS
+				displayImage
+		End Select
+    i = i + 1
+	cs.Clear
+   Next
+End Sub

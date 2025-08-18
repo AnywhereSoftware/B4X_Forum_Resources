@@ -1,0 +1,148 @@
+﻿Build1=Default,b4a.example
+Build2=Test,Test_b4a.example
+File1=attention.png
+File2=error.png
+File3=fdm.db
+File4=info1.png
+File5=Layout.bal
+File6=TEST.db
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+Group=Default Group
+Library1=core
+Library2=runtimepermissions
+Library3=sql
+Library4=xui
+Library5=b4xencryption
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=extDBUtils
+Module2=Starter
+NumberOfFiles=6
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: extDBUtils Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	' to learn and proof the extended functions 
+	' -	set project mode: Debug
+	' - start project on device(Do not use Emulator!)
+	' - start project
+	
+	' used example Database:
+	' SQLite 3.0, TEST.db
+	' Table: TEST
+	' Columns: rowid long, TextColumn text, IntegerColum Int, DecimalColumn double,
+	' CrpytoColumn Blob, ImageColumn Blob
+	
+	' NOTICE!
+	' All basic functions of erels DBUtils Vers 2.11 are untouched. For 
+	' information see equivilant post.
+	
+	' ###### TEST extended features #####
+	' a) opens the database and initialize maps and list
+	' this will initialize global extDBUtils.sqlDB. use this global
+	' to set the SQL Parameter in the basic DBUtils functions like
+	' extDBUtils.InsertMaps(SQL.... -> extDBUtils.InsertMaps(extDBUtils.sqlDB,....
+	' use globals:
+	' extDBUtils.SQLValues MAP to transfer Values
+	' extDBUtils.SQLWhere MAP to transfer WHERE clause values
+	' extDBUtils.SQLValuesList List to transfer list of SQLValues Maps
+	' equal to the basic DBUtils functions
+	Log( "DB open: " & extDBUtils.openDB("TEST.db",False,False))
+	
+	' b) clean DB
+	Log("Size new/old: " & extDBUtils.cleanDB("TEST.db"))
+	Log("-------")
+	' c) Date abd Time Functions
+	DtFunc("yyyy/MM/dd","2021/06/01","HH:mm","13:30")
+	Log("-------")
+	
+	' d) Encrption/Decryption
+	Dim resBlob() As Byte = extDBUtils.EncryptText("Welcome Friend","Good luck")
+	Dim resBlob() As Byte = extDBUtils.EncryptText("Welcome Friend","Good luck")
+	Log(extDBUtils.DecryptText(resBlob,"Good luck"))
+	Log("-------")
+	
+	' e) image
+	' examin variables for value
+	Dim imgIN, imgOut As Bitmap
+	Dim imgBlob() As Byte
+	imgIN.Initialize(File.DirAssets,"attention.png")
+	imgBlob = extDBUtils.Image2Blob(imgIN,True)
+	Log("Blob Buffer: " & imgBlob.Length)
+	imgOut = extDBUtils.Blob2Image(imgBlob)
+	Log("Image: " & imgOut.Height & " x " & imgOut.Width)
+	Log("-------")
+	
+	' f) isUnique
+	extDBUtils.SQLWHERE.Clear
+	extDBUtils.sqlwhere.put("TextColumn","ABCDEF")
+	Log("unique value:" & extDBUtils.isUnique("TestTable"))
+	Log("-------")
+	
+	' g) get row ID
+	extDBUtils.SQLWHERE.Clear
+	extDBUtils.sqlwhere.put("TextColumn","ABCDEF")
+	Log("rowID = " & extDBUtils.getRowID("TestTable"))
+	Log("-------")
+	
+	' h1) calc column values over all
+	extDBUtils.SQLWHERE.Clear
+	Log(extDBUtils.calcValue("avg","TestTable","IntegerColumn"))
+	Log(extDBUtils.calcValue("max","TestTable","IntegerColumn"))
+	Log(extDBUtils.calcValue("min","TestTable","IntegerColumn"))
+	Log(extDBUtils.calcValue("sum","TestTable","IntegerColumn"))
+	Log("-------")
+	
+	' x) close db
+	extDBUtils.closeDB
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+private Sub DtFunc(DTF As String,DT As String,TIF As String,  TI As String)
+	Log("Date ticks: " & extDBUtils.Date2Ticks(DTF,DT))
+	Log("Time ticks: " & extDBUtils.Time2Ticks(TIF,TI))
+	Log("DateTime Ticks: " &  extDBUtils.DateTime2Ticks(DTF,TIF,DT,TI))
+	Log("------")
+	Log("Date string: " & extDBUtils.Ticks2Date(DTF, extDBUtils.Date2Ticks(DTF,DT)))
+	Log("Time string:: " & extDBUtils.Ticks2Time(TIF,extDBUtils.Time2Ticks(TIF,TI)))
+	Log("DateTime string: " &  _
+		extDBUtils.Ticks2DateTime(DTF,TIF,extDBUtils.DateTime2Ticks(DTF,TIF,DT,TI)))
+End Sub

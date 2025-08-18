@@ -1,0 +1,125 @@
+﻿Build1=Default,com.visualnet.vpfullsample2
+File1=layMain.bal
+File2=layVideoList.bal
+File3=poster1.jpg
+File4=poster2.jpg
+File5=poster3.jpg
+File6=poster4.jpg
+File7=poster5.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=appcompat
+Library3=videoplayerfullscreen
+Library4=xcustomlistview
+Library5=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~~\n~SetActivityAttribute(Main, android:configChanges, "orientation|screenSize|keyboardHidden")~\n~SetActivityAttribute(Main, android:screenOrientation, "portrait")~\n~'SetActivityAttribute(Main, android:configChanges, "orientation|screenSize")~\n~~\n~    	~\n~'SetApplicationAttribute(android:theme, "@style/Theme.AppCompat")~\n~'SetApplicationAttribute(android:theme, "@style/AppTheme")~\n~  ~\n~  ~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'SetApplicationAttribute(ndroid:theme, "@style/AppTheme")~\n~'CreateResourceFromFile(Macro, Themes.AppCompat)~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:theme, "@style/Theme.AppCompat")~\n~
+Module1=Starter
+NumberOfFiles=7
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.01
+@EndOfDesignText@
+#Region  Project Attributes 
+
+	#ApplicationLabel: VideoPlayer
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+    '#AdditionalRes: D:\eclipse\VideoPlayerFullScreen\samples\sample1\ResVideoPlayer
+	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private CustomListView1 As CustomListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	Activity.LoadLayout("layVideoList")
+
+	CustomListView1.Clear
+	CustomListView1.AsView.Color = Colors.Transparent
+
+	SU_CreateRow("Video1", "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4","poster1.jpg")
+	SU_CreateRow("Video2", "https://docs.google.com/uc?export=download&id=15mxi2qUROBuTNrYKda6M2vDzfGiQYbQf","poster2.jpg")
+	SU_CreateRow("Video3", "https://file-examples.com/wp-content/uploads/2017/04/file_example_MP4_480_1_5MG.mp4","poster3.jpg")
+	SU_CreateRow("Video4", "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4","poster4.jpg")
+	SU_CreateRow("Video5", "https://docs.google.com/uc?export=download&id=1epTMvIQFavyJfXjiD0wHHPD809vqZHJZ","poster5.jpg")
+	
+End Sub
+
+Sub SU_CreateRow(pTitle As String, pUrl As String, pAsset As String)
+	
+	Dim p As Panel : p.Initialize("")
+	p.SetLayout(0, 0, CustomListView1.AsView.Width, 200dip)
+	CustomListView1.Add(p, p.tag)
+	p.LoadLayout("layMain")
+	p.Color = Colors.Transparent
+	
+	Dim objVideo As VideoPlayerFullScreen
+	objVideo.Initialize("objVideo")
+	Dim pPanel As Panel = p.GetView(0)
+	objVideo = pPanel.GetView(0)
+	objVideo.Visible = True
+	objVideo.DebugMode(True)
+	objVideo.URL(pUrl,pTitle)
+	objVideo.ThumbnailImage(LoadBitmap(File.DirAssets,pAsset))
+	
+End Sub
+
+Sub objVideo_onInitialized()
+	Log("[VideoPlayerFullScreen1_onInitialized]")
+End Sub
+
+Sub Activity_Resume
+	Log("[Activity_Resume]")
+End Sub
+
+Sub objVideo_onState(State As Int)
+	Log("[VideoPlayerFullScreen1_onState]" & FU_StateName(State))
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub FU_StateName(State As Int) As String
+	
+	Dim strRet As String = ""
+	
+	Select Case State
+		Case -1: strRet = "STATE_IDLE"
+		Case 0: strRet = "STATE_NORMAL"
+		Case 1: strRet = "STATE_PREPARING"
+		Case 2: strRet = "STATE_PREPARING_CHANGING_URL"
+		Case 3: strRet = "STATE_PREPARED"
+		Case 4: strRet = "STATE_PLAYING"
+		Case 5: strRet = "STATE_PAUSE"
+		Case 6: strRet = "STATE_AUTO_COMPLETE"
+		Case 7: strRet = "STATE_ERROR"
+	End Select
+	
+	Return strRet
+	
+End Sub

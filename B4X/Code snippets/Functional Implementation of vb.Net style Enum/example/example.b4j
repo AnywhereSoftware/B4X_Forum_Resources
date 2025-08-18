@@ -1,0 +1,121 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.87
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private Root As B4XView
+	Private xui As XUI
+
+	Private playlist As List
+	Private lv As ListView
+	Private ButtonShuffle As Button
+	Private ButtonPlay As Button
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Show
+	playlist.Initialize
+	playlist.Add("A")
+	playlist.Add("B")
+	playlist.Add("C")
+	playlist.Add("D")
+	playlist.Add("E")
+	playlist.Add("F")
+	playlist.Add("G")
+	playlist.Add("H")
+	playlist.Add("I")
+	playlist.Add("J")
+	playlist.Add("K")
+	playlist.Add("L")
+	playlist.Add("M")
+	playlist.Add("N")
+	playlist.Add("O")
+	playlist.Add("P")
+	playlist.Add("Q")
+	playlist.Add("R")
+	playlist.Add("S")
+	playlist.Add("T")
+	playlist.Add("U")
+	playlist.Add("V")
+	playlist.Add("W")
+	playlist.Add("X")
+	playlist.Add("Y")
+	playlist.Add("Z")
+	lv.Items.Clear					'CHANGE
+	
+	Log("===== PlayList (create) =========")
+	For i = 0 To playlist.Size-1
+		lv.Items.Add(playlist.Get(i))	'CHANGE
+		Log(playlist.Get(i))
+	Next
+	Log("=================================")
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello World!", "B4X")
+End Sub
+
+Sub ShuffleList(pl As List) As List
+  For i = pl.Size - 1 To 0 Step -1
+    Dim j As Int
+		Dim k As Object
+    j = Rnd(0, i + 1)
+    k = pl.Get(j)
+    pl.Set(j,pl.Get(i))
+    pl.Set(i,k)
+  Next
+	Return pl 
+End Sub
+
+Sub GetNextFromPL As String
+	Dim t As Object
+	Dim res As String
+	t = playlist.Get(0)
+	res = t
+	playlist.RemoveAt(0)
+	playlist.Add(t)
+	Return res
+End Sub
+
+Sub ButtonPlay_Click
+	xui.MsgboxAsync("Next is " & GetNextFromPL, True)	'CHANGE
+	lv.Items.Clear	'CHANGE
+	For i = 0 To playlist.Size-1
+		lv.Items.add(playlist.Get(i))		'CHANGE
+		Log(playlist.Get(i))
+	Next
+	
+End Sub
+
+Sub ButtonShuffle_Click
+	playlist = ShuffleList(playlist)
+	Log("===== PlayList (shuffle) =========")
+	lv.Items.Clear	'CHANGE
+	For i = 0 To playlist.Size-1
+		lv.Items.add(playlist.Get(i))		'CHANGE
+		Log(playlist.Get(i))
+	Next
+	Log("=================================")
+		
+End Sub
+
+Private Sub lv_SelectedIndexChanged(Index As Int)		'CHANGE
+	
+End Sub

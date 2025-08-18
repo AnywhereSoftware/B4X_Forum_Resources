@@ -1,0 +1,61 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2_nonui
+Library3=json
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+
+	Private S20IP As String = "a.b.c.d" ' <<< Set your Sonoff S20's IP address here
+	Private action As String = "state" ' <<< Use 'on', 'off', or 'toggle'; anything else is considered 'report current state'
+
+End Sub
+
+Sub AppStart (Args() As String)
+
+	Act
+	StartMessageLoop
+
+End Sub
+
+Sub Act
+
+	Dim uri As String = "http://" & S20IP & "/cm?cmnd=Power"
+
+	Select Case action
+		Case "on", "off", "toggle"
+			uri = uri & "%20" & action
+	End Select
+
+	Try
+		Dim Job As HttpJob
+		Job.Initialize("ActOnSonoffS20", Me)
+		Job.Download(uri)
+		Wait For (Job) JobDone(Job As HttpJob)
+		If Job.Success Then
+			Dim parser As JSONParser
+			parser.Initialize(Job.GetString)
+			Dim m As Map = parser.NextObject
+			Log("Success - current state is: " & m.GetDefault("POWER", Job.GetString))
+		Else
+			Log("Error: " & Job.ErrorMessage)
+		End If
+		Job.Release
+	Catch
+		Log("Error: " & LastException)
+	End Try
+
+	StopMessageLoop
+
+End Sub

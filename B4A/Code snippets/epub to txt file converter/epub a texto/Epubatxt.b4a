@@ -1,0 +1,156 @@
+﻿Build1=Default,flm.b4a.demoebook
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=contentresolver
+Library2=core
+Library3=epubreader
+Library4=fileprovider
+Library5=httputils2
+Library6=sql
+Library7=webreader
+Library8=webviewextras2
+Library9=b4xcollections
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~	~\n~	~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:hardwareAccelerated, "true")~\n~SetApplicationAttribute(android:requestLegacyExternalStorage, "true")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~~\n~'SetApplicationAttribute(android:theme, "@android:style/Theme.Translucent") ~\n~'SetActivityAttribute(transparente, android:theme, @android:style/Theme.Translucent.NoTitleBar)~\n~'End of default text.~\n~~\n~AddPermission("android.permission.RECORD_AUDIO")~\n~AddPermission("android.permission.MODIFY_AUDIO_SETTINGS")~\n~~\n~~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.READ_INTERNAL_STORAGE)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.WRITE_INTERNAL_STORAGE)~\n~~\n~~\n~'**************************************************************************~\n~'FileProvider~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <files-path name="name" path="shared" />~\n~)~\n~'IME~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~~\n~'Receive files~\n~AddActivityText(Main,~\n~<intent-filter>~\n~   <action android:name="android.intent.action.VIEW" />~\n~   <category android:name="android.intent.category.DEFAULT" />~\n~   <data android:mimeType="text/*" />~\n~</intent-filter>)~\n~~\n~~\n~
+Module1=FileHandler
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=1
+Version=11.5
+@EndOfDesignText@
+#Region  Project Attributes
+    #ApplicationLabel: EPUB 2 TXT
+    #VersionCode: 1
+    #VersionName:
+    'SupportedOrientations possible values: unspecified, landscape or portrait.
+    #SupportedOrientations: unspecified
+    #CanInstallToExternalStorage: False
+    #IgnoreWarnings: 15, 16
+#End Region
+
+#Region  Activity Attributes
+    #FullScreen: True
+    #IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Dim Reader As ePubReader
+	Dim Navigator As ePubNavigator
+End Sub
+
+Sub Globals
+	Private WbRd As WebReader
+	Private Label1 As Label
+	Dim BaseURL As String
+	Dim fname As String
+	Dim WebViewExtras1 As WebViewExtras
+	Dim tmplist As List
+	Private FileHandler1 As FileHandler
+	Private Label2 As Label
+	Private Button1 As Button
+	Private Label3 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'**** PERMISOS
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_READ_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	Activity.LoadLayout("main.bal")
+	Dim JavascriptInterface1 As DefaultJavascriptInterface
+	JavascriptInterface1.Initialize
+	WebViewExtras1.Initialize(WbRd)
+	WebViewExtras1.AddJavascriptInterface(JavascriptInterface1, "B4A") 'linea modificada
+	FileHandler1.Initialize
+	tmplist.Initialize
+	Reader.Initialize
+End Sub
+Sub OpenFile(ePubFile As String)
+	Dim UnZipFolder As String = File.Combine(File.DirInternalCache, "epub")
+	Reader.UnZip(ePubFile, UnZipFolder, "Unzip")
+	Dim Book As ePubBook = Reader.ReadWithoutLoading(ePubFile, "UTF-8")
+	Label2.Text = Book.Title
+	Dim OpfResource As String = Book.OpfResource.Href
+	BaseURL = "file://" & File.Combine(UnZipFolder, OpfResource.SubString2(0, Max(0, OpfResource.LastIndexOf("/"))))
+	Navigator.Initialize(Book, "Navig")
+	
+	Navigator.GoToFirstSpineSection
+	Dim ini As Int = Navigator.CurrentSpinePos
+	Navigator.GoToLastSpineSection
+	Dim fin As Int = Navigator.CurrentSpinePos
+
+	ProgressDialogShow2("Convirtiendo Epub a Texto",False)
+	tmplist.Clear	
+	Sleep(0)
+	Do While ini<=fin
+		Navigator.GoToSpineSection(ini)
+		UpdateViews
+		Sleep(1000)
+		ini=ini+1
+	Loop
+	ProgressDialogShow2("Guardando Archivo TXT...",False)
+	File.WriteList(File.DirRootExternal&"/", Label2.Text&".txt",tmplist)
+	Sleep(1000)
+	File.Delete(File.DirRootExternal&"/", fname)
+	ProgressDialogHide
+	Label3.Text="TXT Creado en: "&File.DirRootExternal&"/"&Label2.Text&".txt"
+	'Log(File.DirRootExternal&"/"&Label2.Text&".txt")
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed Then
+		'Cleans the cache folder
+		Dim CacheDir As String = BaseURL.Replace("file://", "")
+		Dim LstFiles As List = File.ListFiles(CacheDir)
+		For i = 0 To LstFiles.Size - 1
+			File.Delete(CacheDir, LstFiles.Get(i))
+		Next
+	End If
+End Sub
+Sub UpdateViews
+	Label1.Text = Navigator.CurrentSpinePos & " / " & Navigator.CurrentResource.Id
+	WbRd.LoadUrl(File.Combine(BaseURL, Navigator.CurrentResource.Href))
+End Sub
+Sub Unzip_Progression(NbOfUnzippedFiles As Int, UnzippedFile As String)
+	'This event is raised after each file is unzipped by Reader.UnZip
+	Log("Unzip: " & NbOfUnzippedFiles & " " & UnzippedFile)
+End Sub
+Sub WbRd_OverrideUrl (Url As String) As Boolean
+End Sub
+Sub WbRd_PageFinished (Url As String) 'aqui llama script que extrae texto del html
+	Dim Javascript As String
+	Javascript="B4A.CallSub('Crear_TXT', true, document.documentElement.innerText)"   'ActiveElement werkt wel!
+	WebViewExtras1.executeJavascript(Javascript)
+End Sub
+Sub Crear_TXT(Read1 As String)
+	'Log("Texto plano: "&Read1)
+	Dim tpp As String
+	Dim tpl() As String
+	tpl=(Regex.split(CRLF,Read1))
+	If tpl.Length>1 Then
+		For ppi=0 To tpl.Length-1
+			tpp=tpl(ppi).Trim
+			tmplist.Add(tpp)
+			Sleep(0)
+		Next
+		tmplist.Add(CRLF)
+	End If
+End Sub
+Private Sub Button1_Click
+	Wait For (FileHandler1.Load("epub")) Complete (Resultado As LoadResult)
+	fname = Resultado.RealName
+	If Resultado.Success Then
+		Label2.Text=""
+		Label3.Text=""
+		File.Copy("ContentDir", Resultado.FileName, File.DirRootExternal&"/", fname)
+		OpenFile(File.Combine(File.DirRootExternal&"/", fname))
+	End If
+End Sub
+Sub Navig_AfterJump(Event As ePubNavigationEvent)
+	'This event is raised when the GoTo functions of the ePUB navigator are called
+	Log("Jump: " & Event.OldSpinePos & " -> " & Event.CurrentSpinePos)
+	Log("      " & Event.OldResource.Id & " -> " & Event.CurrentResource.Id)
+End Sub

@@ -1,0 +1,44 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rspi
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private PCF As SPI
+    Dim buffIn(64), buffOut(64) As Byte
+	Dim stat=False As bool
+End Sub
+
+'more on SPI :https://www.arduino.cc/en/Reference/SPI
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Do Until stat=True
+'		"only 2 configurations of pins are accepted by this library 6,7,8,0 or 14,12,13,15
+		 stat = PCF.Initialize(14,12,13,15)
+		 If stat = False Then Log("Pins NOK") Else Log("Pins OK")
+		 Delay(1000)
+	Loop
+	PCF.begin
+	PCF.beginTransaction(PCF.clock_SPI_CLOCK_DIV8,PCF.bitOrder_LSBFIRSTS,PCF.dataMode_SPI_MODE1)
+	PCF.setHwCs(True)
+	PCF.setDataMode(0x44)
+	PCF.setBitOrder(PCF.bitOrder_LSBFIRSTS)
+	PCF.transferBytes(buffOut,buffIn, 64)
+End Sub
+
+

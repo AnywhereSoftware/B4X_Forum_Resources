@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+ <title>B4J - System login example</title>
+ <link rel="stylesheet" type="text/css" href="index.css" />
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+ </head>
+ <body>
+	
+	<form id="registerForm">
+		<h1>Register as a new user or <a href="signin.html">sign in</a></h1>
+	    <div>
+			<label for="name">Name:</label>
+			<input type="text" name="username" />
+		</div>
+		<div>
+			<label for="password">Password:</label>
+			<input type="password" name="password" id="password" />
+		</div>
+		<div>
+			<label for="verify">Verify password:</label>
+			<input type="password" id="verify" />
+		</div>
+		
+		<br/>
+		<script type="text/javascript"
+		 src="https://www.google.com/recaptcha/api/challenge?k=6LcDKfASAAAAAP4JUE_Lq8D5zUswcviBtocXdvGs"> <!-- change to your public key -->
+	  </script>
+	  <noscript>
+		 <iframe id="captcha" src="https://www.google.com/recaptcha/api/noscript?k=6LcDKfASAAAAAP4JUE_Lq8D5zUswcviBtocXdvGs" <!-- change to your public key -->
+			 height="300" width="500" frameborder="0"></iframe><br>
+		 <textarea name="recaptcha_challenge_field" rows="3" cols="40">
+		 </textarea>
+		 <input type="hidden" name="recaptcha_response_field"
+			 value="manual_challenge">
+	  </noscript>
+		<br/>
+	  <div id="btnRegister">
+			<button type="submit">Register</button>
+		</div>
+	</form>
+	<script>
+	$( document ).ready(function() {
+		
+		$("#btnRegister").click(function(e) {
+			e.preventDefault();
+			if ($("#verify").val() !=  $("#password").val()) {
+				alert("Password do not match!");
+				return;
+			}
+			$.ajax({
+				type: "POST",
+				url: "registerHelper",
+				data: $("#registerForm").serialize(), 
+			   success: function(result)
+			   {
+				   if (result.success) {
+						window.location  = 'members/index.html';
+				   }
+				   else {
+						alert(result.errorMessage);
+						Recaptcha.reload();
+				   }
+			   },
+				error: function (xhr, ajaxOptions, thrownError) {
+					alert(thrownError);
+					Recaptcha.reload();
+				}
+			});
+			
+		});
+	});
+	</script>
+
+ </body>

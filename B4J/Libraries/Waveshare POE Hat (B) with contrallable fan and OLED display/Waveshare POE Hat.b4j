@@ -1,0 +1,44 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jpi4j
+Library4=jnetwork
+Module1=fan
+Module2=i2c
+Module3=ssd1306
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=3
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+#CommandLineArgs:
+#MergeLibraries: True 
+#JavaCompilerPath: 8, C:\Program Files\Java\jdk1.8.0_144\bin\javac.exe
+#End Region
+Sub Process_Globals
+ Dim IP As String 
+End Sub
+ 
+Sub AppStart (Args() As String)
+ 
+	ssd1306.init(1, 0x3c)
+	ssd1306.Delay_ms(200)
+	ssd1306.reset
+	ssd1306.set_power(1)
+	ssd1306.cls
+	
+	fan.Init(1,0x20)
+ fan.Temp_Control_Enable(40)	
+	
+	Dim local As ServerSocket
+ local.Initialize(8888, "")
+ IP=local.GetMyIP
+	ssd1306.WriteText($"IP : ${IP}"$, 0, 0, False)
+	
+ StartMessageLoop
+End Sub
+ 

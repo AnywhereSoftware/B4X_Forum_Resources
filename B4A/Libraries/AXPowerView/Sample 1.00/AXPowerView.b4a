@@ -1,0 +1,98 @@
+﻿Build1=Default,com.aghajari.axpowerview.sample
+Group=Default Group
+Library1=core
+Library2=axpowerview
+Library3=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~CreateResource(values,style.xml,<resources>~\n~~\n~    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">~\n~        <item name="colorPrimary">#071735</item>~\n~        <item name="colorPrimaryDark">#071735</item>~\n~        <item name="colorAccent">#03DAC5</item>~\n~        <item name="android:windowBackground">#071735</item>~\n~    </style>~\n~~\n~</resources>)~\n~~\n~SetApplicationAttribute(android:theme, "@style/AppTheme")
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AXPowerView
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#Extends : androidx.appcompat.app.AppCompatActivity
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim PowerView As AXPowerView
+	Dim Status As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Color = 0xFF071735
+	
+	Dim Size As Int = 164dip
+	PowerView.Initialize("Amir")
+	Activity.AddView(PowerView,50%x - (Size/2) , 50%y - (Size/2) , Size , Size)
+	PowerView.AutoStart = True
+	PowerView.MainColor = 0xFF55A4F1
+	PowerView.InnerColor = Colors.White
+	
+	Status.Initialize("")
+	Activity.AddView(Status,0,100%y-36dip,-1,20dip)
+	Status.TextSize = 16
+	Status.Gravity = Gravity.CENTER
+	Status.Typeface = Typeface.DEFAULT_BOLD
+	Status.TextColor = Colors.White
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub Amir_onAnimationEnded (CurrentState As Object, NextState As Object)
+	Amir_onStateChanged(NextState,NextState,True)
+End Sub
+
+Private Sub Amir_onStateChanged (CurrentState As Object, NextState As Object, AnimationLoaded As Boolean)
+	Select NextState
+		Case PowerView.STATE_SUCCEED
+			Status.Text = "CONNECTED!"
+		Case PowerView.STATE_POWER,PowerView.STATE_RELOADING
+			Status.Text = "CONNECT"
+		Case PowerView.STATE_LOADING
+			Status.Text = "CONNECTING..."
+		Case PowerView.STATE_HIDDEN
+			Status.Text = ""
+	End Select
+End Sub
+
+Private Sub Amir_Click
+	If PowerView.CurrentState = PowerView.STATE_HIDDEN Then
+		PowerView.SetState(PowerView.STATE_POWER)
+	else if PowerView.CurrentState = PowerView.STATE_POWER Then
+		PowerView.SetState(PowerView.STATE_LOADING)
+	else if PowerView.CurrentState = PowerView.STATE_LOADING Then
+		PowerView.SetState(PowerView.STATE_SUCCEED)
+	Else
+		PowerView.SetState(PowerView.STATE_POWER)
+	End If
+End Sub
+
+Private Sub Amir_LongClick As Boolean
+	If PowerView.CurrentState = PowerView.STATE_LOADING Then
+		PowerView.SetState(PowerView.STATE_POWER)
+		Return True
+	End If
+	Return False
+End Sub

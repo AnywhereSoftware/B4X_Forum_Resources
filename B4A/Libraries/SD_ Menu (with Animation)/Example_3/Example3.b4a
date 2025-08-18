@@ -1,0 +1,89 @@
+﻿Version=6.5
+NumberOfModules=1
+Module1=Starter
+Build1=Default,b4a.example
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=5
+File1=1.png
+File2=2.png
+File3=3.png
+File4=4.png
+File5=5.png
+NumberOfLibraries=4
+Library1=core
+Library2=javaobject
+Library3=reflection
+Library4=sd_menu
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SD Menu Library Example
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim Ro As RollOutMenu
+	Dim SM As SideMenu
+	End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim Button1,Button2 As Button
+	
+	Button1.Initialize("Button1")
+	Button1.Text="Roll MENU"
+	Activity.AddView(Button1,100dip,10dip,150dip,40dip)
+	
+	Button2.Initialize("Button2")
+	Button2.Text="Side MENU"
+	Activity.AddView(Button2,100dip,60dip,150dip,40dip)
+	
+	Ro.Initialize("Ro",Me,True,50dip)
+	SM.Initialize("Side",Me,False,50dip)
+	
+	For i=1 To 5
+		Ro.AddImageButton(LoadBitmap(File.DirAssets, I & ".png"),i)
+		SM.AddImageButton(LoadBitmap(File.DirAssets, I & ".png"),i)
+	Next
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub Button1_Click 
+	Ro.Open(True)
+End Sub
+
+Sub Ro_Click (ID As String)
+	ToastMessageShow(ID,False)
+End Sub
+
+Sub Button2_Click 
+	SM.Open(True)
+End Sub
+
+Sub Side_Click (ID As String)
+	ToastMessageShow(ID,False)
+End Sub

@@ -1,0 +1,91 @@
+﻿Version=4.1
+IconFile=
+NumberOfModules=3
+Module1=Service1
+Module2=Class1
+Module3=Code1
+Build1=Default,b4a.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=2
+Library1=core
+Library2=javaobject
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private nativeMe As JavaObject
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		nativeMe.InitializeContext
+	End If
+	nativeMe.RunMethod("Test", Null)
+	Dim c As Class1
+	c.Initialize
+	StartService(Service1)
+	Code1.Init
+	Activity.AddMenuItem("Example1", "Example1")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+#If JAVA
+import android.view.*;
+public void Test() {
+	setProgressBarIndeterminateVisibility(true);
+}
+public void _onCreate() {
+	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+}
+public void _onResume() {
+	BA.Log("OnResume");
+}
+public void _onPause() {
+	BA.Log("onPause");
+}
+public void _onDestroy() {
+	BA.Log("_onDestroy");
+}
+public void _onStop() {
+	BA.Log("_onStop");
+}
+public void _onStart() {
+	BA.Log("_onStart");
+}
+public void _onPrepareOptionsMenu (Menu menu) {
+	BA.Log("_onPrepareOptionsMenu");
+}
+public boolean _onCreateOptionsMenu (Menu menu) {
+	BA.Log("_onCreateOptionsMenu");
+	return false;
+}
+#End IF
+
+

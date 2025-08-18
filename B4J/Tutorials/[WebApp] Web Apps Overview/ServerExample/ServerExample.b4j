@@ -1,0 +1,208 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example,SERVER
+File1=Dynamic.html
+FileGroup1=Default Group
+Group=Default Group
+Library1=byteconverter
+Library10=jstringutils
+Library11=jbuilderutils
+Library2=encryption
+Library3=jcore
+Library4=jdateutils
+Library5=jexcel
+Library6=jokhttputils2
+Library7=jserver
+Library8=json
+Library9=jsql
+Module1=ChartsHelper
+Module10=Guess
+Module11=HttpsFilter
+Module12=JsonHelper
+Module13=Logout
+Module14=MembersFilter
+Module15=MembersHandler
+Module16=PushB4A
+Module17=PushBrowser
+Module18=PushShared
+Module19=Quiz
+Module2=Chat
+Module20=RegexHelper
+Module21=RegisterHelper
+Module22=ResetMyNumber
+Module23=SigninHelper
+Module24=Smiley
+Module25=TableHelper
+Module26=WebSocketWithFileUpload
+Module27=WebUtils
+Module28=WSDBUtilsExample
+Module29=WSGuessMyNumber
+Module3=ChatLogin
+Module30=WSRegex
+Module4=ChatShared
+Module5=DatePicker
+Module6=DB
+Module7=DBUtils
+Module8=Dynamic
+Module9=FileHelper
+NumberOfFiles=1
+NumberOfLibraries=11
+NumberOfModules=30
+Version=8.8
+@EndOfDesignText@
+'Non-UI application (console application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: false 
+	#AdditionalJar: mysql-connector-java-5.1.27-bin
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+	Public settings As Map
+	Public SQLite As SQL 'SQLite connections should be shared directly, without a pool.
+	Public TempDir As String 
+	Public SQLite As SQL
+End Sub
+
+Sub AppStart (Args() As String)
+	TempDir = File.Combine(File.DirApp, "temp")
+	settings = File.ReadMap(File.DirApp, "settings.txt")
+	If File.Exists(TempDir, "") = False Then
+		File.MakeDir(TempDir, "")
+	End If
+	
+	srvr.Initialize("srvr")
+	'ConfigureSSL(8888)
+	srvr.Port = settings.Get("Port")
+	'********* Comment out this section if there is no MySQL db running
+	'You should also remove the #AdditionalJar attribute
+	'members registration example
+	DB.init 'MySQL database
+	DB.CreateUserTableIfNeeded
+	srvr.AddHandler("/login_example/registerHelper", "RegisterHelper", False)
+	srvr.AddHandler("/login_example/signinHelper", "SigninHelper", False)
+	srvr.AddHandler("/login_example/members/membersHandler", "MembersHandler", False)
+	srvr.AddHandler("/login_example/members/logout", "Logout", False)
+	'add filter to protect the members only folder
+	srvr.AddFilter("/login_example/members/*", "MembersFilter", False)
+	'reports
+	srvr.AddHandler("/reports/tableHelper", "TableHelper", False)
+	'********************************************************************
+	
+	'json
+	srvr.AddHandler("/json/jsonHelper", "JsonHelper", False)
+	'guess my number
+	srvr.AddHandler("/guessmynumber/guess", "Guess", False)
+	srvr.AddHandler("/guessmynumber/reset", "ResetMyNumber", False)
+	
+	'charts
+	srvr.AddHandler("/reports/chartsHelper", "ChartsHelper", False)
+	'regex
+	srvr.AddHandler("/regex/regexHelper", "RegexHelper", False)
+	'guess my number WS
+	srvr.AddWebSocket("/guessmynumber_ws/ws", "WSGuessMyNumber")
+	'regex WS
+	srvr.AddWebSocket("/regex_ws/ws", "WSRegex")
+	'dbutils example WS
+	SQLite.InitializeSQLite(File.DirApp, "dbutils.db", True)
+	CreateDBUtilsExampleTables
+	srvr.AddWebSocket("/dbutils/ws", "WSDBUtilsExample") 
+	'smiley WS
+	srvr.AddWebSocket("/smiley/ws", "Smiley")
+	'dynamic controls
+	srvr.AddWebSocket("/dynamic/ws", "Dynamic")
+	'websocket with file upload feature
+	srvr.AddWebSocket("/websocket_with_fileupload/ws", "WebSocketWithFileUpload")
+	srvr.AddHandler("/websocket_with_fileupload/filehelper", "FileHelper", False)
+	'date picker
+	srvr.AddWebSocket("/datepicker/ws", "DatePicker")
+	'Chat example
+	ChatShared.Init
+	srvr.AddWebSocket("/chat/login", "ChatLogin")
+	srvr.AddWebSocket("/chat/main", "Chat")
+	'Quiz example
+	srvr.AddWebSocket("/quiz/ws", "Quiz")
+	'Push example
+	PushShared.Init
+	srvr.AddWebSocket("/push/b4a_ws2", "PushB4A")
+	srvr.AddWebSocket("/push/ws", "PushBrowser")
+	
+	srvr.DebugNetworkLatency = 200
+	srvr.Start
+	Log("Server started")
+	StartMessageLoop
+End Sub
+
+Private Sub ConfigureSSL (SslPort As Int) 'ignore
+	'example of SSL connector configuration
+	Dim ssl As SslConfiguration
+	ssl.Initialize
+	ssl.SetKeyStorePath(File.DirApp, "test2.keystore") 'path to keystore file
+	ssl.KeyStorePassword = "123456"
+	ssl.KeyManagerPassword = "654321"
+	srvr.SetSslConfiguration(ssl, SslPort)
+	'add filter to redirect all traffic from http to https
+	srvr.AddFilter("/*", "HttpsFilter", False)
+End Sub
+
+'create the tables of the DBUtils example if the database is empty
+'This call also sets the journal mode to wal. This allows the same SQLite database to be used
+'by multiple threads.
+Private Sub CreateDBUtilsExampleTables
+	If SQLite.ExecQuerySingleResult( _
+		"SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Students'") = 0 Then
+		SQLite.ExecNonQuery("PRAGMA journal_mode = wal") 'best mode for multithreaded apps.
+		Log("journal mode: " & SQLite.ExecQuerySingleResult("PRAGMA journal_mode"))
+		Dim m As Map
+		m.Initialize
+		m.Put("Id", DBUtils.DB_TEXT)
+		m.Put("First Name", DBUtils.DB_TEXT)
+		m.Put("Last Name", DBUtils.DB_TEXT)
+		m.Put("Birthday", DBUtils.DB_INTEGER)
+		Dim l1 As List
+		l1.Initialize
+		l1.AddAll(Array As String("1", "2", "3"))
+		DBUtils.CreateTable(SQLite, "Students", m, "Id")
+		DBUtils.CreateTable(SQLite, "Grades", _
+			CreateMap("Id": DBUtils.DB_TEXT, "Test": DBUtils.DB_TEXT, "Grade": DBUtils.DB_INTEGER), "")
+		'fill the students table
+		Dim ListOfMaps As List
+		ListOfMaps.Initialize
+		Dim id As Int
+		For i = 1 To 20
+			Dim m As Map
+			m.Initialize
+			id = Rnd(id + 1, id + 10000)
+			m.Put("Id", NumberFormat2(id, 6, 0, 0, False))
+			m.Put("First Name", "John")
+			m.Put("Last Name", "Smith" & i)
+			m.Put("Birthday", DateTime.Add(DateTime.Now, Rnd(-100, 0), Rnd(-12, 0), Rnd(-30, 0)))
+			ListOfMaps.Add(m)
+		Next
+		DBUtils.InsertMaps(SQLite, "Students", ListOfMaps)
+		'fill the grades table
+		Dim Table As List
+		Table = DBUtils.ExecuteMemoryTable(SQLite, "SELECT Id FROM Students", Null, 0)
+		'Table is a list of arrays. Each array holds a single item.
+		Dim Cols() As String
+		Dim ListOfMaps As List
+		ListOfMaps.Initialize
+		For test = 1 To 20
+			For student = 0 To Table.Size - 1
+				Dim m As Map
+				m.Initialize
+				Cols = Table.Get(student)
+				m.Put("Id", Cols(0))
+				m.Put("Test", "Test #" & NumberFormat(test, 2, 0))
+				m.Put("Grade", Rnd(0, 101)) 'The upper value is exclusive
+				ListOfMaps.Add(m)
+			Next
+		Next
+		DBUtils.InsertMaps(SQLite, "Grades", ListOfMaps)
+	End If
+End Sub
+
+
+
+

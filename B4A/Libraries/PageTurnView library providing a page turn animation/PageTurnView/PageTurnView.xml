@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.agraham.pageturnview.CurlViewWrapper</name>
+        <shortname>PageTurnView</shortname>
+        <comment>This library contains a View that presents a Bitmap as a book page and simulates the
+turning of pages with an animation in reponse to touch events. It is based on an OpenGL
+implementation by Harri Smått at https://github.com/harism/android_page_curl with
+additions by Andrew Graham to adapt it for use with Basic4android.
+This library is based on page_curl-339d9e0.zip whose sources are dated 8/8/11
+The library is released under Apache 2.0 and can be used in commercial or personal projects.
+
+Copyright 2011 Harri Smått
+Copyright 2011 Andrew Graham
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</comment>
+        <objectwrapper>anywheresoftware.b4a.agraham.pageturnview.CurlView</objectwrapper>
+        <owner>activity</owner>
+        <event>GetPages() As Int 'Called when the number of pages is required. Return the number of pages</event>
+        <event>GetBitmap(Width as Int, Height As Int, Page as Int) As Bitmap 'Called when the Bitmap for the given page number is required. Return the Bitmap</event>
+        <event>Click</event>
+        <event>LongClick</event>
+        <method>
+            <name>RunOnGuiThread</name>
+            <comment>Causes the specified Sub to be scheduled for execution on the main GUI thread.
+This mechanism is the only way a thread can access GUI items. This call returns
+immediately and the Sub will be run at some indeterminate time in the future.
+Returns True if the Sub was found otherwise returns False.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>sub</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>params</name>
+                <type>java.lang.Object[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BringToFront</name>
+            <comment>Changes the Z order of this view and brings it to the front.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>RequestFocus</name>
+            <comment>Tries to set the focus to this view.
+Returns True if the focus was set.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>RemoveView</name>
+            <comment>Removes this view from its parent.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetBackgroundImage</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Bitmap</name>
+                <type>android.graphics.Bitmap</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OnPause</name>
+            <comment>You must call this method in your Sub OnPause.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Invalidate3</name>
+            <comment>Invalidates the given rectangle.
+Redrawing will only happen when the program can process messages. Usually when it finishes running the current code.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Left</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Top</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Right</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Bottom</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Invalidate2</name>
+            <comment>Invalidates the given rectangle.
+Redrawing will only happen when the program can process messages. Usually when it finishes running the current code.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Rect</name>
+                <type>android.graphics.Rect</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetMarginPixels</name>
+            <comment>Set the visible margins in pixels around a page displayed in the view.
+This is a conveninece call to SetMArgins that allows dips to be used to specifiy sizes.
+This must be called after this view has been added to a parent view and its size defined
+because values are stored as a scaling factor of this views width and height at the time of this call.
+If the view size is changed subsequently this method will need to be called again.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>left</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>top</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>right</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>bottom</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialise the PageViewTurn with its event name and the smoothness of the page turn.
+The value for this was 10 in version 1.0 but this is insufficient for larger screen
+higher resolution devices where the line segments making up the page curl can be see.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>eventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>smoothness</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RecycleBitmap</name>
+            <comment>Free the native object associated with the bitmap, and clear the reference
+to the pixel data. This operation cannot be reversed, so it should only be called
+if you are sure there are no further uses for the bitmap.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>bitmap</name>
+                <type>android.graphics.Bitmap</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RecoverMemory</name>
+            <comment>Force a garbage collection to try to recover all avalable memory.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Invalidate</name>
+            <comment>Invalidates the whole view forcing the view to redraw itself.
+Redrawing will only happen when the program can process messages. Usually when it finishes running the current code.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetLayout</name>
+            <comment>Changes the view position and size.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Left</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Top</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Width</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Height</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OnResume</name>
+            <comment>You must call this method in your Sub OnResume.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetMargins</name>
+            <comment>Set the visible margins in pixels around a page displayed in the view.
+These values are specified as a scaling factor of the view width or height as appropriate.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>left</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>top</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>right</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>bottom</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SendToBack</name>
+            <comment>Changes the Z order of this view and sends it to the back.</comment>
+            <returntype>void</returntype>
+        </method>
+        <property>
+            <name>Enabled</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Top</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>top</name>
+                <type>int</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Visible</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Visible</name>
+                <type>boolean</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Background</name>
+            <returntype>android.graphics.drawable.Drawable</returntype>
+            <parameter>
+                <name>drawable</name>
+                <type>android.graphics.drawable.Drawable</type>
+            </parameter>
+            <comment>Gets or sets the background drawable.</comment>
+        </property>
+        <property>
+            <name>Height</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>height</name>
+                <type>int</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Left</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>left</name>
+                <type>int</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>AllowLastPageCurl</name>
+            <parameter>
+                <name>allowLastPageCurl</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Allow the last page to curl. The default is to permit this.</comment>
+        </property>
+        <property>
+            <name>Color</name>
+            <parameter>
+                <name>color</name>
+                <type>int</type>
+            </parameter>
+            <comment>Sets the background color - or the OpenGL clear color to be more precise.
+You should call this in Activity_Resume as it is lost on an activity pause.</comment>
+        </property>
+        <property>
+            <name>TwoPages</name>
+            <parameter>
+                <name>twopages</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sets the view mode. If TwoPages is True then two pages are laid out on the visible area.
+otherwise the right page occupies the view. The default is one page.</comment>
+        </property>
+        <property>
+            <name>Tag</name>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>tag</name>
+                <type>java.lang.Object</type>
+            </parameter>
+            <comment>Gets or sets the Tag value. This is a place holder which can used to store additional data.</comment>
+        </property>
+        <property>
+            <name>Width</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>width</name>
+                <type>int</type>
+            </parameter>
+            <comment>Gets or sets the view's width.</comment>
+        </property>
+        <property>
+            <name>Version</name>
+            <returntype>double</returntype>
+            <comment>Returns the version number of the library.</comment>
+        </property>
+        <property>
+            <name>CurrentPage</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+            <comment>Get or set the current page. Page numbering starts at 0 like an array.</comment>
+        </property>
+        <property>
+            <name>RenderLeftPage</name>
+            <parameter>
+                <name>renderLeftPage</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sets whether left side page is rendered. This is useful mostly for situations where the
+right (main) page is aligned to left side of screen and the left page is not visible anyway.
+The default is to render the left page.</comment>
+        </property>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.agraham.pageturnview.CurlViewWrapper.TextPaginator</name>
+        <shortname>TextPaginator</shortname>
+        <comment>TextPaginator will split a String into pages according to a set of specified page and paint parameters.
+
+The paginated text is stored internally and may be rendered to a Bitmap on demand.</comment>
+        <owner>process</owner>
+        <method>
+            <name>GetPageBitmap</name>
+            <comment>Return a Bitmap containing the text specified rendered onto the background color.</comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>backcolor</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Paginate</name>
+            <comment>Paginate the provided text into lines and pages and store them internally ready for use.
+The text must end with a Char(10) - CRLF, so the library will add one if this is not so.
+However, depending on how you build your text it is probably more efficient to ensure that it
+is already terminated when passed.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetPageParameters</name>
+            <comment>Set the parameters of the page to be used to render text onto. Width and height are the
+size of the page in pixels. Leftmargin and topmargin determine the position of the text
+within the page and a right and a bottom margin of the same sizes are assumed. Linespacing
+determines the vertical spacing between lines as a multiple of the normal character height
+A value of 1.0 specifies the normal spacing, increase or decrease it to change the spacing.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>alignment</name>
+                <type EnumType="true">android.text.Layout.Alignment</type>
+            </parameter>
+            <parameter>
+                <name>width</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>leftmargin</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>height</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>topmargin</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>linespacing</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetPaintParameters</name>
+            <comment>Set the parameters of the Paint that will be used to render the text.
+These are the same as for Basic4android Canvas.DrawText except for antialias which
+if True smooths out the edges of what is being drawn.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>typeface</name>
+                <type>android.graphics.Typeface</type>
+            </parameter>
+            <parameter>
+                <name>textsize</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>color</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>antialias</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <property>
+            <name>PageCount</name>
+            <returntype>int</returntype>
+            <comment>Return the number of pages in the most recent pagination.</comment>
+        </property>
+        <field>
+            <name>ALIGN_OPPOSITE</name>
+            <comment></comment>
+            <returntype EnumType="true">android.text.Layout.Alignment</returntype>
+        </field>
+        <field>
+            <name>ALIGN_NORMAL</name>
+            <comment></comment>
+            <returntype EnumType="true">android.text.Layout.Alignment</returntype>
+        </field>
+        <field>
+            <name>ALIGN_CENTER</name>
+            <comment></comment>
+            <returntype EnumType="true">android.text.Layout.Alignment</returntype>
+        </field>
+    </class>
+    <version>1.4</version>
+    <comment>This PageTurnView inherits the properties and methods of a normal Basic4android view.
+Some are overriden to provide the correct behaviour of this view, some will work correctly
+while others may have no, or a detrimental effect when invoked. Experiment will inform.
+
+There are no touch or click events available as the page turning animation swallows all gestures.
+
+Note that the PageTurnerView events run on a separate thread to the main thread.
+They therefore must not try to manipulate GUI elements or an exception will occur.
+The RunOnGuiThread method allows an event to invoke a Sub to be run on the main thread.
+
+The GetPages() As Int event is called when the number of pages is required.
+Return the total number of pages that are available for display.
+
+The GetBitmap(Width as Int, Height As Int, Page as Int) As Bitmap event is called when
+the Bitmap for the given page number is required. Return the appropriate Bitmap.
+If the returned Bitmap is not of the requested size it will be displayed scaled to fit.</comment>
+    <author>Andrew Graham</author>
+</root>

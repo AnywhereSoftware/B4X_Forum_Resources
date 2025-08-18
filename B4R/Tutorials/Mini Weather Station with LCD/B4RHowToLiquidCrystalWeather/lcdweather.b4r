@@ -1,0 +1,243 @@
+﻿Version=1
+NumberOfModules=0
+Build1=Default,B4RDev
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=rcore
+Library2=rsfe_bmp180
+Library3=rliquidcrystal
+Library4=rdht
+@EndOfDesignText@
+#Region Project Notes
+'B4R HowTo Mini Weather Station with LiquidCrytal LCD and sensors BMP180, DHT11
+'Additional Libraries:
+'rLiquidCrystal
+'rSFE_BMP180 [many thanks to Erel from Anywhere Software www.b4x.com]
+'rDHT [many thanks to Inakigarm from the b4r forum)]
+'Hardware: Arduino UNO
+'Wiring
+'LCD		Arduino
+'RS			- 12
+'Enable 	- 11
+'D4 		- 5
+'D5			- 4
+'D6			- 3
+'D7			- 2
+'R/W		- GND
+'VSS		- GND
+'VCC		- 5V
+'10K resistor ends to +5V and GND, wiper (middle pin) to LCD VO
+'
+'BMP180		Arduino		WireColors
+'3.3v --	3.3v		Red
+'GND ---	GND			Black
+'SDA ---	A4			Yellow
+'SCL ---	A5			Blue
+'       
+'DHT11		Arduino	WireColors
+'3.3v --	3.3v		Red
+'GND --		GND			Black
+'DATA --	7			Yellow
+'
+'v20160614 by rwblinn.de
+#end region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private CAPPNAME1 As String = "Weather Station"
+	Private CAPPNAME2 As String = "by rwblinn.de"
+	Public Serial1 As Serial
+	'
+	Private LCD As LiquidCrystal
+	Private LCDCharArrowUp As Byte = 0
+	Private LCDCharArrowDown As Byte = 1
+	Private LCDCharArrowEq As Byte = 2
+	Private BMP180 As SFE_BMP180
+    Public DHT11 As dht
+    Public DHT11pin As Pin
+	Private Temperature, Pressure, PressureSeaLevel, Altitude, Humidity As Double
+	Private PrevTemperature, PrevPressure, PrevAltitude, PrevHumidity As Double
+	'Set the reference altitude in meters
+	Private ALTITUDEHAMBURG As Double = 27.0
+	'Timer every 5 seconds
+	Private Timer1 As Timer
+	Private TimerInterval As Double = 5000
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'Init the LCD display with Pins RS, RW, E, Datapins
+	LCD.Initialize(12,255,11, Array As Byte(5,4,3,2))
+	'Columns, Rows
+	LCD.Begin(16,2)
+	'Turn the backlight on (default is turned off)
+   	LCD.DisplayOn = True
+	'Define the special characters used for the trend
+	RunNative("createChar", Null)
+   	'Show who made this
+	LCD.SetCursor(0, 0)
+	LCD.Write(CAPPNAME1) 
+   	LCD.SetCursor(0, 1)
+	LCD.Write(CAPPNAME2) 
+    'Init the DHT11 (delivering temperature and humidity). Arduino Pin 7 is used
+	DHT11pin.Initialize(7 ,DHT11pin.MODE_INPUT)        
+	'Init the BMP180 barometic sensonsor
+	BMP180.Initialize
+	'Set an initial value to the previous measures
+	PrevTemperature = 0
+	PrevPressure = 0
+	PrevAltitude = 0
+	PrevHumidity = 0
+	'Start the timer every n seconds 
+	Timer1.Initialize("Timer1_Tick", TimerInterval)
+	Timer1.Enabled = True
+End Sub
+
+Private Sub Timer1_Tick
+	'Clear the LC first
+	LCD.Clear
+	If Not(BMP180.GetTemperature) Then 
+		'		   0123456789012345
+		LCD.SetCursor(0,0)
+		LCD.write("Error BMP180")
+		LCD.SetCursor(0,1)
+		LCD.write("Reading Data")
+		Log("Error retrieving temperature data from the BMP180 sensor.")
+		Return
+	End If
+	Temperature = BMP180.LastResult
+'	Log("Temperature [C]:", Temperature) 
+	BMP180.GetPressure(0, Temperature)
+	Pressure = BMP180.LastResult
+'	Log("Pressure [mBar]:", Pressure) 
+	PressureSeaLevel = BMP180.Sealevel(Pressure, ALTITUDEHAMBURG)
+'	Log("PressureSeaLevel [mBar]:",PressureSeaLevel)	
+	Altitude = BMP180.Altitude(Pressure, PressureSeaLevel)
+'	Log("Altitude [m]:", Altitude)
+	'
+    DHT11.Read11(DHT11pin.PinNumber)
+    Humidity=DHT11.GetHumidity
+	'Update LCD
+	Dim x As UInt = 2
+	'Line1 = TEMP + HUMIDITY
+	'0123456789012345
+	'T:ttttCD_H:hhh%D
+	LCD.SetCursor(0,0)
+	LCD.write("T:")
+	LCD.SetCursor(2,0)
+	LCD.Write(Round(Temperature))
+	LCD.SetCursor(6,0)
+	LCDWriteTrend(Temperature, PrevTemperature)
+	PrevTemperature = Temperature
+	LCD.SetCursor(8,0)
+	LCD.write("H:")
+	LCD.SetCursor(10,0)
+	LCD.Write(Round(Humidity))
+	If Humidity = 100 Then x = 3
+	LCD.SetCursor(10 + x,0)
+	LCDWriteTrend(Humidity, PrevHumidity)
+	PrevHumidity = Humidity
+
+	'Line2 = PRESSURE+ALTITUDE
+	'0123456789012345
+	'P:ppppD_A:aaaaD
+	LCD.SetCursor(0,1)
+	LCD.write("P:")
+	LCD.SetCursor(2,1)
+	LCD.Write(Round(Pressure))
+	LCD.SetCursor(6,1)
+	LCDWriteTrend(Pressure, PrevPressure)
+	PrevPressure = Pressure
+	LCD.SetCursor(8,1)
+	LCD.write("A:")
+	LCD.SetCursor(10,1)
+	LCD.Write(Round(Altitude))
+	x = 2
+	If Altitude > 100 Then x = 3
+	If Altitude > 1000 Then x = 4
+	LCD.SetCursor(10 + x,1)
+'	RunNative("writeChar", CharArrowEq)
+	LCDWriteTrend(Altitude , PrevAltitude)
+	PrevAltitude = Altitude
+	'
+End Sub
+
+'Write the trend identicator (special character) depending current and previous value
+Sub LCDWriteTrend(c As Double, p As Double)
+	Dim result As Byte = LCDCharArrowEq
+	c = Round(c)
+	p = Round(p)
+	If c < p Then result = LCDCharArrowDown
+	If c > p Then result = LCDCharArrowUp
+	RunNative("writeChar", result)
+End Sub
+
+'Inline C to define the special characters
+'Usage:
+'	Private CharArrowUp As Byte = 0
+'	Private CharArrowDown As Byte = 1
+'	Private CharArrowEq As Byte = 2
+'	RunNative("createChar", Null)
+'	lcd.SetCursor(0,0)
+'	RunNative("writeChar", CharArrowUp)
+'	lcd.SetCursor(5,0)
+'	RunNative("writeChar", CharArrowDown)
+'	lcd.SetCursor(10,0)
+'	RunNative("writeChar", CharArrowEq)
+#if C
+Byte arrowup[8] = {
+  B00000,
+  B00100,
+  B01110,
+  B11111,
+  B00100,
+  B00100,
+  B00100,
+  B00000
+};
+
+Byte arrowdown[8] = {
+  B00000,
+  B00100,
+  B00100,
+  B00100,
+  B11111,
+  B01110,
+  B00100,
+  B00000
+};
+
+Byte arroweq[8] = {
+  B00000,
+  B00000,
+  B11111,
+  B00000,
+  B11111,
+  B00000,
+  B00000,
+  B00000
+};
+
+//Create the special chars:0=arrow up, 1=arrow down, 2=arrow equal
+//Use:
+//RunNative("createChar", Null)
+void createChar(B4R::Object* o) {
+   b4r_main::_lcd->lc->createChar(0, arrowup);
+   b4r_main::_lcd->lc->createChar(1, arrowdown);
+   b4r_main::_lcd->lc->createChar(2, arroweq);
+}
+
+//Write a special chart to the display: 0=arrow up, 1=arrow down, 2=arrow equal
+//Use:
+//lcd.SetCursor(0,1)
+//RunNative("writeChar", 0)
+void writeChar(B4R::Object* o) {
+   b4r_main::_lcd->lc->write((Byte)o->toULong());
+}
+#end if

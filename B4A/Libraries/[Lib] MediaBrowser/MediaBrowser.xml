@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.05</doclet-version-NOT-library-version>
+    <class>
+        <name>flm.media.browser.MediaBrowser</name>
+        <shortname>MediaBrowser</shortname>
+        <owner>process</owner>
+        <event>MediaCompleted</event>
+        <event>ScanCompleted(Path As String)</event>
+        <event>SeekCompleted</event>
+        <method>
+            <name>GetExifLatLong</name>
+            <comment>Stores the latitude and longitude value of the specified image in a float array. Returns False if these Exif data are not available.
+Location = complete path name for the file.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Location</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>LatLong</name>
+                <type>float[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetImageDimensions</name>
+            <comment>Returns a map containing width and height of the specified file.
+Location = complete path name for the file.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>Location</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaPosition</name>
+            <comment>Gets the current playback position.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>MediaLength</name>
+            <comment>Returns the duration in ms.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>MediaPause</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetAudioFieldByID</name>
+            <comment>Returns a field from the MediaStore about the specified audio file.
+Examples of field: FIELD_COMPOSER, FIELD_DATE_MODIFIED, FIELD_MIME_TYPE, FIELD_SIZE...</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>Field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetVideoFileInfoByID</name>
+            <comment>Returns a Map containing info from the MediaStore about a video file.
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Resolution" (can be Null for some files)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetMediaAudioList</name>
+            <comment>Returns a Map containing a list of all Audio files in the MediaStore which can be sorted.
+
+The allowed fields for sorting are:
+Null (= FIELD_ID)
+FIELD_ALBUM
+FIELD_ARTIST
+FIELD_COMPOSER
+FIELD_DATA (location)
+FIELD_DATE_ADDED
+FIELD_DATE_MODIFIED
+FIELD_DISPLAY_NAME
+FIELD_DURATION
+FIELD_MIME_TYPE
+FIELD_SIZE
+FIELD_TITLE
+FIELD_TRACK
+FIELD_YEAR
+  
+The fields that are returned are:
+"ID"
+"Title"
+"Album"
+"Artist"
+"Track"
+"Year"
+"Location"
+"DisplayName"
+"Duration" (in ms)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>SortCol</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaAudioPlay</name>
+            <comment>Plays an audio file.
+Raises the "MediaCompleted" event when the file end is reached.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ScanNewMedia</name>
+            <comment>Requests the media scanner to scan the given files and add them to the MediaStore.
+ Raises the "ScanCompleted" event after each file is scanned.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>Paths</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetExtVideoFileInfo</name>
+            <comment>Returns a Map containing info from the MediaStore about an external video file.
+Location = complete path name for the file.
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Resolution" (can be Null for some files)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>Location</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaResume</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetVideoThumbnailByID</name>
+            <comment>Returns the micro thumbnail (96x96) or mini thumbnail (512x384) of a video file (it is generated if it doesn't exist). 
+There's a known bug on some Android versions with micro thumbnails:
+If the micro thumbnail can't be generated (e.g. video file format not recognized), the result is either null or a random thumbnail. Thus, for video files, it is strongly recommended to check if the mini thumbnail is initialized before trying to get the micro thumbnail.</comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>Mini</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetImageFileInfoByID</name>
+            <comment>Returns a Map containing info from the MediaStore about an image file.
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Height" (with Android 3.0+)
+"Width" (with Android 3.0+)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaSeek</name>
+            <comment>Seeks to specified time position (in ms).
+Raises the event "SeekCompleted" when the position change has been completed.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>position</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetExtImageFileInfo</name>
+            <comment>Returns a Map containing info from the MediaStore about an external image file.
+Location = complete path name for the file.
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Height" (with Android 3.0+)
+"Width" (with Android 3.0+)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>Location</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaStop</name>
+            <comment>Stops the playback and releases the allocated resources.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>MediaIsPlaying</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetMediaVideoList</name>
+            <comment>Returns a Map containing a list of all Video files in the MediaStore which can be sorted.
+  
+The allowed fields for sorting are:
+Null (= FIELD_ID)
+FIELD_DATA (location)
+FIELD_DATE_ADDED
+FIELD_DATE_MODIFIED
+FIELD_DATE_TAKEN
+FIELD_DISPLAY_NAME
+FIELD_MIME_TYPE
+FIELD_RESOLUTION
+FIELD_SIZE
+FIELD_TITLE
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Resolution" (can be Null for some files)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>SortCol</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaSetVolume</name>
+            <comment>Sets the volume on this player (and this player only).
+Note that the passed volume values are raw scalars. UI controls should be scaled logarithmically.
+This function must be called AFTER MediaAudioPlay.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>leftVolume</name>
+                <type>float</type>
+            </parameter>
+            <parameter>
+                <name>rightVolume</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetMediaImageList</name>
+            <comment>Returns a Map containing a list of all Image files in the MediaStore which can be sorted.
+
+The allowed fields for sorting are:
+Null (= FIELD_ID)
+FIELD_DATA (location)
+FIELD_DATE_ADDED
+FIELD_DATE_MODIFIED
+FIELD_DATE_TAKEN
+FIELD_DISPLAY_NAME
+FIELD_HEIGHT
+FIELD_MIME_TYPE
+FIELD_ORIENTATION
+FIELD_SIZE
+FIELD_TITLE
+FIELD_WIDTH
+  
+The fields that are returned are:
+"ID"
+"Location"
+"DisplayName"
+"DateTaken" (in ticks from 1970)
+"Height" (with Android 3.0+)
+"Width" (with Android 3.0+)
+"Size" (in bytes)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>SortCol</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAudioFileInfo</name>
+            <comment>Returns a Map containing info from the MediaStore about an audio file.
+  
+The fields that are returned are:
+"ID"
+"Title"
+"Album"
+"Artist"
+"Track"
+"Year"
+"Location"
+"DisplayName"
+"Duration" (in ms)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>File</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetExifAttribute</name>
+            <comment>Returns the requested attribute from the Exif data of the specified image.  
+Location = complete path name for the file.
+The complete list of attributes can be found here: https://developer.android.com/reference/android/media/ExifInterface</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Location</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Attribute</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetVideoFieldByID</name>
+            <comment>Returns a field from the MediaStore about the specified video file.
+Examples of field: FIELD_DATE_ADDED, FIELD_DATE_MODIFIED, FIELD_MIME_TYPE...</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>Field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetImageFieldByID</name>
+            <comment>Returns a field from the MediaStore about the specified image file.
+Examples of field: FIELD_DATE_MODIFIED, FIELD_MIME_TYPE, FIELD_ORIENTATION...</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>Field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetImgThumbnailByID</name>
+            <comment>Returns the micro thumbnail (96x96) or mini thumbnail (512x384) of an image file (it is generated if it doesn't exist).</comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>Mini</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAudioFileInfoByID</name>
+            <comment>Returns a Map containing info from the MediaStore about an audio file.
+  
+The fields that are returned are:
+"ID"
+"Title"
+"Album"
+"Artist"
+"Track"
+"Year"
+"Location"
+"DisplayName"
+"Duration" (in ms)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>External</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>ID</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MediaIsLooping</name>
+            <comment>Checks whether the player is looping or non-looping.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>MediaSetLooping</name>
+            <comment>Sets the player to be looping or non-looping.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Looping</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <field>
+            <name>FIELD_DATE_MODIFIED</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_DURATION</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_ID</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_DATE_ADDED</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_DATE_TAKEN</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_DATA</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_SIZE</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_TRACK</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_ALBUM</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_RESOLUTION</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_ORIENTATION</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_ARTIST</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_YEAR</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_WIDTH</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_MIME_TYPE</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_TITLE</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_COMPOSER</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_DISPLAY_NAME</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>Tag</name>
+            <comment></comment>
+            <returntype>java.lang.Object</returntype>
+        </field>
+        <field>
+            <name>FIELD_DESCRIPTION</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FIELD_HEIGHT</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+    </class>
+    <version>1.4</version>
+    <author>F. Leneuf-Magaud</author>
+</root>

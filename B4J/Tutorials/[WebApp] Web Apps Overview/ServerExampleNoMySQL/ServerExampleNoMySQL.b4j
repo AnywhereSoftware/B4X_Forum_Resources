@@ -1,0 +1,181 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=Dynamic.html
+FileGroup1=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=javaobject
+Library3=jcore
+Library4=jdateutils
+Library5=jserver
+Library6=json
+Library7=jsql
+Module1=ChartsHelper
+Module10=HttpsFilter
+Module11=JsonHelper
+Module12=ManyImages
+Module13=PushB4A
+Module14=PushBrowser
+Module15=PushShared
+Module16=Quiz
+Module17=RegexHelper
+Module18=ResetMyNumber
+Module19=SessionCreator
+Module2=Chat
+Module20=Smiley
+Module21=WebSocketWithFileUpload
+Module22=WebUtils
+Module23=WSDBUtilsExample
+Module24=WSGuessMyNumber
+Module25=WSRegex
+Module3=ChatLogin
+Module4=ChatShared
+Module5=DatePicker
+Module6=DBUtils
+Module7=Dynamic
+Module8=FileHelper
+Module9=Guess
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=25
+Version=8.8
+@EndOfDesignText@
+'Non-UI application (console application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: true
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+	Public SQLite As SQL 'SQLite connections should be shared directly, without a pool.
+	Public TempDir As String
+	Private KeyStorePassword As String = ""
+End Sub
+
+Sub AppStart (Args() As String)
+	TempDir = File.Combine(File.DirApp, "temp")
+	If File.Exists(TempDir, "") = False Then
+		File.MakeDir(TempDir, "")
+	End If
+	SQLite.InitializeSQLite(File.DirApp, "dbutils.db", True)
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	'add a filter that will create the session before the websocket upgrade request.
+	'this is required for Safari to work properly with WebSocket sessions.
+	srvr.AddFilter("/b4j_ws.js", "SessionCreator", False)
+	'json
+	srvr.AddHandler("/json/jsonHelper", "JsonHelper", False)
+	'guess my number
+	srvr.AddHandler("/guessmynumber/guess", "Guess", False)
+	srvr.AddHandler("/guessmynumber/reset", "ResetMyNumber", False)
+	
+	'charts
+	srvr.AddHandler("/reports/chartsHelper", "ChartsHelper", False)
+	'regex
+	srvr.AddHandler("/regex/regexHelper", "RegexHelper", False)
+	'guess my number WS
+	srvr.AddWebSocket("/guessmynumber_ws/ws", "WSGuessMyNumber")
+	'regex WS
+	srvr.AddWebSocket("/regex_ws/ws", "WSRegex")
+	'dbutils example WS
+	CreateDBUtilsExampleTables
+	srvr.AddWebSocket("/dbutils/ws", "WSDBUtilsExample") 
+	'smiley WS
+	srvr.AddWebSocket("/smiley/ws", "Smiley")
+	'dynamic controls
+	srvr.AddWebSocket("/dynamic/ws", "Dynamic")
+	'websocket with file upload feature
+	srvr.AddWebSocket("/websocket_with_fileupload/ws", "WebSocketWithFileUpload")
+	srvr.AddHandler("/websocket_with_fileupload/filehelper", "FileHelper", False)
+	'date picker
+	srvr.AddWebSocket("/datepicker/ws", "DatePicker")
+	'Chat example
+	ChatShared.Init
+	srvr.AddWebSocket("/chat/login", "ChatLogin")
+	srvr.AddWebSocket("/chat/main", "Chat")
+	'Quiz example
+	srvr.AddWebSocket("/quiz/ws", "Quiz")
+	'Push example
+	PushShared.Init
+	srvr.AddWebSocket("/push/b4a_ws2", "PushB4A")
+	srvr.AddWebSocket("/push/ws", "PushBrowser")
+	srvr.AddHandler("/manyimages", "ManyImages", False)
+	srvr.DebugNetworkLatency = 200
+	'ConfigureSSL(51143)
+	srvr.Start
+	Log("Server started")
+	StartMessageLoop
+End Sub
+
+Private Sub ConfigureSSL (SslPort As Int) 'ignore
+	'example of SSL connector configuration
+	Dim ssl As SslConfiguration
+	ssl.Initialize
+	ssl.SetKeyStorePath(File.DirApp, "domain.keystore") 'path to keystore file
+	ssl.KeyStorePassword = KeyStorePassword
+	ssl.KeyManagerPassword = KeyStorePassword
+	srvr.SetSslConfiguration(ssl, SslPort)
+	'add filter to redirect all traffic from http to https
+	'
+	'srvr.AddFilter("/*", "HttpsFilter", False)
+End Sub
+
+'create the tables of the DBUtils example if the database is empty
+'This call also sets the journal mode to wal. This allows the same SQLite database to be used
+'by multiple threads.
+Private Sub CreateDBUtilsExampleTables
+	If SQLite.ExecQuerySingleResult( _
+		"SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Students'") = 0 Then
+		SQLite.ExecNonQuery("PRAGMA journal_mode = wal") 'best mode for multithreaded apps.
+		Log("journal mode: " & SQLite.ExecQuerySingleResult("PRAGMA journal_mode"))
+		Dim m As Map
+		m.Initialize
+		m.Put("Id", DBUtils.DB_TEXT)
+		m.Put("First Name", DBUtils.DB_TEXT)
+		m.Put("Last Name", DBUtils.DB_TEXT)
+		m.Put("Birthday", DBUtils.DB_INTEGER)
+		Dim l1 As List
+		l1.Initialize
+		l1.AddAll(Array As String("1", "2", "3"))
+		DBUtils.CreateTable(SQLite, "Students", m, "Id")
+		DBUtils.CreateTable(SQLite, "Grades", _
+			CreateMap("Id": DBUtils.DB_TEXT, "Test": DBUtils.DB_TEXT, "Grade": DBUtils.DB_INTEGER), "")
+		'fill the students table
+		Dim ListOfMaps As List
+		ListOfMaps.Initialize
+		Dim id As Int
+		For i = 1 To 20
+			Dim m As Map
+			m.Initialize
+			id = Rnd(id + 1, id + 10000)
+			m.Put("Id", NumberFormat2(id, 6, 0, 0, False))
+			m.Put("First Name", "John")
+			m.Put("Last Name", "Smith" & i)
+			m.Put("Birthday", DateTime.Add(DateTime.Now, Rnd(-100, 0), Rnd(-12, 0), Rnd(-30, 0)))
+			ListOfMaps.Add(m)
+		Next
+		DBUtils.InsertMaps(SQLite, "Students", ListOfMaps)
+		'fill the grades table
+		Dim Table As List
+		Table = DBUtils.ExecuteMemoryTable(SQLite, "SELECT Id FROM Students", Null, 0)
+		'Table is a list of arrays. Each array holds a single item.
+		Dim Cols() As String
+		Dim ListOfMaps As List
+		ListOfMaps.Initialize
+		For test = 1 To 20
+			For student = 0 To Table.Size - 1
+				Dim m As Map
+				m.Initialize
+				Cols = Table.Get(student)
+				m.Put("Id", Cols(0))
+				m.Put("Test", "Test #" & NumberFormat(test, 2, 0))
+				m.Put("Grade", Rnd(0, 101)) 'The upper value is exclusive
+				ListOfMaps.Add(m)
+			Next
+		Next
+		DBUtils.InsertMaps(SQLite, "Grades", ListOfMaps)
+	End If
+End Sub
+

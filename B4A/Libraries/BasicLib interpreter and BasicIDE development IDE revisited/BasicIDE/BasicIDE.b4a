@@ -1,0 +1,585 @@
+﻿Build1=Default,anywheresoftware.b4a.agraham.basicide
+File1=layout.bal
+File2=LightBulb.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=ime
+Library3=reflection
+Library4=collectionsextra
+Library5=basiclib
+Library6=dialogs
+Library7=runtimepermissions
+Library8=phone
+Library9=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~	  android:name="android.support.FILE_PROVIDER_PATHS"~\n~	  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~	<paths xmlns:android="http://schemas.android.com/apk/res/android">~\n~	<external-path name="root" path="" />~\n~</paths>~\n~)
+Module1=Script
+Module2=FileProvider
+NumberOfFiles=2
+NumberOfLibraries=9
+NumberOfModules=2
+Version=8.8
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Basic IDE
+	#VersionCode: 1
+	#VersionName: 1.0
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+	Dim Version As Double
+	
+	' Version History
+	' 2.0	Script modoule code and comments tidied up for use with the new BasicIDE and with some additions from the JesseW version
+	'			Main module code tidied up and bought up to date to suppress B4A warnings
+	Version = 2.00
+		
+	' Provider needs manifest AddApplicationText entry for FileProvider
+	' Provider needs manifest CreateResource entry for File.DirRootExternal
+	Private Provider As FileProvider
+	
+	Dim DefaulTitle As String = Activity.Title & " v" & NumberFormat2(Version, 1, 2, 2, False)
+	Dim DefaultTextSize As Int = 16
+
+	Dim IdeDir As String : IdeDir = "BasicIDE"
+	Dim IdeHelpDir As String : IdeHelpDir = "Help"
+	Dim IdePath As String : IdePath = File.DirRootExternal & "/" & IdeDir
+	Dim IdeHelpPath As String : IdeHelpPath = IdePath & "/" & IdeHelpDir & "/"
+	
+	Dim BOM As Int : 	BOM = 65279 ' Byte Order Mark for Windows UTF-8 files
+	
+	Dim B4Sfile As String
+	Dim SourceChanged As Boolean
+	Dim LineNumbered As Boolean
+		
+		
+	' saved values on Pause to restore on Resume
+	Dim SaveSource, SaveTitle, SaveBreakLine As String
+	Dim SaveStep, SaveBreak, SaveWrap As Boolean
+	Dim SaveFont, SaveFontSize As Int
+		
+		
+	' reformatting
+	Dim indentwords() As String = Array As String ("sub ", "if", "for ", "do ", "do" & CRLF) '/ Next line indented 0, 1
+	Dim bidentwords() As String = Array As String ("case ", "else ", "else"  & CRLF) 'this line outdented, Next line indented again -1, 0
+	Dim outdentwords() As String = Array As String ("end ", "next ", "next" & CRLF, "loop ", "loop" & CRLF) 'this And Next line outdented -1, -1
+	Dim indent As String = "    " ' the 'tab' size for code indentation
+	Type Indents (ThisLine As Int, NextLine As Int)
+			
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim IME As IME
+
+	Dim btnRun As Button
+	Dim chkBreak As CheckBox
+	Dim chkStep As CheckBox
+	Dim edtSource As EditText
+	Dim btnLineNum As Button
+	Dim lblLine As Label
+	Dim btnClear As Button
+	Dim chkWrap As CheckBox
+	Dim Obj1 As Reflector
+End Sub
+
+#Region Activity Events
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		' Provider needs manifest AddApplicationText entry for FileProvider
+		' Provider needs manifest CreateResource entry for File.DirRootExternal
+		Provider.Initialize
+	End If	
+	
+	Activity.LoadLayout("Layout")
+	
+	IME.Initialize("IME")
+	
+	edtSource.Left=0
+	edtSource.Top=0
+	edtSource.Width=Activity.Width
+	edtSource.Height=lblLine.Top-5
+	edtSource.Color = Colors.White
+
+	Activity.AddMenuItem("Open", "mnuOpen")
+	Activity.AddMenuItem("Save", "mnuSave")
+	Activity.AddMenuItem("Save As", "mnuSaveAs")
+	Activity.AddMenuItem("Add Line Nos.", "mnuAddNos")
+	Activity.AddMenuItem("Remove Line Nos.", "mnuRemNos")
+	Activity.AddMenuItem("Format Code", "mnuFormat")
+	Activity.AddMenuItem("Font", "mnuFont")
+	Activity.AddMenuItem("Font Size", "mnuSize")
+	Activity.AddMenuItem("Help", "mnuHelp")
+	
+	Dim Args(4) As Object
+	Dim Types(4) As String
+	Args(0) = 6dip
+	Args(1) = 6dip
+	Args(2) = 6dip
+	Args(3) = 6dip
+	Types(0) = "java.lang.int"
+	Types(1) = "java.lang.int"
+	Types(2) = "java.lang.int"
+	Types(3) = "java.lang.int"
+	Obj1.Target = edtSource
+	Obj1.RunMethod4("setPadding", Args, Types) 
+	edtSource.Wrap = False	
+	
+	If FirstTime Then
+		SetDefaults
+	End If
+	
+	' Need to get all the first time things done before Wait For as FirstTime is no longer set on re-entry after a wait
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE) ' Implicit read capability if granted
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)	
+	Log($"PERMISSION_WRITE_EXTERNAL_STORAGE = ${Result}"$)
+	
+	If Not(File.IsDirectory(File.DirRootExternal, IdeDir)) Then
+		File.MakeDir(File.DirRootExternal, IdeDir)
+		File.MakeDir(IdePath, IdeHelpDir)
+	End If
+End Sub
+
+Sub Activity_Resume
+	Activity.Title = SaveTitle
+	lblLine.Text = SaveBreakLine
+	chkBreak.Checked = SaveBreak
+	chkStep.Checked = SaveStep
+	chkWrap.Checked = SaveWrap
+	edtSource.TextSize = SaveFontSize
+	SetFont(SaveFont)
+	Dim saved As Boolean = SourceChanged ' assigning edtSource.Text sets SourceChanged so we get whether it actually has
+	edtSource.Text = SaveSource
+	SourceChanged = saved ' assigning edtSource.Text sets SourceChanged so we reset it to whether it actually has
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed Then
+		SetDefaults
+	Else
+		SaveTitle = Activity.Title
+		SaveBreak = chkBreak.Checked
+		SaveBreakLine = lblLine.Text
+		SaveStep = chkStep.Checked
+		SaveWrap = chkWrap.Checked
+		SaveSource = edtSource.Text
+		SaveFontSize = edtSource.TextSize
+	End If
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'return true if you want to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		Dim res As String = Msgbox2("Do you really want to exit?", "", "Yes", "", "No", Null)
+		If Not(res = DialogResponse.POSITIVE) Then Return True
+		CheckSave
+	End If
+	Return False
+End Sub
+
+#End Region
+
+Sub CheckSave
+	If SourceChanged Then
+		Dim ret As String = Msgbox2("Save changed source code?","Source changed", "Yes", "", "No", Null)
+		If ret = DialogResponse.POSITIVE Then
+			mnuSave_Click
+		End If
+	End If
+End Sub
+
+Sub SetDefaults
+	' Process_Globals
+	B4Sfile = ""
+	SourceChanged = False
+	LineNumbered = False
+	' Globals
+	SaveTitle = DefaulTitle ' Resume runs immediately after Create
+	SaveSource = ""
+	SaveBreakLine = 0
+	SaveBreak = False
+	SaveStep = False
+	SaveWrap = False
+	SaveFontSize = DefaultTextSize
+	SaveFont = 1
+	SourceChanged = False
+End Sub
+
+#Region Formatting
+
+Sub FormatCode
+	If edtSource.Text = "" Then Return
+	If LineNumbered Then
+		edtSource.Text = RemoveLineNumbers
+	End If
+	edtSource.Text = DoFormatCode
+	If LineNumbered Then
+		edtSource.Text = AddLineNumbers
+	End If
+End Sub
+
+Sub DoFormatCode As String
+	Dim sb As StringBuilder
+	Dim i As Int = 0
+	Dim src As String = edtSource.Text
+	If src.CharAt(src.Length -1) <> Chr(10) Then
+		src = src & Chr(10)
+	End If
+	Dim lines() As String = Regex.Split(CRLF, src)
+	Try
+		sb.Initialize
+		Dim tabs As Int = 0
+		Dim line As String
+		For i = 0 To lines.Length-1
+			line = lines(i).Trim() & CRLF
+			If i <> lines.Length - 1 Or  lines(i) <> "" Then 'prevent adding additional blank line at End
+				Dim ins As Indents = CheckIndents(line)
+				Dim ts As String = ""
+				For j = 0 To tabs + ins.ThisLine - 1
+					ts = ts & indent
+				Next
+				sb.Append(ts).Append(line)
+				tabs = tabs + ins.nextline
+			End If
+		Next
+	Catch
+		Dim msg As String = "Reformatting failed at line " & (i + 1) & ": " & lines(i) & CRLF
+		msg = msg & "Is there a block structuring error in the code?!"
+		MsgboxAsync(msg, "Reformat Failed!")
+		Return edtSource.Text ' return unchanged
+	End Try
+	Return sb.ToString
+End Sub
+
+
+Sub CheckIndents(s As String ) As Indents
+	Dim sl As String = s.ToLowerCase
+	Dim  t As Indents
+	t.NextLine = 0
+	t.ThisLine = 0
+	' End Select special Case outdent twice -2, -2
+	If sl.Length > 9 And sl.Substring2(0, 10) = "end select" Then
+		t.thisline = -2 : t.nextline = -2 : Return t
+	End If
+	' Select special Case indent twice To allow For first following Case 0, 2
+	If sl.Length > 6 And sl.Substring2(0, 7) = "select " Then
+		t.thisline = 0 : t.nextline = 2 : Return t
+	End If
+	For i = 0 To indentwords.Length - 1
+		Dim word As String = indentwords(i)
+		Dim wordlen As Int = word.Length
+		If sl.Length >= wordlen And sl.Substring2(0, wordlen) = word Then
+			t.thisline = 0 : t.nextline = 1 : Return t
+		End If
+	Next
+	For i = 0 To bidentwords.Length - 1
+		Dim word As String = bidentwords(i)
+		Dim wordlen As Int = word.Length
+		If sl.Length >= wordlen And sl.Substring2(0, wordlen) = word Then
+			t.thisline = -1 : t.nextline = 0 : Return t
+		End If
+	Next
+	For i = 0 To outdentwords.Length-1
+		Dim word As String = outdentwords(i)
+		Dim wordlen As Int = word.Length
+		If sl.Length >= wordlen And sl.Substring2(0, wordlen) = word Then
+			t.thisline = -1 : t.nextline = -1 : Return t
+		End If
+	Next
+	Return t
+End Sub
+
+Sub AddLineNumbers As String
+	Dim src As String
+	Dim sb As StringBuilder
+	Dim no, first, last As Int
+	If edtSource.Text = "" Then Return ""
+	If LineNumbered Then
+		src = RemoveLineNumbers
+	Else
+		src = edtSource.Text
+	End If
+	sb.Initialize
+	If src.CharAt(src.Length -1) <> Chr(10) Then
+		src = src & Chr(10)
+	End If
+	last = src.IndexOf2(Chr(10), first)
+	Do While last <> -1
+		no = no + 1
+		sb.Append(no).Append(" : ").Append(src.SubString2(first, last+1))
+		first = last + 1
+		last = src.IndexOf2(Chr(10), first)
+	Loop
+	Return sb.ToString
+End Sub
+
+Sub RemoveLineNumbers As String
+	Dim src As String
+	Dim sb As StringBuilder
+	Dim first, last As Int
+	If edtSource.Text = "" Then Return ""
+	If Not(LineNumbered) Then
+		Return edtSource.Text
+	End If
+	src = edtSource.Text
+	sb.Initialize
+	last = src.IndexOf2(Chr(10), first)
+	Do While last <> -1
+		If IsNumber(src.CharAt(first)) Then ' some edited lines might have no number
+			Dim endidx As Int = src.IndexOf2(":", first) + 2
+			If Not(endidx < 0 Or endidx > last) Then
+				first = endidx
+			End If
+		End If
+		sb.Append(src.SubString2(first, last+1))
+		first = last + 1
+		last = src.IndexOf2(Chr(10), first)
+	Loop
+	Return sb.ToString
+End Sub
+
+#End Region
+
+#Region Menu Events
+
+Sub mnuFont_Click
+	IME.HideKeyboard
+	Dim fonts As List
+	fonts.Initialize2(Array As String("Serif", "Sans-serif", "Monospaced"))
+	Dim sel As String= InputList(fonts, "Font", -1)
+	SetFont(sel)
+End Sub
+
+Sub SetFont(which As Int)
+	If which >= 0 Then
+		SaveFont = which
+		If which = 0 Then
+			edtSource.Typeface = Typeface.CreateNew(Typeface.SERIF, Typeface.STYLE_NORMAL)		
+		Else If which = 1 Then
+			edtSource.Typeface = Typeface.CreateNew(Typeface.SANS_SERIF, Typeface.STYLE_NORMAL)		
+		Else If which = 2 Then
+			edtSource.Typeface = Typeface.CreateNew(Typeface.MONOSPACE, Typeface.STYLE_NORMAL)		
+		End If
+	End If
+End Sub
+
+Sub mnuSize_Click
+	IME.HideKeyboard
+	Dim sizes As List
+	sizes.Initialize2(Array As String(12, 16, 20, 24, 28, 32, 34, 38, 42, 44, 48))
+	Dim sel As String = InputList(sizes, "Font size", -1)
+	If sel >= 0 Then
+		edtSource.TextSize = sel * 4 + 12
+		SaveFontSize = edtSource.TextSize
+	End If
+End Sub
+
+Sub mnuSave_Click
+	IME.HideKeyboard
+	Dim ostream As OutputStream
+	Dim writer As TextWriter
+	If B4Sfile == "" Then
+		mnuSaveAs_Click
+	Else
+		ostream = File.OpenOutput(IdePath, B4Sfile, False)
+		writer.Initialize(ostream)
+		If LineNumbered Then
+			writer.Write(RemoveLineNumbers)			
+		Else
+			writer.Write(edtSource.Text)
+		End If
+		writer.Flush
+		writer.Close
+		SourceChanged = False
+	End If	
+End Sub
+
+Sub mnuSaveAs_Click
+	IME.HideKeyboard
+	Dim ip As InputDialog
+	Dim ret As Int
+	Dim ostream As OutputStream
+	Dim writer As TextWriter
+	Dim filename As String	
+	ret = ip.Show("Enter filename", "Save", "OK", "Cancel", "", Null)
+	If ret == DialogResponse.POSITIVE Then
+		filename = ip.Input
+		If filename.IndexOf(".") < 0 Then
+			filename = filename & ".b4s"
+		End If
+		ostream = File.OpenOutput(IdePath, filename, False)
+		writer.Initialize(ostream)
+		If LineNumbered Then
+			writer.Write(RemoveLineNumbers)			
+		Else
+			writer.Write(edtSource.Text)
+		End If
+		writer.Flush
+		writer.Close
+		SourceChanged = False
+		B4Sfile = filename
+		Activity.Title = B4Sfile
+	End If	
+End Sub
+
+Sub mnuOpen_Click
+	IME.HideKeyboard
+	Dim filesro As List
+	Dim files As List
+	Dim istream As InputStream
+	Dim reader As TextReader
+	Dim str As String
+	files.Initialize
+	CheckSave
+	filesro.Initialize	
+	filesro = File.ListFiles(IdePath) ' read-only list
+	For i = 0 To filesro.Size - 1
+		If Not(File.IsDirectory(IdePath, filesro.Get(i))) Then
+			files.Add(filesro.Get(i))
+		End If
+	Next
+	files.Sort(True)	
+	Dim sel As String = InputList(files, "Files", -1)
+	If sel >= 0 Then
+		B4Sfile = files.Get(sel)
+		istream = File.OpenInput(IdePath, B4Sfile)
+		reader.Initialize(istream)
+		str = reader.ReadAll
+		str = str.Replace(Chr(BOM), "") ' remove BOM if present in case file is from Windows
+		edtSource.Text = str.Replace(Chr(13), "") ' remove CR in case file is from Windows
+		SourceChanged = False
+		Activity.Title = B4Sfile
+		LineNumbered = False
+	End If
+End Sub
+
+Sub mnuHelp_Click
+	IME.HideKeyboard
+	Dim filesro As List
+	Dim files As List
+	Dim helpfile As String
+	Dim helpintent As Intent
+	filesro = File.ListFiles(IdeHelpPath) ' read-only list
+	files.Initialize
+	For i = 0 To filesro.Size - 1
+		If Not(File.IsDirectory(IdePath, filesro.Get(i))) Then
+			files.Add(filesro.Get(i))
+		End If
+	Next
+	files.Sort(True)	
+	Dim sel As String = InputList(files, "Files", -1)
+	If sel >= 0 Then
+'		' early SDKs		
+'		helpfile = "file://" & IdeHelpPath & "/" & files.Get(sel)		
+'		helpintent.Initialize(helpintent.ACTION_VIEW, helpfile)
+'		helpintent.SetType("text/html")
+'		StartActivity(helpintent)
+		' SDK 26 and later
+		helpfile = IdeDir & "/" & IdeHelpDir & "/" & files.Get(sel)
+		' Provider needs manifest AddApplicationText entry for FileProvider
+		' Provider needs manifest CreateResource entry for File.DirRootExternal
+		Provider.SharedFolder = File.DirRootExternal
+		helpintent.Initialize(helpintent.ACTION_VIEW, Provider.GetFileUri(helpfile))
+		helpintent.SetType("text/html")
+		helpintent.Flags = 1 'FLAG_GRANT_READ_URI_PERMISSION
+		StartActivity(helpintent)
+
+	End If
+End Sub
+
+Sub mnuAddNos_Click
+	IME.HideKeyboard
+	edtSource.Text = AddLineNumbers
+	LineNumbered = True
+End Sub
+
+Sub mnuRemNos_Click
+	IME.HideKeyboard
+	edtSource.Text = RemoveLineNumbers
+	LineNumbered = False
+End Sub
+
+Sub mnuFormat_Click
+	IME.HideKeyboard
+	FormatCode
+End Sub
+
+#End Region
+
+#Region Other View Events
+
+Sub btnRun_Click
+	If LineNumbered Then
+		Script.Program = RemoveLineNumbers
+	Else
+		Script.Program = edtSource.Text
+	End If
+	Script.FirstRunFlag = True
+	StartActivity("Script")
+End Sub
+
+Sub chkStep_CheckedChange(Checked As Boolean)
+	Script.StepState = Checked
+End Sub
+
+Sub chkBreak_CheckedChange(Checked As Boolean)
+	If Checked Then
+		Script.BreakLine = lblLine.Text
+	Else
+		Script.BreakLine = 0
+	End If	
+End Sub
+
+Sub edtSource_TextChanged (Old As String, New As String)
+		SourceChanged = True	
+End Sub
+
+Sub btnLineNum_Click
+	Dim ip As InputDialog
+	Dim ret As Int
+	ip.InputType = ip.INPUT_TYPE_NUMBERS
+	ret = ip.Show("Enter line number", "Break line", "OK", "Cancel", "", Null)
+	If ret = DialogResponse.POSITIVE Then
+		lblLine.Text = ip.Input
+		If chkBreak.Checked Then
+			Script.BreakLine = lblLine.Text		
+		End If
+	End If		
+End Sub
+
+Sub btnClear_Click
+	Dim ret As Int
+	CheckSave
+	ret = Msgbox2("Do you want to clear all source code?", "Clear Editor", "Yes", "", "No", Null)
+	If ret = DialogResponse.POSITIVE Then
+		edtSource.Text = ""
+		SourceChanged = False
+		LineNumbered = False
+		B4Sfile = ""
+		Activity.Title = DefaulTitle
+	End If	
+End Sub
+
+Sub chkWrap_CheckedChange(Checked As Boolean)
+	Obj1.Target = edtSource
+	Obj1.RunMethod2("setHorizontallyScrolling", Not(Checked), "java.lang.boolean") 
+End Sub
+
+
+#End Region
+
+

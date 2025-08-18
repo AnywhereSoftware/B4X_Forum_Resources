@@ -1,0 +1,106 @@
+﻿Build1=Default,sqliteextra.example1
+File1=b4a.png
+File2=b4i.png
+File3=b4j.png
+File4=main.bal
+File5=test.sql
+FileGroup1=Nuovo Gruppo
+FileGroup2=Nuovo Gruppo
+FileGroup3=Nuovo Gruppo
+FileGroup4=Nuovo Gruppo
+FileGroup5=Nuovo Gruppo
+Group=Default Group
+IconFile=
+Library1=core
+Library2=sd_sqliteextra
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=2
+NumberOfModules=1
+Version=7.95
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SqliteExtra Sample
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private ImageView1 As ImageView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Activity.LoadLayout("main")
+	
+	' ----------------- Copy image to internal cache
+	File.Copy(File.DirAssets,"b4a.png",File.DirInternalCache,"b4a.png")
+	File.Copy(File.DirAssets,"b4j.png",File.DirInternalCache,"b4j.png")
+	File.Copy(File.DirAssets,"b4i.png",File.DirInternalCache,"b4i.png")
+	File.Copy(File.DirAssets,"test.sql",File.DirRootExternal,"test.sql")
+	
+		
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub ButtonSave_Click
+	Dim oper As sqlite
+	Dim filenamedb As String = File.Combine(File.DirRootExternal,"test.sql")
+		
+	oper.Initialize
+	oper.UpdateBitmap(filenamedb,"mytable","ID=1","bitmap",LoadBitmap(File.DirInternalCache,"b4a.png"))
+	oper.UpdateBitmap(filenamedb,"mytable","ID=2","bitmap",LoadBitmap(File.DirInternalCache,"b4j.png"))
+	oper.UpdateBitmap(filenamedb,"mytable","ID=3","bitmap",LoadBitmap(File.DirInternalCache,"b4i.png"))
+	
+	ToastMessageShow("image stored",False)
+End Sub
+
+Sub ButtonLoad1_Click
+	Dim oper As sqlite
+	
+	oper.Initialize
+	Dim Bm As Bitmap = oper.readBitmap(File.Combine(File.DirRootExternal,"test.sql"),"mytable","ID=1","bitmap")
+	If Bm.IsInitialized Then ImageView1.SetBackgroundImage(Bm)
+End Sub
+
+Sub ButtonLoad2_Click
+	Dim oper As sqlite
+	
+	oper.Initialize
+	Dim Bm As Bitmap = oper.readBitmap(File.Combine(File.DirRootExternal,"test.sql"),"mytable","ID=2","bitmap")
+	If Bm.IsInitialized Then ImageView1.SetBackgroundImage(Bm)
+End Sub
+
+Sub ButtonLoad3_Click
+	Dim oper As sqlite
+	
+	oper.Initialize
+	Dim Bm As Bitmap = oper.readBitmap(File.Combine(File.DirRootExternal,"test.sql"),"mytable","ID=3","bitmap")
+	If Bm.IsInitialized Then ImageView1.SetBackgroundImage(Bm)
+End Sub

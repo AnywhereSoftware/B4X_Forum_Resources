@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::MqttConnectOptions</name>
+        <shortname>MqttConnectOptions</shortname>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Sets the user name and password. Pass empty strings to omit a value.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>UserName</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetLastWill">SetLastWill</name>
+            <comment>Sets the last will message. This message will be sent if the client is disconnected abruptly.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Message</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>QOS</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Retained</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="Password">Password</name>
+            <returntype>B4R::B4RString*</returntype>
+        </field>
+        <field>
+            <name DesignerName="UserName">UserName</name>
+            <returntype>B4R::B4RString*</returntype>
+        </field>
+    </class>
+    <class>
+        <name>B4R::MqttClient</name>
+        <shortname>MqttClient</shortname>
+        <event>MessageArrived (Topic As String, Payload() As Byte)</event>
+        <event>Disconnected</event>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initializes the client.
+Stream - A stream from the network client object. Note that the stream should not be connected before this method.
+Ip - Server ip address.
+Port - Server port.
+ClientId - The client id. Note that the string must be a string literal or a process global string.
+MessageArrivedSub - The sub that will handle the MessageArrived event.
+DisconnectedSub - The sub that will handle the Disconnected event.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Stream</name>
+                <type>B4R::B4RStream*</type>
+            </parameter>
+            <parameter>
+                <name>Ip</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Port</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>ClientId</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>MessageArrivedSub</name>
+                <type>SubVoidStringByteArray</type>
+            </parameter>
+            <parameter>
+                <name>DisconnectedSub</name>
+                <type>SubVoidVoid</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Initialize2">Initialize2</name>
+            <comment>Similar to Initialize. Accepts the server host name instead of the ip address.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Stream</name>
+                <type>B4R::B4RStream*</type>
+            </parameter>
+            <parameter>
+                <name>HostName</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Port</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>ClientId</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>MessageArrivedSub</name>
+                <type>SubVoidStringByteArray</type>
+            </parameter>
+            <parameter>
+                <name>DisconnectedSub</name>
+                <type>SubVoidVoid</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Connect">Connect</name>
+            <comment>Tries to connect to the server. Returns true if connection was successful.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="Connect2">Connect2</name>
+            <comment>Similar to Connect. Allows passing connection options with a MqttConnectOptions object.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Options</name>
+                <type>B4R::MqttConnectOptions*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Subscribe">Subscribe</name>
+            <comment>Subscribes to the given topic. QOS should be 0 or 1. Returns true if operation was successful.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>QOS</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Unsubscribe">Unsubscribe</name>
+            <comment>Unsubscribes from the given topic. Returns true if operation was successful.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Publish">Publish</name>
+            <comment>Publishes a message to the given topic. The QOS is set to 0.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Payload</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Publish2">Publish2</name>
+            <comment>Similar to Publish. Allows setting the retain flag.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Payload</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Retained</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Close">Close</name>
+            <comment>Closes the client.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="BeginPublish">BeginPublish</name>
+            <comment>Starts a chunk based publish. This allows sending large messages.
+TotalLength - Total payload size.
+Example: &lt;code&gt;
+mqtt.BeginPublish("last", 100, False)
+Dim buffer(5) As Byte
+For i = 1 To 100 Step 5
+	buffer(0) = i
+	buffer(1) = i + 1
+	buffer(2) = i + 2
+	buffer(3) = i + 3
+	buffer(4) = i + 4
+	mqtt.WriteChunk(buffer)
+Next
+mqtt.EndPublish&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Topic</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>TotalLength</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>Retained</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="WriteChunk">WriteChunk</name>
+            <comment>Writes a chunk of data. Must be called between a call to BeginPublish and a call to EndPublish.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Payload</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="EndPublish">EndPublish</name>
+            <comment>Ends a chunk based publish.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="IsConnected">IsConnected</name>
+            <comment>Returns true if the client is connected to the broker
+Example: &lt;code&gt;
+	If mqtt.IsConnected Then
+  End If
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetBufferSize">SetBufferSize</name>
+            <comment>Sets the maximum size of a packet. (including header)
+Default size is 256 bytes
+Example: &lt;code&gt;
+	mqtt.SetBufferSize(1024)
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>size</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetKeepAlive">SetKeepAlive</name>
+            <comment>Sets the time between KeepAlive packets in seconds.
+Default time is 15 seconds
+Example: &lt;code&gt;
+	mqtt.SetKeepAlive(60)
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>keepAlive</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetSocketTimeout">SetSocketTimeout</name>
+            <comment>Sets the socket timeout time in seconds.
+Default time is 15 seconds
+Example: &lt;code&gt;
+	mqtt.SetSocketTimeout(60)
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>timeout</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.02</version>
+</root>

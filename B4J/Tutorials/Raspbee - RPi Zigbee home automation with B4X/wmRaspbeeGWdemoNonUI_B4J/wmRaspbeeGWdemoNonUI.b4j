@@ -1,0 +1,56 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.wmRaspbeeGWdemoNonUI
+Group=Default Group
+Library1=jcore
+Library2=byteconverter
+Library3=json
+Library4=jokhttputils2_nonui
+Module1=|absolute|C:\Users\walter\Documents\_WM\Dropbox\B4X\_B4XsharedModules\wmRaspbeeGateway
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.5
+@EndOfDesignText@
+'Non-UI application (console / server application)
+
+#Region Project Attributes
+	#CommandLineArgs: 
+	#MergeLibraries: True
+#End Region
+
+#Region Core
+Sub Process_Globals
+
+	Private raspbeeGateway As wmRaspbeeGateway
+	Private raspbeeGatewayLights As List ' List of Type rbgw_light
+
+End Sub
+
+Sub AppStart (Args() As String)
+
+	Log("Initializing Raspbee Gateway")
+	InitRaspbeeGateway("xxx.xxx.xxx.xxx", "xxxxxxxx") ' <----- ENTER YOUR VALUES HERE
+	StartMessageLoop ' Must be done this way - see https://www.b4x.com/android/forum/threads/resumablesub-dont-work.89719
+
+	Log("Starting message loop")
+	StartMessageLoop
+
+End Sub
+
+Sub InitRaspbeeGateway(IP As String, APIkey As String)
+
+	raspbeeGateway.Initialize(IP, APIkey, False)
+
+	Wait For (raspbeeGateway.GetAllLights) Complete (result As Map)
+	If result.Get("error") = "" Then
+		raspbeeGatewayLights.Initialize2(result.Get("value"))
+	Else
+		raspbeeGatewayLights.Initialize
+		Log("raspbeeGateway.GetAllLights failed: " & result.Get("error"))
+	End If
+
+	Log("Raspbee Gateway initialized: " & raspbeeGatewayLights)
+
+	StopMessageLoop
+
+End Sub

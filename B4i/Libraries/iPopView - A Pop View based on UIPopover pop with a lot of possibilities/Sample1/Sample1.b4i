@@ -1,0 +1,110 @@
+﻿Version=3
+NumberOfModules=0
+Build1=Default,com.visualnet.popview
+NumberOfFiles=4
+File1=Layout1.bil
+File2=Layout2.bil
+File3=Layout3.bil
+File4=Layout4.bil
+NumberOfLibraries=2
+Library1=icore
+Library2=ipopview
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: PopView
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 8
+	'#Entitlement: <key>aps-environment</key><string>production</string>
+	'#Entitlement: <key>aps-environment</key><string>development</string>
+	
+	#CertificateFile: ios_distribution.cer
+    #ProvisionFile: adhoc.mobileprovision
+#End Region
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+	Dim objMenu1,objMenu2,objMenu3,objMenu4,objMenu5 As iPopView
+	Private ImageView1, ImageView2 As ImageView
+	Private cmdPop1 As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = ""
+	NavControl.ShowPage(Page1)
+	NavControl.NavigationBarVisible=False 
+	Page1.RootPanel.LoadLayout("Layout1")
+	
+	objMenu1.Initialize("objMenu1")
+	objMenu2.Initialize("objMenu2")
+	objMenu3.Initialize("objMenu3")
+	objMenu4.Initialize("objMenu4")
+	objMenu5.Initialize("objMenu5")
+		
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub Button1_Click
+ 
+End Sub
+
+Sub objMenu_onDismiss(Title As String)
+	LogColor("[objMenu_onDismiss]Title:" & Title,Colors.Blue)
+End Sub
+
+Sub objMenu_NewPopview(Title As String)
+	LogColor("[objMenu_NewPopview]Title:" & Title,Colors.Blue)
+End Sub
+
+Sub objMenu_onInitialized(EventName As String)
+	LogColor("[objMenu_onInitialized]Title:" & EventName,Colors.Blue)
+End Sub
+
+Sub ScrollView1_Click
+	objMenu1.Dismiss
+End Sub
+Sub MyOption_Click
+	objMenu4.Dismiss
+End Sub
+
+Sub cmdPop1_Click
+	Dim Page21 As Page : Page21.Initialize("Page21") : Page21.RootPanel.LoadLayout("Layout2")	
+	objMenu1.ShowPop(Page21,"Test",True,200,200,0.8,"Red",320,100,"Up")
+End Sub
+
+Sub cmdPop2_Click
+	Dim Page2 As Page : Page2.Initialize("Page2") : Page2.RootPanel.LoadLayout("Layout4")
+	objMenu2.ShowPop(Page2 ,"Test",True,200,300,1,"Green", 200,500,"Down")
+End Sub
+
+Sub cmdPop3_Click
+	Dim Page3 As Page : Page3.Initialize("Page3") : Page3.RootPanel.LoadLayout("Layout3")
+	objMenu3.ShowPop(Page3 ,"",True,200,350,1,"Gray",50,50,"NoArrow")
+End Sub
+
+Sub cmdPop4_Click
+	Dim Page4 As Page : Page4.Initialize("Page4") : Page4.RootPanel.LoadLayout("Layout3")
+	objMenu4.ShowPop(Page4 ,"",True,200,350,1,"Red",50,50,"NoArrow")
+End Sub
+
+Sub cmdPop5_Click
+	Dim Page5 As Page : Page5.Initialize("Page5") : Page5.RootPanel.LoadLayout("Layout3")
+	objMenu5.ShowPop(Page5 ,"My Title",True,   300,400,1,"Gray", 200,500,"Down")
+End Sub

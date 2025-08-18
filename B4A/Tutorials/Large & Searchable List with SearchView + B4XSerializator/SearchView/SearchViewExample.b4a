@@ -1,0 +1,95 @@
+﻿Version=5.5
+NumberOfModules=1
+Module1=SearchView
+Build1=Default,anywheresoftware.b4a.samples.searchview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21" />~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=3
+File1=1.bal
+File2=first.dat
+File3=second.dat
+NumberOfLibraries=4
+Library1=core
+Library2=ime
+Library3=randomaccessfile
+Library4=javaobject
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: SearchView
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Private firstIndex = Null, secondIndex = Null As Object
+End Sub
+
+Sub Globals
+	Dim sv As SearchView
+	Dim Panel1 As Panel
+	Private ProgressBar1 As ProgressBar
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	If FirstTime Then
+		ProgressBar1.Visible = True
+		LoadIndices
+	End If
+	
+	sv.Initialize(Me, "sv")
+	sv.AddToParent(Panel1, 0, 0, Panel1.Width, Panel1.Height)
+	If firstIndex <> Null Then sv.LoadFirst(firstIndex)
+	If secondIndex <> Null Then sv.LoadSecond(secondIndex)
+	Dim ime As IME
+	ime.Initialize("ime")
+	ime.AddHeightChangedEvent
+End Sub
+
+Private Sub ime_HeightChanged (NewHeight As Int, OldHeight As Int)
+	sv.lv.Height = NewHeight - sv.lv.Top
+End Sub
+
+Private Sub LoadIndices
+	Dim ser As B4XSerializator
+	ser.Tag = 1
+	ser.ConvertBytesToObjectAsync( _
+		Bit.InputStreamToBytes(File.OpenInput(File.DirAssets, "first.dat")), "ser")
+End Sub
+
+Private Sub ser_BytesToObject (Success As Boolean, NewObject As Object)
+	ProgressBar1.Visible = False
+	If Success Then
+		Dim ser As B4XSerializator = Sender
+		Log($"BytesToObject: ${ser.Tag}"$)
+		If ser.Tag = 1 Then
+			firstIndex = NewObject
+			sv.LoadFirst(firstIndex)
+			ser.Tag = 2
+			'read the secondary index
+			ser.ConvertBytesToObjectAsync( _
+				Bit.InputStreamToBytes(File.OpenInput(File.DirAssets, "second.dat")), "ser")
+		Else if ser.Tag = 2 Then
+			secondIndex = NewObject
+			sv.LoadSecond(secondIndex)
+		End If	
+	End If
+End Sub
+
+Sub sv_ItemClick(Value As String)
+	Msgbox("Chosen value: " & Value, "")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

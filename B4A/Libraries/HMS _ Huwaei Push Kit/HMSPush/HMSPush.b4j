@@ -1,0 +1,77 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2
+Library3=json
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private ClientId As String = "103144799"
+	Private ClientSecret As String = "f0d0e3xxxxxxxxx"
+End Sub
+
+Sub AppStart (Args() As String)
+	SendMessage("test", "after boot", "body body")
+	StartMessageLoop
+End Sub
+
+Private Sub SendMessage (Topic As String, Title As String, Body As String)
+	Wait For (GetAccessToken) Complete (AccessToken As String)
+	If AccessToken = "" Then
+		Log("No access token")
+		ExitApplication
+	End If
+	
+	Dim msg As Map = CreateMap("message": _
+			CreateMap( _
+			"notification": CreateMap("title": Title, "body": Body), _
+			"android": _
+				CreateMap("notification": _
+					CreateMap("title": Title, _
+						"body": Body, _
+						"click_action": CreateMap("type": 3) _
+						) _
+				), _
+			"topic": Topic _
+			), "validate_only": False)
+			
+	Dim jg As JSONGenerator
+	jg.Initialize(msg)
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.PostString($"https://push-api.cloud.huawei.com/v1/${ClientId}/messages:send"$, jg.ToString)
+	j.GetRequest.SetHeader("Authorization", $"Bearer ${AccessToken}"$)
+	j.GetRequest.SetContentType("application/json")
+	Wait For (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log(j.GetString)
+	End If
+	j.Release
+	ExitApplication
+End Sub
+
+Private Sub GetAccessToken As ResumableSub
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.PostString("https://oauth-login.cloud.huawei.com/oauth2/v3/token", $"grant_type=client_credentials&client_id=${ClientId}&client_secret=${ClientSecret}"$)
+	j.GetRequest.SetContentType("application/x-www-form-urlencoded")
+	Wait For (j) JobDone (j As HttpJob)
+	Dim res As String
+	If j.Success Then
+		Dim p As JSONParser
+		p.Initialize(j.GetString)
+		res =p.NextObject.Get("access_token")
+	End If
+	j.Release
+	Return res
+End Sub

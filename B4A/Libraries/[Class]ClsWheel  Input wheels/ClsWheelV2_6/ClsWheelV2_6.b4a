@@ -1,0 +1,189 @@
+﻿Build1=Default,b4a.ClsWheels
+File1=main.bal
+File2=numbers.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=ClsWheel
+Module2=Numbers
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=2
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ClsWheel
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'Activity module
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim whlDate, whlTimeHM, whlTimeHMS, whlDateTime, whlCustom, whlCustomSingle As ClsWheel
+
+	Dim lblSelection As Label
+	Dim edtSelection, edtTime, edtDate As EditText
+	Dim lblTime, lblDate, lblCustom As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	
+	InitWheelData
+
+	DateTime.DateFormat = "MM/dd/yyyy"
+End Sub
+
+Sub Activity_Resume
+'	Dim txt As String
+'	txt = whlDate.GetSelection
+'	Activity.Title = txt
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub InitWheelData
+	Dim lstDate(2) As List
+	lstDate(0).Initialize
+	lstDate(1).Initialize
+	
+	whlDate.Initialize(Me, Activity, "Enter date", 3, Null, 24, 0, True)
+'	whlDate.Initialize(Me, Activity, "Enter date, date, date, date, date, date, date", 3, Null, 24, 0, True)
+	whlDate.FirstYear = 1940
+	Dim tmpYear As Int = DateTime.GetYear(DateTime.Now) - whlDate.FirstYear
+	whlDate.NumberOfYears = tmpYear + 1  'until current year
+	
+	whlTimeHM.Initialize(Me, Activity, "Enter Time", 2, Null, 30, 1, True)
+	whlTimeHMS.Initialize(Me, Activity, "Enter Time", 3, Null, 24, 2, True)
+	whlDateTime.Initialize(Me, Activity, "Enter Date + Time", 5, Null, 24, 3, True)
+
+	lstDate(0).Add("Apple")	
+	lstDate(0).Add("Pear")	
+	lstDate(0).Add("Peche")	
+	lstDate(0).Add("Apricot")	
+	lstDate(0).Add("Cherry")	
+	lstDate(0).Add("Prune")	
+	lstDate(0).Add("Strawberry")	
+	lstDate(0).Add("Raspberry")	
+	lstDate(0).Add("Blueberry")	
+	lstDate(0).Add("Cranberry")	
+	lstDate(0).Add("Ananas")	
+	lstDate(0).Add("Banana")	
+	lstDate(0).Add("Kiwi")	
+	lstDate(0).Add("Orange")	
+	lstDate(0).Add("Grapefruit")	
+	lstDate(0).Add("Currant")	
+	lstDate(0).Add("Grape")		
+	
+	lstDate(1).Add("Oak")	
+	lstDate(1).Add("Aspen")	
+	lstDate(1).Add("Maple")	
+	lstDate(1).Add("Pine")	
+	lstDate(1).Add("Sequoia")	
+	lstDate(1).Add("Birch")	
+	lstDate(1).Add("Larch")	
+	lstDate(1).Add("Beech")	
+	lstDate(1).Add("Eucalyptus")	
+	' no logic behind these choices, just for demonstration
+	whlCustom.Initialize(Me, Activity, "Enter fruits & trees", 2, lstDate, 24, 4, False)
+	whlCustom.SetSeparationText(" & ")
+	
+	Dim lstDate1(1) As List
+	lstDate1(0).Initialize
+	
+	lstDate1(0).Clear
+	lstDate1(0).AddAll(Array As String("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"))
+	whlCustomSingle.Initialize(Me, Activity, "Enter day of the week", 1, lstDate1, 24, 4, False)
+'	lstDate1(0).AddAll(Array As String(" 0", "15", "30", "45"))
+'	whlCustomSingle.Initialize(Me, Activity, "Enter day of the week", 1, lstDate1, 24, 4, True)
+
+End Sub
+
+Sub btnSelectDate_Click
+'	whlDate.Show(lblSelection, "11/22/2005")
+	whlDate.Show(lblSelection, "")
+	whlDate.SetBackgroundColor(Colors.Red)
+	whlDate.SetWindowLineColor(Colors.Blue)
+	whlDate.SetWindowColor(Colors.ARGB(96, 0, 0, 255))
+End Sub
+
+Sub btnSelectTimeHM_Click
+'	whlTimeHM.Show(lblSelection, "")
+	whlTimeHM.Show(lblSelection, "10:15")
+End Sub
+
+Sub btnSelectTimeHMS_Click
+'	whlTimeHMS.Show(lblSelection, "")
+'	DateTime.TimeFormat = "hh:mm"
+	whlTimeHMS.Show(lblSelection, "10:15:25")
+End Sub
+
+Sub btnSelectDateTime_Click
+'	whlDateTime.Show(lblSelection, "")
+	whlDateTime.Show(lblSelection, "11/22/2005 10:15")
+End Sub
+
+Sub btnSelectCustom_Click
+'	whlCustom.Show(edtSelection, "")
+	whlCustom.Show(edtSelection, "Strawberry & Pine")
+End Sub
+
+Sub btnSelectCustomSingle_Click
+	whlCustomSingle.Show(edtSelection, "Fri")
+End Sub
+
+Sub btnSelectNumber_Click
+	StartActivity("Numbers")
+End Sub
+
+Sub edtTime_FocusChanged (HasFocus As Boolean)
+	If HasFocus = True Then
+		whlTimeHM.Show(edtTime, edtTime.Text)
+	End If
+End Sub
+
+Sub edtDate_FocusChanged (HasFocus As Boolean)
+	If HasFocus = True Then
+		whlDate.Show(edtDate, edtDate.Text)
+	End If
+End Sub
+
+Sub lblCustom_Click
+	whlCustom.Show(lblCustom, lblCustom.Text)
+End Sub
+
+Sub btnEvent_Click
+	whlCustom.Show2("whlCustom", lblCustom.Text)
+End Sub
+
+Sub whlCustom_Closed(Canceled As Boolean, Selection As String)
+	If Canceled = False Then
+		Activity.Title = Selection
+	Else
+	End If
+End Sub
+
+Sub whlCustom_StartScroll
+	Activity.Title = "Scrolling"
+End Sub
+
+Sub whlCustom_EndScroll
+	Activity.Title = ""
+End Sub

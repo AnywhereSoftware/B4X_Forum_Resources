@@ -1,0 +1,137 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+Library3=rmax6675
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterMAX6675.b4r
+'Example B4R B4XLib rRFXMeter. The B4XLib contains the code module RFXMeter which does not need to be declared in Process_Globals.
+'Send thermosensor MAX6675 temperature (C) to the Domoticz RFXMeter device and assign the :
+'IDX=384, Hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, Type=RFXMeter, SubType=RFXMeter counter, Data=NNNN
+'The device type is set as Counter.
+
+'The Arduino sends thermosensor MAX6675 temperature (C) via the 433Mhz Transmitter To the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+'The data is received by a RFXMeter device, parsed into temperature and a Temperature device is updated.
+'Hardware:
+'Arduino UNO with connected modules 433Mhz Transmitter and MAX6675 compatible module + K Type Thermocouple Temperature Sensor 0°C-1024°C.
+'Domoticz Configuration:
+'Device RFXMeter (name RFXMeter) connected To the hardware RFXCOM RFXtrx433e:
+'IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMeter, Type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+'Device Temperature (name RFXMeterMAX6675) connected To the Dummy (Virtual Sensors) hardware:
+'IDX=375, Hardware=VirtualSensors, ID=141C7, Unit=1, Name=RFXMeterMAX6675, Type=Temp, SubType=LaCrosse TX3, Data=66.0
+'Additional Libraries: rRFXMeter (rRFXMeter.b4xlib), rMAX6675
+'20220406 rwbl
+#End Region
+
+#Region Wiring
+'433Mhz Transmitter = Arduino
+'VCC = 5v
+'Signal = D7
+'GND = GND
+
+'MAX6675 = Arduino
+'GND = GND
+'VCC = 5v
+'SCK = D10
+'CS = D9
+'SO = D8 
+'Thermosensor: RED = +, BLUE = -
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	'433Mhz TX
+	Private RFXMeter_Address As Byte = 0x09	'Address of the Domoticz RFXMeter used for the Send method (multiple addresses can be used)
+	Private TX_PINNR As Byte = 7			'433 Mhz transmitter data pin
+	Private LED_PINNR As Byte = 13			'LED to indicate data is transmitted
+	'MAX6675
+	Private maxx As MAX6675
+	Private PINSCK As Byte = 10
+	Private PINCS As Byte = 9
+	Private PINSO As Byte = 8
+	'Domoticz
+	Private IDX_TEMPERATURE As UInt = 375
+	'Timer reading thermosensor
+	Private Timer_Test As Timer
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	RFXMeter.Initialize(TX_PINNR, LED_PINNR)
+	RFXMeter.Logging = True
+	maxx.Initialize(PINSCK, PINCS, PINSO)
+	Timer_Test.Initialize("Timer_Test_Tick", 15000)
+	Timer_Test.Enabled = True
+	Timer_Test_Tick
+End Sub
+
+Sub Timer_Test_Tick
+	Dim temperature As UInt = NumberFormat(maxx.ReadCelsius, 0, 1)
+	Log("Temperature: ", temperature, ", idx=", IDX_TEMPERATURE)
+	'Send the value to the Domoticz RFXMeter device with the given address.
+	RFXMeter.SendValueToIDX(RFXMeter_Address, IDX_TEMPERATURE, temperature)
+
+	'Logging Example: Temperature 19 is sent to RFXMeter with address 09 and assigned via dzVents to device with IDX=375.
+'	RFXMeter SendDeviceValue: value=1337519, leadingnumber=1000000, idxlen=300000, idxvalue=37500, devvalue=19
+'	RFXMeter Send: address=9, value=1337519
+'	RFXMeter Send: Address Bytes 0,1=09F9
+'	RFXMeter Send: value Bytes 4,2,3=1468AF
+'	RFXMeter Send: Packet Type&Parity Byte 5=02
+'	RFXMeter SendCommand: data=09F968AF1402
+	Log("***")
+End Sub
+
+'Domoticz Automation Event
+'--[[
+'    rfxmetermax6675.dzvents - Explore Arduino_RFXtrx433e.
+'    The Arduino sends Thermosensor MAX6675 temperature via the 433Mhz Transmitter To the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+'    The data is received by a RFXMeter device, parsed into idx, temperature value And the Temp device with given idx is updated.
+'    Hardware
+'    Arduino UNO with connected modules 433Mhz Transmitter And Thermosensor MAX6675.
+'
+'    Domoticz Devices
+'    Device RFXMeter (name RFXMeter) connected To the hardware RFXCOM RFXtrx433e:
+'    IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMeter, Type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+'    Device Temperature (name RFXMeterMAX6675) connected To the Dummy (Virtual Sensors) hardware:
+'    IDX=375, Hardware=VirtualSensors, ID=141C7, Unit=1, Name=RFXMeterMAX6675, Type=Temp, SubType=LaCrosse TX3, Data=66.0
+'    HINT: The RFXMeter can set To hidden by setting the name first character To $. Example: $RFXMeter.
+'
+'    20220405 rwbl
+']]--
+'
+'-- IDX of the devices used.
+'local IDX_RFXMETER = 384
+'
+'Return {
+'	on = { devices = { IDX_RFXMETER } },
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERMAX6675', },
+'	execute = function(domoticz, device)
+'	    -- RFXMeter: 1337518 = 1(LeadingNumber) 3(IDX length) 375(IDX) 18(Temperature)
+'		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+'        -- Method string.sub extracts a piece of the string s, from the i-th To the j-th character inclusive. In Lua, the first character of a string has index 1
+'        -- Get the length of the idx at pos 2 (pos 1 is Not used As fixed leading number 1)
+'        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+'        -- Get the idx starting at pos 3 of the sValue
+'        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+'        -- The temperature is set As sValue. The nvalue is just For completeness
+'        local nvalue = 0    -- tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+'        local svalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+'        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+'        If (idx ~= 0) Then 
+'            -- The device is updated via HTTP: http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=375&nvalue=0&svalue=18&parsetrigger=False
+'            domoticz.devices(idx).setValues(nvalue, svalue)
+'        End
+'    End
+'}

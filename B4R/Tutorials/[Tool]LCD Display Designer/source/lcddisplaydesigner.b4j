@@ -1,0 +1,433 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+File2=Styles.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=cssutils
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Copyright
+'B4J Open Sourec Project: LCDDisplayDesigner
+'Additional Libraries used: CSSUtils, JavaObject
+'This Source Code is subject to the terms of the GNU GENERAL PUBLIC LICENSE.
+'Copyright (c) 2021, Robert W.B. Linn, Pinneberg, Germany
+'Development Tools: B4J 8.90 with JDK8
+'Version: see Process_Globals Const CAPPVERSION
+'Information: README.md
+'Author: Robert W.B. Linn
+#End Region
+
+#Region Project Notes
+#End Region
+
+#Region Project ToDo
+'TODO:
+#End Region
+
+#Region  Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 600
+	#VirtualMachineArgs: -Dglass.win.uiScale=100% 
+#End Region
+
+Sub Process_Globals
+	Private Const CAPPTITLE As String 		= "LCD Display Designer"
+	Private Const CAPPVERSION As String 	= "v1.01 (20210215)"
+	Private Const CAPPCOPYRIGHT As String 	= "Copyright (c) 2021 by Robert W.B. Linn"
+	Private Const CAPPDESCRIPTION As String	= "Design layouts for LCD20x4 or LCD16x2."
+	Private Const CRLF2 As String = CRLF & CRLF	'ignore
+	
+	Private fx As JFX
+	Private MainForm As Form
+	Private PaneDisplay As Pane
+	Private TextFieldDisplayName As TextField
+	Private ButtonClear As Button
+	Private ButtonClose As Button
+
+	' LCD Addresses, Columns & Rows - Default 20x4 display
+	Private lcdAddresses() As String = Array As String("0x27", "0x3F")
+	Private lcdColumns As Int = 20
+	Private lcdRows As Int = 4
+	' Panel with selectable characters
+	Private TEXTFIELD_COLOR_DEFAULT As Paint = fx.Colors.LightGray
+	Private ButtonCodeB4R As Button
+	Private ButtonCodeCPP As Button
+	Private ButtonSave As Button
+	Private ComboBoxSelectDisplay As ComboBox
+	Private PaneCode As Pane
+	Private ButtonOpen As Button
+	Private ButtonInfo As Button
+	Private TextAreaCode As TextArea
+	Private ButtonCopyCode As Button
+	Private LabelLCDPosition As Label
+	Private ColPos As Int = 0
+	Private RowPos As Int = 0
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UTILITY")
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Title = $"${CAPPTITLE} ${CAPPVERSION}"$
+	MainForm.Show
+	AppInit
+End Sub
+
+Sub AppInit
+	'Set option lcd displays
+	ComboBoxSelectDisplay.Items.AddAll(Array As String("LCD 20x4", "LCD 16x2"))
+	ComboBoxSelectDisplay.SelectedIndex = 0
+	'Styling
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "Styles.css"))
+	'Create the cols x rows char matrix depending display 20x4 or 16x2
+	CreateDisplay
+End Sub
+
+'Close the app - add any specifics here
+Sub AppClose
+	MainForm.Close
+End Sub
+
+'Handle form closing via system close (top right X button)
+Sub MainForm_CloseRequest (EventData As Event)
+	AppClose
+End Sub
+
+#Region TOOLBAR
+Private Sub ButtonOpen_Click
+	Dim f As String
+	Dim fc As FileChooser                 ' Use filechooser from jFX library
+	fc.Initialize                         ' Init! Do not forget
+	fc.InitialDirectory = File.DirApp     ' Set starting folder
+	fc.InitialFileName = TextFieldDisplayName.Text & ".lcd"
+	fc.SetExtensionFilter("LCD Display Design", Array As String("*.lcd"))
+	fc.Title = "Select a LCD Display Design File"
+	f = fc.ShowOpen(MainForm)      ' Show the dialog and select
+	If f.Length = 0 Then Return
+	Try
+		Dim m As Map = File.ReadMap(GetFilePath(f), GetFileName(f))
+		For row = 0 To lcdRows
+			For col = 0 To lcdColumns
+				SetTextFieldByTag("c"&row&":"&col, m.Get("c"&row&":"&col))
+			Next
+		Next
+		TextFieldDisplayName.Text = GetFileName(f).Replace(".lcd", "")
+	Catch
+		fx.Msgbox2(MainForm, $"Error reading file ${f}${CRLF}${LastException.Message}"$, "Error", "OK", "", "", fx.MSGBOX_ERROR)
+	End Try
+End Sub
+
+Private Sub ButtonSave_Click
+	Dim fc As FileChooser                 ' Use filechooser from jFX library
+	fc.Initialize                         ' Init! Do not forget
+	fc.InitialDirectory = File.DirApp     ' Set starting folder
+	fc.SetExtensionFilter("LCD Display Design", Array As String("*.lcd"))
+	If TextFieldDisplayName.Text.Length > 0 Then
+		fc.InitialFileName = TextFieldDisplayName.text
+	Else
+		fc.InitialFileName = "lcddisplay.lcd"
+	End If
+	fc.Title = "Save Character to File"
+	Dim f As String = fc.ShowSave(MainForm)      ' Show the dialog and select
+	If f.Length = 0 Then Return
+	Try
+		Dim m As Map
+		m.Initialize
+		For row = 0 To lcdRows
+			For col = 0 To lcdColumns
+				m.Put("c"&row&":"&col, GetTextFieldText("c"&row&":"&col))
+			Next
+		Next
+		File.WriteMap(GetFilePath(f), GetFileName(f),m)
+	Catch
+		fx.Msgbox2(MainForm, $"Error saving character to file ${f}${CRLF}${LastException.Message}"$, "Error", "OK", "", "", fx.MSGBOX_ERROR)
+	End Try
+End Sub
+
+Private Sub ButtonClear_Click
+	For Each n As Node In PaneDisplay.GetAllViewsRecursive
+		If n Is TextField Then
+			Dim tf As TextField = n
+			tf.Text = ""
+			CSSUtils.SetBackgroundColor(tf, TEXTFIELD_COLOR_DEFAULT)
+		End If
+	Next
+
+End Sub
+
+Private Sub ComboBoxSelectDisplay_SelectedIndexChanged(Index As Int, Value As Object)
+	'Index has not changed > leave
+	'If ComboBoxSelectDisplay.SelectedIndex == Index Then Return
+	'Set number of columns & rows
+	Select Index
+		Case 0:
+			lcdColumns = 20
+			lcdRows = 4
+		Case 1:
+			lcdColumns = 16
+			lcdRows = 2
+	End Select
+	'Remove All Nodes from the display
+	PaneDisplay.RemoveAllNodes
+	'Create the display
+	CreateDisplay
+End Sub
+
+Private Sub ButtonInfo_Click
+	fx.Msgbox2(MainForm, $"${CAPPTITLE} ${CAPPVERSION}${CRLF}${CAPPDESCRIPTION}${CRLF}${CAPPCOPYRIGHT}"$, "About", "OK", "", "", fx.MSGBOX_INFORMATION)
+End Sub
+#End Region
+
+#Region LCDDISPLAY
+'Create the char matrix with cols and rows depending screen size. Each row representing a character
+Sub CreateDisplay
+	Dim l As Double = 20
+	Dim l2 As Double = l + 25
+	Dim w As Double = 35
+	Dim w2 As Double = 45
+	Dim h As Double = 30
+	' Create the row & col numbering
+	For row = 0 To lcdRows - 1
+		Dim lbl As Label
+		lbl.Initialize("")
+		lbl.Text = row
+		lbl.TextColor = fx.colors.Blue
+		' Node, L, T, W, H
+		PaneDisplay.AddNode(lbl, l, 10 + (row * 40) + 15, w, h)
+	Next
+	For col = 0 To lcdColumns - 1
+		Dim lbl As Label
+		lbl.Initialize("")
+		If col < 10 Then lbl.Text = "   " & col
+		If col > 9 Then lbl.Text = "  " & col
+		lbl.TextColor = fx.colors.Blue
+		' Node, L, T, W, H
+		PaneDisplay.AddNode(lbl, l2 + (col * w2), 5, w, h)
+
+	Next
+	' Create the char textfields
+	For row = 0 To lcdRows - 1
+		For col = 0 To lcdColumns - 1
+			Dim tf As TextField
+			tf.Initialize("tf")
+			tf.Tag = "c"& row & ":" & col
+			tf.Id = $"${row}:${col}"$
+			tf.PrefWidth = 25
+			' btn.TextSize = 14
+			CSSUtils.SetStyleProperty(tf, "-fx-font-weight","bold")
+			CSSUtils.SetBackgroundColor(tf, TEXTFIELD_COLOR_DEFAULT)
+			' Node, L, T, W, H
+			PaneDisplay.AddNode(tf, l2 + (col * w2), 15 + (row * 40) + 15, w, h)
+		Next
+	Next
+End Sub
+
+Private Sub tf_TextChanged (Old As String, New As String)
+	Dim tf As TextField = Sender
+	If New.Length > 1 Then
+		tf.text = New.SubString2(0,1)	
+	End If
+End Sub
+
+Private Sub tf_FocusChanged (HasFocus As Boolean)
+	Dim tf As TextField = Sender
+	If tf == Null Then Return
+	If HasFocus Then
+		Dim s() As String = Regex.Split(":", tf.id)
+		ColPos = s(0)
+		RowPos = s(1)
+		LabelLCDPosition.Text = $"${ColPos}:${RowPos}"$
+	End If
+End Sub
+
+'Set the color state of a button depending its id being high or low
+Sub SetTextField(tf As TextField, text As String)	'ignore
+	tf.Text = text
+End Sub
+
+'Get a textfield by searching for its tag
+'The textfield is recognized by its tag: "c"&row&":"&col, like c1:2
+'Example: GetTextField(lcdCharSelected)
+Sub GetTextField(mtag As String) As TextField
+	For Each n As Node In PaneDisplay.GetAllViewsRecursive
+		If n Is TextField Then
+			Dim tf As TextField = n
+			If tf.Tag = mtag Then
+				Return tf
+			End If
+		End If
+	Next
+	Return Null
+End Sub
+
+'Get the text of a textfield.
+'The textfield is recognized by its tag: "c"&row&":"&col, like c1:2
+'Example: GetTextField(lcdCharSelected)
+Sub GetTextFieldText(mtag As String) As String
+	For Each n As Node In PaneDisplay.GetAllViewsRecursive
+		If n Is TextField Then
+			Dim tf As TextField = n
+			If tf.Tag = mtag Then
+				Return tf.Text
+			End If
+		End If
+	Next
+	Return ""
+End Sub
+
+'Find a texfield and set the text
+'Example: SetTextFieldByTag(lcdCharSelected, "R")
+Sub SetTextFieldByTag(mtag As String, text As String)
+	For Each n As Node In PaneDisplay.GetAllViewsRecursive
+		If n Is TextField Then 
+			Dim tf As TextField= n 
+			If tf.Tag = mtag Then
+				tf.Text = text
+			End If
+		End If
+	Next
+End Sub
+
+'Find a textfield and set its selection style
+'Example: SetButtonStyleByTag(lcdCharSelected, "R")
+Sub SetTextFieldStyleByTag(mtag As String,  clr As Paint)		'ignore
+	For Each n As Node In PaneDisplay.GetAllViewsRecursive
+		If n Is TextField Then
+			Dim tf As TextField = n
+			If tf.Tag = mtag Then
+				CSSUtils.SetBackgroundColor(tf, clr)
+			End If
+		End If
+	Next
+End Sub
+#End Region 'CHARMATRIX
+
+#Region TOOLBARCODE
+'geneate some simple B4R code based on the rLiquidCrytal_I2C library
+Private Sub ButtonCodeB4R_Click
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append($"' Requires Library: rLiquidCrystal_I2C"$).Append(CRLF)
+	sb.Append($"' Code generated: ${DateTime.Date(DateTime.Now)} ${DateTime.Time(DateTime.Now)}"$).Append(CRLF)
+	sb.append("Process_Globals").Append(CRLF)
+	sb.append("Private lcd As LiquidCrystal_I2C").Append(CRLF)
+	sb.append("' Pins Arduino MEGA: SDA = 20, SCL = 21; UNO: SDA = 18, SCL = 19").Append(CRLF)
+	sb.append("' LCD Display addresses: 20x4 = 0x27, 16x2 = 0x3F").Append(CRLF)
+	sb.append("").Append(CRLF)
+	sb.append("'AppStart").Append(CRLF)
+	sb.append($"' Init LCD: ${ComboBoxSelectDisplay.Value}"$).Append(CRLF)
+	sb.append($"lcd.Initialize(${lcdAddresses(ComboBoxSelectDisplay.SelectedIndex)}, ${lcdColumns}, ${lcdRows})"$).Append(CRLF)
+	sb.append("lcd.Backlight = True").Append(CRLF)
+	sb.append("lcd.Clear").Append(CRLF)
+	sb.append("").Append(CRLF)
+
+	Dim charTag As String
+	Dim RowCode As String
+	Dim c As String
+	' Option write each line starting at position 0 of a row
+	sb.Append($"'Option write each line starting at position 0 of a row"$).Append(CRLF)
+	For Row = 0 To lcdRows - 1
+		RowCode = ""
+		For col = 0 To lcdColumns - 1
+			charTag = $"c${Row}:${col}"$
+			c = GetTextFieldText(charTag)
+			If c= "" Then c= " "
+			RowCode = RowCode & c
+		Next
+		sb.Append($"lcd.WriteAt(0, ${Row}, "${RowCode}")"$).Append(CRLF)
+	Next
+	sb.Append(CRLF)
+
+	' Option write each character at position
+	sb.Append($"'Option write each character at position"$).Append(CRLF)
+	For Row = 0 To lcdRows - 1
+		RowCode = ""
+		For col = 0 To lcdColumns - 1
+			charTag = $"c${Row}:${col}"$
+			c = GetTextFieldText(charTag)
+			If c= "" Then c= " "
+			RowCode = RowCode & c
+			sb.Append($"lcd.WriteAt(${col}, ${Row}, "${c}")"$).Append(CRLF)
+		Next
+	Next
+	'
+	TextAreaCode.Text = $"${sb.ToString}"$
+End Sub
+
+Private Sub ButtonCodeCPP_Click
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append($"//Requires Library: LiquidCrystal_I2C"$).Append(CRLF)
+	sb.Append($"//Code generated: ${DateTime.Date(DateTime.Now)} ${DateTime.Time(DateTime.Now)}"$).Append(CRLF)
+	sb.Append($"#include <Wire.h>"$).Append(CRLF)
+	sb.Append($"#include <LiquidCrystal_I2C.h>"$).Append(CRLF)
+	sb.append($"LiquidCrystal_I2C lcd(${lcdAddresses(ComboBoxSelectDisplay.SelectedIndex)}, ${lcdColumns}, ${lcdRows});"$).Append(CRLF).Append(CRLF)
+	sb.Append($"void setup() {"$).Append(CRLF)
+	sb.Append($"	lcd.init();"$).Append(CRLF)
+	sb.Append($"	lcd.backlight();"$).Append(CRLF)
+	Dim charTag As String
+	Dim RowCode As String
+	Dim c As String
+	' Option write each line starting at position 0 of a row
+	For Row = 0 To lcdRows - 1
+		' Set cursor col, row
+		sb.Append($"	lcd.setCursor(0,${Row});"$).Append(CRLF)
+		RowCode = ""
+		For col = 0 To lcdColumns - 1
+			charTag = $"c${Row}:${col}"$
+			c = GetTextFieldText(charTag)
+			If c= "" Then c= " "
+			RowCode = RowCode & c
+		Next
+		sb.Append($"	lcd.print("${RowCode}");"$).Append(CRLF)
+	Next
+	sb.Append("}").Append(CRLF).Append(CRLF)
+	sb.Append("void loop(){").Append(CRLF)
+	sb.Append("}").Append(CRLF)
+	TextAreaCode.Text = $"${sb.ToString}"$
+End Sub
+
+Private Sub ButtonCopyCode_Click
+	fx.Clipboard.SetString(TextAreaCode.Text)
+	fx.Msgbox(MainForm, "Copy copied to the clipboard", "Copy Code")
+End Sub
+
+#End Region
+
+'Close the appliction
+Private Sub ButtonClose_Click
+	MainForm.close
+End Sub
+
+#Region UTILITIES
+'Returns the filename from a fullpath
+Sub GetFileName(path As String) As String
+  ' Define the JavaObject                      
+  Dim fileO As JavaObject
+  ' Get the fileio class
+  fileO.InitializeNewInstance("java.io.File", Array As Object(path))
+  ' Getthe filename
+  Return fileO.RunMethod("getName", Null)
+End Sub
+
+'Returns the filepath from a fullpath
+Sub GetFilePath(path As String) As String
+  ' Define the JavaObject
+  Dim fileO As JavaObject
+  ' Get the fileio class
+  fileO.InitializeNewInstance("java.io.File", Array As Object(path))
+  ' Getthe filename and path
+  Dim n As String = fileO.RunMethod("getName", Null)
+  Dim p As String = fileO.RunMethod("getPath", Null)
+  p = p.Replace(n, "")
+  Return p
+End Sub
+#End Region UTILITIES

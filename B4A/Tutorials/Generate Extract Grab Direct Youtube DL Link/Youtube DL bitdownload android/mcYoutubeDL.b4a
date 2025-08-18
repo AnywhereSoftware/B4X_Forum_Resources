@@ -1,0 +1,144 @@
+﻿Build1=Default,com.leafecodes.bitdlyoutube
+File1=layoutMain.bal
+File2=result.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=webviewextras2
+Library3=minihtmlparser
+Library4=exoplayer
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~'SetApplicationAttribute(android:usesCleartextTraffic,"true")~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: mcYoutubeDL
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: true
+#End Region
+
+'AUTHOR: MCQUECCU (WWW.LEAFECODES.COM/B4A-TUTORIALS)
+'YOUTUBE: https://www.youtube.com/channel/UCl9KKwBFLWKoZx0NOZy-bPA?view_as=subscriber
+
+Sub Process_Globals
+	Private mp As SimpleExoPlayer
+End Sub
+
+Sub Globals
+	Private btnBrowse As Button
+
+	Private edtURL As EditText
+	Private wv As WebView	
+	Dim wve As WebViewExtras
+		
+	Dim endPoint As String = "https://bitdownloader.com/download?video=$YTBLINK$"
+	
+	Private txtOutput As EditText
+	Private exoview As SimpleExoPlayerView
+	Private pb As ProgressBar
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("layoutMain")
+	mp.Initialize("mp")
+	exoview.Player = mp
+	
+	
+	wve.Initialize(wv)
+	
+	Dim JavascriptInterface1 As DefaultJavascriptInterface
+	JavascriptInterface1.Initialize
+	wve.AddJavascriptInterface(JavascriptInterface1, "B4A")
+
+	Dim cc As DefaultWebChromeClient
+	cc.Initialize("cc")
+	wve.SetWebChromeClient(cc)
+	
+	wve.JavaScriptEnabled = True
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnBrowse_Click
+	pb.Visible = True
+	Log("Loading....")
+	Dim modUrl As String  = endPoint.Replace("$YTBLINK$",edtURL.Text)
+	wv.LoadUrl(modUrl)	
+End Sub
+
+Sub wv_PageFinished(Url As String)
+	pb.Visible = False
+	Log("Finished Loading")
+	
+	'run javascript
+	Dim Javascript As String
+	
+	Javascript="B4A.CallSub('Process_HTML', true, document.documentElement.outerHTML)"
+		
+	wve.executeJavascript(Javascript)	
+End Sub
+
+
+Sub Process_HTML(Html As String)
+ 	
+	getYoutubeLink(Html)
+	
+	Sleep(0)
+	
+	Log(txtOutput.Text)
+	
+	mp.Prepare(mp.CreateUriSource(txtOutput.text))	
+	mp.Play
+	
+	
+'	mp.Play
+End Sub
+
+Sub mp_Ready
+	Log("Play")
+End Sub
+
+Sub getYoutubeLink(content As String) As String
+	Dim link As String
+	
+	Dim parser As MiniHtmlParser
+	parser.Initialize
+	Dim root As HtmlNode = parser.Parse(content)
+	Dim option_button As HtmlNode = parser.FindNode(root,"div",parser.CreateHtmlAttribute("id","optionButtons"))
+	Dim atag As HtmlNode = parser.FindNode(option_button,"a",Null)
+	
+'		parser.PrintNode(atag)
+	Activity.Title = parser.GetAttributeValue(atag,"download",Null)
+	txtOutput.Text=  cleanAmp(parser.GetAttributeValue(atag,"href",Null))
+	
+	link = cleanAmp(parser.GetAttributeValue(atag,"href",Null))
+	Return cleanAmp(link)
+End Sub
+
+Sub cleanAmp(link As String) As String
+	Return link.Replace("amp;","")
+End Sub
+
+
+
+

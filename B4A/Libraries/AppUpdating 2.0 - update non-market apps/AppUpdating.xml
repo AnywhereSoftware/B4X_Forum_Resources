@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+  <b4x_version>8.30</b4x_version>
+  <dependsOn includesSingletonModules="true">okhttputils2</dependsOn>
+  <dependsOn>javaobject</dependsOn>
+  <dependsOn>reflection</dependsOn>
+  <dependsOn>runtimepermissions</dependsOn>
+  <dependsOn>phone</dependsOn>
+  <dependsOn>okhttp</dependsOn>
+  <dependsOn>stringutils</dependsOn>
+  <dependsOn>okhttp-3.5.0</dependsOn>
+  <dependsOn>okio-1.11.0</dependsOn>
+  <dependsOn>com.android.support:support-v4</dependsOn>
+  <class b4a_type="Service">
+    <name>eu.dgconsulting.appupdating.newinst2</name>
+    <shortname>newinst2</shortname>
+    <owner>process</owner>
+    <objectwrapper>java.lang.Class</objectwrapper>
+    <field>
+      <name DesignerName="pkg">_pkg</name>
+      <returntype>String</returntype>
+    </field>
+    <field>
+      <name DesignerName="svcVerbose">_svcverbose</name>
+      <returntype>boolean</returntype>
+    </field>
+    <method>
+      <name>process_globals</name>
+      <returntype>void</returntype>
+    </method>
+  </class>
+  <class>
+    <name>eu.dgconsulting.appupdating.cl_appupdate</name>
+    <shortname>cl_appupdate</shortname>
+    <comment>Class module: cl_appupdate
+Version: 2.00
+Author: UDG
+Last Modified: 18.10.2018
+Location: Di Gioia Consulting - Lugano (CH)
+</comment>
+    <owner>activity</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Tests whether the object has been initialized.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="CanRequestPackageInstalls">_canrequestpackageinstalls</name>
+      <comment>Starting from Android 8 (API 26) each app needs to explicitly request a special permission to install other apps.
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="CheckNonMarketAppsEnabled">_checknonmarketappsenabled</name>
+      <comment>Check if installation of non-market apps is allowed
+</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="DownloadApk">_downloadapk</name>
+      <comment>Downloads newer apk from webserver
+</comment>
+      <returntype>void</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetAvailableSpace">_getavailablespace</name>
+      <comment>Returns device's available space. Use to test whether there's enough room to load apk from webserver
+</comment>
+      <returntype>long</returntype>
+    </method>
+    <method>
+      <name DesignerName="getCurVN" HideFromIDE="true">_getcurvn</name>
+      <comment>Returns current version number value (as a string)
+Valid only after calling ReadCurVN
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getPackageName" HideFromIDE="true">_getpackagename</name>
+      <comment>Gets back the package name set for this app. Used internally.
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getStatus" HideFromIDE="true">_getstatus</name>
+      <comment>Returns current internal status. Negatives denote ERRORS/WARNINGS.
+</comment>
+      <returntype>int</returntype>
+    </method>
+    <method>
+      <name DesignerName="getWebChangeLog" HideFromIDE="true">_getwebchangelog</name>
+      <comment>Returns optional change log data (as a string) as read from the info text file on the webserver
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getWebFileSize" HideFromIDE="true">_getwebfilesize</name>
+      <comment>Returns optional apk's file size (as a string) as read from the info text file on the webserver
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getWebVN" HideFromIDE="true">_getwebvn</name>
+      <comment>Returns the version number value (as a string) as read from the info text file on the webserver.
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>CallbackModule</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InstallApk">_installapk</name>
+      <comment>Installs an already downloaded apk. Pstatus = result from a call to CheckInstallationRequirements in calling activity
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>pstatus</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ReadCurVN">_readcurvn</name>
+      <comment>Reads current version number from running copy of apk (see Attribute #VersionName).
+Valid if StatusCode = OK_CURVER
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ReadWebVN">_readwebvn</name>
+      <comment>Reads version number as published in the text info file on the webserver
+Valid if StatusCode = OK_WEBVER
+</comment>
+      <returntype>void</returntype>
+    </method>
+    <method>
+      <name DesignerName="SetAndStartSplashScreen">_setandstartsplashscreen</name>
+      <comment>Optional sub - superimposes a simple splash screen on the calling Activity.
+To remove the splash screen, call StopSplashScreen from Activity (generally in the callback function. See "Initialize")
+CallingAct - Activity object whose layout will be superimposed with BM in a panel
+BM - Bitmap object to be shown while apk checking is in progress
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>CallingAct</name>
+        <type>anywheresoftware.b4a.objects.ActivityWrapper</type>
+      </parameter>
+      <parameter>
+        <name>BM</name>
+        <type>anywheresoftware.b4a.objects.drawable.CanvasWrapper.BitmapWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setCredentials">_setcredentials</name>
+      <comment>Sets Username and Password to use when downloading from a protected website folder
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>UserN</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>UserP</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setNewVerApk" HideFromIDE="true">_setnewverapk</name>
+      <comment>Complete path to the new apk for your app, available for download from the webserver
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>NVA</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setNewVerTxt" HideFromIDE="true">_setnewvertxt</name>
+      <comment>Complete path to the info text file having a first line of text formatted as
+ver=x.yz where x.yz corresponds to the newest app's version available on the webserver
+Optionally that first line of text could be followed by ChangeLog and FileSize sections
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>NVT</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setPackageName" HideFromIDE="true">_setpackagename</name>
+      <comment>Sets package name for this app. It should equal the value in menu "Project.Build configurations.Package"
+Example: com.test.myapp
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>PN</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVerbose" HideFromIDE="true">_setverbose</name>
+      <comment>Sets verbose mode on/off
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Verbose</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="StopSplashScreen">_stopsplashscreen</name>
+      <comment>Stops and removes the superimposed splash screen if it's showing
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="UpdateApk">_updateapk</name>
+      <comment>Check website for a newer apk version and (if any exists) try to download it, then ask user to install it.
+Note: we don't know if the user will then accept to install it..
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>pstatus</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="CurVN">_curvn</name>
+      <comment>Returns current version number value (as a string)
+Valid only after calling ReadCurVN
+</comment>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="PackageName">_packagename</name>
+      <comment>Gets back the package name set for this app. Used internally.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Status">_status</name>
+      <comment>Returns current internal status. Negatives denote ERRORS/WARNINGS.
+</comment>
+      <returntype>int</returntype>
+    </property>
+    <property>
+      <name DesignerName="WebChangeLog">_webchangelog</name>
+      <comment>Returns optional change log data (as a string) as read from the info text file on the webserver
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="WebFileSize">_webfilesize</name>
+      <comment>Returns optional apk's file size (as a string) as read from the info text file on the webserver
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="WebVN">_webvn</name>
+      <comment>Returns the version number value (as a string) as read from the info text file on the webserver.
+Valid only after successfully calling ReadWebVN
+</comment>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="NewVerApk">_newverapk</name>
+      <comment>Complete path to the new apk for your app, available for download from the webserver
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="NewVerTxt">_newvertxt</name>
+      <comment>Complete path to the info text file having a first line of text formatted as
+ver=x.yz where x.yz corresponds to the newest app's version available on the webserver
+Optionally that first line of text could be followed by ChangeLog and FileSize sections
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+    <property>
+      <name DesignerName="Verbose">_verbose</name>
+      <comment>Sets verbose mode on/off
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+    <field>
+      <name DesignerName="ERR_NOPKG">_err_nopkg</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_NOTXT">_err_notxt</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_NOAPK">_err_noapk</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_TXTROW">_err_txtrow</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_HTML">_err_html</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_NOSPACE">_err_nospace</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_NOPERM">_err_noperm</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_DOWNLOAD">_err_download</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="ERR_HTTP">_err_http</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_INIT">_ok_init</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_CURVER">_ok_curver</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_WEBVER">_ok_webver</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="NO_NEWERAPK">_no_newerapk</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_NEWERAPK">_ok_newerapk</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_DOWNLOAD">_ok_download</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="OK_INSTALL">_ok_install</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <version>2</version>
+  <author>UDG</author>
+</root>

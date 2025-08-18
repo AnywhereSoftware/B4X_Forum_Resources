@@ -1,0 +1,345 @@
+'Custom View class
+#Event: Loaded
+
+
+Sub Class_Globals
+	Private fx As JFX
+	Private XUI As XUI
+	Private mEventName As String 'ignore
+	Private mCallBack As Object 'ignore
+	Private mBase As Pane
+	Private WebView1 As WebView
+	Public WebE As WebEngine
+	Private JS As jScriptEngine
+	Type B4xCallsType(module As Object, EventName As String)
+	Private B4xCalls As Map
+	Private CurrentStyle As String
+	Private CodeMirrorPath As String
+	Private mFontSize As Int = 12
+	Private mFontUnit As String = "pt"
+	Private mShowLineNumbers As String = "true"
+	Private Loaded As Boolean
+	Private mWidth As Int
+	Private mHeight As Int
+	
+	'For testing
+	#If B4a
+	'do this
+	#Else If b4i
+	'do that
+	#else
+	'OK
+	#End If
+End Sub
+
+Public Sub Initialize (Callback As Object, EventName As String)
+	mEventName = EventName
+	mCallBack = Callback
+	
+	CodeMirrorPath = WCE_Utils.InitializeFiles
+End Sub
+
+Public Sub DesignerCreateView (Base As Pane, Lbl As Label, Props As Map)
+	mBase = Base
+	'Initial Values
+	mWidth = mBase.Width
+	mHeight = mBase.Height
+
+'	mBase.AddNode(WebView1,0,0,mBase.PrefWidth,mBase.PrefHeight)
+	mBase.LoadLayout("CodeEditorWrapper")
+	WebE = WebEngine_Static.New(WebView1)
+	
+	WebE.SetOnAlert(Me,"JSAlert")
+	WebE.SetOnError(Me,"JSError")
+	
+	B4xCalls.Initialize
+	RegisterB4XCall("JsLog",Me,"Js_Log")
+	
+	WebE.AddWorkerListener(Me,"LoadProgress")
+	
+End Sub
+
+Private Sub LoadProgress_Event (NewState As String)
+	
+	If NewState  = "SUCCEEDED" Then
+		Log("Page LOADED")
+		'Setup the javascript interface
+		Set_Bridge
+		Loaded = True
+		SetSize(mWidth + 10, mHeight + 10)
+		CallSub(mCallBack,mEventName & "_Loaded")
+	End If
+End Sub
+
+
+Private Sub Base_Resize (Width As Double, Height As Double)
+	SetSize(Width,Height)
+End Sub
+
+Public Sub GetBase As Pane
+	Return mBase
+End Sub
+
+'###############################################################################
+#Region JS interface subs
+'###############################################################################
+
+'Register a Javascript callback and map it to the required B4xSub
+Sub RegisterB4XCall(CallName As String,Module As Object,EventName As String)
+	Dim B4xCall As B4xCallsType
+	B4xCall.Initialize
+	B4xCall.Module = Module
+	B4xCall.EventName = EventName
+	B4xCalls.Put(CallName,B4xCall)
+End Sub
+
+'Call a registered sub with no parameters
+Sub CallB4x(CallName As String) As Object															'Ignore
+	Dim B4xCall As B4xCallsType = B4xCalls.Get(CallName)
+	If B4xCall = Null Then
+		Log("B4xCall " & CallName & " not registered")
+		Return Null
+	End If
+	If SubExists(B4xCall.Module,B4xCall.EventName) Then
+		Return CallSub(B4xCall.Module,B4xCall.EventName)
+	Else
+		Log("Sub " & B4xCall.EventName & " Not found")
+		Return Null
+	End If
+End Sub
+
+'Call a registered sub with 1 parameter
+Sub CallB4x2(CallName As String, Param1 As Object) As Object										'ignore
+	Dim B4xCall As B4xCallsType = B4xCalls.Get(CallName)
+'	Log(B4xCall)
+	If B4xCall = Null Then
+		Log("B4xCall " & CallName & " not registered")
+		Return Null
+	End If
+	If SubExists(B4xCall.Module,B4xCall.EventName) Then
+		Return CallSub2(B4xCall.Module,B4xCall.EventName,Param1)
+	Else
+		Log("Sub " & B4xCall.EventName & " Not found")
+		Return Null
+	End If
+	
+End Sub
+
+'Call a registered sub with 2 parameters
+Sub CallB4x3(CallName As String,Param1 As Object,Param2 As Object) As Object						'ignore
+	Dim B4xCall As B4xCallsType = B4xCalls.Get(CallName)
+	If B4xCall = Null Then
+		Log("B4xCall " & CallName & " not registered")
+		Return Null
+	End If
+	If SubExists(B4xCall.Module,B4xCall.EventName) Then
+		Return CallSub3(B4xCall.Module,B4xCall.EventName,Param1,Param2)
+	Else
+		Log("Sub " & B4xCall.EventName & " Not found")
+		Return Null
+	End If
+End Sub
+
+'Capture Javascript events
+Private Sub JSAlert_Event(Args() As Object)
+	Dim Msg As String = WCE_Cast.AsJO(Args(0)).RunMethod("getData",Null)
+'	If Msg = "done" Then RunJS("alert(window.b4j)")
+	Log("JSALERT : **************************************************************")
+	Log("JSALERT : " & Msg)
+	Log("JSALERT : **************************************************************")
+'	If Msg = "done" Then Log(getHTMLText)
+End Sub
+
+Private Sub JSError_Event(Args() As Object)
+	Dim Msg As String = WCE_Cast.AsJO(Args(0)).RunMethod("getData",Null)
+	Log("JSError : **************************************************************")
+	Log("JSError : " & Msg)
+	Log("JSError : **************************************************************")
+End Sub
+
+'Receiving calls from JS console.log
+Private Sub Js_Log(text As Object)
+	Log("JScl: " & text)
+End Sub
+
+'Call java code to setup the JS Bridge
+Private Sub Set_Bridge
+	Dim MeJo As JavaObject = Me
+	MeJo.RunMethod("setBridge",Array(WebE.GetObject))
+End Sub
+
+#End Region JS Interface subs
+
+
+#Region Wrapper Subs
+Public Sub Load(URL As String)
+	Loaded = False
+	WebE.Load(URL)
+End Sub
+
+'get the current code
+Public Sub GetCode As String
+	Return ExecuteScript("editor.getValue();")
+End Sub
+
+Public Sub GetSelectedCode As String
+	Return ExecuteScript("editor.getSelection();")
+End Sub
+
+Public Sub SetSize(Width As Double, Height As Double)
+	mWidth = Width - 10
+	mHeight = Height - 10
+	If Loaded = False Then Return
+	ExecuteScript($"editor.setSize(${mWidth},${mHeight})"$)
+End Sub
+
+public Sub SetFontSize(FontSize As Int, FontUnit As String)
+	mFontSize = FontSize
+	mFontUnit = FontUnit
+	If Loaded = False Then Return
+	ExecuteScript($"editor.getWrapperElement().style["font-size"] = ${mFontSize}+"${mFontUnit}";editor.refresh();"$)
+End Sub
+
+Public Sub ShowLineNos(ShowLineNumbers As Boolean)
+	Dim Show As String = "false"
+	If ShowLineNumbers Then Show = "true"
+	mShowLineNumbers = Show
+	If Loaded = False Then Return
+	ExecuteScript($"editor.setOption("lineNumbers", ${Show});"$)
+End Sub
+
+Public Sub Setstyle(Style As String)
+	CurrentStyle = Style.ToLowerCase
+End Sub
+
+Public Sub SetCode(NewCode As String)
+	'Delete the HTML for the last style used.
+	If File.Exists(XUI.DefaultFolder,$"WCE-${CurrentStyle}.HTML"$) Then
+		File.Delete(XUI.DefaultFolder,$"WCE-${CurrentStyle}.HTML"$)
+	End If
+	UpdatePage(NewCode)
+End Sub
+
+private Sub UpdatePage(Code As String)
+	CreateEditingTemplateFile(Code)
+	Loaded = False
+	Load(File.GetUri(XUI.DefaultFolder,$"WCE-${CurrentStyle}.HTML"$))
+End Sub
+
+'Replace the {code} tag with the actual code we want to edit.
+Private Sub applyEditingTemplate(Code As String) As String
+	Return EditingTemplate.Replace("{code}",Code)
+End Sub
+
+
+'Write the template to the application folder (easier than writing to temp while debugging).
+Private Sub CreateEditingTemplateFile(Code As String)
+	Dim Template As String = applyEditingTemplate(Code)
+	File.WriteString(XUI.DefaultFolder,$"WCE-${CurrentStyle}.HTML"$,Template)
+End Sub
+
+'Create an HTML file from the template with the links to the specified language mode.
+Private Sub EditingTemplate As String
+
+	Dim MimeType As String
+	Dim JSModeFile As String
+	Dim CSSFileURI As String = $"${CodeMirrorPath}/lib/codemirror.css"$
+	Dim CodeFileURI As String = $"${CodeMirrorPath}/lib/codemirror.js"$
+	Select CurrentStyle
+		Case "java"
+			MimeType = "text/x-java"
+			JSModeFile= $"${CodeMirrorPath}/mode/clike/clike.js"$
+		Case "b4x","b4a","b4i","b4j"
+			MimeType = "b4x"
+			JSModeFile = "b4x.js"
+		Case "vbscript"
+			MimeType = "text/vbscript"
+			JSModeFile= $"${CodeMirrorPath}/mode/vbscript/vbscript.js"$
+	End Select
+	Log("Mode " & File.Exists(JSModeFile,""))
+	Return $"
+<!doctype html
+<html>
+  <head>
+   <link rel="stylesheet" href="${CSSFileURI}" />
+   <link rel="stylesheet" href="wrapper.css" />
+   <script src="${CodeFileURI}"></script>
+   <script src="${JSModeFile}"></script>
+   <script src="wrapper.js"></script>
+   <style>
+   		body{
+   			overflow:hidden;
+   		}
+   		.CodeMirror{
+			width: ${mWidth}px;
+			height: ${mHeight}px;
+			font-size: ${mFontSize}${mFontUnit};
+		}
+   </style>
+  </head>
+ <body> 
+    <form><textarea id="code" name="code">{code}</textarea></form>
+    <script>
+      var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        lineNumbers: ${mShowLineNumbers},
+        matchBrackets: true,
+        mode: "${MimeType}",
+		indentUnit: 4
+      });
+	  //Set event For callback To B4j when the code changes
+	  editor.on('change',function(cm, change){
+		  	//callB4j("codechanged",change.text);
+			console.log("call commented");
+	  });
+    </script>
+  </body>
+</html>"$
+End Sub
+
+#End Region Wrapper Subs
+
+'###############################################################################
+#Region JS Functions
+'###############################################################################
+
+Public Sub SetJSVar(VarName As String, Content As Object)
+	JS.evalString($"var ${VarName} = ${Content}"$)
+End Sub
+
+Public Sub ExecuteScript(Script As String) As Object
+	Return WebE.ExecuteScript(Script)
+End Sub
+'###############################################################################
+#End Region JS Functions
+
+#Region java
+'Java
+#if java
+import netscape.javascript.JSObject;
+import javafx.scene.web.WebEngine;
+import anywheresoftware.b4a.BA.RaisesSynchronousEvents;
+
+//Needs to be a global variable otherwise it appears to be garbage collected.
+Bridge b;
+
+public class Bridge{
+    public Object callB4j(String sub,String funct) { // for call with no parameters
+		return ba.raiseEvent2(this, false,sub.toLowerCase(),true, funct);
+	}
+    public Object callB4j2(String sub,String funct, Object arg) { // for call with  1 param
+		return ba.raiseEvent2(this, false, sub.toLowerCase() , true, funct, arg);
+	}
+	public Object callB4j3(String sub, String funct,Object arg1, Object arg2) { // for call with  2 params
+		return ba.raiseEvent2(this, false,sub.toLowerCase() ,true, funct,arg1 ,arg2);
+	}
+}
+public void setBridge(WebEngine we) {
+	
+	JSObject jsobj = (JSObject) we.executeScript("window");
+	b = new Bridge();
+	jsobj.setMember("b4j", b);
+	
+	}
+#end if
+
+#End Region java

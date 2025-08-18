@@ -1,0 +1,276 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=json
+Library3=jstringutils
+Library4=jrandomaccessfile
+Library5=byteconverter
+Module1=BalConverter
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs: "C:\Users\H\Documents\B4A Samples\AnotherDatePicker\Files\datepicker.bal" "C:\Users\H\Downloads\1.bil"
+	#MergeLibraries: True 
+	#IgnoreWarnings: 12
+#End Region
+
+Sub Process_Globals
+	Private javaTypes As Map
+	Private designerTypes As Map
+	Private csTypes As Map
+	Private Converters As Map
+	Private bc As BalConverter
+	Private Const version As String = "1.20"
+	Private ControlsHeaders As List
+	Private CurrentHeader As Map
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	Converters = CreateMap("Dbasic.Designer.MetaButton": "ConvertButton", _
+		"Dbasic.Designer.MetaActivity": "ConvertMain", _
+		"Dbasic.Designer.MetaCheckBox": "ConvertSwitch", _
+		"Dbasic.Designer.MetaToggleButton": "ConvertImageView", _
+		"Dbasic.Designer.MetaEditText": "ConvertTextField", _
+		"Dbasic.Designer.MetaImageView": "ConvertImageView", _
+		"Dbasic.Designer.MetaHorizontalScrollView": "ConvertHScrollView", _
+		"Dbasic.Designer.MetaScrollView": "ConvertVScrollView", _
+		"Dbasic.Designer.MetaLabel": "ConvertLabel", _
+		"Dbasic.Designer.MetaProgressBar": "ConvertProgressBar", _
+		"Dbasic.Designer.MetaSeekBar": "ConvertSeekBar", _
+		"Dbasic.Designer.MetaSpinner": "ConvertSpinner", _
+		"Dbasic.Designer.MetaWebView": "ConvertWebView", _
+		"Dbasic.Designer.MetaAutoCompleteEditText": "ConvertTextField", _
+		"Dbasic.Designer.MetaCustomView": "ConvertUnknown", _
+		"Dbasic.Designer.MetaListView": "ConvertUnknown", _
+		"Dbasic.Designer.MetaRadioButton": "ConvertImageView", _
+		"Dbasic.Designer.MetaTabHost": "ConvertUnknown" _
+	)
+	Log($"Bal2Bil version ${version}"$)
+	bc.Initialize (True)
+	
+'	If  Args.Length <> 2 Then
+'		Args = Array As String("D:\B4X\BBsPages\B4A\Files\suserpreferences.bal", "D:\suserpreferences.bil")
+'	End If
+	
+	If Args.Length <> 2 Then
+		Log("Usage: Bal2Bil <input file> <output file>")
+		ExitApplication2(1)
+	End If
+	
+	
+	
+	'bc.ConvertBalToJson(dir, filename)
+	Dim design As Map = bc.ConvertBalToJsonInMemory(Args(0), "")
+	If design.IsInitialized = False Then
+		Log("Error reading file.")
+		ExitApplication2(1)
+	End If
+	LayoutHeader(design.Get("LayoutHeader"))
+	HandleView(design.Get("Data"))
+	bc.ConvertJsonToBalInMemory(design, Args(1), "")
+	Log("Completed successfully: " & Args(1))
+End Sub
+
+Private Sub HandleView(view As Map)
+	view.Put("parent", Name(view.Get("parent")))
+	view.Put("name", Name(view.Get("name")))
+	If view.ContainsKey("drawable") Then
+		Dim drawable As Map = view.Get("drawable")
+		If drawable.ContainsKey("borderColor") Then view.Put("borderColor", drawable.Get("borderColor"))
+		view.Put("borderWidth", CreateMap("ValueType": bc.CFLOAT, "Value": drawable.GetDefault("borderWidth", 0)))
+		view.Put("cornerRadius", CreateMap("ValueType": bc.CFLOAT, "Value": drawable.GetDefault("cornerRadius", 0)))
+		If drawable.ContainsKey("color") Then view.Put("backgroundColor", drawable.Get("color"))
+		If drawable.GetDefault("alpha", 1) = 0 Then view.Put("backgroundColor", CreateMap("ValueType": bc.CCOLOR, "Value": "0x00FFFFFF"))
+	End If
+	view.Put("alpha", CreateMap("ValueType": bc.CFLOAT, "Value": 1))
+	If view.ContainsKey("fontsize") Then
+		Dim font As Map = CreateMap("csType": "Dbasic.Designer.FontGrid", "type": "B4IFontWrapper", _
+			"fontSize": view.Get("fontsize"))
+		Dim fontMapping As Map = CreateMap("BOLD": "DEFAULT-Bold", "ITALIC": "DEFAULT-Italic")
+		font.Put("fontName", fontMapping.GetDefault(view.Get("style"), "DEFAULT"))
+		view.Put("font", font)
+		view.Remove("style")
+	End If
+	
+	Dim originalCSType As String = view.Get("csType")
+
+	If  originalCSType.Contains("MetaRadioButton") Then
+		Log("MetaRadioButton")
+	End If
+	
+	
+	view.Put("csType", csType(originalCSType))
+	Dim dt As String = DesignerType(originalCSType.SubString("Dbasic.Designer.Meta".Length))
+	Dim CurrentHeader As Map = CreateMap("Name": Name(view.Get("name")), _
+		"JavaType": JavaType(view.Get("javaType")), _
+		"DesignerType": dt)
+	ControlsHeaders.Add(CurrentHeader)
+	
+	Log($"Looking for ${originalCSType}"$)
+	
+	
+	If SubExists(Me, Converters.Get(originalCSType)) Then
+		CallSub2(Me, Converters.Get(originalCSType), view)
+	End If
+	view.Put("javaType", CurrentHeader.Get("JavaType"))
+	view.Remove("drawable")
+	If view.ContainsKey(":kids") Then
+		Dim kids As Map = view.Get(":kids")
+		For Each v As Map In kids.Values
+			HandleView(v)
+		Next
+	End If
+End Sub
+Private Sub ConvertProgressBar(view As Map)
+	If view.Get("indeterminate") = True Then
+		CurrentHeader.Put("JavaType", "B4IActivityIndicatorWrapper")
+		CurrentHeader.Put("DesignerType", "ActivityIndicator")
+	Else
+		CurrentHeader.Put("JavaType", "B4IProgressWrapper")
+		CurrentHeader.Put("DesignerType", "ProgressView")
+	End If
+	view.Put("csType", "Dbasic.Designer.Meta" & CurrentHeader.Get("DesignerType"))
+End Sub
+Private Sub ConvertTextField(view As Map)
+	If view.Get("singleLine") = False Then
+		CurrentHeader.Put("JavaType", "B4ITextViewWrapper")
+		CurrentHeader.Put("DesignerType", "TextView")
+		view.Put("csType", "Dbasic.Designer.MetaTextView")
+	End If
+	view.Put("hintText", view.Get("hint"))
+End Sub
+Private Sub ConvertUnknown(view As Map)
+	CurrentHeader.Put("JavaType", "B4IPanelWrapper")
+	CurrentHeader.Put("DesignerType", "Panel")
+	view.Put("csType", "Dbasic.Designer.MetaPanel")
+	view.Put("backgroundColor", CreateMap("ValueType": bc.CCOLOR, "Value": "0xAAFF0000"))
+End Sub
+Private Sub ConvertLabel(view As Map)
+	Dim alignments As Map = CreateMap("LEFT": 0, "CENTER_HORIZONTAL": 1, "RIGHT": 2)
+	view.Put("textAlignment", alignments.Get(view.Get("hAlignment")))
+	view.Put("backgroundColor", CreateMap("ValueType": bc.CCOLOR, "Value": "0x00FFFFFF"))
+End Sub
+
+Private Sub ConvertSwitch(view As Map)
+	view.Put("value", view.GetDefault("isChecked", False))
+	view.Put("backgroundColor", CreateMap("ValueType": bc.CCOLOR, "Value": "0x00FFFFFF"))
+End Sub
+Private Sub ConvertWebView(view As Map)
+	view.Put("scaleToFit", view.Get("zoomEnabled"))
+End Sub
+Private Sub ConvertButton(view As Map)
+	view.Remove("textColor")
+End Sub
+Private Sub ConvertSpinner(view As Map)
+	view.Put("text", view.Get("prompt"))
+	view.Put("style", 1)
+End Sub
+Private Sub ConvertSeekBar(view As Map)
+	view.Put("value",  CreateMap("ValueType": bc.CFLOAT, "Value": view.Get("value")))
+	view.Put("maximumValue",  CreateMap("ValueType": bc.CFLOAT, "Value": view.Get("max")))
+End Sub
+Private Sub ConvertImageView(view As Map)
+	Dim drawable As Map = view.Get("drawable")
+	If  drawable.IsInitialized = False Then
+		drawable.Initialize
+	End If
+	
+	view.Put("ImageView", drawable.Get("file"))
+	Dim content As Map = CreateMap(119: 0, 17: 4, 51: 9)
+	view.Put("contentMode", content.Get(drawable.Get("gravity")))
+End Sub
+
+Private Sub ConvertMain(view As Map)
+	view.Put("eventName", "Page1")
+	view.Put("navigationToolbarVisible", False)
+	view.Put("navigationBarVisible", True)
+	view.Put("duration", view.GetDefault("animationDuration", 400))
+End Sub
+Private Sub ConvertHScrollView(view As Map)
+	view.Put("contentWidth",  view.Get("innerWidth"))
+End Sub
+Private Sub ConvertVScrollView(view As Map)
+	view.Put("contentHeight",  view.Get("innerHeight"))
+End Sub
+
+Private Sub LayoutHeader(header As Map)
+	ControlsHeaders = header.Get("ControlsHeaders")
+	ControlsHeaders.Clear
+	Dim files As List = header.Get("Files")
+	Dim newFiles As List
+	newFiles.Initialize
+	For Each f As String In files
+		If f.ToLowerCase.EndsWith(".ttf") Then Continue
+		newFiles.Add(f)
+	Next
+	header.Put("Files", newFiles)
+End Sub
+
+Private Sub JavaType(jt As String) As String
+	If javaTypes.IsInitialized = False Then
+		javaTypes = CreateMap(".ActivityWrapper": "B4IPanelWrapper", _
+			".PanelWrapper": "B4IPanelWrapper", _
+			".ButtonWrapper": "B4IButtonWrapper", _
+			".CompoundButtonWrapper$CheckBoxWrapper": "B4ISwitchWrapper", _
+			".AutoCompleteEditTextWrapper": "B4ITextFieldWrapper", _
+			".ImageViewWrapper": "B4IImageViewWrapper", _
+			".HorizontalScrollViewWrapper": "B4IScrollView", _
+			".ScrollViewWrapper": "B4IScrollView", _
+			".LabelWrapper": "B4ILabelWrapper", _
+			".SeekBarWrapper": "B4ISliderWrapper", _
+			".SpinnerWrapper": "B4IButtonWrapper", _
+			".CompoundButtonWrapper$ToggleButtonWrapper": "B4IImageViewWrapper", _
+			".CompoundButtonWrapper$RadioButtonWrapper": "B4IImageViewWrapper", _			
+			".EditTextWrapper": "B4ITextFieldWrapper", _
+			".WebViewWrapper": "B4IWebViewWrapper")
+	End If
+	Return javaTypes.GetDefault(jt, "")
+End Sub
+
+Private Sub DesignerType(dt As String) As String
+	If designerTypes.IsInitialized = False Then
+		designerTypes = CreateMap("Activity": "Panel", _
+			"EditText": "TextField", _
+			"AutoCompleteEditText": "TextField", _
+			"HorizontalScrollView": "ScrollView", _
+			"SeekBar": "Slider", _
+			"Spinner": "Button", _
+			"ToggleButton": "ImageView", _
+			"RadioButton": "ImageView", _			
+			"CheckBox": "Switch")
+	End If
+	If designerTypes.ContainsKey(dt) Then
+		Return designerTypes.Get(dt)
+	Else
+		Return dt
+	End If
+End Sub
+Private Sub csType(cs As String) As String
+	If csTypes.IsInitialized = False Then
+		csTypes = CreateMap("Dbasic.Designer.MetaActivity": "Dbasic.Designer.MetaMain", _
+			"Dbasic.Designer.MetaEditText": "Dbasic.Designer.MetaTextField", _
+			"Dbasic.Designer.MetaAutoCompleteEditText": "Dbasic.Designer.MetaTextField", _
+			"Dbasic.Designer.MetaHorizontalScrollView": "Dbasic.Designer.MetaScrollView", _
+			"Dbasic.Designer.MetaSeekBar": "Dbasic.Designer.MetaSlider", _
+			"Dbasic.Designer.MetaSpinner": "Dbasic.Designer.MetaButton", _
+			"Dbasic.Designer.MetaToggleButton": "Dbasic.Designer.MetaImageView", _
+			"Dbasic.Designer.MetaRadioButton": "Dbasic.Designer.MetaImageView", _			
+			"Dbasic.Designer.MetaCheckBox": "Dbasic.Designer.MetaSwitch")
+	End If
+	If csTypes.ContainsKey(cs) Then
+		Return csTypes.Get(cs)
+	Else
+		Return cs
+	End If
+End Sub
+
+Private Sub Name(n As String) As String
+	If n = "Activity" Then n = "Main"
+	Return n
+End Sub

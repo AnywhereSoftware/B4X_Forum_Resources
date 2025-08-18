@@ -1,0 +1,76 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Module1=pgIndex
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.5
+@EndOfDesignText@
+#IgnoreWarnings: 12, 15
+#Region Project Attributes 
+	#MergeLibraries: True
+	#LibraryAuthor: Anele Mashy Mbanga
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "serializeobjects"
+	Public AppTitle As String = "Serialize Objects"
+	Private Publish As String = "C:\laragon\www"
+	Public ServerIP As String = "localhost"
+	Public Version As String = "0.1"
+	Public Port As String = "8080"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName, DateTime.now)
+	BANano.HTML_NAME = "index.html"
+	BANano.Header.Title = AppTitle
+	'BANano.Header.AddFavicon("favicon-16x16.png", "16x16")
+	'BANano.Header.AddAppleTouchIcon("apple-touch-icon.png", "180x180")
+	'BANano.Header.AddMSTileIcon("mstile-150x150.png", "144x144")
+	'BANano.Header.SetMaskIcon("safari-pinned-tab.svg")
+	'BANano.Header.AddManifestIcon("android-chrome-192x192.png", "192x192")
+	'BANano.Header.AddManifestIcon("android-chrome-512x512.png", "512x512")
+	BANano.TranspilerOptions.UseServiceWorker = False
+	BANano.TranspilerOptions.MergeAllCSSFiles = True
+	BANano.TranspilerOptions.MergeAllJavascriptFiles = True
+	BANano.TranspilerOptions.MinifyOnline = False
+	#if release
+		BANano.TranspilerOptions.EnableLiveCodeSwapping = False
+	#end if
+	BANano.TranspilerOptions.RedirectOutput(File.DirApp, "log.txt")
+	'set php settings
+	BANano.PHP_NAME = $"${AppName}.php"$
+	BANano.PHPHost = $"http://${ServerIP}:${Port}/${AppName}/"$
+	BANano.PHPAddHeader("Access-Control-Allow-Origin: *")
+	
+	BANano.Build(Publish)
+	
+	Dim fx As JFX
+	Dim URL As String = File.GetUri(File.DirApp,"log.txt")
+	fx.ShowExternalDocument(URL)
+	'
+	Dim appPath As String = $"http://localhost/${AppName}/index.html"$
+	If Port <> "" Then appPath = $"http://localhost:${Port}/${AppName}/index.html"$
+	fx.ShowExternalDocument(appPath)
+	'
+	#if release
+		ExitApplication
+	#end if
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub BANano_Ready
+	pgIndex.init
+End Sub

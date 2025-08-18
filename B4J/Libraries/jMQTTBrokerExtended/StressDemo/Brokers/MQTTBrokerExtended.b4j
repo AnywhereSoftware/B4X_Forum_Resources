@@ -1,0 +1,34 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jmqttbrokerextended
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Dim Broker As MQTTBrokerExtended
+	Dim Const Port As Int = 1883
+End Sub
+
+Sub AppStart (Args() As String)
+	'Starts the broker
+	Broker.Initialize(Port, Broker.AUTHENTICATION_NO, False, "")
+	Broker.LogLevel = Broker.LOG_LEVEL_WARN
+	Broker.Start
+	StartMessageLoop 'Non-UI app
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Broker.AddToLog("APP ERROR: " & Error.Message, Broker.LOG_LEVEL_ERROR)
+	Return True
+End Sub

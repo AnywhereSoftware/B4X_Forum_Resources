@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <NOTE>This XML file should only be used for documentation purposes.</NOTE>
+    <doclet-version-NOT-library-version>0</doclet-version-NOT-library-version>
+    <class>
+        <name>LEDController</name>
+        <shortname>LEDController</shortname>
+        <method>
+            <name>Initialize</name>
+            <comment>Init the LED controller object.
+Interval - Interval in ms to check the LEDs (default 1000ms).
+Debug_Mode - Debug flag to log methods steps and output.
+Example: &lt;code&gt;
+LEDController.Initialize(1000, True)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Interval</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Debug_Mode</name>
+                <type>Boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Add_LED</name>
+            <comment>Add an LED to the LED arrays.
+Index - LED array index. Must be in range array size 0 - 10 (set by LEDCOUNT in the module). Default 0-9.
+PinNr - LED GPIO pin number. Like 0x0D.
+Returns:
+True if sucessfully added to the arrays; False if out of array index
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Add_LED(LEDRED, 0x0D)
+&lt;/code&gt;</comment>
+            <returntype>Boolean</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PinNr</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Timer_Enabled</name>
+            <comment>Set the timer enabled state.
+Enabled - True (1) Timer is ON, False (0) Timer is Off.
+Example: &lt;code&gt;
+LEDController.Set_Timer_Enabled(False)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Enabled</name>
+                <type>Boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Timer_Off_After_Ticks</name>
+            <comment>Set the timer off after number of ticks.
+Ticks - If timer ticks &gt; ticks, the timer will be disabled. Disable turning timer off by setting Ticks to 0.
+Example: &lt;code&gt;
+LEDController.Set_Timer_Off_After_Ticks(10)	'Turn timer off after 10 ticks
+LEDController.Set_Timer_Off_After_Ticks(0)		'Disable turning timer off after max ticks
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Ticks</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Get_Timer_Enabled</name>
+            <comment>Get the timer state enabled or disanled.
+Return True (timer is enabled), False (timer is disabled)
+Example: &lt;code&gt;
+Dim LEDController_Timer_Enabled As Boolean = LEDController.Get_Timer_Enabled
+&lt;/code&gt;</comment>
+            <returntype>Boolean</returntype>
+        </method>
+        <method>
+            <name>Set_State</name>
+            <comment>Set state to ON or OFF.
+Index - LED array index.
+State - True=ON, False=OFF.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_State(LEDRED, True)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>State</name>
+                <type>Boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Get_State</name>
+            <comment>Get state ON (True) or OFF (False).
+Index - LED array index.
+Return True (1) if LED is ON, False (0) if LED is OFF.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+Dim State As Boolean = LEDController.Get_State(LEDRED)
+&lt;/code&gt;</comment>
+            <returntype>Boolean</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_ON</name>
+            <comment>Set state to ON.
+Index - LED array index.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_ON(LEDRED)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_OFF</name>
+            <comment>Set state to OFF.
+Index - LED array index.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_OFF(LEDRED)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Mode_None</name>
+            <comment>Set mode to none. All counter are resetted and LED is turned off.
+Index - LED array index.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_Mode_None(LEDRED)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Mode_Blink</name>
+            <comment>Set mode to blink.
+Index - LED array index.
+Ticks - Blink on number of timer ticks. Set to 1 if every timer tick else higher for every N timer ticks.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_Mode_Blink(LEDRED, 2)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Ticks</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Blink_For_Time</name>
+            <comment>Set mode to blink for time.
+Each timer_tick is calculated using the Timer_Interval.
+Time - Time in ms.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Blink_For_Time(LEDRED, 4000)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Time</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Blink_For_Count</name>
+            <comment>Set mode to blink for N number of timer ticks (counts).
+Index - LED array index.
+Count - Number of timer ticks the LED should blink.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_Blink_For_Count(LEDRED, 4)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Count</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_ON_For_Time</name>
+            <comment>Set mode to on for time.
+Each timer_tick is calculated using the Timer_Interval.
+Time - Time in ms.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Blink_For_Time(LEDRED, 4000)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Time</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Set_Blink_Ticks</name>
+            <comment>Set the blink ticks.
+Index - LED array index.
+Ticks - Blink on number of timer ticks. Set to 1 if every timer tick else higher for every N timer ticks.
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Set_Blink_Ticks(LEDRED, 4)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Index</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Ticks</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Check_LEDS</name>
+            <comment>Check the state of the LEDS, output to the log (serialline).
+Example: &lt;code&gt;
+Private Const LEDRED As Int = 0, LEDYellow As Int = 1, LEDGREEN As Int = 2
+LEDController.Check_LEDS
+&lt;/code&gt;</comment>
+            <returntype/>
+        </method>
+        <field>
+            <name>Debug</name>
+            <comment>
+Debug flag</comment>
+            <returntype>Boolean</returntype>
+        </field>
+        <field>
+            <name>Timer</name>
+            <comment>
+LED controller single timer handling all LEDS - is set in sub Initialize. Best to run every second (1000ms).</comment>
+            <returntype>Timer</returntype>
+        </field>
+    </class>
+    <version>1.00</version>
+</root>

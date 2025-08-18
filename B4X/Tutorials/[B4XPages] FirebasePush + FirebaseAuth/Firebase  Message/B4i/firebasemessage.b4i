@@ -1,0 +1,93 @@
+﻿Build1=Default,it.tecnomedia.push
+File1=login.bil
+File2=MainPage.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=b4xpages
+Library3=ifirebaseanalytics
+Library4=ifirebasenotifications
+Library5=ihttputils2
+Library6=ijson
+Library7=ifirebaseauth
+Library8=ixui
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\B4XPagePush
+NumberOfFiles=2
+NumberOfLibraries=8
+NumberOfModules=2
+Version=6.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Best Message
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+	#Entitlement: <key>aps-environment</key><string>production</string>
+	'use the provision profile that goes with the explicit App Id
+
+     ' CHANGE
+	'#UrlScheme: 
+    '#CertificateFile: ios_distribution.cer
+    '#ProvisionFile: push.mobileprovision
+   
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private analytics As FirebaseAnalytics
+	Private fm As FirebaseMessaging
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	analytics.Initialize
+	NavControl = Nav
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(NavControl)
+	App.RegisterUserNotifications(True, True, True)
+	App.RegisterForRemoteNotifications
+	fm.Initialize("fm")
+End Sub
+
+Private Sub Application_Active
+	fm.FCMConnect 'should be called from Application_Active
+End Sub
+
+Private Sub Application_Background
+	B4XPages.Delegate.Activity_Pause
+	fm.FCMDisconnect
+End Sub
+
+Private Sub Application_Foreground
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+
+Private Sub fm_FCMConnected
+	Log("FCMConnected")
+	'here we can subscribe and unsubscribe from topics
+	fm.SubscribeToTopic("ios_general") 'add ios_ prefix to all topics
+End Sub
+
+Private Sub Application_RemoteNotification (Message As Map, CompletionHandler As CompletionHandler)
+	Log($"Message arrived: ${Message}"$)
+	Msgbox(Message.Get("body"), Message.Get("title"))
+	CompletionHandler.Complete
+End Sub
+
+
+Sub Application_PushToken (Success As Boolean, Token() As Byte)
+	Log($"PushToken: ${Success}"$)
+	Log(LastException)
+End Sub
+
+Private Sub Application_OpenUrl (Url As String, Data As Object, SourceApplication As String) As Boolean
+	Dim mp As B4XMainPage = B4XPages.GetPage("MainPage")
+	Return mp.Application_OpenUrl(Url, Data, SourceApplication)
+End Sub

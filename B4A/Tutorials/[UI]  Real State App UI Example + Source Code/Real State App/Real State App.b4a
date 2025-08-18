@@ -1,0 +1,304 @@
+﻿Build1=Default,b4a.example
+File1=bookmark.png
+File10=Home5.jpg
+File11=Home6.jpg
+File12=House_Layout.bal
+File13=Layout.bal
+File14=notification.png
+File15=notification1.png
+File16=settings.png
+File17=settings1.png
+File18=xtools!.jpg
+File2=bookmark1.png
+File3=Card.bal
+File4=home.png
+File5=Home1.jpg
+File6=home1.png
+File7=Home2.jpg
+File8=Home3.jpg
+File9=Home4.jpg
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xui views
+Library4=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=House
+Module2=Starter
+NumberOfFiles=18
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Real State App
+	#VersionCode: 1
+	#VersionName: 1.0.0
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+	Type MyTy(SomeBitmap As Bitmap , SomeStr As String , SomePrice As String)
+	Public SomeVar As MyTy
+End Sub
+
+Sub Globals
+	Private Edt_Search As EditText
+	Private CustomListView1 As CustomListView
+	
+	Private Ico_Saved,Ico_Setting,Ico_Notification,Ico_Home As ImageView	
+	Private StrHouse(6),StrPrice(6) As String
+	
+	Private bitmp(6) As Bitmap
+	Private Selection_Dot,Panel3,Panel2,Pnl_Search As Panel
+	
+	Private Img_Home1,Img_Home2,Img_Profile As B4XImageView
+	Private Lbl_HouseName1,Lbl_HouseName2,Lbl_Price1,Lbl_Price2 As Label
+	
+	Public SomeVarArr(6) As MyTy
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	SetStatusBarAndNavigationColor(0xFF32463F)
+	Activity.LoadLayout("Layout")
+	
+	BackgroundAndCornerRadius(Pnl_Search,10dip)
+	BackgroundAndCornerRadius(Edt_Search,10dip)
+
+	Selection_Dot.Initialize("Selection_Dot")
+	Panel_Selection_Attr(Ico_Home)
+
+	Img_Profile.CornersRadius = 15dip
+	Img_Profile.Load(File.DirAssets,"XTools!.jpg")
+	
+	Edt_Search.Hint = " Search your home"
+	
+	InitializeDatas
+
+	CreateItem
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub BackgroundAndCornerRadius(View As View , CornerRadius As Int)
+	Dim cdw1 As ColorDrawable
+	cdw1.Initialize(Colors.White, CornerRadius)
+	View.Background = cdw1
+End Sub
+
+
+ Sub SetStatusBarAndNavigationColor(clr As Int)
+	Try
+		Dim jo As JavaObject
+		jo.InitializeContext
+		Dim window As JavaObject = jo.RunMethodJO("getWindow", Null)
+		window.RunMethod("addFlags", Array (0x80000000))
+		window.RunMethod("clearFlags", Array (0x04000000))
+		window.RunMethod("setStatusBarColor", Array(clr))
+		Dim jo2 As JavaObject
+		jo2.InitializeContext
+		jo2.RunMethodJO("getWindow", Null).RunMethod("setNavigationBarColor", Array(clr))
+	Catch
+		ToastMessageShow("Some error with your android version ( <5 )",True)
+	End Try
+End Sub
+
+Sub CreateItem()
+	For i = 0 To 4 Step 2
+		Dim p As B4XView = xui.CreatePanel("")
+		Dim height As Int = 220dip
+		p.SetLayoutAnimated(0, 0, 0, 100%x , height)
+		p.LoadLayout("Card")
+		
+		Dim Info As MyTy
+		Dim Info2 As MyTy
+		
+		Img_Home1.CornersRadius = 12dip
+		Img_Home1.Bitmap = bitmp(i)
+		
+		Img_Home2.CornersRadius = 12dip
+		Img_Home2.Bitmap = bitmp(i+1)
+		
+		Lbl_HouseName1.Text = StrHouse(i)
+		Lbl_HouseName2.Text = StrHouse(i+1)
+		
+		Lbl_Price1.Text = StrPrice(i)
+		Lbl_Price2.Text = StrPrice(i+1)
+'		
+		Info.SomeBitmap = bitmp(i)
+		Info.SomeStr = StrHouse(i)
+		Info.SomePrice = StrPrice(i)
+		
+		Info2.SomeBitmap = bitmp(i+1)
+		Info2.SomeStr = StrHouse(i+1)
+		Info2.SomePrice = StrPrice(i+1)
+		
+		SomeVarArr(i) = Info
+		SomeVarArr(i+1) = Info2
+		CustomListView1.Add(p,Array(i,Info))
+	Next
+End Sub
+
+Sub InitializeDatas
+	bitmp(0) = LoadBitmap(File.DirAssets,"Home1.jpg")
+	bitmp(1) = LoadBitmap(File.DirAssets,"Home2.jpg")
+	bitmp(2) = LoadBitmap(File.DirAssets,"Home3.jpg")
+	bitmp(3) = LoadBitmap(File.DirAssets,"Home4.jpg")
+	bitmp(4) = LoadBitmap(File.DirAssets,"Home5.jpg")
+	bitmp(5) = LoadBitmap(File.DirAssets,"Home6.jpg")
+
+	StrHouse(0) = "Charming Vila"
+	StrPrice(0) = "$1200/"
+	
+	StrHouse(1) = "Furnished House"
+	StrPrice(1) = "$1650/"
+
+	StrHouse(2) = "Old Fashioned"
+	StrPrice(2) = "$1400/"
+
+	StrHouse(3) = "Pool House"
+	StrPrice(3) = "$2100/"
+
+	StrHouse(4) = "Modern House"
+	StrPrice(4) = "$1800/"
+
+	StrHouse(5) = "Green House"
+	StrPrice(5) = "$1700/"
+
+End Sub
+
+Sub ChangeColorBasedOnAlphaLevel(bmp As B4XBitmap, NewColor As Int) As B4XBitmap
+	Dim bc As BitmapCreator
+	bc.Initialize(bmp.Width, bmp.Height)
+	bc.CopyPixelsFromBitmap(bmp)
+	Dim a1, a2 As ARGBColor
+	bc.ColorToARGB(NewColor, a1)
+	For y = 0 To bc.mHeight - 1
+		For x = 0 To bc.mWidth - 1
+			bc.GetARGB(x, y, a2)
+			If a2.a > 0 Then
+				a2.r = a1.r
+				a2.g = a1.g
+				a2.b = a1.b
+				bc.SetARGB(x, y, a2)
+			End If
+		Next
+	Next
+	Return bc.Bitmap
+End Sub
+
+Sub Panel_Selection_Attr(Selection As ImageView)
+	'PanelSelection.Initialize("PanelSelection")
+	Ico_Home.Bitmap = LoadBitmap(File.DirAssets,"Home1.png")
+	Ico_Notification.Bitmap = LoadBitmap(File.DirAssets,"Notification1.png")
+	Ico_Saved.Bitmap = LoadBitmap(File.DirAssets,"Bookmark1.png")
+	Ico_Setting.Bitmap = LoadBitmap(File.DirAssets,"Settings1.png")
+	Select Selection
+		Case Ico_Home
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Home.png")
+		Case Ico_Notification
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Notification.png")
+		Case Ico_Saved
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Bookmark.png")
+		Case Ico_Setting
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Settings.png")
+	End Select
+	BackgroundAndCornerRadius(Selection_Dot,5dip)
+	Selection_Dot.Color = 0xFF486459
+	Dim Left As Int = Selection.Left + (Selection.Width/2)
+	Dim Top As Int = Selection.Top + Selection.Height
+	Activity.AddView(Selection_Dot,Left - 3dip ,Top+ 6dip,6dip,6dip)
+	SetBitmapWithFitOrFill(Selection, ChangeColorBasedOnAlphaLevel(bmp,0xFF486459))
+	Selection_Dot.BringToFront
+End Sub
+
+Public Sub SetBitmapWithFitOrFill (vTargetView As B4XView, bmp As B4XBitmap)
+	vTargetView.SetBitmap(bmp)
+   #if B4A
+	'B4XView.SetBitmap sets the gravity in B4A to CENTER. This will prevent the bitmap from being scaled as needed so
+	'we switch to FILL
+	Dim iv As ImageView = vTargetView
+	iv.Gravity = Gravity.FILL
+   #End If
+End Sub
+
+Private Sub Ico_Setting_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Setting)
+End Sub
+
+Private Sub Ico_Saved_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Saved)
+End Sub
+
+Private Sub Ico_Notification_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Notification)
+End Sub
+
+Private Sub Ico_Home_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Home)
+End Sub
+
+
+Private Sub Panel2_Click
+	Dim index As Int = CustomListView1.GetItemFromView(Sender)
+	Log(index)
+	Select index
+		Case 0 
+			SomeVar = SomeVarArr(0)
+		Case 1
+			SomeVar = SomeVarArr(2)
+		Case 2
+			SomeVar = SomeVarArr(4)
+	End Select
+	StartActivity(House)
+End Sub
+
+Private Sub Panel3_Click
+	Dim index As Int = CustomListView1.GetItemFromView(Sender)
+	Log(index)
+	Select index
+		Case 0
+			SomeVar = SomeVarArr(1)
+		Case 1
+			SomeVar = SomeVarArr(3)
+		Case 2
+			SomeVar = SomeVarArr(5)
+	End Select
+	StartActivity(House)
+End Sub

@@ -1,0 +1,149 @@
+---------------
+ TaskScheduler
+---------------
+it is a basic task scheduler to manage multi-threading in B4R environnement
+This one is based on a loop to check conditions of each thread and to launch it with Callsubplus in asynchrone mode
+
+
+multi-threating is based on a module TaskScheduler:
+   - In a loop, this module will launch each thread one by one depending of some criteria(Enable/Period/Watchdog)
+   - 15 threads are available in this module but it can be modified if more needed
+   - you can run only the number of threads needed
+   - this module is including GlobalStore version 2.00 to add storage 
+   - data is saved in a global buffer with size set to 200. You can increase it if you face out of arrays exceptions.
+   - 15 variables are availabe to store data for each thread (one slot by thread, slot0 < slot14)
+   - each variable is an array of byte, you can store array or string
+
+TaskScheduler module can manage 15 threads (0<14) in basic configuration
+   - Scheduler is based on a delay of 1ms between each cycle, to give time for others parts of B4R
+
+ * functions available:
+   - TaskScheduler.initialize(14) 	             ' if 15 threads 0<14
+
+   - TaskScheduler.statStart		             ' to start statistic collection and printing every 15mn
+   - TaskScheduler.statStop		             ' to stop statistic collection and printing
+
+ * variables available:
+   - TaskScheduler.Task(i).Enabled = True            ' <Boolean> to make active a thread after configuration
+   - TaskScheduler.Task(i).Period = MyVar            ' <Uint> to define period between thread running 2 times
+   - TaskScheduler.Task(i).Watchdog = Myvar          ' <Uint> to define period maxi before activation of a thread
+					             ' will run the thread with Tag 255 in this case
+   - TaskScheduler.Task(i).Tag		             ' <Byte> Tag is parameter sent to thread at launch
+ 					             ' Several values of tag can be used to avoid Delay()
+					             ' 255 is used in case of Watchdog activation 
+   - TaskScheduler.Put(slot as Int, Value() As Byte) ' to save an Array of Byte to slot (0<14 possible)
+   - MyArray = TaskScheduler.Slot0                   ' to read an Array of Byte from Slot0 (Slot0 < Slot14 possible)
+
+
+------------------
+  In B4X exemple
+------------------
+thread(0) is used for Led on pin12
+          flash of Led is done without Delay() by use of "Tag" in thread and "Select Tag" 
+thread(1) is used for Led on pin13
+          flash of Led is done without Delay() by use of "Tag" in thread and "Select Tag" 
+	  different time for Led ON/Led OFF is done by modification of "Period" before next activation
+thread(2) is used for Led on pin15
+
+Standard pinButton_change on pin4 is used to read a button change
+
+Astream_NewData is used to manage Serial Input on Serial1 (Serial with log)
+ - if Windows10 is used, with a Serial Terminal like Termite connected to esp8266, you can send commandes to esp8266
+        if you send "statON" you will activate statistic of scheduler
+        if you send "statOFF" you will stop statistic of scheduler
+        => you can check scheduleur and threads timing 
+
+
+about statistic for Scheduler, we have 2 types of information:
+ * for scheduler:
+   - it provides period between 2 run of Scheduler  : Min/Med/Max 
+   - it provides time needed for a run of Scheduler :  Min/Med/Max 
+ * for each thread enabled:
+   - it provides period between 2 run of thread   : Min/Med/Max 
+   - it provides time needed for a run of thread  : Min/Med/Max 
+
+with a look at statistics, we can check :
+ - check how long take one run of Scheduler
+ - check what is delay between 2 runs of scheduler (it is time used by process out of threads)
+ - check how long take each enabled thread
+ - check what is delay between 2 runs of each enabled thread
+   => it can help at search of blocking parts in your code
+
+
+------------------------------
+mandatory part to add in Main:
+------------------------------
+each task (0<14) in Main file must be created in format below: 
+   Sub task00(Tag As Byte)
+   End Sub
+   Sub task01(Tag As Byte)
+   End Sub
+   Sub task02(Tag As Byte)
+   End Sub
+   Sub task03(Tag As Byte)
+   End Sub
+   Sub task04(Tag As Byte)
+   End Sub
+   Sub task05(Tag As Byte)
+   End Sub
+   Sub task06(Tag As Byte)
+   End Sub
+   Sub task07(Tag As Byte)
+   End Sub
+   Sub task08(Tag As Byte)
+   End Sub
+   Sub task09(Tag As Byte)
+   End Sub
+   Sub task10(Tag As Byte)
+   End Sub
+   Sub task11(Tag As Byte)
+   End Sub
+   Sub task12(Tag As Byte)
+   End Sub
+   Sub task13(Tag As Byte)
+   End Sub
+   Sub task14(Tag As Byte)
+   End Sub
+
+
+---------------------------------------------
+ part to modify (if needed) in TaskScheduler:
+---------------------------------------------
+   'Change its size if you encounter out of bounds errors.
+   Private GlobalBuffer(200) As Byte
+   
+   'You can change the number of slots. You must update the next three lines.
+   Public Slot0(), Slot1(), Slot2(), Slot3(), Slot4(), Slot5(), Slot6(), Slot7(), Slot8(), Slot9(), Slot10(), Slot11(), Slot12(), Slot13(), Slot14()As Byte
+   Private slots() As Object = Array(Slot0, Slot1, Slot2, Slot3, Slot4,Slot5, Slot6, Slot7, Slot8, Slot9,Slot10, Slot11, Slot12, Slot13, Slot14)
+   Private lengths(15) As Byte
+
+------------
+-------
+exemple of logfile:
+-------------------
+button ON
+message saved 1: Button ON
+button OFF
+message saved 2: Button OFF
+statON
+statistic change: statON
+
+message saved 1: statON
+ 
+task0 duration  : mini=0 med =0 Maxi=0 Nb run =30
+task0 WaitForRun: mini=500 med =500 Maxi=500 Nb run =30
+task1 duration  : mini=0 med =0 Maxi=0 Nb run =8
+task1 WaitForRun: mini=2000 med =2000 Maxi=2000 Nb run =8
+task2 duration  : mini=0 med =0 Maxi=0 Nb run =100
+task2 WaitForRun: mini=150 med =150 Maxi=320 Nb run =100
+Scheduler duration: mini=0 med =0 Maxi=1 Nb run =14997
+Scheduler underRun: mini=1 med =1 Maxi=10 Nb run =14997
+ 
+task0 duration  : mini=0 med =0 Maxi=0 Nb run =30
+task0 WaitForRun: mini=500 med =500 Maxi=500 Nb run =30
+task1 duration  : mini=0 med =0 Maxi=0 Nb run =7
+task1 WaitForRun: mini=2000 med =2000 Maxi=2000 Nb run =7
+task2 duration  : mini=0 med =0 Maxi=0 Nb run =100
+task2 WaitForRun: mini=150 med =150 Maxi=150 Nb run =100
+Scheduler duration: mini=0 med =0 Maxi=1 Nb run =14999
+Scheduler underRun: mini=1 med =1 Maxi=10 Nb run =14999

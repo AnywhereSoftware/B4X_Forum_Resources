@@ -1,0 +1,37 @@
+﻿Version=4.01
+AppType=StandardJava
+NumberOfModules=1
+Module1=SearchView
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=sites.txt
+NumberOfLibraries=2
+Library1=jcore
+Library2=jrandomaccessfile
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	Dim dataToIndex As List = File.ReadList(File.DirAssets, "sites.txt")
+	Dim search As SearchView
+	search.Initialize
+	Dim obj() As Object = search.SetItems(dataToIndex)
+	Dim ser As B4XSerializator
+	WriteFile("first.dat", ser.ConvertObjectToBytes(Array(obj(0), obj(1))))
+	WriteFile("second.dat", ser.ConvertObjectToBytes(obj(2)))
+End Sub
+
+Sub WriteFile(FileName As String, b() As Byte)
+	Dim out As OutputStream = File.OpenOutput(File.DirApp, FileName, False)
+	out.WriteBytes(b, 0, b.Length)
+	out.Close
+End Sub

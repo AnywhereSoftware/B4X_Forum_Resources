@@ -1,0 +1,56 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Inner.bjl
+File2=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private Scroll As ScrollPane
+	Private Canvas As Canvas 
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Scroll.LoadLayout("Inner",1000,200)
+	DrawGraph
+End Sub
+
+Sub Button1_Click
+	DrawGraph
+End Sub
+
+Sub DrawGraph
+	Dim Random, High, Low As Int
+	Canvas.DrawRect(0,0,1000,200,fx.colors.black,True, 0 )
+	For i=0 To 800 Step 2
+		Random =Rnd(-50,50)
+		If Random<0 Then
+			High=100+Random
+			Low=-Random
+		Else
+			High=100
+			Low=Random
+		End If
+		Canvas.DrawRect(i,High,2,Low,fx.Colors.Yellow ,True,0)
+	Next
+End Sub

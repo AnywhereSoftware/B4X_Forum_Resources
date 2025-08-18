@@ -1,0 +1,1 @@
+netsh ipsec static delete rule name=MBB_%1 MBB_POL_1

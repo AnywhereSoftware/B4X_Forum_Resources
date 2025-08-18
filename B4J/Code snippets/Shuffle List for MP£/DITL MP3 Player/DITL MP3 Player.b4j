@@ -1,0 +1,156 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=MP3PlayList.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private btnExit As Button
+	Private btnPlay As Button
+	Private btnShuffle As Button
+	Private cmbPlaylist As ComboBox
+	Private lv As ListView
+	Private playlist As List
+	Private btnStop As Button
+	Public mp As MediaPlayer
+	Public mMusic, mFolder, mName, mfilename As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'Firstly thanks to DonManFred and William Lancee for pointing me in the right direction
+	'I needed the code to shuffle an MP3 playlist in my main program so when a playlist is selected it starts at a diffent song each time
+	'to avoid customer boredom :-) So this app was created to try the methods out before implementing in my main app
+	'The folder D:\ditl\music contains the text files which hold the play lists, these wer created using a free directory listing program ' FileListCretor'
+	'The files are quickly edited to just contain the file name of each mp3 file in that folder
+	'i.e.
+	'Background.txt - contains
+	'01 - Smokey Robinson - Tears Of A Clown.mp3
+	'01 Chicago - You're The Inspiration.mp3
+	'01 Counting Stars.mp3
+	'01 Cruel Summer.mp3
+	'01 I'm Like A Bird.mp3
+	'01 Lighthouse Family - Lifted.mp3
+	'etc
+	'Please amend accordingly if you find it useful
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("MP3PlayList")
+	MainForm.Show
+	playlist.Initialize
+	cmbMusicPopulate
+End Sub
+
+Private Sub btnExit_Action
+	ExitApplication
+End Sub
+
+Private Sub btnStop_Action
+	mp.Stop
+	btnStop.Visible = False
+End Sub
+
+Sub ShuffleList(pl As List) As List
+	For i = pl.Size - 1 To 0 Step -1
+		Dim j As Int
+		Dim k As Object
+		j = Rnd(0, i + 1)
+		k = pl.Get(j)
+		pl.Set(j,pl.Get(i))
+		pl.Set(i,k)
+	Next
+	Return pl
+End Sub
+
+Private Sub btnPlay_Click
+	btnStop.Visible = True
+	mMusic = mFolder & mName
+	Dim t As Object
+	Dim res As String
+	For i =0 To playlist.Size - 1
+		t = lv.Items.Get(i)
+		res = t
+		mp.Initialize("mp", File.GetUri("", res))
+		mp.Play
+		Wait For (mp) mp_Complete
+	Next
+End Sub
+
+Sub btnShuffle_Click
+	playlist = ShuffleList(playlist)
+	lv.Items.Clear
+	For i = 0 To playlist.Size-1
+		lv.Items.add(playlist.Get(i))
+	Next
+		
+End Sub
+
+Private Sub cmbMusicPopulate
+	cmbPlaylist.Items.Clear
+	cmbPlaylist.Items.AddAll(Array As String("Background Music", "Rock Ballads", "Motown", "60s Music","70s Music","80s Music","90s Music","00s Music"))
+End Sub
+
+
+Sub cmbPlaylist_selectedIndexChanged(index As Int, Value As Object)
+	btnStop.Visible = False
+	If cmbPlaylist.SelectedIndex = -1 Then
+		Return
+	Else
+		If mp.IsInitialized Then btnStop_Action
+		lv.Items.Clear
+		btnStop.Visible = True
+		mName = Value
+		If mName = "Background Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "background.txt"
+		End If
+		If mName = "Rock Ballads" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "rock ballads.txt"
+		End If
+		If mName = "Motown" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "motown.txt"
+		End If
+		If mName = "60s Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "60s music.txt"
+		End If
+		If mName = "70s Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "70s music.txt"
+		End If
+		If mName = "80s Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "80s music.txt"
+		End If
+		If mName = "90s Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "90s music.txt"
+		End If
+		If mName = "00s Music" Then
+			mFolder = "d:\ditl\music\"
+			mfilename = "00s music.txt"
+		End If
+		mMusic = mFolder & mName
+		For Each line As String In File.ReadList(mFolder, mfilename)
+			mMusic = mFolder & mName & "\" & line
+			lv.Items.Add(mMusic)
+			playlist.Add(mMusic)
+		Next
+		btnShuffle_Click
+	End If
+End Sub

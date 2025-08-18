@@ -1,0 +1,75 @@
+﻿Build1=Default,b4a.admob
+File1=layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=firebaseadmobplus
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~~\n~' For video ads to show successfully in your banner ad views, hardware acceleration must be enabled.~\n~	SetApplicationAttribute(android:hardwareAccelerated, "true")~\n~~\n~~\n~' By default, the Google Mobile Ads SDK initializes app measurement and begins sending user-level event data to Google immediately when the app starts.~\n~' This initialization behavior ensures you can enable AdMob user metrics without making additional code changes.~\n~' However, if your app requires user consent before these events can be sent, you can delay app measurement until you explicitly initialize the Mobile Ads SDK or load an ad.~\n~' To delay app measurement, add the following <meta-data> tag in your Manifest.~\n~' Delay app measurement until MobileAds.initialize() is called.~\n~	AddApplicationText(~\n~		<meta-data~\n~		    android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"~\n~		    android:value="true"/>~\n~	)~\n~~\n~~\n~AddReplacement($ADMOB_APP_ID$, ca-app-pub-3940256099942544~3347511713)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~CreateResourceFromFile(Macro, FirebaseAdMob.FirebaseAds)~\n~
+Module1=ActAppOpenAds
+Module2=ActBanner
+Module3=ActInterstitial
+Module4=ActNative
+Module5=ActRewardedAd
+Module6=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=6
+Version=10.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: FirebaseAdmobPlus
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+		
+End Sub
+Sub Globals
+		Dim MobileAds As MobileAds
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("layout1")
+		
+		
+	'Initialize MobileSDK
+	MobileAds.Initialize	
+	Wait For MobileAds_onInitializationComplete
+		Log("MobileAds_onInitializationComplete")
+End Sub
+Sub Activity_Resume
+
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+Private Sub Button1_Click
+		If MobileAds.IsAdmobReadyToLoadAds Then StartActivity(ActBanner) Else Log("MobileAds is not initialized")
+End Sub
+Private Sub Button2_Click
+		If MobileAds.IsAdmobReadyToLoadAds Then StartActivity(ActInterstitial) Else Log("MobileAds is not initialized")
+End Sub
+Private Sub Button3_Click
+		If MobileAds.IsAdmobReadyToLoadAds Then StartActivity(ActNative) Else Log("MobileAds is not initialized")
+End Sub
+Private Sub Button4_Click
+		If MobileAds.IsAdmobReadyToLoadAds Then StartActivity(ActAppOpenAds) Else Log("MobileAds is not initialized")
+End Sub
+Private Sub Button5_Click
+		If MobileAds.IsAdmobReadyToLoadAds Then StartActivity(ActRewardedAd) Else Log("MobileAds is not initialized")
+End Sub
+
+
+

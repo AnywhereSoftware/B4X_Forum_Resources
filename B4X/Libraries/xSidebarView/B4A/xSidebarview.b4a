@@ -1,0 +1,129 @@
+﻿Build1=Default,b4a.example
+File1=haus.png
+File2=header.png
+File3=Sidebar.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=b4xdrawer
+Library2=b4xpages
+Library3=core
+Library4=xsidebarview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=|relative|..\B4XMainPage
+Module2=Starter
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: xSidebarView
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+'#BridgeLogger: True
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	Private drawer As B4XDrawer
+	Private xSidebarView1 As xSidebarView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	If Activity.Width>Activity.Height Then
+		drawer.Initialize(Me,"drawer",Activity,30%x)
+	Else
+		drawer.Initialize(Me,"drawer",Activity,80%x)
+	End If
+	
+	Dim pm As B4XPagesManager
+	pm.Initialize(drawer.CenterPanel)
+	drawer.LeftPanel.LoadLayout("Sidebar")
+	
+	xSidebarView1.CreateHeader(100dip)
+	Dim HeaderPic As B4XBitmap = xui.LoadBitmapResize(File.DirAssets,"header.png",xSidebarView1.AsView.Width,100dip,True)
+	xSidebarView1.Header.SetBitmap(HeaderPic)
+	
+	xSidebarView1.CreateSeperator
+	xSidebarView1.CreateItem(xui.LoadBitmap(File.DirAssets,"haus.png"),"Home",xui.Color_Red)
+	xSidebarView1.CreateSeperator
+	xSidebarView1.CreateHeadline("Regler")
+	xSidebarView1.CreateItem(Chr(0xE01E),"Chlor",xui.Color_Red)
+	xSidebarView1.CreateItem(Chr(0xE1B8),"pH",xui.Color_Blue)
+	xSidebarView1.CreateItem(Chr(0xE80E),"Termperatur",xui.Color_Green)
+	xSidebarView1.CreateSeperator
+	xSidebarView1.CreateHeadline("Filter")
+	xSidebarView1.CreateItem(Chr(0xE01E),"Zeiten",xui.Color_Magenta)
+	xSidebarView1.CreateItem(Chr(0xE1B8),"Einstellungen",xui.Color_Yellow)
+	xSidebarView1.CreateSeperator
+	xSidebarView1.CreateHeadline("Attraktionen")
+	xSidebarView1.CreateItem(Chr(0xE01E),"Gegenstrom",xui.Color_LightGray)
+	xSidebarView1.CreateItem(Chr(0xE1B8),"Massage",xui.Color_Black)
+	
+	xSidebarView1.HighlightItem(2)
+	
+End Sub
+
+Sub SidebarView1_ItemClick(Value As String)
+	Log(Value)
+End Sub
+
+Sub SidebarView1_ItemLongClick (Value As String)
+	Log(Value)
+End Sub
+
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	drawer.LeftOpen=Not(drawer.LeftOpen)
+'	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+

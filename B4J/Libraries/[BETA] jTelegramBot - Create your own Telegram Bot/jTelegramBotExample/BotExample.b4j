@@ -1,0 +1,175 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jtelegrambot
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=7.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+' Warning 22 needs to be ignored
+#IgnoreWarnings: 22
+
+Sub Process_Globals
+	Private jtb As JTB
+	Private replbld As ReplyMarkupBuilder
+	Private bld As ApiBuilder
+	Public glmap As Map
+
+End Sub
+
+Sub AppStart (Args() As String)
+	jtb.Initialize("JTB","yourbotname","youtbottoken")
+	glmap.Initialize
+	jtb.startAsync
+	StartMessageLoop
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub JTB_onCallbackQueryReceived(api As Object, id As Int, query As Object)
+	Log($"JTB_onCallbackQueryReceived( ${id}, ${query}"$)
+	Dim cbquery As CallbackQuery = query
+	Log($"CallbackQuery.ChatInstance = ${cbquery.ChatInstance}"$)
+	Log($"CallbackQuery.Data = ${cbquery.Data}"$)
+	Log($"CallbackQuery.From = ${cbquery.From}"$)
+	Dim from As User = cbquery.From
+	Log($"FromFirstName: ${from.FirstName}"$)
+	Log($"FromLastName: ${from.LastName}"$)
+	Log($"FromUserName: ${from.Username}"$)
+	Log($"FromID: ${from.Id}"$)
+
+	Log($"CallbackQuery.Id = ${cbquery.Id}"$)
+	Log($"CallbackQuery.Inline_message_id = ${cbquery.Inline_message_id}"$)
+	Log($"CallbackQuery.Message = ${cbquery.Message}"$)
+	Dim msg As Message = cbquery.Message
+	bld.Initialize(api)
+	
+
+	If glmap.ContainsKey(msg.MessageId) Then
+		jtb.sendMessage(jtb.byId(from.Id),$"Thank you ${from.Username} for clicking the button ${cbquery.Data} :-)"$,"MARKDOWN",False,False,msg.MessageId,Null)
+	
+		jtb.answerCallbackQuery(cbquery.Id,$"Thank you. You pressed Button: ${cbquery.Data}"$,True)
+		glmap.Remove(msg.MessageId)
+	Else
+		jtb.sendMessage(jtb.byId(from.Id),$"thank you, ${from.Username}. You pressed Button ${cbquery.Data} but you are only allowed to answer one time."$,"MARKDOWN",False,False,msg.MessageId,replbld.hideCustomKeyboard)
+		jtb.answerCallbackQuery(cbquery.Id,$"Nur einmal möglich"$,False)
+	End If
+
+End Sub
+Sub JTB_onChosenInlineResultReceived(api As Object, id As Int,	result As Object)
+	Log($"JTB_onChosenInlineResultReceived( ${id}, ${result}"$)
+End Sub
+Sub JTB_onEditedMessageReceived(api As Object, id As Int, msg As Object)
+	Log($"JTB_onEditedMessageReceived( ${id}, ${msg}"$)
+End Sub
+Sub JTB_onInlineQueryReceived(api As Object, id As Int, query As Object)
+	Log($"JTB_onInlineQueryReceived( ${id}, ${query}"$)
+End Sub
+Sub JTB_onMessageReceived(api As Object, id As Int, msg As Object)
+	bld.Initialize(api)
+	Log($"JTB_onMessageReceived( ${id}, ${msg}"$)
+	Dim message As Message = msg
+	Log($"MessageFrom: ${message.From}"$)
+	Dim from As User = message.From
+	Log($"FromFirstName: ${from.FirstName}"$)
+	Log($"FromLastName: ${from.LastName}"$)
+	Log($"FromUserName: ${from.Username}"$)
+	Log($"FromID: ${from.Id}"$)
+	
+	Log($"MessageChat: ${message.Chat}"$)
+	Dim chat As Chat = message.Chat
+	Log($"ChatFirstName: ${chat.FirstName}"$)
+	Log($"ChatFirstName: ${chat.LastName}"$)
+	Log($"ChatUserName: ${chat.Username}"$)
+	If chat.Title <> Null Then
+		Log($"ChatTitle: ${chat.Title}"$)
+	End If
+	Log($"ChatID: ${chat.Id}"$)
+
+	If message.Caption <> Null Then
+		Log($"MessageCaption: ${message.Caption}"$)
+	End If
+	If message.Contact <> Null Then
+		Log($"MessageContact: ${message.Contact}"$)
+	End If
+	Log($"MessageDate: ${message.Date}"$)
+	If message.Entities <> Null Then
+		Log($"MessageEntities: ${message.Entities}"$)
+	End If
+	If message.Voice <> Null Then
+		Dim voic As Voice = message.Voice
+		Log($"Voice.Duration ${voic.Duration}"$)
+		Log($"Voice.FileId ${voic.FileId}"$)
+		Log($"Voice.Filesize ${voic.FileSize}"$)
+		Log($"Voice.MimeType ${voic.MimeType}"$)
+	End If
+	If message.Video <> Null Then
+		Dim vid As Video = message.Video
+		Log($"Video.FileId ${vid.FileId}"$)
+		Log($"Video.Duration ${vid.Duration}"$)
+		Log($"Video Size ${vid.Width}x${vid.Height}"$)
+		Log($"Video.MimeType ${vid.MimeType}"$)
+		Log($"Video.Filesize ${vid.FileSize}"$)
+	End If
+
+	If message.Game <> Null Then
+		Dim game As Object = message.Game
+		Log($"Game ${game}"$)
+	End If
+
+	Log($"MessageText: ${message.Text}"$)
+	If message.Text = "/buttons" Then
+		Dim mark As InlineKeyboardMarkup
+		mark.initialize(jtb.CreateDummyKeyboard)
+		Dim buttons As Message = jtb.sendMessage(jtb.byId(from.Id),"Click the Button!","MARKDOWN",False,False,message.MessageId,mark)
+		glmap.Put(buttons.MessageId,buttons)
+	else If message.Text = "/location" Then
+		jtb.sendChatAction(jtb.byId(from.Id),jtb.ChatActionFIND_LOCATION)
+		jtb.sendLocation(jtb.byId(from.Id),50.8337006,6.441118,False,message.MessageId,Null)
+	else If message.Text = "/url" Then
+		jtb.sendMessage(jtb.byId(from.Id),"[jTelegramBot Thread](https://www.b4x.com/android/forum/threads/jtelegrambot.103778/#post-650611)","MARKDOWN",False,False,message.MessageId,Null)
+	else If message.Text = "/plainurl" Then
+		bld.sendMessage(chat.Id,"Link without Preview [jTelegramBot Thread](https://www.b4x.com/android/forum/threads/jtelegrambot.103778/#post-650611)",message.MessageId,False,True,Null,jtb.parsemodeMARKDOWN)
+	else If message.Text = "/text" Then
+		jtb.sendMessage(jtb.byId(from.Id),$"Testtext <b>Bold</b>, <i>Italic</i>
+	new row..."$,"HTML",True,False,message.MessageId,Null)
+	else If message.Text = "/document" Then
+		jtb.sendChatAction(jtb.byId(from.Id),jtb.ChatActionUPLOAD_DOCUMENT)
+		jtb.sendDocument(jtb.byId(from.Id),jtb.MediaByFile(File.DirApp,"mydocument.zip"),"DocumentCaption",False,message.MessageId,Null)
+	else If message.Text = "/photo" Then
+		jtb.sendChatAction(jtb.byId(from.Id),jtb.ChatActionUPLOAD_PHOTO)
+		jtb.sendPhoto(jtb.byId(from.Id),jtb.MediaByFile(File.DirApp,"myimage.png"),"DocumentCaption",False,message.MessageId,replbld.forceReply)
+	else If message.Text = "/audio" Then
+		jtb.sendChatAction(jtb.byId(from.Id),jtb.ChatActionUPLOAD_VIDEO)
+		jtb.sendAudio(jtb.byId(from.Id),jtb.MediaByFile(File.DirApp,"myaudio.mp3"),223,"Fleedwood Mac","Eyes of the World",False,message.MessageId,replbld.forceReply)
+	else If message.Text = "/sticker" Then
+		jtb.sendSticker(jtb.byId(from.Id),jtb.MediaByFile(File.DirApp,"mysticker.webp"),False,message.MessageId,Null)
+	else If message.Text = "/start" Then
+		jtb.sendMessage(jtb.byId(from.Id),$" Hello ${chat.Username}
+`Command   | Result
+----------|-------------------------
+/location | Returns a Locationobject
+/document | Returns a Document
+/photo    | Returns a Photo
+/audio    | Returns a Audiofile
+/url      | Returns a URL with Preview
+/plainurl | Returns a URL without Preview
+/buttons  | Shows some buttons To Click on
+`
+Thank you For choosing Me :-)"$,"MARKDOWN",False,False,message.MessageId,Null)
+	End If
+End Sub
+Sub JTB_onGetUpdatesFailure(error As String)
+	Log($"${error}"$)
+End Sub

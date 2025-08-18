@@ -1,0 +1,85 @@
+﻿Build1=Default,uk.co.cyferltd.qbimagePickerDemo
+File1=1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=iqbimagepicker
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=6.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: QBImagePickerDemo
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+	#PlistExtra:<key>NSPhotoLibraryUsageDescription</key><string>Select your photo and attach to the task.</string>
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private QBImagePicker As QBImagePicker
+	Private ImageView1 As ImageView
+	Private theAssets As List, pAsset As Int
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub qb_cancelled
+	Log("Cancelled")
+End Sub
+
+Sub qb_picked (assets As List )
+	If assets.Size=0 Then
+		Log("None selected")
+		Return
+	End If
+	theAssets=assets
+	ImageView1.Bitmap=QBImagePicker.ConvertPHAssetToImage(assets.Get(0))
+	pAsset=0
+End Sub
+
+Sub Button1_Click
+	QBImagePicker.Initialize("qb")
+	Dim subType As List
+	subType.Initialize
+	subType.add(209) 'user library
+	QBImagePicker.load(Page1,1,subType,True,0,10,0,0,True)
+	
+	'or use default subTypes
+	'QBImagePicker.load(Page1,1,Null,True,0,10,0,0,True)
+End Sub
+
+Sub ImageView1_Click
+	pAsset=pAsset+1
+	If pAsset>theAssets.Size-1 Then
+		pAsset=0
+	End If
+	ImageView1.Bitmap=QBImagePicker.ConvertPHAssetToImage(theAssets.Get(pAsset))
+End Sub

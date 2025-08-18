@@ -1,0 +1,111 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=Template.xlsx
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=jcore
+Library3=xlutils
+Module1=CSVParser
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Type CountryDataPoint (Date As Long, TotalCases As Int, TotalDeaths As Int, Country As String, Continent As String)
+	Private xl As XLUtils
+	Private Continents As B4XSet
+	Private CountriesData As List
+End Sub
+
+Sub AppStart (Args() As String)
+	CreateWorkbook
+	StartMessageLoop 'required for the OpenExcel step
+End Sub
+
+Sub CreateWorkbook
+	xl.Initialize
+	Dim workbook As XLWorkbookWriter = xl.CreateWriterFromTemplate(File.DirAssets, "Template.xlsx")
+	Dim Sheet As XLSheetWriter = workbook.CreateSheetWriterByName("Countries")
+	ReadCountriesData (File.ReadString(File.DirAssets, "owid-covid-data.csv"))
+	Dim LinkStyle As XLStyle = workbook.CreateStyle.FontLink(11).HorizontalAlignment("CENTER")
+	Sheet.PutString(xl.AddressName("A1"), "Data source - https://ourworldindata.org").CreateHyperlink(Sheet.LastAccessed, "URL", "https://ourworldindata.org/coronavirus-source-data")
+	Sheet.SetStyle(Sheet.LastAccessed, LinkStyle)
+	Sheet.LastAccessed.Row0Based = 2
+	Dim ContinentLinkColumn0 As Int
+	For Each Continent As String In Continents.AsList
+		Dim ContinentStartRow0 As Int = Sheet.LastAccessed.Row0Based + 1
+		Sheet.PutString(xl.AddressOne("A", ContinentStartRow0 + 1), Continent).SetStyle(Sheet.LastAccessed, workbook.CreateStyle.FontBold(12))
+		
+		Sheet.PutString(xl.AddressZero(ContinentLinkColumn0, 1), Continent).SetStyle(Sheet.LastAccessed, LinkStyle)
+		'URL - Country!A13
+		Sheet.CreateHyperlink(Sheet.LastAccessed, "DOCUMENT", $"'${Sheet.PoiSheet.Name}'!${xl.AddressOneToString("A", ContinentStartRow0 + 1)}"$)
+		ContinentLinkColumn0 = ContinentLinkColumn0 + 1
+		Sheet.LastAccessed.Row0Based = ContinentStartRow0 'set it back
+		
+		For Each point As CountryDataPoint In CountriesData
+			If point.Continent = Continent Then
+				Dim CountryRow1 As Int = Sheet.LastAccessed.Row0Based + 1 + 1
+				Sheet.PutString(xl.AddressOne("A", CountryRow1), point.Country)
+				Sheet.PutNumber(xl.AddressOne("B", CountryRow1), point.TotalCases).SetStyle(Sheet.LastAccessed, workbook.CreateStyle.DataFormat("#,##0"))
+				Sheet.PutNumber(xl.AddressOne("C", CountryRow1), point.TotalDeaths).SetStyle(Sheet.LastAccessed, workbook.CreateStyle.DataFormat("#,##0"))
+			End If
+		Next
+		Sheet.GroupRows(ContinentStartRow0 + 1, Sheet.LastAccessed.Row0Based, True)
+	Next
+	For col = 0 To ContinentLinkColumn0 - 1
+		Sheet.AutoSizeColumn(col)
+	Next
+	Dim f As String = workbook.SaveAs(File.DirApp, "1.xlsx", True) 'don't write in File.DirApp in real apps.
+	Wait For (xl.OpenExcel(f)) Complete (Success As Boolean)
+	StopMessageLoop
+End Sub
+
+Sub ReadCountriesData (csv As String)
+	Log("Read countries data")
+	Dim parser As CSVParser
+	parser.Initialize
+	Continents.Initialize
+	CountriesData.Initialize
+	Dim n As Long = DateTime.Now
+	Dim Data As List = parser.Parse(csv, ",", True)
+	Log(DateTime.Now - n)
+	Dim CurrentCountry As String
+	Dim CurrentDataPoint As CountryDataPoint 'we only need the last value
+	DateTime.DateFormat = "yyyy-MM-dd"
+	For Each row() As String In Data
+		Dim Country As String = row(2)
+		If row(4) = "" Then row(4) = "0"
+		If row(7) = "" Then row(7) = "0"
+		Dim Continent As String = row(1)
+		If Continent = "" Then Continue 'not country
+		Continents.Add(Continent)
+		If Country <> CurrentCountry Then
+			CurrentCountry = Country
+			If CurrentDataPoint.IsInitialized Then
+				CountriesData.Add(CurrentDataPoint)
+			End If
+		End If
+		Dim Date As Long = DateTime.DateParse(row(3))
+		CurrentDataPoint = CreateCountryDataPoint(Date, row(4), row(7), Country, Continent)
+	Next
+	CountriesData.SortType("Country", True)
+End Sub
+
+Public Sub CreateCountryDataPoint (Date As Long, TotalCases As Int, TotalDeaths As Int, Country As String, Continent As String) As CountryDataPoint
+	Dim t1 As CountryDataPoint
+	t1.Initialize
+	t1.Date = Date
+	t1.TotalCases = TotalCases
+	t1.TotalDeaths = TotalDeaths
+	t1.Country = Country
+	t1.Continent = Continent
+	Return t1
+End Sub

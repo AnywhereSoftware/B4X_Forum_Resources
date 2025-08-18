@@ -1,0 +1,79 @@
+﻿Build1=Default,b4a.example
+File1=music.mp3
+File2=video.mp4
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=mobileFFmpeg
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=2
+Version=10.66
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: mobile-ffmpeg-min-4.4.LTS.aar
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private aMobileFFMPEG As mobileFFmpeg
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	aMobileFFMPEG.Initialize(Me, "FFMPEG")
+	Dim levels() As Object=aMobileFFMPEG.GetLogLevels
+	Log("Logging levels:")
+	For Each aLevel As Object In levels
+		Log(aLevel)
+	Next
+	Log("Using log level: AV_LOG_WARNING")
+	'if you want to see some log output, set to AV_LOG_INFO or higher
+	aMobileFFMPEG.setLogLevelByConstant("AV_LOG_WARNING")
+	aMobileFFMPEG.enableLogCallback
+	aMobileFFMPEG.enableStatisticsCallback
+	Dim abiName As String=aMobileFFMPEG.GetAbi 'ignore
+	Log("ABI: " & abiName)
+	File.Copy(File.DirAssets, "video.mp4", File.DirInternal, "video.mp4")
+	File.Copy(File.DirAssets, "music.mp3", File.DirInternal, "music.mp3")
+	'adds an audio track to a video
+	Dim theCmd As String="-y -i " & File.Combine(File.DirInternal, "video.mp4") & " -i " & File.Combine(File.DirInternal, "music.mp3") & " -c copy " & File.Combine(File.DirInternal, "videomusic.mp4")
+	Dim id As Long=aMobileFFMPEG.ExecuteAsync(Regex.Split(" ",theCmd))
+	Log("Running with Execution Id: " & id)
+End Sub
+
+Sub FFMPEG_Event(id As Long, retCode As Int)
+	Log("Callback with Execution Id: " & id & " and return code: " & retCode)
+	If File.Exists(File.DirInternal, "videomusic.mp4") Then
+		Log("videomusic.mp4 file size: " & File.Size(File.DirInternal, "videomusic.mp4"))
+	End If
+	MsgboxAsync("Check the logs", "Mobile-FFMPEG test")
+End Sub
+
+Sub FFMPEG_Log(msg As String)
+	Log("log: " & msg)
+End Sub
+
+Sub FFMPEG_Statistics(msg As String)
+	Log("Statistics: " & msg)
+End Sub

@@ -1,0 +1,76 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jserver
+Module1=queue
+Module2=request
+Module3=status
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=3
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Public nQueue As Int = 0
+	Public rQueue As Int = 0
+	Public Last_rQueue As Int = 0
+	Private svr As Server
+	Private rQueueView As Label
+	Private nQueueView As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	svr.Initialize("svr")
+	svr.Port=51015
+	svr.AddHandler("","status",False)
+'	svr.AddHandler("/request/","request",False)
+	svr.AddHandler("/request","request",False)
+'	svr.AddHandler("/queue/","queue",False)
+	svr.AddHandler("/queue","queue",False)
+	svr.Start
+	
+	UpdateQueue
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	ExitApplication
+End Sub
+
+Public Sub UpdateQueue
+	rQueueView.Text=rQueue
+	nQueueView.Text=nQueue
+End Sub
+
+Sub ButtonPrev_Click
+	If rQueue>1 Then 
+		rQueue=rQueue-1
+		UpdateQueue
+	End If
+End Sub
+
+Sub ButtonNext_Click
+	If rQueue<nQueue Then 
+		rQueue=rQueue+1
+		UpdateQueue
+	End If
+End Sub

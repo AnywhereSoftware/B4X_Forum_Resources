@@ -1,0 +1,68 @@
+﻿Version=2.5
+NumberOfModules=1
+Module1=CustomListView
+Build1=Default,b4i.example2
+NumberOfFiles=2
+File1=1.bil
+File2=Cell.bil
+NumberOfLibraries=2
+Library1=icore
+Library2=iui8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 7
+#End Region
+#MinVersion: 8
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private TableView1 As TableView
+	Private CustomListView1 As CustomListView
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	For i = 1 To 30
+		TableView1.AddSingleLine($"Item #${i}"$)
+	Next
+	For i = 1 To 30
+		Dim p As Panel
+		p.Initialize("")
+		p.SetLayoutAnimated(0, 1, 0, 0, CustomListView1.GetBase.Width, 120dip)
+		p.LoadLayout("Cell")
+		CustomListView1.Add(p, 120dip, i)
+	Next
+End Sub
+
+Private Sub Page1_KeyboardStateChanged (Height As Float)
+	Dim TableViewMaxHeight As Int = TableView1.BaseView.CalcRelativeKeyboardHeight(Height)
+	Dim TableViewMaxHeightWithNoKeyboard As Int = Page1.RootPanel.Height - 10dip - TableView1.BaseView.Top
+	'If the keyboard is visible then the TableView end at the keyboard top.
+	'Otherwise the TableView will end a few pixels from the full page size.
+	TableView1.BaseView.Height = Min(TableViewMaxHeight, TableViewMaxHeightWithNoKeyboard)
+	'We are doing the same thing for the CLV.
+	CustomListView1.GetBase.Height = Min(CustomListView1.GetBase.CalcRelativeKeyboardHeight(Height), _
+		 Page1.RootPanel.Height - 10dip - CustomListView1.GetBase.Top)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub

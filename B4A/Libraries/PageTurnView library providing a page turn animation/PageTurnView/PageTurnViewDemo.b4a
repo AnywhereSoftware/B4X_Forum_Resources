@@ -1,0 +1,142 @@
+﻿Version=1.60
+IconFile=
+FullScreen=False
+IncludeTitle=True
+NumberOfModules=0
+Package=anywheresoftware.b4a.agraham.pageturnviewdemo
+Label=PageTurnView Demo
+VersionCode=1
+VersionString=
+Orientation=unspecified
+CanInstallToExternalStorage=False
+DoNotOverwriteManifest=False
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=core
+Library2=gps
+Library3=pageturnview
+Library4=threading
+@EndOfDesignText@
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim PageNumber As Int ' save page number during device rotation
+	
+	Dim ipsum As String
+	ipsum = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	Dim paracount As Int : paracount = 8
+	Dim LeftMargin As Int : LeftMargin = 10dip
+	Dim TopMargin As Int : TopMargin = 10dip
+	Dim LineSpacing As Int : LineSpacing = 1
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim PageTurner As PageTurnView
+	Dim Pager As TextPaginator
+	Dim Font As Typeface
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	PageTurner.Initialize("PageTurner", 20)
+	Activity.AddView(PageTurner, 10dip, 10dip, Activity.Width - 20dip, Activity.Height - 20dip)
+
+	If Activity.Width > Activity.Height Then
+		PageTurner.TwoPages = True ' the default is False
+		PageTurner.RenderLeftPage = True ' the default is True
+		Pager.SetPageParameters(Pager.ALIGN_NORMAL, PageTurner.Width/2 - 12dip, LeftMargin, PageTurner.Height - 12dip, TopMargin, LineSpacing)
+		PageTurner.SetMarginPixels(6dip, 6dip, 6dip, 6dip)
+	Else	
+		PageTurner.TwoPages = False 
+		PageTurner.RenderLeftPage = False
+		Pager.SetPageParameters(Pager.ALIGN_CENTER, PageTurner.Width - 20dip, LeftMargin, PageTurner.Height - 20dip, TopMargin, LineSpacing)
+		PageTurner.SetMarginPixels(10dip, 10dip, 10dip, 10dip)
+	End If
+	PageTurner.AllowLastPageCurl = False ' the default is true	
+	
+	Font = Font.CreateNew(Typeface.SERIF, Typeface.STYLE_NORMAL)
+	Dim text As String
+	For i = 0 To paracount - 1
+		text = text & ipsum & CRLF & CRLF
+	Next
+	Pager.SetPaintParameters(Font, 16, Colors.Black, True)
+	Pager.Paginate(text)
+	
+End Sub
+
+Sub Activity_Resume
+	PageTurner.CurrentPage = PageNumber
+	PageTurner.Color = Colors.LightGray ' otherwise it gets lost on Pause and Resume without a Create
+	PageTurner.OnResume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	PageNumber = PageTurner.CurrentPage
+	PageTurner.OnPause
+End Sub
+
+' This is run on the main thread to display any exception in PageTurner_GetBitmap
+Sub ShowPTError(title As String, msg As String)
+	Msgbox(msg, title)
+End Sub
+
+' The PageTurnerView events run on a separate thread to the main thread.
+' They therefore must not try to manipulate GUI elements.
+' -------------------------------------------------------------------------------------------
+' DO NOT ATTEMPT TO PAUSE THE DEBUGGER IN ANY OF SUBS BELOW AS IT MAY HAVE UNEXPECTED RESULTS
+' -------------------------------------------------------------------------------------------
+' This may be fixed in a future version of Basic4android. 
+
+Sub PageTurner_GetBitmap(Width As Int, Height As Int, Page As Int) As Bitmap 'Called when the Bitmap for the given page number is required. Return the Bitmap
+	' As this is running on a separate thread exceptions will cause the application to force close
+	' and not report the exception as would happen on the main thread so we use a Try Catch block
+	' to trap any errors
+	Dim bmp As Bitmap
+	Dim cnv As Canvas
+	bmp.InitializeMutable(Width, Height) ' do this here so we have a valid return in case of an exception
+	Try	
+		'File.OpenInput("bad", "filename") ' this would cause an exception to be reported on the main thread
+		If Page = 0 Then	
+			cnv.Initialize2(bmp)
+			cnv.DrawColor(Colors.Blue)
+			cnv.DrawText( "A Book", Width/2, 100dip, Typeface.DEFAULT, 24, Colors.White, "CENTER")
+			Return bmp
+		Else If Page = Pager.PageCount + 1 Then	
+			cnv.Initialize2(bmp)
+			cnv.DrawColor(Colors.DarkGray)
+			cnv.DrawText( "The End", Width/2, 100dip, Typeface.DEFAULT, 24, Colors.White, "CENTER")
+			Return bmp
+		Else
+			Return Pager.GetPageBitmap(page - 1, Colors.Yellow)
+		End If	
+	Catch
+		' catch and report any exceptions on the rendering thread to the main thread
+		PTException
+	End Try	
+	Return bmp ' if we don't return something valid we will cause an exception on the rendering thread
+End Sub 
+
+Sub PageTurner_GetPages() As Int 'Called when the number of pages is required. Return the number of pages
+	' This is running on a separate thread and I have seen a NullPointerException in here on closing the app
+	' Presumably the Pager object was destroyed before the OpenGL thread was stopped so we trap any error
+	Try
+		Return Pager.PageCount + 2
+	Catch
+		Return 0 ' if we don't return something valid we will cause an exception on the rendering thread
+	End Try 
+End Sub
+
+Sub PTException()
+	Dim Ex As ExceptionEx
+	Dim where As String
+	Ex = LastException
+	Dim args(2) As Object
+	args(0) = LastException.Message
+	where = Ex.StackTraceElement(2) ' get Java line of error
+	args(1) = where	
+	PageTurner.RunOnGuiThread("ShowPTError", args)
+End Sub
+
+

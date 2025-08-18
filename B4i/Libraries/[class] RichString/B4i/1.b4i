@@ -1,0 +1,53 @@
+﻿Version=1.5
+IconFile=
+NumberOfModules=1
+Module1=RichString
+Build1=Default,anywheresoftware.b4i.push
+NumberOfFiles=1
+File1=1.bil
+NumberOfLibraries=3
+Library1=icore
+Library2=irandomaccessfile
+Library3=iencryption
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight AND PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private Label1 As Label
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	Dim rs As RichString
+	rs.Initialize(Label1.Text)
+	rs.Color(Colors.Red, 0, 4).Color(Colors.Blue, 4, 8).SetFont(Font.CreateNewBold(30), 1, 5)
+	rs.Strikethrough(True, 5, 10)
+	rs.Underline(True, Colors.Blue, 0, 10)
+	rs.SetFont(Font.CreateNewItalic(20), 0, rs.Text.Length-5)
+	rs.SetFont(Font.CreateNewBold(30), 4, 7)
+	rs.BackgroundColor(0xFFC0C000, 5, 20)
+	rs.SetToLabel(Label1)
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+

@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <NOTE>This XML file should only be used for documentation purposes.</NOTE>
+    <doclet-version-NOT-library-version>0</doclet-version-NOT-library-version>
+    <class>
+        <name>GPRMC</name>
+        <shortname>GPRMC</shortname>
+        <method>
+            <name>Initialize</name>
+            <comment>Init the object.
+Debug_Mode - Set To True To Log the various steps from init To getting data.
+Hint: The debug mode can also set via field GPRMC.DebugMode = True Or False.
+UTC_Offset - UTC Offset in Hours (to Local Time) for the Timestamp Hours.
+Speed_Min_Threshold - Speed Kmh is set to 0 if below min threshold. To disable, set minthreshold 0.
+Hint: The threshold can also set via field GPRMC.SpeedMinThresHold = NN.
+Example &lt;code&gt;
+GPRMC.Initialize(False, 2, 5)
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>Debug_Mode</name>
+                <type>Boolean</type>
+            </parameter>
+            <parameter>
+                <name>UTC_Offset</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>Speed_Min_Threshold</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Parse_RMC_Sentence</name>
+            <comment>Parse the RMC data, csv string into the fields as declared in process_globals.
+Fields:
+DateStamp.Hour, Minutes, Seconds - Int
+TimeStamp.Hour, Minutes, Seconds - Int
+DataValid - True or False
+Lat.Degrees, Minutes, Seconds, DegreesDec - Int, Indicator (N, S) - Byte
+Lon.Degrees, Minutes, Seconds, DegreesDec - Int, Indicator (E, W) - Byte
+Note: Lat and Lon position in Decimal Degrees can be used directly in f.e. Google Maps 47.2852,8.5653
+Speed - Kmh - Double
+Course - Degrees over ground - Double
+Note: The RMC sentence fields 10 - 14 are not parsed.
+Example &lt;code&gt;
+Dim GPRMC_DATA As String  "$GPRMC,083559.00,A,4717.11437,N,00833.91522,E,10.4,77.52,290621,,,A,V*57"
+Dim bc As ByteConverter
+GPRMC.Initialize(False)
+If GPRMC.Parse_RMC_Sentence(GPRMC_DATA) Then
+Log("Data Valid: ", GPRMC.DataValid)
+Log("Lat: ", GPRMC.Lat.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lat.Indicator)))
+Log("Lon: ", GPRMC.Lon.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lon.Indicator)))
+Log("Speed (kmh): ", GPRMC.Speed, ", Course (deg): ", GPRMC.Course)
+Log("TimeStamp (h.m.s): ", GPRMC.TimeStamp.Hour, ".", GPRMC.TimeStamp.Minutes, ".", GPRMC.TimeStamp.Seconds)
+Log("DateStamp (D.M.Y): ", GPRMC.DateStamp.Day, ".", GPRMC.DateStamp.Month, ".", GPRMC.DateStamp.Year)
+End If
+&lt;/code&gt;</comment>
+            <returntype>Boolean</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Distance_Between_Positions</name>
+            <comment>Calculate approximate distance in Km between two positions with lat / lon coordinates - NOT ACCURATE.
+Best result for distances &gt; 10 Km (to be checked out if smaller distance can do as well properly with f.e. Arduino Leonardo).
+latA - Latitude first location in decimal degrees (DD.DDDDDD)
+lonA - Longitude first location in decimal degrees (DD.DDDDDD)
+latB - Latitude second location in decimal degrees (DD.DDDDDD)
+lonB - Longitude second location in decimal degrees (DD.DDDDDD)
+unit - 0 statute miles, 1 kilometers, 2 nautical miles
+Returns
+Distance depending selected unit
+Example &lt;code&gt;
+'Distance between the cities Hamburg and Kiel (Germany) = 86.5038 km
+Log(GPRMC.Distance_Between_Positions(53.551086, 9.993682, 54.323334, 10.1394444, 1))
+&lt;/code&gt;</comment>
+            <returntype>Double</returntype>
+            <parameter>
+                <name>latA</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>lonA</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>latB</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>lonB</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>unit</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Distance_Between_TimeStamps</name>
+            <comment>Calculate approximate distance in Km using average speed between two GPS timestamps - NOT ACCURATE
+The usual time difference in seconds between two GPS readings is 1 second (depends GPS device and atenna).
+speedA - First Speed Kmh
+speedB - Second Speed Kmh
+timeA - Start time stamp
+timeB - End time stamp
+Returns
+Distance in Km
+Example &lt;code&gt;
+'Time difference is 1 second between two GPS readings. Speed A=50, B=52, Avg=51.
+Dim TimeA As TGPRMCTime
+TimeA.Hours = 10: TimeA.Minutes=10: TimeA.Seconds=10
+Dim TimeB As TGPRMCTime
+TimeB.Hours = 10: TimeB.Minutes=10: TimeB.Seconds=11
+Log(GPRMC.Distance_Between_TimeStamps(50, 52, TimeA, TimeB))	'0.0142km
+&lt;/code&gt;</comment>
+            <returntype>Double</returntype>
+            <parameter>
+                <name>speedA</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>speedB</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>timeA</name>
+                <type>TGPRMCTime</type>
+            </parameter>
+            <parameter>
+                <name>timeB</name>
+                <type>TGPRMCTime</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Course_To</name>
+            <comment>Calculate approximate bearing (course to) between two locations with lat / lon coordinates - NOT ACCURATE
+latA - Latitude first location in decimal degrees (DD.DDDDDD)
+lonA - Longitude first location in decimal degrees (DD.DDDDDD)
+latB - Latitude second location in decimal degrees (DD.DDDDDD)
+lonB - Longitude second location in decimal degrees (DD.DDDDDD)
+Returns
+Decimal Degrees
+Example &lt;code&gt;
+'Bearing between the cities Hamburg and Kiel (Germany) = 6.2814 degrees
+Log(GPRMC.Course_To(53.551086, 9.993682, 54.323334, 10.1394444))
+&lt;/code&gt;</comment>
+            <returntype>Double</returntype>
+            <parameter>
+                <name>latA</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>lonA</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>latB</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>lonB</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Time_Difference</name>
+            <comment>Calculate the time difference in HH MM SS between a start and end time (to used for duration calculations).
+StartHours, StartMinutes, StartSeconds - Int
+EndHours, EndMinutes, EndSeconds - Int
+Returns
+Global variable TimeDifference with type TGPRMCTime is updated.
+The time difference is always positive even if the endtime smaller starttime.
+Example &lt;code&gt;
+GPRMC.Time_Difference(10, 55, 0, 11, 0, 0)
+Log("Time Difference: ", GPRMC.TimeDifference.Stamp, ",",GPRMC.TimeDifference.Hours,",",GPRMC.TimeDifference.Minutes,",",GPRMC.TimeDifference.Seconds)
+'Time Difference: 500,0,5,0
+&lt;/code&gt;</comment>
+            <returntype/>
+            <parameter>
+                <name>StartHours</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>StartMinutes</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>StartSeconds</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>EndHours</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>EndMinutes</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>EndSeconds</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Knots_To_Kmh</name>
+            <comment>Conversion Knots to Kmh
+1 knot (kt) = 1.85200 kmh</comment>
+            <returntype>Double</returntype>
+            <parameter>
+                <name>knots</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Kmh_To_Knots</name>
+            <comment>Conversion Kmh to Knots
+1 kmh = 0,539957 knot (kt)</comment>
+            <returntype>Double</returntype>
+            <parameter>
+                <name>kmh</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <field>
+            <name>DebugMode</name>
+            <comment>
+Set debug mode to true if want to see details of the methods</comment>
+            <returntype>Boolean</returntype>
+        </field>
+        <field>
+            <name>DataValid</name>
+            <comment>
+Public Fields</comment>
+            <returntype>Boolean</returntype>
+        </field>
+        <field>
+            <name>Lat</name>
+            <comment/>
+            <returntype>TGPRMCPos</returntype>
+        </field>
+        <field>
+            <name>Lon</name>
+            <comment/>
+            <returntype>TGPRMCPos</returntype>
+        </field>
+        <field>
+            <name>Speed</name>
+            <comment/>
+            <returntype>Double</returntype>
+        </field>
+        <field>
+            <name>Course</name>
+            <comment/>
+            <returntype>Double</returntype>
+        </field>
+        <field>
+            <name>TimeStamp</name>
+            <comment/>
+            <returntype>TGPRMCTime</returntype>
+        </field>
+        <field>
+            <name>DateStamp</name>
+            <comment/>
+            <returntype>TGPRMCDate</returntype>
+        </field>
+        <field>
+            <name>TimeDifference</name>
+            <comment/>
+            <returntype>TGPRMCTime</returntype>
+        </field>
+        <field>
+            <name>UTCOffset</name>
+            <comment>
+Public Field Parameter used in Sub Initialize</comment>
+            <returntype>Int</returntype>
+        </field>
+        <field>
+            <name>SpeedMinThresHold</name>
+            <comment/>
+            <returntype>Double</returntype>
+        </field>
+    </class>
+    <version>1.45</version>
+</root>

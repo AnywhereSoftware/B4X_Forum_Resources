@@ -1,0 +1,182 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Android128.png
+File10=layMain.bjl
+File2=AnywhereNew.png
+File3=AppleIOS.png
+File4=arduino.png
+File5=B4AText.png
+File6=B4IText.png
+File7=B4JText.png
+File8=B4RText.png
+File9=java.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=animatedgifencoder
+Library4=jxui
+NumberOfFiles=10
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private ivAnywhere As ImageView
+	Private ivB4A As ImageView
+	Private ivB4I As ImageView
+	Private ivB4J As ImageView
+	Private ivB4R As ImageView
+	Private lstIVs As List
+
+	Private pnContainer As Pane
+	
+	Private ivB4AText As ImageView
+	Private ivB4JText As ImageView
+	Private ivB4IText As ImageView
+	Private ivB4RText As ImageView
+	Private lstIVTexts As List
+
+	Private pnBorder As Pane
+
+	Private mAnimatedGifEncoder As AnimatedGifEncoder
+	Private mGifFileName As String = "AnywhereSoftware.gif"
+	Private mGifOutputStream As OutputStream
+	Private tmrGifEncoding As Timer
+	Private mGifDelay As Int
+	Private lblStatus As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("layMain") 'Load the layout file.
+	MainForm.Show
+
+	ivAnywhere.SetImage(fx.LoadImage(File.DirAssets, "AnywhereNew.png"))
+	ivAnywhere.SetAlphaAnimated(0, 0)
+
+	ivB4A.SetImage(fx.LoadImage(File.DirAssets, "Android128.png"))
+	ivB4A.SetAlphaAnimated(0, 0)
+	ivB4AText.SetImage(fx.LoadImage(File.DirAssets, "B4AText.png"))
+	ivB4AText.SetLayoutAnimated(0, 0, pnContainer.Height, pnContainer.Width, 0)
+
+	ivB4J.SetImage(fx.LoadImage(File.DirAssets, "java.png"))
+	ivB4J.SetAlphaAnimated(0, 0)
+	ivB4JText.SetImage(fx.LoadImage(File.DirAssets, "B4JText.png"))
+	ivB4JText.SetLayoutAnimated(0, 0, pnContainer.Height, pnContainer.Width, 0)
+
+	ivB4I.SetImage(fx.LoadImage(File.DirAssets, "AppleIOS.png"))
+	ivB4I.SetAlphaAnimated(0, 0)
+	ivB4IText.SetImage(fx.LoadImage(File.DirAssets, "B4IText.png"))
+	ivB4IText.SetLayoutAnimated(0, 0, pnContainer.Height, pnContainer.Width, 0)
+
+	ivB4R.SetImage(fx.LoadImage(File.DirAssets, "arduino.png"))
+	ivB4R.SetAlphaAnimated(0, 0)
+	ivB4RText.SetImage(fx.LoadImage(File.DirAssets, "B4RText.png"))
+	ivB4RText.SetLayoutAnimated(0, 0, pnContainer.Height, pnContainer.Width, 0)
+
+	lstIVs.Initialize2(Array As Object(ivB4A, ivB4J, ivB4I, ivB4R))
+	lstIVTexts.Initialize2(Array As Object(ivB4AText, ivB4JText, ivB4IText, ivB4RText))
+
+	mAnimatedGifEncoder.Initialize
+	mGifDelay = 25
+	mAnimatedGifEncoder.setSize(pnContainer.Width, pnContainer.Height)
+	mAnimatedGifEncoder.Delay = mGifDelay
+	mAnimatedGifEncoder.Quality = 10
+	mAnimatedGifEncoder.Repeat = 0
+	tmrGifEncoding.Initialize("tmrGifEncoding", mGifDelay)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_MouseClicked (EventData As MouseEvent)
+	Start
+End Sub
+
+Sub Start
+	pnBorder.Visible = False
+	lblStatus.Text = "Started"
+	Restore
+	
+	mGifOutputStream = File.OpenOutput(File.DirApp, mGifFileName, False)
+	mAnimatedGifEncoder.start(mGifOutputStream)
+	tmrGifEncoding.Enabled = True
+	
+	ivAnywhere.SetAlphaAnimated(500, 1)
+	Sleep(2000)
+	ivAnywhere.SetAlphaAnimated(500, 0)
+	Sleep(700)
+	
+	For i = 0 To lstIVs.Size - 1
+		Anim(lstIVs.Get(i), lstIVTexts.Get(i))
+		Sleep(2000)
+	Next
+	tmrGifEncoding.Enabled = False
+	StopGifEnconding
+	lblStatus.Text = "Completed"
+End Sub
+
+Sub Anim(IV As ImageView, IVText As ImageView)
+	Dim Moltiplier As Float = 1
+	If IV = ivB4A Then
+		Moltiplier = 0.45
+	End If
+	Dim Left, Top, Width, Height As Double
+	Width = ivB4A.Width * Moltiplier
+	Height = Width
+
+	IV.SetAlphaAnimated(650, 1)
+	Sleep(650)
+	Left = IV.Left + (pnContainer.Width - Width) / 2
+	Top = IV.Top
+	IV.SetLayoutAnimated(500, Left, Top, Width, Height)
+	IVText.SetLayoutAnimated(500, 0, pnContainer.Height - 67dip, pnContainer.Width, pnContainer.Height)
+	Sleep(1000)
+	IV.SetAlphaAnimated(300, 0)
+	IVText.SetAlphaAnimated(300, 0)
+End Sub
+
+Sub Restore
+	ivAnywhere.SetAlphaAnimated(0, 0)
+	
+	For i = 0 To lstIVs.Size - 1
+		Dim iv As ImageView = lstIVs.Get(i)
+		iv.SetAlphaAnimated(0, 0)
+		iv.Visible = True
+		iv.SetLayoutAnimated(0, 0, 0, pnContainer.Width, pnContainer.Height)
+		Dim ivText As ImageView = lstIVTexts.Get(i)
+		ivText.SetLayoutAnimated(0, 0, pnContainer.Height, pnContainer.Width, 0)
+		ivText.SetAlphaAnimated(0, 1)
+		ivText.Visible = True
+	Next
+End Sub
+
+Sub tmrGifEncoding_Tick
+	Dim img As Image = pnContainer.Snapshot
+	mAnimatedGifEncoder.addFrame(img)
+End Sub
+
+Sub StopGifEnconding
+	mAnimatedGifEncoder.finish
+	mGifOutputStream.Close
+End Sub

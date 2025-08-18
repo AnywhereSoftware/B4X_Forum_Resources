@@ -1,0 +1,35 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=Bookmarks_example.xml
+FileGroup1=New Group
+Group=Default Group
+Library1=jcore
+Library2=json
+Library3=jxmlsax
+Module1=PListParser
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim in As InputStream = File.OpenInput(File.DirAssets, "Bookmarks_example.xml")
+	Dim parser As PListParser
+	parser.Initialize
+	Dim RootDict As Map = parser.Parse(in)
+	'just to see the result:
+	
+	Dim jg As JSONGenerator
+	jg.Initialize(RootDict)
+	Log(jg.ToPrettyString(4))
+End Sub

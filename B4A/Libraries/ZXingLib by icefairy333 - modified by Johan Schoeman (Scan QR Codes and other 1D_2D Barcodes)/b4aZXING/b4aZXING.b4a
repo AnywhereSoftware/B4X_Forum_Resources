@@ -1,0 +1,216 @@
+﻿Build1=Default,com.jhs.zxing.abc
+File1=B4A.png
+File2=main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=jhsicezxing1
+Library3=runtimepermissions
+ManifestCode=~\n~'This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true"~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(<uses-feature android:name="android.hardware.telephony" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />)~\n~AddManifestText(<uses-feature android:name="android.hardware.camera.flash" android:required="false" />)~\n~'AddPermission("android.permission.ACCESS_COARSE_LOCATION")~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.ACCESS_FINE_LOCATION)~\n~AddPermission(android.permission.WAKE_LOCK)~\n~AddPermission(android.permission.DEVICE_POWER)~\n~'AddPermission("android.permission.ACCESS_COARSE_UPDATES")~\n~AddPermission("android.permission.READ_PHONE_STATE")~\n~AddPermission(android.permission.VIBRATE)~\n~AddPermission(android.permission.CAMERA)~\n~AddPermission(android.permission.FLASHLIGHT)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~AddPermission(android.hardware.camera)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:largeHeap, "true")~\n~~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~  android:maxSdkVersion="18" />~\n~)~\n~~\n~CreateResourceFromFile(Macro, JhsIceZxing1.CaturePortrait)~\n~'CreateResourceFromFile(Macro, JhsIceZxing1.CatureLandscape)~\n~
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: b4aZXING
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim rp As RuntimePermissions               'ADDED 2 June 2018
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim zx As JhsIceZxing1
+	Private Button1 As Button
+	
+	 
+	
+	Dim bm As Bitmap
+	
+	Dim ImageView1 As ImageView
+	Private ImageView2 As ImageView
+	Private ImageView3 As ImageView
+	Private ImageView4 As ImageView
+	Dim cnt As Int
+	Private ImageView5 As ImageView
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Activity.LoadLayout("main")
+'	check
+	bm.Initialize(File.DirAssets,"B4A.png") 
+	ImageView1.Color = Colors.Transparent
+	ImageView2.Color = Colors.Transparent
+	ImageView3.Color = Colors.Transparent
+	ImageView4.Color = Colors.Transparent
+	cnt = 1 
+	
+	ImageView5.Gravity = Gravity.FILL                                                                  'ADDED 2 June 2018
+	
+	'use zx.CreateQRCode or zx.CreateDataMatrixCode or zx.CreateAztecCode
+	zx.CODE_BACK_COLOR = Colors.Yellow                                                                 'ADDED 2 June 2018
+	zx.CODE_FORE_COLOR = Colors.blue                                                                   'ADDED 2 June 2018
+	bm = zx.CreateQRCode("Hello B4A - testing creation of 2D codes. It seems to be working well")      'ADDED 2 June 2018
+	
+	ImageView5.Bitmap = bm                                                                             'ADDED 2 June 2018
+
+
+End Sub
+ Sub Button1_Click
+	Dim Result As Boolean = True                                                                       'ADDED 2 June 2018
+	If Not(rp.Check(rp.PERMISSION_CAMERA)) Then                                                        'ADDED 2 June 2018
+		rp.CheckAndRequest(rp.PERMISSION_CAMERA)                                                       'ADDED 2 June 2018
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)                   'ADDED 2 June 2018
+	End If                                                                                             'ADDED 2 June 2018
+	If Result Then                                                                                     'ADDED 2 June 2018
+	'	ImageView1.Background = Null
+		
+	    zx.isportrait = True
+		zx.displayOrientation = 90     '90 is the default value that was set in the library. It works for most devices
+		                               'although for eg the Nexus 5 will show an upside down preview with this setting.
+									   'I guess zx.displayOrientation = 270 will fix it for the Nexus 5 when used in portrait mode.
+		zx.useFrontCam = False
+		'set the timeoutDuration to a very high value (such as 2000000000) if you dont want it to time out
+		'2000000000 = 63 years
+		zx.timeoutDuration = 30
+		
+		
+		'change these factors between 0 and 1 to change the size of the viewfinder rectangle
+		'the library will limit the minimum size to 240 x 240 pixels and the maximum to (screen width) x (screen height) pixels
+
+		zx.theViewFinderXfactor = 0.7      'portrait
+		zx.theViewFinderYfactor = 0.5      'portrait
+		
+	'	zx.theViewFinderXfactor = 0.5      'landscape
+	'	zx.theViewFinderYfactor = 0.5      'landscape
+		
+		zx.theFrameColor = Colors.Blue
+		zx.theLaserColor = Colors.Yellow
+		
+	    zx.moveLaser = True
+		
+		zx.theMaskColor = Colors.argb(100, 0, 0, 100)
+		zx.theResultColor = Colors.Green
+		zx.theResultPointColor = Colors.Red
+		
+		'set the prompt messages
+		zx.theTopPromptMessage = "This was done......"
+		zx.theTopPromptTextSize = 5%y                            'text size in pixels
+		zx.topPromptColor = Colors.Green
+		zx.topPromptDistanceFromTop = 1%y                        'pixel distance from top
+		zx.textSkewnessTop = 0.0
+		
+		
+		zx.theBottomPromptMessage = "Just for fun......"
+		zx.theBottomPromptTextSize = 5%y                         'text size in pixels
+		zx.bottomPromptColor = Colors.Green
+		zx.bottomPromptDistanceFromBottom = 5%y                  'pixel distance from top
+		zx.textSkewnessBottom = 0.0
+		
+		'add a bitmap - portrait
+		zx.theBitMap = bm
+		zx.theBitmapPosition(40%x,10%y,20%x,20%x)
+		
+		'add a bitmap - landscape
+	'	zx.theBitMap = bm
+	'	zx.theBitmapPosition(5%x,5%x,20%y,20%y)	
+
+	    zx.mustBeep = False
+		zx.mustVibrate = True
+		
+	    'START OF ADDED 7 NOVEMBER 2015:
+	'   Specify the bar code formats to scan
+	'   If not specified then all code formats will be scanned
+	'   Specify one of the following: PRODUCT_FORMATS, ONE_D_FORMATS, QR_CODE_FORMATS, DATA_MATRIX_FORMATS, AZTEC_FORMATS, PDF_417_FORMATS, TWO_D_FORMATS
+	'   PRODUCT_FORMATS are the following: UPC A, UPC E, EAN 13, EAN 8, RSS 14
+	'   ONE_D_FORMATS are all the PRODUCT FORMATS plus the following: CODE 39, CODE 93, CODE 128, ITF
+	'   TWO_D_FORMATS are the following: QR CODE, DATA MATRIX, AZTEC CODE, PDF 417
+
+	    'COMMENT THE BELOW LINE OR USE zx.ScanMode = "" to scan all the 1D and 2D type barcodes that this version of the ZXING library supports
+	    'zx.ScanMode = zx.FORMATS_TWO_D                 
+		'END OF ADDED 7 NOVEMBER 2015
+		zx.scanInvertedCodes = True
+		
+		zx.ReturnBitmap = True                                                                       'ADDED 2 June 2018
+		zx.BeginScan("myzx")	
+	End If   
+	  
+	
+End Sub
+
+Sub myzx_result(atype As String, Value As String, image As Bitmap)
+	If image <> Null Then               	 'ADDED 2 June 2018 ---> when zx.ReturnBitmap = False a null bitmap will be returned
+		If cnt = 1 Then
+			ImageView1.Bitmap = image
+			ImageView1.Gravity = Gravity.FILL
+		  
+			cnt = cnt + 1 
+		  
+		Else If cnt = 2 Then
+			ImageView2.Bitmap = image
+			ImageView2.Gravity = Gravity.FILL
+			cnt = cnt + 1
+		Else If cnt = 3 Then
+			ImageView3.Bitmap = image
+			ImageView3.Gravity = Gravity.FILL
+			cnt = cnt + 1
+		Else If cnt = 4 Then
+			ImageView4.Bitmap = image
+			ImageView4.Gravity = Gravity.FILL
+			cnt = cnt + 1
+		Else If cnt > 4 Then
+			ImageView1.Bitmap = Null
+			ImageView1.Bitmap = ImageView2.Bitmap
+			ImageView2.Bitmap = Null
+			ImageView2.Bitmap = ImageView3.Bitmap
+			ImageView3.Bitmap = Null
+			ImageView3.Bitmap = ImageView4.Bitmap
+			ImageView4.Bitmap = Null
+			ImageView4.Bitmap = image
+			ImageView1.Gravity = Gravity.FILL
+			cnt = cnt + 1
+		End If
+
+		Log(cnt)
+	End If	
+	
+	Log("type:" & atype &  " Value:" & Value)
+	Msgbox(Value,"type:" & atype)	
+
+End Sub
+Sub myzx_timedout(timedOut As Boolean)
+	Log("timedOut " & timedOut)
+
+End Sub
+
+Sub myzx_usercancelled(userCancelled As Boolean)
+	Log("userCancelled " & userCancelled)
+End Sub
+
+Sub Activity_Resume
+	
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+

@@ -1,0 +1,452 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=b4xcollections
+Library4=byteconverter
+Library5=jrandomaccessfile
+Library6=jnetwork
+Library7=xcustomlistview
+Library8=javaobject
+Module1=MB_TCP_MASTER
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	'Declare a new object of modbus TCP
+	Public  MBobject As MB_TCP_MASTER
+		
+	'We use a timer to "poll" values at a fixed interval
+	Public timer1 As Timer
+	
+	'Timer 2 to keep track of write action failures
+	Public timer2 As Timer
+	
+	Private lblStatus As Label
+	Private cmdConnect As Button
+	
+	
+	
+	Private txtIPaddress As TextField
+	Private txtPort As TextField
+	Private txtSlaveAddress As TextField
+	Private cmdDisconnect As Button
+	Private txtStartReg As TextField
+	Private txtNumbReg As TextField
+	
+	Private TableView1 As TableView
+	
+	Private cmdWrite As Button
+	Private txtRegWrite As TextField
+	Private txtWriteValue As TextField
+	Private lblWriteStatus As Label
+	Private chbDataType As ChoiceBox
+	
+	Private PollAnimationChar As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main") 'Load the layout file.
+	MainForm.Show
+		
+	
+	'ConnectToClient
+	'Ipadress of server, TCP port of server, own local threadname, subname where aynchronous data will arrive.
+	MBobject.Initialize(Me,"MBresponseEvent","MBexceptionEvent")
+	
+	'Default settings
+	txtIPaddress.Text = "127.0.0.1"
+	txtPort.Text = 502
+	txtSlaveAddress.text = 1
+	txtStartReg.Text = 0
+	txtNumbReg.Text = 10
+	
+	
+	'Ask modbus library to connect. If the connection isn't possible, the system will try to reconnect with a fixed interval.
+	'MBobject.ConnectServer
+	
+	
+	'Never poll the modbus client faster then the timeout of the response.
+	'Otherwise, due to the use of the transaction id, the internal timeout timer will be reset, and no error will be generated,
+	'when the client doensn't respond.
+	MBobject.SetResponseTimeout_ms(800)
+	
+	'Initialize the timer that does here in this example the requests ("poll's")
+	timer1.Initialize("timer1",1000)
+	timer1.Enabled = False
+	
+	timer2.Initialize("timer2",1000)
+	
+	
+
+	TableView1.SetColumns(Array As String("Holding register", "Value"))
+	
+	chbDataType.Items.AddAll(Array As String("Signed","Unsigned","Hex","Binary"))
+	chbDataType.SelectedIndex = 0
+	
+	
+End Sub
+
+Sub cmdDisconnect_Click
+	
+	
+	MBobject.DisconnectServer
+	
+	timer1.Enabled = False
+	txtIPaddress.Enabled = True
+	txtPort.Enabled = True
+	txtSlaveAddress.Enabled = True
+	
+	lblStatus.Text = "Disconnected"
+	
+End Sub
+
+Sub cmdConnect_Click
+	If MBobject.IsValidIPv4Address(txtIPaddress.Text) = False Then
+		Log("Please use valid ip address")
+		lblStatus.Text ="Please use valid ip address"
+		Return
+	End If
+	
+	If txtPort.Text < 0  Or IsNumber (txtPort.Text) = False Then
+		Log("Please use valid port - 502 is the default for modbus TCP")
+		lblStatus.Text ="Please use valid port - 502 is the default for modbus TCP"
+		Return
+	End If
+	
+	If txtSlaveAddress.Text < 0 Or  txtSlaveAddress.Text > 254 Or IsNumber (txtSlaveAddress.Text) = False Then
+		Log("Please use valid slave address")
+		lblStatus.Text ="Please use valid slave address"
+		Return
+	End If
+	
+	If txtStartReg.Text < 0 Or  txtStartReg.Text > 9999 Or IsNumber (txtStartReg.Text) = False Then
+		Log("Please use valid start register")
+		lblStatus.Text ="Please use valid start register"
+		Return
+	End If
+	
+	If (txtStartReg.Text + txtNumbReg.Text ) > 9999  Or IsNumber (txtNumbReg.Text) = False Then
+		Log("Selected range is too big")
+		lblStatus.Text ="Selected range is too big"
+		Return
+	End If
+	
+	
+	
+	MBobject.ConnectServer(txtIPaddress.Text, txtPort.Text)
+	timer1.Enabled = True
+	
+	txtIPaddress.Enabled = False
+	txtPort.Enabled = False
+	txtSlaveAddress.Enabled = False
+	
+	
+End Sub
+
+
+Sub cmdWrite_MouseReleased (EventData As MouseEvent)
+	
+	If   txtRegWrite.Text = "" Or txtRegWrite.Text < 0 Or  txtRegWrite.Text > 9999 Or IsNumber (txtRegWrite.Text) = False  Then
+		Log("Please use valid write register")
+		lblStatus.Text ="Please use valid write register"
+		lblWriteStatus.Text = "invalid value!"
+		Return
+	End If
+	
+	If txtWriteValue.Text = ""  Or txtWriteValue.Text < -32768 Or  txtWriteValue.Text > 32767 Or IsNumber (txtWriteValue.Text) = False  Then
+		Log("Please use valid write value")
+		lblStatus.Text ="Please use valid write value"
+		lblWriteStatus.Text = "invalid value!"
+		Return
+	End If
+	
+	'Writing of values in "short" type.
+	MBobject.WriteSingleRegister(2,txtSlaveAddress.Text,txtRegWrite.Text,txtWriteValue.Text)
+	
+	timer2.Enabled = True
+	
+End Sub
+
+
+
+
+private Sub timer1_tick
+	
+	'Here the functions that are supported by this library
+	'The paramters that you need to give:
+	'-transactionID -> MUST be unique for each requested value, you will use this value to evaluate the response of your request.
+	'-Unit -> this is the slave address of your modbus server/slave
+	'-StartAddress -> address in the list where you what start reading or writing
+	'-numInputs/Value/Values -> number of values that you want to read or the data that you want to write
+	
+	
+	'Reading of values in "short" type
+	If txtStartReg.Text = "" Or txtNumbReg.Text = "" Or IsNumber (txtStartReg.Text)  = False Or IsNumber (txtNumbReg.Text)  = False Then
+		Log("No valid number for start reg or number reg")
+		lblStatus.Text ="No valid number for start reg or number reg"
+		Return
+	End If
+	
+
+	MBobject.ReadHoldingRegisters(1,txtSlaveAddress.Text,txtStartReg.Text,txtNumbReg.Text)
+	'MBobject.ReadInputRegisters(2,200,0,10)
+	
+	'Reading of values in "bit" type, the library will always return a FULL byte.
+	'MBobject.ReadCoils(3,200,0,10)
+	'MBobject.ReadDiscreteInputs(3,200,0,10)
+	
+	'Writing of values in "short" type.
+	'MBobject.WriteSingleRegister(2,200,1,10)
+	'MBobject.WriteMultipleRegsiters(1,200,0,Values)
+	
+	'Writing of values in byte (multiple coils) or "bit" type (write a single coil)
+	'MBobject.WriteSingleCoil(1,200,5,False)
+	'MBobject.WriteMultipleCoils(1,200,0,Values)
+	
+	
+	
+End Sub
+
+
+private Sub timer2_tick
+'Write action timed out!!
+	Log("Write action timed out!")
+	lblWriteStatus.Text = "Fail!"
+
+timer2.Enabled = False
+
+End Sub
+
+
+
+Sub MBresponseEvent (MBAP As MB_MBAP_HeaderData, Response  As MB_ResponseDataValues)
+	
+	'Here we will receive every response.
+	'For reading and for writing commands.
+	'For writing commands, no data (Repsonse) is given back, only the MBAP, but this confirms that your writing was successful.
+	
+	'MBAP_HeaderData is an object that contains the modbus Mbap header information.
+	'Like:
+	'-Transaction ID (unique ID that is send and echoed back by the modbus slave.
+	'-Unit, also know as the modbus slave address.
+	'-MessageLength, length of the message after the message lenght value (so transaction id,protocol id and messagelength itself aren't counted).
+	
+	'MB_ResponseDataValues is an object that contains the values, returned at a read action
+	'For coils and discrete inputs, the result is returned in bytes
+	'For Holding and input registers, the result is returned in short values
+	'So you need to use the correct type -> Response.Registers (as short) or  Response.CoilsOrDitialInputs (as byte)
+	
+
+	Dim msg As String
+	
+	
+	Dim IndexFromStartReg As Short = txtStartReg.Text
+	
+	
+	
+	'Identify transaction ID
+	'The response linked to this transationID, that identifies you initial request
+	Select	MBAP.transactionID
+		
+		''Poll with ID no 1
+		Case 1
+			
+			TableView1.Items.Clear
+			
+			If PollAnimationChar = "*" Then
+				PollAnimationChar = "-"
+				Else
+				PollAnimationChar = "*"
+			End If
+			
+			msg = "Unit:" & MBAP.unit & " TransID: " & MBAP.transactionID & " MessageLength: " & MBAP.MessageLength & "  Read action was successful." & PollAnimationChar
+			Log(msg)
+			lblStatus.Text = msg
+			
+			For Each	RegisterValue As Short In Response.Registers
+				'Log("Index:" & IndexInfo & " Value: "& RegisterValue)
+				Dim ValueAsString As String
+				
+				Select chbDataType.SelectedIndex
+					Case 0
+						ValueAsString = RegisterValue
+					Case 1
+						ValueAsString = ShortToUnsigned(RegisterValue)
+					Case 2
+						ValueAsString = ShortToHex(RegisterValue)				
+					Case 3
+						ValueAsString = ShortToBinaryString(RegisterValue)
+				End Select
+				
+				
+				Dim row() As Object = CreateRow(Array As String("Reg #" & IndexFromStartReg, ValueAsString))
+				TableView1.Items.Add(row)
+				'TableView1.
+				IndexFromStartReg  = IndexFromStartReg + 1
+				
+			Next
+			
+		Case 2
+			msg = "Unit:" & MBAP.unit & " TransID: " & MBAP.transactionID & " MessageLength: " & MBAP.MessageLength & "  write action was successful."
+			Log(msg)
+			lblStatus.Text = msg
+			lblWriteStatus.Text = "Success"
+			'stop timer that tracks the response, within 1000 milliseconds
+			timer2.Enabled = False
+			
+			
+			'For unkown transaction ID's, do nothing.
+		Case Else
+			
+		
+	End Select
+	
+End Sub
+
+
+
+Sub MBexceptionEvent (exceptionObject As MB_exceptionType)
+	'Sub for handling the error information.
+	
+	'Troubles in paradise
+	Dim SlaveInformation As String = " For -> Unit ID (slave address): " & exceptionObject.unit & " Transaction ID:  " & exceptionObject.transactionID & "Functioncode: " & exceptionObject.function
+	Dim excMessage As String = "Modbus reports error: "
+	
+	
+	'Exception messages for debug information, or for the end user.
+	Select	exceptionObject.exception
+		Case MBobject.excIllegalFunction
+			excMessage = excMessage & "Illegal function!" & SlaveInformation
+		Case MBobject.excIllegalDataAdr
+			excMessage = excMessage & "Illegal data address!" & SlaveInformation
+						
+		Case MBobject.excIllegalDataVal
+			excMessage = excMessage & "Illegal data value!" & SlaveInformation
+			
+		Case MBobject.excSlaveDeviceFailure
+			excMessage = excMessage & "Slave device failure!" & SlaveInformation
+				
+		Case MBobject.excAck
+			excMessage = excMessage & "Acknowledge!" & SlaveInformation
+							
+		Case MBobject.excSlaveIsBusy
+			excMessage = excMessage & "Slave is busy!" & SlaveInformation
+			
+		Case MBobject.excNegAck
+			excMessage = excMessage & "Negative Acknowledge!" & SlaveInformation
+		
+		Case MBobject.excMemoryParityErr
+			excMessage = excMessage & "Memory parity error!" & SlaveInformation
+			
+		Case MBobject.excGatePathUnavailable
+			excMessage = excMessage & "Gateway path unavailable!" & SlaveInformation
+			
+		Case MBobject.excGateRepsonseFailure
+			excMessage = excMessage & "Gateway response failure!" & SlaveInformation
+			
+		Case MBobject.excExtendExceptResponse
+			excMessage = excMessage & "Extended exception response!" & SlaveInformation
+			
+		Case MBobject.excExceptionNotConnected
+			excMessage = excMessage & "Not connected!" & SlaveInformation
+			
+		Case MBobject.excExceptionConnectionLost
+			excMessage = excMessage & "Connection is lost!" & SlaveInformation
+			
+		Case MBobject.excExceptionTimeout
+			excMessage = excMessage & "Slave timed out!" & SlaveInformation
+		
+		Case MBobject.excExceptionOffset
+			excMessage = excMessage & "Wrong offset!" & SlaveInformation
+	
+		Case MBobject.excSendFailt
+			excMessage = excMessage & "Send failure!" & SlaveInformation
+	
+		Case MBobject.excSocketError
+			excMessage = excMessage & "Socket error!"  'general error
+	
+		
+	End Select
+	
+	'Write exceptionstring to logbook
+	Log(excMessage)
+	lblStatus.Text = excMessage
+	
+End Sub
+
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+#Region Helper Methods
+Sub CreateRow(Row() As String) As Object()
+	Dim labels(Row.Length) As Object
+	For i = 0 To Row.Length - 1
+		Dim lbl As Label
+		lbl.Initialize("")
+		lbl.Text = Row(i)
+		labels(i) = lbl
+	Next
+	Return labels
+End Sub
+#End Region
+
+
+'' CONVERSION ROUTINES''
+
+
+Sub ShortToBinaryString(number As Short) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	
+	'OPGELET!! bitshift works only with integers!!
+	Dim x As Int = Bit.ShiftLeft(1, 15) 
+	
+	For i = 0 To 15
+		Dim ii As Short = Bit.And(number, x) 
+		If ii <> 0 Then
+			sb.Append("1")
+		Else
+			sb.Append("0")
+		End If
+		If ((i+1) Mod 4) = 0 Then
+			sb.Append(" ")
+			
+		End If
+		x = Bit.UnsignedShiftRight(x, 1) 
+	Next
+	Return sb.ToString
+End Sub
+
+
+Sub ShortToUnsigned(number As Short) As Int
+	Return Bit.And(0xFFFF,number)
+End Sub
+
+
+Sub ShortToHex(number As Short) As String
+	Dim bc As ByteConverter
+	bc.LittleEndian = False
+	
+	Dim b() As Byte =  bc.ShortsToBytes(Array As Short(number))
+	Return  "0x" & bc.HexFromBytes(b)
+
+End Sub
+

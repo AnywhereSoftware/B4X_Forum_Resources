@@ -1,0 +1,125 @@
+﻿Build1=Default,b4i.myapplication
+File1=1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=infc
+Library3=irandomaccessfile
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=6.3
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+ #ApplicationLabel: B4i Example
+ #Version: 1.0.0 
+ 'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+ #iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+ #iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+ #Target: iPhone, iPad
+ #ATSEnabled: True
+#End Region
+#MinVersion: 11
+'privacy description:
+#PlistExtra: <key>NFCReaderUsageDescription</key><string>Read nfc tags.</string>
+#Entitlement: <key>com.apple.developer.nfc.readersession.formats</key><array><string>NDEF</string><string>TAG</string></array>
+
+'Change to your provision profile!!!
+#ProvisionFile: Firebase.mobileprovision
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private nfc As NFC
+ 
+	Private lblSupported As Label
+	Private TextView1 As TextView
+	Private btnScan As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	nfc.Initialize("nfc")
+	If nfc.Supported Then
+		lblSupported.Text = "Supported"
+	Else
+		lblSupported.Text = "Not supported!"
+	End If
+	btnScan.Enabled = nfc.Supported
+End Sub
+
+Sub btnScan_Click
+	nfc.Scan("Scan tag")
+End Sub
+
+
+Sub NFC_TagDetected (Messages As List)
+	LogMsg("Tag detected")
+	Dim bc As ByteConverter
+	For Each msg As NdefRecord In Messages
+		Log(msg) 'ignore
+		LogMsg("Payload: " & bc.HexFromBytes(msg.GetPayload))
+		LogMsg("Type: " & msg.RecordType)
+		Try
+			If msg.RecordType = msg.FORMAT_NFCWellKnown Then
+				LogMsg("Known type: " & KnownType(msg.GetPayload, msg.GetKnownType))
+			Else
+				LogMsg("As text: " & bc.StringFromBytes(msg.GetPayload, "utf8"))
+			End If
+		Catch
+			Log(LastException)
+		End Try
+	Next
+	nfc.StopScan
+End Sub
+
+Sub KnownType(payload() As Byte, ktype() As Byte) As String
+	Dim c As String = BytesToString(ktype, 0, 1, "utf8")
+	Select c
+		Case "U"
+			Dim types As List = Array("", "http://www.", "https://www." , "http://" , "https://" , "tel:", "mailto:" _
+		 , "ftp://anonymous:anonymous@", "ftp://ftp.", "ftps://" , "sftp://" , "smb://" , "nfs://", "ftp://" _
+		 , "dav://", "news:" , "telnet://" , "imap:" , "rtsp://" , "urn:" , "pop:" , "sip:" , "sips:" _
+		  , "tftp:" , "btspp://" , "btl2cap://" , "btgoep://" , "tcpobex://" , "irdaobex://" , "file://" _
+		 , "urn:epc:id:" , "urn:epc:tag:" , "urn:epc:pat:" , "urn:epc:raw:" , "urn:epc:" , "urn:nfc:")
+			Dim sb As StringBuilder
+			sb.Initialize
+			sb.Append(types.Get(payload(0)))
+			sb.Append(BytesToString(payload, 1, payload.Length - 1, "utf8"))
+			Return sb.ToString
+		Case "T"
+			Dim encoding As String
+			If Bit.And(payload(0), 0x80) = 0 Then encoding = "UTF-8" Else encoding = "UTF-16"
+			Dim languageCodeLength As Int = Bit.And(payload(0), 0x3f)
+			Return BytesToString(payload, languageCodeLength + 1, payload.Length - 1 - languageCodeLength, encoding)
+		Case Else
+			Return "Unknown type: " & c
+	End Select
+		
+End Sub
+
+Sub LogMsg(msg As String)
+	TextView1.Text = TextView1.Text & msg & CRLF
+	TextView1.ScrollTo(TextView1.Text.Length)
+End Sub
+
+Sub NFC_SessionClosed
+	Log("SessionClosed: " & LastException)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+ 
+End Sub
+
+Private Sub Application_Background
+ 
+End Sub
+
+

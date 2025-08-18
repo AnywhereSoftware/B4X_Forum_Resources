@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	package="jhs.tapcard"
+	android:versionCode="1"
+	android:versionName=""
+	android:installLocation="internalOnly">
+	
+	<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>
+	<supports-screens android:largeScreens="true" 
+	    android:normalScreens="true" 
+	    android:smallScreens="true" 
+	    android:anyDensity="true"/>
+	<uses-permission android:name="android.permission.NFC"/>
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+	<application
+		android:icon="@drawable/icon"
+		android:label="b4aTapCard"
+		android:theme="@style/LightTheme">
+		<activity
+			android:windowSoftInputMode="stateHidden"
+			android:launchMode="singleTop"
+			android:name=".main"
+			android:label="b4aTapCard"
+			android:screenOrientation="unspecified">
+			<intent-filter>
+			   <action android:name="android.intent.action.MAIN" />
+			   <category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			
+			<intent-filter>
+			
+			                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+			                <category android:name="android.intent.category.DEFAULT" />
+			            </intent-filter>
+			            <meta-data
+			                android:name="android.nfc.action.TECH_DISCOVERED"
+			                android:resource="@xml/nfc_tech_filter"/>
+		</activity>
+		<service android:name=".starter">
+		</service>
+		<receiver android:name=".starter$starter_BR">
+		</receiver>
+	</application>
+</manifest>

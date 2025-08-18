@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+ <title>B4J - Regex Example</title>
+ <link rel="stylesheet" type="text/css" href="index.css" />
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+ <script src="../json/jquery.autosize.js"></script>
+<script src="/b4j_ws.js"></script>
+ </head>
+ <body>
+	<h1>B4J - Regex Example with Web Socket</h1>
+	<form id="top">
+		<label for="pattern">Pattern</label>
+		<input type="text" id="pattern" value="(\w+)@(\w+)\.\w+"></input>
+		<button type="submit" id="btnparse">Parse</button>
+		<input type="checkbox" id="casesensitive" ><span style="font-family:arial">Case Sensitive</span></input>
+		<input type="checkbox" id="multiline" ><span style="font-family:arial">Multiline</span></input>
+	</form>
+	<div id="main">
+		<div id="rawTextDiv">
+			<textarea id="textarea">Paste the text here.
+john@gmail.com
+mike@gmail.com</textarea>
+		</div>
+		<div id="logsdiv">
+		</div>
+		<div id="codeDiv">
+			<p id="codeP">
+				Dim m As Matcher = Regex.Matcher2('pattern', 'options', 'text')<br/>
+Do While m.Find<br/>
+	&nbsp;Log("Match: " & m.Match)<br/>
+	&nbsp;For g = 1 To m.GroupCount<br/>
+		&nbsp;&nbsp;Log("Group #" & g & ": " & m.Group(g))<br/>
+	&nbsp;Next<br/>
+Loop<br/>
+			</p>
+		</div>
+	</div>
+	<script>
+	$( document ).ready(function() {
+        b4j_connect("/regex_ws/ws");
+    });
+	</script>
+
+ </body>

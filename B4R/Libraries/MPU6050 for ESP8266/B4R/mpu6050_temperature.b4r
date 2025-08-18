@@ -1,0 +1,78 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rmpu6050
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Public mpu As MPU6050
+	Public mpu2 As MPU6050_DATA
+	Private pinbutton As Pin
+End Sub
+
+Sub PinButton_Change(state As Boolean)
+	
+	If state = False Then
+		Log(" "):Log("button ON")
+		Log("ButtonPress =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+		Delay(2000)
+		myloop		
+	Else
+		Log("button OFF")
+	End If
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+    StopWIFI
+	Delay(5000)
+	mpu.Initialize()
+	Log("init done")
+	pinbutton.Initialize(4,pinbutton.MODE_INPUT_PULLUP)
+	pinbutton.AddListener("PinButton_change")
+	Delay(2000)
+ Dim connect = mpu.beginSoftwareI2C(5,14,mpu2.MPU6050_DPS_SCALE_2000DPS,mpu2.MPU6050_RANGE_2G,0x68) As Boolean
+
+ If connect = False Then
+ 	 	 	Log("Could Not find a valid mpu6050 sensor, check wiring!")	
+Else
+	Log("connexion mpu6050 OK")	
+End If	
+End Sub
+
+Sub myloop
+
+    For i = 0 To 50
+      Dim temp = mpu.readTemperature As Double
+	  Log("temperature: ",temp)
+      Delay(2000)
+	Next 
+	Log("checkTemperature =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+End Sub
+
+public Sub StopWIFI
+	Log("Stop wifi")
+	RunNative("stopWIFI", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopWIFI (B4R::Object* u) {
+  WiFi.forceSleepBegin();
+  }
+#end if

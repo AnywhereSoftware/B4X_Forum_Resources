@@ -1,0 +1,290 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rmqtt
+Library3=resp8266wifi
+Library4=rrandomaccessfile
+Library5=rlolin32
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+'B4R example program to control 8 Output (Relay)
+'the program une the MQTT protocol to connect to a broker 
+'developed and tested on a ESP32 - Lolin32
+
+'I use a custom rCore.h header with the "extern void *operator new( size_t size, void *ptr );" removed
+'otherwise it generate an error at compiler time.
+
+Sub Process_Globals
+    'These global variables will be declared once when the application starts.
+    'Public variables can be accessed from all modules.
+
+	'Private const ESP32=1 As Byte
+
+    Public Serial1 As Serial
+
+    Private AStream As AsyncStreams
+    Private WiFi As ESP8266WiFi
+    Private WiFiStr As WiFiSocket
+    Private MQTT As MqttClient
+    Private MQTTOpt As MqttConnectOptions
+	Private MQTTUser As String = "Name"
+	Private MQTTPassword As String = "Password"
+	Private MQTTHostName As String = "192.168.1.4"
+	Private MQTTPort As Int = 1883
+	
+	Private WiFiconnected  As Boolean = False
+	Private MQTTconnected  As Boolean = False
+	Private MQTTError As Boolean = False
+	
+	Private WiFi_SSID As String = "WiFi_net_name"
+	Private WiFi_PW As String = "WiFi_Password"
+	
+	'Private DS, STCP, SHCP As Pin
+	'Private ESPin As D1Pins
+
+	Private ESPin As LolinPins
+
+	Private Relays As Int = 8
+
+	Private R(8) As Pin
+	
+	Private Relays As Int = 8
+' Private Registers(Relays) As Boolean
+	Private BC As ByteConverter
+
+	Private Timer1, Timer2 As Timer
+	Private TimerD As Int = 0
+	Private const RetryD As Int = 5
+	
+    Private conn_stat As Byte = 0           ' Connection status For WiFi And MQTT:
+											'// status |   WiFi   |    MQTT
+											'// -------+----------+------------
+											'//      0 | starting |    down
+											'//      1 |    up    |    down
+											'//      2 |    up    |  starting
+											'//      3 |    up    | finalising
+											'//      4 |    up    |     up
+
+	Private lastStatus As ULong = 0 			'counter in example code For conn_stat == 5
+	Private lastTask As ULong = 0               'counter in example code For conn_stat <> 5
+
+	Public RStatus, RSet As UInt    
+	Private i As Byte
+	Private RS(1) As Byte
+
+		
+	End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Delay(1000)
+    Log("AppStart")
+
+	R(0).Initialize(ESPin.D15, R(0).MODE_OUTPUT) '
+	R(1).Initialize(ESPin.D2, R(1).MODE_OUTPUT) '
+	R(2).Initialize(ESPin.D0, R(2).MODE_OUTPUT) '
+	R(3).Initialize(ESPin.D4, R(3).MODE_OUTPUT) '
+	R(4).Initialize(ESPin.D16, R(4).MODE_OUTPUT) '
+	R(5).Initialize(ESPin.D17, R(5).MODE_OUTPUT) '
+	R(6).Initialize(ESPin.D5, R(6).MODE_OUTPUT) '
+	R(7).Initialize(ESPin.D13, R(7).MODE_OUTPUT) '
+	
+    'Clear Register Values
+    ClearAllReg
+
+    AStream.Initialize(Serial1.Stream, "Astream_NewData", "Astream_Error")
+	
+    'Connect to local WiFi Access Point
+	'WiFi.Disconnect()
+	'WiFi.Connect2(WiFi_SSID, WiFi_PW)
+	'If WiFi.IsConnected Then Log("Connected to WiFi, Local IP ", WiFi.LocalIp) Else Log("Not Connected to WiFi")
+
+  ' 'Connect to CloudMQTT broker
+  ' Dim ClientId As String = Rnd(0, 999999999) 'create a unique id
+  ' MQTT.Initialize2(WiFiStr.stream, MQTTHostName, MQTTPort, ClientId, "MQTT_MessageArrived", "MQTT_Disconnected")
+  ' MQTTOpt.Initialize(MQTTUser, MQTTPassword)
+  ' MQTT_Connect(0)
+	
+	Timer1.Initialize("Timer1_Tick", 1000)
+	Timer1.Enabled = True 'don't forget to enable it
+	
+End Sub
+
+
+Private Sub Timer1_Tick
+	'start of non-blocking connection setup section
+	
+    If TimerD > 0 Then
+		TimerD = TimerD -1
+		Log ("wait ",TimerD)
+		Return
+	End If
+	WiFiconnected = WiFi.IsConnected
+
+	If Not(WiFiconnected) Then conn_stat = 0
+	If WiFiconnected And Not(MQTTconnected) And (conn_stat > 2) Then conn_stat = 2
+	If WiFiconnected And MQTTconnected And (conn_stat <> 4) Then conn_stat = 3
+	'Log(conn_stat," ",WiFiconnected," ", MQTTconnected)
+
+Select conn_stat
+Case 0                                                       ' MQTT And WiFi down: start WiFi
+		'Serial.println("MQTT and WiFi down: start WiFi");
+		Log ("MQTT and WiFi down: start WiFi ", conn_stat)
+		WiFi.disconnect()
+		Delay(100) 
+		If WiFi.Connect2(WiFi_SSID, WiFi_PW) Then
+			conn_stat = 1
+		Else
+			TimerD = RetryD
+		End If
+Case 1                                                       ' WiFi starting, Do nothing here
+		If WiFiconnected Then
+			conn_stat = 2
+			Log ("WiFi start")
+		Else
+			conn_stat = 0
+ 		End If
+			TimerD = RetryD			'wait few seconds
+Case 2                                                       ' WiFi up, MQTT down: start MQTT
+		Log ("WiFi up, MQTT down: start MQTT ", conn_stat)
+		'Connect to CloudMQTT broker
+		Dim ClientId As String = Rnd(0, 999999999) 'create a unique id
+		MQTT.Initialize2(WiFiStr.stream, MQTTHostName, MQTTPort, ClientId, "MQTT_MessageArrived", "MQTT_Disconnected")
+		MQTTOpt.Initialize(MQTTUser, MQTTPassword)
+		MQTTconnected = MQTT.Connect2(MQTTOpt)
+		If MQTTconnected Then
+			conn_stat = 3
+		Else
+			conn_stat = 0  'if MQTT do not start, is better to restart WiFi
+			TimerD = RetryD	'wait few second before retry
+		End If
+Case 3                                                       ' WiFi up, MQTT up: finish MQTT configuration
+		Log ("WiFi and MQTT up: make MQTT configuration ",conn_stat)
+		'Dim i As Int
+		'subscribe to MQTT
+		'For i = 0 To Relays -1
+		'	MQTTError = MQTTError Or Not(MQTT.Subscribe(JoinStrings(Array As String("Relay_", i)), 0))
+		'Next
+		MQTTError = MQTTError Or Not(MQTT.Subscribe("Relay_Set", 0))
+			MQTTError = MQTTError Or Not(MQTT.Subscribe("RelayStatusRequest" , 0) )
+		If MQTTError Then 
+			Log ("MQTT subscription error")
+			MQTT_Disconnected
+			conn_stat = 2
+			TimerD = RetryD	'wait few second before retry
+		Else	
+			conn_stat = 4
+			BroakerRelaysStausUpdate (RStatus)
+		End If
+		'end of non-blocking connection setup section
+End Select
+
+'start section with tasks where WiFi/MQTT is required
+If (conn_stat = 4) Then 
+	If (Millis() - lastStatus > 10000) Then                         ' Start send status every 10 sec (just As an example)
+		Log("Running")
+		'mqttClient.publish(input_topic, Status)                     ' send status To broker
+		'mqttClient.Loop()                                           ' give control To MQTT To send message To broker
+		lastStatus = Millis()                                      ' remember time of last sent status message
+	End If	
+	'ArduinoOTA.handle();                                            ' internal household function For OTA
+	'mqttClient.Loop();                                              ' internal household function For MQTT
+End If
+
+	'end of section For tasks where WiFi/MQTT are required
+		
+	'start section For tasks which should run regardless of WiFi/MQTT
+If (Millis() - lastTask > 1000) Then                                ' Print message every second (just As an example)
+	'Log ("print this every second")
+	lastTask = Millis()
+ 	'DigitalOut.DigitalWrite(Not(DigitalOut.DigitalRead))
+End If
+
+End Sub 
+
+Sub MQTT_MessageArrived (Topic As String, Payload() As Byte)
+	Log("Topic = ", Topic, " and Payload = ", Payload)
+'	If IsNumber(Payload) = False Then Return
+
+	Dim RelayNewStatus As UInt = BC.StringFromBytes(Payload)
+	Log("RelayNewStatus ",RelayNewStatus)
+	
+	
+	Dim NewRelayStatus As Boolean
+    Select Case Topic
+
+		Case "Relay_Set"
+			RSet = Bit.Xor (RelayNewStatus, RStatus) 'find different set from now and request
+													 'bit 0=equal 1=change 
+
+			RStatus = RelayNewStatus				 'save request for next compare
+			
+            If RSet <> 0 Then				         'some bits = 1 then relay status change 
+				For i = 0 To (Relays - 1)
+					If Bit.Get(RSet,i) <> 0 Then
+						If Bit.Get(RStatus, i) <> 0 Then
+							NewRelayStatus = True
+						Else
+							NewRelayStatus = False
+						End If
+						R(i).DigitalWrite(NewRelayStatus)
+				End If
+				Next
+				BroakerRelaysStausUpdate (RStatus)
+			End If
+			Log("Rset ", RSet)
+			Log("RStatus ", RStatus)
+
+		Case "RelayStatusRequest"
+			BroakerRelaysStausUpdate (RStatus)
+	End Select
+
+End Sub
+
+
+Sub MQTT_Disconnected ()
+	'Log("Disconnected")
+	MQTT.Close
+	MQTTconnected = False
+	MQTTError = False
+'    MQTT_Connect(0)
+End Sub
+
+Sub Astream_NewData (Buffer() As Byte)
+    Log("Received: ", Buffer)
+End Sub
+
+Sub AStream_Error ()
+    Log("error")
+End Sub
+
+
+'Update Broaker with relay status
+Private Sub BroakerRelaysStausUpdate (Status As UInt) As Boolean
+'	RS(0) = Bit.LowByte(RStatus)
+	RS(0) = Bit.LowByte(Status)
+	Log("RS ", RS(0))
+	Return MQTT.Publish("Relay_Status" , RS)
+
+End Sub
+
+'Clear All Registers
+Private Sub ClearAllReg()
+		
+	For i = 0 To Relays -1
+		R(i).DigitalWrite(True)
+	Next
+
+	RStatus = 0xff				'default condition
+
+End Sub

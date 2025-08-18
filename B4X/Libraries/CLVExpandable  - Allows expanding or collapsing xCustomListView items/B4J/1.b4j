@@ -1,0 +1,78 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=arrow.png
+File3=Item.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xcustomlistview
+Module1=|absolute|C:\Users\H\Downloads\projects\B4A Samples\CLVExpandable
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=1
+Version=7.33
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private clv1 As CustomListView
+	Private lblTitle As B4XView
+	Private pnlTitle As B4XView
+	Private pnlExpanded As B4XView
+	Private expandable As CLVExpandable
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	expandable.Initialize(clv1)
+	For i = 1 To 20
+		Dim p As B4XView = CreateItem(Rnd(0xFF000000, 0xFFFFFFFF), "Item #" & i, 200dip)
+		clv1.Add(p, expandable.CreateValue(p, "some value"))
+	Next
+End Sub
+
+
+Sub CreateItem(clr As Int, Title As String, ExpandedHeight As Int) As B4XView
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, clv1.AsView.Width, ExpandedHeight)
+	p.LoadLayout("Item")
+	p.SetLayoutAnimated(0, 0, 0, p.Width, p.GetView(0).Height) 'resize it to the collapsed height
+	lblTitle.Text = Title
+	pnlTitle.Color = clr
+	pnlExpanded.Color = ShadeColor(clr)
+	Return p
+End Sub
+
+Sub ShadeColor(clr As Int) As Int
+	Dim argb() As Int = GetARGB(clr)
+	Dim factor As Float = 0.75
+	Return xui.Color_RGB(argb(1) * factor, argb(2) * factor, argb(3) * factor)
+End Sub
+
+Sub GetARGB(Color As Int) As Int()
+	Private res(4) As Int
+	res(0) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff000000), 24)
+	res(1) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff0000), 16)
+	res(2) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff00), 8)
+	res(3) = Bit.And(Color, 0xff)
+	Return res
+End Sub
+
+Sub clv1_ItemClick (Index As Int, Value As Object)
+	expandable.ToggleItem(Index)
+End Sub
+
+

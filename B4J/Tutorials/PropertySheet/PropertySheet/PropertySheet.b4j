@@ -1,0 +1,112 @@
+﻿Version=2.8
+AppType=JavaFX
+IconFile=
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=1.fxml
+NumberOfLibraries=5
+Library1=jcore
+Library2=jfx
+Library3=jcontrolsfx
+Library4=javaobject
+Library5=jrandomaccessfile
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Sheet As PropertySheet
+	Type Record (Name As String, _
+		Age As Int, _
+		Birthday As Long, _
+		Gender As String, _
+		LikesIceCream As Boolean)
+	Private SheetMeta As Map
+	Private records As List
+	Private paneProperties As AnchorPane
+	Private btnPrevious As Button
+	Private btnNext As Button
+	Private lblRecordIndex As Label
+	Private btnSave As Button
+	Private index As Int
+	Private Const filename As String = "data.dat"
+	Private cutils As ControlsUtils
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	cutils.DisableCssWarnings
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Show
+	
+	Sheet.Initialize("sheet")
+	paneProperties.AddNode(Sheet, 0, 0, 0, 0)
+	paneProperties.SetAnchors(Sheet, 0, 0, 0,0) 'It will fill the pane.
+	SheetMeta = CreateMap("Name": Sheet.CreateMeta("Full Name", "", ""), _
+		"Age": Sheet.CreateMeta("Age", "", ""), _
+		"Birthday": Sheet.CreateMeta("Next Birthday", "", ""), _
+		"Gender": Sheet.CreateMeta("Gender", "", "").SetChoices(Array("Male", "Female")), _
+		"LikesIceCream": Sheet.CreateMeta("Likes Ice Cream", "", ""))
+	LoadRecords
+	index = 0
+	Sheet.SearchBoxVisible = False
+	Sheet.ModeSwitcherVisible = False
+	ShowRecord
+End Sub
+
+Sub LoadRecords
+	If File.Exists(File.DirApp, filename) Then
+		Dim raf As RandomAccessFile
+		raf.Initialize(File.DirApp, filename, True)
+		records = raf.ReadB4XObject(0)
+		raf.Close
+		cutils.ShowNotification3("", $"${records.Size} records loaded from file."$, _
+			cutils.ICON_INFORMATION, MainForm, "BOTTOM_RIGHT", 1500)
+	Else
+		records.Initialize
+		Dim genders() As String = Array As String("Male", "Female")
+		Dim ice() As Boolean = Array As Boolean(True, False)
+		For i = 1 To 10
+			Dim r As Record
+			r.Initialize
+			r.Age = Rnd(1, 100)
+			r.Name = "Unknown"
+			r.Birthday = DateTime.Now
+			r.gender = genders(Rnd(0, 2))
+			r.LikesIceCream = ice(Rnd(0, 2))
+			records.Add(r)
+		Next
+		cutils.ShowNotification3("", $"${records.Size} records randomly created."$, _
+			cutils.ICON_INFORMATION, MainForm, "BOTTOM_RIGHT", 1500)
+	End If
+End Sub
+
+Sub ShowRecord
+	Sheet.Set(records.Get(index), SheetMeta)
+	btnPrevious.Enabled = index > 0
+	btnNext.Enabled = index < records.Size - 1
+	lblRecordIndex.Text = $"${index + 1} / ${records.Size}"$
+End Sub
+
+Sub btnSave_Action
+	Dim raf As RandomAccessFile
+	raf.Initialize(File.DirApp, filename, False)
+	raf.WriteB4XObject(records, 0)
+	raf.Close
+	cutils.ShowNotification3("", $"Records saved successfully."$, _
+		cutils.ICON_INFORMATION, MainForm, "BOTTOM_RIGHT", 1500)
+End Sub
+Sub btnNext_Action
+	index = index + 1
+	ShowRecord
+End Sub
+Sub btnPrevious_Action
+	index = index - 1
+	ShowRecord
+End Sub
+

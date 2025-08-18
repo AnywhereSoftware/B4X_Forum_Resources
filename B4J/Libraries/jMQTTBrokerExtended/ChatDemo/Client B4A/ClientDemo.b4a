@@ -1,0 +1,153 @@
+﻿Build1=Default,b4a.example
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=jmqtt
+Library3=randomaccessfile
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddPermission(android.permission.INTERNET)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ChatDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+	#IgnoreWarnings: 34
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private txtName As EditText
+	Private btnConnect As Button
+	Private txtLogs As EditText
+	Private txtMessage As EditText
+	Private btnSend As Button
+	Private lstUsers As ListView
+
+	Dim Client As MqttClient
+	Dim SBLog As StringBuilder
+	Dim Const IPAddress As String = "192.168.1.7" 'Broker IP Address
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+
+	Dim Serializator As B4XSerializator
+	Type typData(Publisher As String, Msg As String)
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+
+	lstUsers.SingleLineLayout.Label.TextSize = 16
+	lstUsers.SingleLineLayout.ItemHeight = 80
+	txtName.Text = "User" & Rnd(0, 100000)
+	txtLogs.InputType = txtLogs.INPUT_TYPE_NONE
+	txtLogs.SingleLine = False
+	txtLogs.Wrap = True
+	SBLog.Initialize
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub btnConnect_Click
+	If txtName.Text = "" Then
+		Msgbox("Please enter your name.", "Invalid name")
+		Return
+	End If
+
+	txtLogs.Text = ""
+	lstUsers.Clear
+
+	Client.Initialize("Monitor", ServerURI, txtName.Text)
+	Dim Options As MqttConnectOptions
+	Options.Initialize(txtName.Text, "")
+	Options.SetLastWill("all", CreatePayload("I lost the connection. Bye bye"), Client.QOS_0_MOST_ONCE, False)
+	Client.Connect2(Options)
+End Sub
+
+Sub CreatePayload(Msg As String) As Byte()
+	Dim Data As typData
+	Data.Initialize
+	Data.Publisher = txtName.Text
+	Data.Msg = Msg
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub txtMessage_Action
+	btnSend_Click
+End Sub
+
+Sub btnSend_Click
+	If txtMessage.Text = "" Then
+		Msgbox("Please enter your message.", "Invalid message")
+		Return
+	End If
+
+	Dim Bytes() As Byte = CreatePayload(txtMessage.Text)
+	Client.Publish2("all", Bytes, Client.QOS_1_LEAST_ONCE, True)
+	txtMessage.Text = ""
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	If Success = True Then
+		txtName.Enabled = False
+		btnConnect.Enabled = False
+		txtMessage.Enabled = True
+		btnSend.Enabled = True
+		Client.Subscribe("all/#", Client.QOS_1_LEAST_ONCE)
+	End If
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	Log("Message arrived: Topic=" & Topic & " / Length=" & Payload.Length)
+	If Payload.Length = 0 Then
+		'Ignores the message
+		Return
+	Else If Topic = "all/users" Then
+		'Fills the list of users
+		Dim ConnectedClients As List = Serializator.ConvertBytesToObject(Payload)
+		lstUsers.Clear
+		For Each U As String In ConnectedClients
+			lstUsers.AddSingleLine(U)
+		Next
+	Else
+		'Displays the message
+		Dim Data As typData = Serializator.ConvertBytesToObject(Payload)
+		SBLog.Append(Data.Publisher).Append(": ").Append(Data.Msg).Append(CRLF)
+		txtLogs.Text = SBLog.ToString
+		txtLogs.SelectAll 'Forces the EditText to scroll
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+	txtName.Enabled = True
+	btnConnect.Enabled = True
+	txtMessage.Enabled = False
+	btnSend.Enabled = False
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed And Client.Connected Then
+		Client.Publish2("all", CreatePayload("Bye bye"), Client.QOS_0_MOST_ONCE, False)
+		Client.Close
+	End If
+End Sub

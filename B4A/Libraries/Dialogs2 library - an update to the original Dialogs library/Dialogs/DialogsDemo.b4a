@@ -1,0 +1,372 @@
+﻿Build1=Default,anywheresoftware.b4a.agraham.dialogsdemo
+File1=android48.png
+File2=DetailsDialog.bal
+File3=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+Library3=runtimepermissions
+Library4=dialogs2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~
+Module1=TimeDialog2
+Module2=DateDialog2
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9.01
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: true
+	#IncludeTitle: True
+	#ApplicationLabel: Dialogs Demo
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: True
+	#BridgeLogger: True
+#End Region
+
+' Erel added ShowAsync to all the other dialogs, except Custom1 and Custom2, retaining Show
+' CustomLayoutDialog added by Erel only implements ShowAsync
+' Custom1 and Custom2, now also support ShowModal
+' Several dialogs above have been converted to ShowAsync to show thenon-modal usage
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Dim btnDate As Button
+	Dim btnInput As Button
+	Dim Bmp As Bitmap
+	Dim btnColor As Button
+	Dim btnColor2 As Button
+	Dim btnNumber As Button
+	Dim btnFile As Button
+	Dim btnCustom As Button
+	Private btnEnterDetails As Button
+	Private btnDate2 As Button
+	Private btnTime2 As Button	
+	
+	Dim lbl1 As Label
+	Private btnTime As Button
+	
+	' Declared by the DetailsDialo layout for a CustomLayoutDialog
+	Private DetailsDialog As CustomLayoutDialog
+	Private DialogAge As Spinner
+	Private DialogLastName As EditText
+	Private DialogFirstName As EditText
+
+
+	Private rdioSync As RadioButton
+	Private rdioAsync As RadioButton
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Bmp.Initialize(File.DirAssets, "android48.png")
+	
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE) ' Implicit read capability if granted
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	Log($"PERMISSION_WRITE_EXTERNAL_STORAGE = ${Result}"$)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnInput_Click
+	Dim Id As InputDialog
+	'Id.PasswordMode = True
+	'Id.InputType = Id.INPUT_TYPE_DECIMAL_NUMBERS
+	'Id.InputType = Id.INPUT_TYPE_NUMBERS
+	'Id.InputType = Id.INPUT_TYPE_PHONE
+	Id.Input = ""
+	Id.Hint = "Enter some text!"
+	Id.HintColor = Colors.ARGB(196, 255, 140, 0)
+	If rdioSync.Checked Then
+		Dim ret As Int = Id.Show("Input the required text", "B4A Input Dialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = Id.ShowAsync("Input the required text", "B4A Input Dialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : " & Id.Input, False)
+End Sub
+
+Sub btnDate_Click
+	Dim Dd As DateDialog
+	Dd.Year = DateTime.GetYear(DateTime.Now)
+	Dd.Month = DateTime.GetMonth(DateTime.Now)	
+	Dd.DayOfMonth = DateTime.GetDayOfMonth(DateTime.Now)		
+	If rdioSync.Checked Then
+			Dim ret As Int = Dd.Show("Set the required date", "B4A Date Dialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = Dd.ShowAsync("Set the required date", "B4A Date Dialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If	
+	ToastMessageShow(ret & " : " & Dd.DayOfMonth & "/" & Dd.Month & "/" & Dd.Year , False)
+End Sub
+
+Sub btnTime_Click
+	Dim td As TimeDialog
+	td.Hour = DateTime.GetHour(DateTime.Now)
+	td.Minute = DateTime.GetMinute(DateTime.Now)
+	td.Is24Hours = True
+	Dim fda As Object = td.ShowAsync("Set a time", "B4A Time Dialog", "Yes", "No", "Maybe", Bmp, True)
+	Wait For (fda) Dialog_Result(ret As Int)	
+	If rdioSync.Checked Then
+			Dim ret As Int = td.Show("", "B4A Time Dialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = td.ShowAsync("", "B4A Time Dialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : " & td.Hour & ":" & td.Minute, False)
+End Sub
+
+Sub btnColor_Click
+	Dim cd As ColorDialog
+	cd.RGB = Colors.RGB(128, 128, 128)
+	If rdioSync.Checked Then
+		Dim ret As Int = cd.Show("B4A ColorDialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = cd.ShowAsync("B4A ColorDialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : " & cd.Red & " " & cd.Green & " " & cd.Blue, False)
+	Activity.color = cd.RGB
+End Sub
+
+Sub btnColor2_Click
+	Dim cd As ColorDialogHSV
+	cd.Hue = 180
+	cd.Saturation = 0.5
+	cd.Value = 0.5	
+	If rdioSync.Checked Then
+		Dim ret As Int = cd.Show("B4A ColorDialogHSV", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = cd.ShowAsync("B4A ColorDialogHSV", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If	
+	ToastMessageShow(ret & " : " & cd.RGB, False)
+	Activity.color = cd.RGB
+End Sub
+
+Sub btnColor3_Click
+	Dim cd As ColorPickerDialog
+	cd.RGB = Colors.DarkGray
+	If rdioSync.Checked Then
+		Dim ret As Int = cd.Show("B4A ColorPickerDialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = cd.ShowAsync("B4A ColorPickerDialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : " & cd.RGB, False)
+	Activity.color = cd.RGB
+End Sub
+
+Sub btnNumber_Click
+	Dim nd As NumberDialog
+	nd.Digits = 10
+	nd.Number = -12345
+	nd.Decimal = 2
+	nd.ShowSign = True
+	If rdioSync .Checked Then
+		Dim ret As Int = nd.Show("B4A NumberDialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = nd.ShowAsync("B4A NumberDialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : " & nd.Number, False)
+End Sub
+
+Sub btnFile_Click
+	Dim fd As FileDialog
+	fd.TextColor = Colors.Black
+	fd.FastScroll = True
+	'fd.ShowOnlyFolders = True
+	fd.FilePath = File.DirRootExternal ' also sets ChosenName to an emtpy string
+	Log(File.DirRootExternal)
+	'fd.ShowOnlyFolders = true
+	'fd.FileFilter = ".txt" ' for example or ".jpg,.png" for multiple file types
+	If rdioSync.Checked Then
+		Dim ret As Int = fd.Show("B4A File Dialog", "Yes", "No", "Maybe", Bmp)
+	Else
+		Dim fda As Object = fd.ShowAsync("B4A File Dialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+	ToastMessageShow(ret & " : Path : " & fd.FilePath & CRLF & "File : " & fd.ChosenName, False)
+End Sub
+
+Sub btnCustom_Click
+	Dim cd As CustomDialog
+	Dim pnl As Panel
+	pnl.Initialize("pnl")
+	Dim bgnd As ColorDrawable
+	bgnd.Initialize(Colors.Green, 5dip)
+	pnl.Background = bgnd
+	Dim btn1 As Button
+	btn1.Initialize("btn1")
+	btn1.Text = "Press me"
+	pnl.AddView(btn1, 50dip, 20dip, 60dip, 60dip)
+	lbl1.Initialize("")
+	pnl.AddView(lbl1, 120dip, 20dip, 120dip, 60dip)
+	cd.AddView(pnl, 10dip, 10dip, 280dip, 100dip)
+	If rdioSync.Checked Then
+		Dim ret As Int = cd.Show("B4A CustomDialog", "Yes", "No", "Maybe", Bmp) 'ignore
+	Else
+		Dim fda As Object = cd.ShowAsync("B4A CustomDialog", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+End Sub
+
+Sub btnCustom2_Click
+	Dim cd As CustomDialog2
+	Dim pnl As Panel
+	pnl.Initialize("pnl")
+	Dim bgnd As ColorDrawable
+	bgnd.Initialize(Colors.Cyan, 5dip)
+	pnl.Background = bgnd
+	Dim btn1 As Button
+	btn1.Initialize("btn1")
+	btn1.Text = "Press me"
+	pnl.AddView(btn1, 20dip, 10dip, 60dip, 60dip)
+	lbl1.Initialize("")
+
+	pnl.AddView(lbl1, 10dip, 80dip, 80dip, 50dip)
+	
+	Dim lv As ListView
+	lv.Initialize("lv")
+	lv.Color = Colors.LightGray
+	lv.AddTwoLinesAndBitmap("one", "one", Null)
+	lv.AddTwoLinesAndBitmap("two", "one", Null)
+	lv.AddTwoLinesAndBitmap("three", "one", Null)
+	pnl.AddView(lv, 120dip, 15dip, 120dip, 120dip)
+	cd.AddView(pnl, 300dip, 150dip)
+	 		
+	If rdioSync.Checked Then
+		Dim ret As Int = cd.Show("B4A CustomDialog2", "Yes", "No", "Maybe", Bmp) 'ignore
+	Else
+		Dim fda As Object = cd.ShowAsync("B4A CustomDialog2", "Yes", "No", "Maybe", Bmp, False)
+		Wait For (fda) Dialog_Result(ret As Int)
+	End If
+End Sub
+
+Sub btn1_Click ' this works with both Show and ShowAsync
+	lbl1.Text = "Pressed!"
+	lbl1.Color = Colors.Black
+	lbl1.TextColor = Colors.White
+	lbl1.Gravity = Gravity.CENTER
+	ToastMessageShow("Pressed!", False)		
+End Sub
+
+Sub lv_ItemClick (Position As Int, Value As Object)' this now only works with ShowAsync on later B4A/Android versions
+	ToastMessageShow(Position, False)
+End Sub
+
+' The native Date and Time dialogs don't usually work properly in landscape mode, especially TimeDialog
+' So we made our own below
+
+Sub btnTime2_Click
+	Dim td As TimeDialog2
+	td.Initialize
+	td.Hour = DateTime.GetHour(DateTime.Now)
+	td.Minute = DateTime.GetMinute(DateTime.Now)
+	If rdioSync.Checked Then
+		Dim ret As Int = td.Show("B4A TimeDialog2", "OK", "", "Cancel", Bmp) 'ignore
+	Else
+		Dim fda As Object = td.ShowAsyncComplete("B4A TimeDialog2", "OK", "", "Cancel", Bmp, False)
+		Wait For (fda) Complete(ret As Int) ' Note event is Complete not Dialog_Result
+	End If
+	ToastMessageShow(ret & " " & td.Hour & ":" & td.Minute, False)
+End Sub
+
+Sub btnDate2_Click
+	Dim dd As DateDialog2
+	Dim daynames() As String = Array As String("***", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+	dd.Initialize(2000, 2050)
+	dd.Day = DateTime.GetDayOfMonth(DateTime.Now)
+	dd.Month = DateTime.GetMonth(DateTime.Now)
+	dd.Year = DateTime.GetYear(DateTime.Now)
+	If rdioSync.Checked Then
+		Dim ret As Int = dd.Show("Custom Date Dialog", "OK", "", "Cancel", Bmp) 'ignore
+	Else
+		Dim fda As Object = dd.ShowAsyncComplete("Custom Date Dialog", "OK", "", "Cancel", Bmp, False)
+		Wait For (fda) Complete(ret As Int) ' Note event is Complete not Dialog_Result
+	End If	
+	Try
+		DateTime.DateFormat = "dd/MM/yyyy"
+		Dim DateStr As String = dd.Day & "/" & dd.Month & "/" & dd.Year
+		Dim ticks As Long = DateTime.DateParse(DateStr)
+		Dim day As String =  daynames(DateTime.GetDayOfWeek(ticks)) & " " & DateTime.GetDayOfMonth(ticks) & ":" & DateTime.GetMonth(ticks) & ":" & DateTime.GetYear(ticks)
+	Catch
+		day = "Unparseable"
+	End Try
+	ToastMessageShow(ret & " " & day & " " & DateStr, False)
+End Sub
+
+Sub btnEnterDetails_Click
+	If rdioSync.Checked Then		
+		MsgboxAsync("CustomLayoutDialog only supports ShowAsync", "CustomLayoutDialog")
+		Return		
+	End If	
+	Dim sf As Object = DetailsDialog.ShowAsync("Enter details", "Ok", "Cancel", "", Null, True)
+	Dim w As Int = 100%x
+	Log(100%x & " Wide, " & 100%y & "High")
+	If 100%Y < 100%x Then w = 100%y
+	DetailsDialog.SetSize(w, 350dip)
+	Wait For (sf) Dialog_Ready(pnl As Panel)
+	pnl.LoadLayout("DetailsDialog")
+	'0x00002000 = TYPE_TEXT_FLAG_CAP_WORDS (capitalize first character of each word)
+	DialogFirstName.InputType = Bit.Or(0x00002000, DialogFirstName.InputType)
+	DialogLastName.InputType = Bit.Or(0x00002000, DialogLastName.InputType)
+	Dim jo As JavaObject
+	jo = DialogFirstName
+	jo.RunMethod("setImeOptions", Array(33554432)) ' IME_FLAG_NO_FULLSCREEN
+	jo = DialogLastName
+	jo.RunMethod("setImeOptions", Array(33554432)) ' IME_FLAG_NO_FULLSCREEN
+	DialogAge.Add("")
+	For i = 1 To 120
+		DialogAge.Add(i)
+	Next
+	DetailsDialog.GetButton(DialogResponse.POSITIVE).Enabled = False
+	Wait For (sf) Dialog_Result(res As Int)
+	'force the keyboard to hide
+	DialogFirstName.Enabled = False
+	DialogLastName.Enabled = False
+	If res = DialogResponse.POSITIVE Then
+		ToastMessageShow($"${DialogFirstName.Text} ${DialogLastName.Text} is ${DialogAge.SelectedItem} years old"$, True)
+	End If
+End Sub
+
+Sub DialogAge_ItemClick (Position As Int, Value As Object)
+	CheckAllFieldsValid
+End Sub
+
+Sub DialogLastName_TextChanged (Old As String, New As String)
+	CheckAllFieldsValid
+End Sub
+
+Sub DialogFirstName_TextChanged (Old As String, New As String)
+	CheckAllFieldsValid
+End Sub
+
+Sub CheckAllFieldsValid
+	Dim valid As Boolean = DialogAge.SelectedIndex > 0 And DialogFirstName.Text.Length > 0 And DialogLastName.Text.Length > 0
+	DetailsDialog.GetButton(DialogResponse.POSITIVE).Enabled = valid
+End Sub
+

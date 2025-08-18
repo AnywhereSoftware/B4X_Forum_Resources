@@ -1,0 +1,358 @@
+﻿Build1=Default,b4a.dji2
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=dji
+Library4=phone
+Library5=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddReplacement($DJI_KEY$, ec3xxxxxxxxxxx)~\n~CreateResourceFromFile(Macro, DJI.DJI)~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Drone Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+#BridgeLogger: true
+#MultiDex: true
+#AdditionalJar: dji-sdk-provided-4.15, ReferenceOnly
+
+Sub Process_Globals
+	Private sdk As DJISDKManager
+	Private timer1 As Timer
+	Private aircraft As DJIAircraft
+	Private controller As DJIFlightController
+	Private camera As DJICamera
+	Private aircraftName As String
+	Private batteryLevel As Int
+	Private IMU As String
+	Private pws As PhoneWakeState
+	Private HotpointOperator As DJIHotpointMissionOperator
+	Private WaypointOperator As DJIWaypointMissionOperator
+	Private MissionStatus As String
+	Private LastIntent As Intent
+End Sub
+
+Sub Globals
+	Private pnlCamera As Panel
+	Private lblText As Label
+	Private btnStartMission As Button
+	Private btnStopMission As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	
+	If sdk.IsInitialized = False Then
+		Wait For (RequestPermissions) Complete (Result As Boolean)
+		If Result Then
+			sdk.Initialize("sdk")
+			Log("sdk version: " & sdk.SdkVersion)		
+			timer1.Initialize("timer1", 200)
+			Wait For SDK_RegisteredResult (Success As Boolean, ErrorMessage As String)
+			If Success Then
+				Log("Registered successfully!")
+				Log("activation state: " & sdk.ActivationState)
+				Log("binding state: " & sdk.AircraftBindingState)
+				sdk.StartConnectionToProduct
+			Else
+				Log(ErrorMessage)
+			End If
+		Else
+			ToastMessageShow("No permission granted!", True)
+		End If
+	End If
+End Sub
+
+Private Sub RequestPermissions As ResumableSub
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then Return False
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then Return False
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_READ_PHONE_STATE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	Return Result
+End Sub
+
+Sub SDK_ActivationStateChanged (State As String)
+	Log("Activation state changed: " & State)
+End Sub
+
+Sub SDK_BindingStateChanged (State As String)
+	Log($"SDK_BindingStateChanged: ${State}"$)
+	If (State = "BOUND" Or State = "NOT_REQUIRED") And aircraft <> Null And aircraft.Connected Then
+		AfterAircraftConnected
+	Else
+		Log("Aircraft disconnected!")
+		lblText.Text = $"Disconnected!!!"$
+		timer1.Enabled = False
+	End If
+End Sub
+
+Sub SDK_ProductConnected (AircraftData As Object)
+	If AircraftData <> Null Then
+		Log("Product connected")
+		aircraft.Initialize("aircraft", AircraftData)
+		If aircraft.Connected Then
+			AfterAircraftConnected
+		End If
+	Else
+		Log("No connected product")
+	End If
+End Sub
+
+Sub SDK_ProductDisconnected
+	Log("Product disconnected")
+End Sub
+
+
+
+Sub Aircraft_BatteryState (battery As Object, RemainingPercentage As Int)
+	batteryLevel = RemainingPercentage
+End Sub
+
+Sub AfterAircraftConnected
+	Log("AfterAircraftConnected")
+	If aircraft.CameraReady = False Or aircraft.BatteryReady = False Then
+		Log("Camera / battery not ready")
+		Sleep(500)
+		If aircraft.Connected Then AfterAircraftConnected
+		Return
+	End If
+	aircraft.RegisterBatteryStateEvent
+	controller.Initialize("controller", aircraft)
+	CreateHardwareStateListener
+	Log($"simulator: ${controller.SimulatorStarted)}"$
+	camera.Initialize("camera", aircraft)
+	pnlCamera.AddView(camera.CreateVideoView, 0, 0, pnlCamera.Width, pnlCamera.Height)
+	timer1.Enabled = True
+	HotpointOperator.Initialize("HotpointOperator")
+	WaypointOperator.Initialize("WaypointOperator")
+	aircraftName = "N/A"
+	Wait for (aircraft.GetName) Aircraft_ResultWithValue (Success As Boolean, ErrorMessage As String, Value As Object)
+	If Success Then
+		aircraftName = Value
+	End If
+End Sub
+
+Sub CreateHardwareStateListener
+	Dim RemoteController As JavaObject = aircraft
+	RemoteController = RemoteController.RunMethod("getRemoteController", Null)
+	Dim callback As Object = RemoteController.CreateEventFromUI("dji.common.remotecontroller.HardwareState$HardwareStateCallback", "HardwareState", Null)
+	RemoteController.RunMethod("setHardwareStateCallback", Array(callback))
+End Sub
+
+Sub HardwareState_Event (MethodName As String, Args() As Object) As Object
+	Dim HardwareState As JavaObject = Args(0)
+	Dim c1button As JavaObject = HardwareState.RunMethod("getC1Button", Null)
+	Dim IsClicked As Boolean = c1button.RunMethod("isPresent", Null) 'ignore
+'	Log($"C1 button: ${IsClicked}"$)
+	Return Null
+End Sub
+
+Sub RotateGimbal (roll As Float) 'ignore
+	Dim aircraftjo As JavaObject = aircraft
+	Dim gimbal As JavaObject = aircraftjo.RunMethod("getGimbal", Null)
+	If gimbal.IsInitialized Then
+		Dim cc As Object = gimbal.CreateEventFromUI("dji.common.util.CommonCallbacks$CompletionCallback", "callback", Null)
+		gimbal.RunMethod("rotate", Array(CreateRotation(roll), cc))
+		Wait For (gimbal) Callback_Event (MethodName As String, Args() As Object)
+		If Args(0) = Null Then
+			Log("Gimbal rotated successfully.")
+		Else
+			Log("Error setting rotation: " & Args(0))
+		End If
+	Else
+		Log("Gimbal not available.")
+	End If
+	
+End Sub
+
+Sub CreateRotation (RollAngle As Float) As JavaObject
+	Dim builder As JavaObject
+	builder.InitializeNewInstance("dji.common.gimbal.Rotation.Builder", Null)
+	Dim time As Double = 2 'seconds
+	builder.RunMethod("mode", Array("ABSOLUTE_ANGLE"))
+	builder.RunMethod("time", Array(time))
+	builder.RunMethod("roll", Array(RollAngle))
+	Return builder.RunMethodJO("build", Null)
+End Sub
+
+
+
+Sub Activity_Resume
+	If Activity.GetStartingIntent.IsInitialized And Activity.GetStartingIntent <> LastIntent Then
+		LastIntent = Activity.GetStartingIntent
+		If LastIntent.Action = "android.hardware.usb.action.USB_ACCESSORY_ATTACHED" Then
+			Dim SdkManagerStatic As JavaObject
+			SdkManagerStatic.InitializeStatic("dji.sdk.sdkmanager.DJISDKManager")
+			Dim in As Intent
+			in.Initialize(SdkManagerStatic.GetField("USB_ACCESSORY_ATTACHED"), "")
+			Dim p As Phone
+			p.SendBroadcastIntent(in)
+		End If
+	End If
+	If sdk.IsInitialized And sdk.Registered Then sdk.StartConnectionToProduct
+	pws.KeepAlive(True)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	timer1.Enabled = False
+	pnlCamera.RemoveAllViews 'remove the video feed view (if it was added)
+	pws.ReleaseKeepAlive
+End Sub
+
+
+Sub Timer1_Tick
+	If controller.IsInitialized Then
+		Dim St As DJIFlightControllerCurrentState = controller.CurrentState
+		Dim speed As Double = Sqrt(Power(St.VelocityX, 2) + Power(St.VelocityY, 2))
+		Dim sb As CSBuilder
+		sb.Initialize
+		sb.Append($"Aircraft: ${aircraftName}"$).Append(CRLF)
+		SetColor(sb, batteryLevel < 30).Append($"Battery: ${batteryLevel}%"$).Pop.Append(CRLF)
+		SetColor(sb, St.GPSStatus <> 4 And St.GPSStatus <> 5).Append($"GPSStatus (5 = good): ${St.GPSStatus}"$).Pop
+		sb.Append(CRLF)
+		sb.Append($"Simulator: ${controller.SimulatorStarted}
+FlightMode: ${St.FlightMode}
+Altitude: $1.0{St.AircraftLocation.Altitude} m
+Location: $1.3{St.AircraftLocation.Latitude} / $1.3{St.AircraftLocation.Longitude}
+speed: $1.0{speed} m/s
+VelocityZ: $1.1{-St.VelocityZ + 0.001} m/s
+HotpointOperator: ${HotpointOperator.MissionState}
+WaypointOperator: ${WaypointOperator.MissionState}
+Activation: ${sdk.ActivationState}
+Binding: ${sdk.AircraftBindingState}
+"$)
+		AppendIf(sb, St.IMUPreheating, $"IMUPreheating: ${St.IMUPreheating}"$)
+		sb.Append(IMU)
+		SetColor(sb, St.HomeLocationSet = False)
+		If St.HomeLocationSet Then
+			sb.Append($"Home: $1.3{St.HomeLocation.Latitude} / $1.3{St.HomeLocation.Longitude}"$)
+		Else
+			sb.Append("Home: Not set!")
+			If St.GPSStatus = 4 Or St.GPSStatus = 5 Then
+				SetHome
+			End If
+		End If
+		sb.Pop.Append(CRLF)
+		AppendIf(sb, MissionStatus <> "", MissionStatus)
+		lblText.Text = sb
+	End If
+End Sub
+
+Sub SetColor(sb As CSBuilder, Condition As Boolean) As CSBuilder
+	If Condition Then sb.Color(Colors.Red) Else sb.Color(Colors.White)
+	Return sb
+End Sub
+
+Sub AppendIf(sb As CSBuilder, Condition As String, Text As String) As CSBuilder
+	If Condition Then sb.Append(Text).Append(CRLF)
+	Return sb
+End Sub
+
+Sub SetHome
+	Wait For (controller.SetHomeLocationUsingAircraftCurrentLocation) Controller_Result (Success As Boolean, ErrorMessage As String)
+	If Success Then
+		Log("home set")
+	Else
+		Log("Error: " & ErrorMessage)
+	End If
+End Sub
+
+
+Sub Controller_IMUStateChanged (State As DJIIMUState)
+	If State.AccelerometerStatus = "" Then Return
+	Dim sb As CSBuilder
+	sb.Initialize
+	AppendIf(sb, State.AccelerometerStatus <> "NORMAL_BIAS", $"Acceleromter: ${State.AccelerometerStatus}"$)
+	AppendIf(sb, State.CalibrationStatus <> "NONE", $"Calibration: ${State.CalibrationStatus}"$)
+	AppendIf(sb, State.GyroscopeState <> "NORMAL_BIAS", $"Gyroscope: ${State.GyroscopeState}"$)
+	IMU = sb
+End Sub
+
+Sub btnStartMission_Click
+	Dim builder As DJIWaypointMissionBuilder
+	builder.Initialize
+	Dim wp1, wp2, wp3 As DJIWaypoint
+	wp1.Initialize(32.83519, 35.26872, 50)
+	wp1.AddAction("START_TAKE_PHOTO", 0)
+	wp2.Initialize(32.8367, 35.2683, 50)
+	wp3.Initialize(32.8373, 35.26964, 50)
+	builder.AddWaypoint(wp1)
+	builder.AddWaypoint(wp2)
+	builder.AddWaypoint(wp3)
+	
+	'change coordinates here and remove the ExitApplication
+	ExitApplication
+	WaypointOperator.LoadMission(builder)
+	Wait For(WaypointOperator.UploadMission) WaypointOperator_Result (Success As Boolean, ErrorMessage As String)
+	If Success Then
+		Sleep(1000)
+		Log("Start: " & Success & ", " & ErrorMessage)
+		MissionState(True)
+		Wait For(WaypointOperator.StartMission) WaypointOperator_Result (Success As Boolean, ErrorMessage As String)
+	Else
+		Log("Error uploading: " & ErrorMessage)
+		ToastMessageShow("Error uploading: " & ErrorMessage, True)
+	End If
+End Sub
+
+
+Sub MissionState(Running As Boolean)
+	btnStartMission.Enabled = Not(Running)
+	btnStopMission.Enabled = Running
+End Sub
+
+Sub WaypointOperator_MissionStart
+	MissionStatus = "MissionStart"
+End Sub
+
+Sub WaypointOperator_MissionFinish (Error As String)
+	MissionStatus = "MissionFinish: " & Error
+	MissionState(False)
+End Sub
+
+Sub WaypointOperator_MissionProgress (ExecutionEvent As Object, TargetWaypointIndex As Int)
+	Log(ExecutionEvent & ", " & TargetWaypointIndex)
+End Sub
+
+Sub HotpointOperator_HotpointMissionStart
+	MissionStatus = "MissionStart"
+End Sub
+
+Sub HotpointOperator_HotpointMissionFinish (Error As String)
+	MissionStatus = "MissionFinish: " & Error
+	MissionState(False)
+End Sub
+
+Sub HotpointOperator_HotpointMissionProgress (ExecutionEvent As Object)
+	Log(ExecutionEvent)
+End Sub
+
+
+Sub btnStopMission_Click
+	Wait For (WaypointOperator.StopMission) WaypointOperator_Result (Success As Boolean, ErrorMessage As String)
+	If Success = False Then
+		ToastMessageShow("Failed to stop", True)
+	Else
+		MissionStatus = "Mission stopped"
+		MissionState(False)
+	End If
+End Sub

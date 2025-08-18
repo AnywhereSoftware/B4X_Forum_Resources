@@ -1,0 +1,49 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rwire
+Library3=rvl53l1x
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private Master As WireMaster
+	Private Sensor As VL53L1X
+	Private timSensor As Timer
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Master.Initialize
+	Sensor.SetI2CAddress(41)
+	If Sensor.Initialize Then
+		Log("Sensor found")
+		Sensor.SetIntermeasurementPeriod(100)
+		Sensor.SetDistanceModeShort
+		Sensor.SetTimingBudgetInMs(80)
+		Sensor.StartRanging
+		timSensor.Initialize("timSensor_Tick",50)
+		timSensor.Enabled=True
+	Else
+		Log("Sensor not found, Check wiring ")
+	End If
+End Sub
+
+private Sub timSensor_Tick
+	If Sensor.CheckForDataReady Then
+		Log(Sensor.GetDistance)
+		Sensor.ClearInterrupt
+	End If
+End Sub

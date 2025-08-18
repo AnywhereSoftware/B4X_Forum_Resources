@@ -1,0 +1,91 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=codescanner
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(<uses-permission android:name="android.permission.CAMERA"/>~\n~<category android:name="android.intent.category.LAUNCHER" />)	~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~~\n~~\n~~\n~~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim rp As RuntimePermissions
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private CodeScanner1 As CodeScanner
+	Private Label1 As Label
+	
+	Private CheckBox1 As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	If Not(rp.Check(rp.PERMISSION_CAMERA)) Then
+		rp.CheckAndRequest(rp.PERMISSION_CAMERA)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	CodeScanner1.stopPreview
+'	xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+Sub Button2_Click
+	CodeScanner1.startPreview
+End Sub
+
+Sub CodeScanner1_scan_result(scantext As String)
+	Label1.Text = scantext
+	Log(scantext)
+	Sleep(10)
+	CodeScanner1.startPreview
+	
+End Sub
+
+Sub Button3_Click
+	
+	CodeScanner1.FlashButtonColor = 0xFF239900
+	CodeScanner1.FrameThickness = 40
+End Sub
+
+
+Sub CheckBox1_CheckedChange(Checked As Boolean)
+	If CheckBox1.Checked = True Then
+		CodeScanner1.AutoFocusButtonVisible = False
+		Else
+		CodeScanner1.AutoFocusButtonVisible = True
+	End If
+End Sub

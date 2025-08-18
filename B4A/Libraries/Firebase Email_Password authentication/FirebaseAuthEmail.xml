@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.FirebaseAuthEmail.AuthEmailResultWrapper</name>
+        <shortname>AuthEmailResult</shortname>
+        <objectwrapper>com.google.firebase.auth.AuthResult</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>toString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>authResult</name>
+                <type>com.google.firebase.auth.AuthResult</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.FirebaseAuthEmail.FirebaseAuthEmailWrapper</name>
+        <shortname>FirebaseAuthEmailWrapper</shortname>
+        <owner>process</owner>
+        <method>
+            <name>currentToken</name>
+            <comment>Get current token. 
+ This function should be used to retrieve token ID's
+ token string will returned  on _gettoken event.
+   
+ Example:&lt;code&gt;
+  authphone.currentToken()&lt;/code&gt;
+
+ Events: 
+  &lt;code&gt;_gettoken(success As Boolean, token as string, info As String)&lt;/code&gt;
+ 
+  Events examples:
+  &lt;code&gt;
+		Sub authphone_gettoken(success As Boolean, token as string, info As String)
+			If success = True Then
+			  ToastMessageShow("get token success!",True)  
+			  log(token)
+			  ' use token with your backend server
+			  '	....
+			Else
+			  MsgboxAsync("get token failed!"&amp; CRLF &amp; "info: " &amp; info, "Alert")
+			End If
+		End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SignOut</name>
+            <comment>Signs out from email account.
+Example: 
+ &lt;code&gt;authemail.SignOut()&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>signInWithEmailAndPassword</name>
+            <comment>Sign in using an existing Firebase User/Email account.
+ Example:&lt;code&gt;
+  authemail.signInWithEmailAndPassword(et_email.Text,et_password.Text)
+  wait for authemail_signedin(success As Boolean, User As FirebaseAuthEmailUser, info As String)	
+  If success Then
+   Log("User Uid: " &amp; User.Uid)
+   Log("User: " &amp; User.DisplayName)
+   Log("Email: " &amp; User.Email) 
+   Log("Is Verified: " &amp; User.EmailVerified)
+    If User.EmailVerified = False Then
+	   User.sendEmailVerification
+	 End if
+  End if&lt;/code&gt;
+ 
+ Events: 
+   &lt;code&gt;_signedin(success As Boolean, User As FirebaseAuthEmailUser, info As String)&lt;/code&gt;
+   &lt;code&gt;_signedinfailure(success As Boolean, info As String)&lt;/code&gt;
+   
+ 
+  Events examples:&lt;code&gt;
+   Sub authemail_signedinfailure(success As Boolean, User As FirebaseAuthEmailUser, info As String)
+	 If info.Contains("The user may have been deleted") then
+	    MsgboxAsync("Unknown user!"&amp; CRLF &amp;"email &lt;" &amp; et_email.text &amp; "&gt; was not found on Firebase!.","Alert"	)
+	 Else if info.Contains("The email address is badly formatted") Then
+	    MsgboxAsync("The email address:"&amp; CRLF &amp;" &lt;" &amp; et_email.text &amp; "&gt; is badly formatted!.","Alert"	)
+	 else if info.Contains("The password is invalid") Then
+		MsgboxAsync("Invalid Password!", "Alert")
+	 End If&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>str2</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>createUserWithEmailAndPassword</name>
+            <comment>Creates a new Firebase User/Email account.
+ Example:&lt;code&gt;
+  authemail.createUserWithEmailAndPassword(et_email.Text,et_password.Text)
+  wait for authemail_usercreated(success As Boolean, User As FirebaseAuthEmailUser, info As String)	
+  If success Then
+   Log("User Uid: " &amp; User.Uid)
+   Log("User: " &amp; User.DisplayName)
+   Log("Email: " &amp; User.Email) 
+   Log("Is Verified: " &amp; User.EmailVerified)
+  End if&lt;/code&gt;
+ 
+ Events: 
+   &lt;code&gt;_usercreated(success As Boolean, User As FirebaseAuthEmailUser, info As String)&lt;/code&gt;
+   &lt;code&gt;_createfailure(success As Boolean, info As String)&lt;/code&gt;
+ 
+  Events examples:&lt;code&gt;
+   Sub authemail_createfailure(success As Boolean, info As String)
+     If info.Contains("The email address is already in use by another account.")  Then
+        ' some code
+	  End if 
+	  MsgboxAsync("User creation failed.","Alert")
+   End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>str2</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>displayName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>photoUri</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>updateProfile</name>
+            <comment>Update User profile. 
+ This function should be used to modify/update user Diplay Name and Photo Url
+ successful update would be returned on _userupdated event.
+   
+ Example:&lt;code&gt;
+  authemail.updateProfile(displayName as string, photoUrl as string)&lt;/code&gt;
+
+ Events: 
+  &lt;code&gt;_userupdated(success As Boolean, info As String)&lt;/code&gt;
+ 
+  Events examples:
+  &lt;code&gt;
+		Sub authphone_userupdated(success As Boolean,info As String)
+			If success = True Then
+			  ToastMessageShow("Profile updated successfully!",True)  
+			  '	....
+			Else
+			  MsgboxAsync("Profile update failed!"&amp; CRLF &amp; "info: " &amp; info, "Alert")
+			End If
+		End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>displayName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>photoUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>deleteUser</name>
+            <comment>Delete User. 
+ This function should be used to delete user currently connected.
+ successful update would be returned on _userupdated event.
+   
+ Example:&lt;code&gt;
+  authemail.updateProfile(displayName as string, photoUri as string)&lt;/code&gt;
+
+ Events: 
+  &lt;code&gt;_userupdated(success As Boolean, info As String)&lt;/code&gt;
+ 
+  Events examples:
+  &lt;code&gt;
+		Sub authphone_userupdated(success As Boolean,info As String)
+			If success = True Then
+			  ToastMessageShow("Profile updated successfully!",True)  
+			  '	....
+			Else
+			  MsgboxAsync("Profile update failed!"&amp; CRLF &amp; "info: " &amp; info, "Alert")
+			End If
+		End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendPasswordResetEmail</name>
+            <comment>Reset password of an existing User/Email account.
+ Example:&lt;code&gt;
+  authemail.sendPasswordResetEmail(et_email.Text)
+	   MsgboxAsync("A password reset link has been sent to:  " &amp; CRLF &amp; _
+		"&lt;" &amp; fet_regemail.text &amp; "&gt;" &amp;CRLF&amp; _
+		 "Click on link reported to submit your new password!", "Password reset!")&lt;/code&gt;
+ 
+ Events: 
+   &lt;code&gt;_passwordreset(success As Boolean, info As String)&lt;/code&gt;
+   &lt;code&gt;_passwordresetfailure(success As Boolean, info As String)&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>CurrentUser</name>
+            <returntype>anywheresoftware.b4a.FirebaseAuthEmail.FirebaseAuthEmailWrapper.FirebaseAuthEmailUserWrapper</returntype>
+            <comment></comment>
+        </property>
+        <field>
+            <name>eventName</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.FirebaseAuthEmail.FirebaseAuthEmailWrapper.FirebaseAuthEmailUserWrapper</name>
+        <shortname>FirebaseAuthEmailUser</shortname>
+        <objectwrapper>com.google.firebase.auth.FirebaseUser</objectwrapper>
+        <owner>process</owner>
+        <method>
+            <name>updateEmail</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>updatePassword</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendEmailVerification</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>delete</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <property>
+            <name>EmailVerified</name>
+            <returntype>boolean</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>ProviderId</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Uid</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>ProviderData</name>
+            <returntype>java.util.List</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Email</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>DisplayName</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Anonymous</name>
+            <returntype>boolean</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>PhotoUrl</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Providers</name>
+            <returntype>java.util.List</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <version>1.4</version>
+</root>

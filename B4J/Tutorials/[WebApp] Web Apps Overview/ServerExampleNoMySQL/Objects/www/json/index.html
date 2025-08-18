@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+ <title>B4J - JSON Tree Example</title>
+ <link rel="stylesheet" type="text/css" href="index.css" />
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+ <script src="jquery.autosize.js"></script>
+ </head>
+ <body>
+	<h1>JSON Tree Example</h1>
+	<button id="btnParse">Parse</button>
+	<div id="main">
+		<div id="rawTextDiv">
+			<textarea id="textarea">{json :"Paste the JSON string here"}</textarea>
+		</div>
+		<div id="treeDiv">
+		</div>
+		<div id="codeDiv">
+			<p id="codeP"></p>
+		</div>
+	</div>
+	<script>
+	$( document ).ready(function() {
+		$("#textarea").autosize();
+		$("#btnParse").click(function(e) {
+			e.preventDefault();
+			$.ajax({
+				type: "POST",
+				url: "jsonHelper",
+				data: $("#textarea").val(), 
+			   success: function(result)
+			   {
+				   if (result.success) {
+						$("#codeP").html(result.code);
+						 $("#treeDiv").html(result.tree);
+						 $("ul li:last-child").addClass('last');
+				   }
+				   else {
+						alert(result.error);
+				   }
+			   },
+				error: function (xhr, ajaxOptions, thrownError) {
+					alert(thrownError);
+				}
+			});
+			
+		});
+		$("#textarea").focus(function() {
+			var $this = $(this);
+			$this.select();
+			$this.mouseup(function() {
+				$this.unbind("mouseup");
+			return false;
+			});
+		});
+	});
+	</script>
+
+ </body>

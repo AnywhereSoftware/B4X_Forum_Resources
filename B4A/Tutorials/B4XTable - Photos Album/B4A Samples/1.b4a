@@ -1,0 +1,185 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=runtimepermissions
+Library3=b4xtable
+Library4=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:requestLegacyExternalStorage, true)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private rp As RuntimePermissions
+	Private NumberOfColumns As Int = 4
+End Sub
+
+Sub Globals
+	Private xui As XUI
+	Private B4XTable1 As B4XTable
+	Private Dialog As B4XDialog
+	Private btnPrev As Button
+	Private btnNext As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+	Dialog.Initialize(Activity)
+	Dialog.Title = "Album Example"
+	rp.CheckAndRequest(rp.PERMISSION_READ_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = True Then
+		If File.Exists(File.DirRootExternal, "DCIM/Camera") = False Then
+			ToastMessageShow("Failed to find camera folder.", True)
+			Return
+		End If
+		FindPictures
+	Else
+		ToastMessageShow("No permission to access external storage", True)
+	End If
+	
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'Return True to consume the event
+	'close the dialog if it is visible
+	If KeyCode = KeyCodes.KEYCODE_BACK And Dialog.Close(xui.DialogResponse_Cancel) Then Return True
+	Return False
+End Sub
+
+Sub FindPictures
+	Dim AllPictures As List
+	AllPictures.Initialize
+	For Each Folder As String In Array("DCIM/Camera", "Pictures", "DCIM")
+		Dim PicturesFolder As String = File.Combine(File.DirRootExternal, Folder)
+		If File.Exists(PicturesFolder, "") = False Then Continue
+		Wait For (File.ListFilesAsync(PicturesFolder)) Complete (Success As Boolean, Files As List)
+		If Success Then
+			For Each f As String In Files
+				AllPictures.Add(File.Combine(PicturesFolder, f))
+			Next
+		End If
+	Next
+	
+	CreateTable(AllPictures)
+End Sub
+
+Sub CreateTable (Files As List)
+	B4XTable1.AllowSmallRowHeightModifications = False
+	B4XTable1.RowHeight = 80dip
+	B4XTable1.SearchField.TextField.Enabled = False
+	For i = 0 To NumberOfColumns - 1
+		B4XTable1.AddColumn(i, B4XTable1.COLUMN_TYPE_TEXT)
+	Next
+	'Force the creation of the cells.
+	B4XTable1.MaximumRowsPerPage = 20
+	B4XTable1.BuildLayoutsCache(B4XTable1.MaximumRowsPerPage)
+	For Each col As B4XTableColumn In B4XTable1.Columns
+		col.Sortable = False
+		col.Width = 100%x / NumberOfColumns
+		For i = 0 To col.CellsLayouts.Size - 1
+			Dim pnl As B4XView = col.CellsLayouts.Get(i)
+			pnl.GetView(0).Visible = False 'hide the label
+			If i > 0 Then 'i = 0 is the header
+				Dim iv As ImageView
+				iv.Initialize("")
+				pnl.AddView(iv, 2dip, 2dip, col.Width - 4dip, B4XTable1.RowHeight - 4dip)
+			End If
+		Next
+	Next
+	LoadData(Files)
+	B4XTable1.mBase.Visible = True
+End Sub
+
+Private Sub LoadData (Files As List)
+	Dim Data As List
+	Data.Initialize
+	Dim row(NumberOfColumns) As Object
+	Dim index As Int = -1
+	For Each f As String In Files
+		If f.EndsWith(".jpg") Or f.EndsWith(".png") Then
+			index = (index + 1) Mod NumberOfColumns
+			row(index) = f
+			If index = NumberOfColumns - 1 Then
+				Data.Add(row)
+				Dim row(NumberOfColumns) As Object
+			End If
+		End If
+	Next
+	If index < NumberOfColumns - 1 Then
+		'last incomplete row
+		For i = index + 1 To NumberOfColumns - 1
+			row(i) = ""
+		Next
+		Data.Add(row)
+	End If
+	B4XTable1.SetData(Data)
+End Sub
+
+Sub B4XTable1_DataUpdated
+	Dim row As Map
+	For i = 0 To B4XTable1.VisibleRowIds.Size - 1
+		Dim RowId As Long = B4XTable1.VisibleRowIds.Get(i)
+		If RowId > 0 Then
+			row = B4XTable1.GetRow(RowId)
+		Else
+			row = CreateMap()
+		End If
+		For Each column As B4XTableColumn In B4XTable1.Columns
+			Dim pnl As B4XView = column.CellsLayouts.Get(i + 1) '+1 because the first cell is the header
+			Dim iv As B4XView = pnl.GetView(1) 'ImageView will be the 2nd child of the panel. The built-in label is the first.
+			If row.GetDefault(column.Id, "") <> "" Then
+				iv.SetBitmap(xui.LoadBitmapResize("", row.Get(column.Id), iv.Width, iv.Height, False))
+			Else
+				iv.SetBitmap(Null)
+			End If
+		Next
+	Next
+	btnNext.Enabled = B4XTable1.lblNext.Tag
+	btnPrev.Enabled = B4XTable1.lblBack.Tag
+End Sub
+
+Sub B4XTable1_CellClicked (ColumnId As String, RowId As Long)
+	Dim img As String = B4XTable1.GetRow(RowId).Get(ColumnId)
+	If img <> "" Then
+		Dim pnl As B4XView = xui.CreatePanel("")
+		Dim iv As ImageView
+		iv.Initialize("")
+		pnl.SetLayoutAnimated(0, 0, 0, 90%x, 80%y)
+		pnl.AddView(iv, 0, 0, pnl.Width, pnl.Height)
+		iv.Bitmap = xui.LoadBitmapResize("", img, iv.Width, iv.Height, True)
+		Dialog.ShowCustom(pnl, "OK", "", "")
+	End If
+End Sub
+
+Sub btnNext_Click
+	B4XTable1.CurrentPage = B4XTable1.CurrentPage + 1
+End Sub
+
+Sub btnPrev_Click
+	B4XTable1.CurrentPage = B4XTable1.CurrentPage - 1
+End Sub
+
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

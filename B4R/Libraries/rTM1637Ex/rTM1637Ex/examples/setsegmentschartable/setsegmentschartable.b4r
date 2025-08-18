@@ -1,0 +1,69 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtm1637ex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+' segments.b4r
+' Sample project for the B4R Library rTM1637Ex - Seven Segment Display.
+' Set 7-segment defined chars & symbols in the 4 digits.
+' The global constants define various chars&symbols just to show the bit patterns
+' Additional Libraries: rTM1637Ex
+' 20210525 rwbl
+#End Region
+
+#Region Wiring
+'TM1637 = Arduino
+'CLK = D2 
+'DIO = D3 
+'GND = GND
+'VCC = 3.3v Or 5v
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rTM1637Ex - SetSegmentsEx v20210525"
+	Public serialLine As Serial
+	Private tmDisplay As TM1637Display
+	Private PINCLK As Byte = 2
+	Private PINDIO As Byte = 3
+	Private charFont As Byte = 1
+	Private shortDelay As ULong = 2000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	tmDisplay.Initialize(PINCLK, PINDIO)
+	
+	'Write text HaLo AscII starting at pos 0 = leftmost
+	Delay(shortDelay)
+	tmDisplay.Clear
+	tmDisplay.ShowText("HaLo", 0, tmDisplay.FONT_ASCII)
+
+	'Write text HaLo Siekoo starting at pos 0 = leftmost
+	Delay(shortDelay)
+	tmDisplay.Clear
+	tmDisplay.ShowText("HaLo", 0, tmDisplay.FONT_SIEKOO)
+
+	'Show special character
+	'Write text 9°C at pos 1 with fonts ascii and siekoo
+	Delay(shortDelay)
+	tmDisplay.Clear
+	charFont = tmDisplay.FONT_ASCII
+	tmDisplay.SetSegments(Array As Byte(tmDisplay.GetChar(9, charFont), tmDisplay.SPECIAL_DEGREE, tmDisplay.GetChar(Asc("C"), charFont)), 1)
+	Delay(shortDelay)
+	tmDisplay.Clear
+	charFont = tmDisplay.FONT_SIEKOO
+	tmDisplay.SetSegments(Array As Byte(tmDisplay.GetChar(9, charFont), tmDisplay.SPECIAL_DEGREE, tmDisplay.GetChar(Asc("C"), charFont)), 1)
+End Sub

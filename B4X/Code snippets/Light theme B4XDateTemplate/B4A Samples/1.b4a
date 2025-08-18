@@ -1,0 +1,90 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Private DateTemplate As B4XDateTemplate
+	Private Dialog As B4XDialog
+	Private lblDate As B4XView
+	Private xui As XUI
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	DateTemplate.Initialize
+	DateTemplate.Date = DateTime.Now
+	UpdateLabel
+	Dialog.Initialize(Activity)
+	Dim cs As CSBuilder
+	Dialog.Title = cs.Initialize.Size(24).Append("Select Date").PopAll
+	SetLightTheme
+End Sub
+
+Sub SetLightTheme
+	Dialog.TitleBarColor = 0xFFFF7505
+	Dialog.TitleBarHeight = 80dip
+	Dim TextColor As Int = 0xFF5B5B5B
+	Dialog.BackgroundColor = xui.Color_White
+	Dialog.ButtonsColor = xui.Color_White
+	Dialog.ButtonsTextColor = Dialog.TitleBarColor
+	Dialog.BorderColor = xui.Color_Transparent
+	DateTemplate.DaysInWeekColor = xui.Color_Black
+	DateTemplate.SelectedColor = 0xFF39D7CE
+	DateTemplate.HighlightedColor = 0xFF00CEFF
+	DateTemplate.DaysInMonthColor = TextColor
+	DateTemplate.lblMonth.TextColor = TextColor
+	DateTemplate.lblYear.TextColor = TextColor
+	DateTemplate.SelectedColor = 0xFFFFA761
+	For Each x As B4XView In Array(DateTemplate.btnMonthLeft, DateTemplate.btnMonthRight, DateTemplate.btnYearLeft, DateTemplate.btnYearRight)
+		x.Color = xui.Color_Transparent
+	Next
+End Sub
+
+Sub lblDate_Click
+	Wait For (Dialog.ShowTemplate(DateTemplate, "", "", "CANCEL")) Complete (Result As Int)
+	UpdateLabel
+End Sub
+
+Sub UpdateLabel
+	lblDate.Text = $"Selected Date: $Date{DateTemplate.Date}"$
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

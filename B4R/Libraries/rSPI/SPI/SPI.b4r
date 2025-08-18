@@ -1,0 +1,95 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Module1=SPI
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public CSPin As Pin
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(9600)
+	Log("AppStart")
+	SPI.CheckIfThisBoardIsSupported
+	
+	CSPin.Initialize(16, CSPin.MODE_OUTPUT)
+	SPI.CSPinDeActivate(CSPin)
+	
+	CommunicateThroughSPI
+
+End Sub
+
+
+Private Sub CommunicateThroughSPI
+	
+	
+	SPI.Begin_Transaction(2000000, SPI.MSBFIRST, SPI.SPI_MODE0)
+	SPI.CSPinActivate(CSPin)
+	
+	SPI.DisableInterrupts
+		
+	Dim b As Byte
+	
+	b = SPI.Transfer_Byte(SPI.GetByteFromString("01101110"))
+	Log(b)
+
+	Log("Here 1")
+	
+	b = SPI.Transfer_Byte(SPI.GetByteFromString("01101110"))
+	Log(b)
+	
+	Log("Here 2")
+	
+	b = SPI.Transfer_Byte(SPI.GetByteFromString("01101110"))
+	Log(b)
+	
+	b = SPI.ShiftLeftByte(b, 3)
+	Log(b)
+	
+	b = SPI.Transfer_Byte(SPI.GetByteFromString("01101110"))
+	Log(b)
+	
+	b = SPI.ShiftRightByte(b, 3)
+	Log(b)
+	
+	'We are interested only in the last 4 bits
+	b = SPI.ApplyMask(b, SPI.GetByteFromString("00001111"))
+	Log(b)
+
+	'Transfer Byte Array
+	Dim iDimension As UInt = 3
+	Dim bSend(iDimension) As Byte
+	bSend(0) = SPI.GetByteFromString("11001100")
+	bSend(1) = SPI.GetByteFromString("01100110")
+	bSend(2) = SPI.GetByteFromString("00110011")
+	Dim bRet(iDimension) As Byte
+	SPI.Transfer_Byte_Array(bSend, bRet)
+	
+	'We want to know the 2nd bit from right value in the byte
+	Dim iBitInSecondPositionFromRight As UInt = SPI.GetBitAt(b, 2)
+	Log(iBitInSecondPositionFromRight)
+
+
+	SPI.EnableInterrupts
+	
+	SPI.CSPinDeActivate(CSPin)
+	SPI.End_Transaction
+	
+	Log("I have ended")
+End Sub
+
+

@@ -1,0 +1,120 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=jcore
+Library3=jfx
+Library4=jrandomaccessfile
+Library5=jserial
+Library6=jxui
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	
+	Private sp As Serial
+	Private astream As AsyncStreams
+	
+	Dim timer1 As Timer
+	
+	Dim counter1 As Int = 0
+	
+	Dim bytesSec As Int = 0
+	
+	'Dim SerialBuffer As String ' replaced by B4XBytesBuilder
+	
+	Dim bBuilder As B4XBytesBuilder
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	timer1.Initialize("timer1", 1000)
+	timer1.Enabled = True
+	
+	sp.Initialize("sp")
+  
+	Log(sp.ListPorts)
+  
+	'SerialBuffer = ""
+	bBuilder.Initialize
+	bBuilder.Clear
+	
+	If sp.ListPorts.Size > 0 Then
+		sp.Open(sp.ListPorts.Get(0))
+		sp.SetParams(500000, 8, 1, 0) ' baud: 9600, 115200, 500000
+  
+		astream.Initialize(sp.GetInputStream, sp.GetOutputStream, "astream")
+	Else
+		Log("No serial port found")
+	End If
+  
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello World!", "B4X")
+End Sub
+
+Sub timer1_tick
+	bytesSec = counter1
+	counter1 = 0
+	
+	Log("bytes/Sec: " & bytesSec)
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+
+	' Old way to avoid breaking the message (replaced by B4XBytesBuilder):
+	
+	'	SerialBuffer =  SerialBuffer & BytesToString(Buffer, 0, Buffer.Length, "UTF8")
+	'	
+	'	If SerialBuffer.IndexOf(Chr(10)) > 0 Then
+	'		Dim SerialBuffer_tmp As String = SerialBuffer.SubString2(0, SerialBuffer.IndexOf(Chr(10)))
+	'		If SerialBuffer.Length >= SerialBuffer.IndexOf(Chr(10)) + 1 Then
+	'			SerialBuffer = SerialBuffer.SubString(SerialBuffer.IndexOf(Chr(10)) + 1)
+	'		End If
+	'		
+	'		Log(SerialBuffer_tmp)
+	'	Else
+	'		Log("NewData")
+	'	End If
+
+
+	' New way to avoid breaking the message:
+	
+	counter1 = counter1 + Buffer.Length
+	
+	bBuilder.Append(Buffer)
+	
+	'10 = line feed (\n); 13 = carriage return (\r); 13+10 = new line (\r\n)
+	Dim searchFor() As Byte = Array As Byte(13, 10)
+	
+	If bBuilder.IndexOf(searchFor) > 0 Then
+		Dim buffer_tmp() As Byte = bBuilder.SubArray2(0, bBuilder.IndexOf(searchFor))
+		
+		If bBuilder.Length >= (bBuilder.IndexOf(searchFor) + 1) Then
+			bBuilder.Remove(0, bBuilder.IndexOf(searchFor) + 1)
+		End If
+		
+		' buffer_tmp ---> Complete message ready to use
+		Log(BytesToString(buffer_tmp, 0, buffer_tmp.Length, "UTF8"))
+	Else
+		Log("NewData")
+	End If
+
+End Sub

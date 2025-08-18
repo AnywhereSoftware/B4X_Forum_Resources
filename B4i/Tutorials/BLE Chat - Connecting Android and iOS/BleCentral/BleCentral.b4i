@@ -1,0 +1,158 @@
+﻿Version=2.51
+NumberOfModules=0
+Build1=Default,b4i.example3
+NumberOfFiles=1
+File1=1.bil
+NumberOfLibraries=3
+Library1=icore
+Library2=ible
+Library3=ihud
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 7
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Public connected As Boolean
+	Private manager As BleManager
+	Private ServiceId, ReadChar, WriteChar As String
+	Private messagesToSend As List
+	Private hd As HUD
+	Private btnSend As Button
+	Private txtLogs As TextView
+	Private txtMessage As TextField
+	Private firstRead As Boolean
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	manager.Initialize("manager")
+	ServiceId = UUID("0001")
+	ReadChar = UUID("1001")
+	WriteChar = UUID("1002")
+	messagesToSend.Initialize
+	SetState
+End Sub
+
+
+Private Sub Page1_KeyboardStateChanged (Height As Float)
+	txtLogs.SetLayoutAnimated(0, 1, txtLogs.Left, txtLogs.Top, txtLogs.Width, _
+		txtLogs.CalcRelativeKeyboardHeight(Height) - 2dip)
+End Sub
+
+Sub SetState
+	btnSend.Enabled = connected
+	txtMessage.Enabled = connected
+	If connected Then
+		hd.ProgressDialogHide
+	Else
+		hd.ProgressDialogShow("Waiting for connection...")
+	End If
+End Sub
+
+Sub Manager_StateChanged (State As Int)
+	If State <> manager.STATE_POWERED_ON Then
+		hd.ProgressDialogHide
+		hd.ToastMessageShow("Bluetooth is not enabled", True)
+	Else
+		StartScan
+	End If
+	SetState
+End Sub
+
+Private Sub StartScan
+	If manager.State = manager.STATE_POWERED_ON Then
+		manager.Scan(Array(ServiceId))
+	End If
+End Sub
+
+Private Sub Manager_DeviceFound (Name As String, DeviceId As String, AdvertisingData As Map, RSSI As Double)
+	Log($"DeviceFound: ${Name}"$)
+	manager.Connect(DeviceId)
+End Sub
+
+Private Sub Manager_Connected (Services As List)
+	Log("Connected")
+	connected = True
+	firstRead = True
+	manager.ReadData(ServiceId) 'must call once to discover the characteristics
+	SetState
+	messagesToSend.Clear
+End Sub
+
+Private Sub Manager_DataAvailable (SId As String, Characteristics As Map)
+	If firstRead Then
+		manager.SetNotify(ServiceId, ReadChar, True)
+		firstRead = False
+		Return
+	End If
+	Dim b() As Byte = Characteristics.Get(ReadChar)
+	NewMessage(b)
+End Sub
+
+Public Sub SendMessage(msg() As Byte)
+	messagesToSend.Add(msg)
+	If messagesToSend.Size = 1 Then
+		manager.WriteDataWithResponse(ServiceId, WriteChar, msg)
+	End If
+End Sub
+
+Private Sub Manager_WriteComplete (Characteristic As String, Status As Int)
+	If connected = False Or messagesToSend.Size = 0 Then Return
+	messagesToSend.RemoveAt(0)
+	If messagesToSend.Size > 0 Then
+		Try
+			manager.WriteDataWithResponse(ServiceId, WriteChar, messagesToSend.Get(0))
+		Catch
+			Log(LastException)
+		End Try
+	End If
+End Sub
+
+Private Sub Manager_Disconnected
+	connected = False
+	SetState
+	StartScan
+End Sub
+
+Sub NewMessage (Data() As Byte)
+	txtLogs.Text = BytesToString(Data, 0, Data.Length, "utf8") & CRLF & txtLogs.Text
+End Sub
+
+Sub txtMessage_EnterPressed
+	btnSend_Click
+End Sub
+
+Sub btnSend_Click
+	If txtMessage.Text.Length = 0 Then Return
+	Dim s As String = "Central (B4i): " & txtMessage.Text
+	Dim msg() As Byte = s.GetBytes("UTF8")
+	SendMessage(msg)	
+	txtMessage.RequestFocus
+	txtMessage.SelectAll
+End Sub
+
+
+
+Private Sub UUID(id As String) As String
+#if B4A
+	Return "0000" & id.ToLowerCase & "-0000-1000-8000-00805f9b34fb"
+#else if B4I
+	Return id.ToUpperCase
+#End If
+End Sub

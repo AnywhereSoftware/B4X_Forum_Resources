@@ -1,0 +1,62 @@
+﻿Build1=Default,com.georgieapps.ebus2
+File1=fish.jpg
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=gbus
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=bus3
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=11.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Event Bus 2
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: true
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim gbus As Gbus
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Title = "Now in sender"
+	gbus.Initialize("gbus")
+
+	MsgboxAsync("Let me know when you're ready","Eventbus Departure")
+	wait for msgbox_result(result As Int)
+
+	Dim bitmap As Bitmap = LoadBitmap(File.DirAssets,"fish.jpg")
+
+	gbus.sendIt(bitmap)
+	StartActivity(bus3)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	gbus.unregister
+End Sub
+
+#AdditionalJar: eventbus-java-3.3.1
+#AdditionalJar: eventbus-3.3.1.aar
+

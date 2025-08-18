@@ -1,0 +1,156 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True
+	#AdditionalJar: jdbf-1.2.jar
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub AppStart (Args() As String)
+	ReadDBF
+	Log(" ")
+	TestWrite
+End Sub
+
+' Read DBF file with GBK charset
+Sub ReadDBF
+	' Set charset to GBK
+	Dim CSet As JavaObject
+	CSet.InitializeStatic("java.nio.charset.Charset")
+	Dim cs As Object = CSet.RunMethod("forName", Array As String("GBK"))
+	
+	' Initialize DBF Reader
+	Dim dbfReader As JavaObject
+	dbfReader.InitializeNewInstance ("com.hexiong.jdbf.DBFReader", Array As Object ("book2.dbf")) ' Inside Objects directory
+
+	' Get field name
+	Dim FieldsName As String
+	Dim FieldsCount As Object = dbfReader.RunMethod("getFieldCount", Null)
+	For i = 0 To FieldsCount - 1
+		Dim Fld As JavaObject = dbfReader.RunMethod("getField", Array As Object(i))
+		Dim Nam As String = Fld.RunMethod("getName", Null)
+		FieldsName = FieldsName & $"${Nam}  |  "$
+	Next
+	Log(FieldsName)
+  
+	' Read fields
+	i = 0
+	Do While dbfReader.RunMethod("hasNextRecord", Null)
+		Dim res() As Object = dbfReader.RunMethod("nextRecord", Array As Object(cs))
+		Dim row As String
+		For Each Field In res
+			row = row & $"${Field}  |  "$
+		Next
+		Log(row & CRLF)
+		i = i + 1
+	Loop
+	Log("Total Count: " & i)
+	
+	' Close the dbf file
+	dbfReader.RunMethod ("close", Null)
+End Sub
+
+Sub TestRead
+	' Initialize DBF Reader
+	Dim dbfReader As JavaObject
+	dbfReader.InitializeNewInstance("com.hexiong.jdbf.DBFReader", Array As Object ("testwrite.dbf"))
+
+	' Get field name
+	Dim FieldsName As String
+	Dim FieldsCount As Object = dbfReader.RunMethod("getFieldCount", Null)
+	For i = 0 To FieldsCount - 1
+		Dim Fld As JavaObject = dbfReader.RunMethod("getField", Array As Object(i))
+		Dim Nam As String = Fld.RunMethod("getName", Null)
+		FieldsName = FieldsName & $"${Nam}  |  "$
+	Next
+	Log(FieldsName)
+	
+	' Read fields
+	i = 0
+	Do While dbfReader.RunMethod("hasNextRecord", Null)
+		Dim res() As Object = dbfReader.RunMethod("nextRecord", Null)
+		Dim row As String
+		For Each Field In res
+			row = row & $"${Field}  |  "$
+		Next
+		Log(row & CRLF)
+		i = i + 1
+	Loop
+	Log("Total Count: " & i)
+	
+	' Close the dbf file
+	dbfReader.RunMethod("close", Null)
+End Sub
+
+Sub TestWrite
+	' Initialize JDB Fields
+	Dim t1 As Char = "C" 	' Characters
+	Dim t2 As Char = "N"	' Numeric
+	Dim t3 As Char = "F"	' Floating Point
+	Dim t4 As Char = "D"	' Date
+	
+	Dim JDBField As JavaObject
+	Dim col1 As JavaObject = JDBField.InitializeNewInstance("com.hexiong.jdbf.JDBField", Array("ID", t1, 8, 0))
+	Dim JDBField As JavaObject
+	Dim col2 As JavaObject = JDBField.InitializeNewInstance("com.hexiong.jdbf.JDBField", Array("Name", t1, 254, 0))
+	Dim JDBField As JavaObject
+	Dim col3 As JavaObject = JDBField.InitializeNewInstance("com.hexiong.jdbf.JDBField", Array("TestN", t2, 20, 0))
+	Dim JDBField As JavaObject
+	Dim col4 As JavaObject = JDBField.InitializeNewInstance("com.hexiong.jdbf.JDBField", Array("TestF", t3, 20, 6))
+	Dim JDBField As JavaObject
+	Dim col5 As JavaObject = JDBField.InitializeNewInstance("com.hexiong.jdbf.JDBField", Array("TestD", t4, 8, 0))
+	
+	Dim JDBFields As JavaObject
+	Dim fields() As Object = JDBFields.InitializeArray("com.hexiong.jdbf.JDBField", Array(col1, col2, col3, col4, col5))
+	
+	' Initialize DBF Writer
+	Dim dbfWriter As JavaObject
+	dbfWriter.InitializeNewInstance("com.hexiong.jdbf.DBFWriter", Array As Object ("testwrite.dbf", fields))
+
+	Dim row1 As Object = Array("1", "hexiong ", 500, 500.123, CurrentDate)
+	Dim row2 As Object = Array("2", " hefang ", 600, 600.234, CurrentDate)
+	Dim row3 As Object = Array("3", "hexi01234567890123456789012345678901234567890123456789" & _
+	"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" & _
+	"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", 600, 600.234, CurrentDate)
+	Dim row4 As Object = Array("4", "heqiang", 700, 700.456, CurrentDate)
+
+	Dim records() As Object
+	records = Array As Object(row1, row2, row3, row4)
+	For i = 0 To records.Length - 1
+		dbfWriter.RunMethod("addRecord", Array(records(i)))
+	Next
+	
+	' Close the dbf file
+	dbfWriter.RunMethod("close", Null)
+	
+	Log("testwrite.dbf write finished.......")
+	Log(" ")
+	TestRead
+End Sub
+
+Sub CurrentDate As Object
+	Dim jo As JavaObject
+	jo.InitializeNewInstance("java.util.Date", Null)
+	Return jo
+End Sub
+
+'' https://www.b4x.com/android/forum/threads/java-util-date-error.72261/post-459424
+'Sub TicksToDate (Ticks As Long) As Object
+'	Dim jo As JavaObject
+'	jo.InitializeNewInstance("java.util.Date", Array(Ticks))
+'	Log(jo)
+'	Return jo
+'End Sub

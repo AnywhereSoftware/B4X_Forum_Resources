@@ -1,0 +1,54 @@
+﻿Build1=Default,com.test.openad
+File1=Page1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=igadappopenad
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=6.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+	
+	#PlistExtra: <key>GADIsAdManagerApp</key><true/>
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+	Private GAOA As iGADAppOpenAd
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	GAOA.Initialize(Me)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("Page1")
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Sub Application_Active
+	GAOA.tryToPresentAppOpenAd("ca-app-pub-3940256099942544/1033173712")
+End Sub
+
+Sub AppOpenAd_Event(event As String)
+	Log(event)
+End Sub

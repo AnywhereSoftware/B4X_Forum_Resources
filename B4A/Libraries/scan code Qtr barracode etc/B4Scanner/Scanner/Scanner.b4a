@@ -1,0 +1,133 @@
+﻿Build1=Default,b4a.example
+File1=a.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=scannerb4a
+Library4=runtimepermissions
+Library5=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~	 <uses-feature android:name="android.hardware.camera" />~\n~    <uses-feature android:name="android.hardware.camera.autofocus" />)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~AddPermission(PERMISSION_READ_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.VIBRATE)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Scannerb4a1 As Scannerb4a
+	Dim rp As RuntimePermissions
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	If Not(rp.Check(rp.PERMISSION_CAMERA)) Then
+		rp.CheckAndRequest(rp.PERMISSION_CAMERA)
+		rp.CheckAndRequest(rp.PERMISSION_READ_EXTERNAL_STORAGE)
+		
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	End If
+	
+'	Dim paths() As Object = GetContext.RunMethod("getExternalFilesDirs", Array(Null))
+'	For Each p As Object In paths
+'		Log(p)
+'	Next
+'	
+'File.MakeDir(File.DirDefaultExternal, "Image")
+		
+	
+	File.Copy(File.DirAssets, "a.png", File.DirDefaultExternal, "/Image/a.png")
+	
+
+	Scannerb4a1.ShouldAdjustFocusArea(True)
+	Scannerb4a1.SaveBmp(False)
+	Scannerb4a1.RotateDegree90Recognition(True)
+	Scannerb4a1.EnableBarcode(True)
+	
+	Scannerb4a1.EnableQrcode(True)
+	Scannerb4a1.EnableZBar(True)
+	
+	Scannerb4a1.Flash(True)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	Scannerb4a1.StarCamera
+	
+'	xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+Sub Button2_Click
+	Scannerb4a1.StopCamera
+End Sub
+
+Sub Button3_Click
+'
+	
+
+End Sub
+
+
+
+ 
+
+'Sub GetContext As JavaObject
+'	Return GetBA.GetField("context")
+'End Sub
+
+'Sub GetBA As JavaObject
+'	Dim jo As JavaObject
+'	Dim cls As String = Me
+'	cls = cls.SubString("class ".Length)
+'	jo.InitializeStatic(cls)
+'	Return jo.GetFieldJO("processBA")
+'End Sub
+
+Sub Scannerb4a1_scan_result(scanval As Int,scandata As String,scanpath As String)
+	' scanpath  si usa solo se funzione  Scannerb4a1.SaveBmp(True).
+	
+	If  scanval = 0 Then
+		Log("Codice QR / codice a barre")
+'	else if scanval = 1 Then
+'		Log("carta d'identità avanti")
+'	else if scanval = 2 Then
+'		Log("Emblema nazionale della carta d'identità")
+	
+	End If
+	Log(scandata)
+'	Log(scanpath)
+	Scannerb4a1.restartPreviewAfterDelay(2000)
+	
+End Sub

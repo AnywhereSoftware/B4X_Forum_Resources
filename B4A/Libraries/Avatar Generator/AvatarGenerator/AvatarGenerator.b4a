@@ -1,0 +1,72 @@
+﻿Build1=Default,miladesign.b4a.avatar
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=avatargenerator
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Avatar Generator Example
+	#VersionCode: 1
+	#VersionName: 1.5
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private ListView1 As ListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Dim Users As List
+	Users.Initialize
+	Users.Add("MilaDesign")
+	Users.Add("miladesign")
+	Users.Add("Aedine")
+	Users.Add("میلادیزاین")
+	Users.Add("Durative")
+	Users.Add("Shituation")
+	Users.Add("Claviform")
+	Users.Add("Mumpsimus")
+	Users.Add("Iconoscope")
+	Users.Add("CakerFuggy")
+	Users.Add("Opacimeter")
+	Users.Add("Zoomania")
+	
+	For Each Name As String In Users
+		Dim AG As AvatarGenerator
+		AG.Initialize.AvatarSize(64).TextSizePercentage(50).Label(Name).ToCircle
+		ListView1.AddTwoLinesAndBitmap(Name, "", AG.Build)
+		ListView1.TwoLinesAndBitmap.Label.TextColor = Colors.DarkGray
+		ListView1.TwoLinesAndBitmap.SecondLabel.Height = 0
+		ListView1.TwoLinesAndBitmap.Label.Height = ListView1.TwoLinesAndBitmap.ItemHeight
+		ListView1.TwoLinesAndBitmap.Label.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	Next
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

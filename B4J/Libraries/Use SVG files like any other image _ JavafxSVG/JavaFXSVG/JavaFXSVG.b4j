@@ -1,0 +1,71 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Build2=Java8,b4j.example,Java8
+Build3=Java11,b4j.example,Java11
+Build4=Java14,b4j.example,Java14
+File1=1.svg
+File2=Layout1.bjl
+File3=release_java_modules.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+Module1=SVGImageLoaderFactory
+NumberOfFiles=3
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#Region Compile Options
+#If Java8
+'#JavaCompilerPath: 8, C:\Java\jdk1.8.0_271\bin\javac.exe
+#Else if Java11
+	#JavaCompilerPath: 11, C:\Java\jdk-11.0.1\bin\javac.exe
+#Else If Java14
+	#JavaCompilerPath: 14, C:\Java\Java-14.0.1\bin\javac.exe
+#End If
+#End Region Compile Options
+
+
+
+#AdditionalJar: javafxSVG\xmlgraphics-commons-2.6
+#AdditionalJar: javafxSVG\batik-all-1.14
+#AdditionalJar: javafxSVG\batik-ext-1.6.1
+#AdditionalJar: javafxSVG\javafxsvg-1.3.0
+
+
+#If Java11 OR Java14
+'For Java 11 & 14 only, Comment if using Java 8
+	#VirtualMachineArgs: --add-opens javafx.graphics/com.sun.javafx.iio.common=ALL-UNNAMED --add-opens javafx.graphics/com.sun.javafx.iio=ALL-UNNAMED
+	#PackagerProperty: VMArgs = --add-opens javafx.graphics/com.sun.javafx.iio.common=b4j --add-opens javafx.graphics/com.sun.javafx.iio=b4j
+#End If
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private B4xImageView1 As B4XImageView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	Dim SVG As SVGImageLoaderFactory
+	SVG.Initialize(False)
+	
+	
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	B4xImageView1.Load(File.DirAssets,"1.svg")
+End Sub
+

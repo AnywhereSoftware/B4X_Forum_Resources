@@ -1,0 +1,102 @@
+﻿Build1=Default,com.example.paypal
+File1=1.bal
+File2=lay_payment.bal
+File3=logo-1.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=okhttp
+Library3=okhttputils2
+Library4=xui views
+Library5=json
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=act_payment
+NumberOfFiles=3
+NumberOfLibraries=5
+NumberOfModules=2
+Version=9.5
+@EndOfDesignText@
+'***********************************
+'* Devil App Payment Paypal
+'***********************************
+#Region  Project Attributes 
+	#ApplicationLabel: PayPal Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private btn_acquisto As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+
+End Sub
+
+'This starts the purchase phase
+Sub btn_acquisto_Click
+	'****************
+	'** IMPORTANT 
+	'** 1. CHANGE IN parametri_pagamento("youremail@paypalaccount" ...with email registrered into paypal
+	'** 2. Copy transazione_negata.php and transazione_ok.php into your server --> transazione_negata.php and transazione_ok.php they are two blank pages
+	'** or if you havent server change value cancel_return= o return= with another 2 pages example google.com etc... same thing in 
+	'***************
+	'It should pass the following parameters:
+	'emailpaypal As String = email address of the paypal account
+	'description As String = article description
+	'article_number As Int = number of items sold
+	'As Double price = total price 
+	'evaluate As String = Currency type EUR
+	'name As String = customer name in order to fill in the fields automatically
+	'surname As String = in order to fill in the fields automatically
+	'address As String = in order to fill in the fields automatically
+	'cap As String = so as to automatically fill in the fields
+	'citta As String = city in order to fill in the fields automatically
+	'email client As String = to automatically fill in the fields
+	'telephony as String = so as to automatically fill in the fields
+	'province As String = to automatically fill in the fields
+	
+	Starter.descrizione_acquisto = "Example buy item 1"
+	Starter.prezzo_acquisto = 2.50
+	StartActivity(act_payment)
+End Sub
+
+
+Sub Activity_Resume
+	
+	'Invia Email se il pagamento è stato effettuato con successo
+	If Starter.ritorno_valore_pagamento = "YES" Then
+		Log("OK SUCCESS Transaction ")
+	Else 
+		Log("FAILED Transaction")
+	End If
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+

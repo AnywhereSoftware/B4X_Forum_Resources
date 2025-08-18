@@ -1,0 +1,111 @@
+﻿Version=3.61
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jnxtreportsb4j
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+	
+	'This jar file must be present in the B4J Additional Libraries folder
+	#AdditionalJar:nextreports-engine-8.1
+	
+	'Don't forget to add jNxtReportsB4J in the B4J IDE Libraries tab
+	
+	'Download these jar files to the B4J Libraries folder
+	#AdditionalJar:commons-jexl-2.1.1
+	#AdditionalJar:commons-logging-1.1.1
+	#AdditionalJar:itext-2.1.7
+	#AdditionalJar:itext-rtf-2.1.7
+	#AdditionalJar:itextpdf-5.0.6
+	#AdditionalJar:xstream-1.3.1
+	#AdditionalJar:xstream-1.4.7
+	#AdditionalJar:poi-3.7
+'	
+	'replace this by your applicable database jar file
+	#AdditionalJar:jtds-1.3.1   
+	
+	
+	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Show
+	
+	'File separator character is set, according to the OS detected.
+    Dim os As String = GetSystemProperty("os.name", "").ToLowerCase
+    Dim filesep As String
+	If os.Contains("win") Then	
+      	filesep="\"
+	Else If os.Contains("mac") Then
+      	filesep="/"
+	End If	
+	
+	
+	Dim inputlist As List
+	Dim inlocation,repin, repout, reptype, driverclass, url As String
+	Dim repexec As jNxtReportsB4J
+	
+	'Location of the *.report file and any necessary images 
+	inlocation=File.DirApp & filesep & "reports" 'For this demo the report is stored in the Objects/reports directory. You can specify any other directory.
+	'name of report created by NextReports. 
+	repin="PHILTESTGR" ' Report specified: PHILTESTGR.report
+	
+	'Output file specification
+	repout="MYOUTPUT" 'name of output report
+	reptype="RTF"  ' Available options: CSV, TXT, XLS, XML, PDF, HTML or RTF. File type must be in CAPITALS.
+	'Output file will be MYOUTPUT.RTF. Output file (and any necessary images) will be stored in your application directory
+	
+	
+	'replace this by your database driver class name
+	driverclass="net.sourceforge.jtds.jdbc.Driver" 
+	
+	'replace this by applicable url for your database
+	'I use IP instead of server name. For some reason, in my tests with SQL SERVER, when I used server name, it would not not work on MACs
+	url="jdbc:jtds:sqlserver://10.0.0.230:1433;databaseName=ADBASE;user=AUSER;password=1111" 
+	
+	'Initialize input list and add necessary arguments in the order shown below
+	inputlist.initialize
+	inputlist.Add(inlocation)
+    inputlist.add(repin)
+	inputlist.add(repout)
+    inputlist.add(reptype)
+    inputlist.add(driverclass)
+    inputlist.add(url)
+	'Now add your parameters - if any
+	'First, the parameter name - as it was defined in NextReports
+    inputlist.add("IdParam") 'The parameter name is IdParam
+	'Then, your parameter value
+    inputlist.add(13)
+	'You can add as many parameters as necessary
+
+
+	'Run the report and export the output report file
+	repexec.reportPrepAndRun(inputlist)
+
+	'Show the output report file
+	fx.ShowExternalDocument(File.GetUri(File.DIRAPP, repout & "." & reptype))
+	
+	
+End Sub
+
+
+
+
+
+
+
+

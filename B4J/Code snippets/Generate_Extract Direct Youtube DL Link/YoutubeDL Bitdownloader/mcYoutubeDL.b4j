@@ -1,0 +1,98 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Library5=minihtmlparser
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 350 
+#End Region
+
+'AUTHOR: MCQUECCU (WWW.LEAFECODES.COM/B4A-TUTORIALS)
+'YOUTUBE: https://www.youtube.com/channel/UCl9KKwBFLWKoZx0NOZy-bPA?view_as=subscriber
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private btnGenerateLink As B4XView
+	Private txtOutput As B4XView
+	Private txtYTURL As B4XView
+	Dim endPointURL As String = "https://bitdownloader.com/download?video=$YTBLINK$"
+	
+	Private wv As WebView
+	Private pb As ProgressBar
+
+	Private btndownload As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+		
+End Sub
+
+
+Sub btnGenerateLink_Click
+	txtOutput.Text = ""
+	Log("---Loading---")
+	pb.Visible = True
+	pb.Progress = -1
+	
+	'Insert the youtube link into the endpointurl and loads the webpage in the hidden webview
+	Dim modUrl As String  = endPointURL.Replace("$YTBLINK$",txtYTURL.Text)
+	wv.LoadUrl(modUrl)
+End Sub
+
+Sub wv_PageFinished (Url As String)
+	pb.Visible = False
+	
+	'Run javascript on the finshed page to and get all the page source file into pageContent variable
+	Private jo As JavaObject = wv
+	Dim pageContent As String = jo.RunMethodJO("getEngine", Null).RunMethod("executeScript", Array("document.documentElement.outerHTML"))
+	
+	
+	'========================RESULT=============================
+	'Gets the recommended direct Youtube link
+	Dim res As Map = generateYoutubeLink(pageContent)	
+	
+	'final result
+	MainForm.Title = res.Get("vidTitle")	
+	txtOutput.Text=  res.Get("vidLink")
+	
+	Log("---Finished---")
+End Sub
+
+'Get the DIRECT LINK for the youtube
+Sub generateYoutubeLink(content As String) As Map
+				
+	Dim parser As MiniHtmlParser
+	parser.Initialize
+	Dim root As HtmlNode = parser.Parse(content)
+	Dim option_button As HtmlNode = parser.FindNode(root,"div",parser.CreateHtmlAttribute("id","optionButtons"))
+	Dim atag As HtmlNode = parser.FindNode(option_button,"a",Null)
+		
+	Dim vidTitle, vidLink As String
+	vidTitle = parser.GetAttributeValue(atag,"download",Null)
+	vidLink = cleanAmp(parser.GetAttributeValue(atag,"href",Null))
+	
+	Dim m As Map = CreateMap("vidTitle":vidTitle,"vidLink":vidLink)
+	Return m	
+End Sub
+
+
+Sub cleanAmp(link As String) As String
+	Return link.Replace("amp;","")
+End Sub
+

@@ -1,0 +1,85 @@
+﻿Build1=Default,b4i.example2
+File1=1.bil
+File2=hamburger.png
+File3=left.bil
+File4=logo-02.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=New Group
+Group=Default Group
+Library1=icore
+Library2=b4xdrawer
+Library3=xcustomlistview
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private Drawer As B4XDrawer
+	Private CustomListView1 As CustomListView
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	SetNavColors(0xFFB0F1FF)
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.SetBorder(0, 0, 0)
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Drawer.Initialize(Me, "drawer", Page1.RootPanel, 200dip)
+	Drawer.CenterPanel.LoadLayout("1")
+	Drawer.LeftPanel.LoadLayout("left")
+	Dim bb As BarButton
+	bb.InitializeBitmap(LoadBitmapResize(File.DirAssets, "hamburger.png", 32dip, 32dip, True), "hamburger")
+	Page1.TopLeftButtons = Array(bb)
+	CustomListView1.DefaultTextBackgroundColor = 0xFF77CAFF
+	For i = 1 To 30
+		CustomListView1.AddTextItem($"Item #${i}"$, "")
+	Next
+End Sub
+
+Sub Page1_BarButtonClick (Tag As String)
+	If Tag = "hamburger" Then
+		Drawer.LeftOpen = Not(Drawer.LeftOpen)
+	End If
+End Sub
+
+Private Sub SetNavColors(clr As Int)
+	Dim bar As NativeObject = NavControl
+	bar.GetField("toolbar").RunMethod("setBarTintColor:", Array(bar.ColorToUIColor(clr)))
+	bar = bar.GetField("navigationBar")
+	bar.RunMethod("setBarTintColor:", Array(bar.ColorToUIColor(clr)))
+	bar.SetField("translucent", False)
+	Dim image As NativeObject
+	image = image.Initialize("UIImage").RunMethod("new", Null)
+	bar.RunMethod("setShadowImage:", Array(image))
+	bar.RunMethod("setBackgroundImage:forBarMetrics:", Array(image, 0))
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	Drawer.Resize(Width, Height)
+End Sub
+
+Private Sub Application_Background
+	
+End Sub

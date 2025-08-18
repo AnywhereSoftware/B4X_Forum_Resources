@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	package="b4a.transfer"
+	android:versionCode="1"
+	android:versionName="1"
+	android:installLocation="internalOnly">
+	
+	<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>
+	<supports-screens android:largeScreens="true" 
+	    android:normalScreens="true" 
+	    android:smallScreens="true" 
+	    android:anyDensity="true"/>
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	<application
+		android:icon="@drawable/icon"
+		android:label="XFER"
+		android:theme="@style/LightTheme">
+		
+		<provider
+		  android:name="androidx.core.content.FileProvider"
+		  android:authorities="b4a.transfer.provider"
+		  android:exported="false"
+		  android:grantUriPermissions="true">
+		  <meta-data
+		  android:name="android.support.FILE_PROVIDER_PATHS"
+		  android:resource="@xml/provider_paths"/>
+		  </provider>
+		<activity
+			android:windowSoftInputMode="adjustResize|stateHidden"
+			android:launchMode="singleTop"
+			android:name=".main"
+			android:label="XFER"
+			android:screenOrientation="portrait">
+			<intent-filter>
+			   <action android:name="android.intent.action.MAIN" />
+			   <category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			
+			<intent-filter>
+			   <action android:name="android.intent.action.VIEW" />
+			   <category android:name="android.intent.category.DEFAULT" />
+			   <data android:mimeType="text/*" />
+			</intent-filter>
+		</activity>
+		<service android:name=".starter">
+		</service>
+		<receiver android:name=".starter$starter_BR">
+		</receiver>
+		<service android:name=".httputils2service">
+		</service>
+		<receiver android:name=".httputils2service$httputils2service_BR">
+		</receiver>
+	</application>
+</manifest>

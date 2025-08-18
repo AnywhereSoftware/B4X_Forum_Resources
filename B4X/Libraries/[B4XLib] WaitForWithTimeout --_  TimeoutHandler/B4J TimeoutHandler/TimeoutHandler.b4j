@@ -1,0 +1,77 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=layMain.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=TimeoutHandler
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+#Region VIEWS 
+	Private btnStart As Button
+	Private btnCall As Button
+	Private tfPlayedCard As TextField
+	Private lblCountdown As Label
+	Private lblExecuted As Label
+#End Region
+
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("layMain") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub btnStart_Click
+	btnStart.Visible = False
+	lblExecuted.Text = ""
+	lblCountdown.Text = ""
+	btnCall.Visible = True
+
+	'*************
+	Dim Timeout As TimeoutHandler
+	Timeout.Initialize
+	Dim Canceled(1) As Boolean
+	Timeout.SetTimeout(Me, "CardPlayed", Canceled, 3, lblCountdown)
+
+	Wait For CardPlayed(ReturnedValue As Object)
+
+	If Not(Canceled(0)) Then
+		Canceled(0) = True
+		lblExecuted.Text = "Played: " & ReturnedValue
+	Else
+		lblExecuted.Text = "too slow"
+	End If
+	'*************
+
+	btnStart.Visible = True
+	btnCall.Visible = False
+End Sub
+
+Sub btnCall_Click
+	btnCall.Visible = False
+	CallSubDelayed2(Me, "CardPlayed", tfPlayedCard.Text)
+	lblCountdown.Text = ""
+End Sub
+

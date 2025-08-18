@@ -1,0 +1,63 @@
+﻿Version=1.00
+IconFile=
+FullScreen=False
+IncludeTitle=True
+NumberOfModules=0
+Package=anywheresoftware.b4a.samples.json
+Label=JSON Example
+VersionCode=1
+VersionString=
+Orientation=unspecified
+NumberOfFiles=1
+File1=example.json
+NumberOfLibraries=2
+Library1=core
+Library2=json
+@EndOfDesignText@
+'Activity module
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'parse the json file
+	Dim JSON As JSONParser
+	Dim Map1 As Map
+	JSON.Initialize(File.ReadString(File.DirAssets, "example.json"))
+	Map1 = JSON.NextObject
+	Dim m As Map 'helper map for navigating
+	Dim MenuItems As List
+	m = Map1.Get("menu")
+	m = m.Get("popup")
+	MenuItems = m.Get("menuitem")
+	For i = 0 To MenuItems.Size - 1
+		m = MenuItems.Get(i)
+		Log(m.Get("value"))
+	Next
+	
+	'generate JSON
+	Dim Data As List
+	Data.Initialize
+	Data.Add(1)
+	Data.Add(2)
+	Data.Add(3)
+	Data.Add(Map1) 'add the previous map loaded from the file.
+	Dim JSONGenerator As JSONGenerator
+	JSONGenerator.Initialize2(Data)
+	Msgbox(JSONGenerator.ToPrettyString(2), "")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

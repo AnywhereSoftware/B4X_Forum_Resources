@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.agraham.jbasiclib.jBasicLib</name>
+        <shortname>jBasicLib</shortname>
+        <comment>This class contains a B4Script interpreter. See the separate B4Script help documentation
+for the language details and the BasicIDE help documentation for the supported platform functions.
+This library also has separate BasicLib help documentation that expands upon the XML file help.</comment>
+        <owner>process</owner>
+        <event>Break(linenumber As Int) 'The script has stopped at linenumber</event>
+        <event>Loaded(error As String) 'Error is an empty string if the script loaded without error</event>
+        <event>Starting 'The script has initialised its variables and is about to start executing</event>
+        <event>Stepped(linenumber As Int) 'The script has stepped to linenumber</event>
+        <event>Message(message As String, subject As String) 'Raised by Msgbox or Print</event>
+        <event>Ended(error As String) 'Error is an empty string if the script terminated without error</event>
+        <method>
+            <name>GetArrayLength</name>
+            <comment>Returns the number of items in the B4Script array specified.
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddSysCalls</name>
+            <comment>Add the script.bas Sub names contained in the array to the internal Sys call table so
+that thay may be called directly as functions rather than by using Sys("whatever",...)</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>subnames</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLocalVars</name>
+            <comment>Returns a comma separated string with the names of all local variables
+The local variables returned are those of the present execution context.
+i.e. that belonging to the current Sub.
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>ShareArray</name>
+            <comment>Sets the global array named var to the array vals.
+Unlike GetArray and SetArray which make a copy the specified array is now shared by the main program and the script and changes made by one will be seen by the other.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>vals</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Halt</name>
+            <comment>Stops the program when it reaches the end of the next statement.
+The Ended event will fire.
+The line number of the last statement executed may be found in the LineNumber property.
+The program cannot be resumed once halted but must be restarted if required to run again.
+This method may be used stop a program running on a separate thread if it gets stuck in an endless loop for some reason.
+If this is called within a Break or Stepped event the program will halt as soon as the event code returns.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>LoadCodeAsString</name>
+            <comment>Loads the script represented by contents of the specified string.
+Each line of the string followed by CRLF contains one line of the script.
+Returns True if the program loaded properly otherwise returns False.
+The reason for failure will be in the ErrorString property.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>program</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetArray</name>
+            <comment>Returns a reference to a copy of the B4Script array specified.
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>java.lang.String[]</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLocal</name>
+            <comment>Returns the value of the B4Script local variable specified.
+The local variable returned is that of the present execution context.
+i.e. that belonging to the current Sub.
+If called while execution is in the main code block a global variable is returned if one with the name var exists.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetGlobal</name>
+            <comment>Returns the value of the B4Script global variable specified.
+If the global is an array the the value at index 0,0,0 is returned.
+To access the elements of an array use the GetArrayXXX methods
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgTokenValue</name>
+            <comment>Returns the numeric value of a token given its name as a string.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>tokenname</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>processBA</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>eventname</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgLiteral</name>
+            <comment>Returns the name of a program literal value given its numeric ID.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>id</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgTokenValueAt</name>
+            <comment>Returns the token value at position index in the compiled program.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ProgramLine</name>
+            <comment>Returns the source code of the program for the line number specified.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>linenumber</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CanCall</name>
+            <comment>Return true if the named Sub exists in subptrs</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>name</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgTokenName</name>
+            <comment>Returns the name of a token given its numeric value.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>tokenvalue</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Call</name>
+            <comment>Calls the Sub name in the presently loaded program passing it the parameters values
+provided and returns the return value of the Sub, which may in turn call others.
+The reason for any failure will be in the ErrorString property.
+It is only valid to do this after the Starting event has occurred.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>name</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>params</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetGlobal</name>
+            <comment>Sets the contents of the global variable named var to val.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>val</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgTokenNameAt</name>
+            <comment>Returns the token name at position index in the compiled program.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetArray</name>
+            <comment>Sets the global array named var to a copy of the array vals.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>vals</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetLocal</name>
+            <comment>Sets the contents of the local variable named var to val.
+The local variable assigned is that of the present execution context.
+i.e. that belonging to the current Sub.
+If called while execution is in the main code block a global variable is assigned if one with the name var exists.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>val</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Run</name>
+            <comment>Runs the presently loaded program again and returns True if the program ran and ended properly otherwise returns False.
+The reason for failure will be in the ErrorString property.
+args is an array that may be used to pass arguments to the program to be run.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>args</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>LoadCodeAsArray</name>
+            <comment>Loads the script represented by the contents of the specified String array.
+Each element of the array contains one line of the script. 
+Returns True if the program loaded properly otherwise returns False.
+The reason for failure will be in the ErrorString property.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>program</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dbgGlobal</name>
+            <comment>Returns the name of a global variable given its numeric ID.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>id</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetArrayItem</name>
+            <comment>Returns the item at index position in the B4Script array specified.
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetArrayItem</name>
+            <comment>Sets the contents of the item index of the global array named var to val.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>var</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>val</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetGlobalVars</name>
+            <comment>Returns a comma separated string with the names of all global variables.
+The names are suffixed with a pair of parentheses containing a semi-colon separated
+string with the length of each of the three possible dimensions of the array.
+A normal non-array variable is suffixed '(1:0:0)'. 
+This is valid only after the Starting event has occurred.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>dbgLocal</name>
+            <comment>Returns the name of a local variable given the Sub name in which it is used and its numeric ID.
+This is provided for debugging the tokeniser and execution engine.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>sub</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>id</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Finished</name>
+            <returntype>boolean</returntype>
+            <comment>Returns True if the program has finished executing.
+This is of little use in a single threaded situation but might be of use if the program is being run on a thread.</comment>
+        </property>
+        <property>
+            <name>Program</name>
+            <returntype>java.lang.String[]</returntype>
+            <comment>Returns an array of strings containing the program with one program line in each array element.</comment>
+        </property>
+        <property>
+            <name>ProgramLines</name>
+            <returntype>int</returntype>
+            <comment>Gets the number of source code lines in the program.</comment>
+        </property>
+        <property>
+            <name>MessageString</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets the the content of the last Msgbox statement or the result of the last Print statement.</comment>
+        </property>
+        <property>
+            <name>StackDepth</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>value</name>
+                <type>int</type>
+            </parameter>
+            <comment>Gets or sets the size of the call and loop stacks.
+This determines how many sub-routine calls, For/Do loops or If statements can be nested.
+The default is five.</comment>
+        </property>
+        <property>
+            <name>Step</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets the state of the Step flag.
+If set True then the program executes one line at a time raising the Stepped event at the end of each line.</comment>
+        </property>
+        <property>
+            <name>ErrorString</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets a description of any error that occurred while the program was executing
+or an empty string if there was no error.</comment>
+        </property>
+        <property>
+            <name>BreakAtLine</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>value</name>
+                <type>int</type>
+            </parameter>
+            <comment>Gets or sets the line number at which execution will cause the Break event to be raised.
+A value of 0 disables Break.</comment>
+        </property>
+        <property>
+            <name>LineNumber</name>
+            <returntype>int</returntype>
+            <comment>Returns the line number of the next program line to be executed.</comment>
+        </property>
+        <property>
+            <name>Version</name>
+            <returntype>double</returntype>
+            <comment>Returns the version number of the library.</comment>
+        </property>
+        <property>
+            <name>dbgTokens</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns a string that contains the tokenised version of the program which is what the BasicLib execution engine interprets.
+This is provided for debugging the tokeniser and execution engine.</comment>
+        </property>
+        <property>
+            <name>dbgTokenCount</name>
+            <returntype>int</returntype>
+            <comment>Returns the total number of tokens in the compiled program.
+This is provided for debugging the tokeniser and execution engine.</comment>
+        </property>
+        <property>
+            <name>SubjectString</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets the the subject of the last Msgbox statement or "Print" if the last statement was a Print statement.</comment>
+        </property>
+    </class>
+    <version>2.2</version>
+    <comment>This library includes an object that can execute scripts written in the B4Script language.
+B4Script is a runtime scripting language intended for incorporation into applications
+written using Basic4ppc and Basic4Android. It is a sub-set of the full Basic4ppc language
+with only minor variations in syntax.
+
+The language can be extended by adding references to external functions using the AddSysCalls method.
+See the appropriate help documentation for details of the B4Script language and of this library.</comment>
+    <author>Andrew Graham</author>
+</root>

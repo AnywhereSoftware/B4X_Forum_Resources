@@ -1,0 +1,100 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Library5=byteconverter
+Module1=PlayDataAudio
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 262
+	#MainFormHeight: 268 
+#End Region
+
+'================================
+' Karplus test to simulate guitar
+' kimstudio@163.com 2020.11
+'================================
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private Label2 As Label
+	Private TextField1 As TextField
+	Private Slider1 As Slider
+	
+	Private SampleRate As Int = 44100
+	Private BufferLength As Int = SampleRate * 4
+	Private AudioBuffer(BufferLength) As Short
+	Private AudioBufferByte() As Byte
+	
+	Private PDA As PlayDataAudio
+	Private BC As ByteConverter
+	Private cv As Canvas
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Label2.Text = "Decay (" & NumberFormat(Slider1.Value, 1, 3) & ")" 
+	
+	PDA.Initialize
+	PDA.StartAudioPlayer
+End Sub
+
+Private Sub MainForm_Closed
+	PDA.StopAudioPlayer
+End Sub
+
+Sub Button1_Click
+	Dim f As Float = TextField1.Text
+	Dim d As Float = Slider1.Value
+	Button1.Text = "Wait ..."
+	Karplus(f, d)
+	DrawGraph
+	Sleep(10)
+	PDA.SendDataPlayer(AudioBufferByte)
+	Button1.Text = "Play"
+End Sub
+
+Sub Karplus(freq As Float, decay As Float)
+	Dim N As Int = Round(SampleRate / freq - 0.5)
+	Dim HD As Float = decay / 2.0
+	For i = 0 To N-1
+		AudioBuffer(i) = Rnd(-32768, 32768)
+	Next
+	AudioBuffer(N) = Round(HD * AudioBuffer(0))
+	For i = N+1 To BufferLength-1
+		AudioBuffer(i) = Round(HD * (AudioBuffer(i-N) + AudioBuffer(i-N-1)))
+	Next
+	
+	AudioBufferByte = BC.ShortsToBytes(AudioBuffer)
+End Sub
+
+Sub Slider1_ValueChange (Value As Double)
+	Label2.Text = "Decay (" & NumberFormat(Slider1.Value, 1, 3) & ")"
+End Sub
+
+Sub DrawGraph
+	Dim y,r,s As Int
+	If Not(cv.IsInitialized) Then Return
+	cv.DrawRect(0,0,cv.Width,cv.Height,fx.colors.black,True, 0 )
+	y = cv.Height/2
+	s = Floor(BufferLength/cv.Width)
+	For i= 1 To cv.Width-1
+		r = AudioBuffer(i*s)*cv.Height/65536.0
+		cv.DrawLine(i-1,y,i,cv.Height/2+r,fx.Colors.Yellow,1.0)
+		y = cv.Height/2+r
+	Next
+End Sub
+

@@ -1,0 +1,80 @@
+﻿Version=5.2
+NumberOfModules=1
+Module1=Starter
+Build1=Default,cm.jahs.captcha
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=0
+NumberOfLibraries=2
+Library1=core
+Library2=captchaview
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: CaptchaView
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+     Dim CaptchaView1 As CaptchaView
+	 Dim btnRefresh,btnCheck As Button
+	 Dim txtCheck As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")	
+	CaptchaView1.Initialize("CaptchaView1")
+	btnCheck.Initialize("btnCheck")
+	btnRefresh.Initialize("btnRefresh")
+	txtCheck.Initialize("txtCheck")	
+    Activity.AddView(CaptchaView1,10%x,10%y,60%x,10%y)	
+	Activity.AddView(txtCheck,10%x,20%y,60%x,10%y)
+	Activity.AddView(btnCheck,10%x,30%y,60%x,10%y)
+	Activity.AddView(btnRefresh,10%x,40%y,60%x,10%y)
+	CaptchaView1.Length = 4
+	CaptchaView1.Pattern = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	CaptchaView1.enableDotBlur(True)
+	CaptchaView1.enableLineBlur(True)	
+	btnCheck.Text = "Check"
+	btnRefresh.Text = "Refresh"
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnCheck_Click
+	Log(CaptchaView1.Captcha.SubString2(0,CaptchaView1.Length))
+	If CaptchaView1.Captcha.SubString2(0,CaptchaView1.Length) = txtCheck.Text.Trim Then
+		ToastMessageShow("Correct Answer",False)		
+		Else
+		ToastMessageShow("Wrong Answer",False)
+		CaptchaView1.Refresh
+		txtCheck.Text = ""
+	End If
+End Sub
+
+Sub btnRefresh_Click
+	CaptchaView1.Refresh
+End Sub

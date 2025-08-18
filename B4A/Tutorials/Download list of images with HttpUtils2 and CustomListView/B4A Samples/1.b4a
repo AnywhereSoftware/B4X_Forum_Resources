@@ -1,0 +1,87 @@
+﻿Version=2.51
+IconFile=
+NumberOfModules=4
+Module1=CustomListView
+ModuleVisible1=0
+Module2=HttpUtils2Service
+ModuleVisible2=0
+Module3=HttpJob
+ModuleVisible3=0
+Module4=DownloadListService
+ModuleVisible4=1
+Package=b4a.maps.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+UserTypesHint=HttpJob,CustomListView
+NumberOfFiles=1
+File1=ListItem.bal
+NumberOfLibraries=4
+Library1=core
+Library2=http
+Library3=reflection
+Library4=stringutils
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Download List
+	#VersionCode: 1
+	#VersionName: 1
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+
+Sub Process_Globals
+    'These global variables will be declared once when the application starts.
+    'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Dim clv As CustomListView
+	Dim Label1 As Label
+	Dim ImageView1 As ImageView
+	Dim ImageViews As List
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		'start the download
+		CallSubDelayed(DownloadListService, "StartDownload")
+	End If
+	ImageViews.Initialize
+	clv.Initialize(Me, "clv")
+	Activity.AddView(clv.AsView, 0, 0, 100%x, 100%y)
+End Sub
+
+Sub Activity_Resume
+	'AfterActivityResume is called in order to re-set items that were already downloaded
+	CallSubDelayed(DownloadListService, "AfterActivityResume")
+End Sub
+
+Sub ShowImage(Image As Bitmap, Index As Int)
+	If ImageViews.Size > Index Then
+		Dim iv As ImageView = ImageViews.Get(Index)
+		iv.SetBackgroundImage(Image)
+	End If
+End Sub
+
+Sub CreateItems(links As List)
+	If clv.GetSize > 0 Then Return 'this check is used to make sure that the items are only added once
+	For Each link As String In links
+		Dim p As Panel
+		p.Initialize("")
+		clv.Add(p, 50dip, link)
+		p.LoadLayout("ListItem")
+		Label1.Text = link 'Label1 now points to the last "Label1" that was added
+		'the same is true for ImageView1. Storing ImageView1 in a list allows us to later access it and update its image
+		ImageViews.Add(ImageView1)
+	Next
+End Sub
+
+Sub clv_ItemClick (Index As Int, Value As Object)
+	Activity.Title = Value
+End Sub
+
+

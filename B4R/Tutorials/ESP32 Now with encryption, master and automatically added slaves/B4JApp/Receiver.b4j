@@ -1,0 +1,97 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jnetwork
+Library4=jrandomaccessfile
+Library5=jxui
+Library6=byteconverter
+Module1=Seri
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private client As Socket
+	Public server As ServerSocket
+	Private astream As AsyncStreams
+	Public PORT As Int
+	Public const ESPIP As String = "192.168.178.51"
+		
+	Dim ser As Seri
+	
+	Dim BC As ByteConverter
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+'	MainForm.RootPane.LoadLayout("Layout1")
+'	MainForm.Show
+	ser.Initialize
+	ConnectToServer(ESPIP)
+End Sub
+
+Public Sub ConnectToServer(ip As String)
+	
+	Log("Connecting to: " & ESPIP)
+	Dim client As Socket
+	
+	For PORT=52000 To 52020
+		client.Initialize("client")
+		Log("Trying PORT " & PORT)
+		client.Connect(ESPIP, PORT, 2000)
+		Wait For Client_Connected (Successful As Boolean)
+		If Successful Then
+			astream.Initialize(client.InputStream, client.OutputStream, "astream")
+			Log("Connected...")
+			Exit
+		Else
+			client.Close
+			Log("Failed to connect: " & LastException)
+		End If
+	Next
+End Sub
+
+Sub AStream_Error
+	ConnectToServer(ESPIP)
+End Sub
+
+Sub AStream_Terminated
+	
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+	
+	If Buffer.Length=0 Then Return
+	
+	Log(BC.HexFromBytes(Buffer))
+	
+	Dim data() As Object = ser.ConvertBytestoarray(Buffer)
+	Log("Received (" & data.Length & " objects)")
+	For Each o As Object In data
+		Log(o)
+	Next
+	
+	Select data(0)
+		Case "Mess"
+			Dim b() As Byte=data(1)
+			Log(BytesToString(b,0,b.Length,"UTF8"))
+			astream.Write(ser.ConvertArrayToBytes(Array("Received", "Success")))
+			
+	End Select
+End Sub
+

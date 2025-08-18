@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RHCSR04</name>
+        <shortname>HCSR04</shortname>
+        <comment>Declare type used for the event</comment>
+        <event>DistanceChanged(Distance As Double)</event>
+        <property>
+            <name>Distance</name>
+            <comment>Get the distance in cm.
+Return
+Distance or -1 if error.
+Example:&lt;code&gt;
+' Get the distance (in cm) from the sensor
+Distance = DistanceSensor.Distance
+' Log the distance without handling innaccurate values
+Log("Distance (cm):",Distance)
+&lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </property>
+        <property>
+            <name>DistanceInch</name>
+            <comment>Get the distance in inch.
+Return
+Distance or -1 if error.
+Example:&lt;code&gt;
+' Get the distance from the sensor
+Distance = DistanceSensor.DistanceInch
+' Log the distance without handling innaccurate values
+Log("Distance (Inch):",Distance)
+&lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Init the object. The sensor reads from 2cm to 400cm (accuracy 0.3cm).
+TriggerPin - Pin number of the trigger.
+EchoPin - Pin number of the echo received.
+Return
+None
+Example:&lt;code&gt;
+Private DistanceSensor As HCSR04
+Private TriggerPinNr As Byte = 13
+Private EchoPinNr As Byte  = 12
+DistanceSensor.Initialize(TriggerPinNr, EchoPinNr)
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>TriggerPin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>EchoPin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Initialize2">Initialize2</name>
+            <comment>Init the object with callback event. The sensor reads from 2 to 400cm (accuracy 0.3cm).
+DistanceChangedSub - Sub to handle distance changes.
+DistanceChangedBy - Min Distance changed absolute value to set callback value in distancechangedsub.
+TriggerPin - Pin number of the trigger.
+EchoPin - Pin number of the echo.
+Return
+None
+Example:&lt;code&gt;
+Private DistanceSensor As HCSR04
+Private TriggerPinNr As Byte = 13
+Private EchoPinNr As Byte  = 12
+DistanceSensor.Initialize2("DistanceChanged", 1.0, TriggerPinNr, EchoPinNr)
+
+' Handle distance changes &gt;= DISTANCECHANGEDBY value
+Private Sub DistanceChanged(Distance As Double)
+	Log("DistanceChanged Data: ", Distance)
+End Sub
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>DistanceChangedSub</name>
+                <type>SubVoidDouble</type>
+            </parameter>
+            <parameter>
+                <name>DistanceChangedBy</name>
+                <type>double</type>
+            </parameter>
+            <parameter>
+                <name>TriggerPin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>EchoPin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.3</version>
+    <author>Robert W.B. Linn</author>
+</root>

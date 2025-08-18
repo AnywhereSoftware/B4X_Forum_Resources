@@ -1,0 +1,59 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=resp8266wifi
+Module1=HttpJob
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=3
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2000
+	#DefineExtra: #define SKIP_B4RNEW
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	If wifi.Connect2("TP-LINK_D577", "xxxxxxxx") Then
+		Log("Connected to router.")
+	Else
+		Log("Failed to connect to router.")
+		Return
+	End If
+	HttpJob.Initialize("Example")
+	HttpJob.Download("https://www.example.com")
+End Sub
+
+
+Sub JobDone (Job As JobResult)
+	Log("*******************************")
+	Log("JobName: ", Job.JobName)
+	If Job.Success Then
+		Dim bc As ByteConverter
+		Log("Response: ", bc.SubString2(Job.Response, 0, Min(200, Job.Response.Length))) 'truncate to 200 characters
+		If Job.JobName = "Example" Then
+			'send another request
+			'This time it is a POST request and we set the Content-Type header
+			HttpJob.Initialize("Example2")
+			'add headers before calling Post or Download (this is different than the standard HttpUtils2 library).
+			HttpJob.AddHeader("Content-Type", "application/x-www-form-urlencoded")
+			HttpJob.Post("http://www.b4x.com/print.php?key1=value1", "PostKey1=PostValue2&abc=def")
+		End If
+	Else
+		Log("ErrorMessage: ", Job.ErrorMessage)
+		Log("Status: ", Job.Status)
+		Log(Job.Response)
+	End If
+End Sub
+

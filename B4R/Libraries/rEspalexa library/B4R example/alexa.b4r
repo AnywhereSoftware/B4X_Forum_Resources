@@ -1,0 +1,187 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=respalexa
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private pinbutton As Pin
+	Public alexa As Espalexa
+	Public device As Device
+	Public color As Color
+	Public Timer1 As Timer
+	Public time=0 As UInt
+	Public cbtest As Byte = 0
+	
+End Sub
+
+Sub DeviceChanged(index As Byte)
+'unique callback for all device, callback is done with device number
+  Log("deviceindex=",index," deviceName=",alexa.getName(index))
+ Select Case index
+    Case 0 'onoff
+		If alexa.getValue(0) = 0 Then
+				Log("test0: Type=",getdevicetype(0),"  last change:", getLastChangedProperty(0),"   value= OFF")
+		Else
+				Log("test0: Type=",getdevicetype(0),"  last change:", getLastChangedProperty(0),"  value= ON")
+		End If
+   	
+	Case 1 'dimming
+			Log("test1: Type=",getdevicetype(1),"  last change:", getLastChangedProperty(1),"  value=", alexa.getValue(1) )
+				
+	Case 2 'WhiteSpectrumcolor
+			Log("test2: Type=",getdevicetype(2),"  last change:", getLastChangedProperty(2)," value=",alexa.getValue(2)," ColorTemp=",alexa.getCt(2)," Kelvin=",alexa.getKelvin(2))
+		
+	Case 3 'Color
+			Log("test3: Type=",getdevicetype(3),"  last change:", getLastChangedProperty(3)," value=",alexa.getValue(3)," ColorR=",alexa.getR(3)," ColorG=",alexa.getG(3)," ColorB=",alexa.getB(3))
+			Log("test3:  ColorRGB=",alexa.getRGB(3))
+	Case 4 'extendedcolor
+			Log("test4 changes: Type=",getdevicetype(4),"  last change:", getLastChangedProperty(4)," value=",alexa.getValue(4)," colormode=",getcolormode(4))
+			Select alexa.getColorMode(4)
+				Case color.Mode_hs
+					Log("test4 mode.hs, hue=",alexa.getHue(4), ", sat=",alexa.getSat(4))					
+				Case color.Mode_xy
+					Log("test4 mode.xy, x=",alexa.getX(4)," ,y=",alexa.getY(4))					
+				Case color.Mode_ct	
+					Log("test4 mode.ct, ct=",alexa.getCt(4))					
+				Case color.Mode_none
+					Log("test4 mode.none")
+			End Select
+ End Select				
+End Sub
+
+Sub LoopRun
+	alexa.RunLoop	
+	time = time + 1
+	If time = 90000 Then 
+		time =0
+'		Log("loop running")
+		Log("memory=", AvailableRAM, "   stack :",StackBufferUsage)
+	End If
+End Sub
+
+Sub PinButton_Change(state As Boolean)
+	
+	If state = False Then
+		Log(" "):Log("button ON")
+		alexa.Processing(cbtest)
+		If cbtest <7 Then cbtest = cbtest + 1 Else cbtest = 0
+'	Else
+'		Log("button OFF")
+	End If
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Timer1.Initialize("LoopRun",1)
+	Timer1.Enabled = True
+	pinbutton.Initialize(4,pinbutton.MODE_INPUT_PULLUP)
+	pinbutton.AddListener("PinButton_change")
+'	Dim dev(10) As String
+	
+	'example of connecting to a local network
+	If wifi.Connect2("xxxxx", "xxxxx") Then
+		Log("Connected to network")
+		Log(wifi.LocalIp)
+	Else
+		Log("Failed to connect to network")
+	End If
+
+	alexa.Initialize("DeviceChanged")
+	Timer1.Initialize("LoopRun",1)
+	Timer1.Enabled = True
+	
+	alexa.addDeviceOnOff("test0",127)
+	Log("device test0 created")
+	alexa.addDeviceDimming("test1",126)
+	Log("device test1 created")
+	alexa.addDeviceWhiteSpectrum("test2",250)
+	Log("device test2 created")
+	alexa.addDeviceColor("test3",100)
+	Log("device test3 created")
+	alexa.addDevice("test4",device.Type_extendedcolor)
+	alexa.setValue(255,4)
+	alexa.setColorCT(1000,4)
+	alexa.setColorRBG(255,255,255,4)
+	alexa.setColorxy(0.50,0.50,4)
+	Log("device test4 created")
+	alexa.setPercent(50,3)
+	Delay(1000)
+	For i = 0 To 9
+	  Log("device name: ",alexa.getName(i))
+	  Log("value=",alexa.getValue(i))
+	Next
+	Log("mac address: ",alexa.getEscapedMac)
+
+
+End Sub
+
+Sub getLastChangedProperty(index As Byte) As String
+'	Log("getLastChangedProperty=",alexa.getLastChangedProperty(index))
+	Select alexa.getLastChangedProperty(index)
+		Case device.Property_on		'1
+			Return  "ON"
+		Case device.Property_off	'2
+			Return  "OFF"
+		Case device.Property_bri	'3
+			Return  "bri"
+		Case device.Property_hs		'4
+			Return  "hs"
+		Case device.Property_ct		'5
+			Return  "ct"
+		Case device.Property_xy		'6
+			Return  "xy"
+		Case Else
+			Return  "none"
+	End Select
+End Sub
+
+Sub getdevicetype(index As Byte) As String
+'	Log("getdevicetype=",alexa.getType(index))
+			Select alexa.getType(index)
+				Case device.Type_onoff			'0
+					Return  "onoff"
+				Case device.Type_dimmable		'1
+			        Return  "dimmable"
+				Case device.Type_whitespectrum 	'2
+					Return  "whitespectrum"
+				Case device.Type_color			'3
+					Return  "color"
+				Case device.Type_extendedcolor	'4
+					Return  "extendedcolor"
+				Case Else
+					Return  "none"	
+			End Select	
+End Sub
+
+Sub getcolormode(index As Byte) As String
+'	Log("getcolormode=",alexa.getColorMode(4))
+	Select alexa.getColorMode(4)
+		Case color.Mode_ct  '1
+			Return "MOde_ct"
+		Case color.Mode_hs   '2
+			Return "Mode_hs"
+		Case color.Mode_xy   '3
+			Return "Mode_xy"
+		Case Else            '0
+			Return "Mode_none"
+	End Select
+End Sub
+
+
+

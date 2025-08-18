@@ -1,0 +1,96 @@
+﻿Build1=Default,b4a.example3
+File1=1.bal
+File2=arrow.png
+File3=Item.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CLVExpandable
+Module2=Starter
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=2
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private clv1 As CustomListView
+	Private lblTitle As B4XView
+	Private pnlTitle As B4XView
+	Private pnlExpanded As B4XView
+	Private xui As XUI
+	Private expandable As CLVExpandable
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	expandable.Initialize(clv1)
+	For i = 1 To 20
+		Dim p As B4XView = CreateItem(Rnd(0xFF000000, 0xFFFFFFFF), "Item #" & i, Rnd(100dip, 300dip) + 60dip)
+		clv1.Add(p, expandable.CreateValue(p, "some value"))
+	Next
+End Sub
+
+Sub CreateItem(clr As Int, Title As String, ExpandedHeight As Int) As B4XView
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, clv1.AsView.Width, ExpandedHeight)
+	p.LoadLayout("Item")
+	p.SetLayoutAnimated(0, 0, 0, p.Width, p.GetView(0).Height) 'resize it to the collapsed height
+	lblTitle.Text = Title
+	pnlTitle.Color = clr
+	pnlExpanded.Color = ShadeColor(clr)
+	Return p
+End Sub
+
+Sub ShadeColor(clr As Int) As Int
+	Dim argb() As Int = GetARGB(clr)
+	Dim factor As Float = 0.75
+	Return xui.Color_RGB(argb(1) * factor, argb(2) * factor, argb(3) * factor)
+End Sub
+
+Sub GetARGB(Color As Int) As Int()
+	Private res(4) As Int
+	res(0) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff000000), 24)
+	res(1) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff0000), 16)
+	res(2) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff00), 8)
+	res(3) = Bit.And(Color, 0xff)
+	Return res
+End Sub
+
+
+Sub clv1_ItemClick (Index As Int, Value As Object)
+	expandable.ToggleItem(Index)
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

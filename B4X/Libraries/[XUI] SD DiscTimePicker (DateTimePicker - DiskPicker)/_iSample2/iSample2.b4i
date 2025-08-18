@@ -1,0 +1,75 @@
+﻿Build1=Default,it.tecnomedia.disctimepicker
+File1=Layout1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=isd_disctimepicker
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+	'	#If DEBUG
+		   #CertificateFile: ios_developement.cer
+		   #ProvisionFile: Developement.mobileprovision
+	'	#ELSE If RELEASE
+	'	   #CertificateFile: ios_distribution.cer
+	'	   #ProvisionFile: distribution.mobileprovision
+	'	#END IF
+	
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private DiskPicker1 As DiskPicker
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("Layout1")
+	
+	DiskPicker1.AddToListUp("1","One").AddToListUp("2","Two").AddToListUp("3","Three").AddToListUp("4","Four").AddToListUp("5","Five").AddToListUp("6","Six").AddToListUp("7","Seven")
+	DiskPicker1.AddToDown1("A","One").AddToDown1("B","Two").AddToDown1("C","Three").AddToDown1("D","Four").AddToDown1("E","Five").AddToDown1("F","Six").AddToDown1("G","Seven")
+	DiskPicker1.AddToDown2("One","1").AddToDown2("Two","2").AddToDown2("Three","3").AddToDown2("Four","4").AddToDown2("Five","5").AddToDown2("Six","6").AddToDown2("Seven","7")
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Private Sub DiskPicker1_ChangeIndexUp(Index As Int)
+	Log("Up: " & Index)
+End Sub
+
+Private Sub DiskPicker1_ChangeIndexDown1(Index As Int)
+	Log("D1: " & Index)
+End Sub
+
+Private Sub DiskPicker1_ChangeIndexDown2(Index As Int)
+	Log("D2: " & Index)
+End Sub

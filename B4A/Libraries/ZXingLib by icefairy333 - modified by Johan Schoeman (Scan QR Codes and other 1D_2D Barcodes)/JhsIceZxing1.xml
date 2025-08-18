@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.05</doclet-version-NOT-library-version>
+    <class>
+        <name>ice.zxing.b4aZXingLib</name>
+        <shortname>JhsIceZxing1</shortname>
+        <owner>activity</owner>
+        <event>result(atype as String,Value as String, image as Bitmap)</event>
+        <event>timedout(timedOut as boolean)</event>
+        <event>usercancelled(userCancelled as boolean)</event>
+        <permission>android.permission.CAMERA</permission>
+        <permission>android.hardware.camera</permission>
+        <permission>android.hardware.camera.autofocus</permission>
+        <permission>android.permission.VIBRATE</permission>
+        <permission>android.permission.FLASHLIGHT</permission>
+        <method>
+            <name>CreateAztecCode</name>
+            <comment></comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CreateDataMatrixCode</name>
+            <comment></comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BeginScan</name>
+            <comment>Start the scan 
+Example:&lt;code&gt; 
+Dim zx As JhsIceZxing1  '(declare this in Sub Globals)
+Dim bm As Bitmap        '(declare this in Sub Globals)
+
+Sub Button1_Click
+  zx.isportrait = True
+  zx.useFrontCam = False
+
+  'set the timeoutDuration to a very high value (such as 2000000000) if you dont want it to time out 2000000000 = 63 years
+  zx.timeoutDuration = 30
+
+  'change these factors between 0 and 1 to change the size of the viewfinder rectangle
+  'the library will limit the minimum size to 240 x 240 pixels and the maximum to (screen width) x (screen height) pixels
+  zx.theViewFinderXfactor = 0.7
+  zx.theViewFinderYfactor = 0.5
+  zx.theFrameColor = Colors.Blue
+  zx.theLaserColor = Colors.Yellow
+  zx.theMaskColor = Colors.argb(95, 0, 0, 255)
+  zx.theResultColor = Colors.Green
+  zx.theResultPointColor = Colors.Red
+
+  'set the prompt messages
+  zx.theTopPromptMessage = "This was done......"
+  zx.theTopPromptTextSize = 5%y 'text size
+  zx.topPromptColor = Colors.Red
+  zx.topPromptDistanceFromTop = 1%y 'pixel distance from top
+  
+  zx.theBottomPromptMessage = "Just for fun......"
+  zx.theBottomPromptTextSize = 5%y  'text size
+  zx.bottomPromptColor = Colors.Blue
+  zx.bottomPromptDistanceFromBottom = 5%y  'pixel distance from top
+  'add a bitmap
+  zx.theBitMap = bm
+  zx.theBitmapPosition(40%x,10%y,20%x,20%x)
+  zx.BeginScan("myzx")
+End Sub
+
+Sub myzx_result(atype As String,Values As String)
+  Msgbox(Values,"type:" &amp;  atype)
+End Sub 
+
+Sub myzx_noscan(atype As String,Values As String)
+  Msgbox(Values,"type:" &amp; atype)
+End Sub
+        &lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CreateQRCode</name>
+            <comment></comment>
+            <returntype>android.graphics.Bitmap</returntype>
+            <parameter>
+                <name>str</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>theBitmapPosition</name>
+            <comment>Specify the left, top, width, and height of the bitmap that will be placed on the mask
+Example:&lt;code&gt; 
+zx.theBitmapPosition(40%x,10%y,20%x,20%x)
+        &lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>left</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>top</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>width</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>height</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>ReturnBitmap</name>
+            <parameter>
+                <name>returnbitmap</name>
+                <type>boolean</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <field>
+            <name>theLaserColor</name>
+            <comment>Specify the color of the laser
+Example:&lt;code&gt; 
+zx.theLaserColor = Colors.Red
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>useFrontCam</name>
+            <comment>Specify if the front facing or rear facing camera should be used
+Example:&lt;code&gt; 
+zx.useFrontCam = False
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>FORMATS_ONE_D</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>theMaskColor</name>
+            <comment>Specify the color of the mask around the view finder rectangle
+Example:&lt;code&gt;
+zx.theMaskColor = Colors.ARGB(95, 0, 0, 255)
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>timeoutDuration</name>
+            <comment>Specify the timeout duration - we need to get a successful scan before this else time out
+Example:&lt;code&gt;
+zx.timeoutDuration = 15
+        &lt;/code&gt;
+Set this value to for eg 2000000000 for and "indefinate" timeout (2 000 000 000 = 63 years+)</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>theBitMap</name>
+            <comment>Specify the bitmap that should be loaded into the mask
+Example:&lt;code&gt; 
+Dim bm As Bitmap
+bm.Initialize(File.DirAssets,"B4A.png")
+zx.theBitMap = bm 
+        &lt;/code&gt;</comment>
+            <returntype>android.graphics.Bitmap</returntype>
+        </field>
+        <field>
+            <name>mustBeep</name>
+            <comment>Specify if the device should make a beep sound upon a successful scan
+The default value is False
+The beep sound will be ToneGenerator.TONE_CDMA_ABBR_ALERT
+
+Example:&lt;code&gt; 
+zx.mustBeep = True
+
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>isportrait</name>
+            <comment>Specify if it should be portrait or landscape mode
+Example:&lt;code&gt; 
+zx.isportrait = True
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>theBottomPromptTextSize</name>
+            <comment>Specify the text size of the bottom prompt message
+Example:&lt;code&gt;
+zx.theBottomPromptTextSize = 5%y
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>FORMATS_PRODUCT</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FORMATS_AZTEC</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>displayOrientation</name>
+            <comment>Specify the display orientation (for eg on Nexus 5)
+Example:&lt;code&gt; 
+zx.displayOrientation = 90
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>theTopPromptTextSize</name>
+            <comment>Specify the text size of the top prompt message
+Example:&lt;code&gt;
+zx.theTopPromptTextSize = 5%y
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>bottomPromptColor</name>
+            <comment>Specify the color of the bottom prompt message
+Example:&lt;code&gt;
+zx.bottomPromptColor = Colors.Yellow
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>theResultPointColor</name>
+            <comment>Specify the color of the possible result points being displayed during a scan
+Example:&lt;code&gt;
+zx.theResultPointColor = Colors.Green
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>topPromptDistanceFromTop</name>
+            <comment>Specify the distance of the top prompt message from the top
+Example:&lt;code&gt;
+zx.topPromptDistanceFromTop = 1%x
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>topPromptColor</name>
+            <comment>Specify the color of the top prompt message
+Example:&lt;code&gt;
+zx.topPromptColor = Colors.Magenta
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>theViewFinderYfactor</name>
+            <comment>Scale factor for the height of the view finder rectangle
+The factor ranges from 0 to 1 (for a height &amp;lt; 240 a default of 240 pixels will be applied)
+Example:&lt;code&gt;
+zx.theViewFinderYfactor = 0.5
+        &lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name>moveLaser</name>
+            <comment>Specify if the laser should be static or move up/down
+The default value is False
+
+Example:&lt;code&gt; 
+zx.moveLaser = True
+
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>theTopPromptMessage</name>
+            <comment>Specify the top prompt message
+Example:&lt;code&gt;
+zx.theTopPromptMessage = "Hallo"
+        &lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>bottomPromptDistanceFromBottom</name>
+            <comment>Specify the distance of the bottom prompt message from the bottom
+Example:&lt;code&gt;
+zx.bottomPromptDistanceFromBottom = 1%x
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ScanMode</name>
+            <comment>Specify the bar code formats to scan
+If not specified then all code formats will be scanned
+Specify one of the following: PRODUCT_FORMATS, ONE_D_FORMATS, QR_CODE_FORMATS, DATA_MATRIX_FORMATS, AZTEC_FORMATS, PDF_417_FORMATS, TWO_D_FORMATS
+ PRODUCT_FORMATS are the following: UPC A, UPC E, EAN 13, EAN 8, RSS 14
+ ONE_D_FORMATS are all the PRODUCT FORMATS plus the following: CODE 39, CODE 93, CODE 128, ITF
+ TWO_D_FORMATS are the following: QR CODE, DATA MATRIX, AZTEC CODE, PDF 417
+
+Example:&lt;code&gt; 
+zx.ScanMode = "PRODUCT_FORMATS";
+
+        &lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FORMATS_TWO_D</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>theViewFinderXfactor</name>
+            <comment>Scale factor for the width of the view finder rectangle
+The factor ranges from 0 to 1 (for a width &amp;lt; 240 a default of 240 pixels will be applied)
+Example:&lt;code&gt;
+zx.theViewFinderXfactor = 0.5
+        &lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name>theBottomPromptMessage</name>
+            <comment>Specify the bottom prompt message
+Example:&lt;code&gt;
+zx.theBottomPromptMessage = "B4A"
+        &lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>textSkewnessBottom</name>
+            <comment>Specify the text skewness for the bottom text message
+Example:&lt;code&gt;
+zx.textSkewnessBottom = -0.25
+        &lt;/code&gt;</comment>
+            <returntype>float</returntype>
+        </field>
+        <field>
+            <name>scanInvertedCodes</name>
+            <comment>Specify if normal or color inverted codes needs to be scanned
+The default value is false (i.e scan normal colored codes and not inverted colored codes)
+
+Example:&lt;code&gt; 
+zx.scanInvertedCodes = False
+
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>FORMATS_QR_CODE</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>FORMATS_PDF_417</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>textSkewnessTop</name>
+            <comment>Specify the text skewness for the top text message
+Example:&lt;code&gt;
+zx.textSkewnessTop = -0.25
+        &lt;/code&gt;</comment>
+            <returntype>float</returntype>
+        </field>
+        <field>
+            <name>CODE_FORE_COLOR</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>FORMATS_DATA_MATRIX</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>theFrameColor</name>
+            <comment>Specify the color of the outer frame of the view finder rectangle
+Example:&lt;code&gt;
+zx.theFrameColor = Colors.Black
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>mustVibrate</name>
+            <comment>Specify if the device should vibrate upon a successful scan
+The default value is False
+It will vibrate for 400ms
+
+Example:&lt;code&gt; 
+zx.mustVibrate = True
+
+        &lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>CODE_BACK_COLOR</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>theResultColor</name>
+            <comment>Specify the color of the mask around the view finder rectangle after a successful scan
+Example:&lt;code&gt;
+zx.theResultColor = Colors.Black
+        &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>ice.zxing.CaptureActivity.IsChineseOrNot</name>
+        <owner>process</owner>
+        <method>
+            <name>isChineseCharacter</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>chineseStr</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.06</version>
+    <author>Johan/IceFairy333</author>
+</root>

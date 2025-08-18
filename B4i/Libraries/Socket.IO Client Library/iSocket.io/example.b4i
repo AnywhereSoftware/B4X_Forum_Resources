@@ -1,0 +1,110 @@
+﻿Build1=Default,com.socket.test
+File1=layout1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ijson
+Library3=isocketioclient
+Library4=irandomaccessfile
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: socket.io Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 10
+	
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Dim socket As iSocketIOClient
+	Private StatusLbl As Label
+	Private SendBtn As Button
+	Private AckLbl As Label
+	Private MsgInput As TextField
+	Private ConnectBtn As Button
+	Private DisconnectBtn As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("layout1")
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub ConnectBtn_Click
+	socket.initialize("socket")
+	socket.DebugLog(True)
+	socket.connect("http://192.168.68.102:5555",Null,Null,False, 3)
+	'socket.connectWithOptions("https://192.168.0.103:999/",null, True,True, 0,1000,5000,20000) 'connect with options
+	StatusLbl.Text = "Connecting"
+End Sub
+
+Sub DisconnectBtn_Click
+	socket.disconnect
+	StatusLbl.Text = "Disconnecting"
+End Sub
+
+Sub socket_OnConnect(data As List)
+	socket.AddListener("new_message","notify")
+	StatusLbl.Text = "Connected"
+	DisconnectBtn.Enabled = True
+	SendBtn.Enabled = True
+	MsgInput.Enabled = True
+	ConnectBtn.Enabled = False
+End Sub
+
+Sub socket_OnDisconnect(data As List)
+	socket.RemoveAllListener("new_message")
+	StatusLbl.Text = "Disconnected"
+	ConnectBtn.Enabled = True
+	SendBtn.Enabled = False
+	MsgInput.Enabled = False
+	DisconnectBtn.Enabled = False
+End Sub
+
+Sub socket_OnError(data As List)
+	Log(data)
+End Sub
+
+Sub socket_notify(data As List, ack As Object)
+	socket.sendAck(ack,"yourdata")
+	Log(data.Get(0).As(Map).Get("test"))
+	Log(GetType(data.Get(0)))
+End Sub
+
+Sub SendBtn_Click
+	Dim l As Map
+	l.Initialize
+	l.put("test",MsgInput.Text)
+	socket.EmitBinary("user_msg",l)
+End Sub
+
+Sub user_msg_ack(data As String)
+	AckLbl.Text = "From Server: "&data
+End Sub

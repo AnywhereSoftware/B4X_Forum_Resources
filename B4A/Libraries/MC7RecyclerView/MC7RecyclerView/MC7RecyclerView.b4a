@@ -1,0 +1,115 @@
+﻿Build1=Default,b4a.example.mc7recyclerview
+File1=2.bal
+File10=rv_items.bal
+File11=skype.png
+File12=whatsapp.png
+File13=wordpress.png
+File14=youtube.png
+File2=android.png
+File3=bing.png
+File4=dropbox.png
+File5=facebook.png
+File6=html-5.png
+File7=instagram.png
+File8=linkedin.png
+File9=pinterest.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=mc7recyclerviewl
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")
+Module1=AC2
+Module2=iModel
+Module3=Starter
+NumberOfFiles=14
+NumberOfLibraries=2
+NumberOfModules=3
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MC7RecyclerView
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'				M-CAP7AIN
+'				MC7RecyclerView | v1.2
+'				http://ictcaptain.blog.ir/
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim RV As MC7RecyclerView
+
+	Dim Model As iModel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Color=Colors.White
+	Model.Initialize
+	
+	
+	RV.Initializer("RV").ListView.Build
+	Activity.AddView(RV,0,0,100%x,100%y)
+
+	Dim Adapter As MC7RVAdapter
+	Adapter.Initialize("RV",Adapter.LOOP_FULL)
+	RV.Adapter = Adapter
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+
+Private Sub RV_GetItemCount As Int
+	Return Model.ListSize
+End Sub
+Private Sub RV_onCreateViewHolder (Parent As Panel,ViewType As Int)
+	Parent.SetLayout(0 , 0 , 100%x , 140dip)
+	Parent.LoadLayout("rv_items")
+End Sub
+Private Sub RV_onBindViewHolder (Parent As Panel,Position As Int)
+	Dim mp As Map = Model.getListObject(Position) 
+	
+	Private Pnl As Panel 		= Parent.GetView(0)
+	Private title As Label		= Pnl.GetView(0)
+	Private imgv As ImageView	= Pnl.GetView(1)
+	
+	title.Text 	= mp.GetKeyAt(0)
+	imgv.Bitmap = LoadBitmapSample(File.DirAssets , mp.GetValueAt(0) , imgv.Width , imgv.Height)
+End Sub
+
+Sub RV_onItemClick (Parent As Panel,Position As Int)
+	Log(Position)
+	StartActivity(AC2)
+End Sub

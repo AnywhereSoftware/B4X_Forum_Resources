@@ -1,0 +1,103 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=chart.html
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=2
+NumberOfLibraries=1
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private template2 As String
+End Sub
+
+Sub Globals
+	Private WebView1 As WebView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		template2 = File.ReadString(File.DirAssets, "chart.html")
+	End If
+	
+	Activity.LoadLayout("1")
+	WebView1.ZoomEnabled = False
+	CreateNewLine	
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+Private Sub createLabels(lst As List) As String
+	Dim str As String = ""
+	For i = 0 To lst.Size - 1 
+		str = str & $""${lst.Get(i)}""$
+		If Not(i = (lst.Size - 1)) Then
+			str = str & ","
+		End If
+	Next
+	Return str
+End Sub
+
+Private Sub createDateSets(data As List, label As String, borderColor As String, fill As Boolean) As String
+	Dim str As String = "{"
+	str = str & "data:["
+	For i = 0 To data.Size - 1 
+		str = str & data.Get(i)
+		If Not(i = (data.Size - 1)) Then
+			str = str & ","
+		End If
+	Next
+	str = str & "],"
+	
+	str = str & $"label:"${label}","$ 
+	str = str & $"borderColor:"${borderColor}","$
+	str = str & $"fill:${fill}"$
+	str = str & "}"
+	Return str
+End Sub
+
+
+Private Sub CreateNewLine
+	Dim labels As String : labels = createLabels(Array As String("JAN","FEB","MAR","APR","MAY"))
+	Dim datasets As String 
+	
+	datasets = createDateSets(Array As String("10","11","20","15","18"),"SALES 1","#3e95cd",False) & ","
+	datasets = datasets & createDateSets(Array As String("20","16","30","35","10"),"SALES 2","#3e20cd",False)
+	
+	Dim html As String = template2
+	
+	html = html.Replace("$TITLE$", "'MONTHS SALES'")
+	html = html.Replace("$LABELS$", "[" & labels & "]")
+	'jg.Initialize(datasets)
+	html = html.Replace("$DATASETS$","[" & datasets & "]")
+	Log(html)
+	WebView1.LoadHtml(html)
+
+End Sub

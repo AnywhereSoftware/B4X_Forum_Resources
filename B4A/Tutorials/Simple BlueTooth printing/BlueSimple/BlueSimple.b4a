@@ -1,0 +1,254 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=serial
+Library3=togglelibrary
+Library4=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Blue SIMPLE
+	#VersionCode: 1
+	#VersionName: BlueTooth DEMO printing
+	
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+'*****************************************************************************************************************
+' Application is demo how to connect and print some simple text on printer connected with blooeTooth connection 
+' on android phone. Printer which is used in this purpose is chinese MPT-II. Trying to keep code simple, but more of
+' lines is for preventing program to chrash if you try to print without attached printer or make reconnection etc..
+'*****************************************************************************************************************
+
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim TekstForPrint As String
+	Dim btAdmin As BluetoothAdmin
+	Dim virtSerial As Serial
+	Dim printer As TextWriter
+	Dim macAdress As String
+	Dim PairedDevices As Map
+	Dim deviceList As List
+	Dim blueDevices As String
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim Toggla As Toggle
+	Private InputTxt As EditText
+	Private L1 As Label
+	Private SwiftButton1 As SwiftButton
+	Private SwiftButton2 As SwiftButton
+	Private SwiftButton3 As SwiftButton
+	Private Status As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Toggla.Initialize
+	
+	If FirstTime Then
+		btAdmin.Initialize("BlueTeeth")
+		virtSerial.Initialize("Printer")
+	End If
+	'**** if bluetooth is not activated *********
+	If Toggla.Bluetooth = False Then
+		MsgboxAsync("BlutTooth is off ","Attention")
+		SwiftButton1.xLBL.Text ="BlueTooth OFF"
+		SwiftButton1_Click 'activate blueTooth through procedure in button script
+		
+	Else
+		SwiftButton1.xLBL.Text ="BlueTooth ON"
+		
+	End If
+	
+End Sub
+
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'**** activation/deactivation bluetooth device ******
+Sub SwiftButton1_Click
+	If Toggla.Bluetooth = False Then
+		Toggla.TurnBluetoothOn
+'		SwiftButton1.xLBL.Text="BlueTooth ON"
+'		Status.Text="Bluetooth activated ......"
+		
+	Else
+		Toggla.TurnBluetoothOff
+'		SwiftButton1.xLBL.Text ="BlueTooth OFF"
+'		Status.Text="Bluetooth not activated ......"
+		
+	End If
+	'xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+'**** printing some text on connected printer ****
+Sub SwiftButton2_Click
+	If InputTxt.Text="" Or InputTxt.Text="Write some text" Then
+		ToastMessageShow("No txt for printing",True)
+		'xui.MsgboxAsync("No txt for printing", "Warning")
+	Else
+		TekstForPrint= InputTxt.Text
+		Printing
+		
+	End If
+End Sub
+
+'**** choosing printer from device list paired on phone ****
+Sub SwiftButton3_Click
+	If printer.IsInitialized Then
+		printer.Close
+	End If
+	If virtSerial.IsInitialized Then
+		virtSerial.Disconnect
+	End If
+	Status.Text="Connection in progress......"
+	PrepPrinter
+End Sub
+
+
+'***** procedure where is choosing and connecting to paired bluetooth printer *****
+Sub PrepPrinter
+	
+	
+	PairedDevices.Initialize
+	deviceList.Initialize
+	
+	Try
+		PairedDevices = virtSerial.GetPairedDevices
+		
+	Catch
+		MsgboxAsync("Getting Paired Devices","Printer Error")
+		printer.Close
+		virtSerial.Disconnect
+	End Try
+
+	If PairedDevices.Size = 0 Then
+		MsgboxAsync("There is no paired devices or bluetooth is OFF","")
+		Return
+	End If
+
+
+	'***** showing the list with paired devices *****
+	
+	For i = 0 To PairedDevices.Size - 1
+		deviceList.Add(PairedDevices.GetKeyAt(i))
+	Next
+
+	InputListAsync(deviceList, "Choose Printer", -1,True)
+	
+	'**** choosing from list of available devices on bluetooth connections *****
+	Wait For InputList_Result (Index As Int)
+	If Index <> DialogResponse.CANCEL Then
+		blueDevices=PairedDevices.GetKeyAt(Index) & " " & PairedDevices.GetValueAt(Index) ' string with data of name and mac address
+		macAdress=PairedDevices.GetValueAt(Index)
+		virtSerial.ConnectInsecure(btAdmin,macAdress,1)
+		'virtSerial.ConnectInsecure(btAdmin,PairedDevices.Get(PairedDevices.GetKeyAt(Index)),1) 'another way to extract macadress from list
+	Else
+		'**** if choosing is canceled try to keep old connection ****
+		Try
+			ToastMessageShow("Search for printer....",False)
+			Sleep(3000) 'timeout wich needs bluetoot receiver to be ready, if not then application crash
+			virtSerial.ConnectInsecure(btAdmin,macAdress,1)
+		Catch
+			ToastMessageShow("No previouse connection,choose one",False)
+			Status.Text= "Choose printer for START..."
+		End Try
+		
+		
+	End If
+	
+End Sub
+
+'**** event occure when comes to connectiona betwean phone and printer *****
+Sub Printer_Connected (Success As Boolean)
+	If Success Then
+		
+		ToastMessageShow("Printer Connected ....",True)
+		Status.Text=blueDevices
+		
+	Else
+		'*** Controling connection status of printer *********
+		Msgbox2Async("Greška !", "Printer Error", "Reprint", "Cancel", "", Null, False)
+		Status.Text="******"
+		Wait For Msgbox_Result (Result As Int)
+		If Result = DialogResponse.POSITIVE Then
+			PrepPrinter
+		End If
+			
+	End If
+End Sub
+
+Sub Printing
+	Try
+		printer.Initialize(virtSerial.OutputStream)
+		printer.WriteLine(TekstForPrint)
+		printer.Flush
+		Status.Text= blueDevices
+		'**** Message after printing ****
+		'ToastMessageShow("Sent to printer",False)
+	Catch
+		ToastMessageShow("NO PRINTER SELECTED",False)
+		Status.Text="NO PRINTER SELECTED"
+	End Try
+		
+			
+End Sub
+
+
+
+'**** event where after turning ON bluetooth adapter is trying to make connection with same printer again                 ****
+'**** this is triggered with switching OFF or ON bluetooh adapter with Toggla.TurnBluetoothOn of Toggla.TurnBluetoothOff  ****
+
+Sub BlueTeeth_StateChanged (NewState As Int, OldState As Int)
+	If NewState=13 Then ' number 13 and 10 is newstate value for bluetooth OFF, 11 and 12 for ON
+		SwiftButton2.Enabled=False
+		SwiftButton1.xLBL.Text ="BlueTooth OFF"
+		Status.Text="Bluetooth not activated ......"
+		
+	End If
+	If NewState=11 Then
+		SwiftButton2.Enabled=True
+		SwiftButton1.xLBL.Text="BlueTooth ON"
+		Status.Text="Bluetooth activated ......"
+		
+		If macAdress <> "" Then
+			ToastMessageShow("Search for printer....",False)
+			Sleep(3000) 'timeout wich needs bluetoot receiver to be ready, if not then application crash
+			virtSerial.ConnectInsecure(btAdmin,macAdress,1)
+		End If
+	End If
+End Sub
+
+'**** procedure for reestablish connection again if you don't use event BlueTeeth_StateChanged ****
+'Sub reConnect
+'	If macAdress <> "" Then
+'		Sleep(3000) 'timeout wich needs bluetoot receiver to be ready, if not then application crash
+'		virtSerial.ConnectInsecure(btAdmin,macAdress,1)
+'		
+'	End If
+'	
+'End Sub

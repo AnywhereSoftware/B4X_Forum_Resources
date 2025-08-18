@@ -1,0 +1,119 @@
+﻿AppType=StandardJava
+Build1=Default,com.ab.template
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=abmaterial
+Library4=javaobject
+Library5=jsql
+Library6=jdateutils
+Module1=ABMApplication
+Module10=ABMUploadHandler
+Module11=AllContainers
+Module12=DBM
+Module13=get
+Module14=home
+Module15=Page2
+Module16=Page3
+Module17=Page4
+Module18=Page5
+Module19=Page6
+Module2=ABMCacheControl
+Module20=Page7
+Module21=Page8
+Module3=ABMCacheScavenger
+Module4=ABMCustomComponentTemplate
+Module5=ABMErrorHandler
+Module6=ABMPageTemplate
+Module7=ABMPageTemplateAlternative
+Module8=ABMRootFilter
+Module9=ABMShared
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=21
+Version=8.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 	
+	#AdditionalJar: sqlite-jdbc-3.27.2.1.jar
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+	Dim ABM As ABMaterial 'ignore
+	Dim port As Int = 80
+End Sub
+
+Sub AppStart (Args() As String)
+	' the user needs to login
+	'ABMShared.NeedsAuthorization = True
+	
+	'Add database 
+	DBM.InitializeSQLite(File.DirApp, "chinook.db", False)
+	
+	
+	' Build the Theme
+	ABMShared.BuildTheme("theme")
+	
+	' create the app
+	Dim myApp As ABMApplication
+	myApp.Initialize
+		
+	' create the pages
+	Dim p1 As home
+	p1.Initialize
+	Dim p2 As Page2
+	p2.Initialize
+	Dim p3 As Page3
+	p3.Initialize
+	Dim p4 As Page4
+	p4.Initialize
+	Dim p5 As Page5
+	p5.Initialize
+	Dim p6 As Page6
+	p6.Initialize
+	Dim p7 As Page7 'for upload
+	p7.Initialize
+	Dim p8 As Page8
+	p8.Initialize
+
+		
+	' add the pages to the app
+	myApp.AddPage(p1.page)
+	myApp.AddPage(p2.page)
+	myApp.AddPage(p3.page)
+	myApp.AddPage(p4.page)
+	myApp.AddPage(p5.page)
+	myApp.AddPage(p6.page)
+	myApp.AddPage(p7.page)
+	myApp.AddPage(p8.page)
+
+	srvr.AddHandler("/get" ,"get", True)
+		
+	' start the server
+	myApp.StartServer(srvr, "srvr", port)	
+			
+	'ABMShared.RedirectOutput(File.DirApp, "logs.txt")
+	
+	#If DEBUG
+		' in debug mode, start the browser and open the app on all devices (DOES NOT WORK IF EDGE IS YOUR DEFAULT BROWSER!)
+'		ABM.ViewerOpenAllDevices("http://localhost:" & port & "/" & ABMShared.AppName & "/", 100)
+		
+		' or open a specific device as default (DOES NOT WORK IF EDGE IS YOUR DEFAULT BROWSER!)
+		'ABM.ViewerOpenDevice("http://localhost:" & port & "/" & ABMShared.AppName & "/", 300, ABM.VIEWER_TABLET)
+		
+		' or just open de browser, no multiple devices
+		'ABM.ViewerOpen("http://localhost:" & port & "/" & ABMShared.AppName & "/")
+	#End If
+			
+	StartMessageLoop
+End Sub
+
+
+
+
+
+
+

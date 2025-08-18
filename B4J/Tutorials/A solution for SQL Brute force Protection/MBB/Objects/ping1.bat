@@ -1,0 +1,1 @@
+ping -n 1 %1 >ip.txt

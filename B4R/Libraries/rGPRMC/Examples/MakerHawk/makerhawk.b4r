@@ -1,0 +1,111 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rsoftwareserial
+Library4=rgprmc
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+'makerhawk.b4r
+'20210704 rwbl
+'Test reading & parsing NMEA GPRMC sentence messages from a MakerHawk GPS Module with GT-U7 chip and SIM39ES antenna.
+'It can take up-to few minutes (module onboard red LED lights steady) till the module receives GPS data (module onboard red LED starts to blink).
+'If GPS satellite connection made, data is updated almost every second.
+'Ensure the antenna is close pointing to an outside area.
+'From the GPS message, the NMEA sentence starting with $GPRMC is used and the first 10 fields are parsed.
+'The time stamp is in UTC.
+'Log Example:
+'$GPRMC,082243.00,A,5338.25112,N,00947.94171,E,0.245,,010721,,,A*71
+'$GPVTG,,T,,M,0.245,N,0.453,K,A*2
+'DateStamp (D.M.Y): 10721=1.7.21
+'TimeStamp (h:m:s): 82243=8:22:43
+'Lat: 53.6375, Indicator: N
+'Lon: 9.7990, Indicator: E
+'Speed (kmh): 0.4537, 0.2450 (kt)
+'Course Over Ground (deg): 0
+'********************************************************************
+'
+'Hardware:
+'Arduino UNO
+'MakerHawk GPS Module with GT-U7 chip and SIM39ES antenna
+'	Operating voltage: 3.3V-5V (Or direct usb Power supply), Operating baud rate: 9600, Onboard rechargeable button battery
+'	Onboard E2PROM to save parameter data, NEMA output format compatible NEO-6M, Size: 27.6mm * 26.6mm
+'
+'Additional libraries:
+'rGPRMS - GPS module
+'rRandomAccessFile - ByteConverter
+'rSoftwareSerial - GPS Module TX&RX lines
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+#Region Wiring
+'GPS Module = Arduino UNO (Wirecolor)
+'VCC = 3.3V (RED)
+'GND = GND (BLACK)
+'RXD = Pin #3 used as TX (BLUE)
+'TXD = Pin #4 used as RX (GREEN)
+'PPS = Time Pulse output = Not used - Can be used for the GPS to drive a hardware high precision clock
+#End Region
+
+Sub Process_Globals
+	' Serial line
+	Public serialLine As Serial
+	Private Const SERIALLINE_BAUD As ULong = 115200
+	' Software serial port used for GPS module with baud rate 9600
+	Private serialGPS As SoftwareSerial
+	Private Const SERIALGPS_BAUD As ULong	= 9600		'Take from GPS module datasheet
+	Private Const SERIALGPS_RX_PIN As Byte	= 4			'Microcontroller RX pin
+	Private Const SERIALGPS_TX_PIN As Byte	= 3			'Microcontroller TX pin
+	Private CONST GPRMC_SENTENCE() As Byte	= "$GPRMC"	'As defined by NMEA spec
+	' Handle GPS data received via serial gps
+	Private asyncStream As AsyncStreams
+	' Helper to get GPRMC Lat indicator as String in the log
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(SERIALLINE_BAUD)
+	Log("GPRMC Test - GPS MakerHawk Module v20210704")
+	'Init the GPS object
+	GPRMC.Initialize(False, 2, 0)
+	'Init serial GPS with Baud, Arduino RX Pin 4, Arduino TX Pin 3
+	serialGPS.Initialize(SERIALGPS_BAUD, SERIALGPS_RX_PIN, SERIALGPS_TX_PIN)
+	Log("Init serial GPS")
+	asyncStream.Initialize(serialGPS.Stream,"AsyncStream_NewData",Null)
+	Log("Init asyncstream, waiting for data... (approx every second)")
+End Sub
+
+' Handle new data from the serial GPS line
+Sub AsyncStream_NewData(rmcData() As Byte)
+	' Check if the incoming data starts with the NMEA GPRMC sentence
+	If bc.IndexOf2(rmcData, GPRMC_SENTENCE, 0) > -1 Then
+		Log(rmcData)
+		' Parse the RMC sentence data - the first 10 fields
+		If GPRMC.Parse_RMC_Sentence(rmcData) Then
+			If GPRMC.DataValid Then
+				Log("DateStamp (D.M.Y): ", GPRMC.DateStamp.Stamp, "=", GPRMC.DateStamp.Day, ".", GPRMC.DateStamp.Month, ".", GPRMC.DateStamp.Year)
+				Log("TimeStamp (h:m:s): ", GPRMC.TimeStamp.Stamp, "=", GPRMC.TimeStamp.Hours, ":", GPRMC.TimeStamp.Minutes, ":", GPRMC.TimeStamp.Seconds)
+				Log("Lat: ", GPRMC.Lat.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lat.Indicator)))
+				Log("Lon: ", GPRMC.Lon.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lon.Indicator)))
+				Log("Speed (kmh): ", GPRMC.Speed, ", ", GPRMC.Speed * GPRMC.KMHTOKT, " (kt)")
+				Log("Course Over Ground (deg): ", GPRMC.Course)
+				Log("********************************************************************")
+			Else
+				' If not receiving GPS signal, the data valid flag is 0 (false)
+				Log("Data is NOT valid")
+			End If
+		End If
+	End If
+	' Short delay to ensure parsing is complete befor new data arrives
+	DelayMicroseconds(100)
+End Sub

@@ -1,0 +1,1 @@
+netsh ipsec static delete policy name=MBB_POL_%1

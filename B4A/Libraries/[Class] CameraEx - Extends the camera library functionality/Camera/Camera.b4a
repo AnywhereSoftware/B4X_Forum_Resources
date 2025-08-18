@@ -1,0 +1,144 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.camera
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=camera
+Library2=core
+Library3=phone
+Library4=reflection
+Library5=javaobject
+Library6=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />~\n~)~\n~~\n~
+Module1=CameraExClass
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=8.3
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: False
+	#ApplicationLabel: Camera example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Private frontCamera As Boolean = False
+End Sub
+
+Sub Globals
+	Private Panel1 As Panel
+	Private camEx As CameraExClass
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	InitializeCamera
+End Sub
+
+Private Sub InitializeCamera
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_CAMERA)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		camEx.Initialize(Panel1, frontCamera, Me, "Camera1")
+		frontCamera = camEx.Front
+	Else
+		ToastMessageShow("No permission!!!", True)
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If camEx.IsInitialized Then
+		camEx.Release
+	End If
+End Sub
+
+Sub Camera1_Ready (Success As Boolean)
+	If Success Then
+		camEx.SetJpegQuality(90)
+		camEx.SetContinuousAutoFocus
+		camEx.CommitParameters
+		camEx.StartPreview
+		Log(camEx.GetPreviewSize)
+	Else
+		ToastMessageShow("Cannot open camera.", True)
+	End If
+End Sub
+
+Sub btnTakePicture_Click
+	camEx.TakePicture
+End Sub
+
+Sub btnFocus_Click
+	camEx.FocusAndTakePicture
+End Sub
+
+Sub Camera1_PictureTaken (Data() As Byte)
+	Dim filename As String = "1.jpg"
+	Dim dir As String = File.DirInternal
+	
+	camEx.SavePictureToFile(Data, dir, filename)
+	camEx.StartPreview 'restart preview
+	ToastMessageShow("Picture saved." & CRLF  & "File size: " & File.Size(dir, filename), True)
+End Sub
+
+
+Sub ChangeCamera_Click
+	camEx.Release
+	frontCamera = Not(frontCamera)
+	InitializeCamera
+End Sub
+
+Sub btnEffect_Click
+	Dim effects As List = camEx.GetSupportedColorEffects
+	If effects.IsInitialized = False Then
+		ToastMessageShow("Effects not supported.", False)
+		Return
+	End If
+	Dim effect As String = effects.Get((effects.IndexOf(camEx.GetColorEffect) + 1) Mod effects.Size)
+	camEx.SetColorEffect(effect)
+	ToastMessageShow(effect, False)
+	camEx.CommitParameters
+End Sub
+
+Sub btnFlash_Click
+	Dim f() As Float = camEx.GetFocusDistances
+	Log(f(0) & ", " & f(1) & ", " & f(2))
+	Dim flashModes As List = camEx.GetSupportedFlashModes
+	If flashModes.IsInitialized = False Then
+		ToastMessageShow("Flash not supported.", False)
+		Return
+	End If
+	Dim flash As String = flashModes.Get((flashModes.IndexOf(camEx.GetFlashMode) + 1) Mod flashModes.Size)
+	camEx.SetFlashMode(flash)
+	ToastMessageShow(flash, False)
+	camEx.CommitParameters	
+End Sub
+
+Sub btnPictureSize_Click
+	Dim pictureSizes() As CameraSize = camEx.GetSupportedPicturesSizes
+	Dim current As CameraSize = camEx.GetPictureSize
+	For i = 0 To pictureSizes.Length - 1
+		If pictureSizes(i).Width = current.Width And pictureSizes(i).Height = current.Height Then Exit
+	Next
+	Dim ps As CameraSize = pictureSizes((i + 1) Mod pictureSizes.Length)
+	camEx.SetPictureSize(ps.Width, ps.Height)
+	ToastMessageShow(ps.Width & "x" & ps.Height, False)
+	camEx.CommitParameters		
+End Sub
+
+
+Sub SeekBar1_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged = False Or camEx.IsZoomSupported = False Then Return
+	camEx.Zoom = Value / 100 * camEx.GetMaxZoom
+	camEx.CommitParameters
+End Sub

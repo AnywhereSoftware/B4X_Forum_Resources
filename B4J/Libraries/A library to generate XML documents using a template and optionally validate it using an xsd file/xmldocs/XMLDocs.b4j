@@ -1,0 +1,266 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=XMlDocs.bas
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xmlbuilder
+Library5=xui views
+Module1=XMLLib
+Module2=XMLTemplates
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=2
+Version=9.1
+@EndOfDesignText@
+ #Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	' Example invoice IT , collect and generate all the lists first
+	
+	Dim lstarticoli As List
+	lstarticoli.Initialize
+ 
+	Dim mp As Map
+	Dim total_t As Double=0
+	Dim tax_t As Double=0
+	Dim taxedon_t As Double=0
+	
+	Dim row As Int
+		
+	For row=0 To 5 ' articoli
+		
+		mp.Initialize
+		mp.Put("NumeroLinea",row+1)
+		mp.Put("Descrizione","Articolo n." & (row+1))
+		mp.Put("Quantita",NumberFormat2((row+1),0,2,2,False).Replace(",","."))
+		mp.Put("PrezzoUnitario","5.00")
+		Dim total As Double=Round2(5*(row+1),2)
+		Dim tax As Double=Round2(5*(row+1)*22/100,2)
+		Dim taxedon As Double=Round2(total-tax,2)
+		
+		lstarticoli.Add(mp)
+		total_t=total_t + total
+		tax_t=tax_t+tax
+		taxedon_t=taxedon_t+taxedon
+		
+		mp.Put("PrezzoTotale",NumberFormat2(total,0,2,2,False).Replace(",","."))
+	    mp.Put("AliquotaIVA","22.00")
+
+	Next
+	
+	Dim lstfoot As List
+	lstfoot.Initialize
+ 	 	
+	mp.Put("AliquotaIVA","22.00")
+	mp.Put("ImponibileImporto",NumberFormat2(taxedon_t,0,2,2,False).Replace(",","."))
+	mp.Put("Imposta",NumberFormat2(tax_t,0,2,2,False).Replace(",","."))
+    mp.Put("EsigibilitaIVA","I")
+	lstfoot.Add(mp)
+ 
+	Dim lstdettpay As List
+	lstdettpay.Initialize
+ 	Dim lstmodpag As List
+	lstmodpag.Initialize
+ 
+	Dim mp As Map
+	mp.Initialize
+	
+	Dim mp2 As Map
+	mp2.Initialize
+	
+	mp2.Put("ModalitaPagamento","MP01")
+	mp2.Put("DataScadenzaPagamento","2015-01-30")
+	mp2.Put("ImportoPagamento","32.95")
+	lstmodpag.Add(mp2)
+		
+	mp.Put("CondizioniPagamento","TP01")
+	mp.Put("DettaglioPagamento",lstmodpag)
+	lstdettpay.Add(mp)
+  	
+	Dim lstordaquisto As List
+	lstordaquisto.Initialize
+	Dim mp As Map
+	mp.Initialize
+	mp.Put("RiferimentoNumeroLinea","1")
+	mp.Put("IdDocumento","66685")
+	mp.Put("NumItem","1")
+	lstordaquisto.Add(mp)
+	 
+	Dim lstCausale As List
+	lstCausale.initialize
+	lstCausale.add("LA FATTURA FA RIFERIMENTO AD UNA OPERAZIONE AAAA BBBBBBBBBBBBBBBBBB CCC DDDDDDDDDDDDDDD E FFFFFFFFFFFFFFFFFFFF GGGGGGGGGG HHHHHHH II LLLLLLLLLLLLLLLLL MMM NNNNN OO PPPPPPPPPPP QQQQ RRRR SSSSSSSSSSSSSS")
+	lstCausale.add("SEGUE DESCRIZIONE CAUSALE NEL CASO IN CUI NON SIANO STATI SUFFICIENTI 200 CARATTERI AAAAAAAAAAA BBBBBBBBBBBBBBBBB")
+ 
+	' now we have our lists we constuct our map with values for our template
+	
+	Dim mpdata As Map 
+	mpdata.Initialize
+	 
+	mpdata.put("/FatturaElettronicaHeader/DatiTrasmissione/IdTrasmittente/IdPaese","IT")
+	mpdata.put("/FatturaElettronicaHeader/DatiTrasmissione/IdTrasmittente/IdCodice","01234567890")
+	mpdata.put("/FatturaElettronicaHeader/DatiTrasmissione/ProgressivoInvio","0001")
+	mpdata.put("/FatturaElettronicaHeader/DatiTrasmissione/FormatoTrasmissione","FPR12")
+	mpdata.put("/FatturaElettronicaHeader/DatiTrasmissione/CodiceDestinatario","ABC1234")      
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/DatiAnagrafici/IdFiscaleIVA/IdPaese","IT")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/DatiAnagrafici/IdFiscaleIVA/IdCodice","01234567890")
+  	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/DatiAnagrafici/Anagrafica/Denominazione","Società ALPHA SRL")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/DatiAnagrafici/RegimeFiscale","RF01")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/Sede/Indirizzo","VIALE ROMA 543")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/Sede/CAP","07100")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/Sede/Comune","SASSARI")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/Sede/Provincia","SS")
+	mpdata.put("/FatturaElettronicaHeader/CedentePrestatore/Sede/Nazione","IT")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/DatiAnagrafici/CodiceFiscale","09876543210")
+    mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/DatiAnagrafici/Anagrafica/Denominazione","DITTA BETA")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/Sede/Indirizzo","VIALE ROMA 543")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/Sede/CAP","07100")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/Sede/Comune","SASSARI")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/Sede/Provincia","SS")
+	mpdata.put("/FatturaElettronicaHeader/CessionarioCommittente/Sede/Nazione","IT")
+  	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiGeneraliDocumento/TipoDocumento","TD01")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiGeneraliDocumento/Divisa","EUR")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiGeneraliDocumento/Data","2014-12-18")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiGeneraliDocumento/Numero","123")	
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiGeneraliDocumento/Causale",lstCausale)	
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiOrdineAcquisto",lstordaquisto)	
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiTrasporto/DatiAnagraficiVettore/IdFiscaleIVA/IdPaese","IT")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiTrasporto/DatiAnagraficiVettore/IdFiscaleIVA/IdCodice","24681012141")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiTrasporto/DatiAnagraficiVettore/Anagrafica/Denominazione","Trasporto spa")
+	mpdata.put("/FatturaElettronicaBody/DatiGenerali/DatiTrasporto/DataOraConsegna","2012-10-22T16:46:12.000+02:00") 	 
+	mpdata.put("/FatturaElettronicaBody/DatiBeniServizi/DettaglioLinee",lstarticoli)	
+	mpdata.put("/FatturaElettronicaBody/DatiBeniServizi/DatiRiepilogo",lstfoot)	 
+	mpdata.put("/FatturaElettronicaBody/DatiPagamento",lstdettpay)
+	
+	Dim Filexsd As String= File.DirApp & "\Schema_del_file_xml_FatturaPA_versione_1.2.1.xsd"
+	
+	Dim InvXML As XMLConstruct=XMLTemplates.GenInvXMLIT(mpdata ,"FPR12",Filexsd,2,False) 
+ 	 
+	Dim xmlstr As String=InvXML.xmlstr	
+	Dim xmlerr1 As String=InvXML.errxsd
+	Dim xmlerr2 As String=InvXML.errors
+	
+	Dim filename As String="c:\temp\xml.txt"
+	If File.Exists("",filename) Then
+		File.Delete("",filename)
+	End If
+	
+	If xmlerr1<>"" Or xmlerr1<>"" Then
+		Log(xmlerr1 & xmlerr2)
+		xui.MsgboxAsync("Problem with XML:" & xmlerr1 & xmlerr2, "XML Doc")	
+	Else		
+		xui.MsgboxAsync("Generated XML is valid", "XML Doc")	
+	End If
+	
+	File.WriteString("",filename,xmlstr)
+	
+End Sub
+
+
+Private Sub Button2_Click
+	
+	'simpler example different structure with two lists
+	
+	Dim mpdata As Map
+	mpdata.Initialize
+	
+	Dim lstarr As List
+	lstarr.Initialize
+	
+	Dim mp As Map
+	mp.Initialize
+	mp.put("idswh","3475121")
+	mp.put("tipoalloggiato","18") 
+	mp.put("idcapo","")
+	mp.put("sesso","M")
+	mp.put("cittadinanza","100000100") 
+	mp.put("statoresidenza","100000100") 
+	mp.put("luogoresidenza","403015146") 
+	mp.put("datanascita","19720611") 
+	mp.put("statonascita","100000100") 
+	mp.put("comunenascita","403015146") 
+	mp.put("tipoturismo","ENOGASTRONOMICO") 
+	mp.put("mezzotrasporto","AUTO") 
+	mp.put("canaleprenotazione","DIRETTA WEB") 
+	mp.put("titolostudio","") 
+	mp.put("professione","") 
+	mp.put("esenzioneimposta","")
+	lstarr.Add(mp) 
+	
+	mp.Initialize
+	mp.put("idswh","3475121")
+	mp.put("tipoalloggiato","20") 
+	mp.put("idcapo","")
+	mp.put("sesso","F")
+	mp.put("cittadinanza","100000100") 
+	mp.put("statoresidenza","100000100") 
+	mp.put("luogoresidenza","403015146") 
+	mp.put("datanascita","19710611") 
+	mp.put("statonascita","100000100") 
+	mp.put("comunenascita","403015146") 
+	mp.put("tipoturismo","ENOGASTRONOMICO") 
+	mp.put("mezzotrasporto","AEREO") 
+	mp.put("canaleprenotazione","DIRETTA WEB") 
+	mp.put("titolostudio","") 
+	mp.put("professione","") 
+	mp.put("esenzioneimposta","")
+	lstarr.Add(mp) 
+	
+	Dim lstpart As List
+	lstpart.Initialize
+	Dim mp As Map
+	mp.Initialize	
+	mp.put("idswh","3475121")
+	mp.put("tipoalloggiato","18")
+	mp.put("arrivo","20000102")
+	lstpart.Add(mp)
+	
+	mpdata.put("/codice","A00927P")
+	mpdata.put("/prodotto","XXXXXXXXX")
+	mpdata.put("/movimento/data","20000102")
+	mpdata.put("/movimento/struttura/apertura","SI")
+	mpdata.put("/movimento/struttura/camereoccupate","9")
+	mpdata.put("/movimento/struttura/cameredisponibili","16")
+	mpdata.put("/movimento/struttura/lettidisponibili","34")
+	
+	mpdata.put("/movimento/arrivi/arrivo",lstarr)
+	mpdata.put("/movimento/partenze/partenza",lstpart)
+	
+	Dim DocXML As XMLConstruct=XMLTemplates.GenRoss1000(mpdata ,0,True) 
+ 	 
+	Dim xmlstr As String=DocXML.xmlstr	 
+	
+	Dim filename As String="c:\temp\xmldoc.txt"
+	If File.Exists("",filename) Then
+		File.Delete("",filename)
+	End If
+	 	
+	xui.MsgboxAsync("Generated XML", "XML Doc")	
+	 
+	File.WriteString("",filename,xmlstr)
+
+	
+End Sub

@@ -1,0 +1,120 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=b4xlistmanager
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	
+	Private Options As List
+	Private ReservedItems As List
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Dialog As B4XDialog
+	Dim B4xListManager1 As B4xListManager
+	Private B4XComboBox1 As B4XComboBox
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Dialog.Initialize(Activity)
+	Options.Initialize
+	
+	'SetReservedOptions
+	ReservedItems.Initialize
+	ReservedItems.AddAll(Array As String("Default"))
+	Options.Add("Default")
+	
+	'Set initial Data
+	For i = 0 To 9
+		Options.Add("Option " & i)
+	Next
+	
+	ShowOptions(Options)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnEditList_Click
+	
+	Dim CD As B4XView = xui.CreatePanel("")
+	CD.SetLayoutAnimated(0,0,0,300dip,300dip)
+	CD.LoadLayout("b4xlistmanagerlayout")
+	
+	Sleep(0)
+	
+	Dialog.Title = "Manage List"
+	
+	'Either an arbitrary list
+	'B4xListManager1.List = Options
+	'or read from spinner content
+	Dim L As List
+	L.Initialize
+	For i = 0 To B4XComboBox1.Size - 1
+		L.Add(B4XComboBox1.GetItem(i))
+	Next
+	B4xListManager1.List = L
+	
+	
+	Dim SC As Object = Dialog.ShowCustom(CD,"Done","","Cancel")
+	
+	Wait For (SC) Complete (resp As Int)
+	
+	If resp = xui.DialogResponse_Positive Then
+		Options.Clear
+		'Revised list is available from B4xListManager1.List
+		For Each S As String In B4xListManager1.List
+			Options.Add(S)
+		Next
+		ShowOptions(Options)
+	End If
+	
+End Sub
+
+Private Sub ShowOptions(Opts As List)
+
+	Dim SelectedItem As String = B4XComboBox1.SelectedItem
+	B4XComboBox1.SetItems(Opts)
+	'Select the first item if no current selection or the item is removed, otherwise maintain the selection
+	B4XComboBox1.SelectedIndex = Max(0,B4XComboBox1.IndexOf(SelectedItem))
+End Sub
+
+'Disallow removal of specific items from the list
+Private Sub B4xListManager1_ReservedItem(Text As String) As Boolean
+	If ReservedItems.IndexOf(Text) > -1 Then Return True
+	Return False
+End Sub

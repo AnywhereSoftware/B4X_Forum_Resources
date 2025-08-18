@@ -1,0 +1,239 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jnetwork
+Library3=byteconverter
+Library4=b4xcollections
+Library5=jrandomaccessfile
+Module1=MB_TCP_MASTER
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+	'Declare a new object of modbus TCP
+	Public  MBobject As MB_TCP_MASTER
+	
+	
+	'We use a timer to "poll" values at a fixed interval
+	Public timer1 As Timer
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	'Application started
+	Log("Hello World")
+	
+	'ConnectToClient
+	'Ipadress of server, TCP port of server, own local threadname, subname where aynchronous data will arrive.
+	MBobject.Initialize(Me,"MBresponseEvent","MBexceptionEvent")
+	
+	
+	'Ask modbus library to connect. If the connection isn't possible, the system will try to reconnect with a fixed interval.
+	MBobject.ConnectServer("127.0.0.1",502)
+	
+	
+	'Never poll the modbus client faster then the timeout of the response.
+	'Otherwise, due to the use of the transaction id, the internal timeout timer will be reset, and no error will be generated,
+	'when the client doensn't respond.
+	MBobject.SetResponseTimeout_ms(800)
+	
+	'Initialize the timer that does here in this example the requests ("poll's")
+	timer1.Initialize("timer1",1000)
+	timer1.Enabled = True
+	
+	'Let the program run in a loop
+	StartMessageLoop
+End Sub
+
+'Poll for data every second
+Sub timer1_tick
+	
+		
+	'Never poll the modbus client faster then the timeout of the response.
+	'Otherwise, due to the use of the transaction id, the internal timeout timer will be reset, and no error will be generated
+	'When the client doensn't respond. (-> and the TCP socket is open)
+	
+	'Some test data to write to a modbus TCP server / slave
+	Dim Values(3) As Byte
+	Values(0) = 0x00
+	Values(1) = 0x55
+	Values(2) = 0xFF
+	
+	
+	'Here the functions that are supported by this library
+	'The paramters that you need to give:
+	'-transactionID -> MUST be unique for each requested value, you will use this value to evaluate the response of your request.
+	'-Unit -> this is the slave address of your modbus server/slave
+	'-StartAddress -> address in the list where you what start reading or writing
+	'-numInputs/Value/Values -> number of values that you want to read or the data that you want to write
+	
+	
+	'Reading of values in "short" type
+	'MBobject.ReadHoldingRegisters(2,1,5000,10)
+	'MBobject.ReadInputRegisters(2,200,0,10)
+	
+	'Reading of values in "bit" type, the library will always return a FULL byte.
+	MBobject.ReadCoils(3,200,0,10)
+	'MBobject.ReadDiscreteInputs(3,200,0,10)
+	
+	'Writing of values in "short" type.
+	'MBobject.WriteSingleRegsiter(1,200,1,10)
+	'MBobject.WriteMultipleRegsiters(1,200,0,Values)
+	
+	'Writing of values in byte (multiple coils) or "bit" type (write a single coil)
+	'MBobject.WriteSingleCoil(1,200,5,False)
+	'MBobject.WriteMultipleCoils(1,200,0,Values)
+	
+	
+End Sub
+
+
+Sub MBresponseEvent (MBAP As MB_MBAP_HeaderData, Response  As MB_ResponseDataValues)
+	
+	'Here we will receive every response.
+	'For reading and for writing commands.
+	'For writing commands, no data (Repsonse) is given back, only the MBAP, but this confirms that your writing was successful.
+	
+	'MBAP_HeaderData is an object that contains the modbus Mbap header information.
+	'Like: 
+	'-Transaction ID (unique ID that is send and echoed back by the modbus slave.
+	'-Unit, also know as the modbus slave address.
+	'-MessageLength, length of the message after the message lenght value (so transaction id,protocol id and messagelength itself aren't counted).
+	
+	'MB_ResponseDataValues is an object that contains the values, returned at a read action
+	'For coils and discrete inputs, the result is returned in bytes
+	'For Holding and input registers, the result is returned in short values
+	'So you need to use the correct type -> Response.Registers (as short) or  Response.CoilsOrDitialInputs (as byte)
+	
+
+	Dim msg As String
+	
+	Dim IndexInfo As Short = 0
+	
+	'Identify transaction ID
+	'The response linked to this transationID, that identifies you initial request
+	Select	MBAP.transactionID
+		
+		''Poll with ID no 1
+		Case 1
+			msg = "Unit:" & MBAP.unit & " TransID: " & MBAP.transactionID & " MessageLength: " & MBAP.MessageLength & "  Write action was successful." 
+			Log(msg)
+				
+			
+			'Poll with ID no 2
+		Case 2
+			msg = "Unit:" & MBAP.unit & " TransID: " & MBAP.transactionID & " MessageLength: " & MBAP.MessageLength	 
+			Log(msg)
+			
+			'Show the values in the log
+			For Each	RegisterValue As Short In Response.Registers
+				Log("Index:" & IndexInfo & " Value: "& RegisterValue)
+			
+				IndexInfo  = IndexInfo +1
+				
+			Next
+			
+			'Poll with ID no 3
+		Case 3
+			msg = "Unit:" & MBAP.unit & " TransID: " & MBAP.transactionID & " MessageLength: " & MBAP.MessageLength
+			Log(msg)
+			
+			'Show the values in the log
+			For Each	RegisterValue2 As Byte In Response.CoilsOrDitialInputs
+				Log("Index:" & IndexInfo & " Value: "& MBobject.ToBinaryString(RegisterValue2))
+				IndexInfo  = IndexInfo + 1
+				
+			Next
+			
+			
+			'For unkown transaction ID's, do nothing.
+		Case Else
+			
+		
+	End Select
+	
+End Sub
+
+
+
+Sub MBexceptionEvent (exceptionObject As MB_exceptionType)
+	'Sub for handling the error information.
+	
+	'Troubles in paradise
+	Dim SlaveInformation As String = " For -> Unit ID (slave address): " & exceptionObject.unit & " Transaction ID:  " & exceptionObject.transactionID & "Functioncode: " & exceptionObject.function
+	Dim excMessage As String = "Modbus reports error: "
+	
+	
+	'Exception messages for debug information, or for the end user.
+	Select	exceptionObject.exception
+			Case MBobject.excIllegalFunction
+			excMessage = excMessage & "Illegal function!" & SlaveInformation
+			Case MBobject.excIllegalDataAdr
+			excMessage = excMessage & "Illegal data address!" & SlaveInformation
+						
+			Case MBobject.excIllegalDataVal
+			excMessage = excMessage & "Illegal data value!" & SlaveInformation
+			
+			Case MBobject.excSlaveDeviceFailure
+			excMessage = excMessage & "Slave device failure!" & SlaveInformation
+				
+			Case MBobject.excAck
+			excMessage = excMessage & "Acknowledge!" & SlaveInformation
+							
+			Case MBobject.excSlaveIsBusy
+			excMessage = excMessage & "Slave is busy!" & SlaveInformation
+			
+			Case MBobject.excNegAck
+			excMessage = excMessage & "Negative Acknowledge!" & SlaveInformation
+		
+			Case MBobject.excMemoryParityErr
+			excMessage = excMessage & "Memory parity error!" & SlaveInformation
+			
+			Case MBobject.excGatePathUnavailable
+			excMessage = excMessage & "Gateway path unavailable!" & SlaveInformation
+			
+			Case MBobject.excGateRepsonseFailure
+			excMessage = excMessage & "Gateway response failure!" & SlaveInformation
+			
+			Case MBobject.excExtendExceptResponse
+			excMessage = excMessage & "Extended exception response!" & SlaveInformation
+			
+			Case MBobject.excExceptionNotConnected
+			excMessage = excMessage & "Not connected!" & SlaveInformation
+			
+			Case MBobject.excExceptionConnectionLost
+			excMessage = excMessage & "Connection is lost!" & SlaveInformation
+			
+			Case MBobject.excExceptionTimeout
+			excMessage = excMessage & "Slave timed out!" & SlaveInformation
+		
+			Case MBobject.excExceptionOffset
+			excMessage = excMessage & "Wrong offset!" & SlaveInformation
+	
+			Case MBobject.excSendFailt
+			excMessage = excMessage & "Send failure!" & SlaveInformation
+	
+		    Case MBobject.excSocketError
+			excMessage = excMessage & "Socket error!"  'general error
+	
+		
+	End Select
+	
+	'Write exceptionstring to logbook
+	Log(excMessage)
+		
+	
+End Sub
+
+

@@ -1,0 +1,58 @@
+﻿Build1=Default,b4i.example.iAXMaterialProgress
+Group=Default Group
+Library1=icore
+Library2=iaxmaterialprogress
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+''Code module
+#Region  Project Attributes 
+	#ApplicationLabel: iAXMaterialProgress
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Dim Progress As iAXMaterialProgress
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	
+	Progress.Initialize("Amir")
+	Page1.RootPanel.AddView(Progress,50%x-28dip,30%y-28dip,56dip,56dip)
+	Progress.SetProgressSize(56dip,56dip)
+	Progress.Start
+	
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Private Sub Amir_ProgressUpdated (mProgress As Float)
+	Dim NO As NativeObject = Me
+	Progress.SetBarColor(NO.ColorToUIColor(Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255))))
+End Sub

@@ -1,0 +1,55 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jbitmapcreator
+Library4=xui views
+Module1=VerticalTextEngine
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Canvas1 As Canvas
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+	
+	Dim vte As VerticalTextEngine
+	vte.Initialize
+	Dim img As B4XBitmap
+	Dim text As String
+	'text="1995今天天气不错！"&CRLF&"我觉得很开心。"
+	'text="ABBC 7月1日"
+	'text="2"
+	text="今日から—"&CRLF&"みんなと勉強"&CRLF&"する事になった、"&CRLF&"灰原哀さん"&CRLF&"です！"
+	
+	img=vte.Draw(text,fx.DefaultFont(15),fx.Colors.Black,5,5,True,Canvas1.Width,Canvas1.Height)
+	Dim out As OutputStream
+	out=File.OpenOutput(File.DirApp,"out.png",False)
+	img.WriteToStream(out,"100","PNG")
+	out.Close
+	Log(img.Width)
+	Log(img.Height)
+	'Canvas1.DrawRect(0,0,img.Width,img.Height,fx.Colors.Red,True,2)
+	Canvas1.DrawImage(img,0,0,img.Width,img.Height)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

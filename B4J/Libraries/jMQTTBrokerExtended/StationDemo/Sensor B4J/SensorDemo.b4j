@@ -1,0 +1,153 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 300 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private btnStart As Button
+	Private btnStop As Button
+	Private lstData As ListView
+
+	Dim Client As MqttClient
+	Dim Const IPAddress As String = "127.0.0.1"
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+
+	Dim Const FIRST_VALUE As Float = 100
+	Dim CurrentValue As Float
+	Dim TrendUp As Boolean
+	Dim Const SLEEP_DURATION As Int = 200 'ms
+	Dim Const WAIT_BEFORE_RECONNECT As Int = 5 'sec.
+
+	Dim Serializator As B4XSerializator
+	Type typControl(Sensor As String, Stop As Boolean)
+	Type typData(Sensor As String, Data As Object)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+	MainForm.Show
+
+	'Initializes the simulation data
+	CurrentValue = FIRST_VALUE + Rnd(-20, 20)
+	TrendUp = (Rnd(0, 2) = 0)
+
+	'Connects to the MQTT broker
+	Client.Initialize("Monitor", ServerURI, "S" & Rnd(0, 100000))
+	Client.Connect
+End Sub
+
+Sub btnStart_Click
+	btnStart.Enabled = False
+	btnStop.Enabled = True
+
+	Do While Client.Connected And btnStop.Enabled
+		'Gets the current sensor (simulated) data
+		Dim Change As Float = Rnd(-6, 15) / 10
+		If TrendUp Then
+			CurrentValue = CurrentValue + Change
+		Else
+			CurrentValue = CurrentValue - Change
+		End If
+
+		'Simulates a change of trend
+		If Rnd(0, 30) = 0 Then
+			TrendUp = (Rnd(0, 2) = 0)
+		End If
+		If CurrentValue < 30 Then
+			TrendUp = True
+		Else If CurrentValue > 170 Then
+			TrendUp = False
+		End If
+
+		'Sends it to the controller
+		Client.Publish2("data", CreateMsg(CurrentValue), Client.QOS_0_MOST_ONCE, True)
+
+		'Displays the value in the list
+		If lstData.Items.Size > 100 Then lstData.Items.Clear
+		lstData.Items.Add(NumberFormat(CurrentValue, 1, 2))
+		lstData.ScrollTo(lstData.Items.Size - 1)
+
+		'Waits before sending new data
+		Sleep(SLEEP_DURATION)
+	Loop
+End Sub
+
+Sub btnStop_Click
+	btnStart.Enabled = True
+	btnStop.Enabled = False
+End Sub
+
+Sub CreateMsg(RawData As Object) As Byte()
+	Dim Data As typData
+	Data.Initialize
+	Data.Sensor = Client.ClientId
+	Data.Data = RawData
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	If Success Then
+		Client.Subscribe("control", Client.QOS_1_LEAST_ONCE)
+		MainForm.Title = "Sensor " & Client.ClientId
+		btnStart.Enabled = True
+	Else
+		Log("Connection failed. Reconnect attempt in " & WAIT_BEFORE_RECONNECT & " seconds.")
+		Sleep(WAIT_BEFORE_RECONNECT * 1000)
+		Client.Connect
+	End If
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	If Topic = "control" Then
+		'Control message received from the controller
+		Dim Order As typControl = Serializator.ConvertBytesToObject(Payload)
+		If Order.Sensor = Client.ClientId Or Order.Sensor = "*" Then
+			If Order.Stop Then
+				If btnStop.Enabled Then btnStop_Click
+			Else
+				If btnStart.Enabled Then btnStart_Click
+			End If
+		End If
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+	Log("Disconnected. Reconnect attempt in " & WAIT_BEFORE_RECONNECT & " seconds.")
+	btnStart.Enabled = False
+	btnStop.Enabled = False
+	Sleep(WAIT_BEFORE_RECONNECT * 1000)
+	Client.Connect
+End Sub
+
+Sub MainForm_Closed
+	If Client.Connected Then
+		Client.Close
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

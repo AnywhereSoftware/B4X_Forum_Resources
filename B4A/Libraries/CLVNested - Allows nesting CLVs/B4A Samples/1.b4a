@@ -1,0 +1,92 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=Item.bal
+File3=ItemHorizontal.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=xcustomlistview
+Library3=xui
+Library4=viewsex
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CLVNested
+Module2=Starter
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private CustomListView1 As CustomListView
+	Private clvItem As CustomListView
+	Private xui As XUI
+	Private nested As CLVNested
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	nested.Initialize(Activity)
+	nested.base.LoadLayout("1")
+	nested.CLV = CustomListView1
+	For i = 1 To 10
+		CustomListView1.AddTextItem($"*** TITLE (${i}) ***"$, "")
+		Dim p As B4XView = xui.CreatePanel("")
+		p.SetLayoutAnimated(0, 0, 0, 100%x, 200dip)
+		If i Mod 2 = 1 Then
+			p.LoadLayout("Item")
+			FillInnerList
+		Else
+			p.LoadLayout("ItemHorizontal")
+			FillHorizontalInnerList
+		End If
+		p.Tag = clvItem 'must set the Panel tag like this
+		CustomListView1.Add(p, "")
+	Next
+End Sub
+
+Sub FillInnerList
+	For x = 1 To 10
+		clvItem.AddTextItem($"Item #${x}"$, x)
+	Next
+End Sub
+
+Sub FillHorizontalInnerList
+	For i = 1 To 10
+		Dim pp As B4XView = xui.CreatePanel("")
+		pp.SetLayoutAnimated(0, 0, 0, 60dip, clvItem.AsView.Height)
+		pp.Color = Rnd(0xff000000, -1)
+		clvItem.Add(pp, i)
+	Next
+End Sub
+
+Sub CLVItem_ItemClick (Index As Int, Value As Object)
+	Log(Value)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

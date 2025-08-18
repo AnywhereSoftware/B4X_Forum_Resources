@@ -1,0 +1,112 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=CVT.bjl
+File2=richtext.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Module1=CodeArea
+Module2=CSSUtils
+Module3=Utils
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=3
+Version=6.3
+@EndOfDesignText@
+#AdditionalJar: richtextfx-fat-0.9.0
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private CodeArea1 As CodeArea
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	
+	'To load from the designer
+	'MainForm.RootPane.LoadLayout("CVT") 'Load the layout file.
+	
+	
+	'To load via code. Comment out the LoadLayout above
+	
+			CodeArea1.Initialize(Me,"CodeArea1")
+			
+			'Run Setup on the CustomView
+			CodeArea1.Setup(MainForm,Null,0,0,MainForm.Width,MainForm.Height)
+			
+			'Set the anchors on the CustomViews Base Pane so that the view will autosize
+			MainForm.RootPane.SetAnchors(CodeArea1.BasePane,0,0,0,0)
+			
+			'Set a font size to the customview object
+			CSSUtils.SetStyleProperty(CodeArea1.GetObject,"-fx-font-size","12px")
+	'End of load via code 
+	
+	
+	MainForm.Show
+	
+	
+	'For Read only
+	'CodeArea1.Editable = False
+	
+	'Update the text in the codeArea
+	CodeArea1.ReplaceText(0,CodeArea1.Length,GetText)
+
+End Sub
+
+Sub CodeArea1_TextChanged(OldVal As String,NewVal As String)
+	Log($"*** OV ***
+${OldVal}"$)
+	Log($"*** NV ***
+${NewVal}"$)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+'Example Text
+Sub GetText As String
+	Dim Text As String = "'Convenient method to assign a single style class.Public" & CRLF
+	Text=Text & "Sub SetStyleClass(SetFrom As Int, SetTo As Int, Class As String)" & CRLF
+	Text=Text & "	JO.RunMethod(""setStyleClass"",Array As Object(SetFrom, SetTo, Class))" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Gets the value of the property length." & CRLF
+	Text=Text & "Public Sub Length As Int" & CRLF
+	Text=Text & "	Return JO.RunMethod(""getLength"",Null)" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Replaces a range of characters with the given text." & CRLF
+	Text=Text & "Public Sub ReplaceText(Start As Int, ThisEnd As Int, Text As String)" & CRLF
+	Text=Text & "	JO.RunMethod(""replaceText"",Array As Object(Start, ThisEnd, Text))" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Get/Set the CodeArea Editable" & CRLF
+	Text=Text & "Public Sub setEditable(Editable As Boolean)" & CRLF
+	Text=Text & "	JO.RunMethod(""setEditable"",Array(Editable))" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "Public Sub getEditable As Boolean" & CRLF
+	Text=Text & "	JO.RunMethod(""isEditable"",Null)" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Get the unwrapped object" & CRLF
+	Text=Text & "Public Sub GetObject As Object" & CRLF
+	Text=Text & "	Return JO" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Get the unwrapped object As a JavaObject" & CRLF
+	Text=Text & "Public Sub GetObjectJO As JavaObject" & CRLF
+	Text=Text & "	Return JO" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Text=Text & "'Comment if not needed" & CRLF
+	Text=Text & "'Set the underlying Object, must be of correct type" & CRLF
+	Text=Text & "Public Sub SetObject(Obj As Object)" & CRLF
+	Text=Text & "	JO = Obj" & CRLF
+	Text=Text & "End Sub" & CRLF
+	Return Text
+End Sub
+

@@ -1,0 +1,190 @@
+﻿AppType=JavaFX
+Build1=Default,agraham.jbasiclib.demo
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jbasiclib
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 300
+	' Ignore unused method warning(12)
+	#IgnoreWarnings: 12
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Dim Blib As jBasicLib
+	Private Button1 As Button
+	Private Label1 As Label
+	Dim Program As String = ""
+	Type VarType (Name As String, Ranks As String, IsArray As Boolean) ' used in dipslaying variable values
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	Blib.Initialize("Blib")
+	Blib.AddSysCalls(Array As String("TestMethod"))
+	' This whole application is a bit trivial but does demonstrate that the host interface is working correctly
+	' To see a much more sophisticated use case download the Android BasicLib library zip file and examine the BasicIDE code
+	
+	' This B4Script program tests the colour functions that were rewritten for jBasicLib,
+	' it also calls back into the host to run Sub TestMethod
+	' and provides Subs Called0, Called1 and Called2 that can be called from the host.
+	Program = ""
+	' provide some globals to look at in break
+	Program = Program & "globa = 1111" & CRLF '1
+	Program = Program & "globb = 'A string'" & CRLF '2
+	Program = Program & "dim array1(3)" & CRLF '3
+	Program = Program & "array1(0) = 1234" & CRLF '4
+	Program = Program & "array1(1) = 2468" & CRLF '5
+	Program = Program & "array1(2) = 3579" & CRLF '6
+	' check my amended colour functions
+	Program = Program & "color = -8372192" & CRLF '7 color = 0xff804020
+	Program = Program & "col = argb(255, 128, 64, 32)" & CRLF '8
+	Program = Program & "msg = 'Alpha: ' & geta(col)" & CRLF '9
+	Program = Program & "msg = msg & ' Red: ' & getr(col)" & CRLF '10
+	Program = Program & "msg = msg & ', Green: ' & getg(col)" & CRLF '11
+	Program = Program & "msg = msg & ', Blue: ' & getb(col)" & CRLF '12
+	Program = Program & "msg = msg & ', OK = ' & (col = color)" & CRLF '13
+	Program = Program & "msgbox(msg, 'Colour Values')" & CRLF '14
+	Program = Program & "print testmethod('Extension method called from within BasicLib')" & CRLF '15
+	Program = Program & "AppClose" & CRLF '16
+	Program = Program & "" & CRLF '17
+	' some subs to call from the host
+	Program = Program & "sub called0" & CRLF '18
+	Program = Program & "  msgbox('No parameters', 'Called0')" & CRLF '19
+	Program = Program & "end sub" & CRLF '20
+	Program = Program & "" & CRLF '21
+	Program = Program & "sub called1(param1)" & CRLF '22
+	Program = Program & "  msgbox(param1, 'Called1')" & CRLF '23
+	Program = Program & "end sub" & CRLF '24
+	Program = Program & "" & CRLF '25
+	Program = Program & "sub called2(param1, param2)" & CRLF '26
+	' add some locals to examine in break
+	Program = Program & "  local1 = 'Fred'" & CRLF '27
+	Program = Program & "  local2 = 'Jim'" & CRLF '28	
+	Program = Program & "  msgbox(param1 & ', ' & param2, 'Called2')" & CRLF '29
+	Program = Program & "end sub" & CRLF '30
+	Program = Program & "" & CRLF '31
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub Button1_Click
+	Blib.Step = True ' you wouldn't normally do this but with it we can see the progress of the program in the Log
+	Blib.BreakAtLine = 29
+	Dim args(0) As String
+	Blib.LoadCodeAsString(Program)
+	Blib.Run(args)
+End Sub
+' jBasicLib Events
+
+Sub Blib_Break(linenumber As Int) 'The script has stopped at linenumber
+	Log("Break Event at line: " & linenumber)
+	Dim msg As String = "Break at line " & Blib.linenumber & " : "  & Blib.ProgramLine(Blib.linenumber) & CRLF
+	msg = msg & GetVariableVals & CRLF
+	fx.Msgbox(MainForm, msg, "Break")
+End Sub
+
+Sub GetVariableVals As String
+	Dim GlobalVars, LocalVars, Printed As String
+	Dim LocalsArr(0), GlobalsArr(0) As String
+	Dim vtype As VarType
+	GlobalVars = Blib.GetGlobalVars
+	LocalVars = Blib.GetLocalVars
+	GlobalsArr = Regex.Split(",", GlobalVars)
+	LocalsArr = Regex.Split(",", LocalVars)
+	GlobalVars = "GLOBAL VARIABLES" & CRLF
+	LocalVars = "LOCAL VARIABLES" & CRLF
+	Printed = ""
+	If GlobalsArr(0) <> "" Then
+		For Each var In GlobalsArr
+			vtype = ParseVar(var)
+			GlobalVars = GlobalVars & vtype.Name
+			If vtype.IsArray Then
+				GlobalVars = GlobalVars & vtype.Ranks
+			End If
+			GlobalVars = GlobalVars & " = '" & Blib.GetGlobal(vtype.Name).Replace(Chr(10), "\n") & "'"
+			If vtype.IsArray Then
+				GlobalVars = GlobalVars  & " ... "
+			End If
+			GlobalVars = GlobalVars  & CRLF
+		Next
+	End If
+	If LocalsArr(0) <> "" Then
+		For Each var In LocalsArr
+			LocalVars = LocalVars & var & " = '" & Blib.GetLocal(var).Replace(Chr(10), "\n") & "'" & CRLF
+		Next
+	End If
+	Return  LocalVars & CRLF & GlobalVars & Printed
+End Sub
+
+Sub ParseVar(var As String) As VarType
+	Dim vparts(2) As String '= Regex.Split("\(", var)
+	Dim idx As Int = var.IndexOf("(")
+	vparts(0) = var.SubString2(0, idx)
+	vparts(1) = var.SubString(idx)
+	Dim vtype As VarType
+	vtype.IsArray = True
+	vtype.Name = vparts(0)
+	vtype.Ranks = vparts(1).Replace(":", ",")
+	If vtype.Ranks = "(1,0,0)" Then vtype.IsArray = False
+	Return vtype
+End Sub
+
+
+Sub Blib_Ended(error As String) 'Error is an empty string if the script terminated without error
+	Log("Ended Event: " & error )
+	Log("Called Called0")
+	Blib.Call("called0", Null)
+	Log("Returned")
+	Log("Called Called1")
+	Blib.Call("called1", Array As String("Parameter1"))
+	Log("Returned")
+	Log("Called Called2")
+	Blib.Call("called2", Array As String("Parameter1", "Parameter2"))
+	Log("Returned")
+End Sub
+
+Sub Blib_Loaded(error As String) 'Error is an empty string if the script loaded without error
+	Log("Loaded Event: " & error)
+End Sub
+
+Sub Blib_Starting 'The script has initialised its variables and is about to start executing
+	Log("Starting Event:")
+End Sub
+
+Sub Blib_Stepped(linenumber As Int) 'The script has stepped to linenumber
+	Log("Step Event at line: " & linenumber)
+End Sub
+
+' B4Script Msgbox and Print statements arrive here modally
+Sub Blib_Message(message As String, subject As String) 'Raised by Msgbox or Print
+	Label1.Text = "Message = " & subject & " : " & message
+	Log(Label1.Text)
+	fx.Msgbox(MainForm, message, "From BasicLib: " & subject)
+End Sub
+
+
+' jBasicLib Extension Sub callable from a jBasicLib program
+' Must be added with AddSysCalls(Array As String(...)) to be callable
+' Must take string parameters and return a string value
+Sub TestMethod(msg As String) As String
+	Log("TestMethod : " & msg)
+	fx.Msgbox(MainForm, msg, "From BasicLib: TestMethod")
+	Return "TestMethod returned"
+End Sub
+

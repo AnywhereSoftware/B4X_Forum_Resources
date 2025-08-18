@@ -1,0 +1,122 @@
+﻿Build1=Default,www.sagital.ap
+File1=apDark.bil
+File2=apLight.bil
+File3=audioempty.png
+File4=audioicon.png
+File5=foldericon.png
+File6=foldericonup.png
+File7=notrack.png
+File8=playlistimg.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+Group=Default Group
+Library1=icore
+Library2=istringutils
+Library3=iui8
+Library4=il_audioplayer
+NumberOfFiles=8
+NumberOfLibraries=4
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: il_AudioPlayer
+	#Version: 0.01
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+	#PlistExtra: <key>UIBackgroundModes</key><array><string>audio</string></array>
+#End Region
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private audioplayer As il_AudioPlayer	
+	Private btn1, btn2 As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController) 'ignore
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	NavControl.NavigationBarVisible = False 
+	NavControl.ToolBarVisible = False
+	
+	btn1.Initialize("btn",btn1.STYLE_SYSTEM)
+	btn2.Initialize("btn",btn2.STYLE_SYSTEM)
+	btn1.Text = "Open AudioPlayer LightMode"
+	btn2.Text = "Open AudioPlayer DarkMode"
+	
+	btn1.Tag = 0
+	btn2.Tag = 1
+	
+	Page1.RootPanel.AddView(btn1,0,0,0,0)
+	Page1.RootPanel.AddView(btn2,0,0,0,0)
+End Sub
+ 
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	btn1.SetLayoutAnimated(0,1,50dip,250dip,250dip,50dip)
+	btn2.SetLayoutAnimated(0,1,50dip,300dip,250dip,50dip)
+End Sub
+ 
+Private Sub Application_Background
+End Sub
+
+Sub btn_Click
+	Dim btn As Button = Sender
+	Dim thememode As Int = btn.tag '0 = LightMode, 1 = DarkMode
+ 
+	If audioplayer.IsInitialized = False Then
+		audioplayer.Initialize(App,Me,Page1.RootPanel,"audioplayer",thememode,True,True)
+		audioplayer.AP_Songlist.Clear
+		
+		'## filling songlist with tracks
+		audioplayer.AP_Songlist.Clear
+		
+		'// Load your songs here.
+		'audioplayer.AP_Songlist.Add(audioplayer.Ap_Createsong(audioplayer.AP_Songlist.Size,File.DirAssets,"CRO - Traum (Official Version).mp3","CRO - Traum",False,Null,Null,""))
+		'audioplayer.AP_Songlist.Add(audioplayer.Ap_Createsong(audioplayer.AP_Songlist.Size,File.DirAssets,"Soldimyfilesshare.mp3","Soldimyfilesshare",False,Null,Null,""))
+		'...
+
+		audioplayer.AP_SetLoopPlay(True)
+		audioplayer.Ap_SetSkipseconds(30)
+		audioplayer.Ap_ShowSpecialButtons(True)
+		audioplayer.AP_SongPath(File.DirAssets) 
+		audioplayer.AP_SongPathLongClick(File.DirDocuments)
+		audioplayer.AP_PlaylistPath(File.Combine(File.DirDocuments,"myplaylists"))
+		audioplayer.AP_show
+		If audioplayer.AP_Songlist.Size > 0 Then audioplayer.AP_playTrack(0)
+ 
+		'// change view color
+		'Dim lbl As Label = audioplayer.returnTitleLabel
+		'lbl.TextColor = Colors.Red
+ 
+	Else 
+		audioplayer.AP_show
+	End If
+End Sub
+
+Sub audioplayer_likeClicked(id As Int,value As Boolean) 'AP_Event
+	Log("songid:  " & id & "  -  value:  " & value)
+End Sub
+
+Sub audioplayer_playerclose 'AP_Event
+	If audioplayer.IsInitialized Then audioplayer.AP_pause
+End Sub
+
+Sub audioplayer_msg(senderaction As String) 'AP_Event
+	Log(senderaction)
+End Sub
+ 

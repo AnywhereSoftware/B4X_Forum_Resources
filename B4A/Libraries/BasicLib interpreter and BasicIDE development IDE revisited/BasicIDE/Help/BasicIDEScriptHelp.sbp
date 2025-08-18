@@ -1,0 +1,65 @@
+﻿Version=9.79
+NumberOfForms=0
+FormWidth=600
+FormHeight=548
+IconFile=
+NumberOfDesktopIncludes=0
+NumberOfObjects=0
+NumberOfModules=0
+ModuleOrder=Main
+SelectedModuleIndex=0
+CaretOffset=1416
+Arguments=
+Watches=line,,,,,,,,,,,
+Platform32bit=False
+ExplorerNodeStates=C,C,C,C,C,
+Sub designer
+End Sub
+@EndOfDesignText@
+Sub Globals
+	'Declare the global variables here.
+	
+	' 1.0	Original version for "Sys" calls
+	' 1.1 Modified for "proper" calls to Script.bas
+	IDText = "Basic4Android BasicLibHelp Generator version 1.1"
+	
+	SysFile = AppPath & "\..\script.bas"
+	HelpFile = AppPath & "\BasicIDEScriptHelp.html"
+End Sub
+
+Sub App_Start
+	ReadFile
+End Sub
+
+Sub ReadFile
+	If FileExist(SysFile) = True Then
+		FileOpen(infile, SysFile, cRead)
+		FileOpen(outfile, HelpFile, cWrite)
+		FileWrite(outfile, "<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>")
+		FileWrite(outfile, "<html>")
+		FileWrite(outfile, "<body>")	
+		'FileWrite(outfile, "<b><u>BasicIDE B4Script Language Extensions</u></b><br>")			
+		line = FileRead(infile)
+		Do Until line = EOF
+			If StrIndexOf(line, "''", 0) = 0 Then
+				line = SubString(line, 2, StrLength(line) - 2) & "<br>"		
+				If SubString(line, 0, 3) = "@N:" Then
+					line = "<br><b>" & SubString(line, 3, StrLength(line) - 3) & "</b>"				
+				Else If SubString(line, 0, 3) = "@H:" Then
+					line = "<br><br><b><u>" & SubString(line, 3, StrLength(line) - 3) & "</u></b>"				
+					line = "<a href='#top'>Contents</a><br>" & line
+				Else If SubString(line, 0, 1) = "@" Then
+					line = "<b>" & SubString(line, 1, StrLength(line) - 1) & "</b>"				
+				End If
+			FileWrite(outfile, line)		
+			End If			
+			line = FileRead(infile)			
+		Loop
+		FileWrite(outfile, "<br><a href='#top'>Contents</a><br><br>")
+		FileWrite(outfile, "</body>")
+		FileWrite(outfile, "</html>")
+		FileClose(infile)
+		FileClose(outfile)
+	End If
+End Sub
+

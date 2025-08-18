@@ -1,0 +1,390 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=game.db
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jmqttbrokerextended
+Library3=jrandomaccessfile
+Library4=jsql
+Module1=|relative|..\Shared code\codConstants
+Module2=codMessages
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=8.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End Region
+
+Sub Process_Globals
+	Dim Broker As MQTTBrokerExtended
+
+	Dim SQL As SQL
+	Dim Const DBName As String = "game.db"
+
+	Dim StateMap As Map
+	Dim WaitingRoom As List
+	Dim JoiningRoom As Map
+	Dim MatchingTimer As Timer
+
+	Dim Const NUMBER_OF_PLAYERS As Int = 3 'Minimum 2
+	Dim Const MAX_WAITING_TIME As Long = 300000 '5 minutes
+	Dim Const MIN_DELAY_BEFORE_REPLAYING_TOGETHER As Long = 3600000 '1 hour
+	Dim Const SEARCH_FREQUENCY_FOR_NEW_GAME As Long = 500 'Every 500 ms
+
+	Dim Const J_NOT_YET_READY As Boolean = False
+	Dim Const J_READY As Boolean = True
+
+	Type typMsg(MsgType As Byte, Message As Object)
+	Type typWaiting(PlayerID As String, LastMatchID As String, LastUpdate As Long, EntryTime As Long)
+	Type typJoin(MatchID As String, Players As List, Data As typGameData)
+	Type typGameData(RoundNbr As Int, CurrentPlayer As Int, Data As Object, Timestamp As Long)
+End Sub
+
+Sub AppStart (Args() As String)
+	'Copies the database if it's not done yet
+	If Not(File.Exists(File.DirApp, DBName)) Then
+		File.Copy(File.DirAssets, DBName, File.DirApp, DBName)
+	End If
+
+	'Opens the database
+	SQL.InitializeSQLite(File.DirApp, DBName, False)
+
+	'Initializes the lists and maps
+	StateMap.Initialize
+	WaitingRoom.Initialize
+	JoiningRoom.Initialize
+
+	'Initializes the timer that checks whether there are enough players for a game
+	MatchingTimer.Initialize("Matcher", SEARCH_FREQUENCY_FOR_NEW_GAME)
+
+	'Starts the broker
+	Broker.Initialize(codConstants.PORT, Broker.AUTHENTICATION_NO, False, "Broker")
+	Broker.Start
+	StartMessageLoop 'Non-UI app
+End Sub
+
+Sub Broker_Connect(ClientID As String, Username As String, ProtocolName As String, ProtocolVersion As Byte, QOS As String, KeepAlive As Int, IsCleanSession As Boolean, IsDupFlag As Boolean, IsRetainFlag As Boolean, IsWillFlag As Boolean)
+	Broker.AddToLog("CONNECT : " & ClientID & " Username=" & Username & " ProtocolName=" & ProtocolName & " ProtocolVersion=" & ProtocolVersion & " QOS=" & QOS, Broker.LOG_LEVEL_INFO)
+	Broker.AddToLog("        : KeepAlive=" & KeepAlive & " IsCleanSession=" & IsCleanSession & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag & " IsWillFlag=" & IsWillFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub ChangeState(PlayerID As String, NewState As Int)
+	'Updates the map tracking the state of all players
+	StateMap.Put(PlayerID, NewState)
+
+	'Publishes the new state to the private topic of the player
+	Broker.AddToLog(PlayerID & " STATE=" & NewState, Broker.LOG_LEVEL_INFO)
+	Broker.InternalPublish(PlayerID, codMessages.CreateStateMsg(NewState), Broker.QOS_AT_LEAST_ONCE, False)
+End Sub
+
+Sub Broker_Subscribe(ClientID As String, Username As String, RequestedQOS As String, TopicFilter As String)
+	Broker.AddToLog("SUBSCRIBE : " & ClientID & " Username=" & Username & " TopicFilter=" & TopicFilter & " ReqQOS=" & RequestedQOS, Broker.LOG_LEVEL_INFO)
+
+	'After connecting to this broker, the player subscribes to his private topic (topic name = client ID).
+	'His state and current game ID, if any, are retrieved from the database.
+	'At this stage, only two states are allowed: MUST_WAIT (he wants to join a game) or PLAYING (he already has a game in progress).
+	'The state is sent to the client. Game data are also sent if the state is PLAYING and the game is still on.
+
+	'If the player state is MUST_WAIT, the player may subscribe to the waiting topic (topic name = TOPIC_WAITING).
+	'If his state is JOINING; he may subscribe to the game topic (topic name = match ID).
+
+	'By subscribing to the waiting topic, the player is added to the waiting room and his state changes to WAITING.
+	'The new state and the list of waiting players are sent to update the client.
+	'The timer that checks whether there are enough players for a game is started.
+	'If there are enough players for a game, they are moved from the waiting room to the joining room and their state changes to JOINING.
+
+	'By subscribing to the game topic, the player confirms that he's ready to play with the other participants.
+	'His state in the joining room is set to READY.
+	'When all participants have confirmed their participation, the game is started. The initial game data is sent to all participants and their status changes to PLAYING.
+
+	If TopicFilter = ClientID Then 'Private topic
+		'Returns the recorded data of this player
+		Dim RS As ResultSet = SQL.ExecQuery2("SELECT State, MatchID FROM Players WHERE PlayerID=?", Array As String(ClientID))
+		Dim State As Int
+		Dim MatchID As String
+		If RS.NextRow Then
+			'Player found
+			State = RS.GetInt("State")
+			MatchID = RS.GetString("MatchID")
+			RS.Close
+			If State <> codConstants.STATE_MUST_WAIT And State <> codConstants.STATE_PLAYING Then
+				'When subscribing to the private topic, only MUST_WAIT (default) and PLAYING are allowed
+				State = codConstants.STATE_MUST_WAIT
+			End If
+		Else
+			'Player not found -> adds the player to the DB
+			State = codConstants.STATE_MUST_WAIT
+			Broker.AddToLog("Adding " & ClientID & " to the DB", Broker.LOG_LEVEL_INFO)
+			SQL.ExecNonQuery2("INSERT INTO Players VALUES (?,?,?,?)", Array As Object(ClientID, State, Null, DateTime.Now))
+		End If
+		ChangeState(ClientID, State)
+		If State = codConstants.STATE_PLAYING Then
+			RS = SQL.ExecQuery2("SELECT Players, Data FROM Games WHERE MatchID=?", Array As String(MatchID))
+			If RS.NextRow Then
+				'Game data found
+				Dim Players As List = codMessages.ConvertFromBlob(RS.GetBlob("Players"))
+				Dim GameMsg As typMsg = codMessages.ConvertFromBlob(RS.GetBlob("Data"))
+				RS.Close
+				Broker.InternalPublish(ClientID, codMessages.CreateRejoiningMsg(MatchID, Players, GameMsg), Broker.QOS_AT_LEAST_ONCE, False)
+
+				'Informs the other participants that this player is back in the game
+				Broker.InternalPublish(MatchID, codMessages.CreateBackMsg(ClientID), Broker.QOS_AT_LEAST_ONCE, False)
+			Else
+				'Game data not found (the game is already over)
+				Broker.InternalPublish(ClientID, codMessages.CreateEndMsg(MatchID), Broker.QOS_AT_LEAST_ONCE, False)
+			End If
+		End If
+
+	Else If TopicFilter = codConstants.TOPIC_WAITING Then 'Waiting room
+		'Adds this player to the waiting room
+		Dim WaitingPlayer As typWaiting
+		WaitingPlayer.Initialize
+		WaitingPlayer.PlayerID = ClientID
+		WaitingPlayer.EntryTime = DateTime.Now
+		Dim RS As ResultSet = SQL.ExecQuery2("SELECT MatchID, Updated FROM Players WHERE PlayerID=?", Array As String(ClientID))
+		If RS.NextRow Then
+			WaitingPlayer.LastMatchID = RS.GetString("MatchID")
+			WaitingPlayer.LastUpdate = RS.GetLong("Updated")
+			RS.Close
+			WaitingRoom.Add(WaitingPlayer)
+
+			'Changes the state of this player
+			ChangeState(ClientID, codConstants.STATE_WAITING)
+
+			'Publishes the list of all waiting players
+			Broker.InternalPublish(codConstants.TOPIC_WAITING, codMessages.CreateWaitingMsg(WaitingRoom), Broker.QOS_AT_LEAST_ONCE, False)
+
+			'Starts the timer
+			If MatchingTimer.Enabled = False Then Broker.AddToLog("Starting the timer", Broker.LOG_LEVEL_INFO)
+			MatchingTimer.Enabled = True
+		Else
+			'The player should be in the DB
+			Broker.AddToLog("Player not found in the DB: " & ClientID, Broker.LOG_LEVEL_ERROR)
+		End If
+
+	Else If JoiningRoom.ContainsKey(TopicFilter) Then 'Game topic
+		'The player confirms that he's ready to play
+		Dim MatchID As String = TopicFilter
+		Dim JPlayers As Map = JoiningRoom.Get(MatchID)
+		JPlayers.Put(ClientID, J_READY)
+
+		'Are all the participants ready?
+		Dim Participants As List
+		Participants.Initialize
+		For Each PlayerID As String In JPlayers.Keys
+			If JPlayers.Get(PlayerID) = J_READY Then
+				Participants.Add(PlayerID)
+			End If
+		Next
+		If Participants.Size = NUMBER_OF_PLAYERS Then
+			'All participants joined the game -> creates the initial game data and updates the DB
+			Dim State As Int = codConstants.STATE_PLAYING
+			Dim GameData() As Byte = codMessages.CreateGameMsg(1, 0, Null)
+			SQL.BeginTransaction
+			Try
+				For Each PlayerID As String In Participants
+					SQL.ExecNonQuery2("UPDATE Players SET State=?,MatchID=?,Updated=? WHERE PlayerID=?", Array As Object(State, MatchID, DateTime.Now, PlayerID))
+				Next
+				SQL.ExecNonQuery2("INSERT INTO Games VALUES(?,?,?)", Array As Object(MatchID, codMessages.ConvertToBlob(Participants), GameData))
+			Catch
+				Broker.AddToLog("Unable to store data for the game " & MatchID & ":" & CRLF & LastException.Message, Broker.LOG_LEVEL_ERROR)
+				SQL.Rollback
+				Return
+			End Try
+			SQL.TransactionSuccessful
+
+			'Sends the new state to all participants
+			For Each PlayerID As String In Participants
+				ChangeState(PlayerID, State)
+			Next
+			JoiningRoom.Remove(MatchID)
+
+			'Sends the game data for the first round
+			Broker.InternalPublish(MatchID, GameData, Broker.QOS_AT_LEAST_ONCE, False)
+			Broker.AddToLog("Game " & MatchID & " started. First player is " & Participants.Get(0), Broker.LOG_LEVEL_INFO)
+		End If
+	End If
+End Sub
+
+Sub CreateGame(Candidates As List)
+	'Removes all candidates from the waiting room
+	For Each Candidate As typWaiting In Candidates
+		Dim Index As Int = WaitingRoom.IndexOf(Candidate)
+		WaitingRoom.RemoveAt(Index)
+	Next
+
+	'Publishes the updated list of waiting players
+	Broker.InternalPublish(codConstants.TOPIC_WAITING, codMessages.CreateWaitingMsg(WaitingRoom), Broker.QOS_AT_LEAST_ONCE, False)
+
+	'Creates a game with the given candidates
+	Dim Players As Map
+	Players.Initialize
+	For Each Candidate As typWaiting In Candidates
+		Players.Put(Candidate.PlayerID, J_NOT_YET_READY) 'This player has not yet confirmed his participation
+	Next
+	Dim MatchID As String = "M" & DateTime.Now & "|" & Players.GetKeyAt(0)
+
+	'Adds the created game to the joining room
+	JoiningRoom.Put(MatchID, Players)
+	Broker.AddToLog("Game created: " & MatchID, Broker.LOG_LEVEL_INFO)
+
+	'Sends the list of participants of the created game to all participants and changes their state to JOINING
+	For Each PlayerID As String In Players.Keys
+		ChangeState(PlayerID, codConstants.STATE_JOINING)
+		Broker.InternalPublish(PlayerID, codMessages.CreateJoiningMsg(MatchID, Players), Broker.QOS_AT_LEAST_ONCE, False)
+	Next
+End Sub
+
+Sub Matcher_Tick
+	'Checks whether there are enough players for a game
+	If WaitingRoom.Size >= NUMBER_OF_PLAYERS Then
+		WaitingRoom.SortType("LastUpdate", True)
+		Dim FirstPlayer As typWaiting = WaitingRoom.Get(0)
+		Dim Candidates As List
+		Candidates.Initialize
+		Candidates.Add(FirstPlayer)
+		For i = 1 To WaitingRoom.Size - 1
+			Dim Player As typWaiting = WaitingRoom.Get(i)
+			If DateTime.Now - Player.EntryTime < MAX_WAITING_TIME Then
+				If FirstPlayer.LastMatchID <> Null And Player.LastMatchID <> Null And FirstPlayer.LastMatchID = Player.LastMatchID Then
+					'Players who have already played together must wait before playing together again
+					If Abs(FirstPlayer.LastUpdate - Player.LastUpdate) < MIN_DELAY_BEFORE_REPLAYING_TOGETHER Then
+						Continue
+					End If
+				End If
+			End If
+			Candidates.Add(Player)
+			If Candidates.Size = NUMBER_OF_PLAYERS Then
+				'There are enough candidates to create a game
+				CreateGame(Candidates)
+				Exit
+			End If
+		Next
+	End If
+End Sub
+
+Sub Broker_LastWill(ClientID As String, Username As String, QOS As Byte, TopicName As String, Message() As Byte, IsRetainFlag As Boolean)
+	Broker.AddToLog("LASTWILL : " & ClientID & " QOS=" & QOS & " Topic=" & TopicName & " Message=" & Message.Length & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Publish(ClientID As String, Username As String, QOS As String, TopicName As String, Message() As Byte, IsDupFlag As Boolean, IsRetainFlag As Boolean)
+	Broker.AddToLog("PUBLISH : " & ClientID & " Username=" & Username & " QOS=" & QOS & " Topic=" & TopicName & " MessageLength=" & Message.Length & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+
+	If TopicName <> ClientID And TopicName <> codConstants.TOPIC_WAITING Then 'Game topic
+		If codMessages.IsPlayMsg(Message) Then
+			'Stores the game data in the DB
+			SQL.ExecNonQuery2("UPDATE Games SET Data=? WHERE MatchID=?", Array As Object(Message, TopicName))
+		End If
+	End If
+End Sub
+
+Sub Broker_Unsubscribe(ClientID As String, Username As String, TopicFilter As String)
+	Broker.AddToLog("UNSUBSCRIBE : " & ClientID & " Username=" & Username & " TopicFilter=" & TopicFilter, Broker.LOG_LEVEL_INFO)
+
+	If TopicFilter <> ClientID And TopicFilter <> codConstants.TOPIC_WAITING Then 'Game topic
+		Dim CurrentState As Int = StateMap.GetDefault(ClientID, codConstants.STATE_MUST_WAIT)
+		If CurrentState = codConstants.STATE_PLAYING Then
+			'This player is leaving a game in progress
+			Dim NewState As Int = codConstants.STATE_MUST_WAIT
+			SQL.BeginTransaction
+			Try
+				'Updates his state in the database
+				SQL.ExecNonQuery2("UPDATE Players SET State=?,Updated=? WHERE PlayerID=?", Array As Object(NewState, DateTime.Now, ClientID))
+
+				'Retrieves the list of game participants
+				Dim MatchID As String = TopicFilter
+				Dim RS As ResultSet = SQL.ExecQuery2("SELECT Players FROM Games WHERE MatchID=?", Array As String(MatchID))
+				If RS.NextRow Then
+					Dim Players As List = codMessages.ConvertFromBlob(RS.GetBlob("Players"))
+					RS.Close
+					Players.RemoveAt(Players.IndexOf(ClientID))
+					If Players.Size > 1 Then
+						'There are enough participants -> the list of game participants is updated
+						SQL.ExecNonQuery2("UPDATE Games SET Players=? WHERE MatchID=?", Array As Object(codMessages.ConvertToBlob(Players), MatchID))
+
+						'Informs the other participants
+						Broker.InternalPublish(MatchID, codMessages.CreateQuitMsg(ClientID), Broker.QOS_AT_LEAST_ONCE, False)
+					Else
+						'There aren't enough participants -> all game data are deleted
+						SQL.ExecNonQuery2("DELETE FROM Games WHERE MatchID=?", Array As String(MatchID))
+
+						'Informs the other participants
+						Broker.InternalPublish(MatchID, codMessages.CreateEndMsg(MatchID), Broker.QOS_AT_LEAST_ONCE, False)
+					End If
+				End If
+			Catch
+				Broker.AddToLog("Unable to update the DB (ClientID=" & ClientID & ", MatchID=" & MatchID & "):" & CRLF & LastException.Message, Broker.LOG_LEVEL_ERROR)
+				SQL.Rollback
+				Return
+			End Try
+			SQL.TransactionSuccessful
+
+			'Changes the player state to MUST_WAIT
+			ChangeState(ClientID, NewState)
+		End If
+	End If
+End Sub
+
+Sub Broker_Disconnect(ClientID As String, Username As String)
+	Broker.AddToLog("DISCONNECT : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_ConnectionLost(ClientID As String, Username As String)
+	Broker.AddToLog("CONNECTION_LOST : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+
+	Dim CurrentState As Int = StateMap.GetDefault(ClientID, codConstants.STATE_MUST_WAIT)
+	Select CurrentState
+		Case codConstants.STATE_WAITING
+			'The player was waiting -> removes him from the waiting room
+			For i = 0 To WaitingRoom.Size - 1
+				Dim WPlayer As typWaiting = WaitingRoom.Get(i)
+				If WPlayer.PlayerID = ClientID Then
+					WaitingRoom.RemoveAt(i)
+					Exit
+				End If
+			Next
+
+			'Publishes the updated list of waiting players
+			Broker.InternalPublish(codConstants.TOPIC_WAITING, codMessages.CreateWaitingMsg(WaitingRoom), Broker.QOS_AT_LEAST_ONCE, False)
+
+		Case codConstants.STATE_JOINING
+			'The player was joining a game -> cancels the joining process
+			For Each MatchID As String In JoiningRoom.Keys
+				Dim JPlayers As Map = JoiningRoom.Get(MatchID)
+				If JPlayers.ContainsKey(ClientID) Then
+					JPlayers.Remove(ClientID)
+					For Each PlayerID As String In JPlayers.Keys
+						ChangeState(PlayerID, codConstants.STATE_CANCELING)
+					Next
+					JoiningRoom.Remove(MatchID)
+					Exit
+				End If
+			Next
+
+		Case codConstants.STATE_PLAYING
+			'The player was playing a game
+			Dim MatchID As String = SQL.ExecQuerySingleResult2("SELECT Games.MatchID FROM Players LEFT JOIN Games ON Players.MatchID=Games.MatchID WHERE PlayerID=?", Array As String(ClientID))
+			If MatchID = Null Then
+				'The game data no longer exists -> updates his state to MUST_WAIT
+				SQL.ExecNonQuery2("UPDATE Players SET State=?,Updated=? WHERE PlayerID=?", Array As Object(codConstants.STATE_MUST_WAIT, DateTime.Now, ClientID))
+			Else
+				'Warns the other participants that he's no longer active
+				Broker.InternalPublish(MatchID, codMessages.CreateMissingMsg(ClientID), Broker.QOS_AT_LEAST_ONCE, False)
+			End If
+	End Select
+
+	'Removes the disconnected client from the map of states
+	StateMap.Remove(ClientID)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Broker.AddToLog("APP ERROR: " & Error.Message, Broker.LOG_LEVEL_ERROR)
+	Return True
+End Sub

@@ -1,0 +1,278 @@
+REM Specify the title and menus.
+
+setactivitytitle("GUI Test")
+
+Dim menuitems(0)
+array(menuitems,"Zero","One","Two")
+for g_i = 0 to arraylen(menuitems()) - 1
+  addmenuitem(menuitems(g_i))
+next
+
+REM An array for general use
+Dim g_data(0)
+
+REM Scale controls to screen size. The script assumes a width of 320
+REM Note that fonts are scaled according to density by Android
+
+g_d = getlayoutvalues
+strsplit(g_data, g_d, ",")
+g_d = g_data(0)  / 320
+
+
+REM let the activity window paint empty to look like somethings happened immediately
+REM otherwise you carry on seeing the IDE window
+calldoevents
+
+REM Add the views
+
+addbutton("btn1", 5*g_d, 5*g_d, 65*g_d, 65*g_d, "")
+settext("btn1", "Get")
+
+addtogglebutton("tgl1", 250*g_d, 5*g_d, 65*g_d, 65*g_d, "")
+settexton("tgl1", "Yes")
+settextoff("tgl1", "No")
+
+addlabel("lbl1", 100*g_d, 5*g_d, 130*g_d, 30*g_d, "")
+settext("lbl1", "<- press both ->")
+settextsize("lbl1", 18)
+
+addprogressbar("prg1", 100*g_d, 45*g_d, 130*g_d, 30*g_d, "")
+
+addcheckbox("chk1", 5*g_d, 80*g_d, 170*g_d,40*g_d, "")
+settext("chk1", "Check(!) this out")
+
+addradiobutton("rad1", 180*g_d, 80*g_d, 65*g_d, 40*g_d, "")
+settext("rad1", "On")
+
+addradiobutton("rad2", 250*g_d, 80*g_d, 65*g_d, 40*g_d, "")
+settext("rad2", "Off")
+
+addedittext("edt1", 5*g_d, 105*g_d, 205*g_d, 105*g_d, "")
+settext("edt1", "Some text" & crlf & "some more" & crlf & "even more" & crlf & "and more")
+
+createtypeface("serif", 1)
+settypeface("edt1")
+settextsize("edt1", 24)
+
+addlabel("lbl2", 220*g_d, 135*g_d, 100*g_d, 30*g_d, "")
+settext("lbl2", "Scroll the text")
+
+addimage("img1", 5*g_d, 205*g_d, 305*g_d, 200*g_d, "")
+
+addpanel("pnl1", 5*g_d, 80*g_d, 310*g_d, 300*g_d, "")
+setbackground("pnl1", 10*g_d, csilver)
+addbutton("btn2", 5*g_d, 5*g_d, 65*g_d, 65*g_d, "pnl1")
+settext("btn2", "Hide")
+setvisible("pnl1", false)
+
+Dim g_data(3)
+g_data(0) = cred
+g_data(1) = cgreen
+g_data(2) = cblue
+setactivitybackground("TL_BR", 10*g_d, "g_data")
+setbackgroundgradient("lbl1", "RIGHT_LEFT", 10*g_d, "v")
+settextcolor("lbl1", cyellow)
+
+
+REM TabHost
+
+addtabhost("tbh1", 75*g_d, 5*g_d, 230*g_d, 250*g_d, "pnl1")
+setbackground("tbh1", 5*g_d, cred)
+
+addtab("One", "tab1", "tbh1")
+setbackground("tab1", 10*g_d, cblack)
+addspinner("spin1", 10*g_d, 10*g_d, 150*g_d, 40*g_d, "tab1")
+setprompt("spin1", "A Spinner")
+array(g_data, "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+addall("spin1", "g_data")
+addlistview("lvw1", 10*g_d, 55*g_d, 150*g_d, 100*g_d, "tab1")
+setbackground("lvw1", 5*g_d, cblue)
+setscrollcolor("lvw1", cblue)
+addall("lvw1", "g_data")
+
+addtab("Two", "tab2", "tbh1")
+setbackground("tab2", 10*g_d, clightgray)
+addseekbar("skb1", 10*g_d, 20*g_d, 150*g_d, 35*g_d, "tab2")
+addbutton("tbtn1", 50*g_d, 80*g_d, 65*g_d, 65*g_d, "tab2")
+settext("tbtn1", "Reset")
+setvalue("skb1", getmax("skb1")/2)
+
+addtab("Three", "tab3", "tbh1")
+setbackground("tab3", 10*g_d, cwhite)
+addscrollview("svw1", 10*g_d, 10*g_d, 160*g_d, 150*g_d, "tab3")
+setbackground("svw1", 10*g_d, cgreen)
+getpanel("svw1", "svpnl")
+setheight("svpnl", 300*g_d)
+addbutton("tbtn2", 40*g_d, 80*g_d, 85*g_d, 65*g_d, "svpnl")
+settext("tbtn2", "Bottom")
+addlabel("tlbl2", 50*g_d, 280*g_d, 1000*g_d, 30*g_d, "svpnl")
+settext("tlbl2", "ScrollView")
+
+
+
+REM Graphics 
+
+canvasinit("img1")
+drawcolor(cYellow)
+
+g_col = argb(128, 255, 0, 0)
+drawcircle(35*g_d, 35*g_d, 35*g_d, g_col, true, 2*g_d)
+
+g_col = argb(128, 0, 255, 0)
+drawline(35*g_d, 35*g_d, 35*g_d, 135*g_d, g_col, 4*g_d) 
+
+for g_i = 0 to 80*g_d
+	drawpoint(g_i, 100*g_d, cblue)
+next
+
+rem the points array can have a rank of 1 or 2
+dim g_points(4,2)
+g_points(0,0) = 40*g_d
+g_points(0,1) = 40*g_d
+g_points(1,0) = 80*g_d
+g_points(1,1) = 80*g_d
+g_points(2,0) = 40*g_d
+g_points(2,1) = 160*g_d
+g_points(3,0) = 40*g_d
+g_points(3,1) = 40*g_d
+drawpath("g_points", cpurple, false, 3)
+
+REM the points array can have a rank of 1 or 2
+dim g_rect(4)
+g_rect(0) = 135*g_d
+g_rect(1) = 15*g_d
+g_rect(2) = 200*g_d
+g_rect(3) = 135*g_d
+
+drawrect("g_rect", cbrown, false, 4*g_d)
+drawrectrotated("g_rect", cgold, false, 4*g_d, 45) 
+
+drawtext("Some text", 155*g_d, 100*g_d, 20, cblack, "RIGHT")
+drawtextrotated("Some text", 155*g_d, 100*g_d, 20, cblack, "RIGHT", 180)
+
+
+canvasinit("pnl1")
+drawtext("Some text", 155*g_d, 280*g_d, 20, cblack, "RIGHT")
+drawtextrotated("Some text", 155*g_d, 280*g_d, 20, cblack, "RIGHT", 180)
+
+
+REM File operations
+
+g_txt = filereadstring(filedirrootexternal & "/BasicIDE", "IdeTest.b4s")
+msgbox(g_txt, "My script!" & " " & getfirsttime)
+
+filewritelist(filedirrootexternal, "test.txt", "g_rect")
+g_txt = filereadstring(filedirrootexternal, "test.txt")
+msgbox(g_txt, "Write Test File")
+
+filereadlist(filedirrootexternal, "test.txt", "temp")
+	g_txt = ""
+	for g_i = 0 to 3
+	g_txt = g_txt & temp(g_i) & crlf
+next	
+msgbox(g_txt, "Read Test File")
+
+
+inputdate("Enter a date", "Date Dialog", now, "OK", "Cancel", "")
+showtoast("Date = " & Date(getinput), false)
+inputtime("Enter a time", "Time Dialog", now, true, "OK", "Cancel", "")
+showtoast("Time = " & Time(getinput), false)
+
+
+REM device layout values
+
+g_w = ActivityWidth
+g_h = ActivityHeight
+showtoast("Activity size is " & g_w & " x " & g_h, false)
+showtoast("Layout values are " & getlayoutvalues, false)
+
+REM start the timer
+
+settimerenabled(true)
+
+REM End of inital program block
+
+
+REM Event Subs
+
+Sub activity_resume
+end sub
+
+Sub button_click(who)
+	select who
+		case "btn1"
+			res = inputbox("Enter text", "InputBox", "OK", "Cancel", "", type_text)
+			ip = getinput
+			msgbox(ip, "You entered")
+			array(g_data, "Zero", "One", "Two", "Three", "Four", "Five")
+			res = inputlistbox("g_data", "Choose an item", 0)
+			if res < 0 then
+				res = "Nothing"
+			else
+				res = g_data(res)
+			end if
+			msgbox(res, "You chose") 
+			res = inputmultilistbox("g_data", "Choose one or more items")
+			msgbox(res, "You chose") 
+		case "btn2"
+				setvisible("pnl1", false)	
+				setchecked("tgl1", false)	
+		case "tbtn1"
+			a = getmax("skb1")
+			setvalue("skb1", a/2)
+		case "tbtn2"
+			fullscroll("svw1", true)
+	end select
+End Sub 
+
+Sub check_checkedchange(who, checked)
+  progressshow(who & " checked is " & checked, false)
+ for i = 0 to 50000
+	calldoevents
+  next
+  progresshide	
+End Sub 
+
+Sub edit_enterpressed(who)
+ showtoast(who & " Enter", false)
+End Sub
+
+
+Sub edit_textchanged(who, old, new)
+ showtoast(who & " " & asc(strat(new, strlength(new) - 1)), false)
+End Sub
+
+Sub listview_itemclick(who, pos, value)
+	showtoast(who & " " & value, false) 
+end sub
+
+Sub menu_click(which)
+	showtoast(which, false) 
+end sub
+	
+Sub radio_checkedchange(who, checked)
+	showtoast(who & " " & checked, false) 
+End Sub 
+
+Sub seekbar_valuechanged(who, value, userchanged)
+	setprogress("prg1", getvalue("skb1"))
+End Sub
+
+Sub spinner_itemclick(who, pos, value)
+	showtoast(who & " " & value, false) 
+end sub
+
+Sub tabhost_tabchanged(who)
+End Sub 
+
+Sub timer_tick
+	setvisible("lbl1", not(getvisible("lbl1")))
+End Sub
+
+Sub toggle_checkedchange(who, checked)
+	setvisible("pnl1", checked)
+End Sub 
+
+
+
+	

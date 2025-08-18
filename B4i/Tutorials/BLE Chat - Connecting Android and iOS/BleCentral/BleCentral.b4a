@@ -1,0 +1,92 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=ble2
+Library3=ime
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~AddPermission(android.permission.ACCESS_FINE_LOCATION)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private btnSend As Button
+	Private txtMessage As EditText
+	Private txtLogs As EditText
+	Private ime As IME
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	ime.Initialize("ime")
+	ime.AddHandleActionEvent(txtMessage)
+	ime.AddHeightChangedEvent
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		Starter.StartScan
+	End If
+End Sub
+
+Private Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	txtLogs.SetLayoutAnimated(200, txtLogs.Left, txtLogs.Top, txtLogs.Width, NewHeight - 5dip - txtLogs.Top)
+End Sub
+
+Public Sub SetState(connected As Boolean)
+	btnSend.Enabled = connected
+	txtMessage.Enabled = connected
+	If connected Then
+		ProgressDialogHide
+	Else
+		ProgressDialogShow2("Trying to connect", False)
+	End If
+End Sub
+
+Sub Activity_Resume
+	SetState(Starter.connected)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Public Sub NewMessage(msg() As Byte)
+	txtLogs.Text = BytesToString(msg, 0, msg.Length, "utf8") & CRLF & txtLogs.Text
+End Sub
+
+Sub IME_HandleAction As Boolean
+	btnSend_Click
+	Return True 'don't close the keyboard	
+End Sub
+
+Sub btnSend_Click
+	If txtMessage.Text.Length = 0 Then Return
+	Dim s As String = "Central (B4A): " & txtMessage.Text
+	Starter.SendMessage(s.GetBytes("utf8"))
+	txtMessage.RequestFocus
+	txtMessage.SelectAll
+End Sub
+

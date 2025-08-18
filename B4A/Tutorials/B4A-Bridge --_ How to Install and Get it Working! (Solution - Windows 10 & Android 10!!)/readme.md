@@ -1,0 +1,19 @@
+### B4A-Bridge --> How to Install and Get it Working! (Solution - Windows 10 & Android 10!!) by OriginalPaladin
+### 10/12/2021
+[B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/135056/)
+
+I've made this (new thread) post because I just went through all of this and scoured these forums and the Internet and could not find any complete step-by-step instructions that worked, and the "B4A-Bridge a new way to connect to your device" thread is closed to new posts. So this is simply what I did that worked to get the B4A-Bridge working between my **Windows 10** laptop and my **Android 10** **Motorola** phone (it would connect and disconnect to/from my phone constantly). So, here goes:  
+  
+
+1. After you've got B4A completely installed on your machine according to [these instructions](https://www.b4x.com/b4a.html), steps 1-3, then go ahead and do step 4 to download and install the B4A-Bridge Android app to your phone. Don't worry about connecting B4A-Bridge to anything just yet.
+2. Next, go [here](https://developer.android.com/studio/run/win-usb) and if you have a Google phone, click the "Click here to download the Google USB Driver ZIP file (ZIP)" and download and install the Google USB drivers for your phone. But if you own a different brand phone like me, go [here](https://developer.android.com/studio/run/oem-usb) and find your phone's manufacturer in the list (scroll down) and download and install your manufacturer's USB drivers for you phone.
+3. Now, go to [this tutorial](https://www.b4x.com/android/forum/threads/b4a-bridge-a-new-way-to-connect-to-your-device.7978/) and do the **USB Debug Mode** instructions. On my phone, I didn't have to choose MTP or PTP, because when I enabled the "Developer" settings/menu after clicking on the build number 7 times, I went into the new "Developer" menu and turned on "USB Debugging" and when I connected my phone to my laptop via USB cable, it said "tap here to enable USB Debugging" which I did.
+4. Connect your phone to your computer using a USB cable (yes, I know we want to run B4A-Bridge to connect wirelessly, but it didn't work for me yet) and make sure it is in "USB Debugging" mode or PTP, MTP, etc.
+5. Fire up B4A and don't worry about connecting via B4A-Bridge just yet. Create a new, default app, name it something, and then compile and run it. B4A should find your phone and connect to it via USB, if everything has been set up correctly, and install and run the app on your phone.
+6. Now, in B4A, go to the "Debug" menu and click "Stop".
+7. On your phone, find the B4A-Bridge app and run it and tap on the green "Start" button.
+8. On your computer, go "Tools" menu in B4A, click on "B4A Bridge", then click "Connect", then click either "New IP" and enter your phone's IP Address (displaying in B4A-Bridge app running on your phone) or click on the existing IP Address for your phone, if you've already been down this road and been unsuccessful in getting B4A-Bridge working wirelessly.
+9. The connection should be successful at this point.
+10. You should now be able to disconnect the USB cable between your phone and computer and the B4A-Bridge connection should still remain connected and working properly now. I closed B4A on my computer and stopped the B4A-Bridge on my phone and restarted them both and my phone still connects fine and stays connected wirelessly.
+
+I tried a few different combinations of the steps above, short of re-installing B4A (as that was suggested on one of the forums), and these steps were the only thing that worked for me. I hope this is helpful to someone else and thanks to whoever's post pointed me in this direction (I looked at so many posts, I can't relocate the one that did)!

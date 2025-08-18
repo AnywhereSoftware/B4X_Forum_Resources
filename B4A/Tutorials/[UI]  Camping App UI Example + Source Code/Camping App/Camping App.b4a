@@ -1,0 +1,257 @@
+﻿Build1=Default,b4a.example
+File1=Black Canyon_Colorado.jpg
+File10=Notification 3.png
+File11=other-places-for-camping-in-manali-20191025053359.jpg
+File12=person0.jpg
+File13=Person1.jpg
+File14=Person2.jpg
+File15=Person3.jpg
+File16=Safari.png
+File17=User.png
+File18=XTools!.jpg
+File2=Calendar.png
+File3=Camp.bal
+File4=Card.bal
+File5=Death Valley_Nevada.jpg
+File6=Devils Tower_Wyoming.jpg
+File7=Heart.png
+File8=Home.png
+File9=Layout.bal
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xui views
+Library4=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Camping
+Module2=Starter
+NumberOfFiles=18
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Camping UI Example
+	#VersionCode: 1
+	#VersionName: 1.0.0
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+	Type MyTy(SomeBitmap As Bitmap , SomeStr As String , SomeLocation As String)
+	Public SomeVar As MyTy
+End Sub
+
+Sub Globals
+	Private B4XImageView2,ProfPic_Img As B4XImageView
+	Private EditText1 As EditText
+	Private Discover_Btn,Calendar_Btn,Fav_Btn,Home_Btn,Profile_Btn,Notif_Btn As ImageView
+	Private PanelSelection,Panel1 As Panel
+	Private bitmp(4) As Bitmap
+	Private StrCamps(4),StrLocations(4) As String
+	Private LocaName_Lbl,Location_Lbl As Label
+	Private CustomListView1 As CustomListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	SetStatusBarAndNavigationColor(0xFF03051A)
+	
+	Activity.LoadLayout("Layout")
+	PanelSelection.Initialize("PanelSelection")
+	ProfPic_Img.RoundedImage = True
+	ProfPic_Img.Load(File.DirAssets,"XTools!.jpg")
+	EditText1.Hint = "      Search Destination"
+	
+	BackgroundAndCornerRadius(EditText1,10dip)
+	
+	Panel_Selection_Attr(Home_Btn)
+	
+	InitializeDatas
+	
+	CreateItem
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+''Change Icon Colors
+Sub ChangeColorBasedOnAlphaLevel(bmp As B4XBitmap, NewColor As Int) As B4XBitmap
+	Dim bc As BitmapCreator
+	bc.Initialize(bmp.Width, bmp.Height)
+	bc.CopyPixelsFromBitmap(bmp)
+	Dim a1, a2 As ARGBColor
+	bc.ColorToARGB(NewColor, a1)
+	For y = 0 To bc.mHeight - 1
+		For x = 0 To bc.mWidth - 1
+			bc.GetARGB(x, y, a2)
+			If a2.a > 0 Then
+				a2.r = a1.r
+				a2.g = a1.g
+				a2.b = a1.b
+				bc.SetARGB(x, y, a2)
+			End If
+		Next
+	Next
+	Return bc.Bitmap
+End Sub
+
+Public Sub SetBitmapWithFitOrFill (vTargetView As B4XView, bmp As B4XBitmap)
+	vTargetView.SetBitmap(bmp)
+   #if B4A
+	'B4XView.SetBitmap sets the gravity in B4A to CENTER. This will prevent the bitmap from being scaled as needed so
+	'we switch to FILL
+	Dim iv As ImageView = vTargetView
+	iv.Gravity = Gravity.FILL
+   #End If
+End Sub
+''Set Bacground and Corner Radius 
+Sub BackgroundAndCornerRadius(View As View , CornerRadius As Int)
+	Dim cdw1 As ColorDrawable
+	cdw1.Initialize(Colors.White, CornerRadius)
+	View.Background = cdw1
+End Sub
+
+Sub SetStatusBarAndNavigationColor(clr As Int)
+	Try
+		Dim jo As JavaObject
+		jo.InitializeContext
+		Dim window As JavaObject = jo.RunMethodJO("getWindow", Null)
+		window.RunMethod("addFlags", Array (0x80000000))
+		window.RunMethod("clearFlags", Array (0x04000000))
+		window.RunMethod("setStatusBarColor", Array(clr))
+		Dim jo2 As JavaObject
+		jo2.InitializeContext
+		jo2.RunMethodJO("getWindow", Null).RunMethod("setNavigationBarColor", Array(clr))
+	Catch
+		ToastMessageShow("Some error with your android version ( <5 )",True)
+	End Try
+End Sub
+
+''Probably the worst way to implement Bottom Navigation :)
+Sub Panel_Selection_Attr(Selection As ImageView)
+	'PanelSelection.Initialize("PanelSelection")
+	Home_Btn.Bitmap = LoadBitmap(File.DirAssets,"Home.png")
+	Profile_Btn.Bitmap = LoadBitmap(File.DirAssets,"User.png")
+	Fav_Btn.Bitmap = LoadBitmap(File.DirAssets,"Heart.png")
+	Calendar_Btn.Bitmap = LoadBitmap(File.DirAssets,"Calendar.png")
+	Discover_Btn.Bitmap =  LoadBitmap(File.DirAssets,"Safari.png")
+	Select Selection
+		Case Home_Btn
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Home.png")
+		Case Profile_Btn
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"User.png")
+		Case Fav_Btn
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Heart.png")
+		Case Calendar_Btn
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Calendar.png")
+		Case Discover_Btn
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Safari.png")
+	End Select
+	BackgroundAndCornerRadius(PanelSelection,15dip)
+	PanelSelection.Color = 0xFF03051A
+	Dim Left As Int
+	Left = Selection.Left - 5%x
+	Activity.AddView(PanelSelection,Left,91%y,16%x,8%y)
+	SetBitmapWithFitOrFill(Selection, ChangeColorBasedOnAlphaLevel(bmp,Colors.White))
+	'PanelSelection.SendToBack
+	PanelSelection.SendToBack
+End Sub
+''CLV Item Create
+Sub CreateItem()
+	For i = 0 To 3 
+		Dim p As B4XView = xui.CreatePanel("")
+		Dim height As Int = 56%y
+		p.SetLayoutAnimated(0, 0, 0, 100%x , height)
+		p.LoadLayout("Card")
+		Dim Info As MyTy
+		B4XImageView2.CornersRadius = 30dip
+		B4XImageView2.Bitmap = bitmp(i)
+		LocaName_Lbl.Text = StrCamps(i)
+		Location_Lbl.Text = StrLocations(i)
+		
+		Info.SomeBitmap = bitmp(i)
+		Info.SomeStr = StrCamps(i)
+		Info.SomeLocation = StrLocations(i)
+		CustomListView1.Add(p,Array(i,Info))
+	Next
+End Sub
+
+Private Sub CustomListView1_ItemClick (Index As Int, Value As Object)
+	Dim v() As Object = Value
+	Dim Index As Int = v(0)
+	SomeVar = v(1)
+	StartActivity(Camping)
+End Sub
+
+Private Sub Profile_Btn_Click
+	PanelSelection.RemoveView
+	Panel_Selection_Attr(Profile_Btn)
+End Sub
+
+Private Sub Home_Btn_Click
+	PanelSelection.RemoveView
+	Panel_Selection_Attr(Home_Btn)
+End Sub
+
+Private Sub Fav_Btn_Click
+	PanelSelection.RemoveView
+	Panel_Selection_Attr(Fav_Btn)
+End Sub
+
+Private Sub Discover_Btn_Click
+	PanelSelection.RemoveView
+	Panel_Selection_Attr(Discover_Btn)
+End Sub
+
+Private Sub Calendar_Btn_Click
+	PanelSelection.RemoveView
+	Panel_Selection_Attr(Calendar_Btn)
+End Sub
+
+Sub InitializeDatas
+	bitmp(0) = LoadBitmap(File.DirAssets,"other-places-for-camping-in-manali-20191025053359.jpg")
+	bitmp(1) = LoadBitmap(File.DirAssets,"Black Canyon_Colorado.jpg")
+	bitmp(2) = LoadBitmap(File.DirAssets,"Death Valley_Nevada.jpg")
+	bitmp(3) = LoadBitmap(File.DirAssets,"Devils Tower_Wyoming.jpg")
+
+	StrCamps(0) = "Camp Exotica Kullu"
+	StrLocations(0) = " Kullu Manali"
+	
+	StrCamps(1) = "Black Canyon"
+	StrLocations(1) = " Colorado"
+
+	StrCamps(2) = "Death Valley"
+	StrLocations(2) = " Nevada"
+
+	StrCamps(3) = "Devils Tower"
+	StrLocations(3) = " Wyoming"
+End Sub

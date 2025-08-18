@@ -1,0 +1,83 @@
+﻿Version=3.5
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=smiley.png
+NumberOfLibraries=3
+Library1=jcore
+Library2=jfx
+Library3=jpoi
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.Show
+	CreateWorkbook
+	fx.ShowExternalDocument(File.GetUri(File.DirApp, "1.xlsx"))
+	ExitApplication
+End Sub
+
+Private Sub CreateWorkbook
+	Dim wb As PoiWorkbook
+	wb.InitializeNew(True) 'create new xlsx workbook
+	Dim sheet1 As PoiSheet = wb.AddSheet("Sheet 1", 0)
+	sheet1.AddMergedRegion(1, 0, 4, 0)
+	Dim row As PoiRow = sheet1.CreateRow(0)
+	Dim cell As PoiCell = row.CreateCellString(1, "Merged Title")
+	Dim cs As PoiCellStyle
+	cs.Initialize(wb)
+	cs.HorizontalAlignment = cs.HORIZONTAL_CENTER
+	cell.CellStyle = cs
+	Dim titleStyle As PoiCellStyle
+	titleStyle.Initialize(wb)
+	titleStyle.BorderBottom = titleStyle.BORDER_THIN
+	titleStyle.ForegroundColor = fx.Colors.LightGray
+	titleStyle.HorizontalAlignment = titleStyle.HORIZONTAL_CENTER
+	Dim font As PoiFont
+	font.Initialize(wb)
+	font.Bold = True
+	titleStyle.SetFont(font)
+	Dim titleRow As PoiRow = sheet1.CreateRow(1) 'second row
+	titleRow.CreateCellString(1, "Name")
+	titleRow.CreateCellString(2, "Price")
+	titleRow.CreateCellString(3, "Amount")
+	titleRow.CreateCellString(4, "Total (formula)")
+	sheet1.SetColumnWidth(4, 256 * 20)
+	SetStyleToRowCells(titleRow, titleStyle)
+	Dim priceStyle As PoiCellStyle
+	priceStyle.Initialize(wb)
+	priceStyle.SetDataFormat(wb, "$0.00")
+	For i = 0 To 25
+		Dim row As PoiRow = sheet1.CreateRow(i + 2)
+		row.CreateCellString(1, "Item " & i)
+		row.CreateCellNumeric(2, i)
+		row.CreateCellNumeric(3, i + 1)
+		row.CreateCellFormula(4, $"C${i + 3} * D${i + 3}"$)
+		row.GetCell(2).CellStyle = priceStyle
+		row.GetCell(4).CellStyle = priceStyle
+	Next
+	'add image to the workbook
+	Dim imageIndex As Int = wb.AddImage(File.DirAssets, "smiley.png")
+	'put the image on the sheet
+	sheet1.SetImage(imageIndex, 5, 5, 7, 8)
+	sheet1.SetImage(imageIndex, 5, 9, 7, 12)
+	wb.Save(File.DirApp, "1.xlsx")
+	wb.Close
+End Sub
+
+Private Sub SetStyleToRowCells(row As PoiRow, style As PoiCellStyle)
+	For Each cell As PoiCell In row.Cells
+		cell.CellStyle = style
+	Next
+End Sub

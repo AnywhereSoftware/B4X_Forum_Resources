@@ -1,0 +1,86 @@
+﻿Version=2
+NumberOfModules=1
+Module1=WebSocketHandler
+Build1=Default,anywheresoftware.b4i.example
+NumberOfFiles=1
+File1=1.bil
+NumberOfLibraries=4
+Library1=icore
+Library2=iwebsocket
+Library3=ijson
+Library4=ihud
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private wsh As WebSocketHandler
+	Private btnConnect As Button
+	Private btnSend As Button
+	Private lblServerTime As Label
+	Private lblStatus As Label
+	Private TextField1 As TextField
+	Private Const link As String = "ws://192.168.0.100:51042/ws"
+	Private hd As HUD
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	wsh.Initialize(Me, "wsh")
+	UpdateStatus
+End Sub
+
+Sub wsh_Connected
+	UpdateStatus
+End Sub
+
+Sub wsh_Closed (Reason As String)
+	Log("Closed: " & Reason)
+	UpdateStatus
+	hd.ToastMessageShow(Reason, True)
+End Sub
+
+Sub UpdateStatus
+	If wsh.ws.Connected Then
+		lblStatus.Text = "Status: Connected"
+	Else
+		lblStatus.Text = "Status: Disconnected"
+	End If
+	btnConnect.Enabled = Not(wsh.ws.Connected)
+	btnSend.Enabled = wsh.ws.Connected
+End Sub
+
+
+Sub wsh_ServerTime(Params As List)
+   'example of a server push message
+   lblServerTime.Text = "Server Time: " & Params.Get(0)
+End Sub
+
+Sub btnSend_Click
+	Dim data As Map = CreateMap("message": TextField1.Text)
+	wsh.SendEventToServer("Device_Message", data)
+	TextField1.ResignFocus
+End Sub
+
+Sub TextField1_EnterPressed
+	If btnSend.Enabled Then btnSend_Click
+End Sub
+
+Sub btnConnect_Click
+	wsh.Connect(link)
+	lblStatus.Text = "Status: Connecting..."
+End Sub

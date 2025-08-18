@@ -1,0 +1,181 @@
+﻿Version=1.06
+AppType=JavaFX
+IconFile=
+NumberOfModules=0
+Package=b4j.example
+UserTypesHint=
+NumberOfFiles=1
+File1=1.fxml
+NumberOfLibraries=6
+Library1=jaudiorecord
+Library2=jcore
+Library3=jfx
+Library4=jmsgboxes
+Library5=jrandomaccessfile
+Library6=threading
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private AR As AudioRecord
+	Private MP As MediaPlayer
+	Private Record As Thread
+	Private OutFile As RandomAccessFile
+	Private StopRecording As Boolean
+	Private DataSize As Int = 0
+	Private SampleRate As Int
+	Private NoChnls,BitsPerSample,DataSize As Int
+	Private RecordRunning As Boolean
+	Private CalcAmplLbl As Label
+	Private StartBtn As Button
+	Private StopBtn As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	
+	'Initialize the thread to record on
+	Record.Initialise("Rec")
+	
+	'Set up recording parameters
+	'devices
+	SampleRate = 44100
+	NoChnls = AR.CH_CONF_Stereo
+	BitsPerSample = 16
+	
+End Sub
+Sub Recording
+
+	RecordRunning = True
+	
+	'ReSet the data size
+	DataSize = 0
+	Dim BytesRead As Int = 0
+	Dim RecDataSize As Int = AR.BufferSize/5
+	
+	Log("Recording...")
+	'Do the recording
+	Do While True
+	
+		Dim RecData(RecDataSize) As Byte
+		Dim Sum As Int
+		BytesRead = AR.Read(RecData,0,RecData.Length)
+		OutFile.WriteBytes(RecData,0,BytesRead,44+DataSize)
+		DataSize=DataSize+BytesRead
+		For i = 0 To 480 Step 2			'Approx 5ms worth of data
+			Sum=Sum+(RecData(i)*256)+RecData(i+1)
+		Next
+		Record.RunOnGuiThread("ShowVolume",Array As Object(Sum))
+		'Check if recording time is up
+		If StopRecording Then Exit
+	Loop
+
+End Sub
+Sub ShowVolume(Sum As Int)
+	Sum=Sum/240+(32767/2)
+	CalcAmplLbl.Text=Sum
+	'Log(Sum)
+End Sub
+Sub Rec_Ended(endedOK As Boolean,Error As String)
+	
+	'Stop recording and release resources
+	AR.Stop
+	AR.release
+	
+	'Reset Flags
+	StopRecording = False
+	RecordRunning = False
+	
+	Log("Thread Rec EndedOK "&endedOK&" "&Error)
+	
+	'Finish writing the WAVE Header
+	UpdateHeader
+	
+	'Load the recorded file into Media player as a test
+	MP.Initialize("MP",File.GetUri(File.DirTemp,"test.wav"))
+	MP.Play
+End Sub
+Sub WriteWavHeader
+
+	Dim Pos,IntLen,ShLen,StrLen As Int
+	
+	Pos=0
+	IntLen=4
+	ShLen=2
+	StrLen=4
+	OutFile.WriteBytes(Array As Byte(Asc("R"),Asc("I"),Asc("F"),Asc("F")),0,StrLen,Pos)
+	Pos=Pos+IntLen
+	OutFile.WriteInt(0,Pos)				'Final size not yet known
+	Pos=Pos+IntLen
+	OutFile.WriteBytes(Array As Byte(Asc("W"),Asc("A"),Asc("V"),Asc("E")),0,StrLen,Pos)
+	Pos=Pos+IntLen
+	OutFile.WriteBytes(Array As Byte(Asc("f"),Asc("m"),Asc("t"),Asc(" ")),0,StrLen,Pos)
+	Pos=Pos+IntLen
+	OutFile.WriteInt(16,Pos)				'Sub chunk size 16 for PCM
+	Pos=Pos+IntLen
+	OutFile.WriteShort(1,Pos)				'Audio Format, 1 for PCM
+	Pos=Pos+ShLen
+	OutFile.WriteShort(NoChnls,Pos)				'No of Channels
+	Pos=Pos+ShLen
+	OutFile.WriteInt(SampleRate,Pos)
+	Pos=Pos+IntLen
+	OutFile.WriteInt(SampleRate*BitsPerSample*NoChnls/8,Pos)	'Byte Rate
+	Pos=Pos+IntLen
+	OutFile.WriteShort(NoChnls*BitsPerSample/8,Pos)	'Block align, NumberOfChannels*BitsPerSample/8
+	Pos=Pos+ShLen
+	OutFile.WriteShort(BitsPerSample,Pos)	'BitsPerSample
+	Pos=Pos+ShLen
+	OutFile.WriteBytes(Array As Byte(Asc("d"),Asc("a"),Asc("t"),Asc("a")),0,StrLen,Pos)
+	Pos=Pos+IntLen
+	OutFile.WriteInt(0,Pos)			'Data chunk size (Not yet known)
+	Log("Pos "&Pos)
+	
+End Sub
+Sub UpdateHeader
+	Log("DataSize "&DataSize)
+	OutFile.WriteInt(36+DataSize,4)
+	OutFile.WriteInt(DataSize,40)
+	OutFile.Flush
+	OutFile.Close
+End Sub
+Sub StopBtn_Action
+	'Check recording is running otherwise it will prematurely end the next recording
+	If RecordRunning Then StopRecording = True
+End Sub
+Sub StartBtn_Action
+
+	'Can't reinitialize the recording if it's still working
+	If RecordRunning Then 
+		Dim MsgBox As Msgboxes
+		MsgBox.DialogType = "ERROR"
+		MsgBox.Show("Please stop the recording first","Recording in progress")
+		Return
+	End If
+	
+	'Initialize the AudioRecorder
+	Log(AR.Initialize(SampleRate,BitsPerSample,NoChnls))
+	
+	'Delete the file if it exists to avoid problems with Random access files
+	If File.Exists(File.DirTemp,"test.wav") Then
+		File.Delete(File.DirTemp,"test.wav")
+	End If
+	
+	'Initialize the output file
+	OutFile.Initialize2(File.DirTemp,"test.wav",False,True)
+	
+	'Write the Wave file header
+	WriteWavHeader
+
+	AR.Start
+	
+	'Start the thread to record on
+	Record.Start(Null,"Recording",Null)
+
+End Sub

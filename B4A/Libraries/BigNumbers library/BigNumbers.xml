@@ -1,0 +1,923 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</name>
+        <shortname>BigDecimal</shortname>
+        <comment>This object provides arbitrary-precision signed decimal numbers. It is intended for use where absolute
+accuracy is required, the classic example being financial computations where the intrinsic
+approximations of Floats and Doubles to exact decimal values are unaccetable.
+
+A BigDecimal consists of an arbitrary precision integer unscaled value, which is actually a
+BigInteger, and a 32-bit integer scale. If zero or positive, the scale is the number of digits
+to the right of the decimal point. If negative, the unscaled value of the number is multiplied by
+ten to the power of the negation of the scale. The value of the number represented by the BigDecimal
+is therefore (unscaledValue × 10-scale).
+
+Note that the various Initializers do not offer initialization from Floats or Doubles.
+This is a deliberate design choice as Floats and Doubles are inaccurate representations of most decimal values.
+For example FloatVar = 0.1 will cause FloatVar to actually contain a value slightly larger than 0.1.
+Also note that where a numeric unquoted literal is used in code as a parameter to Initialize
+Basic4android converts it first to a Double and so a slightly inaccurate value may result.
+ 
+Many of the operations return the BigDecimal itself so allowing operations to be chained.
+For example "BigD1.Add(BigD2).Multiply(BigD3)". Such expressions are evaluated left to right.
+ 
+The Java documentation should be studied for more information on BigDecimal.
+Note that the Class Overview in the Android online documentation is incorrect and actually applies to
+BigInteger, not BigDecimal.</comment>
+        <owner>process</owner>
+        <method>
+            <name>Add</name>
+            <comment>Sets this BigDecimal to a value is this + augend.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>augend</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>MovePointLeft</name>
+            <comment>Sets this BigDecimal to a value where the decimal point has been moved n places to the left.
+If n &lt; 0 then the decimal point is moved -n places to the right.
+
+The result is obtained by changing its scale. If the scale of the result becomes negative,
+then its precision is increased such that the scale is zero.
+
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Max</name>
+            <comment>Sets this BigDecimal to the maximum of this and val.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>val</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>StripTrailingZeros</name>
+            <comment>Sets this BigDecimal to a value with the same value as before but with an unscaled value
+where the trailing zeros have been removed.
+If the unscaled value of this has n trailing zeros, then the scale and the precision
+of the result has been reduced by n.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+        </method>
+        <method>
+            <name>ToPlainString</name>
+            <comment>Returns a string representation of this BigDecimal. No scientific notation is used.
+This methods adds zeros where necessary.
+If this string representation is used to create a new instance, this instance is
+generally not identical to this as the precision changes.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>MovePointRight</name>
+            <comment>Sets this BigDecimal to a value where the decimal point has been moved n places to the right.
+If n &lt; 0 then the decimal point is moved -n places to the left.
+
+The result is obtained by changing its scale. If the scale of the result becomes negative,
+then its precision is increased such that the scale is zero. 
+
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the BigDecimal with the number provided.
+Beware of using unquoted literals as parameters as they will be first converted to Double.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Remainder</name>
+            <comment>Sets this BigDecimal to a value that is this % divisor.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Divide</name>
+            <comment>Sets this BigDecimal to a  value of this / divisor.
+The scale of the result is the difference of the scales of this and divisor.
+If the exact result requires more digits, then the scale is adjusted accordingly.
+For example, 1/128 = 0.0078125 which has a scale of 7 and precision 5.
+Throws an ArithmeticException if the result cannot be represented exactly 
+because it has a non-terminating decimal expansion.  
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Abs</name>
+            <comment>Sets this BigDecimal to a value that is the absolute value of this.
+The scale of the result is the same as the original scale of this.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+        </method>
+        <method>
+            <name>SetScale2</name>
+            <comment>Sets the scale of this BigDecimal to the specified scale.
+Returns itself.
+
+If the new scale is greater than the old scale, then additional zeros are added to the unscaled value.
+In this case no rounding is necessary. 
+
+If the new scale is smaller than the old scale, then trailing digits are removed.
+If these trailing digits are not zero, then the remaining unscaled value has to be rounded.
+For this rounding operation the specified rounding mode is used.
+
+if rounding = ROUND_UNNECESSARY and rounding is necessary according to the given scale then
+an ArithmeticException is thrown.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>newScale</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>rounding</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Multiply</name>
+            <comment>Sets this BigDecimal to a value of this * multiplicand.
+The scale of the result is the sum of the scales of the two arguments.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>multiplicand</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>UnscaledValue</name>
+            <comment>Returns the unscaled value of this BigDecimal instance as a BigInteger.
+The unscaled value can be computed as this * 10^(scale).</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+        </method>
+        <method>
+            <name>Round</name>
+            <comment>Sets this BigDecimal to a value that is this, rounded according to the passed precision
+and ROUND_XXX type.
+If precision = 0, then no rounding is performed. 
+If precision &gt; 0 and = ROUND_UNNECESSARY, then an ArithmeticException is thrown if the result
+cannot be represented exactly within the given precision.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>precision</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>rounding</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Plus</name>
+            <comment>Sets this BigDecimal to a  value that is +this.
+The scale of the result is the same as the scale of this.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+        </method>
+        <method>
+            <name>CompareTo</name>
+            <comment>Compares this BigDecimal with val. Returns one of the three values 1, 0, or -1.
+The method behaves as if this.subtract(val) is computed.
+If this difference is &gt; 0 then 1 is returned, if the difference is &lt; 0 then -1 is returned,
+and if the difference is 0 then 0 is returned.
+
+This means, that if two decimal instances are compared which are equal in value but differ in scale,
+then these two instances are considered as equal unlike Equals().</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>val</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetScale</name>
+            <comment>Sets the scale of this BigDecimal to the specified scale.
+If the new scale is greater than the old scale, then additional zeros are added to the unscaled value.
+If the new scale is smaller than the old scale, then trailing zeros are removed.
+If the trailing digits are not zeros then an ArithmeticException is thrown.
+If no exception is thrown, then the following equation holds: x.setScale(s).compareTo(x) = 0.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>newScale</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToBigInteger</name>
+            <comment>Returns this BigDecimal as a BigInteger instance. Any fractional part is discarded.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+        </method>
+        <method>
+            <name>Scale</name>
+            <comment>Returns the scale of this BigDecimal.
+The scale is the number of digits behind the decimal point.
+The value of this BigDecimal is the unsignedValue * 10^(-scale).
+If the scale is negative, then this BigDecimal represents a big integer.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>DivideToIntegralValue</name>
+            <comment>Sets thisBigDecimal to a value that is the integral part of this / divisor.
+The quotient is rounded down towards zero to the next integer. For example, 0.5/0.2 = 2.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Signum</name>
+            <comment>Returns the sign of this BigDecimal, -1 if this &lt; 0, 0 if this == 0, 1 if this &gt; 0.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>Initialize6</name>
+            <comment>Initialises the BigDecimal with the BigInteger value provided.
+The scale of the BigDecimal is zero.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize5</name>
+            <comment>Initialises the BigDecimal with the BigDecimal value provided.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Equals</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>bigdecimal</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize4</name>
+            <comment>Initialises the BigDecimal whose value is equal to unscaledVal * 10^(-scale).
+The scale of the result is scale, and its unscaled value is unscaledVal.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>unscaledVal</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>scale</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Min</name>
+            <comment>Sets this BigDecimal to the minimum of this and val.
+Returns itself</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>val</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize3</name>
+            <comment>Initialises the BigDecimal with the number provided.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize2</name>
+            <comment>Initialises the BigDecimal with the number provided in the charcter array. 
+The array may contain the characters 0 to 9 and a decimal point.
+The most significant digit of the number is at index 0 in the array.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>char[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DoubleValue</name>
+            <comment>Returns this BigDecimal as a double value. If this is too big to be represented as a Double
+then Double.POSITIVE_INFINITY or Double.NEGATIVE_INFINITY is returned. 
+
+Note that many BigDecimal values, such as 0.1, cannot be represented accurately by a Double.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>Precision</name>
+            <comment>Returns the precision of this BigDecimal.
+The precision is the number of decimal digits used to represent this decimal.
+It is equivalent to the number of digits of the unscaled value.
+The precision of 0 is 1 (independent of the scale).</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>ToEngineeringString</name>
+            <comment>Returns a string representation of this BigDecimal.
+This representation always prints all significant digits of this value.
+If the scale is negative or if scale - precision &gt;= 6 then engineering notation is used.
+Engineering notation is similar to the scientific notation except that the exponent is
+made to be a multiple of 3 such that the integer part is &gt;= 1 and &lt; 1000.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>LongValue</name>
+            <comment>Returns this BigDecimal as an long value. Any fractional part is discarded.
+If the integral part of this is too big to be represented as an long, then this % 2^64 is returned.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>Pow</name>
+            <comment>Sets this BigDecimal to a value that is this ^ n.
+The scale of the result is n times the scales of this. 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Subtract</name>
+            <comment>Sets this BigDecimal to a value that is this - subtrahend.
+The scale of the result is the maximum of the scales of the two arguments.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>subtrahend</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ScaleByPowerOfTen</name>
+            <comment>Sets this BigDecimal to a value that is this 10^n.
+The scale of the result is this.scale() - n.
+The precision of the result is the precision of this.
+This method has the same effect as movePointRight(int), except that the precision is not changed.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Negate</name>
+            <comment>Sets this BigDecimal to a value that is -this.
+The scale of the result is the same as the scale of this.
+Returns itself</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+        </method>
+        <method>
+            <name>ToString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>Divide2</name>
+            <comment>Sets this BigDecimal to a  value of this / divisor.
+The result is rounded according to the passed parameters.
+If the passed precision is 0, then this call is equivalent to Divide(divisor).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+            <parameter>
+                <name>precision</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>rounding</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Version</name>
+            <returntype>double</returntype>
+            <comment>Returns the version of the library.</comment>
+        </property>
+        <field>
+            <name>ROUND_DOWN</name>
+            <comment>Rounding mode where the values are rounded towards zero.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_UNNECESSARY</name>
+            <comment>Rounding mode where the rounding operations throws an ArithmeticException for the case
+that rounding is necessary, i.e. for the case that the value cannot be represented exactly.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_CEILING</name>
+            <comment>Rounding mode to round towards positive infinity.
+For positive values this rounding mode behaves as ROUND_UP,
+for negative values as ROUND_DOWN.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_HALF_DOWN</name>
+            <comment>Rounding mode where values are rounded towards the nearest neighbor.
+ Ties are broken by rounding down.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_HALF_UP</name>
+            <comment>Rounding mode where values are rounded towards the nearest neighbor.
+Ties are broken by rounding up.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_UP</name>
+            <comment>Rounding mode where positive values are rounded towards positive infinity
+and negative values towards negative infinity.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_FLOOR</name>
+            <comment>Rounding mode to round towards negative infinity.
+For positive values this rounding mode behaves as ROUND_DOWN,
+for negative values as ROUND_UP.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>ROUND_HALF_EVEN</name>
+            <comment>Rounding mode where values are rounded towards the nearest neighbor.
+Ties are broken by rounding to the even neighbor.</comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</name>
+        <shortname>BigInteger</shortname>
+        <comment>This object provides signed integers of arbitrary magnitude.
+
+This implementation is efficient for operations traditionally used in cryptography,
+such as the generation of large prime numbers and computation of the modular inverse.
+
+This API includes operations for bitwise operations in two's complement representation.
+Two's complement is not the internal representation used by this implementation, so such
+methods may be inefficient.
+
+Many of the operations return the BigInteger itself so allowing operations to be chained.
+For example "BigI1.Add(BigI2).Multiply(BigI3)". Such expressions are evaluated left to right.
+
+The Java documentation should be studied for more information on BigInteger.</comment>
+        <owner>process</owner>
+        <method>
+            <name>Add</name>
+            <comment>Sets this BigInteger to a value of this + value. 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ShiftRight</name>
+            <comment>Sets this BigInteger to a value that is this &gt;&gt; n.
+For negative arguments, the result is also negative.
+The shift distance may be negative which means that this is shifted left.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Or</name>
+            <comment>Sets this BigInteger to a  value that is this OR value. 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Max</name>
+            <comment>Sets this BigInteger to the maximum of this and value.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToStringBase</name>
+            <comment>Returns a string containing a string representation of this BigInteger with base radix. If radix &lt; Character.MIN_RADIX or radix &gt; Character.MAX_RADIX then a decimal representation is returned. The characters of the string representation are generated with method Character.forDigit.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>radix</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>NextProbablePrime</name>
+            <comment>Sets this BigInteger to the smallest integer x &gt; this which is probably prime.
+The probability that the returned BigInteger is prime is beyond 1 - 1/pow(2, 80).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+        </method>
+        <method>
+            <name>SetBit</name>
+            <comment>Sets this BigInteger to a value which has the same binary representation as this
+but with the bit at position n set. The result is equivalent to this | pow(2, n).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the BigDecimal with the number provided.
+Beware of using unquoted literals as parameters as they will be first converted to Double.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Remainder</name>
+            <comment>Sets this BigInteger to a value that is this % divisor.
+Regarding signs this methods has the same behavior as the % operator on ints:
+The sign of the remainder is the same as the sign of this.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Divide</name>
+            <comment>Sets this BigInteger to a  value of this / divisor.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>divisor</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Abs</name>
+            <comment>Sets this BigInteger to a value that is the absolute value of this. 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+        </method>
+        <method>
+            <name>ClearBit</name>
+            <comment>Sets this BigInteger to one that has the same binary representation as this but with
+the bit at position n cleared. The result is equivalent to this AND NOT(pow(2, n)).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>TestBit</name>
+            <comment>Tests whether the bit at position n in this BigInteger is set.
+The result is equivalent to this &amp; pow(2, n) != 0.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLowestSetBit</name>
+            <comment>Returns the position of the lowest set bit in the two's complement representation of
+this BigInteger. If all bits are zero (this==0) then -1 is returned as result.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>Multiply</name>
+            <comment>Sets this BigInteger to a value that is this * value.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CompareTo</name>
+            <comment>Compares this BigInteger with value. Returns -1 if this &lt; value, 0 if this == value
+and 1 if this &gt; value.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Mod</name>
+            <comment>Sets this BigInteger to a value is this mod m. The modulus m must be positive.
+The result is guaranteed to be in the interval [0, m] (0 inclusive, m exclusive).
+The behavior of this function is not equivalent to the behavior of the % operator
+defined for the built-in int's.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>m</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ShiftLeft</name>
+            <comment>Sets this BigInteger to a value that is this &lt;&lt; n.
+The result is equivalent to this * pow(2, n) if n &gt;= 0.
+The shift distance may be negative which means that this is shifted right.
+The result then corresponds to floor(this / pow(2, -n)). 
+Returns itself;</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ModPow</name>
+            <comment>Sets this BigInteger to a value that is pow(this, exponent) mod m. The modulus m must be positive.
+The result is guaranteed to be in the interval [0, m] (0 inclusive, m exclusive).
+If the exponent is negative, then pow(this.modInverse(m), -exponent) mod m is computed.
+The inverse of this only exists if this is relatively prime to m, otherwise an exception is thrown.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>exponent</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+            <parameter>
+                <name>m</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ModInverse</name>
+            <comment>Sets this BigInteger to a value that is 1/this mod m. The modulus m must be positive.
+The result is guaranteed to be in the interval [0, m] (0 inclusive, m exclusive).
+If this is not relatively prime to m, then an exception is thrown.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>m</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize7</name>
+            <comment>Initialises the BigInteger with the BigInteger value provided.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BitCount</name>
+            <comment>Returns the number of bits in the two's complement representation of this which differ
+from the sign bit. If this is negative, the result is equivalent to the number of bits 
+set in the two's complement representation of -this - 1.
+
+Use bitLength() to find the length of the binary value in bits.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>Initialize6</name>
+            <comment>Initialises the BigInteger with the BigDecimal value provided.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize5</name>
+            <comment>Initialises the BigDecimal with a random BigInteger instance in the range
+[0, pow(2, bitLength)-1] which is probably prime.
+The probability that the returned BigInteger is prime is beyond 1 - 1/pow(2, certainty).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>bitlength</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>certainty</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Equals</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>biginteger</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Not</name>
+            <comment>Sets this BigInteger to a value that is NOT(this). The result of this operation is -this-1.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+        </method>
+        <method>
+            <name>Initialize4</name>
+            <comment>Initialises the BigDecimal with a random BigInteger instance in the range
+[0, pow(2, bitLength)-1].</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>bitlength</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Min</name>
+            <comment>Sets this BigInteger to the minimum of this and value.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize3</name>
+            <comment>Initialises the BigDecimal with the number provided.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize2</name>
+            <comment>Initialises the BigDecimal with the twos complement number provided in the byte array. 
+The most significant digits of the number are at index 0 in the array.
+The most significant bit of this entry determines the sign of the new BigInteger instance.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BitLength</name>
+            <comment>Returns the length of the value's two's complement representation without leading zeros for
+positive numbers / without leading ones for negative values.
+The two's complement representation of this will be at least bitLength() + 1 bits long.
+The value will fit into an int if bitLength() &lt; 32 or into a long if bitLength() &lt; 64.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>DoubleValue</name>
+            <comment>Returns this BigInteger as a double. If this is too big to be represented as a double,
+then Double.POSITIVE_INFINITY or Double.NEGATIVE_INFINITY is returned.
+
+Note that not all integers in the range [-Double.MAX_VALUE, Double.MAX_VALUE] can be
+exactly represented as a double.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>And</name>
+            <comment>Sets this BigInteger to a value of  this AND value.
+Usage of this method is not recommended as the current implementation is not efficient.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>LongValue</name>
+            <comment>Returns this BigInteger as a long value.
+If this is too big to be represented as a long, then this % pow(2, 64) is returned.
+RTturns itself.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>Pow</name>
+            <comment>Sets this BigInteger to a value that is pow(this, exp).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>exp</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Subtract</name>
+            <comment>Sets this BigInteger to a value that is this - value.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Xor</name>
+            <comment>Sets this BigInteger to a value that is this XOR value. 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AndNot</name>
+            <comment>Sets this BigInteger to a value that is this AND NOT(~value).
+Usage of this method is not recommended as the current implementation is not efficient.
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>value</name>
+                <type>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>FlipBit</name>
+            <comment>Sets this BigInteger to one which has the same binary representation as this but with
+the bit at position n flipped. The result is equivalent to this ^ pow(2, n). 
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>n</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ProbablePrime</name>
+            <comment>Sets this BigInteger to a random positive BigInteger in the range [0, pow(2, bitLength)-1]
+which is probably prime.
+The probability that the returned BigInteger is prime is beyond 1 - 1/pow(2, 80).
+Returns itself.</comment>
+            <returntype>anywheresoftware.b4a.agraham.bignumbers.BigDecimalWrapper.BigIntegerWrapper</returntype>
+            <parameter>
+                <name>bitLength</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>ToByteArray</name>
+            <comment>Returns the two's complement representation of this BigInteger in a byte array.</comment>
+            <returntype>byte[]</returntype>
+        </method>
+    </class>
+    <version>1.3</version>
+    <comment>This library exposes the Java classes BigInteger and BigDecimal to Basic4android.</comment>
+    <author>Andrew Graham</author>
+</root>

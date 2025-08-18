@@ -1,0 +1,40 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jsql
+Module1=hello
+Module2=hello2
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	
+	#AdditionalJar: sqlite-jdbc-3.34.0_min
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	Dim SQLFileName As String = "report.sqlite"
+	Dim DB As SQL
+End Sub
+
+Sub AppStart (Args() As String)
+	DB.InitializeSQLite(File.DirApp, SQLFileName, False)
+	
+	srvr.Initialize("srvr")
+	srvr.Port = 8081
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	
+	srvr.AddHandler("/hello", "hello", False)
+	srvr.AddHandler("/hello2", "hello2", False)
+
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:51042/
+End Sub

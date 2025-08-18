@@ -1,0 +1,68 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.searchview
+File1=1.bal
+File2=Cities.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=ime
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~~\n~
+Module1=SearchView
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.01
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: SearchView
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Private index As Object
+End Sub
+
+Sub Globals
+	Private SearchView1 As SearchView
+	Private ime As IME
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	If FirstTime Then
+		Dim cities As List = File.ReadList(File.DirAssets, "Cities.txt")
+		'As an optimization we store the index as a process global variable
+		'and only build it once.
+		index = SearchView1.SetItems(cities)
+	Else
+		SearchView1.SetIndex(index)
+	End If
+	ime.Initialize("ime")
+	ime.AddHeightChangedEvent
+End Sub
+
+'Don't forget to add the SetActivityAttribute in the manifest editor (already added in this example)
+Private Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	SearchView1.ActivityHeightChanged(NewHeight)
+End Sub
+
+Sub SearchView1_ItemClick(Value As String)
+	Msgbox("Chosen value: " & Value, "")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

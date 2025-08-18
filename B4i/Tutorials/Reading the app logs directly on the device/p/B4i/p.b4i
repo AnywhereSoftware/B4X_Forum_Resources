@@ -1,0 +1,73 @@
+﻿Build1=Default,b4i.example2
+File1=MainPage.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=icore
+Library3=ireleaselogger
+Library4=inetwork
+Module1=|relative|..\B4XMainPage
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=7.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Logger As ReleaseLogger
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(NavControl)
+	Logger.Initialize("127.0.0.1", 5000)
+	Dim no As NativeObject
+	no.Initialize("B4I").RunMethod("shared", Null).SetField("logger", Me)
+	Me.As(NativeObject).RunMethod("test", Null)
+End Sub
+
+'Template version: B4i-1.0
+#Region Delegates
+Private Sub Application_Background
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Private Sub Application_Foreground
+	B4XPages.Delegate.Activity_Resume
+End Sub
+#End Region
+
+
+Private Sub Log_Log(Message As String)
+	If Message.Contains("recvfrom") Then Return
+	Dim tv As B4XView = B4XPages.MainPage.TextView1
+	tv.Text = tv.Text & CRLF & Message
+	tv.As(TextView).ScrollTo(tv.Text.Length)
+End Sub
+
+#if OBJC
+@end
+@interface b4i_main (logger) <B4ILogger>
+@end
+@implementation b4i_main (logger)
+- (void) Log:(NSString *)message :(NSString*)prefix {
+	[self.bi raiseEventFromDifferentThread:nil event:@"log_log:" params:@[message]];
+}
+- (void) test {
+	NSLog(@"this is a test");
+}
+#End If

@@ -1,0 +1,95 @@
+﻿Build1=Default,b4a.transfer
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=bctoast
+Library3=contentresolver
+Library4=core
+Library5=fileprovider
+Library6=ime
+Library7=xui views
+Library8=sql
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~'FileProvider~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <files-path name="name" path="shared" />~\n~)~\n~'IME~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~~\n~'Receive files~\n~AddActivityText(Main,~\n~<intent-filter>~\n~   <action android:name="android.intent.action.VIEW" />~\n~   <category android:name="android.intent.category.DEFAULT" />~\n~   <data android:mimeType="text/*" />~\n~</intent-filter>)
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\FileHandler
+Module3=Starter
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=3
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: XFER
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True 
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: False
+#End Region
+
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+End Sub
+
+Sub Globals
+	Private ime As IME
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	ime.Initialize("IME")
+	ime.AddHeightChangedEvent
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+End Sub
+
+Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	B4XPages.GetManager.RaiseEvent(B4XPages.GetManager.GetTopPage, "IME_HeightChanged", Array(NewHeight, OldHeight))
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

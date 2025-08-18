@@ -1,0 +1,67 @@
+--[[
+    rfxmeterdht22.dzvents - Explore Arduino_RFXtrx433e.
+    The Arduino sends DHT22 sensor data (temperature, humidity) via the 433Mhz Transmitter to the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+    The data is received by a RFXMeter device, parsed into temperature & humidity values and a Temp+Humidity device is updated.
+    Hardware
+    Arduino UNO with connected modules 433Mhz Transmitter and DHT22 sensor.
+
+    Domoticz Configuration
+    Device RFXMeter (name RFXMETER) connected to the hardware RFXCOM RFXtrx433e:
+    IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+    Device Temp + Humidity (name RFXMeterTempHum) connected to the Dummy (Virtual Sensors) hardware:
+    IDX=385, Hardware=VirtualSensors, ID=141D1, Unit=1, Name=RFXMeterTempHum, Type=Temp + Humidity, SubType=THGN122/123/132, THGR122/228/238/268, Data=17.0 C, 49 %
+
+    This Automation Event dzVents is triggered on RFXMETER device changes.
+    If the RFXMETER device changes, by receiving data from the Arduino, the ULong value is parsed into a table with 3 int values.
+    The 3 int values are temperature sign pos/neg, temperature, humidity.
+    The temperature is corrected depending sign pos/neg.
+    The device RFXMeterTempHum temperature & humidity are updated (without the status).
+    HINT: The RFXMeter can set to hidden by setting the name first character to $. Example: $RFXMeter.
+    20220404 rwbl
+]]--
+
+-- IDX of the devices used.
+local IDX_RFXMETER = 384
+local IDX_TEMPHUM = 385
+
+-- Convert a number to N ints.
+-- value - number to convert (integer or long). Float is not handled.
+-- nrbytes - number of bytes to convert from the value.
+-- Return table with N ints entries.
+local function convert_to_ints(value, nrbytes)
+    local result = {}
+    for i = 0, nrbytes - 1 do
+        -- Convert the byte to a number (int) and assign to the table (note the table index starts with 1 and not 0)
+        result[i+1] = math.floor((value / (2 ^ (i * 8))) % (2 ^ 8))
+        -- result[i+1] = (value >> (i * 8)) & 0xFF
+    end
+    return result
+end
+
+return {
+	on = {
+		devices = { IDX_RFXMETER }
+	},
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERDHT22', },
+    -- Listen to RFXMeter device changes
+	execute = function(domoticz, device)
+	    -- Example: device.sValue=131889 holds 3 bytes as HEX value=020331:
+        -- HEX 02=temperature sign neg, HEX 03=temperature 3Celsius, converted to -3C because sign is 2 (1 is pos value), HEX 31=humidity 49%
+		domoticz.log(("%s: %s (ulong) %s (hex)"):format(device.name, device.sValue, string.upper(string.format("%06x", device.sValue))))
+        -- Convert the sValue from string to number
+		local value = tonumber(device.sValue)
+		-- domoticz.log(("Value=%.f"):format(value))
+		-- Convert the RFXMeter value in a table with 3 ints
+        local data = convert_to_ints(value, 3)
+        domoticz.log(data)
+        local sign = tonumber(data[3])
+        local temperature = tonumber(data[2])
+        if (sign == 2) then temperature = temperature * -1 end
+        local humidity = data[1]    
+        -- dzVents: Info: RFXMETER: s=2, t=-3, h=49
+        domoticz.log(("s=%d, t=%d, h=%d"):format(sign, temperature, humidity))
+        -- Assign the values to a Domoticz device
+        -- Note: status is not used: domoticz.HUM_NORMAL, HUM_COMFORTABLE, HUM_DRY, HUM_WET or HUM_COMPUTE. 
+        domoticz.devices(IDX_TEMPHUM).updateTempHum(temperature, humidity)  -- status
+    end
+}

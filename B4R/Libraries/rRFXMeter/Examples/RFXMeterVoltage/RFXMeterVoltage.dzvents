@@ -1,0 +1,20 @@
+-- RFXMeterVoltage.dzVents
+-- 20220330 rwbl
+
+local rfxmeter = 384
+local rfxmetervoltage = 385
+return {
+	on = { devices = { rfxmeter } },
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETER', },
+	execute = function(domoticz, device)
+	    -- Example: device.sValue=11345
+		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+        -- Convert the sValue from string to number
+		local value = tonumber(device.sValue)
+        -- Convert the value Voltage value mV to virtual sensor Voltage
+		value = value * 0.001
+		-- Update the Voltage device
+		domoticz.devices(rfxmetervoltage).updateVoltage(value)        
+		domoticz.log(("Voltage=%.2f"):format(value))
+    end
+}

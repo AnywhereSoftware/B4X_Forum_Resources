@@ -1,0 +1,89 @@
+﻿Version=4.01
+NumberOfModules=0
+Build1=Default,b4i.example2
+NumberOfFiles=2
+File1=Main.bil
+File2=Tab1.bil
+NumberOfLibraries=2
+Library1=icore
+Library2=itabstrip
+@EndOfDesignText@
+
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private MainPage As Page
+
+	Private TabStrip1 As TabStrip
+	Private WebView1 As WebView
+	Private TabPages As List
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	MainPage.Initialize("MainPage")
+	MainPage.RootPanel.LoadLayout("Main")
+	NavControl.ShowPage(MainPage)
+	TabPages.Initialize
+	Dim cs As CSBuilder
+	Dim page1, page2, page3 As Page
+	
+	
+	page1.Initialize("page1")
+	page1.RootPanel.LoadLayout("Tab1")
+	page1.Title = "Bing"
+	WebView1.LoadUrl("https://www.bing.com")
+	TabPages.Add(page1)
+	
+	page2.Initialize("page2")
+	page2.RootPanel.LoadLayout("Tab1")
+	WebView1.LoadUrl("https://www.google.com")
+	cs.Initialize.Font(Font.CreateFontAwesome(18)).Color(0xFF014E1C).VerticalAlign(-1).Append("Google ").Append(Chr(0xF17B)).PopAll
+	SetAttributedTitle(page2, cs)
+	TabPages.Add(page2)
+	
+	page3.Initialize("page3")
+	page3.RootPanel.LoadLayout("Tab1")
+	WebView1.LoadUrl("https://www.duckduckgo.com")
+	SetAttributedTitle(page3, cs.Initialize.Color(0xFFF46903).Append("DuckDuckGo").PopAll)
+	TabPages.Add(page3)
+		
+	TabStrip1.SetPages(TabPages)
+	
+End Sub
+
+Sub TabStrip1_PageSelected (Position As Int)
+	Log("Current page: " & Position)
+End Sub
+
+Sub SetAttributedTitle(page As Page, cs As CSBuilder)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.AttributedText = cs
+	page.TitleView = lbl
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+

@@ -1,0 +1,78 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=okhttp
+Library3=phone
+Library4=randomaccessfile
+Library5=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:usesCleartextTraffic,"true")
+Module1=HttpJob
+Module2=HttpUtils2Service
+Module3=DownloadService
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=3
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private link1 As String = "http://mirror.filearena.net/pub/speed/SpeedTest_16MB.dat"
+End Sub
+
+Sub Globals
+	Dim ProgressBar1 As ProgressBar
+	Dim Label1 As Label
+	Dim btnDownload As Button
+	Dim btnCancel As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub btnDownload_Click
+	Dim dd As DownloadData
+	dd.url = link1
+	dd.EventName = "dd"
+	dd.Target = Me
+	CallSubDelayed2(DownloadService, "StartDownload", dd)
+End Sub
+
+Sub dd_Progress(Progress As Long, Total As Long)
+	ProgressBar1.Progress = Progress / Total * 100
+	Label1.Text = NumberFormat(Progress / 1024, 0, 0) & "KB / " & _
+		NumberFormat(Total / 1024, 0, 0) & "KB"
+End Sub
+
+Sub dd_Complete(Job As HttpJob)
+	Log("Job completed: " & Job.Success)
+	Job.Release
+End Sub
+
+Sub btnCancel_Click
+	CallSubDelayed2(DownloadService, "CancelDownload", link1)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

@@ -1,0 +1,103 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlegoinoboost
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+' BoostBasicControl.b4r
+' Sample project for the B4R Library rLegoinoBoost.
+' Perform some basic motor & HUB LED actions to test the various fuctions using the Lego Boost Set 17101.
+' 20211017 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "B4R Library rLegoinoBoost - BoostBasicControl v20211017"
+	Private DEBUG As Boolean = False
+	Public serialLine As Serial
+	Private moveHUB As LegoinoBoost
+	Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init sensor with callback event, MAC adress 00:16:53:AE:9B:27 and debug flag
+	' The MAC address can be obtained using the hcitool or Android app Serial Bluetooth
+	moveHUB.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+	Log("Waiting for MoveHub Bluetooth connection: ", MOVEHUB_ADDRESS)
+End Sub
+
+' Callback event handling the connection state change.
+' When connected to the move hub, run several actions.
+Sub MoveHub_StateChanged(Connected As Boolean)
+	Log("MoveHub StateChanged: ", Connected)
+	If Connected Then
+		Log("Connected to ", moveHUB.Name)
+
+		' HUB LED Color GREEN
+		Log("Set LED Color Green")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_GREEN)
+		Delay(3000)
+
+		' HUB Internal Tacho Motor Port A
+		' Move forward
+		Log("Set LED Color Blue")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_BLUE)
+		Log("Set Tacho Motor A Speed=20 Forward MaxPower=100")
+		moveHUB.SetTachoMotorSpeed(moveHUB.MOVEHUBPORT_A, 20, 100, moveHUB.BRAKINGSTYLE_BRAKE)
+		Delay(3000)
+		' Stop
+		Log("Stop Tacho Motor A")
+		moveHUB.StopTachoMotor(moveHUB.MOVEHUBPORT_A)
+		Log("Set LED Color Green")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_GREEN)
+		Delay(3000)
+		' Move backward
+		Log("Set LED Color Red")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_RED)
+		Log("Set Tacho Motor A Speed=40 Backwards MaxPower=100")
+		moveHUB.SetTachoMotorSpeed(moveHUB.MOVEHUBPORT_A, -40, 100, moveHUB.BRAKINGSTYLE_BRAKE)
+		Delay(3000)
+		' Stop
+		Log("Stop Tacho Motor A")
+		moveHUB.StopTachoMotor(moveHUB.MOVEHUBPORT_A)
+		Log("Set LED Color Green")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_GREEN)
+		Delay(2000)
+
+		' External Basic Motor Port C
+		Log("Set LED Color Lightblue")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_LIGHTBLUE)
+		Log("Set Basic Motor Port C Position Speed=20, Position=-30")
+		moveHUB.SetAbsoluteMotorPosition(moveHUB.MOVEHUBPORT_C, 20, -30, 100, moveHUB.BRAKINGSTYLE_BRAKE)
+		Delay(2000)
+
+		' HUB LED RGB Color - CYAN
+		Log("Set LED Color CYAN")
+		moveHUB.SetLEDRGBColor(0, 255, 255)
+		Delay(1000)
+
+		' HUB Properties
+		Log("Properties BatteryLevel: ", moveHUB.BatteryLevel, "%, VoltageSensor: ", moveHUB.VoltageSensor, "V")
+		Delay(1000)
+
+		Log("HUB Shutdown...")
+		moveHUB.ShutDownHub
+		Log("DONE")
+	End If		
+End Sub

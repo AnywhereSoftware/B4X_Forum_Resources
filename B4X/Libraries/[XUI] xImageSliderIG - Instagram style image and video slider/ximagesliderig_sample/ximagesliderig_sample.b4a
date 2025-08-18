@@ -1,0 +1,139 @@
+﻿Build1=Default,b4a.example
+File1=img1.jpg
+File2=img2.jpg
+File3=layout1.bal
+File4=layout2.bal
+File5=ximageslider_video.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=gesturedetector
+Library4=javaobject
+Library5=xcustomlistview
+Library6=ahviewpager
+Library7=okhttputils2
+Library8=exoplayer
+Library9=ximagesliderig
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=9
+NumberOfModules=1
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: xImageSliderIG Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Type SliderContainer(slider As xImageSliderIG, items As List)
+	Private CustomListView1 As CustomListView
+	Private xImageSliderIG1 As xImageSliderIG
+	
+	Private sliders As List
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout2")
+	sliders.Initialize
+	For i=0 To 15
+		If i=10 Or i=1 Then
+			Dim p As Panel
+			p.Initialize("")
+			p.SetLayout(0,0,100%x,300dip)
+			p.LoadLayout("layout1")
+			CustomListView1.Add(p,"")
+			CustomListView1.GetPanel(i).Color = Colors.White
+			
+			Dim sc As SliderContainer
+			sc.Initialize
+			sc.slider = xImageSliderIG1
+			sc.slider.ActivityHasActionBar = True
+			sc.items.Initialize
+			
+			For j=0 To 10
+				sc.items.Add(CreateMap("data":"Item 1-"&j, "video":"https://media.w3.org/2010/05/sintel/trailer.mp4", "type":"uri"))
+				sc.items.Add(CreateMap("data":"Item 1-"&j, "image":LoadBitmap(File.DirAssets,"img1.jpg")))
+				sc.items.Add(CreateMap("data":"Item 1-"&j, "image":"https://cdn.pixabay.com/photo/2015/07/06/13/58/arlberg-pass-833326__340.jpg"))
+			Next
+	
+			sc.slider.setitems(sc.items)
+			sc.slider.SetZoomPanel(Activity)
+			
+			sliders.Add(sc)
+		Else
+			CustomListView1.AddTextItem("abc "&i,"")
+		End If
+	Next
+	UpdateSliders
+	Activity.AddMenuItem("Refresh","Refresh")
+End Sub
+
+Sub Activity_Resume
+	UpdateSliders
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	For Each sc As SliderContainer In sliders
+		sc.slider.PauseCurrentVideo
+	Next
+End Sub
+
+Sub Refresh_Click
+	Dim sc As SliderContainer = sliders.Get(0)
+	sc.items.Initialize
+			
+	For j=0 To 5
+		sc.items.Add(CreateMap("data":"Item 1-"&j, "video":"https://media.w3.org/2010/05/sintel/trailer.mp4", "type":"uri"))
+		sc.items.Add(CreateMap("data":"Item 1-"&j, "image":LoadBitmap(File.DirAssets,"img1.jpg")))
+		sc.items.Add(CreateMap("data":"Item 1-"&j, "image":"https://cdn.pixabay.com/photo/2015/07/06/13/58/arlberg-pass-833326__340.jpg"))
+	Next
+	
+	sc.slider.setitems(sc.items)
+	UpdateSliders
+End Sub
+
+Sub xImageSliderIG1_SingleTap(CurrentIndex As Int, Data As Object)
+	Dim str As String = Data
+	ToastMessageShow("Single Tap:" & CurrentIndex &", "& str,False)
+End Sub
+
+Sub xImageSliderIG1_DoubleTap(CurrentIndex As Int, Data As Object)
+	Dim str As String = Data
+	ToastMessageShow("Double Tap:" & CurrentIndex &", "& str,False)
+End Sub
+
+Sub CustomListView1_ScrollChanged (Offset As Int)
+	UpdateSliders
+End Sub
+
+Sub UpdateSliders
+	For Each sc As SliderContainer In sliders
+		sc.slider.UpdatePlayback
+	Next
+End Sub

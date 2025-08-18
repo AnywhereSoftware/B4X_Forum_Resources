@@ -1,0 +1,158 @@
+﻿Build1=Default,com.biswajit
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=runtimepermissions
+Library3=javaobject
+Library4=phone
+Library5=speechrecognitionnoui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.RECORD_AUDIO)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.ACCESS_NOTIFICATION_POLICY)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+
+#Region  Project Attributes 
+	#ApplicationLabel: SpeechRecognitionNoUI Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private Button1 As Button
+	Private Label1 As Label
+	Private Label3 As Label
+	Private Label2 As Label
+	Private ProgressBar1 As ProgressBar
+	Dim sr As SpeechRecognitionNoUI
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+	sr.Initialize("sr",Me)
+	
+	sr.NoRecognizerBeep = True
+End Sub
+
+Sub Activity_Resume
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_RECORD_AUDIO)
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	Dim rp As RuntimePermissions
+	If Permission = rp.PERMISSION_RECORD_AUDIO Then
+		If Result Then
+			Button1.Text = Chr(0xE02A)
+			Button1.Enabled = True
+		Else
+			Button1.Text = Chr(0xE02B)
+			Button1.Enabled = False
+		End If
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	Dim p As Phone
+	If p.SdkVersion >= 24 Then
+		Dim NotificationManager As JavaObject
+		NotificationManager = NotificationManager.InitializeContext.RunMethod("getSystemService", Array("notification"))
+		If NotificationManager.RunMethod("isNotificationPolicyAccessGranted", Null) = False Then
+			Msgbox2Async("Allow the app to access Do Not Disturb mode.", "Access Required", "Ok", "", "No", Null, False)
+			Wait For Msgbox_Result (Result As Int)
+			If Result = DialogResponse.POSITIVE Then
+				Dim in As Intent
+				in.Initialize("android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS", "")
+				Sleep(500)
+				StartActivity(in)
+				Wait For Activity_Resume
+				Log("after resume")
+				If NotificationManager.RunMethod("isNotificationPolicyAccessGranted", Null) = False Then
+					Log("no permission")
+					Return
+				End If
+			Else
+				Return
+			End If
+		End If
+	End If
+
+	If sr.IsInitialized Then
+		sr.StartListening("en",True,False)
+	End If
+End Sub
+
+Sub sr_Results(Texts As List)
+	Dim Text As String = "Speech Results:"&CRLF&CRLF
+	For Each t As String In Texts
+		Text = Text & ">" & t & CRLF& CRLF
+	Next
+	Label1.Text = Text
+End Sub
+
+Sub sr_PartialResults(Texts As List)
+	If Texts.Size > 0 Then
+		Label3.Text = Texts.get(0)
+	Else
+		Label3.Text = ""
+	End If
+End Sub
+
+Sub sr_BeginningOfSpeech
+	Button1.Text = Chr(0xE029)
+	Button1.Enabled = False
+	Label3.Text = ""
+	Label1.Text = ""
+	Label3.Visible = True
+End Sub
+
+Sub sr_EndOfSpeech
+	Button1.Text = Chr(0xE02A)
+	Button1.Enabled = True
+	Label3.Text=""
+	Label3.Visible = False
+	ProgressBar1.Visible = False
+	Activity.Title = "Recognition Ended"
+	
+End Sub
+
+Sub sr_ReadyForSpeech
+	ProgressBar1.Visible = True
+	Activity.Title = "Speak Now"
+End Sub
+
+Sub sr_Error(Msg As String)
+	Button1.Text = Chr(0xE02A)
+	Button1.Enabled = True
+	Label3.Text = ""
+	Label1.Text = ""
+	Msgbox(Msg,"")
+End Sub
+
+Sub sr_RmsChanged(RmsValue As Float)
+	
+End Sub

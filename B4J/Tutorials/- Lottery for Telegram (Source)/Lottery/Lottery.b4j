@@ -1,0 +1,124 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private TextField1 As TextField
+	Private LBL_1 As Label
+	Private LBL_2 As Label
+	Private BTN_Open As Button
+	Private BTN_StartLottery As Button
+	Private BTN_RElottery As Button
+	Private Btn_Check As Button
+	Dim num_from As Int = -1
+	Dim num_to As Int = -1
+	Dim channel_Username As String = ""
+	Private Label1 As Label
+	Dim List As List
+	Dim win As Int = -1
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "Lottery"
+	MainForm.Show
+	List.Initialize
+	BTN_RElottery_Click
+End Sub
+
+Private Sub TextField1_TextChanged (Old As String, New As String)
+	Try
+		If New <> "" Then
+			If num_from = -1 And num_to = -1 Then
+				New = New.Replace("https://t.me/","")
+				channel_Username = New.SubString2(0,New.LastIndexOf("/"))
+				num_from = New.Replace(channel_Username&"/","")
+				Label1.Text = "The last person allowed in the lottery"
+				TextField1.Text = ""
+			Else if num_from <> -1 And num_to = -1 Then
+				New = New.Replace("https://t.me/","")
+				If channel_Username = New.SubString2(0,New.LastIndexOf("/")) Then
+					num_to = New.Replace(New.SubString2(0,New.LastIndexOf("/"))&"/","")
+					TextField1.Text = ""
+					Label1.Text = "Checking the accuracy ..."
+					Sleep(1000)
+					Label1.Text = "successful!"
+					Sleep(1000)
+					TextField1.Visible = False
+					Sleep(1000)
+					Btn_Check.Visible = True
+					BTN_RElottery.Visible = True
+				Else
+					fx.Msgbox(MainForm,"Input channel is wrong!","Error")
+				End If
+				
+			End If
+		End If
+	Catch
+		fx.Msgbox(MainForm,"Invalid links","Error")
+		Log(LastException)
+	End Try
+	Log(channel_Username)
+	Log(num_from)
+	Log(num_to)
+End Sub
+
+Private Sub Btn_Check_Click
+	LBL_1.Text = "Pending..."
+	For i = 1 To num_to - num_from
+		List.Add(num_from + i)
+	Next
+	Log(List)
+	Sleep(1000)
+	LBL_1.Text = "Lottery information and statistics:" & CRLF&CRLF&"Channel ID: @"&channel_Username&CRLF &"Number of participants allowed:"& (num_to - num_from ) & CRLF & "Everyone has a chance to win:"& NumberFormat(((1/(num_to - num_from))*100),0,2) &"%"
+	Sleep(1000)
+	BTN_StartLottery.Visible = True
+End Sub
+
+Private Sub BTN_RElottery_Click
+	TextField1.Visible = True
+	TextField1.Text = ""
+	num_from = -1
+	num_to = -1
+	channel_Username = ""
+	LBL_1.Text = ""
+	LBL_2.Text = ""
+	win = -1
+	List.Clear
+	Label1.Text = "Lottery Post ID:"
+	Btn_Check.Visible = False
+	BTN_Open.Visible = False
+	BTN_RElottery.Visible = False
+	BTN_StartLottery.Visible = False
+End Sub
+
+Private Sub BTN_StartLottery_Click
+	LBL_2.Text = "The lottery has started!"
+	Sleep(2000)
+	LBL_2.Text = "Finding the winner of the lottery" &List.Size
+	Sleep(5000)
+	win = Rnd(1,List.Size)
+	LBL_2.Text = "Congratulations !!! The winner has been determined, the winner will be opened via the button below !!"
+	Sleep(1000)
+	BTN_Open.Visible = True
+End Sub
+
+Private Sub BTN_Open_Click
+	fx.ShowExternalDocument("https://t.me/"&channel_Username&"/"&List.Get(win-1))
+End Sub

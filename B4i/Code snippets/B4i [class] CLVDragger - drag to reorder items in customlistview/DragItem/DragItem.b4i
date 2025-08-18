@@ -1,0 +1,75 @@
+﻿Build1=Default,com.binary.dragitem
+File1=mmenu.bil
+File2=Page1.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=xui views
+Module1=CLVDragger
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=7.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private xui As XUI
+	Private myclv As CustomListView
+	Private lbl1 As Label
+	Private lbl2 As Label
+	
+	'Dim hud As HUD
+	Private dragger As CLVDragger
+	
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("Page1")
+	NavControl.ShowPage(Page1)
+	
+	For i=1 To 25
+		Dim p As B4XView = CreateMenu(i)
+		myclv.Add(p,i)
+	Next
+	
+	dragger.Initialize(myclv)
+	dragger.SetDefaults(40dip, xui.Color_Black, xui.Color_White, False)
+	dragger.AddDragButtons
+End Sub
+
+Private Sub CreateMenu(i As Int) As B4XView
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0,0,0dip, 100%x, 60dip)
+	p.LoadLayout("mmenu")
+	lbl1.Text=i
+	lbl2.Text="Text Menu " & i
+	Return p
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub myclv_ItemClick (Index As Int, Value As Object)
+	'hud.ToastMessageShow($"Item ${Index}"$, False)
+End Sub

@@ -1,0 +1,125 @@
+﻿Build1=Default,genesis.irange
+File1=bar-background.png
+File10=slider-default7-track@2x.png
+File11=slider-default7-trackbackground@2x.png
+File12=slider-default7-trackcrossedover@2x.png
+File13=slider-default-handle@2x.png
+File14=slider-default-track@2x.png
+File15=slider-default-trackcrossedover@2x.png
+File16=slider-metal-handle@2x.png
+File2=bar-background@2x.png
+File3=bar-highlight.png
+File4=bar-highlight@2x.png
+File5=handle.png
+File6=handle@2x.png
+File7=handle-hover.png
+File8=handle-hover@2x.png
+File9=main.bil
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=icore
+Library2=irangebar
+NumberOfFiles=16
+NumberOfLibraries=2
+NumberOfModules=0
+Version=6.47
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private lblLeft As Label
+	Private lblRight As Label
+	Private iRangeBar1 As iRangeBar
+	Private lblLeft2 As Label
+	Private lblRight2 As Label
+	Private iRangeBar2 As iRangeBar
+	Private lblLeft3 As Label
+	Private lblRight3 As Label
+	Private iRangeBar3 As iRangeBar
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("main")
+	iRangeBar1.assignrangeImage(LoadBitmap(File.DirAssets, "bar-background.png"))
+	iRangeBar1.assignleftThumb(LoadBitmap(File.DirAssets, "handle.png"))
+	iRangeBar1.assignrightThumb(LoadBitmap(File.DirAssets, "handle.png"))
+	iRangeBar1.assigntrackImage(LoadBitmap(File.DirAssets, "bar-highlight.png"))
+	iRangeBar1.setMinValue(0, 100)
+	iRangeBar1.setMinimumDistance(30)
+	
+	'''second rangebar
+	iRangeBar2.assignrangeImage(LoadBitmap(File.DirAssets, "slider-default7-trackbackground@2x.png"))
+	iRangeBar2.assignleftThumb(LoadBitmap(File.DirAssets, "slider-metal-handle@2x.png"))
+	iRangeBar2.assignrightThumb(LoadBitmap(File.DirAssets, "slider-metal-handle@2x.png"))
+	iRangeBar2.assigntrackImage(LoadBitmap(File.DirAssets, "slider-default-trackcrossedover@2x.png"))
+	iRangeBar2.setMinValue(-100, 100)
+	iRangeBar2.setMinimumDistance(30)
+	
+	'''third rangebar
+	iRangeBar3.assignrangeImage(LoadBitmap(File.DirAssets, "slider-default7-trackbackground@2x.png"))
+	iRangeBar3.assignleftThumb(LoadBitmap(File.DirAssets, "slider-metal-handle@2x.png"))
+	iRangeBar3.assignrightThumb(LoadBitmap(File.DirAssets, "slider-metal-handle@2x.png"))
+	iRangeBar3.assigntrackImage(LoadBitmap(File.DirAssets, "slider-default7-trackcrossedover@2x.png"))
+	iRangeBar3.setMinValue(-80, 180)
+	iRangeBar3.setMinimumDistance(20)
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+Sub iRangeBar1_SliderValueChanged (leftValue As Double, rightValue As Double)
+	lblLeft.Text = NumberFormat(leftValue, 0, 2)
+	lblRight.Text = NumberFormat(rightValue, 0, 2)
+End Sub
+
+Sub iRangeBar2_SliderValueChanged (leftValue As Double, rightValue As Double)
+	lblLeft2.Text = NumberFormat(leftValue, 0, 2)
+	lblRight2.Text = NumberFormat(rightValue, 0, 2)
+End Sub
+
+Sub iRangeBar3_SliderValueChanged (leftValue As Double, rightValue As Double)
+	lblLeft3.Text = NumberFormat(leftValue, 0, 2)
+	lblRight3.Text = NumberFormat(rightValue, 0, 2)
+End Sub

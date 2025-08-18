@@ -1,0 +1,133 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+Library4=json
+Library5=javaobject
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=8.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Button1 As Button
+	Private pdfName As String
+	Private repfolder As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	pdfName="report.pdf"
+	repfolder="c:\reports\"
+	MainForm.Show
+	
+	
+End Sub
+
+Sub PrintPdf()
+	Dim PdfSh As Shell
+	 		
+	If File.Exists(repfolder,"render.js") Then
+		File.Delete(repfolder,"render.js")
+	End If
+	
+	Dim JSONGenerator As JSONGenerator
+   	Dim n As Int
+	Dim data As Map
+	data.Initialize
+	Dim lst As List
+	lst.Initialize
+	For n=0 To 15
+		Dim d1 As Map
+		d1.Initialize
+		d1.Put("category","a1-" & n)
+		d1.Put("description","a2-" & n)
+		d1.Put("title","a3-" & n)
+		d1.Put("video","a4-" & n)
+		lst.Add(d1)
+	Next
+	 
+	data.Put("shows",lst)
+	
+	JSONGenerator.Initialize(data)
+	
+	Dim json As String= JSONGenerator.ToString
+	
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("function renderdoc(){") 
+  	sb.Append("var template = document.getElementById('template').innerHTML;")
+  	sb.Append("var rendered = Mustache.render(template," & json & ");")
+  	sb.Append("document.getElementById('target').innerHTML = rendered;")
+	sb.Append("}")
+	
+	File.WriteString(repfolder,"render.js",sb.ToString)
+	
+	Dim t As Long = DateTime.Now
+	Dim fileready As Boolean=False  
+	Do While fileready=False And DateTime.Now < t+5000
+		If File.Exists(repfolder,"render.js") Then
+			fileready=True
+		End If
+	Loop
+	If fileready=True Then
+		  PdfSh.Initialize("PdfPrint", "c:\program files\wkhtmltopdf\bin\wkhtmltopdf.exe", Array As String("--javascript-delay 	","500", "--enable-local-file-access",repfolder & "report.html",repfolder  &  pdfName))
+	    PdfSh.WorkingDirectory = repfolder
+	    PdfSh.Run(5000)
+	Else
+		fx.Msgbox(MainForm,"Check wkhtmltopdf and report paths","Stop")
+	End If
+  
+End Sub
+
+Sub PdfPrint_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+    Log(StdOut)
+    Log(StdErr)
+	Dim FileSeparator As String="/"
+	Dim AppDir As String="appdir"
+	Dim OsName As String=asJO(Me).RunMethod("getSysProp",Array As String("os.name"))
+    If Success And ExitCode = 0 Then
+		If OsName.Contains("Windows") Then
+			fx.ShowExternalDocument(File.GetUri(repfolder,pdfName))
+		Else If OsName.Contains("Linux") Then
+			fx.ShowExternalDocument( AppDir & FileSeparator & pdfName )
+		End If	
+	Else
+		fx.Msgbox(MainForm,"Check wkhtmltopdf error messages in log","Stop")		
+    End If   
+End Sub
+
+Private Sub Button1_Click
+	PrintPdf
+End Sub
+
+Sub asJO(o As JavaObject)As JavaObject
+	Return o
+End Sub
+#if java
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+public static String getAppPath(){
+    String userDir = System.getProperty("user.dir");
+	return userDir;
+}
+public static String getSysProp(String fld){
+    String data = System.getProperty(fld);
+	return data;
+}
+
+#End If

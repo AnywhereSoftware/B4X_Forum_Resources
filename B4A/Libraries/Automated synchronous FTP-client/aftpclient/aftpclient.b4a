@@ -1,0 +1,127 @@
+﻿Build1=Default,b4a.example.aftpclient
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=runtimepermissions
+Library3=phone
+Library4=net
+Library5=abzipunzip
+Library6=xui
+Library7=keyvaluestore
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=aftpclient
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=2
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: FTP-client
+	#VersionCode: 1
+	#VersionName: 0.14
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim timLog As Timer
+	Dim folder As String
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private butUpload As Button
+	Private butDownload As Button
+	Private butDelete As Button
+	Private txtLog As EditText
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		folder = File.DirDefaultExternal	'File.DirInternalCache
+		Starter.StartFTP
+	Else
+		ToastMessageShow("No permission", False)
+	End If
+End Sub
+
+Sub Activity_Resume
+	timLog.Initialize("timLog", 1000)
+	timLog.Enabled = True
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub butUpload_Click
+	Dim fn As String = "text_FTP_file" & Rnd(0, 1000) & ".txt"
+	butUpload.Tag = fn	'save for next test operations
+	File.WriteString(File.DirInternalCache, fn, "test text " & Rnd(0, 1000))
+	Starter.af.Upload_File(File.DirInternalCache, fn, Starter.Root_FTPfolder, True)
+	Activity.Title = fn
+End Sub
+
+Sub butDownload_Click
+	Log("butUpload.Tag pre-deleted=" & File.Delete(butUpload.Tag, folder))
+	Starter.af.Download_FTP_File(butUpload.Tag, Starter.Root_FTPfolder, folder)
+End Sub
+
+Sub butDelete_Click
+	Starter.af.Delete_FTP_File(Starter.Root_FTPfolder, butUpload.Tag)
+	Activity.Title = ""
+End Sub
+
+'group files upload
+Sub butUpload_LongClick
+	For i = 0 To 4
+		Dim fn As String = "text_FTP_file" & i & ".txt"
+		butUpload.Tag = fn	'save for next test operations
+		File.WriteString(File.DirInternalCache, fn, "test text " & i)
+		Starter.af.Upload_File(File.DirInternalCache, fn, Starter.Root_FTPfolder, True)
+	Next
+End Sub
+
+Sub butDelete_LongClick
+	For i = 0 To 4
+		Dim fn As String = "text_FTP_file" & i & ".txt"
+		Starter.af.Delete_FTP_File(Starter.Root_FTPfolder, fn)
+	Next
+End Sub
+
+Sub butDownload_LongClick
+	For i = 0 To 4
+		Dim fn As String = "text_FTP_file" & i & ".txt"
+		Starter.af.Download_FTP_File(fn, Starter.Root_FTPfolder, folder)
+	Next
+End Sub
+
+Sub timLog_Tick
+	Dim L As List = File.ListFiles(folder)
+	Dim Logs As StringBuilder
+	Logs.Initialize
+	Logs.Append("folder = " & folder & CRLF & "Files qty = " & L.Size).Append(CRLF & CRLF)
+	For i = 0 To L.Size - 1
+		Dim a As String = L.Get(i)	'local file
+		If File.IsDirectory(folder, a) Then Continue
+		Logs.Append(a).Append(": " & File.Size(folder, a)).Append(CRLF)
+	Next
+	txtLog.Text = Logs.ToString
+	
+End Sub

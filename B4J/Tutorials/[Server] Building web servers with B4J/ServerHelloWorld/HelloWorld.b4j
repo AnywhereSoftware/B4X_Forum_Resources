@@ -1,0 +1,68 @@
+﻿Version=1.06
+AppType=StandardJava
+IconFile=
+NumberOfModules=3
+Module1=HelloPage
+ModuleVisible1=1
+Module2=FormExampleHelper
+ModuleVisible2=1
+Module3=FileUpload
+ModuleVisible3=1
+Package=b4j.example
+UserTypesHint=HelloPage,FormExampleHelper,FileUpload
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=javaobject
+Library2=jcore
+Library3=jserver
+Library4=jsql
+@EndOfDesignText@
+'Non-UI application (console application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: true 
+	'#AdditionalJar: mysql-connector-java-5.1.27-bin
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	'Public pool As ConnectionPool
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 8888
+	
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.LogsFileFolder = File.Combine(File.DirApp, "logs")
+	srvr.AddHandler("/hello", "HelloPage", False)
+	srvr.AddHandler("/FormExampleHelper", "FormExampleHelper", False)
+	srvr.AddHandler("/FileUpload", "FileUpload", False)
+	
+'	pool.Initialize("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/test?characterEncoding=utf8", _
+'		"root", "")
+'	Log("Testing the database connection")
+'	pool.GetConnection.Close
+
+	srvr.Start
+	Log("Server started")
+	StartMessageLoop
+End Sub
+
+'prints the requests parameters
+Public Sub PrintAllParameters (req As ServletRequest) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("<ul>")
+	Dim params As Map = req.ParameterMap
+	For Each name As String In params.Keys
+		sb.Append("<li>").Append(name).Append(":")
+		Dim values() As String = params.Get(name)
+		For Each value As String In values
+			sb.Append(" ").Append(value)
+		Next
+		sb.Append("</li>")
+	Next
+	sb.Append("</ul>")
+	Return sb.ToString
+End Sub

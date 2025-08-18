@@ -1,0 +1,44 @@
+--[[
+    rfxmetertemphum.dzvents - Explore Arduino_RFXCOM.
+    20220405 rwbl
+]]--
+
+local rfxmeter = 384
+local rfxmetertemphum = 385
+
+-- Convert a number to N bytes.
+-- value - number to convert (integer or long). Float is not handled.
+-- nrbytes - number of bytes to convert from the value.
+-- Return table with N byte entries.
+local function convert_to_bytes(value, nrbytes)
+    local result = {}
+    for i = 0, nrbytes - 1 do
+        -- Convert the byte to a number (int) and assign to the table (note the table index starts with 1 and not 0)
+        result[i+1] = math.floor((value / (2 ^ (i * 8))) % (2 ^ 8))
+        -- result[i+1] = (value >> (i * 8)) & 0xFF
+    end
+    return result
+end
+
+return {
+	on = { devices = { rfxmeter } },
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETER', },
+	execute = function(domoticz, device)
+        -- Convert the sValue from string to number
+		local value = tonumber(device.sValue)
+		domoticz.log(("Value=%.f"):format(value))
+        -- Convert Long Number to 3 Bytes and assign to Domoticz Virtual Sensor Temp+Hum
+        -- Example: The value contains 3 Bytes converted to table with 3 entries ts=2, t=3 (converted to -3 because s=2), h=49
+        local data = convert_to_bytes(value, 3)
+        domoticz.log(data)
+        local sign = tonumber(data[3])
+        local temperature = tonumber(data[2])
+        if (sign == 2) then temperature = temperature * -1 end
+        local humidity = data[1]    
+        -- dzVents: Info: RFXMETER: s=2, t=-3, h=49
+        domoticz.log(("s=%d, t=%d, h=%d"):format(sign, temperature, humidity))
+        -- Assign the values to a Domoticz device
+        -- Parameter: temperature: Celsius, status: domoticz.HUM_NORMAL, HUM_COMFORTABLE, HUM_DRY, HUM_WET or HUM_COMPUTE. 
+        domoticz.devices(rfxmetertemphum).updateTempHum(temperature, humidity)  --  [, status] )
+    end
+}

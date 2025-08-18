@@ -1,0 +1,198 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rgprmc
+Library3=rrandomaccessfile
+Library4=rsoftwareserial
+Library5=rliquidcrystali2cex
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+'lcddisplay.b4r
+'20210705 rwbl
+'Test reading & parsing NMEA GPRMC sentence messages from a MakerHawk GPS Module with GT-U7 chip and SIM39ES antenna.
+'The data is displayed on a LCD2004.
+'This example could be a trigger for a mini dashboard for a vehicle
+'Hardware:
+'Arduino UNO
+'MakerHawk GPS Module with GT-U7 chip and SIM39ES antenna
+'	Operating voltage: 3.3-5V (Or direct usb Power supply), Operating baud rate: 9600, Onboard rechargeable button battery
+'	Onboard E2PROM to save parameter data, NEMA output format compatible NEO-6M, Size: 27.6mm * 26.6mm
+'Example LCD Display Layout
+' ------------------------
+' 0	Kmh: NNN            HH
+' 1	KM : NN.NN 		    MM
+' 2	Dur: HH:MM:SS       SS
+' 3	NN.NNNN NNN.NNNN     X
+' ------------------------
+'Notes:
+'Dur is the duration between start and current timestamp taken from the RMC sentence timestamp
+'HH:MM:SS the actual GPS time taken from the RMC sentence field timestamp
+'X is a place holderin case of an error = displaying E
+'Additional libraries:
+'rGPRMS - GPS module
+'rLiquidCrystalI2CEx - LCD2004 Display
+'rRandomAccessFile - ByteConverter
+'rSoftwareSerial - GPS Module TX&RX lines
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+#Region Wiring
+'GPS Module = Arduino UNO (Wirecolor)
+'VCC = 3.3V (RED) - Range 3.3V - 5V
+'GND = GND (BLACK)
+'RXD = Pin #3 used as TX (BLUE)
+'TXD = Pin #4 used as RX (GREEN)
+'PPS = Time Pulse output = Not used - Can be used for the GPS to drive a hardware high precision clock
+
+'LCD I2C = Arduino (Wirecolor)
+'GND = GND (BLACK)
+'VCC = 5v  (RED)
+'SDA = SDA (BLUE)
+'SCL = SCL (GREEN)
+#End Region
+
+Sub Process_Globals
+	' Serial line
+	Public serialLine As Serial
+	Private Const SERIALLINE_BAUD As ULong	= 115200
+	' Software serial port used for GPS module with baud rate 9600
+	Private serialGPS As SoftwareSerial
+	Private Const SERIALGPS_BAUD As ULong	= 9600		'Take from GPS module datasheet
+	Private Const SERIALGPS_RX_PIN As Byte	= 4			'Microcontroller RX pin
+	Private Const SERIALGPS_TX_PIN As Byte	= 3			'Microcontroller TX pin
+	Private CONST GPRMC_SENTENCE() As Byte	= "$GPRMC"	'As defined by NMEA spec
+	' Handle GPS data received via serial gps
+	Private asyncStream As AsyncStreams
+	Private DistanceTotal As Double
+	Private TimeStartHours As ULong = 0
+	Private TimeStartMinutes As ULong = 0
+	Private TimeStartSeconds As ULong = 0
+	Private FirstTime As Boolean = True
+	Private TimePrevHours As Int	
+	Private TimePrevMinutes As Int	
+	Private TimePrevSeconds As Int
+	Private SpeedPrev As Double
+	' LCD 2004
+	Private lcd As LiquidCrystalI2CEX
+	' Helper to get GPRMC Lat indicator as String in the log
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(SERIALLINE_BAUD)
+	Log("GPRMC Test - LCD Display v20210705")
+	'Init the LCD: Address (1602 = 0x3F,2004 = 0x27), Columns, Rows
+	lcd.Initialize(0x27, 20, 4)
+	'lcd.Initialize(0x3F, 16, 2)
+
+	'Turn the backlight on (default is turned off), set cursor 0,0, write some text
+	lcd.Backlight = True
+	lcd.Clear
+	lcd.WriteAt(0, 0, "GPRMC Test")
+	lcd.WriteAt(15, 0, NumberFormat(GPRMC.VERSIONNR, 0, 2) )
+	lcd.WriteAt(0, 2, "Waiting for data ...")
+	'Init the GPS object with no debug, UTC offset 2 hours, GPS speed min threshold (noise) 3.5 kmh
+	GPRMC.Initialize(False, 2, 3.5)
+	'Init serial GPS with Baud, Arduino RX Pin 4, Arduino TX Pin 3
+	serialGPS.Initialize(SERIALGPS_BAUD, SERIALGPS_RX_PIN, SERIALGPS_TX_PIN)
+	Log("Init serial GPS")
+	asyncStream.Initialize(serialGPS.Stream,"AsyncStream_NewData",Null)
+	Log("Init asyncstream, waiting for data... (approx every second)")
+End Sub
+
+' Handle new data from the serial GPS line
+Sub AsyncStream_NewData(rmcData() As Byte)
+	' Check if the incoming data starts with the NMEA GPRMC sentence
+	If bc.IndexOf2(rmcData, GPRMC_SENTENCE, 0) > -1 Then
+		Log(rmcData)
+		' Parse the RMC sentence data - the first 10 fields
+		If GPRMC.Parse_RMC_Sentence(rmcData) Then
+			If GPRMC.DataValid Then
+				Log("DateStamp (D.M.Y): ", GPRMC.DateStamp.Stamp, "=", GPRMC.DateStamp.Day, ".", GPRMC.DateStamp.Month, ".", GPRMC.DateStamp.Year)
+				Log("TimeStamp (h:m:s): ", GPRMC.TimeStamp.Stamp, "=", GPRMC.TimeStamp.Hours, ":", GPRMC.TimeStamp.Minutes, ":", GPRMC.TimeStamp.Seconds)
+				Log("Lat: ", GPRMC.Lat.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lat.Indicator)))
+				Log("Lon: ", GPRMC.Lon.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lon.Indicator)))
+				Log("Speed (kmh): ", GPRMC.Speed, ", ", GPRMC.Speed * GPRMC.KMHTOKT, " (kt)")
+				Log("Course Over Ground (deg): ", GPRMC.Course)
+				Log("********************************************************************")
+
+				' Handle FirstTime: Reset the flag and assing the timestamp = used for the duration calculation
+				If FirstTime Then 
+					FirstTime = False
+					TimeStartHours 		= GPRMC.TimeStamp.Hours
+					TimeStartMinutes 	= GPRMC.TimeStamp.Minutes
+					TimeStartSeconds 	= GPRMC.TimeStamp.Seconds
+					TimePrevHours 		= GPRMC.TimeStamp.Hours
+					TimePrevMinutes 	= GPRMC.TimeStamp.Minutes
+					TimePrevSeconds 	= GPRMC.TimeStamp.Seconds
+					SpeedPrev 			= GPRMC.Speed
+					' Log("FirstTime:", TimeStartHours, TimeStartMinutes, TimeStartSeconds,", Speed:",SpeedPrev)
+					DistanceTotal = 0.0
+					lcd.Clear
+				End If
+
+				' Write to the LCD display
+
+				' Lat / Lon Position
+				lcd.WriteAt(0, 3, GPRMC.Lat.DegreesDec)
+				lcd.WriteAt(8, 3, GPRMC.Lon.DegreesDec)
+
+				' Speed / Distance / Duration
+				lcd.WriteAt(0, 0, "Kmh:")
+				lcd.WriteAt(5, 0, NumberFormat(GPRMC.Speed, 0, 0))
+				' Speed calculated between twp GPS timestamps - every seconds tested with the MakerHawk
+				Dim TimeStampPrev As TGPRMCTime
+				TimeStampPrev.Hours		= TimePrevHours
+				TimeStampPrev.Minutes	= TimePrevMinutes
+				TimeStampPrev.Seconds	= TimePrevSeconds
+				' Log("Distance (km, approx) speed/time based: ", GPRMC.Distance_Between_TimeStamps(SpeedPrev, GPRMC.Speed, TimeStampPrev, GPRMC.TimeStamp))
+				DistanceTotal = DistanceTotal + GPRMC.Distance_Between_TimeStamps(SpeedPrev, GPRMC.Speed, TimeStampPrev, GPRMC.TimeStamp)
+				' Log("Distance Total: ", DistanceTotal)
+				lcd.WriteAt(0, 1, "Km :")
+				lcd.WriteAt(5, 1, NumberFormat(DistanceTotal, 0, 2))
+								
+				' Display the duration in HHMMSS between start and end (= current) time
+				GPRMC.Time_Difference(TimeStartHours, TimeStartMinutes, TimeStartSeconds, GPRMC.TimeStamp.Hours, GPRMC.TimeStamp.Minutes, GPRMC.TimeStamp.Seconds)
+				lcd.WriteAt(0, 2, "Dur:")
+				lcd.WriteAt(5, 2,NumberFormat(GPRMC.TimeDifference.Hours, 2, 0))
+				lcd.WriteAt(7, 2,":")
+				lcd.WriteAt(8, 2,NumberFormat(GPRMC.TimeDifference.Minutes, 2, 0))
+				lcd.WriteAt(10, 2,":")
+				lcd.WriteAt(11, 2,NumberFormat(GPRMC.TimeDifference.Seconds, 2, 0))
+
+				' Display the GPS time from the RMC sentence
+				lcd.WriteAt(18, 0, NumberFormat(GPRMC.TimeStamp.Hours, 2, 0))
+				lcd.WriteAt(18, 1, NumberFormat(GPRMC.TimeStamp.Minutes, 2, 0))
+				lcd.WriteAt(18, 2, NumberFormat(GPRMC.TimeStamp.Seconds, 2, 0))
+				
+				' Reset Error Indicator
+				lcd.WriteAt(19, 3, " ")
+
+				' Save the previous data used for the calculations distance and duration
+				TimePrevHours 		= GPRMC.TimeStamp.Hours
+				TimePrevMinutes 	= GPRMC.TimeStamp.Minutes
+				TimePrevSeconds 	= GPRMC.TimeStamp.Seconds
+				SpeedPrev 			= GPRMC.Speed
+			Else
+				' If not receiving GPS signal, the data valid flag is 0 (false)
+				Log("ERR: Data NOT valid")
+				' Show E on the display bottom left
+				If Not(FirstTime) Then lcd.WriteAt(19, 3, "E")
+				' Option reset for example if received nan data or want to reset the duration
+				' FirstTime = True
+			End If
+		End If
+	End If
+	' Short delay to ensure parsing is complete befor new data arrives
+	DelayMicroseconds(100)
+End Sub

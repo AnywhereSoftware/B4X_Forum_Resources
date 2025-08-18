@@ -1,0 +1,177 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=richtext.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jfx8print
+Library5=jsql
+Library6=jrandomaccessfile
+Library7=keyvaluestore2
+Library8=cssutils
+Module1=CodeArea
+Module2=PrintCodeArea
+Module3=RT_Utils
+Module4=TabStopManager
+NumberOfFiles=2
+NumberOfLibraries=8
+NumberOfModules=4
+Version=8.5
+@EndOfDesignText@
+#AdditionalJar: richtextfx-fat-0.10.5
+
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600
+#End Region
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private cbFontSize As ComboBox
+	Private CodeArea1 As CodeArea
+	Public KVS As KeyValueStore2
+	Private PackageName As String
+	Private FontAdj As Int = -4
+	
+	Public cbTabsAsSpaces As CheckBox
+	Public cmbTabsAsSpaces As ComboBox
+	
+	Private SettingUp As Boolean = True
+
+	Public cbLineNos As CheckBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	
+	MainForm.Show
+	
+	KVS.Initialize(File.DirApp,"appdata2")
+	PackageName = RT_Utils.GetPackageName(Me)
+	
+	
+	SetOptions
+	
+	CallSubDelayed(Me,"SetupComplete")
+	
+End Sub
+
+#Region Setup
+	Sub SetUpComplete
+		SettingUp = False
+	End Sub
+
+Sub SetOptions
+	For i = 6 To 20
+		cbFontSize.Items.Add(i)
+	Next
+	cbFontSize.Value = KVS.GetDefault("FontSize",9)
+			
+	For i = 1 To 8
+		cmbTabsAsSpaces.Items.Add(i)
+	Next
+	cbTabsAsSpaces.Checked = 1 = KVS.GetDefault("TabsAsSpaces",1)
+		cmbTabsAsSpaces.Value = KVS.GetDefault("TabSpace",4)
+End Sub
+#End Region Setup
+
+#Region FontSize Gui
+	Sub cbFontSize_ValueChanged (Value As Object)
+		KVS.Put("FontSize",Value)
+		ChangeFontSize
+	End Sub
+
+	Sub ChangeFontSize
+		CSSUtils.SetStyleProperty(CodeArea1.GetObject,"-fx-font-size",$"${cbFontSize.Value - FontAdj}px;"$)
+	End Sub
+
+#End Region FontSize Gui
+
+#Region ManageButtons
+	Sub btnSave_Action
+		Dim FileExtn As String = ".txt"
+		Dim FC As FileChooser
+		FC.Initialize
+		FC.InitialDirectory = File.DirData(PackageName)
+		FC.SetExtensionFilter("Code File",Array As String("*"&FileExtn))
+		FC.Title = "Save Code"
+		Dim FileName As String = FC.ShowSave(MainForm)
+		'Log(FileName)
+		If FileName <> "" Then
+			If Not(FileName.EndsWith(FileExtn)) Then FileName = FileName & FileExtn
+			Dim Text As String = CodeArea1.GetText
+			If cbTabsAsSpaces.Checked Then Text = TabStopManager.ReplaceSpaces(Text,cmbTabsAsSpaces.Value)
+			File.WriteString(FileName,"",Text)
+		End If
+	End Sub
+
+	Sub btnPrint_Action
+		Dim FontSize As String = KVS.GetDefault("FontSize",9)
+		PrintCodeArea.Print(CodeArea1.GetText ,FontSize)
+	End Sub
+
+	Sub btnLoad_Action
+
+		Dim FileExtn As String = ".txt"
+		Dim FC As FileChooser
+		FC.Initialize
+		FC.InitialDirectory = File.DirData(PackageName)
+		FC.SetExtensionFilter("Code File",Array As String("*" & FileExtn))
+		FC.Title = "Load Code"
+		Dim FileName As String = FC.ShowOpen(MainForm)
+		If FileName <> "" Then
+			Dim Text As String = File.ReadString(FileName,"")
+			If cbTabsAsSpaces.Checked Then Text = TabStopManager.ReplaceTabs(Text,cmbTabsAsSpaces.Value)
+			CodeArea1.ReplaceText(0,CodeArea1.Length,Text)
+		End If
+
+	End Sub
+#End Region ManageButtons
+
+#Region LineNo's Gui
+	'Not yet implemented
+	Sub cbLineNos_CheckedChange(Checked As Boolean)
+		CodeArea1.ShowLineNumbers(Checked)	
+	End Sub
+#End Region LineNo's Gui
+
+#Region Manage TabStop Gui Changes
+
+	Sub cbTabsAsSpaces_CheckedChange(Checked As Boolean)
+		If SettingUp Then Return
+		Log("TAS " & Checked)
+		Dim Text As String = CodeArea1.GetText
+		
+		If Checked Then
+			CodeArea1.TabCheckIgnore = True
+			Text = TabStopManager.ReplaceTabs(Text,cmbTabsAsSpaces.Value)
+		Else
+			Text = TabStopManager.ReplaceSpaces(Text,cmbTabsAsSpaces.Value)
+		End If
+		CodeArea1.ReplaceText(0,CodeArea1.Length,Text)
+		KVS.Put("TabsAsSpaces",Checked)
+	End Sub
+
+	Sub cmbTabsAsSpaces_ValueChanged (Value As Object)
+		If SettingUp Then Return
+		
+		If cbTabsAsSpaces.Checked Then
+			CodeArea1.TabCheckIgnore = True
+			CodeArea1.ReplaceText(0,CodeArea1.Length,TabStopManager.ReplaceExisting(CodeArea1.GetText,Value))
+		Else
+			cbTabsAsSpaces.Checked = True
+		End If
+		KVS.Put("TabSpace",Value)
+	End Sub
+#End Region ManageButtons
+

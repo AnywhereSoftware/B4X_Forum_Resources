@@ -1,0 +1,167 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Module1=TaskScheduler
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 200
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi '
+	Private Led12 As Pin
+	Private Led13 As Pin
+	Private Led15 As Pin
+	Private pinButton As Pin
+	Private astream As AsyncStreams
+	Private bc As ByteConverter
+'	task As taskscheduler
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	' serial1 stream to read chars sent from PC  with a Serial terminal
+	astream.Initialize(Serial1.Stream, "Astream_NewData", "Astream_Error")
+	pinButton.Initialize(4,pinButton.MODE_INPUT_PULLUP)
+	pinButton.AddListener("PinButton_change")
+	Log("AppStart")
+	TaskScheduler.initialize(2)
+	TaskScheduler.Task(0).Enabled=True
+	TaskScheduler.Task(1).Enabled=True
+	TaskScheduler.Task(2).Enabled=True
+	Log("end init tasks used")
+	Led12.Initialize(12, Led12.MODE_OUTPUT)
+	Led13.Initialize(13, Led13.MODE_OUTPUT)
+	Led15.Initialize(15, Led15.MODE_OUTPUT)
+	
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+End Sub
+
+Sub Task00(Tag As Byte)
+'	Log("task 0 - ",Tag)
+	Select Tag
+		'tag is used to replace a not blocking Delay
+
+		Case 0 
+			Led12.DigitalWrite(True)
+			TaskScheduler.Task(0).Period=500
+			TaskScheduler.Task(0).Tag=1
+			Dim buff() = TaskScheduler.Slot0 As Byte
+			If buff.Length > 1 Then
+				Log("message saved 1: ",buff)
+				TaskScheduler.Put(0," ".GetBytes)
+			End If
+		Case 1
+			Led12.DigitalWrite(False)
+			TaskScheduler.Task(0).Period=500
+			TaskScheduler.Task(0).Tag=0
+		End Select
+End Sub
+Sub Task01(Tag As Byte)
+'	Log("task 1 - ",Tag)
+	Select Tag
+		Case 0
+			Led13.DigitalWrite(True)
+			TaskScheduler.Task(1).Period=2000
+			TaskScheduler.Task(1).Tag=1
+			Dim buff() = TaskScheduler.Slot1 As Byte
+			If buff.Length > 1 Then
+				Log("message saved 2: ",buff)
+				TaskScheduler.Put(1," ".GetBytes)
+			End If
+		Case 1
+			Led13.DigitalWrite(False)
+			TaskScheduler.Task(1).Period=2000
+			TaskScheduler.Task(1).Tag=0
+	End Select
+End Sub
+Sub Task02(Tag As Byte)
+	'	Log("task 1 - ",Tag)
+	Select Tag
+		Case 0
+			Led15.DigitalWrite(True)
+			TaskScheduler.Task(2).Period=150
+			TaskScheduler.Task(2).Tag=1
+		Case 1
+			Led15.DigitalWrite(False)
+			TaskScheduler.Task(2).Period=150
+			TaskScheduler.Task(2).Tag=0
+	End Select
+End Sub
+Sub Task03(Tag As Byte)
+	Log("Task 3")
+End Sub
+Sub Task04(Tag As Byte)	
+	Log("Task 4")
+End Sub
+Sub Task05(Tag As Byte)	
+	Log("Task 5")
+End Sub
+Sub Task06(Tag As Byte)	
+	Log("Task 6")
+End Sub
+Sub Task07(Tag As Byte)	
+	Log("Task 7")
+End Sub
+Sub Task08(Tag As Byte)	
+	Log("Task 8")
+End Sub
+Sub Task09(Tag As Byte)	
+	Log("Task 9")
+End Sub
+Sub Task10(Tag As Byte)
+	Log("Task 10")
+End Sub
+Sub Task11(Tag As Byte)	
+	Log("Task 11")
+End Sub
+Sub Task12(Tag As Byte)	
+	Log("Task 12")
+End Sub
+Sub Task13(Tag As Byte)
+	Log("Task 13")
+End Sub
+Sub Task14(Tag As Byte)
+	Log("Task 14")
+End Sub
+
+Sub pinButton_change(state As Boolean)
+	If state = False Then
+		Log("button ON")
+		TaskScheduler.Put(0,"Button ON")
+	Else
+		Log("button OFF")
+		TaskScheduler.Put(1,"Button OFF")
+	End If
+End Sub
+Sub Astream_NewData (Buffer() As Byte)
+    If bc.SubString2(Buffer,0,6) = "statON".getbytes Then 
+		TaskScheduler.statstart
+		Log("statistic change: ", Buffer)
+		TaskScheduler.Put(0,Buffer)
+	End If
+	If bc.SubString2(Buffer,0,7) = "statOFF" Then
+		TaskScheduler.statstop
+		Log("statistic change: ", Buffer)
+		TaskScheduler.Put(1,Buffer)
+	End If
+End Sub
+Sub AStream_Error
+	Log("RS232 Error")
+End Sub

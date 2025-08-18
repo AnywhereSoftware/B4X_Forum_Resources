@@ -1,0 +1,49 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rhcsr04
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Notes
+' B4R Library rHCSR04 - Example handling distance changes via event.
+' Distance Sensor HC-SR04 connected to Arduino UNO.
+' Additional Libraries: rHCSR04
+' 20210728 rwbl
+#End Region
+
+#Region Wiring
+' HC-SR04 = Arduino UNO
+' VCC = 5V
+' Trig = 13 (GPIO13)
+' Echo = 12 (GPIO12)
+' GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public DistanceSensor As HCSR04
+	Private TriggerPinNr As Byte = 13
+	Private EchoPinNr As Byte  = 12
+	Private DISTANCECHANGEDBY As Double = 2.0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	DistanceSensor
+	DistanceSensor.Initialize2("DistanceChanged", DISTANCECHANGEDBY, TriggerPinNr, EchoPinNr)
+End Sub
+
+' Handle distance changes >= DISTANCECHANGEDBY value
+Private Sub DistanceChanged(Distance As Double)
+	Log("DistanceChanged: ", Distance)
+End Sub

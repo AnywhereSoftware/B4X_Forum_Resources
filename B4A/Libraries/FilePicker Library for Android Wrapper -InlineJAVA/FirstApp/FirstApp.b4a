@@ -1,0 +1,263 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=appcompat
+Library4=javaobject
+Library5=runtimepermissions
+Library6=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~SetApplicationAttribute(android:theme, "@style/ExTheme")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="ExTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~        <item name="colorPrimary">#8bc34a</item>~\n~        <item name="colorPrimaryDark">#33691e</item>~\n~        <item name="colorAccent">#8bc34a</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~    </style>~\n~</resources>~\n~)~\n~SetActivityAttribute(Main, android:windowSoftInputMode, adjustPan)~\n~~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <files-path name="name" path="shared" />~\n~)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~~\n~~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~  />~\n~)~\n~AddApplicationText(<activity~\n~            android:name="com.jaiselrahman.filepicker.activity.FilePickerActivity"       >~\n~        </activity>~\n~	<activity~\n~            android:name="com.jaiselrahman.filepicker.activity.DirSelectActivity"       >~\n~        </activity>	~\n~		~\n~		)~\n~		~\n~		~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~     <root-path name="root" path="." />~\n~)~\n~SetApplicationAttribute(android:requestLegacyExternalStorage, true)~\n~~\n~~\n~
+Module1=FileProvider
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: FilePicker Example
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+#MultiDex:true
+#Extends: android.support.v7.app.AppCompatActivity
+#AdditionalJar:C:\Project\FirstApp\LibAAR\FilePicker-1.3.2.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\material-1.1.0-alpha09.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\constraintlayout-1.1.3.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\glide-4.10.0.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\gifdecoder-4.10.0.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\disklrucache-4.10.0.jar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\paging-runtime-2.1.2.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\paging-common-2.1.2.jar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\lifecycle-livedata-2.0.0.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\recyclerview-1.1.0.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\cardview-1.0.0.aar
+#AdditionalJar:C:\Project\FirstApp\LibAAR\constraintlayout-solver-1.1.3.jar
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Private ionjavaselect As Object
+	Private rp As RuntimePermissions
+	Type FilePickerConfigurations (setShowImages As Boolean, setShowVideos As Boolean,setShowAudios As Boolean, setShowFiles As Boolean,enableImageCapture As Boolean,enableVideoCapture As Boolean, setCheckPermission As Boolean,setSuffixes() As String,setMaxSelection As Int,setSingleChoiceMode As Boolean, setSingleClickSelection As Boolean, setSkipZeroSizeFiles As Boolean, setLandscapeSpanCount As Int, setPortraitSpanCount As Int,setRootPath As String,setIgnoreNoMedia As Boolean,setIgnoreHiddenFile As Boolean)
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Log("CHANGE C:\Project\FirstApp\LibAAR\ to your AAR+JAR LIB FOLDER")
+	Activity.LoadLayout("Layout")
+	If rp.Check(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)=False Then
+		show_dialog_permission
+	Else
+	Log("Allow to save file  OK")
+		'File.MakeDir(File.DirRootExternal,directory_save)
+	End If
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	'xui.MsgboxAsync("Hello world!","B4X")
+	Dim openfilesettings As FilePickerConfigurations
+	openfilesettings.Initialize
+	openfilesettings.setShowImages=True
+	openfilesettings.setShowVideos=True
+	openfilesettings.setShowAudios=True
+	openfilesettings.setShowFiles=True
+	openfilesettings.enableImageCapture=True
+	openfilesettings.enableVideoCapture=True
+	openfilesettings.setCheckPermission=True
+	openfilesettings.setSuffixes=Array As String("txt","pdf","html","rtf","csv","xml","zip","tar","gz","rar","7z","torrent","doc","docx","odt","ott","ppt","pptx","pps","xls","xlsx","ods","ots")
+	openfilesettings.setSingleChoiceMode=False
+	openfilesettings.setSingleClickSelection=True
+	openfilesettings.setMaxSelection=-1
+	openfilesettings.setSkipZeroSizeFiles=True
+	openfilesettings.setLandscapeSpanCount=5
+	openfilesettings.setPortraitSpanCount=3
+	openfilesettings.setRootPath=File.DirRootExternal
+	openfilesettings.setIgnoreNoMedia=True
+	openfilesettings.setIgnoreHiddenFile=True
+	
+	Private NativeMe As JavaObject
+	NativeMe.InitializeContext
+	Dim filepickerNativeIntent As Intent = NativeMe.RunMethod("createIntent", Array As Object(openfilesettings.setShowImages,openfilesettings.setShowVideos,openfilesettings.setShowAudios ,openfilesettings.setShowFiles ,openfilesettings.enableImageCapture,openfilesettings.enableVideoCapture ,openfilesettings.setCheckPermission ,openfilesettings.setSuffixes,openfilesettings.setMaxSelection,openfilesettings.setSingleChoiceMode,openfilesettings.setSingleClickSelection,openfilesettings.setSkipZeroSizeFiles,openfilesettings.setLandscapeSpanCount,openfilesettings.setPortraitSpanCount,openfilesettings.setRootPath,openfilesettings.setIgnoreNoMedia,openfilesettings.setIgnoreHiddenFile))
+	StartActivityForResult(filepickerNativeIntent)
+End Sub
+
+Sub show_dialog_permission
+	Msgbox2Async("App need save files into your phone, so please allow to continue","Allow to save files on your phone","OK","","", Application.Icon, False)
+	Wait For Msgbox_Result (Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+		rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	End If
+End Sub
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Permission = rp.PERMISSION_WRITE_EXTERNAL_STORAGE Then
+		If Result=False Then
+			show_dialog_permission
+		Else
+			Log("Allow to save file  OK")
+			'File.MakeDir(File.DirRootExternal,directory_save)
+		End If
+	End If
+End Sub
+
+
+Sub StartActivityForResult(i As Intent)
+	Dim jo As JavaObject = GetBA
+	ionjavaselect = jo.CreateEvent("anywheresoftware.b4a.IOnActivityResult","ionjavaselect", Null)
+	jo.RunMethod("startActivityForResult", Array As Object(ionjavaselect, i))
+End Sub
+Sub GetBA As Object
+	Dim jo As JavaObject
+	Dim cls As String = Me
+	cls = cls.SubString("class ".Length)
+	jo.InitializeStatic(cls)
+	Return jo.GetField("processBA")
+End Sub
+
+Sub ionjavaselect_Event (MethodName As String, Args() As Object) As Object
+	Log("hien o day")
+	Log(Args(0))
+	If Args(0) = -1 Then 'resultCode = RESULT_OK
+		Dim i As Intent = Args(1)
+		Dim jo As JavaObject = i
+		Dim uri As List = jo.RunMethod("getParcelableArrayListExtra", Array("MEDIA_FILES"))
+		If uri.IsInitialized Then
+			Log("user select normal file")
+			If uri.Size=0 Then
+				Log("User dont select any files")
+'				ToastMessageShow("Please select file ...",False)
+			'	toast_nice.showErrorToast("Please select files to convert...")
+				Return Null
+			End If
+			For i1=0 To uri.Size-1
+				Dim anh1 As JavaObject
+				anh1=uri.Get(i1)
+				
+'				id = in.readLong();
+'				size = in.readLong();
+'				duration = in.readLong();
+'				date = in.readLong();
+'				height = in.readLong();
+'				width = in.readLong();
+'				name = in.readString();
+'				uri = in.readParcelable(uri.class.getClassLoader());
+'				thumbnail = in.readParcelable(uri.class.getClassLoader());
+'				path = in.readString();
+'				mimeType = in.readString();
+'				bucketId = in.readString();
+'				bucketName = in.readString();
+'				mediaType = in.readInt();
+
+				
+				Dim path As String=anh1.RunMethod("getPath",Null)
+				Dim name As String=anh1.RunMethod("getName",Null)
+				Dim datefile As String=anh1.RunMethod("getDate",Null)
+				Dim size As String=NumberSuffix( anh1.RunMethod("getSize",Null)) &  " - " & DateTime.Date(datefile*1000)
+				
+				Log(path)
+				Log(name)
+				Log(size)
+				Log(path)
+				Log(DateTime.Date(datefile*1000))
+				'btn_runconvert.Tag=path
+				'kiem tra xem sao
+		Next
+'			InterAds_Show
+'			btn_runconvert.Visible=True
+'			lbl_status.Text="Ready to convert..."
+			Return Null
+		End If
+	End If
+	Return Null
+End Sub
+
+
+
+Sub NumberSuffix(N As Double) As String
+	If N < 0 Then
+		Return "-" & NumberSuffix(-N)
+	End If
+ 
+	Dim Suffix() As String = Array As String(" b"," KB"," MB"," GB"," TB")
+	'''Dim Suffix() As String = Array As String(""," Thousand"," Million"," Billion"," Trillion")
+
+	Dim Thousands As Int = 0
+	Do While N >= 1000 And Thousands < Suffix.Length - 1
+		Thousands = Thousands + 1
+		N = N / 1000
+	Loop
+
+	If Thousands = 0 Then
+		'2 decimal places per example of monetary amount including cents
+		Return NumberFormat2(N, 1, 2, 2, False)
+	End If
+ 
+	'sufficient decimal places for precision required
+'	Dim MaxDecimalPlaces As Int = 0
+'	Do While MaxDecimalPlaces < 5    'absolute maximum 5 decimal places
+'		Dim RelativeError As Double = Abs(N - Round2(N, MaxDecimalPlaces)) / N
+'		If RelativeError < 0.007 Then    'eg 0.7% (or whatever precision you need)
+'			Exit
+'		End If
+'		MaxDecimalPlaces = MaxDecimalPlaces + 1
+'	Loop
+ 
+	Return NumberFormat2(N, 1, 0, 2, False) & Suffix(Thousands)
+End Sub
+
+
+
+#IF JAVA
+import android.net.Uri;
+import java.io.File;
+import android.content.Intent;
+import com.jaiselrahman.filepicker.activity.FilePickerActivity;
+import com.jaiselrahman.filepicker.config.Configurations;
+
+public  Intent createIntent(boolean setShowImages ,boolean setShowVideos ,boolean setShowAudios ,boolean setShowFiles ,boolean enableImageCapture,boolean enableVideoCapture ,boolean setCheckPermission ,String[] setSuffixes,int setMaxSelection,boolean setSingleChoiceMode,boolean setSingleClickSelection,boolean setSkipZeroSizeFiles,int setLandscapeSpanCount,int setPortraitSpanCount,String setRootPath,boolean setIgnoreNoMedia,boolean setIgnoreHiddenFile){
+    Intent intent = new Intent(this, FilePickerActivity.class);
+    intent.putExtra(FilePickerActivity.CONFIGS, new Configurations.Builder()
+                .setShowImages(setShowImages)
+                .setShowVideos(setShowVideos)
+                .setShowAudios(setShowAudios)
+                .setShowFiles(setShowFiles)
+                .enableImageCapture(enableImageCapture)
+                .enableVideoCapture(enableVideoCapture)
+                .setCheckPermission(setCheckPermission)
+				.setSuffixes(setSuffixes)
+				.setSingleChoiceMode(setSingleChoiceMode)
+                .setMaxSelection(setMaxSelection)
+				.setSingleClickSelection(setSingleClickSelection)
+				.setSkipZeroSizeFiles(setSkipZeroSizeFiles)
+				.setLandscapeSpanCount(setLandscapeSpanCount)
+				.setPortraitSpanCount(setPortraitSpanCount)
+				.setRootPath(setRootPath)
+				.setIgnoreNoMedia(setIgnoreNoMedia)
+				.setIgnoreHiddenFile(setIgnoreHiddenFile)
+                .build());
+	return intent;
+}
+#End If

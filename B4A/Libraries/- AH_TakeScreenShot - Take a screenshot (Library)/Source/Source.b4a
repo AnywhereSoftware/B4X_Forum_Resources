@@ -1,0 +1,60 @@
+﻿Build1=Default,b4a.examplewef
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=ah_takeascreenshot
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Take A Screen Shot
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger:true
+
+'Alireza Hassanzadeh Telegram: @B4X_Develop
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Dim AH_TakeAScreenShot As AH_TakeAScreenShot
+	Private ImageView1 As ImageView
+	Private Label1 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	Label1.Text = Rnd(10,99)
+End Sub
+
+Private Sub BTN_ScreenShot_Click
+	Dim bitmap As Bitmap
+	bitmap.Initialize3(AH_TakeAScreenShot.TakeaScreenShout_Activity)
+	ImageView1.SetBackgroundImage(bitmap)
+	'SaveImageToDisc(bitmap) ' if you want to save picture.
+	ToastMessageShow("done!",True)
+	Label1.Text = Rnd(10,99)
+End Sub
+
+Sub SaveImageToDisc(bitmap As Bitmap) ' You have to get a Permission
+	Dim out As OutputStream
+	out = File.OpenOutput(File.DirRootExternal, "1.jpg", False)
+	bitmap.WriteToStream(out, 100, "PNG")' JPEG or PNG
+	out.Close
+	ToastMessageShow("Saved!",True)
+End Sub

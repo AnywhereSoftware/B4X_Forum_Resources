@@ -1,0 +1,841 @@
+﻿Build1=Default,com.timeline.main
+File1=Back1.png
+File10=Main.bal
+File11=main2.bal
+File12=phonelogin.bal
+File13=phonelogin.png
+File14=resetpassword.bal
+File15=unreg_user.png
+File16=updateProfile.bal
+File2=createemailaccount.bal
+File3=emaillogin.bal
+File4=emaillogin2.png
+File5=exit.png
+File6=getphonenumber.bal
+File7=googlelogin2.png
+File8=loginblue.png
+File9=lost_password.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library10=firebaseauthphone
+Library11=firebaseauth
+Library12=firebaseauthemail
+Library2=okhttputils2
+Library3=javaobject
+Library4=runtimepermissions
+Library5=ime
+Library6=dateutils
+Library7=b4xcollections
+Library8=xui views
+Library9=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main, android:windowSoftInputMode, adjustPan)~\n~'SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~~\n~'************ Google Play Services Base ************~\n~AddApplicationText(~\n~	<activity android:name="com.google.android.gms.common.api.GoogleApiActivity"~\n~                  android:theme="@android:style/Theme.Translucent.NoTitleBar"~\n~                  android:exported="false"/>~\n~	 <meta-data~\n~            android:name="com.google.android.gms.version"~\n~            android:value="@integer/google_play_services_version" />~\n~)~\n~'************ Google Play Services Base (end) ************~\n~~\n~~\n~'************ Firebase Base ************~\n~AddApplicationText(<activity android:name="com.google.firebase.auth.internal.RecaptchaActivity"/>)~\n~~\n~CreateResourceFromFile("google-services", "google-services.json")~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~CreateResourceFromFile(Macro, FirebaseAuth.FirebaseAuth)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.FirebaseAnalytics)~\n~~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.WAKE_LOCK)~\n~AddPermission(com.google.android.c2dm.permission.RECEIVE)~\n~AddPermission(${applicationId}.permission.C2D_MESSAGE)~\n~AddManifestText( <permission android:name="${applicationId}.permission.C2D_MESSAGE"~\n~        android:protectionLevel="signature" />)~\n~		~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~
+Module1=Starter
+NumberOfFiles=16
+NumberOfLibraries=12
+NumberOfModules=1
+Version=11.2
+@EndOfDesignText@
+  #Region  Project Attributes 
+	#ApplicationLabel: FirebaseAuth
+	#VersionCode: 1
+	#VersionName: 1.0.1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: Portrait
+	#CanInstallToExternalStorage: False
+	#AdditionalJar: com.google.android.gms:play-services-base
+	#AdditionalJar: androidx.arch.core:core-runtime
+	#AdditionalJar: androidx.browser:browser
+	#MultiDex: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False		
+#End Region
+
+#BridgeLogger: true
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim gb_phoneVerificationSuccess As Boolean
+	Dim gs_verificationID, gs_phoneNumber As String
+	Private auth As FirebaseAuth
+	Private authphone As FirebaseAuthPhoneWrapper  
+	Private authemail As FirebaseAuthEmailWrapper 
+	Type DBCommand (Name As String, Parameters() As Object)
+	Type DBResult (Tag As Object, Columns As Map, Rows As List) 
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private rp As RuntimePermissions
+	Dim ime As IME
+	Private b_phoneLogin As Button
+	Private fet_phonenumber As B4XFloatTextField
+	Private fet_smsCode As B4XFloatTextField
+	Private b_PhoneSignIn As Button
+	Private iv_exitPhoneLogin As ImageView
+	Private b_emailLogin As Button
+	Private b_googleLogin As Button
+	Dim gs_signInMethod As String
+	Private fet_emailReset As B4XFloatTextField
+	Private b_emailResetPassword As Button
+	Private lblRegister As Label
+	Private fet_email As B4XFloatTextField
+	Private b_emailSignIn As Button
+	Private fet_regemail As B4XFloatTextField
+	Private fet_regemailpassword As B4XFloatTextField
+	Private fet_regemailpassword2 As B4XFloatTextField
+	Private fet_emailpassword As B4XFloatTextField
+	Private labelLogInMethod As Label
+	Private LabelUser As Label
+	Private b_setPhoneNumber As Button
+	Private fet_setphonenumber As B4XFloatTextField
+	Private LabelToken As Label
+	Private fet_displayname As B4XFloatTextField
+	Private fet_photourl As B4XFloatTextField
+	Private b_modifyProfile As Button
+	Private b_updateprofile As Button
+	Private b_deleteUser As Button
+	Private iv_exitEmailCreate As ImageView
+End Sub
+
+'-----------------------------------------
+Sub Activity_Create(FirstTime As Boolean)
+'-----------------------------------------
+	Activity.LoadLayout("main")
+	
+	If FirstTime Then
+		ime.Initialize("e_ime")
+		gb_phoneVerificationSuccess = False
+		
+		If CheckForGooglePlayServices = True Then
+			ToastMessageShow("Google play services active!",True)
+		End If
+		
+		Activity.LoadLayout("main")
+		rp.CheckAndRequest(rp.PERMISSION_READ_PHONE_STATE)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result = False Then
+			MsgboxAsync("Phone access permission not allowed!", "Alert...")
+			ExitApplication
+		End If
+		
+		
+		read_signInMethod ' get preferred method from firebase.ini
+		If gs_signInMethod = "googleLogin" Then
+			'If google account Is already initialized Then logs in
+			' auth_signedin event is triggered and "main2" layout is loaded
+			'auth.Initialize("auth") 
+			'If auth.CurrentUser.IsInitialized Then Auth_SignedIn(auth.CurrentUser)				
+		else If gs_signInMethod = "phoneLogin" Then 'optionally you can use phoneLogin if already validated.
+			authphone.Initialize("authphone")		
+			Dim ls_phoneNumber As String = getPhoneNumber
+			If ls_phoneNumber <> "" Then gs_phoneNumber = ls_phoneNumber
+			gs_phoneNumber = "" 'test
+			If gs_phoneNumber = "" Then 
+				setPhoneNumber
+			Else 
+				authphone.startPhoneNumberVerification(gs_phoneNumber)
+			End If
+			' If phone number already validated triggers "authphone_phonesignedin" event
+			' otherwise if auto-verification, triggers "authphone_phonesignedin" event after sms is received.
+			' If auto-verification is not supported it must be manually inserted in phonelogin layout.
+		Else If gs_signInMethod = "emailLogin" Then
+				authemail.Initialize("authemail")
+				Activity.RemoveAllViews
+				Activity.LoadLayout("emaillogin")
+		End If		
+	End If
+End Sub
+
+
+
+'---------------------------------------------
+Sub MainForm_Resize (Width As Double, Height As Double)
+'---------------------------------------------
+	
+End Sub
+
+
+'------------------------------------------
+Sub Activity_Pause (UserClosed As Boolean)
+	
+
+End Sub
+
+
+'-----------------------
+Sub save_signInMethod
+'-----------------------
+	Dim MapConfig As Map
+	MapConfig.Initialize
+	MapConfig.Clear
+
+	MapConfig.Put("authSignInMethod", gs_signInMethod)
+	If gs_phoneNumber <> "" Then 
+		MapConfig.Put("authPhoneNumber", gs_phoneNumber)
+	End If
+	File.WriteMap(File.DirInternal, "firebase.ini", MapConfig)  
+End Sub
+
+
+'-----------------------
+Sub read_signInMethod
+'-----------------------
+	Dim ls_tempKey As String
+	Dim MapConfig As Map
+	MapConfig.Initialize
+			
+	If File.Exists(File.DirInternal,"firebase.ini") = False Then
+		File.WriteMap(File.DirInternal, "firebase.ini", MapConfig)   
+	End If
+	MapConfig.Clear
+	MapConfig = File.ReadMap(File.DirInternal,"firebase.ini")
+	ls_tempKey = ""
+	For i = 0 To MapConfig.Size - 1
+		ls_tempKey = MapConfig.GetKeyAt(i)
+		Select ls_tempKey
+			Case "authSignInMethod"
+				gs_signInMethod = MapConfig.GetValueAt(i)
+			Case "authPhoneNumber" 
+				gs_phoneNumber = MapConfig.GetValueAt(i)
+		End Select
+	Next
+	Log ("Method: " & gs_signInMethod & CRLF & " Phone: " & gs_phoneNumber)
+End Sub
+
+
+ 
+'---------------------------------------------
+Sub CheckForGooglePlayServices As Boolean
+'---------------------------------------------
+	Dim GoogleApiAvailablity As JavaObject
+	GoogleApiAvailablity = GoogleApiAvailablity.InitializeStatic("com.google.android.gms.common.GoogleApiAvailability").RunMethod("getInstance", Null)
+	Dim context As JavaObject
+	context.InitializeContext
+	Dim li_googlePlayServices As Int = GoogleApiAvailablity.RunMethod("isGooglePlayServicesAvailable", Array(context))
+	If  li_googlePlayServices <> 0 Then
+		GoogleApiAvailablity.RunMethod("makeGooglePlayServicesAvailable", Array(context))
+		Return False
+	End If
+	Return True
+End Sub
+
+'----------------------------
+Sub iv_exit_Click
+'----------------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("main")
+End Sub
+
+'----------------------------
+Sub iv_exit_main2_Click
+	'----------------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("Main")
+End Sub
+
+
+'**************************************************************************
+'****************************** Auth Google *****************************
+'**************************************************************************
+'----------------------------
+Sub b_googleLogin_Click
+'----------------------------
+	auth.Initialize("auth")
+	auth.SignInWithGoogle
+End Sub
+
+'---------------------------------------------
+Sub Auth_SignedIn(User As FirebaseUser)
+'---------------------------------------------
+		If User.DisplayName <> Null Then
+		 	Log("google SignedIn: " & User.email)
+		    Log("UID: " & User.Uid)
+		    Log("User name: " & User.DisplayName)
+			ToastMessageShow("Welcome: " & User.email , True)
+			gs_signInMethod = "googleLogin"
+			save_signInMethod
+			Activity.RemoveAllViews
+			Activity.LoadLayout("main2")
+			labelLogInMethod.Text = "Logged in with Google"
+			LabelUser.Text =  _
+				"User: " &authemail.CurrentUser.DisplayName & CRLF & _
+				"email: " & authemail.CurrentUser.Email &CRLF & _
+				"UID: " &  authemail.CurrentUser.Uid & CRLF & _
+				"Photo Url: " & authemail.CurrentUser.PhotoUrl
+				LabelToken.Visible = False
+		
+		End If
+
+End Sub
+
+'---------------------------------------------
+Sub auth_UserCreated(User As FirebaseUser)
+'---------------------------------------------
+	ToastMessageShow("User created successfully!" , False)
+End Sub
+
+
+'---------------------------------------------
+
+'**************************************************************************
+'****************************** Auth phone *****************************
+'**************************************************************************
+'----------------------
+Sub b_phoneLogin_Click
+'----------------------
+	authphone.Initialize("authphone")		
+	Dim ls_phoneNumber As String = getPhoneNumber
+	If ls_phoneNumber <> "" Then gs_phoneNumber = ls_phoneNumber
+	
+	If gs_phoneNumber = "" Then 
+		setPhoneNumber
+	Else 
+		authphone.startPhoneNumberVerification(gs_phoneNumber)
+	End If
+End Sub
+
+'--------------------------------
+Sub b_PhoneSignIn_Click
+'--------------------------------
+	' sends verification code received by sms and manually inserted by user. 
+	' Id device supports auto-verification this is not used
+	' authphone_phonesignedin event is triggered and app jumps to Main2 layout
+	Dim ls_code As String = fet_smsCode.Text 
+	If fet_phonenumber.Text = "" Then 
+		MsgboxAsync("phone number field empty!", "Alert...")
+	else If fet_smsCode.Text = "" Then 
+		MsgboxAsync("sms code field empty!", "Alert...")
+	Else
+		authphone.verifyPhoneNumberWithCode(gs_verificationID, ls_code)
+	End If
+End Sub
+
+
+'--------------------------------
+Sub iv_exitPhoneLogin_Click
+'--------------------------------
+	authphone.SignOut
+	Activity.RemoveAllViews
+	Activity.LoadLayout("main")
+End Sub
+
+
+'--------------------------------
+Sub getPhoneNumber As String
+'--------------------------------
+	Dim pID As PhoneId
+	Dim phonenumber As String	
+	phonenumber = pID.GetLine1Number
+	Return phonenumber
+End Sub
+
+
+'----------------------------------------
+Sub setPhoneNumber
+'----------------------------------------
+Activity.RemoveAllViews
+Activity.LoadLayout("getphonenumber")
+fet_setphonenumber.Text = "+"
+End Sub
+
+'--------------------------------
+Sub b_setPhoneNumber_Click
+'--------------------------------
+	Dim ls_phoneNr As String = fet_setphonenumber.Text.Trim
+	
+	If ls_phoneNr.StartsWith("+") = False  Then
+		MsgboxAsync("Please digit complete Phone number using +xx prefix!", "Alert...")
+ 		Return
+	else If fet_setphonenumber.Text.Length <= 9   Then
+		MsgboxAsync("Please digit complete Phone number using +xx prefix!", "Alert...")
+ 		Return	
+	Else
+		gs_phoneNumber = fet_setphonenumber.text
+		authphone.startPhoneNumberVerification(gs_phoneNumber)	
+		save_signInMethod		
+	End If
+End Sub
+
+
+'--------------------------------
+Sub authphone_phoneverification(success As Boolean, info As String)
+'--------------------------------
+	If success = True Then
+		ToastMessageShow("Phone number successfully verified!",True)  
+		gb_phoneVerificationSuccess = True
+		'Log(authphone.mToken)
+	Else
+		MsgboxAsync("Phone number verification failed!"& CRLF & "info: "& info, "Alert...")
+		gs_phoneNumber = ""
+		gs_signInMethod = ""
+		save_signInMethod
+		Activity.RemoveAllViews
+		Activity.LoadLayout("main")		
+	End If
+End Sub
+
+'--------------------------------
+Sub authphone_phonesignedin(success As Boolean, User As FirebaseAuthPhoneUser, info As String)
+'--------------------------------
+	If success = True Then
+		'<Log(authphone.mToken)
+		Log("Phone Signed In: ")
+		Activity.RemoveAllViews
+		Activity.LoadLayout("main2")
+		Log ("IsInitialized: " & User.IsInitialized)
+		Log ("ProviderId:" & User.ProviderId)
+		Log ("Uid:" & User.Uid)
+'		Log("user" & User)
+		authphone.currentToken()
+		gs_signInMethod = "phoneLogin"
+		labelLogInMethod.Text = "Logged in with Phone number"
+	
+			LabelUser.Text =  _
+				"User: " &authphone.CurrentUser.DisplayName & CRLF & _
+				"phone: " & authphone.CurrentUser.PhoneNumber &CRLF & _
+				"UID: " &  authphone.CurrentUser.Uid & CRLF & _
+				"Photo Url: " & authphone.CurrentUser.PhotoUrl
+				
+		
+	End If
+End Sub
+
+'--------------------------------
+Sub authphone_gettoken(success As Boolean, token As String, info As String)
+'--------------------------------
+	If success = True Then
+		Log("Phone Signed In: ")
+		Log ("token: " & token)
+		LabelToken.Text = "Token: " & CRLF & token
+		Log ("info:" &info)
+	Else
+		MsgboxAsync(info, "Alert")
+	End If
+	
+End Sub
+
+
+'--------------------------------
+Sub authphone_oncodesent(success As Boolean, verificationid As String)
+'--------------------------------
+	If success = True And gb_phoneVerificationSuccess = False Then
+		gs_verificationID = verificationid
+		Activity.RemoveAllViews
+		Activity.LoadLayout("phonelogin")
+	End If
+	Log("authphone_oncodesent success" & success)
+End Sub
+
+
+'**************************************************************************
+'****************************** Auth email *****************************
+'**************************************************************************
+'----------------------------
+Sub b_emailLogin_Click
+'----------------------------
+	authemail.Initialize("authemail")
+	Activity.RemoveAllViews
+	Activity.LoadLayout("emaillogin")
+	
+End Sub
+
+'--------------------------------
+Sub b_emailSignIn_Click
+'--------------------------------
+	If checkEmail(fet_email.text) Then
+		 authemail.signInWithEmailAndPassword(fet_email.Text.trim,fet_emailpassword.text.trim)
+		 ' *** AUTHEMAIL ****************
+		     	wait for authemail_signedin(success As Boolean, User As FirebaseAuthEmailUser, info As String)	
+			    If success Then
+			            Log("SignedIn: " & User.Uid)
+			            Log("User: " & User.DisplayName)
+			            Log("eMail: " & User.Email) 
+			            Log("Anonymous: " & User.Anonymous)
+			            Log("mail verified: " & User.EmailVerified)
+						
+			            If User.EmailVerified = False Then
+							Do While True
+								Log(User.DisplayName)
+			           			User.sendEmailVerification
+						 		Msgbox2Async("You will shortly receive an email to " & CRLF & _
+									"<" & fet_regemail.text & ">" &CRLF& _
+										 "Click on email link to activate your account!", "Alert!", _
+										 "Resend confirmation email","Retry access" ,"Cancel",LoadBitmap(File.DirAssets, "unreg_user.png"),True)
+								wait for MsgBox_result(response As Int)
+								If response = -1 Then
+
+								Else if response = -3 Then 
+									Return
+								Else
+									Activity.RemoveAllViews
+									Activity.LoadLayout("main")
+									Exit
+								End If
+								
+							Loop
+						Else
+							Log("User SignedIn and verified: " & User.Email)
+							gs_signInMethod = "emailLogin"
+							save_signInMethod	
+							Activity.RemoveAllViews
+							Activity.LoadLayout("main2")
+							labelLogInMethod.Text = "Logged in with Email and Password"
+							LabelUser.Text =  _
+							"User: " &authemail.CurrentUser.DisplayName & CRLF & _
+							"email: " & authemail.CurrentUser.Email &CRLF & _
+							"UID: " &  authemail.CurrentUser.Uid & CRLF & _
+							"Photo Url: " & authemail.CurrentUser.PhotoUrl
+							authemail.currentToken
+			            End If		        
+			    Else
+			      ToastMessageShow("Login failed!",True)  
+			      Log("Info: " & info)
+			    End If
+			End If
+End Sub
+
+'--------------------------------
+Sub authemail_gettoken(success As Boolean, token As String, info As String)
+'--------------------------------
+	If success = True Then
+		Log ("token: " & token)
+		LabelToken.Text = "Token: " & CRLF & token
+		Log ("info:" &info)
+	Else
+		MsgboxAsync(info, "Alert")
+	End If
+	
+End Sub
+'----------------------------------------------------------------
+Sub authemail_signedinfailure(success As Boolean, info As String)
+'----------------------------------------------------------------
+ Dim msg As String = ""
+		If info.Contains("The user may have been deleted") Or _
+			info.Contains("The email address is badly formatted") Then
+			msg = "Unknown user!"& CRLF &"Email <" & fet_email.text & "> doesn't exist in our records."
+		else if info.Contains("The password is invalid") Then
+			msg = "Invalid password!"
+		Else
+			ToastMessageShow("Login failed, retry!",True)
+		End If
+		If msg <> "" Then
+			Msgbox2Async(msg, "Error!","Retry","Register new account" ,"Cancel",LoadBitmap(File.DirAssets, "unreg_user.png"),True)
+			wait for MsgBox_result(response As Int)
+			If response = -1 Then
+				Return
+			Else if response = -3 Then 
+				Activity.RemoveAllViews
+				Activity.LoadLayout("createEmailAccount")
+			Else
+				Activity.RemoveAllViews
+				Activity.LoadLayout("main")
+			End If
+	End If
+End Sub
+
+'--------------------------------------------------------------
+Sub authemail_userupdated(success As Boolean, info As String)
+'--------------------------------------------------------------
+	If success = True Then
+		Log("User displayname and photoUrl updated successfully!")
+	Else
+		Log("User displayname and photoUrl update failed!")
+	End If
+	
+End Sub 
+
+'--------------------------------------------------------------
+Sub authemail_createfailure(success As Boolean, info As String)
+'--------------------------------------------------------------
+		If info.Contains("The email address is already in use by another account.")  Then
+		Msgbox2Async("Email address "& CRLF &"<" & fet_regemail.text & ">" & CRLF & _
+				     "is already in use by another user!"& CRLF & _
+					 "press <retry> to correct email."& CRLF & _
+					 "If email is correct go to <Login>!", "Alert!", _
+					 "Retry", "Login" , "Cancel", _
+					 LoadBitmap(File.DirAssets, "unreg_user.png"),True)
+		wait for MsgBox_result(response As Int)
+		If response = -1 Then
+			Return
+		Else if response = -3 Then 
+			Activity.RemoveAllViews
+			Activity.LoadLayout("emaillogin")
+		Else
+			Activity.RemoveAllViews
+			Activity.LoadLayout("main")
+		End If
+	Else
+		'ToastMessageShow("Login failed!",True)
+	End If
+
+End Sub
+
+'---------------------
+Sub lblRegister_Click
+'---------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("createEmailAccount")
+End Sub
+
+'--------------------------------
+Sub b_emailRegistration_Click
+'--------------------------------
+	If fet_regemailpassword.Text.trim <> fet_regemailpassword2.Text.trim Then
+		MsgboxAsync("Passwords do not match.","Error!")
+			fet_regemailpassword.RequestFocusAndShowKeyboard
+	Else if fet_regemail.Text.trim  = "" Then
+			MsgboxAsync("Enter your email!.","Alert!")
+	Else if fet_regemailpassword.Text.trim  = "" Or fet_regemailpassword2.Text.trim  = "" Then
+			MsgboxAsync("You have to type your password in both password fields!","Alert!")
+	Else
+			checkEmail(fet_regemail.Text)
+			authemail.createUserWithEmailAndPassword(fet_regemail.Text.trim,fet_regemailpassword.Text.trim, fet_displayname.Text.trim, fet_photourl.Text.trim)
+	     	wait for authemail_usercreated(success As Boolean, User As FirebaseAuthEmailUser, info As String)	
+		    'Log($"Authemail_SignedIn(${success},${info})"$)
+		    If success Then
+		        If User = Null Then
+		            Log("null User SignedIn: ")
+		        Else
+		            Log("SignedIn: " & User.Uid)
+		            Log("User: " & User.DisplayName)
+		            Log("eMail: " & User.Email) 
+		            Log("Anonymous: " & User.Anonymous)
+		            Log("email verified: " & User.EmailVerified)
+					
+		            If User.EmailVerified = False Then
+						
+						Do While True
+							User.sendEmailVerification
+					 		Msgbox2Async("You will shortly receive an email to " & CRLF & _
+								"<" & fet_regemail.text & ">" &CRLF& _
+								 "Click on email link to activate your account!", "Alert!", _
+								 "Resend confirmation email","Retry access" ,"Cancel",LoadBitmap(File.DirAssets, "unreg_user.png"),True)
+							wait for MsgBox_result(response As Int)
+							If response = -1 Then
+
+							Else if response = -3 Then 
+								Return
+							Else
+								Activity.RemoveAllViews
+								Activity.LoadLayout("main")
+								Exit
+							End If
+							
+						Loop
+		            End If						
+		        End If
+		        
+		    Else
+		      ToastMessageShow("Login failed, retry!",True)  
+		      Log("Info: " & info)
+		    End If
+		
+		
+	End If
+End Sub
+
+
+
+'-------------------------------------
+Sub fet_regemailpassword2_EnterPressed
+'-------------------------------------
+	If fet_regemailpassword.Text.trim <> fet_regemailpassword2.Text.trim Then
+		MsgboxAsync("Passwords do not match.","Alert!")
+		fet_regemailpassword.RequestFocusAndShowKeyboard
+	End If
+End Sub
+
+
+'-------------------------
+Sub fet_email_EnterPressed
+'-------------------------
+	checkEmail(fet_email.Text)
+End Sub
+
+
+
+'--------------------------
+Sub iv_exitEmailLogin_Click
+'--------------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("Main")
+End Sub
+
+ 
+ '--------------------------------
+Sub lblresetPassword_Click
+'--------------------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("resetPassword")
+End Sub
+
+'--------------------------------
+Sub authemail_passwordreset(success As Boolean, info As String) ' Works
+'--------------------------------
+    Log($"AuthEmail_PasswordReset(${success})"$)
+	Log(info)
+End Sub
+
+'--------------------------------
+Sub b_emailResetPassword_Click
+'--------------------------------
+	If fet_emailReset.Text.trim  = "" Then
+		MsgboxAsync("Enter your email! ","Error!")
+	else if fet_emailReset.Text.trim.Contains("@") = False Then
+		MsgboxAsync("Invalid email! ","Error!")
+	Else
+		Do While True
+		   authemail.sendPasswordResetEmail(fet_emailReset.Text.trim)
+		   Msgbox2Async("Email has been sent to the address: " & CRLF & _
+			"<" & fet_emailReset.text & ">" &CRLF& _
+			 "set a new password e try again!", "Alert!", _
+			 "Request email again","Login" ,"Cancel",LoadBitmap(File.DirAssets, "unreg_user.png"),True)
+			wait for MsgBox_result(response As Int)
+			If response = -1 Then
+				Exit
+			Else if response = -3 Then 
+				Activity.RemoveAllViews
+				Activity.LoadLayout("emaillogin")
+				Exit
+
+			Else
+				Activity.RemoveAllViews
+				Activity.LoadLayout("main")
+				Exit
+			End If
+		Loop
+		
+	End If
+
+End Sub
+
+
+
+'---------------------------------------------
+Sub checkEmail(ps_email As String) As Boolean
+'---------------------------------------------
+		Dim Valid As Boolean
+		Valid = Regex.IsMatch("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", ps_email.Trim)
+		If Not(Valid) Then 
+			MsgboxAsync("Invalid mail address!", "Error")
+			Return False
+		End If
+		Return True
+
+End Sub
+
+
+
+'---------------------------------------------
+Private Sub b_modifyProfile_Click
+'---------------------------------------------
+	Activity.RemoveAllViews
+	Activity.LoadLayout("updateProfile")
+	Select gs_signInMethod
+		Case "googleLogin"
+			MsgboxAsync("Not implemented in Google Login.","Error!")
+		Case "phoneLogin"
+			fet_displayname.Text = authphone.CurrentUser.DisplayName
+			fet_photourl.Text = authphone.CurrentUser.PhotoUrl			
+		Case "emailLogin"
+			fet_displayname.Text = authemail.CurrentUser.DisplayName
+			fet_photourl.Text = authemail.CurrentUser.PhotoUrl			
+	End Select
+End Sub
+
+'---------------------------------------------
+Private Sub b_updateprofile_Click
+'---------------------------------------------
+	Select gs_signInMethod
+	Case "googleLogin"
+			MsgboxAsync("Not implemented in Google Login.","Error!")
+		Case "phoneLogin"
+			authphone.updateProfile(fet_displayname.Text, fet_photourl.Text)
+		    wait for authphone_userupdated(success As Boolean,  info As String)	
+			Activity.RemoveAllViews
+			Activity.LoadLayout("main2")
+			labelLogInMethod.Text = "Logged in with Phone number"
+			LabelUser.Text =  _
+				"User: " &authphone.CurrentUser.DisplayName & CRLF & _
+				"phone: " & authphone.CurrentUser.PhoneNumber & CRLF & _
+				"UID: " &  authphone.CurrentUser.Uid & CRLF & _
+				"Photo Url: " & authphone.CurrentUser.PhotoUrl
+				authphone.currentToken
+		Case "emailLogin"
+			authemail.updateProfile(fet_displayname.Text, fet_photourl.Text)
+		    wait for authemail_userupdated(success As Boolean,  info As String)	
+			LabelUser.Text =  _
+				"User: " &authemail.CurrentUser.DisplayName & CRLF & _
+				"email: " & authemail.CurrentUser.Email &CRLF & _
+				"UID: " &  authemail.CurrentUser.Uid & CRLF & _
+				"Photo Url: " & authemail.CurrentUser.PhotoUrl
+				authemail.currentToken
+	End Select
+		    If success Then
+				MsgboxAsync("User profile updated! ","Success!")
+			Else
+					MsgboxAsync("User profile update failed! ","Error!")
+			End If
+			
+	
+End Sub
+
+Private Sub b_deleteUser_Click
+	Select gs_signInMethod
+	Case "googleLogin"
+	Case "phoneLogin"
+		authphone.deleteUser()
+	    wait for authphone_userdeleted(success As Boolean,  info As String)	
+	Case "emailLogin"
+		authemail.deleteUser()
+	    wait for authemail_userdeleted(success As Boolean,  info As String)	
+	End Select
+		    'Log($"Authemail_SignedIn(${success},${info})"$)
+		    If success Then
+				MsgboxAsync("User account deleted! ","Success!")
+				Activity.RemoveAllViews
+				Activity.LoadLayout("main")
+			Else
+				MsgboxAsync("User account deletion failed! ","Error!")
+'				Activity.RemoveAllViews
+'				Activity.LoadLayout("main2")
+'				labelLogInMethod.Text = "Logged in with Google"
+'				LabelUser.Text =  _
+'				"User: " &authemail.CurrentUser.DisplayName & CRLF & _
+'				"email: " & authemail.CurrentUser.Email &CRLF & _
+'				"UID: " &  authemail.CurrentUser.Uid & CRLF & _
+'				"Photo Url: " & authemail.CurrentUser.PhotoUrl
+'				authemail.currentToken
+			End If
+
+End Sub
+
+
+'---------------------------------------------------
+Private Sub iv_exitEmailCreate_Click
+'---------------------------------------------------
+		Activity.RemoveAllViews
+		Activity.LoadLayout("emailLogin")
+End Sub

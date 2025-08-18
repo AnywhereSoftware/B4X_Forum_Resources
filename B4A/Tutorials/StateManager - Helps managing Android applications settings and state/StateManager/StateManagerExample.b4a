@@ -1,0 +1,84 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=tab1.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=randomaccessfile
+Library3=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=StateManager
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: StateManager Example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Dim ScrollView1 As ScrollView
+	Dim TabHost1 As TabHost
+	Dim EditText1 As EditText
+	Dim EditText2 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	Dim gd As GradientDrawable
+	gd.Initialize("TL_BR", Array As Int(Colors.Green, Colors.Red))
+	ScrollView1.Panel.Background = gd
+	Dim p As Panel
+	p.Initialize("")
+	Dim cb As CheckBox
+	cb.Initialize("")
+	p.AddView(cb, 0, 0, 50dip, 50dip)
+	TabHost1.AddTab("Tab1", "tab1")
+	TabHost1.AddTab2("Tab2", p)
+	Dim tb As ToggleButton
+	tb.Initialize("")
+	ScrollView1.Panel.AddView(tb, 10dip, 10dip, 100dip, 100dip)
+	
+	'Set the previous stored state
+	If StateManager.RestoreState(Activity, "Main", 60) = False Then
+		'set the default values
+		EditText1.Text = "Default text"
+		EditText2.Text = "Default text"
+	End If
+	
+	'assuming that we need to read some global settings we can use:
+	Dim AutoUpdate As Boolean = StateManager.GetSetting2("AutoUpdate", False) 'ignore
+	'Later if the user changes this setting we can call: StateManager.SetSetting("AutoUpdate", ...)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed Then
+		StateManager.ResetState("Main")
+	Else
+		StateManager.SaveState(Activity, "Main")
+	End If
+	StateManager.SaveSettings
+End Sub
+
+

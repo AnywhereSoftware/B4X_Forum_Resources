@@ -1,0 +1,108 @@
+﻿Build1=Default,b4a.FormsBuilderView
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=json
+Library3=network
+Library4=randomaccessfile
+Library5=xui
+Library6=xui views
+Library7=b4xpreferencesdialog
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=1
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: b4a FormsBuilder Preview
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Type TMessage(fCommand As String,fJSon As String,fWidth As String,fHeight As String)
+	Private fMessage As TMessage
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private fLabelIP As Label
+	Private fXui As XUI
+	Private fPrefDialog As PreferencesDialog
+	Private fLabelDimensions As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	If FirstTime Then
+		fMessage.Initialize
+		fMessage.fJSon=""
+		fMessage.fWidth=90%x
+		fMessage.fHeight=300dip
+	End If
+	Activity.LoadLayout("main")
+	fLabelIP.Text=CallSub(Starter,"getMyWifiIp")
+End Sub
+
+Sub Activity_Resume
+	showDimensions
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub showDimensions
+	fLabelDimensions.Text=$"Width : ${Activity.Width} , Height : ${Activity.Height}"$
+End Sub
+
+public Sub showPrefDialog(aMessage As TMessage)
+	fMessage=aMessage
+	If fMessage.fJSon<>"" Then
+		fPrefDialog.Initialize(Activity,"Preview",parseDimension(fMessage.fWidth),parseDimension(fMessage.fHeight))
+		fPrefDialog.Clear
+		fPrefDialog.LoadFromJson(fMessage.fJSon)
+		fPrefDialog.ShowDialog(CreateMap(), "Ok", "Cancel")
+	Else
+		fXui.MsgboxAsync("No dialog","Error")
+	End If
+End Sub
+
+private Sub parseDimension(aValue As String) As Float
+	Try
+		If aValue.EndsWith("dip") Then
+			Return aValue.SubString2(0,aValue.Length-3)*1dip	
+		Else
+			If aValue.EndsWith("%x") Then
+				Return aValue.SubString2(0,aValue.Length-2)*Activity.Width/100
+			Else
+				If aValue.EndsWith("%y") Then
+					Return aValue.SubString2(0,aValue.Length-2)*Activity.height/100
+				Else
+					Return aValue
+				End If
+			End If
+		End If
+	Catch
+		fXui.MsgboxAsync($"incorrect value [${aValue}]"$,"Error")
+		Return 300dip
+	End Try
+End Sub
+
+Private Sub fButtonView_Click
+	showPrefDialog(fMessage)
+End Sub

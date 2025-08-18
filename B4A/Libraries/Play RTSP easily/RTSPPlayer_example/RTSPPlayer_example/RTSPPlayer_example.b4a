@@ -1,0 +1,94 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=rtspvideoplayer
+Library3=xui
+Library4=exoplayer
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	
+	Dim player As RTSPVideoPlayer
+	Private PlayerCont As Panel
+	Private stopBtn As Button
+	Private startBtn As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Dim v As View = player.Initialize("RTSP")
+	If player.IsInitialised Then
+		PlayerCont.AddView(v,0,0,PlayerCont.Width,PlayerCont.Width*(9/16))
+		player.SetMedia("rtsp://192.168.2.200:554/user=admin&password=admin1111&channel=1&stream=stream=1.sdp","admin","admin1111","aaa")
+	End If
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If player.IsInitialised And player.IsStarted Then player.Stop
+End Sub
+
+Private Sub startBtn_Click
+	If player.IsInitialised Then player.Start(True,True)
+End Sub
+
+Private Sub stopBtn_Click
+	If player.IsInitialised Then player.Stop
+End Sub
+
+Sub RTSP_Connected
+	Activity.Title = "Connected"
+End Sub
+
+Sub RTSP_Connecting
+	Activity.Title = "Connecting"
+End Sub
+
+Sub RTSP_Disconnected
+	Activity.Title = "Disconnected"
+End Sub
+
+Sub RTSP_Error(message As String)
+	Msgbox(message, "Error")
+End Sub
+
+Sub RTSP_FirstFrameRendered
+	Activity.Title = "Video Started"
+End Sub
+
+Sub RTSP_Unauthorized
+	Activity.Title = "Auth Failed"
+End Sub

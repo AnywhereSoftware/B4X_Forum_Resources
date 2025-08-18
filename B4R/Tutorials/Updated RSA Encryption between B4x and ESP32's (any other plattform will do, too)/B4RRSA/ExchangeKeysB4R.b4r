@@ -1,0 +1,544 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266filesystem
+Library3=resp8266wifi
+Library4=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 30000
+
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Private PubkeyPath As String ="/pub.pem"
+	Private PrivkeyPath As String ="/pri.pem"
+	Private fs As ESP8266FileSystem
+	
+	Private bc As ByteConverter
+	
+	Private WiFi As ESP8266WiFi
+	Private SSID As String=""
+	Private SSIDPW As String=""
+	
+	Private server As WiFiServerSocket
+	Private Port As UInt = 52000
+	Private WiFiAstream As AsyncStreams
+	Private ser As B4RSerializator
+	
+	
+	
+	
+	Public ownpubkey(1000) As Byte
+	Public ownpubkey_length As Int
+	Public ownprivatekey(5000) As Byte
+	Public ownprivatekey_length As Int
+	Public encrypted(256) As Byte
+	Public encrypted_len As Int
+	Public decrypted(245) As Byte ' Max for 2048 Bit
+	Public decrypted_len As Int
+	
+	Public foreignpubkey(1000) As Byte
+	Public foreignpubkey_len As Int
+	
+End Sub
+
+Private Sub AppStart
+	
+	'Taken from: https://github.com/telliottosceola/mbedtls_generate_pem_key_pair
+	
+	Serial1.Initialize(115200)
+	
+	Log("AppStart")
+	InitFS
+
+	'fs.Remove(PubkeyPath)
+	'fs.Remove(PrivkeyPath)
+	If fs.Exists(PubkeyPath) And fs.Exists(PrivkeyPath) Then 
+		ReadKeysFromFile
+	Else
+		GenerateRSAKeys
+		ReadKeysFromFile
+	End If
+	
+	If SSID.Length>0 And SSIDPW.Length>0 Then 
+		Log("Connecting to ",SSID)
+		For i=1 To 10
+			Log(i)
+			
+			If WiFi.Connect2(SSID,SSIDPW) Then 
+				Log("Connected to ",SSID)
+				Log("My ip: ", WiFi.LocalIp)
+				server.Initialize(Port, "server_NewConnection")
+				server.Listen
+				Log("Listening for new connections on port ", Port)
+				Exit
+			Else
+				Log("Could not connect to WiFi. Please check SSID and PW...")
+			End If
+		Next
+	Else
+		Log("Please define SSID + SSID-PW...")
+	End If
+	
+	
+End Sub
+
+Sub Server_NewConnection (NewSocket As WiFiSocket)
+	Log("Client connected...",NewSocket.RemoteIp)
+	WiFiAstream.MaxBufferSize=1000
+	WiFiAstream.WaitForMoreDataDelay = 50
+	WiFiAstream.InitializePrefix(NewSocket.Stream, False, "WiFiastream_NewData", "WiFiastream_Error")
+End Sub
+
+Sub ReadKeysFromFile
+	Log("Loading Keys from file...")
+
+	fs.OpenRead(PubkeyPath)
+	Dim PK(fs.CurrentFile.Size) As Byte
+	fs.Stream.ReadBytes(PK,0,fs.CurrentFile.Size)
+	Log("Filesize:",fs.CurrentFile.Size)
+	bc.ArrayCopy2(PK,0,ownpubkey,0,fs.CurrentFile.Size)
+	fs.Close
+	Log("Public Key: ")
+	Log(bc.StringFromBytes(PK))
+		
+	fs.OpenRead(PrivkeyPath)
+	Dim PK(fs.CurrentFile.Size) As Byte
+	fs.Stream.ReadBytes(PK,0,fs.CurrentFile.Size)
+	For i=0 To ownprivatekey.Length-1
+		ownprivatekey(i)=0
+	Next
+	bc.ArrayCopy2(PK,0,ownprivatekey,0,fs.CurrentFile.Size)
+	ownprivatekey_length=fs.CurrentFile.Size+1
+	Log("Length PK:",fs.CurrentFile.Size)
+	Log("Length ownprivatekey:",ownprivatekey_length)
+	fs.Close
+
+	Log("Private Key: ")
+	Log(bc.StringFromBytes(ownprivatekey))
+End Sub
+
+Sub WiFiAStream_NewData (Buffer() As Byte)
+	Dim be(10) As Object
+	Dim data() As Object = ser.ConvertBytesToArray(Buffer, be)
+	'Log("Received:")
+	'For Each o As Object In data
+	'	Log(o)
+	'Next
+	
+	Select be(0)
+		Case "PUBKEY"
+			Log("PubKey Received")
+			
+			Dim fpubkey As String=data(1)
+			Log("FPub:",fpubkey)
+			For i=0 To foreignpubkey.Length-1
+				foreignpubkey(i)=0
+			Next
+			bc.ArrayCopy2(fpubkey,0,foreignpubkey,0,fpubkey.Length)
+			Log("foreignpubkey:",foreignpubkey)
+			foreignpubkey_len=fpubkey.Length
+
+			Dim d() As Byte="Greetings from ESP32"
+			bc.ArrayCopy2(d,0,decrypted,0,d.Length)
+			decrypted_len=d.Length
+			
+			Log("Decrypted: ",decrypted)
+			Log("Length: ",decrypted_len)
+			
+			decrypted_len=decrypted.Length
+			
+			Log ("Encrypting for B4x...")
+			RunNative("RSAEncrypt", Null)
+			
+			Dim es(encrypted_len) As Byte
+			bc.ArrayCopy2(encrypted,0,es,0,encrypted_len)
+			
+			
+			WiFiAstream.Write(ser.ConvertArrayToBytes(Array("ESP32ENC",bc.HexFromBytes(es))))
+			
+			SendPubKey
+		Case "ENC"
+			Dim enc() As Byte=data(1)
+			For i=0 To encrypted.Length-1
+				encrypted(i)=0
+			Next
+			bc.ArrayCopy2(enc,0,encrypted,0,enc.Length)
+			encrypted_len=enc.Length
+			Log("EL:",encrypted_len)
+						
+			RunNative("RSADecrypt", Null)
+			
+			Log("Decrypted from B4x:",decrypted)
+			Log("Decrypted lenght: ",decrypted_len)
+			
+	End Select
+End Sub
+
+'-------------------------------------------------
+
+#if c
+#include "mbedtls/pk.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/rsa.h"
+
+void RSAEncrypt (B4R::Object* o) {
+
+mbedtls_entropy_context entropy;
+mbedtls_entropy_init( &entropy );
+
+int ret = 0;
+
+mbedtls_ctr_drbg_context ctr_drbg;
+char *personalization = "rsa_genkey";
+
+mbedtls_ctr_drbg_init( &ctr_drbg );
+
+ret = mbedtls_ctr_drbg_seed( &ctr_drbg , mbedtls_entropy_func, &entropy,
+                 (const unsigned char *) personalization,
+                 strlen( personalization ) );
+if( ret != 0 )
+{
+    printf( " failed\n  ! mbedtls_ctr_drbg_seed -0x%04x\n", -ret );
+}
+else
+{
+    printf( " Seed generated...\n");
+
+}
+
+
+mbedtls_pk_context pk;
+mbedtls_pk_init( &pk );
+
+
+ printf( "loading pk");
+if( ( ret = mbedtls_pk_parse_public_key( &pk,(uint8_t*)b4r_main::_foreignpubkey->data ,b4r_main::_foreignpubkey_len+1 ) ) != 0 )
+{
+    printf( " failed\n  ! mbedtls_pk_parse_public_key -0x%04x\n", -ret );
+}
+else
+{
+    printf( "\nPublic Key loaded...\n");
+
+}
+
+
+size_t olen = 0;
+
+/*
+ * Calculate the RSA encryption of the data.
+ */
+printf( "\nGenerating the encrypted value" );
+
+/*
+ctx	The PK context to use. It must have been set up.
+input	Message to encrypt
+ilen	Message size
+output	Encrypted output
+olen	Encrypted output length
+osize	Size of the output buffer
+f_rng	RNG function
+p_rng	RNG parameter
+*/
+
+if( ( ret = mbedtls_pk_encrypt( &pk, (uint8_t*)b4r_main::_decrypted->data, b4r_main::_decrypted_len,
+                                (uint8_t*)b4r_main::_encrypted->data, &olen,b4r_main::_encrypted->length,
+                                mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+{
+    printf( " failed\n  ! mbedtls_pk_encrypt returned -0x%04x\n", -ret );
+}
+else
+{
+    printf( "\nEncryption successful...\n");
+	printf("\nOlen: %i",olen);
+	b4r_main::_encrypted_len = olen;
+	
+}
+
+
+printf( "\nAfter encryption" );
+}
+#End If
+
+'-------------------------------------------------
+
+
+
+#if c
+#include "mbedtls/pk.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/rsa.h"
+
+void RSADecrypt (B4R::Object* o) {
+
+mbedtls_rsa_context rsa;
+mbedtls_rsa_init(&rsa,  MBEDTLS_RSA_PKCS_V15,0);
+
+mbedtls_entropy_context entropy;
+mbedtls_entropy_init( &entropy );
+
+mbedtls_pk_context pk;
+mbedtls_pk_init( &pk );
+
+int ret = 0;
+
+mbedtls_ctr_drbg_context ctr_drbg;
+char *personalization = "rsa_genkey";
+
+mbedtls_ctr_drbg_init( &ctr_drbg );
+
+ret = mbedtls_ctr_drbg_seed( &ctr_drbg , mbedtls_entropy_func, &entropy,
+                 (const unsigned char *) personalization,
+                 strlen( personalization ) );
+if( ret != 0 )
+{
+    printf( " failed\n  ! mbedtls_ctr_drbg_seed -0x%04x\n", -ret );
+}
+else
+{
+    printf( " Seed generated...\n");
+
+}
+
+if( ( ret = mbedtls_pk_parse_key( &pk,(uint8_t*)b4r_main::_ownprivatekey->data,b4r_main::_ownprivatekey_length,NULL,0 ) ) != 0 )
+{
+    printf( "\nfailed\n  ! mbedtls_pk_parse_key returned -0x%04x\n", -ret );
+}
+else
+{
+    printf( "\nPrivate Key loaded...\n");
+}
+
+//Calculate the RSA encryption of the data.
+
+printf( "\nDecrypting..." );
+
+
+/*
+ctx	The PK context To use. It must have been set up with a Private key.
+input	Input To decrypt
+ilen	Input size
+output	Decrypted output
+olen	Decrypted message length
+osize	Size of the output buffer
+f_rng	RNG function
+p_rng	RNG parameter
+*/
+
+int i;
+
+
+printf("\nMax Size: %i\n",MBEDTLS_MPI_MAX_SIZE);
+
+size_t declen;
+
+mbedtls_rsa_set_padding( mbedtls_pk_rsa( pk ),MBEDTLS_RSA_PKCS_V15,0);
+
+if( ( ret = mbedtls_pk_decrypt( &pk, (uint8_t*)b4r_main::_encrypted->data,
+            b4r_main::_encrypted_len, (uint8_t*)b4r_main::_decrypted->data, &declen,
+			b4r_main::_decrypted->length,mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
+
+{
+    
+	
+	printf( "\nfailed  ! mbedtls_pk_decrypt returned -0x%04x\n", -ret );
+ 
+}
+else
+{
+    b4r_main::_decrypted_len = declen;
+	printf( "\nDecrypt successful...\n");
+	
+}
+
+
+
+}
+#End If
+
+Sub SendPubKey
+	Log("Sending PubKey...")
+	WiFiAstream.Write(ser.ConvertArrayToBytes(Array("ESP32PUBKEY",bc.StringFromBytes(ownpubkey))))
+End Sub
+
+
+Sub WifiAStream_Error
+	Log("Connection lost. Listening for new connections...")
+	server.Listen
+End Sub
+
+Sub GenerateRSAKeys
+	Log("Generating keys. This takes a long time...")
+	RunNative("genkeys", Null)
+	Log("Ready...")
+End Sub
+
+
+
+
+
+Sub InitFS
+	Log("Initializing Filesystem...")
+	
+	If(fs.Initialize())=False Then
+		Log("Formatting Filesystem. This may take some time")
+		fs.Format
+		If(fs.Initialize())=True Then
+			Log("Formatting succesful...")
+			
+		Else
+			Log("Error formatting Filesystem...")
+		End If		
+	End If
+	
+	Log("Total size: ", NumberFormat(fs.TotalSize / 1024, 0, 0), " KB")
+	Log("Used size: ", NumberFormat(fs.UsedSize / 1024, 0, 0), " KB")
+	ListFiles
+End Sub
+
+Sub ListFiles
+	Log("Files:")
+	For Each f As File In fs.ListFiles("/")
+		Log(f.Name," Size: ",f.Size)
+	Next
+End Sub
+
+#if c
+
+#include <Arduino.h>
+#include <SPIFFS.h>
+#include <mbedtls/pk.h>
+#include <mbedtls/error.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+#include "mbedtls/bignum.h"
+#include "mbedtls/x509.h"
+#include "mbedtls/rsa.h"
+#include "mbedtls/config.h"
+#include "mbedtls/platform.h"
+
+void genkeys (B4R::Object* o) {
+
+printf( "\n  . Inside C..." );
+
+#define KEY_SIZE 2048
+#define EXPONENT 65537
+
+mbedtls_pk_context pk;
+mbedtls_entropy_context entropy;
+mbedtls_ctr_drbg_context ctr_drbg;
+mbedtls_mpi N, P, Q, D, E, DP, DQ, QP;
+
+char *publicKeyFilePath = (char*)b4r_main::_pubkeypath->data;
+char *privateKeyFilePath = (char*)b4r_main::_privkeypath->data;
+
+//bool KeyPairGenerator::generateKeyPair(char* publicKeyFilePath, char* privateKeyFilePath){
+
+  int ret;
+  bool success = false;
+
+  const char *pers = "rsa_genkey";
+  printf( "\n  . Initializing RSA..." );
+  mbedtls_ctr_drbg_init( &ctr_drbg );
+
+  mbedtls_pk_init( &pk );
+  mbedtls_mpi_init( &N ); mbedtls_mpi_init( &P ); mbedtls_mpi_init( &Q );
+  mbedtls_mpi_init( &D ); mbedtls_mpi_init( &E ); mbedtls_mpi_init( &DP );
+  mbedtls_mpi_init( &DQ ); mbedtls_mpi_init( &QP );
+
+  printf( "\n  . Seeding the random number generator..." );
+  mbedtls_entropy_init( &entropy );
+  if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char *) pers, strlen( pers ) ) ) != 0 ){
+    printf( " failed\n  ! mbedtls_ctr_drbg_seed returned %d\n", ret );
+ 
+  }
+
+  if((ret = mbedtls_pk_setup( &pk, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA) )) != 0){
+    printf("pk_setup failed: %i\n", ret);
+  }
+
+  printf( " ok\n  . Generating the RSA key [ %d-bit ]...", KEY_SIZE );
+  if( ( ret = mbedtls_rsa_gen_key( mbedtls_pk_rsa( pk ), mbedtls_ctr_drbg_random, &ctr_drbg, KEY_SIZE, EXPONENT ) ) != 0 ){
+    printf( " failed\n  ! mbedtls_rsa_gen_key returned %d\n\n", ret );
+    
+  }
+
+  printf( " ok\n  . Checking public/private key validity...");
+  if(mbedtls_rsa_check_pubkey(mbedtls_pk_rsa( pk ))!=0){
+    printf("RSA context does not contain an rsa public key");
+   
+  }
+  if(mbedtls_rsa_check_privkey(mbedtls_pk_rsa( pk ))!=0){
+    printf("RSA context does not contain an rsa private key");
+    
+  }
+
+  printf( " ok\n  . Writing public key to string(PEM format)...." );
+
+  unsigned char pubKeyPem[1000];
+  memset(pubKeyPem, 0, sizeof(pubKeyPem));
+  if(mbedtls_pk_write_pubkey_pem(&pk, pubKeyPem, sizeof(pubKeyPem)) != 0){
+    printf("write public key to string failed");
+    
+  }
+  // printf("Public Key:\n%s\n", (char*)pubKeyPem);
+  printf( " ok\n  . Writing private key to string(PEM format)...." );
+
+  unsigned char privKeyPem[3000];
+  memset(privKeyPem, 0, sizeof(privKeyPem));
+  ret = mbedtls_pk_write_key_pem(&pk, privKeyPem, sizeof(privKeyPem));
+  if(ret!=0){
+    printf("write private key to string failed with code %04x\n",ret);
+  }
+  // printf("Private Key:\n%s\n",(char*)privKeyPem);
+  printf( " ok\n  . Storing Public Key to SPIFFS.... %s", publicKeyFilePath );
+
+  File publicKeyFile;
+  publicKeyFile = SPIFFS.open(publicKeyFilePath, FILE_WRITE);
+  if(publicKeyFile){
+    publicKeyFile.print((char*)pubKeyPem);
+  }else{
+    printf("Could not locate public key file at given path");
+  }
+  publicKeyFile.close();
+  
+  printf( " ok\n  . Storing Private Key to SPIFFS.... %s", privateKeyFilePath );
+  File privateKeyFile;
+  privateKeyFile = SPIFFS.open(privateKeyFilePath, FILE_WRITE);
+  if(privateKeyFile){
+    privateKeyFile.print((char*)privKeyPem);
+  }else{
+    printf("Could not locate private key file at given path");
+   }
+   privateKeyFile.close();
+  
+
+
+  printf("\nSuccess, process complete. Cleaning up...");
+ 
+  mbedtls_mpi_free( &N ); mbedtls_mpi_free( &P ); mbedtls_mpi_free( &Q );
+  mbedtls_mpi_free( &D ); mbedtls_mpi_free( &E ); mbedtls_mpi_free( &DP );
+  mbedtls_mpi_free( &DQ ); mbedtls_mpi_free( &QP );
+  mbedtls_pk_free(&pk);
+  mbedtls_ctr_drbg_free(&ctr_drbg);
+  mbedtls_entropy_free( &entropy );
+}
+
+
+
+#End If
+

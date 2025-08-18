@@ -1,0 +1,39 @@
+--[[
+    rfxmeterslidepot.dzvents - Explore Arduino_RFXCOM.
+    20220407 rwbl
+]]--
+
+-- IDX of the RFXMeter device with ID=0AFA as set in the B4R program
+local IDX_RFXMETER = 387
+-- Optional check if the right device is set in the ULong value received = this in case the RFXMeter device is used by other events or devices as well.
+local IDX_SWITCHDIMMER = 386
+
+return {
+	on = { devices = { IDX_RFXMETER } },
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERSLIDEPOT', },
+	execute = function(domoticz, device)
+	    -- Example: device.sValue=133860: 1=LeadingNumber,3=Length IDX,386=IDX,0=Reed Switch state (0=Off,1=On)
+		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+        -- Convert the value to a given idx and update the device nValue
+        -- IDX=386, Hardware=VirtualSensors, ID=000141D2, Unit=1, Name=RFXMeterSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+        -- Method string.sub extracts a piece of the string s, from the i-th to the j-th character inclusive. In Lua, the first character of a string has index 1
+        -- The switch device is updated via HTTP: Processing device-adapter for RFXHumidity: Humidty device adapter
+        -- RFXMETER: OpenURL: url = http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=386&nvalue=0&svalue=0&parsetrigger=false
+        -- Get the length of the idx at pos 2
+        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+        -- Get the idx starting at pos 3 of the sValue
+        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+        -- The switch state On or Off is set as nValue
+        local nvalue = 0
+        local svalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+        if svalue > 0 then nvalue = 1 end
+        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+        -- Update the device if idx . 
+        if (idx == IDX_SWITCHDIMMER) then 
+            domoticz.devices(idx).setValues(nvalue, svalue)
+            -- Dimmer, like Philips Hue
+            -- idx= 118
+            -- domoticz.devices(idx).setLevel(svalue)
+        end
+    end
+}

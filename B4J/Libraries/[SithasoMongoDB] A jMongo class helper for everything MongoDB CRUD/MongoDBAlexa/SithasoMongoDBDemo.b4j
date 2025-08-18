@@ -1,0 +1,143 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jmongodb
+Library3=json
+Library4=jstringutils
+Library5=javaobject
+Module1=SithasoMongoDB
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim smongo As SithasoMongoDB
+	'create a database named family with a table named members
+	smongo.Initialize("127.0.0.1", 27017, "family", "members")
+	'create the record to add
+	Log("INSERT RECORD...")
+	smongo.PrepareRecord
+	smongo.SetField("firstname", "Anele")
+	smongo.SetField("lastname", "Mbanga")
+	smongo.SetField("gender", "Male")
+	smongo.Insert
+	'
+	smongo.PrepareRecord
+	smongo.SetField("firstname", "Usibabale")
+	smongo.SetField("lastname", "Mbanga")
+	smongo.SetField("gender", "Male")
+	smongo.Insert
+	
+	smongo.PrepareRecord
+	smongo.SetField("firstname", "Olothando")
+	smongo.SetField("lastname", "Mbanga")
+	smongo.SetField("gender", "Female")
+	smongo.Insert
+	'
+	smongo.PrepareRecord
+	smongo.SetField("firstname", "Esona")
+	smongo.SetField("lastname", "Mbanga")
+	smongo.SetField("gender", "Female")
+	smongo.Insert
+
+	
+	Log("READ RECORD...")
+	'* get the last record
+	smongo.ClearWhere
+	smongo.SelectAll
+	smongo.MoveLast
+	Dim id As String = smongo.GetID
+	Log(id)
+	'
+	'read a record using id
+	smongo.Read(id)
+	Log(smongo.RowCount & " record(s) read!")
+	If smongo.RowCount = 1 Then
+		smongo.MoveFirst
+		Dim sname As String = smongo.GetString("firstname")
+		Log(sname)
+		Log(smongo.Record)
+	End If
+	
+	Log("UPDATE RECORD...")
+	'update an existing record by _id
+	smongo.PrepareRecord
+	smongo.SetField("_id", id)
+	smongo.SetField("lastname", "Nguta")
+	smongo.SetField("age", 52)
+	smongo.Update
+	Log(smongo.RowCount & " record(s) updated!")
+	'update where
+	Log("UPDATE RECORD...")
+	smongo.ClearWhere
+	'update where firstname = anele
+	smongo.AddWhere("firstname", smongo.EQ_OP, "Anele")
+	smongo.PrepareRecord
+	'set these fields
+	smongo.SetField("work", "Software Engineer")
+	smongo.SetField("age", 51)
+	smongo.Update
+	Log(smongo.RowCount & " record(s) updated!")
+	'
+	'update where
+	Log("UPDATE WHERE")
+	smongo.ClearWhere
+	smongo.AddWhere("gender", smongo.EQ_OP, "Male")
+	smongo.PrepareRecord
+	smongo.SetField("loves", "b4x")
+	smongo.Update
+	Log(smongo.RowCount & " record(s) updated!")
+	'select all records
+	Log("SELECT ALL")
+	smongo.ClearWhere
+	smongo.AddSort("surname", True)
+	smongo.SetLimit(5)
+	smongo.SetSkip(1)
+	smongo.SelectAll
+	Log(smongo.RowCount & " record(s) selected!")
+	For Each rec As Map In smongo.result
+		Log(rec)
+	Next
+	'select with age
+	Log("SELECT WHERE")
+	smongo.ClearWhere
+	smongo.AddFields(Array("_id", "firstname", "lastname", "age"))
+	smongo.AddWhere("age", smongo.EQ_OP, 52)
+	smongo.SelectAll
+	Log(smongo.RowCount & " record(s) selected!")
+	For Each rec As Map In smongo.result
+		Log(rec)
+	Next
+	'get the last record and delete it
+	Log("DELETE LAST")
+	smongo.ClearWhere
+	smongo.SelectAll
+	smongo.MoveLast
+	Dim lastID As String = smongo.GetID
+	Log(lastID)
+	'smongo.Delete(lastID)
+	Log(smongo.RowCount & " record(s) deleted.")
+	'
+	Log("DELETE WHERE")
+	smongo.ClearWhere
+	smongo.AddWhere("age", smongo.EQ_OP, 52)
+	'smongo.DeleteWhere
+	Log(smongo.RowCount & " record(s) deleted.")
+	'
+	'Log("DELETE ALL")
+	'smongo.DeleteAll
+	'Log(smongo.RowCount & " record(s) deleted.")
+	
+	StartMessageLoop
+End Sub

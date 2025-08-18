@@ -1,0 +1,844 @@
+﻿AppType=JavaFX
+Build1=Default,com.code4data.awesomematerial
+File1=awesomematerial.xlsx
+File2=compiletime.txt
+File3=icon.png
+File4=Main.bjl
+File5=SaveImage.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=cssutils
+Library10=jshell
+Library2=javaobject
+Library3=jcontrolsfx
+Library4=jcore
+Library5=jfx
+Library6=jpoi4
+Library7=jsql
+Library8=jsystemtray
+Library9=xui views
+Module1=|absolute|C:\Users\walter\Documents\_WM\Dropbox\B4X\_B4XsharedModules\CallSubUtils
+NumberOfFiles=5
+NumberOfLibraries=10
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+' Partially shamelessly based on:
+' - B4XLocalizator: https://www.b4x.com/android/forum/threads/b4x-localizator-localize-your-b4x-applications.68751
+' - Dynamic Controls: https://www.b4x.com/android/forum/threads/getting-started-examples.57537
+' Icon from http://www.iconspedia.com/icon/images--448.html
+
+'*****************************************************************************************************
+'IMPORTANT: uses jPOI4, not jPOI5 ! ; the jar and xml files can be fetched here, and then
+'renamed to jPOI4.jar and jPOI4.xml (and then select library jPOI4 in the libraries pane):
+'https://www.b4x.com/android/forum/threads/jpoi-supports-microsoft-excel-xls-and-xlsx-workbooks.57392/
+'Note that in that first post, Erel also mentions additional jars to be installed from:
+'https://www.b4x.com/b4j/files/jPoi_AdditionalJars.zip
+'*****************************************************************************************************
+
+'CHANGES:
+'2021-07-22:
+'- Replaced StatusBar (from JcontrolsFX library) with LabelStatus
+'- Added RedirectOutput
+'2022-05-03:
+'- Added 41 missing FontAwesome icons
+'- Added CheckBox 'Also save as png or jpg'
+
+#Region  Project Attributes
+	#MainFormWidth: 550
+	#MainFormHeight: 525
+	#AdditionalJar: sqlite-jdbc-3.36.0.2
+	' Add If using jPOI4 library:
+	#PackagerProperty: AdditionalModuleInfoString = opens schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443;
+	#PackagerProperty: IncludedModules = jdk.charsets
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+	Private controlsUtils1 As ControlsUtils
+	Private tray As SystemTray
+	Private icon1 As TrayIcon
+
+	Private appName As String = "AwesomeMaterial"
+	Private fname As String = "awesomematerial"
+
+	Private sql As SQL
+
+	Type oneRow(icontype As String, iconname As String, iconhex As String)
+	Type labelSet(lblMat As Label, lblFA As Label, lblText As Label)
+	Type labelTag(txt As String, isFontAwesome As String, iconhex As String)
+
+	Private labelSets As List
+	Private rsList As List
+	Private firstShowing As Int = -1
+
+	Private dlg As B4XDialog
+	Type lastUsed(imageSize As Int, fontSize As Int, formatPng As Boolean, shapeSquare As Boolean, textColour As Paint, bgColour As Paint, initialDir As String)
+	Private lastUsed1 As lastUsed
+
+	' Designer views - Main
+	Private TextField1 As TextField
+	Private LabelSearch As Label
+	Private CheckBoxSave As CheckBox
+
+	Private LabelF1 As Label
+	Private LabelF2 As Label
+	Private LabelF3 As Label
+	Private LabelF4 As Label
+	Private LabelF5 As Label
+	Private LabelF6 As Label
+	Private LabelF7 As Label
+	Private LabelF8 As Label
+	Private LabelF9 As Label
+	Private LabelF10 As Label
+
+	Private LabelM1 As Label
+	Private LabelM2 As Label
+	Private LabelM3 As Label
+	Private LabelM4 As Label
+	Private LabelM5 As Label
+	Private LabelM6 As Label
+	Private LabelM7 As Label
+	Private LabelM8 As Label
+	Private LabelM9 As Label
+	Private LabelM10 As Label
+
+	Private Label1 As Label
+	Private Label2 As Label
+	Private Label3 As Label
+	Private Label4 As Label
+	Private Label5 As Label
+	Private Label6 As Label
+	Private Label7 As Label
+	Private Label8 As Label
+	Private Label9 As Label
+	Private Label10 As Label
+
+	Private ButtonFirst As Button
+	Private ButtonLast As Button
+	Private ButtonNext As Button
+	Private ButtonPrev As Button
+
+	Private LabelStatus As Label
+
+	' Designer views - SaveImage
+	Private LabelShape As Label
+	Private RadioButtonSquare As RadioButton
+	Private RadioButtonCircle As RadioButton
+	Private LabelSaveAs As Label
+	Private RadioButtonPng As RadioButton
+	Private RadioButtonJpg As RadioButton
+	Private LabelColours As Label
+	Private ColorPickerText As ColorPicker
+	Private ColorPickerBackground As ColorPicker
+	Private LabelImageSize As Label
+	Private TextFieldImageSize As TextField
+	Private LabelFontSize As Label
+	Private TextFieldFontSize As TextField
+	Private PaneImage As Pane
+	Private LabelImageFA As Label
+	Private LabelImageMI As Label
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	' For when things go wrong... Redirect stdout and stderr to files.
+#If RELEASE
+	RedirectOutput(File.DirData(appName), "stdx.log", False, True, True)
+#End If
+
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("Main")
+
+	If File.Exists(File.DirApp, fname & ".db") Then
+		sql.InitializeSQLite(File.DirApp, fname & ".db", False)
+	Else
+		BuildDatabaseFromWorkbook
+	End If
+
+	labelSets.Initialize
+	AddLabelSet(LabelM1, LabelF1, Label1)
+	AddLabelSet(LabelM2, LabelF2, Label2)
+	AddLabelSet(LabelM3, LabelF3, Label3)
+	AddLabelSet(LabelM4, LabelF4, Label4)
+	AddLabelSet(LabelM5, LabelF5, Label5)
+	AddLabelSet(LabelM6, LabelF6, Label6)
+	AddLabelSet(LabelM7, LabelF7, Label7)
+	AddLabelSet(LabelM8, LabelF8, Label8)
+	AddLabelSet(LabelM9, LabelF9, Label9)
+	AddLabelSet(LabelM10, LabelF10, Label10)
+
+	lastUsed1.Initialize
+	lastUsed1.imageSize = 100
+	lastUsed1.fontSize = 80
+	lastUsed1.formatPng = True
+	lastUsed1.shapeSquare = True
+	lastUsed1.textColour = fx.Colors.White
+	lastUsed1.bgColour = fx.Colors.Transparent
+	lastUsed1.initialDir = ""
+
+	MainForm.Show
+
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	Log("Application Error - Exception: " & Error.Message)
+	Log("")
+	Log("StackTrace: ")
+	Log("")
+	Log(StackTrace)
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+	Return True
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+
+	RemoveTrayIcon
+
+End Sub
+
+Public Sub RedirectOutput(Dir As String, FileName As String, append As Boolean, stdout As Boolean, stderr As Boolean)
+
+	' Code based on https://www.b4x.com/android/forum/threads/redirect-the-output-to-a-file.65165
+
+	If (stdout = False) And (stderr = False) Then Return
+
+	If (append = False) And File.Exists(Dir, FileName) Then
+		Try
+			File.Delete(Dir, FileName)
+		Catch
+			Log("RedirectOutput: " & LastException)
+		End Try
+	End If
+
+	Dim out As OutputStream = File.OpenOutput(Dir, FileName, False) 'Set to True to append the logs
+	Dim ps As JavaObject
+	ps.InitializeNewInstance("java.io.PrintStream", Array(out, True, "utf8"))
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.lang.System")
+	If stdout Then jo.RunMethod("setOut", Array(ps))
+	If stderr Then jo.RunMethod("setErr", Array(ps))
+
+End Sub
+
+Sub AddLabelSet(lblMat As Label, lblFA As Label, lblText As Label)
+
+	Dim ls As labelSet
+	ls.lblMat = lblMat
+	ls.lblFA = lblFA
+	ls.lblText = lblText
+	labelSets.Add(ls)
+
+End Sub
+
+Private Sub BuildDatabaseFromWorkbook
+
+	' Notice: we're not checking if the layout is what is expected, i.e.:
+	' - Sheet 1 (IconData): version number in cell B1 (currently not used)
+	' - Row 2: headers
+	' - Rows 3 and onwards: data:
+	' - column A: icontype (FontAwesome or Material)
+	' - column B: iconname
+	' - column C: iconhex (hex value)
+
+	Dim curRow As Int = -1
+
+	File.Delete(File.DirApp, fname & ".db")
+	sql.InitializeSQLite(File.DirApp, fname & ".db", True)
+	sql.BeginTransaction
+
+	Try
+		sql.ExecNonQuery("CREATE TABLE data (icontype TEXT, iconname TEXT, iconhex TEXT)")
+		Dim wb As PoiWorkbook
+		wb.InitializeExisting(File.DirAssets, fname & ".xlsx", "")
+		Dim sheet As PoiSheet = wb.GetSheet(0)
+		For Each row As PoiRow In sheet.Rows
+			If row.RowNumber < 2 Then Continue
+			curRow = row.RowNumber
+			Dim icontype, iconname, iconhex As String
+			For Each cell As PoiCell In row.Cells
+				Select Case cell.ColumnIndex
+					Case 0
+						icontype = cell.ValueString.SubString2(0, 1)
+					Case 1
+						iconname = cell.ValueString
+					Case 2
+						iconhex = cell.ValueString
+				End Select
+			Next
+			sql.ExecNonQuery2("INSERT INTO data VALUES (?, ?, ?)", Array (icontype.ToLowerCase, iconname.ToLowerCase, iconhex.ToUpperCase))
+		Next
+		sql.TransactionSuccessful
+		wb.Close
+		fx.Msgbox(MainForm, "The icon data were successfully imported.", appName)
+	Catch
+		Log("BuildDatabaseFromWorkbook error: " & LastException)
+		MsgBoxLongText(MainForm, 0, 0, "Error importing icon data (curRow=" & curRow & "): " & LastException, appName, "OK", "", "", xui.Color_Red)
+		sql.Rollback
+		sql.Close
+		File.Delete(File.DirApp, fname & ".db")
+		ExitApplication
+	End Try
+
+End Sub
+
+Sub LabelSearch_MouseClicked (EventData As MouseEvent)
+
+	DoSearch
+
+End Sub
+
+Sub TextField1_Action
+
+	DoSearch
+
+End Sub
+
+Sub DoSearch
+
+	Dim rs As ResultSet
+
+	rsList.Initialize
+	firstShowing = -1
+	ClearGrid
+	ShowButtons
+
+	Try
+		If TextField1.Text = "" Then
+			rs = sql.ExecQuery("select * from data order by iconname asc")
+		Else
+			rs = sql.ExecQuery2("select * from data where iconname like ? order by iconname asc", Array As String("%" & TextField1.Text & "%"))
+		End If
+	Catch
+		Log("DoSearch: " & LastException)
+		LabelStatus.Text = "No icons found"
+		Return
+	End Try
+
+	Do While rs.NextRow
+		Dim thisRow As oneRow
+		thisRow.icontype = rs.GetString("icontype").ToUpperCase
+		thisRow.iconname = rs.GetString("iconname")
+		thisRow.iconhex = rs.GetString("iconhex").ToUpperCase
+		rsList.Add(thisRow)
+	Loop
+
+	If rsList.Size < 1 Then
+		LabelStatus.Text = "No icons found"
+		Return
+	Else
+		LabelStatus.Text = "Number of icons found: " & rsList.Size
+		LabelStatus.Text = ""
+	End If
+
+	firstShowing = 0
+	ShowData
+
+End Sub
+
+Sub ShowButtons
+
+	ButtonFirst.Visible = False
+	ButtonPrev.Visible = False
+	ButtonNext.Visible = False
+	ButtonLast.Visible = False
+
+	If firstShowing < 0 Then Return
+	If rsList.Size < 11 Then Return
+
+	' Is there a next batch?
+	If (firstShowing + 10) < rsList.Size Then
+		ButtonNext.Visible = True
+		ButtonLast.Visible = True
+	End If
+
+	' Is there a previous batch?
+	If firstShowing > 0 Then
+		ButtonFirst.Visible = True
+		ButtonPrev.Visible = True
+	End If
+
+End Sub
+
+Sub Lbl_MouseClicked (EventData As MouseEvent)
+
+	Dim send As Label = Sender
+	Dim theTag As labelTag = send.Tag
+
+	If EventData.SecondaryButtonPressed Then ' Right-click
+		fx.Clipboard.SetImage(send.Snapshot)
+	Else
+		fx.Clipboard.SetString(theTag.txt)
+	End If
+
+	send.SetAlphaAnimated(50, 0)
+
+	Dim cs As CallSubUtils
+	cs.Initialize
+	cs.CallSubDelayedPlus2(Me, "Lbl_Reset", 50, Array(send))
+
+End Sub
+
+Sub Lbl_Reset(args() As Object)
+
+	Dim lbl As Label = args(0)
+	lbl.SetAlphaAnimated(50, 1)
+
+	If CheckBoxSave.Checked Then SaveImage(lbl)
+
+End Sub
+
+Sub ButtonPrev_Action
+
+	firstShowing = firstShowing - 10
+	If firstShowing < 0 Then firstShowing = 0
+	ShowData
+
+End Sub
+
+Sub ButtonNext_Action
+
+	firstShowing = firstShowing + 10
+	ShowData
+
+End Sub
+
+Sub ButtonLast_Action
+
+	firstShowing = rsList.Size - 10
+	If firstShowing < 0 Then firstShowing = 0
+	ShowData
+
+End Sub
+
+Sub ButtonFirst_Action
+
+	firstShowing = 0
+	ShowData
+
+End Sub
+
+Sub ShowData
+
+	Dim i As Int
+	Dim j As Int = 0
+
+	ClearGrid
+	ShowButtons
+
+	For i = firstShowing To (firstShowing + 9)
+		If i > (rsList.Size - 1) Then Exit
+		Try
+			Dim thisRow As oneRow = rsList.Get(i)
+			Dim theTag As labelTag
+			theTag.Initialize
+			theTag.iconhex = thisRow.iconhex
+			theTag.txt = "Chr(0x" & thisRow.iconhex & ")"
+			Dim ls As labelSet = labelSets.Get(i - firstShowing)
+			Dim lbl As Label
+			Select Case thisRow.icontype
+				Case "F"
+					lbl = ls.lblFA
+					theTag.isFontAwesome = True
+				Case "M"
+					lbl = ls.lblMat
+					theTag.isFontAwesome = False
+				Case Else
+					Log("ShowData - unhandled icontype: " & thisRow.icontype)
+					theTag.isFontAwesome = False
+			End Select
+			lbl.Visible = True
+			lbl.Text = Chr(Bit.ParseInt(thisRow.iconhex, 16))
+			lbl.Tag = theTag
+			ls.lblText.Visible = True
+			ls.lblText.Text = "(" & thisRow.icontype & ") " & thisRow.iconname & CRLF & theTag.txt
+			ls.lblText.Tag = theTag
+			j = i
+		Catch
+			Log("ShowData: " & LastException)
+		End Try
+	Next
+
+	LabelStatus.Text = (firstShowing + 1) & "-" & (j + 1) & " of " & rsList.Size & "; click an icon or label to copy 'Chr(0x...)' to Clipboard"
+
+End Sub
+
+Sub ClearGrid
+
+	Dim i As Int
+
+	For i = 0 To 9
+		Dim ls As labelSet = labelSets.Get(i)
+		ls.lblFA.Visible = False
+		ls.lblMat.Visible = False
+		ls.lblText.Visible = False
+	Next
+
+End Sub
+
+' Was created because at least OpenJDK Java 11 64bit on Linux truncates the MsgBox text (both fx and XUI) after 2 or 3 lines.
+' Requires library 'XUI Views'.
+' Returns a ResumableSub object.
+' Usage:
+'     Wait For(MsgBoxLongText(MainForm, 500dip, 300dip, "This is the text", "Here is the title", "Yes", "No", "", xui.Color_Red)) Complete (result As Int)
+'     If Result = xui.DialogResponse_Positive Then ...
+Public Sub MsgBoxLongText(frm As Form, width As Int, height As Int, msg As String, title As String, positiveBtnText As String, negativeBtnText As String, cancelBtnText As String, borderColour As Int) As ResumableSub
+
+	Dim fnt14 As B4XFont = xui.CreateDefaultFont(14)
+	Dim LongTextTemplate As B4XLongTextTemplate
+	Dim dlg As B4XDialog
+
+	dlg.Initialize(frm.RootPane)
+	dlg.BackgroundColor = xui.Color_LightGray
+	dlg.BlurBackground = True
+	dlg.BorderColor = borderColour
+	dlg.ButtonsColor = xui.Color_White
+	dlg.ButtonsFont = fnt14
+	dlg.ButtonsTextColor = xui.Color_Black
+	dlg.Title = title
+	dlg.TitleBarColor = xui.Color_White
+	dlg.TitleBarFont = fnt14
+	dlg.TitleBarTextColor = xui.Color_Black
+
+	LongTextTemplate.Initialize
+	LongTextTemplate.Resize(IIf(width > 0, width, 500dip), IIf(height > 0, height, 300dip))
+	LongTextTemplate.Text = msg
+
+	Wait For (dlg.ShowTemplate(LongTextTemplate, positiveBtnText, negativeBtnText, cancelBtnText)) Complete (Result As Int)
+	Return Result
+
+End Sub
+
+#Region Save Image
+Private Sub SaveImage(lbl As Label)
+
+	Dim theTag As labelTag = lbl.Tag
+	Dim fnt14 As B4XFont = xui.CreateDefaultFont(14)
+	dlg.Initialize(MainForm.RootPane)
+	dlg.BackgroundColor = xui.Color_LightGray
+	dlg.BlurBackground = True
+	dlg.BorderColor = xui.Color_Black
+	dlg.ButtonsFont = fnt14
+	dlg.Title = "Save as image"
+	dlg.TitleBarColor = xui.Color_LightGray
+	dlg.TitleBarFont = fnt14
+	dlg.TitleBarTextColor = xui.Color_Black
+
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, 390dip, 270dip)
+	p.LoadLayout("SaveImage")
+
+	LabelImageFA.Visible = theTag.isFontAwesome
+	LabelImageMI.Visible = Not(theTag.isFontAwesome)
+	If theTag.isFontAwesome Then
+		LabelImageFA.Text = Chr(Bit.ParseInt(theTag.iconhex, 16))
+	Else
+		LabelImageMI.Text = Chr(Bit.ParseInt(theTag.iconhex, 16))
+	End If
+
+	TextFieldImageSize.Text = lastUsed1.imageSize
+	TextFieldFontSize.Text = lastUsed1.fontSize
+	RadioButtonPng.Selected = lastUsed1.formatPng
+	RadioButtonJpg.Selected = Not(lastUsed1.formatPng)
+	RadioButtonSquare.Selected = lastUsed1.shapeSquare
+	RadioButtonCircle.Selected = Not(lastUsed1.shapeSquare)
+	ColorPickerText.SelectedColor = lastUsed1.textColour
+	ColorPickerBackground.SelectedColor = lastUsed1.bgColour
+
+	Dim rs As ResumableSub = dlg.ShowCustom(p, "Save", "", "Cancel")
+	SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+	Wait For (rs) Complete(Result As Int)
+	dlg.PutAtTop = False
+	If Result <> xui.DialogResponse_Positive Then Return
+
+	lastUsed1.imageSize = TextFieldImageSize.Text
+	lastUsed1.fontSize = TextFieldFontSize.Text
+	lastUsed1.formatPng = RadioButtonPng.Selected
+	lastUsed1.shapeSquare = RadioButtonSquare.Selected
+	lastUsed1.textColour = ColorPickerText.SelectedColor
+	lastUsed1.bgColour = ColorPickerBackground.SelectedColor
+
+	' Save the file
+	Dim fPath As String
+	Dim FileChooser1 As FileChooser
+
+	FileChooser1.Initialize
+	If RadioButtonPng.Selected Then
+		FileChooser1.SetExtensionFilter("PNG files", Array As String("*.png"))
+	Else
+		FileChooser1.SetExtensionFilter("JP[E]G files", Array As String("*.jpg, *.jpeg"))
+	End If
+	If lastUsed1.initialDir <> "" Then FileChooser1.InitialDirectory = lastUsed1.initialDir
+	FileChooser1.Title = "Save your file"
+	fPath = FileChooser1.ShowSave(MainForm)
+	If fPath = "" Then Return
+	lastUsed1.initialDir = File.GetFileParent(fPath)
+
+	If RadioButtonPng.Selected Then
+		If fPath.ToLowerCase.EndsWith(".png") = False Then fPath = fPath & ".png"
+	Else
+		If (fPath.ToLowerCase.EndsWith(".jpg") = False) And _
+			(fPath.ToLowerCase.EndsWith(".jpeg") = False) Then
+			fPath = fPath & ".jpg"
+		End If
+	End If
+
+	If File.Exists(fPath, "") Then File.Delete(fPath, "")
+
+	If theTag.isFontAwesome Then
+		SaveImageSnapLabel(LabelImageFA, fPath)
+	Else
+		SaveImageSnapLabel(LabelImageMI, fPath)
+	End If
+
+	If fx.Msgbox2(MainForm, "Open the output file's location?", "Saved", "Yes", "", "No", fx.MSGBOX_INFORMATION) = fx.DialogResponse.POSITIVE Then OpenFileManager(File.GetFileParent(fPath))
+
+	controlsUtils1.ShowNotification3("AwesomeMaterial", "You can see the image in the System Tray.", controlsUtils1.ICON_INFORMATION, MainForm, "CENTER", 3000)
+
+End Sub
+
+Private Sub SaveImageSnapLabel(lbl As Label, fPath As String)
+
+	Dim out As OutputStream = File.OpenOutput(fPath, "", False)
+	If RadioButtonSquare.Selected Then
+		lbl.Snapshot2(fx.Colors.Transparent).WriteToStream(out)
+	Else
+		CreateRoundBitmap(lbl.Snapshot2(fx.Colors.Transparent), TextFieldImageSize.Text).WriteToStream(out, 100, IIf(RadioButtonPng.Selected, "PNG", "JPEG"))
+	End If
+	out.Close
+	SetTray(fPath)
+
+End Sub
+
+Private Sub TextFieldFontSize_TextChanged (Old As String, New As String)
+
+	SaveImage_Validate(New, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub TextFieldFontSize_FocusChanged (HasFocus As Boolean)
+
+	If HasFocus = False Then SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub TextFieldImageSize_TextChanged (Old As String, New As String)
+
+	SaveImage_Validate(TextFieldFontSize.Text, New)
+
+End Sub
+
+Private Sub TextFieldImageSize_FocusChanged (HasFocus As Boolean)
+
+	If HasFocus = False Then SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub RadioButtonShape_SelectedChange(Selected As Boolean)
+
+	SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub RadioButtonSaveAs_SelectedChange(Selected As Boolean)
+
+	SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub ColorPickerText_ValueChanged (Value As Paint)
+
+	SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub ColorPickerBackground_ValueChanged (Value As Paint)
+
+	SaveImage_Validate(TextFieldFontSize.Text, TextFieldImageSize.Text)
+
+End Sub
+
+Private Sub SaveImage_Validate(newFontSize As String, newImageSize As String)
+
+	Dim okBtn As B4XView = dlg.GetButton(xui.DialogResponse_Positive)
+	okBtn.Enabled = False
+
+	LabelShape.TextColor = fx.Colors.Black
+	LabelSaveAs.TextColor = fx.Colors.Black
+	LabelColours.TextColor = fx.Colors.Black
+	LabelImageSize.TextColor = fx.Colors.Black
+
+	If NoRadioButtonSelected(LabelShape, RadioButtonSquare, RadioButtonCircle) Then Return
+	If NoRadioButtonSelected(LabelSaveAs, RadioButtonPng, RadioButtonJpg) Then Return
+
+	If IsUnsignedInteger(newImageSize, False) = False Then
+		LabelImageSize.TextColor = fx.Colors.Red
+		Return
+	Else If newImageSize < 1 Then
+		LabelImageSize.TextColor = fx.Colors.Red
+		Return
+	End If
+
+	If IsUnsignedInteger(newFontSize, False) = False Then
+		LabelFontSize.TextColor = fx.Colors.Red
+		Return
+	Else If newFontSize < 1 Then
+		LabelFontSize.TextColor = fx.Colors.Red
+		Return
+	End If
+
+	SaveImage_Validate_SetLabel(LabelImageFA)
+	SaveImage_Validate_SetLabel(LabelImageMI)
+
+	okBtn.Enabled = True
+
+End Sub
+
+Private Sub SaveImage_Validate_SetLabel(lbl As Label)
+
+	lbl.SetSize(TextFieldImageSize.Text, TextFieldImageSize.Text)
+	CSSUtils.SetBackgroundColor(lbl, ColorPickerBackground.SelectedColor)
+	lbl.TextColor = ColorPickerText.SelectedColor
+	lbl.TextSize = TextFieldFontSize.Text
+
+	If RadioButtonSquare.Selected Then
+		CSSUtils.SetBorder(PaneImage, 1, fx.Colors.Black, 0)
+	Else
+		CSSUtils.SetBorder(PaneImage, 1, fx.Colors.Black, 90)
+	End If
+
+End Sub
+
+Private Sub NoRadioButtonSelected(lbl As Label, rb1 As RadioButton, rb2 As RadioButton) As Boolean
+
+	If (rb1.Selected = False) And (rb2.Selected = False) Then
+		lbl.TextColor = fx.Colors.Red
+		Return True
+	Else
+		Return False
+	End If
+
+End Sub
+
+Public Sub IsUnsignedInteger(s As String, allowNullString As Boolean) As Boolean
+
+	' Regex expression based on http://regexlib.com/Search.aspx?k=integer&AspxAutoDetectCookieSupport=1
+	If allowNullString And (s = "") Then
+		Return True
+	Else
+		Return IsNumber(s) And Regex.IsMatch("^\d+$", s)
+	End If
+
+End Sub
+
+Sub SetTray(fPath As String)
+
+	RemoveTrayIcon
+
+	tray.Initialize
+
+	Dim MenuItemsList As List
+	MenuItemsList.Initialize
+	MenuItemsList.Add("Remove icon")
+
+	icon1.Initialize("icon1", fx.LoadImage(fPath, ""), MenuItemsList)
+	icon1.ToolTip = "AwesomeMaterial - right-click or double-click to remove this from the System Tray."
+	tray.AddTrayIcon(icon1)
+
+End Sub
+
+Sub Icon1_DoubleClick
+
+	RemoveTrayIcon
+
+End Sub
+
+Sub Icon1_MenuClick(Text As String)
+
+	RemoveTrayIcon
+
+End Sub
+
+Sub RemoveTrayIcon
+
+	Try
+		If icon1.IsInitialized Then tray.RemoveTrayIcon(icon1)
+	Catch
+		Log("RemoveTrayIcon: " & LastException)
+	End Try
+
+End Sub
+
+Sub CreateRoundBitmap(Input As B4XBitmap, Size As Int) As B4XBitmap
+
+	' Code based on https://www.b4x.com/android/forum/threads/b4x-xui-create-a-round-image.85102
+	' The line that creates a border is commented.
+
+	If Input.Width <> Input.Height Then
+		'if the image is not square then we crop it to be a square.
+		Dim l As Int = Min(Input.Width, Input.Height)
+		Input = Input.Crop(Input.Width / 2 - l / 2, Input.Height / 2 - l / 2, l, l)
+	End If
+	Dim c As B4XCanvas
+	Dim xview As B4XView = xui.CreatePanel("")
+	xview.SetLayoutAnimated(0, 0, 0, Size, Size)
+	c.Initialize(xview)
+	Dim path As B4XPath
+	path.InitializeOval(c.TargetRect)
+	c.ClipPath(path)
+	c.DrawBitmap(Input.Resize(Size, Size, False), c.TargetRect)
+	c.RemoveClip
+	'c.DrawCircle(c.TargetRect.CenterX, c.TargetRect.CenterY, c.TargetRect.Width / 2 - 2dip, xui.Color_White, False, 5dip) 'comment this line to remove the border
+	c.Invalidate
+	Dim res As B4XBitmap = c.CreateBitmap
+	c.Release
+	Return res
+
+End Sub
+
+Public Sub OpenFileManager(path As String)
+
+	If GetOS = "l" Then
+		Try
+			Dim shl As Shell
+			shl.Initialize("", "nemo", Array As String(path)) ' Note: nemo is the Linux Mint Cinnamon file manager
+			shl.Run(-1)
+		Catch
+			Log("Couldn't run nemo: " & LastException)
+			fx.ShowExternalDocument(path)
+		End Try
+	Else
+		fx.ShowExternalDocument(path)
+	End If
+
+End Sub
+
+' Returns 'w' for Windows, 'm' for Mac, and 'l' for Linux
+Sub GetOS As String
+
+	Dim os As String = GetSystemProperty("os.name", "").ToLowerCase
+	If os.Contains("win") Then
+		Return "w"
+	Else If os.Contains("mac") Then
+		Return "m"
+	Else
+		Return "l"
+	End If
+
+End Sub
+#End Region ' Save Image
