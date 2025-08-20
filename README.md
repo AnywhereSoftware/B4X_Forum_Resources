@@ -1,4 +1,4 @@
-# Repository of tutorials, libraries and code snippets from B4X forum
+# Repository of tutorials, libraries and code snippets from B4X programming forum
 
 
 There are 4 development tools based on the B4X programming language:
