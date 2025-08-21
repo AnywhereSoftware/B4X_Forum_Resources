@@ -1,0 +1,118 @@
+﻿Build1=Default,com.aghajari.zoomhelper
+Group=Default Group
+Library1=core
+Library2=amir_zoomhelper
+Library3=phone
+Library4=amir_glide
+Library5=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~~\n~'Theme~\n~SetApplicationAttribute(android:theme,"@style/AppTheme")~\n~CreateResource(values,styles.xml,~\n~<resources>~\n~    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~      <item name="colorPrimary">#3F51B5</item>~\n~      <item name="colorPrimaryDark">#303F9F</item>~\n~      <item name="colorAccent">#FF4081</item>~\n~	<item name="android:windowTranslucentStatus">true</item>~\n~	<item name="android:windowTranslucentNavigation">true</item>~\n~	<item name="android:windowDrawsSystemBarBackgrounds">true</item>~\n~	<item name="android:statusBarColor">@android:color/transparent</item>~\n~	<item name="windowActionBar">false</item>~\n~	<item name="windowNoTitle">true</item>~\n~	<item name="android:fitsSystemWindows">false</item>~\n~    </style>~\n~    ~\n~    <style name="Theme.AppCompat.Translucent" parent="AppTheme">~\n~        <item name="android:windowNoTitle">true</item>~\n~        <item name="android:windowBackground">@android:color/transparent</item>~\n~        <item name="android:colorBackgroundCacheHint">@null</item>~\n~        <item name="android:windowIsTranslucent">true</item>~\n~        <item name="android:windowAnimationStyle">@android:style/Animation</item>~\n~	   <item name="android:windowContentOverlay">@null</item>~\n~    	   <item name="android:windowIsFloating">false</item>~\n~         <item name="android:backgroundDimEnabled">false</item>~\n~    </style>~\n~</resources>)
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Amir_ZoomHelper
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+	#Extends :  androidx.appcompat.app.AppCompatActivity
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Private ZoomHelper As Amir_ZoomHelper
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	ZoomHelper.FullScreenSupport
+	
+	Dim Header As Panel
+	Header.Initialize("")
+	Activity.AddView(Header,0,0,100%x,56dip+GetStatusBarHeight)
+	Dim Label As Label
+	Label.Initialize("")
+	Header.AddView(Label,8dip,GetStatusBarHeight,100%x-16dip,56dip)
+	Label.TextColor = Colors.White
+	Label.Text = Application.LabelName
+	Label.TextSize = 20
+	Label.Gravity = Bit.Or(Gravity.LEFT,Gravity.CENTER_VERTICAL)
+	Label.Typeface = Typeface.DEFAULT_BOLD
+	Header.Color = 0xFF3F51B5
+	Header.Elevation = 4dip
+	
+	ZoomHelper.Initialize("ZoomHelper",Activity)
+	ZoomHelper.AlphaFactory = 6
+	ZoomHelper.MinScale = 1.0f
+	Dim p As Phone
+	If p.SdkVersion>=21 Then
+		ZoomHelper.DialogThemeName = "Theme.AppCompat.Translucent"
+	End If
+	
+	Dim Image As ImageView
+	Image.Initialize("")
+	Dim Height As Int = 100%x * 350 / 600
+	Activity.AddView(Image,0,50%y-(Height/2),-1,Height)
+	ZoomHelper.SetViewZoomable(Image,True)
+	ZoomHelper.SetDoubleClickListener("ZoomHelperClick",Image,200)
+	
+	Dim Glide As Amir_Glide
+	Glide.Initializer.Default
+	Dim CD As ColorDrawable
+	CD.Initialize(Colors.LightGray,0)
+	Glide.Load("https://picsum.photos/600/350?id="&DateTime.Now) _
+		.Apply(Glide.RO.CenterCrop.Placeholder(CD)).Into(Image)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'enable Amir_ZoomHelper touch
+#if java
+import com.aghajari.zoom.Amir_ZoomHelper;
+import android.view.MotionEvent;
+
+@Override
+public boolean dispatchTouchEvent(MotionEvent ev) {
+    return Amir_ZoomHelper.onDispatchTouchEvent(ev) || super.dispatchTouchEvent(ev);
+}
+#End If
+
+#Region Amir_ZoomHelperEvents
+Private Sub ZoomHelper_onZoomStateChanged (ZoomableView As View,IsZooming As Boolean)
+	Log("onZoomStateChanged | Zooming : "&IsZooming)
+End Sub
+
+Private Sub ZoomHelperClick_DoubleClick
+	ToastMessageShow("ImageView Double Clicked!",False)
+End Sub
+#End Region
+
+#Region SystemUIUtils
+Public Sub GetStatusBarHeight As Float
+	Dim size As Float = 0
+	Dim ac As AppCompat
+	Dim p As Phone
+	If  p.SdkVersion >19 Then
+		size = ac.GetStatusBarHeight
+	End If
+	Return size
+End Sub
+#End Region

@@ -1,0 +1,740 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=jrandomaccessfile
+Module1=AESCipher
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Dim aes As AESCipher
+	Dim salt() As Byte 'this needs to be saved in order to decrypt, you can save this to hex or base64 encoding. remember to convert it back to byte data before decryption
+	
+	
+	Private Button1 As B4XView
+	Private Button2 As Button
+	Private ComboBox1 As ComboBox
+	Private TextArea1 As TextArea
+	Private TextField1 As TextField
+	Private ComboBox2 As ComboBox
+	Private TextField2 As TextField
+	Private TextField3 As TextField
+	Private Button3 As Button
+	Private Button4 As Button
+	Private TextField4 As TextField
+	Private TextField5 As TextField
+	Private Button5 As Button
+	Private ProgressBar1 As ProgressBar
+	Private Button6 As Button
+	Private Button7 As Button
+	Private Button8 As Button
+	Private TextField6 As TextField
+	Private TextField7 As TextField
+	Private CheckBox1 As CheckBox
+	Private CheckBox2 As CheckBox
+	Private TextField8 As TextField
+	Private TextField9 As TextField
+	Private CheckBox3 As CheckBox
+	Private Label6 As Label
+	Private CheckBox4 As CheckBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	'Initialize AESCyper Class
+	aes.Initialize()
+	
+	ComboBox2.Items.AddAll(Array As String("AES-128", "AES-192", "AES-256"))
+	ComboBox2.Value = "AES-128"
+	
+	ComboBox1.Items.AddAll(Array As String (aes.EncodeType.Hex, aes.EncodeType.Base64))
+	ComboBox1.Value = aes.EncodeType.Base64
+	
+End Sub
+
+Sub Button1_Click
+	
+	TextField1.Text = ""
+	Try
+				
+		'Encrypt Plain Text
+		Dim passphrase As String = TextField3.Text
+		salt = aes.GenerateSalt(aes.KeySize.AES_128)  ' 16-byte salt (128-bit)
+		Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+		' Derive AES key
+		Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+		' Encrypt
+		Dim encrypted() As Byte = aes.EncryptByte(aesKey, TextField2.Text.GetBytes("UTF8"))
+
+		If CheckBox2.Checked Then
+			TextArea1.Text = aes.EncryptPlainTextWithSalt(passphrase, salt,aes.KeySize.AES_128, TextField2.Text, ComboBox1.Value)
+		Else
+			'getting encoding
+			If ComboBox1.Value = "Hex" Then
+				TextArea1.Text = aes.BytesToHex(encrypted)
+				'Label6.Text = "Generated Salt: " & aes.BytesToHex(salt)
+			Else
+				TextArea1.Text = aes.BytesToBase64(encrypted)
+				'Label6.Text = "Generated Salt: " & aes.BytesToBase64(salt)
+			End If
+		End If
+		
+		DisplaySalt(salt) 'displays the gnerated salt with encoding
+	
+	Catch
+		Log(LastException)
+	End Try
+
+End Sub
+Private Sub Button2_Click
+	
+	Try
+			
+		'Decrypt Plain Text
+		Dim passphrase As String = TextField3.Text
+		Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+				
+		If CheckBox2.Checked Then
+			TextField1.Text = aes.DecryptPlainTextWithSalt(passphrase,aes.KeySize.AES_128,TextArea1.Text, ComboBox1.Value)
+		Else
+			' Derive AES key
+			Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+			'getting byte data from textArea1
+			Dim encrypted() As Byte
+			If ComboBox1.Value = "Hex" Then
+				encrypted = aes.HexToBytes(TextArea1.Text)
+			Else
+				encrypted = aes.Base64ToBytes(TextArea1.Text)
+			End If
+		
+			' Decrypt
+			Dim d() As Byte = aes.DecryptByte(aesKey, encrypted)
+			TextField1.Text = BytesToString(d, 0, d.Length, "UTF-8")
+		End If
+	
+	Catch
+		Log(LastException)
+	End Try
+	
+	
+End Sub
+Private Sub Button3_Click
+	SaveEncryptedToFile(TextField4.Text, TextArea1.Text)
+End Sub
+Private Sub Button4_Click
+	
+	Dim loaded As String = LoadEncryptedFromFile(TextField4.Text)
+	
+	Try
+	
+		'Decrypt Plain Text
+		Dim passphrase As String = TextField3.Text
+		Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+		' Derive AES key
+		Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+		
+		'getting byte data from textArea1
+		Dim encrypted() As Byte
+		If ComboBox1.Value = "Hex" Then
+			encrypted = aes.HexToBytes(loaded )
+		Else
+			encrypted = aes.Base64ToBytes(loaded)
+		End If
+		
+		' Decrypt
+		Dim d() As Byte = aes.DecryptByte(aesKey, encrypted)
+		TextField5.Text = BytesToString(d, 0, d.Length, "UTF-8")
+	
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+Private Sub Button5_Click
+	
+	Dim L As FileChooser
+	L.Initialize
+	L.InitialDirectory = "C:\"
+	L.InitialFileName = "EncryptedTestFile.enc"
+	Dim loc As String = L.ShowSave(MainForm)
+	
+	If File.Exists(File.GetFileParent(loc), File.GetName(loc)) Then File.Delete(File.GetFileParent(loc), File.GetName(loc))
+	
+	TextField4.Text = File.GetFileParent(loc) & "\" & "EncryptedTestFile.enc"
+	
+End Sub
+Private Sub Button6_Click
+	
+	If CheckBox3.Checked Then 
+		If CheckBox4.Checked Then
+			EncryptFileWithIDNoChunk(TextField6.Text, TextField8.Text)
+		Else
+			EncryptFileWithID(TextField6.Text, TextField8.Text)
+		End If
+		
+	Else
+		If CheckBox1.Checked Then
+			EncryptFilewithSalt(TextField6.Text)
+		Else
+			EncryptFile(TextField6.Text)
+		End If
+	End If
+	
+End Sub
+Private Sub Button7_Click
+	
+	If CheckBox3.Checked Then
+		If CheckBox4.Checked Then
+			DecryptFileWithIDNoChunk(TextField7.Text, salt)
+		Else
+			DecryptFileWithID(TextField7.Text, salt)
+		End If
+	Else
+		If CheckBox1.Checked Then
+			DecryptFilewithSalt(TextField7.Text)
+		Else
+			DecryptFile(TextField7.Text)
+		End If
+	End If
+	
+End Sub
+Private Sub Button8_Click
+	
+	Dim L As FileChooser
+	L.Initialize
+	L.InitialDirectory = "C:\"
+	L.InitialFileName = "EncryptedTestFile.enc"		
+	TextField6.Text = L.ShowOpen(MainForm)
+	TextField7.Text = TextField6.Text & ".enc"
+	
+End Sub
+
+
+Sub RenameFile(Path As String, EncExtension As String) As String
+	' Get the file name without the custom extension
+	Dim fileName As String = File.GetName(Path)
+    
+	If fileName.EndsWith(EncExtension) Then
+		fileName = fileName.SubString2(0, fileName.Length - EncExtension.Length) ' Remove custom extension
+	End If
+    
+	' Extract the file base name and extension
+	Dim baseName As String = fileName.SubString2(0, fileName.LastIndexOf("."))
+	Dim ext As String = fileName.SubString(fileName.LastIndexOf("."))
+    
+	' Construct the new path (same folder, modified filename)
+	Dim newPath As String = File.GetFileParent(Path) & "/" & baseName & ext
+    
+	' Check if the file already exists and create a copy naming pattern
+	Dim copyIndex As Int = 1
+	Do While File.Exists(File.GetFileParent(newPath), File .GetName(newPath))
+		If copyIndex = 1 Then
+			newPath = File.GetFileParent(Path) & "/" & baseName & " - Copy" & ext
+		Else
+			newPath = File.GetFileParent(Path) & "/" & baseName & " - Copy (" & copyIndex & ")" & ext
+		End If
+		copyIndex = copyIndex + 1
+	Loop
+    
+	' Return the new path
+	Return newPath
+End Sub
+Sub GetKeySize (KeySize As String) As Int
+	
+	Dim Key As Int = 0
+	Select KeySize
+		Case "AES-128" 
+			Key =  aes.KeySize.AES_128 '16 byites
+		Case "AES-192"
+			Key =  aes.KeySize.AES_192 '24 bytes
+		Case "AES-256"
+			Key =  aes.KeySize.AES_256 '32 bytes
+	End Select
+	
+	Return Key
+End Sub
+Sub DisplaySalt(saltvalue() As Byte)
+	
+	If ComboBox1.Value = "Hex" Then
+		Label6.Text = "Generated Salt: " & aes.BytesToHex(saltvalue)
+	Else
+		Label6.Text = "Generated Salt: " & aes.BytesToBase64(saltvalue)
+	End If
+End Sub
+
+'example for encrypting plaintext or string data.
+Sub SaveEncryptedToFile(filePath As String, encryptedText As String)
+	Log(filePath)
+	File.WriteString(File.GetFileParent(filePath),File.GetName(filePath), encryptedText)
+End Sub
+Sub LoadEncryptedFromFile(filePath As String) As String
+	Return File.ReadString(File.GetFileParent(filePath),File.GetName(filePath))
+End Sub
+
+'example for encrypint files.
+Sub EncryptFile (Path As String)
+	Dim size As Long = File.Size(Path, "")
+	Dim rafInput, rafOutput As RandomAccessFile
+	rafInput.Initialize(Path, "", True)
+	rafOutput.Initialize(Path & ".enc", "", False)
+	
+	'Encrypt Plain Text
+	Dim passphrase As String = TextField3.Text
+	salt = aes.GenerateSalt(aes.KeySize.AES_128)  ' 16-byte salt (128-bit)
+	Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+	' Derive AES key
+	Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+	
+	DisplaySalt(salt) 'displays the gnerated salt with encoding
+	
+	Dim buffer(2024 * 1024) As Byte
+	Do While rafInput.CurrentPosition < size
+		Dim count As Int = rafInput.ReadBytes(buffer, 0, Min(buffer.Length, size - rafInput.CurrentPosition), rafInput.CurrentPosition)
+		Dim b() As Byte
+		If count = buffer.Length Then
+			b = buffer
+		Else
+			Dim b(count) As Byte
+			Bit.ArrayCopy(buffer, 0, b, 0, count)
+		End If
+		Dim bb() As Byte = aes.EncryptByte(aesKey, b)
+		rafOutput.WriteInt(bb.Length, rafOutput.CurrentPosition)
+		rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+		ProgressBar1.Progress = rafInput.CurrentPosition / size
+		Sleep(30)
+	Loop
+	rafInput.Close
+	rafOutput.Close
+	fx.Msgbox(MainForm, "Done!", "")
+End Sub
+Sub DecryptFile (Path As String)
+	Dim size As Long = File.Size(Path, "")
+	Dim rafInput, rafOutput As RandomAccessFile
+	rafInput.Initialize(Path, "", True)
+	'rafOutput.Initialize(Path & ".decrypted", "", False)
+	rafOutput.Initialize(RenameFile(Path, ".enc"), "", False)
+	Dim b() As Byte
+	
+	'Decrypt Plain Text
+	Dim passphrase As String = TextField3.Text
+	Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+	' Derive AES key
+	Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+	
+	Do While rafInput.CurrentPosition < size
+		Dim blockLength As Int = rafInput.ReadInt(rafInput.CurrentPosition)
+		If b.Length <> blockLength Then
+			Dim b(blockLength) As Byte
+		End If
+		rafInput.ReadBytes(b, 0, b.Length, rafInput.CurrentPosition)
+		Dim bb() As Byte = aes.DecryptByte(aesKey, b)
+		rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+		ProgressBar1.Progress = rafInput.CurrentPosition / size
+		Sleep(30)
+	Loop
+	rafInput.Close
+	rafOutput.Close
+	fx.Msgbox(MainForm, "Done!", "")
+End Sub
+
+'example for adding salt to the file so you don't have to save it anyplace.
+Sub EncryptFilewithSalt(Path As String)
+    Dim size As Long = File.Size(Path, "")
+    Dim rafInput, rafOutput As RandomAccessFile
+    rafInput.Initialize(Path, "", True)
+    rafOutput.Initialize(Path & ".enc", "", False)
+    
+    ' Generate the salt
+    'Dim salt(16) As Byte
+	salt = aes.GenerateSalt(aes.KeySize.AES_128) ' You can use a 16-byte salt for AES-128 encryption
+	
+	DisplaySalt(salt) 'displays the gnerated salt with encoding
+    
+    ' Write the salt at the beginning of the encrypted file
+    rafOutput.WriteBytes(salt, 0, salt.Length, rafOutput.CurrentPosition)
+    
+    ' Generate the AES key using the salt
+    Dim passphrase As String = TextField3.Text
+    Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+    Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)
+    
+    Dim buffer(2024 * 1024) As Byte
+    Do While rafInput.CurrentPosition < size
+        Dim count As Int = rafInput.ReadBytes(buffer, 0, Min(buffer.Length, size - rafInput.CurrentPosition), rafInput.CurrentPosition)
+        Dim b() As Byte
+        If count = buffer.Length Then
+            b = buffer
+        Else
+            Dim b(count) As Byte
+            Bit.ArrayCopy(buffer, 0, b, 0, count)
+        End If
+        
+        ' Encrypt the actual data block
+        Dim bb() As Byte = aes.EncryptByte(aesKey, b)
+        
+        ' Write the encrypted data
+        rafOutput.WriteInt(bb.Length, rafOutput.CurrentPosition)
+        rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+        
+        ProgressBar1.Progress = rafInput.CurrentPosition / size
+        Sleep(30)
+    Loop
+    
+    rafInput.Close
+    rafOutput.Close
+	fx.Msgbox(MainForm, "Done!", "")
+End Sub
+Sub DecryptFilewithSalt(Path As String)
+    Dim size As Long = File.Size(Path, "")
+    Dim rafInput, rafOutput As RandomAccessFile
+    rafInput.Initialize(Path, "", True)
+	rafOutput.Initialize(RenameFile(Path, ".enc"), "", False)
+    
+    ' Read the salt from the encrypted file (first 16 bytes)
+    Dim Extractedsalt(16) As Byte
+	rafInput.ReadBytes(Extractedsalt, 0, Extractedsalt.Length, rafInput.CurrentPosition)
+    
+    ' Derive the AES key using the salt
+    Dim passphrase As String = TextField3.Text
+    Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+	Dim aesKey() As Byte = aes.DeriveKey(passphrase, Extractedsalt, keyLength)
+    
+    ' Decrypt the data blocks
+    Dim b() As Byte
+    Do While rafInput.CurrentPosition < size
+        Dim blockLength As Int = rafInput.ReadInt(rafInput.CurrentPosition)
+        If b.Length <> blockLength Then
+			Dim b(blockLength) As Byte
+        End If
+        
+        rafInput.ReadBytes(b, 0, b.Length, rafInput.CurrentPosition)
+        
+        ' Decrypt the block
+        Dim bb() As Byte = aes.DecryptByte(aesKey, b)
+        
+        ' Write the decrypted data
+        rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+        
+        ProgressBar1.Progress = rafInput.CurrentPosition / size
+        Sleep(30)
+    Loop
+    
+    rafInput.Close
+	rafOutput.Close
+	fx.Msgbox(MainForm, "Done!", "")
+End Sub
+
+'example showing how to add id to encrypted file and retrieving it.
+Sub EncryptFileWithID(Path As String, id As String)
+	Dim size As Long = File.Size(Path, "")
+	Dim rafInput, rafOutput As RandomAccessFile
+	rafInput.Initialize(Path, "", True)
+	rafOutput.Initialize(Path & ".enc", "", False) ' Save the encrypted file as .enc
+
+	' Step 1: Write the length of the ID (4-byte integer)
+	Dim idLength As Int = id.Length
+	rafOutput.WriteInt(idLength, rafOutput.CurrentPosition) ' Write the length of the ID
+	Log("Encrypted ID length: " & idLength)
+    
+	' Step 2: Write the ID bytes to the file
+	' Convert the ID string to bytes using UTF-8 encoding
+	Dim idBytes() As Byte = id.GetBytes("UTF-8")  ' This handles all characters, including non-ASCII
+    
+	rafOutput.WriteBytes(idBytes, 0, idBytes.Length, rafOutput.CurrentPosition)
+	rafOutput.CurrentPosition = rafOutput.CurrentPosition + idBytes.Length  ' Update position
+
+	' Step 3: Generate the salt
+	Dim salt() As Byte = aes.GenerateSalt(aes.KeySize.AES_128) ' You can use a 16-byte salt for AES-128 encryption
+	
+	DisplaySalt(salt) 'displays the gnerated salt with encoding
+    
+	' Step 4: Derive the AES key using the provided salt
+	Dim passphrase As String = TextField3.Text
+	Dim keyLength As Int = GetKeySize(ComboBox2.Value)  ' Get the key size (e.g., 128, 192, or 256 bits)
+	Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)  ' Use provided salt
+    
+	' Step 5: Encrypt the file data block by block
+	Dim buffer(2024 * 1024) As Byte
+	Do While rafInput.CurrentPosition < size
+		Dim count As Int = rafInput.ReadBytes(buffer, 0, Min(buffer.Length, size - rafInput.CurrentPosition), rafInput.CurrentPosition)
+		Dim b() As Byte
+		If count = buffer.Length Then
+			b = buffer
+		Else
+			Dim b(count) As Byte
+			Bit.ArrayCopy(buffer, 0, b, 0, count)
+		End If
+        
+		' Step 6: Encrypt the actual data block
+		Dim bb() As Byte = aes.EncryptByte(aesKey, b)
+        
+		' Step 7: Write the encrypted data to the output file
+		rafOutput.WriteInt(bb.Length, rafOutput.CurrentPosition)  ' Write the length of the encrypted data
+		rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+        
+		rafOutput.CurrentPosition = rafOutput.CurrentPosition + bb.Length  ' Update position
+        
+		ProgressBar1.Progress = rafInput.CurrentPosition / size
+		Sleep(30)
+	Loop
+    
+	rafInput.Close
+	rafOutput.Close
+	fx.Msgbox(MainForm, "Encryption Done!", "")
+End Sub
+Sub DecryptFileWithID(Path As String, saltValue() As Byte)
+	Try
+		' Initialize file size and access files
+		Dim size As Long = File.Size(Path, "")
+		Dim rafInput, rafOutput As RandomAccessFile
+		rafInput.Initialize(Path, "", True)
+		rafOutput.Initialize(RenameFile(Path, ".enc"), "", False) ' Save the decrypted file as .dec
+
+		' Step 1: Read the ID length (4-byte integer) from the beginning of the file
+		Dim idLength As Int = rafInput.ReadInt(rafInput.CurrentPosition)  ' Read the length of the ID
+		Log("Extracted ID length: " & idLength)
+
+		' Move the pointer past the 4-byte ID length (which we just read)
+		rafInput.CurrentPosition = rafInput.CurrentPosition
+
+		' Step 2: Read the ID bytes based on the ID length
+		If idLength > 0 Then
+			' Read the ID as bytes, adjusting the array size correctly
+			Dim idBytes(idLength) As Byte ' Correct array size to match the ID length
+			rafInput.ReadBytes(idBytes, 0, idBytes.Length, rafInput.CurrentPosition)
+            
+			' Move the pointer past the ID bytes
+			rafInput.CurrentPosition = rafInput.CurrentPosition + idBytes.Length  ' Move the pointer after the ID
+            
+			' Step 3: Convert the ID bytes back to a string (use UTF-8 encoding)
+			Dim extractedID As String = BytesToString(idBytes, 0, idBytes.Length, "UTF-8")
+            
+			' Log or display the extracted ID (optional)
+			Log("Extracted ID: " & extractedID)
+			TextField9.Text = extractedID
+		Else
+			Log("Error: Invalid ID length")
+			Return
+		End If
+
+		' Step 4: Derive the AES key using the provided salt
+		Dim passphrase As String = TextField3.Text
+		Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+        
+		' Debugging log before deriving key
+		Log("Deriving AES key with passphrase and salt...")
+        
+		Dim aesKey() As Byte = aes.DeriveKey(passphrase, saltValue, keyLength)  ' Use provided salt
+
+		' Log the derived key length for debugging
+		Log("AES key length: " & aesKey.Length)
+        
+		' Step 5: Decrypt the data blocks
+		Dim b() As Byte
+		Do While rafInput.CurrentPosition < size
+			' Read the length of the next block (which was written during encryption)
+			Dim blockLength As Int = rafInput.ReadInt(rafInput.CurrentPosition)
+            
+			' Ensure the byte array has the correct length to hold the block
+			If blockLength > 0 Then
+				Dim b(blockLength) As Byte
+				rafInput.ReadBytes(b, 0, b.Length, rafInput.CurrentPosition)
+				rafInput.CurrentPosition = rafInput.CurrentPosition + b.Length  ' Move the pointer after the block
+
+				' Step 6: Decrypt the block
+				Dim bb() As Byte = aes.DecryptByte(aesKey, b)
+                
+				' Write the decrypted block to the output file
+				rafOutput.WriteBytes(bb, 0, bb.Length, rafOutput.CurrentPosition)
+			Else
+				Log("Error: Invalid block length - " & blockLength)
+				Exit
+			End If
+
+			ProgressBar1.Progress = rafInput.CurrentPosition / size
+			Sleep(30)
+		Loop
+        
+		rafInput.Close
+		rafOutput.Close
+		fx.Msgbox(MainForm, "Decryption Done!", "")
+        
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+'example showing how to encrypt in non-chucnk or in memory adding ID and removing ID
+Sub EncryptFileWithIDNoChunk(Path As String, id As String)
+	Dim rafInput As RandomAccessFile
+	rafInput.Initialize(Path, "", True)
+	Dim rafOutput As RandomAccessFile
+	rafOutput.Initialize(Path & ".enc", "", False) ' Save the encrypted file as .enc
+    
+	' Step 1: Write the length of the ID (4-byte integer)
+	Dim idLength As Int = id.Length
+	rafOutput.WriteInt(idLength, rafOutput.CurrentPosition) ' Write the length of the ID
+	Log("Encrypted ID length: " & idLength)
+    
+	' Step 2: Write the ID bytes to the file
+	' Convert the ID string to bytes using UTF-8 encoding
+	Dim idBytes() As Byte = id.GetBytes("UTF-8")  ' This handles all characters, including non-ASCII
+	rafOutput.WriteBytes(idBytes, 0, idBytes.Length, rafOutput.CurrentPosition)
+	rafOutput.CurrentPosition = rafOutput.CurrentPosition + idBytes.Length  ' Update position
+    
+	' Step 3: Open the file as an InputStream
+	Dim inputStream As InputStream
+	inputStream = File.OpenInput(File.GetFileParent(Path), File.GetName(Path)) ' Open the input file as an InputStream
+    
+	' Step 4: Encrypt the file data in one go
+	Dim inputBytes() As Byte = Bit.InputStreamToBytes(inputStream) ' Read all bytes from the input file
+
+	' Step 5: Encrypt the file data (this part remains the same)
+	Dim aes As AESCipher
+	aes.Initialize
+'	' Generate salt
+	Dim salt() As Byte = aes.GenerateSalt(aes.KeySize.AES_128) ' You can use a 16-byte salt for AES-128
+    
+	' Display salt for debugging (optional)
+	DisplaySalt(salt)
+    
+	' Derive AES key
+	Dim passphrase As String = TextField3.Text
+	Dim keyLength As Int = GetKeySize(ComboBox2.Value)  ' Get the key size (e.g., 128, 192, or 256 bits)
+	Dim aesKey() As Byte = aes.DeriveKey(passphrase, salt, keyLength)  ' Use the salt to derive the key
+    
+	' Step 6: Encrypt the file data
+	Dim encryptedData() As Byte = aes.EncryptByte(aesKey, inputBytes)
+    
+'	' Step 7: Write the salt (16 bytes) to the output file
+'	rafOutput.WriteBytes(salt, 0, salt.Length, rafOutput.CurrentPosition)
+'	rafOutput.CurrentPosition = rafOutput.CurrentPosition + salt.Length  ' Update position
+
+	' Step 8: Write the encrypted data to the output file
+	rafOutput.WriteBytes(encryptedData, 0, encryptedData.Length, rafOutput.CurrentPosition)
+    
+	rafInput.Close
+	rafOutput.Close
+    
+	fx.Msgbox(MainForm, "Encryption Done!", "")
+End Sub
+Sub DecryptFileWithIDNoChunk(Path As String, saltValue() As Byte)
+	Try
+		' Initialize file size and access files
+		Dim size As Long = File.Size(Path, "")
+		Dim rafInput, rafOutput As RandomAccessFile
+		rafInput.Initialize(Path, "", True)
+		rafOutput.Initialize(RenameFile(Path, ".enc"), "", False) ' Save decrypted file as .dec
+
+		' Step 1: Read the ID length (4-byte integer) from the beginning of the file
+		Dim idLength As Int = rafInput.ReadInt(rafInput.CurrentPosition)  ' Read the length of the ID
+		Log("Extracted ID length: " & idLength)
+
+		' Move the pointer past the 4-byte ID length (which we just read)
+		rafInput.CurrentPosition = rafInput.CurrentPosition
+
+		' Step 2: Read the ID bytes based on the ID length
+		If idLength > 0 Then
+			' Read the ID as bytes, adjusting the array size correctly
+			Dim idBytes(idLength) As Byte ' Correct array size to match the ID length
+			rafInput.ReadBytes(idBytes, 0, idBytes.Length, rafInput.CurrentPosition)
+            
+			' Move the pointer past the ID bytes
+			rafInput.CurrentPosition = rafInput.CurrentPosition + idBytes.Length  ' Move the pointer after the ID
+            
+			' Step 3: Convert the ID bytes back to a string (use UTF-8 encoding)
+			Dim extractedID As String = BytesToString(idBytes, 0, idBytes.Length, "UTF-8")
+            
+			' Log or display the extracted ID (optional)
+			Log("Extracted ID: " & extractedID)
+			TextField9.Text = extractedID
+		Else
+			Log("Error: Invalid ID length")
+			Return
+		End If
+
+		' Step 4: Derive the AES key using the provided salt
+		Dim passphrase As String = TextField3.Text
+		Dim keyLength As Int = GetKeySize(ComboBox2.Value)
+        
+		' Debugging log before deriving key
+		Log("Deriving AES key with passphrase and salt...")
+        
+		Dim aesKey() As Byte = aes.DeriveKey(passphrase, saltValue, keyLength)  ' Use provided salt
+
+		' Log the derived key length for debugging
+		Log("AES key length: " & aesKey.Length)
+
+'		' Step 5: Read the IV (assuming it's stored at the beginning of the file)
+'		Dim iv(16) As Byte  ' AES block size is 16 bytes
+'		rafInput.ReadBytes(iv, 0, iv.Length, rafInput.CurrentPosition)
+'		rafInput.CurrentPosition = rafInput.CurrentPosition + iv.Length  ' Move pointer past IV
+        
+		' Step 6: Read the entire encrypted file into memory
+		Dim encryptedData(size - rafInput.CurrentPosition) As Byte
+		rafInput.ReadBytes(encryptedData, 0, encryptedData.Length, rafInput.CurrentPosition)
+
+		' Step 7: Decrypt the entire file in memory
+		Dim decryptedData() As Byte
+		decryptedData = aes.DecryptByte(aesKey, encryptedData)  ' Decrypt with IV
+
+		' Step 8: Write the decrypted data to the output file
+		rafOutput.WriteBytes(decryptedData, 0, decryptedData.Length, rafOutput.CurrentPosition)
+
+		' Step 9: Close the files
+		rafInput.Close
+		rafOutput.Close
+
+		fx.Msgbox(MainForm, "Decryption Done!", "")
+
+	Catch
+		Log(LastException)
+	End Try
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

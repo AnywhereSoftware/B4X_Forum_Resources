@@ -1,0 +1,114 @@
+﻿Build1=Default,com.simplysoftware.basicxclvll
+File1=ItemInfo.bil
+File2=MainCLV.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=xcustomlistview
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Type TestData (LabelNum As Int, LabelText As String) 'Create your own custom type
+	
+	Private XUI As XUI
+		
+	Private CLVList As CustomListView 	'Layout View
+	Private LblNum, LblText As B4XView	'Layout View
+	Private BtnPress As B4XView			'Layout View
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")	
+	Page1.RootPanel.LoadLayout("MainCLV") 'Load the base/main layout file
+	Page1.Title = "Basic xCLV with LL layout" 'Page title
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+
+	BuildListItems 'Build and populate the xCLV (the list)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+End Sub
+
+Private Sub Application_Background
+End Sub
+
+'LETS BUILD AND POPULATE THE XCUSTOMLISTVIEW ITEMS
+Sub BuildListItems
+	For i = 0 To 999
+		Dim TD As TestData 'Declare your new custom type (Line 23 above)
+		TD.Initialize 'Initialize your custom type
+		TD.LabelNum = i 'Set the value of i into the LabelNun custom type field
+		TD.LabelText = $"Line ${i} this is a test "$ 'Set the value of this entire line into the LabelText custom type field
+
+		Dim Pnl As B4XView = XUI.CreatePanel(Null) 'Create a new B4X View
+		Pnl.Color = XUI.Color_White 'Set the background color to white
+		Pnl.SetLayoutAnimated(0dip, 0dip, 0dip, CLVList.AsView.Width, 50dip) 'Set the list positiion and dimensions
+
+		CLVList.Add(Pnl, TD)
+	Next
+End Sub
+
+'POPULATE THE XCUSTOMLISTVIEW WITH THE BUILT ITEMS CREATED IN THE SUB ABOVE
+Sub CLVList_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	Dim ExtraSize As Int = 25 'Add 25 items at a time, this can be changed to suite your requirements
+	For i = Max(0, FirstIndex - ExtraSize) To Min(LastIndex + ExtraSize, CLVList.Size - 1) 'Loop for adding/removing your items layout to or from the list
+		Dim Pnl As B4XView = CLVList.GetPanel(i) 'Declare a new B4XView
+		If i > FirstIndex - ExtraSize And i < LastIndex + ExtraSize Then 'Add a new item to the list
+			If Pnl.NumberOfViews = 0 Then 'Add items to the list
+				Dim TD As TestData = CLVList.GetValue(i) 'Get your custom Type
+				Pnl.LoadLayout("ItemInfo") 'Load your
+				LblNum.Text = TD.LabelNum 'Self-explanatory
+				LblText.Text = TD.LabelText 'Self-explanatory
+			End If
+		Else 'Remove items from the list
+			If Pnl.NumberOfViews > 0 Then
+				Pnl.RemoveAllViews 'Remove none visible item from the main xCLV layout
+			End If
+		End If
+	Next
+End Sub
+
+'A LABEL ON THE LIST HAS BEEN CLICKED
+Sub CLVList_ItemClick (Index As Int, Value As Object)
+	Dim xCLVItem As B4XView = CLVList.GetPanel(Index).GetView(1) '2nd view in the layout index which is LblText
+	Log(xCLVItem.Text) 'Print the label text in the logs
+End Sub
+
+'A BUTTON ON THE LIST HAS BEEN CLICKED
+Sub BtnPress_Click
+	Dim xCLVIndex As Int = CLVList.GetItemFromView(Sender) 'Get the row index by using the sender filter
+	Dim xCLVItem As B4XView = CLVList.GetPanel(xCLVIndex) 'Get the Item layout for the selected Row
+	Dim LblNum As B4XView = xCLVItem.GetView(0) '1st view in the layout index which is LblNum
+	Dim LblText As B4XView = xCLVItem.GetView(1) '2nd view in the layout index which is LblText
+	
+	LblNum.TextColor = XUI.Color_Blue 'Change the font color to blue
+	LblNum.Text = Chr(0xF118) 'Put an icon in the label (a smiley)
+	LblText.TextColor = XUI.Color_Red 'Change the font color to red
+	LblText.Text = "It worked" 'Put new text in the label
+End Sub

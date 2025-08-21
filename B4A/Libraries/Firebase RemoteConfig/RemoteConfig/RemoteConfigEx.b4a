@@ -1,0 +1,81 @@
+﻿Build1=Default,b4a.donmanfred.GCM
+Group=Default Group
+IconFile=
+Library1=core
+Library2=firebaseremoteconfig
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="23"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~'************ Google Play Services Base ************~\n~AddApplicationText(~\n~   <activity android:name="com.google.android.gms.common.api.GoogleApiActivity"~\n~  android:theme="@android:style/Theme.Translucent.NoTitleBar"~\n~  android:exported="false"/>~\n~    <meta-data~\n~  android:name="com.google.android.gms.version"~\n~  android:value="@integer/google_play_services_version" />~\n~)~\n~'************ Google Play Services Base (end) ************~\n~~\n~~\n~'************ Firebase Base ************~\n~CreateResourceFromFile("google-services", "google-services.json")~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.WAKE_LOCK)~\n~AddPermission(com.google.android.c2dm.permission.RECEIVE)~\n~AddPermission(${applicationId}.permission.C2D_MESSAGE)~\n~AddManifestText( <permission android:name="${applicationId}.permission.C2D_MESSAGE"~\n~  android:protectionLevel="signature" />)~\n~AddApplicationText(~\n~<receiver~\n~  android:name="com.google.android.gms.measurement.AppMeasurementReceiver"~\n~  android:enabled="true">~\n~  <intent-filter>~\n~  <action android:name="com.google.android.gms.measurement.UPLOAD"/>~\n~  </intent-filter>~\n~  </receiver>~\n~~\n~  <service~\n~  android:name="com.google.android.gms.measurement.AppMeasurementService"~\n~  android:enabled="true"~\n~  android:exported="false"/> ~\n~   <provider~\n~  android:authorities="${applicationId}.firebaseinitprovider"~\n~  android:name="com.google.firebase.provider.FirebaseInitProvider"~\n~  android:exported="false"~\n~  android:initOrder="100" />~\n~    <receiver~\n~  android:name="com.google.android.gms.measurement.AppMeasurementReceiver"~\n~  android:enabled="true">~\n~  <intent-filter>~\n~  <action android:name="com.google.android.gms.measurement.UPLOAD"/>~\n~  </intent-filter>~\n~  </receiver>~\n~~\n~  <service~\n~  android:name="com.google.android.gms.measurement.AppMeasurementService"~\n~  android:enabled="true"~\n~  android:exported="false"/>~\n~   <receiver~\n~  android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"~\n~  android:exported="true"~\n~  android:permission="com.google.android.c2dm.permission.SEND" >~\n~  <intent-filter>~\n~  <action android:name="com.google.android.c2dm.intent.RECEIVE" />~\n~  <action android:name="com.google.android.c2dm.intent.REGISTRATION" />~\n~  <category android:name="${applicationId}" />~\n~  </intent-filter>~\n~  </receiver>~\n~    <receiver~\n~  android:name="com.google.firebase.iid.FirebaseInstanceIdInternalReceiver"~\n~  android:exported="false" />~\n~~\n~ ~\n~  <service~\n~  android:name="com.google.firebase.iid.FirebaseInstanceIdService"~\n~  android:exported="true">~\n~  <intent-filter android:priority="-500">~\n~  <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />~\n~  </intent-filter>~\n~  </service>~\n~)~\n~'************ Firebase Base (end) ************~\n~~\n~
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: com.google.firebase:firebase-core
+#AdditionalJar: com.google.firebase:firebase-config
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim cfg As FirebaseRemoteConfig
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	cfg.Initialize("Config")	
+	Dim setting As ConfigSettingsBuilder
+	setting.Initialize.setDeveloperModeEnabled(True)
+	cfg.ConfigSettings = setting.build
+	cfg.Defaults = CreateMap("promo_code": "", "loading_phrase": "Hallo world!")
+	cfg.Defaults3 = cfg.VALUE_SOURCE_REMOTE
+	Log("loading_phrase="&cfg.getString("loading_phrase"))
+	Log("promo_code="&cfg.getString("promo_code"))
+	Log("Fetching")
+	Dim cacheTime = (DateTime.TicksPerMinute*5)/1000
+	cfg.fetch2(cacheTime)
+	
+End Sub
+
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub Config_onFetchComplete(success As Boolean)
+	Log($"Config_onFetchComplete(${success})"$)
+	If success Then
+		Log("Activate fetched values")
+		cfg.activateFetched
+		Log("loading_phrase="&cfg.getString("loading_phrase"))
+		
+		Dim info As RemoteConfigValue = cfg.getValue("loading_phrase")
+		Log($"Loading phrase info: Source ${info.Source}, ${info.asString}"$)
+
+		Dim info As RemoteConfigValue = cfg.getValue("promo_code")
+		Log($"Promocode info: Source ${info.Source}, ${info.asString}"$)
+
+	End If
+	
+End Sub

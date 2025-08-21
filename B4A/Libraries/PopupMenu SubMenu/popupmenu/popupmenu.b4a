@@ -1,0 +1,111 @@
+﻿Build1=Default,b4a.example
+File1=clspopupmenu.bal
+File2=main.bal
+File3=popupmenu1.json
+File4=popupmenu2.json
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+Library4=json
+Library5=byteconverter
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=clsPopupMenu
+Module2=Starter
+NumberOfFiles=4
+NumberOfLibraries=5
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private fPopupMenu As clsPopupMenu
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("main")
+	'initialize popupmenu for this activity
+	fPopupMenu.Initialize(Activity,Me,"popupmenu")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub fButtonPopupMenu1_Click
+	Dim jp As JSONParser
+	jp.Initialize(File.ReadString(File.DirAssets,"popupmenu1.json"))
+	fPopupMenu.open("menu1",jp.NextObject)
+End Sub
+
+Sub fButtonPopupMenu2_Click
+	Dim jp As JSONParser
+	jp.Initialize(File.ReadString(File.DirAssets,"popupmenu2.json"))
+	fPopupMenu.open("menu2",jp.NextObject)
+End Sub
+
+Sub popupmenu_open(amenu As String)
+	Log("popupmenu1 open : " & amenu)
+End Sub
+
+Sub popupmenu_close(amenu As String)
+	Log("popupmenu1 close : " & amenu)
+End Sub
+
+Sub popupmenu_click(amenu As String,avalue As String)
+	Select Case amenu
+		Case "menu1"
+			ToastMessageShow(amenu & " : " & avalue,True)
+		Case "menu2"
+			Activity.Color=HexToColor(avalue)
+	End Select
+End Sub
+
+Sub activity_keypress(akeycode As Int) As Boolean
+	'if back and popupmenu is open, close popupmenu and consume event
+	If akeycode=KeyCodes.KEYCODE_BACK Then
+		If fPopupMenu.isOpen Then
+			fPopupMenu.close
+			Return True
+		End If
+	End If
+	Return False
+End Sub
+
+'https://www.b4x.com/android/forum/threads/b4x-hextocolor-and-colortohex.114300/
+Private Sub HexToColor(avalue As String) As Int
+	Dim bc As ByteConverter
+	Dim ints() As Int = bc.IntsFromBytes(bc.HexToBytes(avalue))
+	Return ints(0)
+End Sub
+

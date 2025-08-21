@@ -1,0 +1,128 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jrandomaccessfile
+Library4=jstringutils
+Library5=json
+Library6=byteconverter
+Module1=BalConverter
+Module2=JsonConverter
+Module3=DesignerScript
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=3
+Version=7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 200 
+#End Region
+
+' This project is an enhancement of Erel's BalConverter project
+' The original layout using SceneDesigner has been replaced by a Bjl layout with rbJsonToIde TadioButtonadded
+' The original code below code has some additions which are surrounded by added ... /added comments
+' The JsonConverter module contains the new functionality to produce a BasicIDE template from a Bal.Json file
+
+Sub Process_Globals
+	Private fx As JFX
+	Public MainForm As Form
+	Private converter As BalConverter
+	Private rbBalToJson As RadioButton
+	Private rbJsonToBal As RadioButton
+	Private txtFolder As TextField
+	Private btnBrowse As Button
+	Private btnConvert As Button
+	Private settingsFile As String = "settings.txt"
+	Private lblMode As Label
+	' added
+	Private rbJsonToB4S As RadioButton
+	Private jconverter As JsonConverter
+	
+	' Version history
+	' 1.0	First version	
+	Dim Version As Double = 1.0		
+	' /added
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Show
+	MainForm.Title = "BALToBasicIDE - v" & NumberFormat2(Version, 1, 2, 2, False)
+	converter.Initialize(False)
+	' added
+	jconverter.Initialize
+	' /added
+	If File.Exists(File.DirApp, settingsFile) Then
+		Dim m As Map = File.ReadMap(File.DirApp, settingsFile)
+		txtFolder.Text = m.Get("folder")
+	End If
+End Sub
+
+Sub MainForm_Closed
+	File.WriteMap(File.DirApp, settingsFile, CreateMap("folder": txtFolder.Text))
+End Sub
+
+Sub btnConvert_Action
+	If txtFolder.Text.Length = 0 Then
+		btnBrowse_Action
+		If txtFolder.Text.Length = 0 Then Return
+	End If
+	If File.Exists(txtFolder.Text, "") = False Then
+		fx.Msgbox(MainForm, "Folder does not exist", "")
+		Return
+	End If
+	' added block comment
+'	If rbJsonToBal.Selected = False And rbBalToJson.Selected = False Then
+'		fx.Msgbox(MainForm, "Please select conversion mode.", "")
+'		Return
+'	End If
+	' /added
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("The following files were converted: ").Append(CRLF)
+	If rbBalToJson.Selected Then
+		For Each f As String In File.ListFiles(txtFolder.Text)
+			If f.ToLowerCase.EndsWith(".bal") Or f.ToLowerCase.EndsWith(".bjl") Then
+				If converter.ConvertBalToJson(txtFolder.Text, f) Then
+					sb.Append(f).Append(CRLF)
+				End If
+			End If
+		Next
+	' added
+	else If rbJsonToB4S.Selected Then
+		For Each f As String In File.ListFiles(txtFolder.Text)
+			If f.ToLowerCase.EndsWith(".bal.json") Or f.ToLowerCase.EndsWith(".bjl.json")  Then
+				If jconverter.ConvertJsonToB4S(txtFolder.Text, f) Then
+					sb.Append(f).Append(CRLF)
+				End If
+			End If
+		Next
+	' /added
+	Else
+		For Each f As String In File.ListFiles(txtFolder.Text)
+			If f.ToLowerCase.EndsWith(".bal.json") Then
+				converter.ConvertJsonToBal(txtFolder.Text, f)
+				sb.Append(f).Append(CRLF)
+			End If
+		Next
+	End If
+	fx.Msgbox(MainForm, sb.ToString, "")
+End Sub
+
+
+Sub btnBrowse_Action
+	Dim dc As DirectoryChooser	
+	dc.Initialize
+	dc.Title = "Select Folder"
+	Dim selected As String = dc.Show(MainForm)
+	If selected.Length > 0 Then txtFolder.Text = selected
+End Sub
+
+
+

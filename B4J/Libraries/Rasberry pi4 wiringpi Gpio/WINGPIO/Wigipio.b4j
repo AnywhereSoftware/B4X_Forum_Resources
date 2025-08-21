@@ -1,0 +1,63 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=wirigpio
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Dim wingpio As wiripgpio
+End Sub
+
+Sub AppStart (Args() As String)
+	
+'	Dim gip As Int = wingpio.wiringPiSetup
+	wingpio.Initialize("pinstate")
+	If wingpio.wiringPiSetup < 0 Then
+		Log("Errato")
+		Else
+			Log("Fatto")
+	End If
+	
+	led
+	StartMessageLoop
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Public Sub pinstate_callback(pin As Boolean)
+	Log (pin)
+End Sub
+
+Public Sub pinstate_callpinstate(pinstate As Int)
+	Log (pinstate)
+End Sub
+
+Private Sub led
+	wingpio.pinMode(0,wingpio.OUTPUT)
+	
+	Do While True
+		wingpio.digitalWriteTrue(0,False)
+		Sleep(1000)
+		wingpio.digitalWriteTrue(0,True)
+		Sleep(1000)
+		
+' si puo usare anche in questa maniera
+wingpio.digitalWrite(0,wingpio.HIGH)
+Sleep(1000)
+wingpio.digitalWrite(0,wingpio.LOW)
+Sleep(1000)
+	Loop
+End Sub

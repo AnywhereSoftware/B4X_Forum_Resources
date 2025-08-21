@@ -1,0 +1,61 @@
+﻿Build1=Default,b4a.example.badge
+File1=Layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=shortcutbadger
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddManifestText(~\n~<uses-permission android:name="com.sec.android.provider.badge.permission.READ" />~\n~<uses-permission android:name="com.sec.android.provider.badge.permission.WRITE" />~\n~<!-- Sony -->~\n~<uses-permission android:name="com.sonyericsson.home.permission.BROADCAST_BADGE" />~\n~<!-- HTC -->~\n~<uses-permission android:name="com.htc.launcher.permission.READ_SETTINGS" />~\n~<uses-permission android:name="com.htc.launcher.permission.UPDATE_SHORTCUT" />~\n~)~\n~AddPermission("com.sec.android.provider.badge.permission.READ")~\n~AddPermission("com.sec.android.provider.badge.permission.WRITE")~\n~'Samsung~\n~AddPermission("com.sec.android.provider.badge.permission.READ")~\n~AddPermission("com.sec.android.provider.badge.permission.WRITE")~\n~'HTC~\n~AddPermission("com.htc.launcher.permission.READ_SETTINGS")~\n~AddPermission("com.htc.launcher.permission.UPDATE_SHORTCUT")~\n~'Sony~\n~AddPermission("com.sonyericsson.home.permission.BROADCAST_BADGE")~\n~AddPermission("com.sonymobile.home.permission.PROVIDER_INSERT_BADGE")~\n~'Apex~\n~AddPermission("com.anddoes.launcher.permission.UPDATE_COUNT")~\n~'Solid~\n~AddPermission("com.majeur.launcher.permission.UPDATE_BADGE")~\n~'Huawei~\n~AddPermission("com.huawei.launcher3.permission.READ_SETTINGS")~\n~AddPermission("com.huawei.launcher3.permission.WRITE_SETTINGS")~\n~AddPermission("com.huawei.launcher2.permission.READ_SETTINGS")~\n~AddPermission("com.huawei.launcher2.permission.READ_SETTINGS")~\n~AddPermission("com.huawei.android.launcher.permission.CHANGE_BADGE")~\n~AddPermission("com.huawei.android.launcher.permission.WRITE_SETTINGS")~\n~AddPermission("com.huawei.android.launcher.permission.READ_SETTINGS")~\n~'Zuk~\n~AddPermission("android.permission.READ_APP_BADGE")~\n~'Oppo~\n~AddPermission("com.oppo.launcher.permission.READ_SETTINGS")~\n~AddPermission("com.oppo.launcher.permission.WRITE_SETTINGS")~\n~'EvMe~\n~AddPermission("me.everything.badger.permission.BADGE_COUNT_READ")~\n~AddPermission("me.everything.badger.permission.BADGE_COUNT_WRITE")~\n~~\n~AddPermission("com.android.launcher.permission.READ_SETTINGS")~\n~AddPermission("com.android.launcher.permission.WRITE_SETTINGS")~\n~AddPermission("com.android.launcher.permission.INSTALL_SHORTCUT")~\n~AddPermission("com.android.launcher.permission.UNINSTALL_SHORTCUT")~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: BadgeTest
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim badge As ShortcutBadger
+	Private lblCount As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	badge.Initialize()
+	Dim badgeCount As Int = Rnd(1,101)
+	lblCount.Text = badgeCount
+	'Log(badge.ApplyCountCV(badgeCount))
+	If badge.isInitialized Then
+		Log("Update Badge on Icon... "&badge.applyCount(badgeCount))
+	Else
+		Log("Hmmm")
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

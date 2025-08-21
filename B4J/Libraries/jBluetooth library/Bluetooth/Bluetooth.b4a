@@ -1,0 +1,134 @@
+﻿Version=5.5
+NumberOfModules=1
+Module1=ChatActivity
+Build1=Default,anywheresoftware.b4a.samples.bluetooth
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.Holo")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=2
+File1=1.bal
+File2=2.bal
+NumberOfLibraries=4
+Library1=core
+Library2=randomaccessfile
+Library3=serial
+Library4=javaobject
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Bluetooth Example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Dim admin As BluetoothAdmin
+	Dim serial1 As Serial
+	Dim foundDevices As List
+	Type NameAndMac (Name As String, Mac As String)
+	Dim connectedDevice As NameAndMac
+End Sub
+
+Sub Globals
+	Dim btnSearchForDevices As Button
+	Dim btnAllowConnection As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		admin.Initialize("admin")
+		serial1.Initialize("serial1")
+	End If
+	Activity.LoadLayout("1")
+End Sub
+
+
+Sub Activity_Resume
+	btnSearchForDevices.Enabled = False
+	btnAllowConnection.Enabled = False
+	If admin.IsEnabled = False Then
+		If admin.Enable = False Then 
+			ToastMessageShow("Error enabling Bluetooth adapter.", True)
+		Else
+			ToastMessageShow("Enabling Bluetooth adapter...", False)
+			'the StateChanged event will be soon raised
+		End If
+	Else
+		Admin_StateChanged(admin.STATE_ON, 0)
+	End If
+End Sub
+
+Sub Admin_StateChanged (NewState As Int, OldState As Int)
+	btnSearchForDevices.Enabled = (NewState = admin.STATE_ON)
+	btnAllowConnection.Enabled = btnSearchForDevices.Enabled
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed = True Then
+		serial1.Disconnect
+	End If
+End Sub
+
+Sub btnSearchForDevices_Click
+	foundDevices.Initialize
+	If admin.StartDiscovery	= False Then 
+		ToastMessageShow("Error starting discovery process.", True)
+	Else
+		ProgressDialogShow("Searching for devices...")
+	End If
+End Sub
+
+Sub Admin_DiscoveryFinished
+	ProgressDialogHide
+	If foundDevices.Size = 0 Then
+		ToastMessageShow("No device found.", True)
+	Else
+		Dim l As List
+		l.Initialize
+		For i = 0 To foundDevices.Size - 1
+			Dim nm As NameAndMac
+			nm = foundDevices.Get(i)
+			l.Add(nm.Name)
+		Next
+		Dim res As Int
+		res = InputList(l, "Choose device to connect", -1)
+		If res <> DialogResponse.CANCEL Then
+			connectedDevice = foundDevices.Get(res)
+			ProgressDialogShow("Trying to connect to: " & connectedDevice.Name & " (" & connectedDevice.Mac & ")")
+			serial1.Connect(connectedDevice.Mac)
+		End If
+	End If
+End Sub
+
+Sub Admin_DeviceFound (Name As String, MacAddress As String)
+	Log(Name & ":" & MacAddress)
+	Dim nm As NameAndMac
+	nm.Name = Name
+	nm.Mac = MacAddress
+	foundDevices.Add(nm)
+	ProgressDialogShow("Searching for devices (~ device found)...".Replace("~", foundDevices.Size))
+End Sub
+
+Sub btnAllowConnection_Click
+	'this intent makes the device discoverable for 300 seconds.
+	Dim i As Intent
+	i.Initialize("android.bluetooth.adapter.action.REQUEST_DISCOVERABLE", "")
+	i.PutExtra("android.bluetooth.adapter.extra.DISCOVERABLE_DURATION", 300)
+	StartActivity(i)
+	
+	serial1.Listen
+End Sub
+
+Sub Serial1_Connected (Success As Boolean)
+	ProgressDialogHide
+	Log("connected: " & Success)
+	If Success = False Then
+		Log(LastException.Message)
+		ToastMessageShow("Error connecting: " & LastException.Message, True)
+	Else
+		StartActivity(ChatActivity)
+	End If
+End Sub

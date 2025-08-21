@@ -1,0 +1,188 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=icon.png
+File3=ListPorts.exe
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jserial
+Library4=jrandomaccessfile
+Library5=javaobject
+Library6=jnetwork
+Library7=b4xcollections
+Library8=jshell
+NumberOfFiles=3
+NumberOfLibraries=8
+NumberOfModules=0
+Version=8.27
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+#CustomBuildAction: After Packager, %WINDIR%\System32\robocopy.exe, ..\ temp\build\bin\ jssc.dll
+'version 1.20
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private txtMessage As TextField
+	Private cmbPort As ComboBox
+	Private btnOpen As Button
+	Private btnSend As Button
+	Private txtLogs As TextArea
+	Private astream As AsyncStreams
+	Private serial As Serial
+	Private chkReset As CheckBox
+	Private const BAUDRATE As Int = 115200
+	Private const settingsFile As String = "Settings.txt"
+	Private udpListener As UDPSocket
+	Private connected As Boolean
+	Private PortsNames As B4XOrderedMap
+	Private DataFolder As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Show
+	DataFolder = File.DirData("SerialConnector")
+	serial.Initialize("")
+	Wait For (GetPortsNames) Complete (unused As Boolean)
+	cmbPort.Items.AddAll(PortsNames.Values)
+	If File.Exists(File.DirApp, settingsFile) Then
+		Dim m As Map = File.ReadMap(File.DirApp, settingsFile)
+		If m.ContainsKey("port") Then
+			Dim SavedPort As String = m.Get("port")
+			If PortsNames.ContainsKey(SavedPort) Then
+				cmbPort.SelectedIndex = cmbPort.Items.IndexOf(PortsNames.Get(SavedPort))
+			End If
+		End If
+		chkReset.Checked = m.Get("reset")
+	End If
+	If cmbPort.SelectedIndex = -1 Then cmbPort.SelectedIndex = cmbPort.Items.Size - 1
+	udpListener.Initialize2("udp", 51042, 8192, True, True)
+End Sub
+
+Sub GetPortsNames As ResumableSub
+	PortsNames.Initialize
+	For Each port As String In serial.ListPorts
+		PortsNames.Put(port, port) 'default names
+	Next
+	File.Copy(File.DirAssets, "ListPorts.exe", DataFolder, "ListPorts.exe")
+	Dim shl As Shell
+	shl.Initialize("shl", File.Combine(DataFolder, "ListPorts.exe"), Null)
+	shl.Run(5000)
+	Wait For shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		For Each line As String In Regex.Split(CRLF, StdOut)
+			Log(line)
+			Dim i As Int = line.IndexOf(" ")
+			If i = -1 Then Continue
+			Dim port As String = line.SubString2(0, i)
+			Dim Description As String = line.Trim
+			If PortsNames.ContainsKey(port) Then PortsNames.Put(port, Description)
+		Next
+	End If
+	Return True
+End Sub
+
+
+Sub btnOpen_Action
+	OpenAction(True)
+End Sub
+
+Sub OpenAction(User As Boolean)
+	If connected Then 
+		connected = False
+		astream.Close
+		serial.Close
+		btnOpen.Text = "Open"
+		Return
+	End If
+	If User Then
+		OpenAfterDelay
+	Else
+		Sleep(8000)
+		OpenAfterDelay
+	End If
+	
+End Sub
+
+Private Sub OpenAfterDelay
+	If cmbPort.SelectedIndex = -1 Then Return
+	Try
+		serial.Open(PortsNames.Keys.Get(cmbPort.SelectedIndex))
+		If chkReset.Checked Then
+			serial.SetParams(BAUDRATE, 8, 1, 0)
+		Else
+			Dim jo As JavaObject = serial
+			jo = jo.GetField("sp")
+			jo.RunMethod("setParams", Array(BAUDRATE, serial.DATABITS_8, serial.STOPBITS_1, serial.PARITY_ODD, False, False))
+		End If
+		astream.Initialize(serial.GetInputStream, serial.GetOutputStream, "astream")
+		btnSend.Enabled = True
+		btnOpen.Text = "Close"
+	Catch
+		Log(LastException)
+		fx.Msgbox(MainForm, "Failed to open port", "")
+	End Try
+	connected = True
+	btnOpen.Enabled = connected
+	btnClear_Action
+End Sub
+
+
+Sub btnSend_Action
+	astream.Write(txtMessage.Text.GetBytes("utf8"))
+	txtMessage.SelectAll
+	txtMessage.RequestFocus
+End Sub
+
+Sub txtMessage_Action
+	btnSend_Action
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+	txtLogs.Text = txtLogs.Text & BytesToString(Buffer, 0, Buffer.Length, "utf8")
+	txtLogs.SetSelection(txtLogs.Text.Length, txtLogs.Text.Length)
+End Sub
+
+Sub AStream_Error
+	Log("error")
+End Sub
+
+Sub AStream_Terminated
+	Log("terminated")
+End Sub
+
+
+Sub btnClear_Action
+	txtLogs.Text = ""
+End Sub
+
+Sub MainForm_Closed
+	Dim m As Map = CreateMap("reset": chkReset.Checked)
+	If cmbPort.SelectedIndex > -1 Then m.Put("port", PortsNames.Keys.Get(cmbPort.SelectedIndex))
+	File.WriteMap(File.DirApp, settingsFile, m)
+End Sub
+
+Private Sub UDP_PacketArrived (Packet As UDPPacket)
+	Try
+		Dim s As String = BytesToString(Packet.Data, Packet.Offset, Packet.Length, "utf8")
+		If s.StartsWith("B4R") = False Then Return
+		Dim msg() As String = Regex.Split(",", s)
+		If msg.Length < 3 Or cmbPort.SelectedIndex = -1 Then Return
+		If msg(1) = PortsNames.Keys.Get(cmbPort.SelectedIndex) Then
+			If connected <> msg(2) Then 
+				OpenAction(False)
+				
+			End If
+		End If
+	Catch
+		Log(LastException)
+	End Try
+End Sub

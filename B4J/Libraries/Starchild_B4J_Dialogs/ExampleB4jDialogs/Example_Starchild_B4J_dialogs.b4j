@@ -1,0 +1,231 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=lightbulb.png
+File2=Starchild_Icon.png
+File3=test.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=starchild_b4j_dialogs
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 400
+	
+	#AdditionalJar: Starchild_B4J_Extras
+	#AdditionalJar: JavaObject
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Dim MT As Starchild_B4J_ToastMsg
+	Dim MB As Starchild_B4J_MsgBox
+	Dim IB As Starchild_B4J_InputBox
+
+	Private ToastFlag As Boolean
+	Private DefaultSettingsRB As RadioButton
+	Private DemoInputBoxBT As Button
+	Private DemoMsgBoxBT As Button
+	Private DemoToastMsgBT As Button
+	Private UserSettingsRB As RadioButton
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("test") 'Load the layout file.
+	MainForm.Show
+	
+	DefaultSettingsRB.RequestFocus
+	
+	MT.Initialize(MainForm,Me)
+	MB.Initialize(MainForm,Me)
+	IB.Initialize(MainForm,Me)
+
+	ToastFlag = False
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_Resize(W As Double,H As Double)
+	LogDebug("Resized")
+	MB.FormResize(W,H)
+	IB.FormResize(W,H)
+End Sub
+
+Sub DemoToastMsgBT_MouseClicked (EventData As MouseEvent)
+	ToastFlag = Not(ToastFlag)
+	
+	Dim TheMessage As String
+	If ToastFlag Then
+		TheMessage = "This is a Toast message."
+	Else
+		TheMessage = "A Multi-Line Toast Message" & CRLF & _
+					 "This is line one" & CRLF & _
+					 "and this is the second line"
+	End If
+	
+	MT.ToastMsg2(TheMessage,30,1000)
+End Sub
+
+Sub DemoMsgBoxBT_MouseClicked (EventData As MouseEvent)
+	Dim Icon As Image = fx.LoadImage(File.DirAssets,"lightbulb.png")
+	MB.BOX_WIDTH = 300  'or
+	'MB.UseMaxWidth(True)
+	MB.TEXT_SIZE = 12
+	MB.MIN_ICON_SIZE = 30
+	MB.MsgBox2("This is the message. The quick brown fox jumps over the lazy dog.","This is the Title","Click Here","Never","Cancel",Icon)
+	Log(MB.InUse)
+	
+	wait for (MB) Click
+	
+	Select MB.Response
+		Case MB.RESPONSE_POSITIVE
+			Log(">>> Click Here")
+		Case MB.RESPONSE_NEGATIVE
+			Log(">>> Never")
+		Case MB.RESPONSE_CANCEL
+			Log(">>> Cancel")
+	End Select
+	
+	Dim Icon As Image = fx.LoadImage(File.DirAssets,"lightbulb.png")
+	MB.BOX_WIDTH = 220  'or
+	'MB.UseMaxWidth(True)
+	MB.TEXT_SIZE = 12
+	MB.MIN_ICON_SIZE = 30
+	MB.MsgBox2("Notice the title is now multi-line and the buttons have been stacked to fit." & _
+				CRLF & CRLF & _
+				"The quick brown fox jumps over the lazy dog.", _
+				"Now the MsgBox Is a little Bit narrower", _
+				"Click Here","What-Ever","Not Now",Icon)
+
+	Wait For (MB) Click
+	
+	Select MB.Response
+		Case MB.RESPONSE_POSITIVE
+			Log(">>> Click Here")
+		Case MB.RESPONSE_NEGATIVE
+			Log(">>> What-Ever")
+		Case MB.RESPONSE_CANCEL
+			Log(">>> Not Now")
+	End Select
+
+End Sub
+
+Sub DemoInputBoxBT_MouseClicked (EventData As MouseEvent)
+	Dim Icon As Image = fx.LoadImage(File.DirAssets,"Starchild_Icon.png")
+
+	If IB.InUse Then
+		'you can use the InUse property to force closed
+		'the InputBox object if it is already being used
+		'or you could choose To abort this attempt to use it
+		IB.Cancel
+		Sleep(0)  'force closed the InputBox
+		'return   'or just return, as it is already busy
+	End If
+	
+	IB.PasswordMode = True
+	IB.BOX_WIDTH = 250dip
+	IB.BOX_HEIGHT = -1   'the default (gives a single line input box)
+	'IB.InputType = IB.InputType_EMAIL_ADDRESS
+	IB.InputType = IB.InputType_NUMBERS
+	IB.MAX_CHR_COUNT = 5
+	IB.MIN_ICON_SIZE = 50
+	IB.ClickAwayToCancel = True  'clicking the dimmed background is the same as Cancel button
+	
+	IB.InputBox("Enter a Password (max 5 digits)","This is a Simple Input Box")
+	
+	Log("IB.InUse = " & IB.InUse)
+	wait for (IB) Click
+	Log("IB.InUse = " & IB.InUse)
+
+	If IB.Response = IB.RESPONSE_CANCEL Then
+		'clicked "Cancel" button
+		Return
+	End If
+	
+	If IB.InputText = "" Then
+		'no input text
+		MT.AUTO_TIMEOUT_IN_MSEC = 1000
+		MT.ToastMsg("Type any number, then click OK.")
+		Return
+	End If
+	
+	Dim TheNumber As String = IB.InputText
+	MT.AUTO_TIMEOUT_IN_MSEC = 2000
+	MT.ToastMsg("Your number: " & TheNumber)
+	Wait For (MT) Finished
+	
+	'continues when Toast Message disappears
+	'NB: if you click the toast message it will cancel it immediately.
+	
+	IB.PasswordMode = False
+	IB.InputType = IB.InputType_TEXT
+	IB.TEXT_SIZE = 16dip
+	IB.MAX_CHR_COUNT = 20
+	IB.BOX_WIDTH = 250dip
+	IB.BOX_HEIGHT = -1   'the default (gives a single line input box)
+	IB.ClickAwayToCancel = False  'must click one of the buttons to continue
+	
+	Dim ShortMsg As String = "You can show a brief message or information here" & CRLF & CRLF
+	IB.InputBox2("Enter text","",ShortMsg & "Entry Field Header","A single line Input Box","Click Here","Don't do it","Just ignore me",Icon)
+	wait for (IB) Click
+
+	Dim TheText As String = IB.InputText
+	MT.AUTO_TIMEOUT_IN_MSEC = 2000
+	MT.ToastMsg("Your text: " & TheText)
+	Wait for (MT) Finished
+
+	'multi-line Input Box
+	IB.TEXT_SIZE = 12
+	IB.MAX_CHR_COUNT = -1
+	IB.BOX_WIDTH = 370dip
+	IB.BOX_HEIGHT = 200dip  
+	IB.InputBox2("Enter text","Default text",ShortMsg & "Entry Field Header","The Title of this Multi-Line Input Box","Click Here","Don't do it","Just ignore me",Icon)
+	wait for (IB) Click
+	
+	If IB.Response = IB.RESPONSE_POSITIVE Then
+		'Click here button
+		
+		'temprarily change the apperance of the MsgBox
+		Dim BK As Paint = MB.BACK_COLOUR
+		Dim TT As Paint = MB.TITLE_COLOUR
+		Dim MC As Paint = MB.MESSAGE_COLOUR
+		MB.BACK_COLOUR = fx.Colors.RGB(255,255,240)
+		MB.TITLE_COLOUR = fx.Colors.Red
+		MB.MESSAGE_COLOUR = fx.Colors.Black
+		MB.MsgBox(IB.InputText,"This is what you entered into the Multi-Line Input Box")
+		
+		Wait For (MB) Click
+		
+		MB.BACK_COLOUR = BK
+		MB.TITLE_COLOUR = TT
+		MB.MESSAGE_COLOUR = MC
+	End If
+	
+	LogDebug("Done")
+End Sub
+
+Private Sub DefaultSettingsRB_SelectedChange(Selected As Boolean)
+	MB.UseDefaultSettings
+	IB.UseDefaultSettings
+	MT.UseDefaultSettings
+End Sub
+
+Private Sub UserSettingsRB_SelectedChange(Selected As Boolean)
+	'try these settings to see how they change the Dialog boxes.
+	MB.Settings(fx.Colors.Yellow,fx.Colors.White,fx.Colors.Blue,fx.Colors.Blue,fx.Colors.DarkGray,fx.Colors.Magenta,15,50,True)
+	IB.Settings(fx.Colors.Yellow,fx.Colors.White,fx.Colors.RGB(0,0,50),fx.Colors.RGB(120,120,255),fx.Colors.Blue,fx.Colors.DarkGray,fx.Colors.Magenta,15,50,-1,-1,True)
+	MT.Settings(fx.Colors.Blue,fx.Colors.RGB(255,255,220),fx.Colors.Red,20,50,0)
+End Sub

@@ -1,0 +1,126 @@
+﻿AppType=JavaFX
+Build1=Default,it.tecnomedia_sd_server
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jnetwork
+Library4=jrandomaccessfile
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 600 
+	#MergeLibraries: true 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Type UserType (AStream As AsyncStreams, Soc As Socket, Ping As Boolean)
+	Dim srvr As ServerSocket
+	
+	'Dim Const TimePing As Int = DateTime.TicksPerSecond*120
+	'Dim PingTimer As Timer
+	Private ListUser As List
+
+	Private LabelIP As Label
+	Private ButtonStart As Button
+	Private LabelInfo As Label
+	Private TextArea1 As TextArea
+	
+	Private StartServer As Boolean = False
+	Private Port As String = "51051"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+
+	MainForm.Show
+	LabelIP.Text=srvr.GetMyIP
+	ListUser.Initialize
+	
+	' Start Server
+	ButtonStart_Click
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub ButtonStart_Click
+	If StartServer=False Then
+		ButtonStart.Text="STOP"
+		srvr.Initialize(Port,"srvr")
+		srvr.Listen
+
+		Log("Server started")
+	
+		'PingTimer.Enabled=True
+		TextArea1.Text= TextArea1.Text & "START SERVER " & CRLF
+		ListUser.Clear
+	Else
+		' Close All connection
+		ButtonStart.Text="START"
+		TextArea1.Text= TextArea1.Text & "STOP SERVER " & CRLF
+		ListUser.Clear
+	End If
+	StartServer=Not(StartServer)
+End Sub
+
+Sub ButtonSvuota_Click
+	TextArea1.Text=""
+	For Each User As UserType In ListUser
+		User.AStream.Close
+	Next
+	ListUser.Clear
+End Sub
+
+#Region Network
+
+Sub srvr_NewConnection (Successful As Boolean, NewSocket As Socket)
+	If Successful Then
+		Log("Address: " & NewSocket.RemoteAddress)
+		TextArea1.Text=$"${TextArea1.Text}Connect (${NewSocket.RemoteAddress})${CRLF}"$
+		Dim AStreams As AsyncStreams
+
+		AStreams.Initialize(NewSocket.InputStream, NewSocket.OutputStream, "AStreams")
+			
+		Dim New As UserType
+		New.Initialize
+		New.AStream=AStreams
+		New.Soc=NewSocket
+		New.Ping=False
+
+		ListUser.Add(New)
+	Else
+		Log("NewConnection: "  & LastException.Message)
+	End If
+	srvr.Listen
+End Sub
+
+Sub AStreams_NewData (Buffer() As Byte)
+	Dim UserSender As AsyncStreams = Sender 'ignore
+	LabelInfo.Text=$"Riceved ${Buffer.Length} bytes"$
+	For Each User As UserType In ListUser
+'		If User.AStream<>UserSender Then 
+'			User.AStream.Write(Buffer)
+'		End If
+		User.AStream.Write(Buffer)
+	Next
+End Sub
+
+Sub AStreams_Error
+	Log("Astream: " & LastException.Message)
+End Sub
+
+#End Region
+
+

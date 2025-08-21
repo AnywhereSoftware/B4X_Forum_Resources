@@ -1,0 +1,50 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=b4xcollections
+Library4=okhttp
+Library5=javaobject
+Library6=jxui
+Module1=MJPEG
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=7.98
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private mj1 As MJPEG
+	Private ImageView1 As ImageView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Show
+	mj1.Initialize(Me, "mj1")
+	BtnStart_Click
+End Sub
+
+
+Sub mj1_Frame(bmp As Image)
+	ImageView1.SetImage(bmp)
+End Sub
+
+Sub BtnStop_Click
+	If mj1.gout.IsInitialized Then mj1.gout.Close
+End Sub
+
+Sub BtnStart_Click
+	BtnStop_Click
+	mj1.Connect("http://ticklecam.engr.utk.edu/axis-cgi/mjpg/video.cgi")
+End Sub

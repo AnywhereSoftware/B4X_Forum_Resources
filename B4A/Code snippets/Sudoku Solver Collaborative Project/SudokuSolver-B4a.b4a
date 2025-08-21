@@ -1,0 +1,909 @@
+﻿Build1=Default,b4a.Sudoku
+File1=1.bal
+File2=AnswerGrid.png
+File3=buttonbot.png
+File4=buttontop.png
+File5=Grid.png
+File6=untitled.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=Information
+NumberOfFiles=6
+NumberOfLibraries=1
+NumberOfModules=2
+Version=9.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Sudoku 9x9 Solver
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private Panel1 As Panel
+	Private btn1 As Button
+	Private btn2 As Button
+	Private btn3 As Button
+	Private btn4 As Button
+	Private btn5 As Button
+	Private btn6 As Button
+	Private btn7 As Button
+	Private btn8 As Button
+	Private btn9 As Button
+	Private btnNul As Button
+
+
+	Private btnSolveOn As Button
+	Private lblSolveOnOff As Label
+	Private btnShow As Button
+	Private btnClearAll As Button
+	Private btnSave As Button
+	Private btnRestore As Button
+	Private Panel2 As Panel
+	Private btnClearBackgound As Button
+	
+	'Grid Stuff
+	Dim NbRows = 9 As Int
+	Dim NbCols = 9 As Int
+	Dim CellHeight = 45dip As Int
+	Dim CellWidth= 45dip As Int
+	Dim gridlbl(NbRows, NbCols) As Label
+	
+	'Answer Stuff
+	Dim Answerlbl(10) As Label
+	Dim AnswerTotal(9) As Int
+	Dim NumberSelected As Int
+	
+	'StoreStuff
+	Dim Stored(NbRows,NbCols) As String
+	Public Answerlbl(10) As Label
+	Public gridlbl(NbRows, NbCols) As Label
+	
+	'Solve stuff
+	Public TotalCount As Int
+	Public OldTotalCount As Int
+	Public SolveOn As Boolean
+
+End Sub
+
+'TEST GRID
+'This is a medium Sudoku for test purposes
+'Arangement is Stored(Row,Column)
+'Use RESTORE button to access
+Sub PopulateStored_Medium
+	Stored(0,0) = "6"
+	Stored(0,1) = ""
+	Stored(0,2) = "1"
+	Stored(0,3) = ""
+	Stored(0,4) = ""
+	Stored(0,5) = ""
+	Stored(0,6) = "2"
+	Stored(0,7) = "5"
+	Stored(0,8) = ""
+	
+	Stored(1,0) = ""
+	Stored(1,1) = ""
+	Stored(1,2) = "7"
+	Stored(1,3) = "4"
+	Stored(1,4) = ""
+	Stored(1,5) = "2"
+	Stored(1,6) = ""
+	Stored(1,7) = ""
+	Stored(1,8) = "8"
+	
+	Stored(2,0) = ""
+	Stored(2,1) = "3"
+	Stored(2,2) = ""
+	Stored(2,3) = ""
+	Stored(2,4) = ""
+	Stored(2,5) = ""
+	Stored(2,6) = ""
+	Stored(2,7) = "6"
+	Stored(2,8) = ""
+	
+	Stored(3,0) = ""
+	Stored(3,1) = "1"
+	Stored(3,2) = ""
+	Stored(3,3) = "7"
+	Stored(3,4) = ""
+	Stored(3,5) = ""
+	Stored(3,6) = ""
+	Stored(3,7) = "2"
+	Stored(3,8) = ""
+	
+	Stored(4,0) = "4"
+	Stored(4,1) = ""
+	Stored(4,2) = ""
+	Stored(4,3) = ""
+	Stored(4,4) = "3"
+	Stored(4,5) = ""
+	Stored(4,6) = ""
+	Stored(4,7) = ""
+	Stored(4,8) = "6"
+
+	Stored(5,0) = ""
+	Stored(5,1) = "2"
+	Stored(5,2) = ""
+	Stored(5,3) = ""
+	Stored(5,4) = ""
+	Stored(5,5) = "5"
+	Stored(5,6) = ""
+	Stored(5,7) = "1"
+	Stored(5,8) = ""
+	
+	Stored(6,0) = ""
+	Stored(6,1) = "8"
+	Stored(6,2) = ""
+	Stored(6,3) = ""
+	Stored(6,4) = ""
+	Stored(6,5) = ""
+	Stored(6,6) = ""
+	Stored(6,7) = "7"
+	Stored(6,8) = ""
+
+	Stored(7,0) = "1"
+	Stored(7,1) = ""
+	Stored(7,2) = ""
+	Stored(7,3) = "3"
+	Stored(7,4) = ""
+	Stored(7,5) = "8"
+	Stored(7,6) = "6"
+	Stored(7,7) = ""
+	Stored(7,8) = ""
+	
+	Stored(8,0) = ""
+	Stored(8,1) = "6"
+	Stored(8,2) = "9"
+	Stored(8,3) = ""
+	Stored(8,4) = ""
+	Stored(8,5) = ""
+	Stored(8,6) = "8"
+	Stored(8,7) = ""
+	Stored(8,8) = "1"
+	
+End Sub
+
+Sub PopulateStored_Hard
+	Stored(0,0) = "4"
+	Stored(0,1) = "1"
+	Stored(0,2) = ""
+	Stored(0,3) = ""
+	Stored(0,4) = "5"
+	Stored(0,5) = ""
+	Stored(0,6) = ""
+	Stored(0,7) = ""
+	Stored(0,8) = "3"
+	
+	Stored(1,0) = ""
+	Stored(1,1) = ""
+	Stored(1,2) = "6"
+	Stored(1,3) = ""
+	Stored(1,4) = "1"
+	Stored(1,5) = "7"
+	Stored(1,6) = ""
+	Stored(1,7) = ""
+	Stored(1,8) = ""
+	
+	Stored(2,0) = "3"
+	Stored(2,1) = ""
+	Stored(2,2) = ""
+	Stored(2,3) = "6"
+	Stored(2,4) = ""
+	Stored(2,5) = ""
+	Stored(2,6) = ""
+	Stored(2,7) = ""
+	Stored(2,8) = ""
+	
+	Stored(3,0) = "7"
+	Stored(3,1) = ""
+	Stored(3,2) = ""
+	Stored(3,3) = "9"
+	Stored(3,4) = ""
+	Stored(3,5) = ""
+	Stored(3,6) = "6"
+	Stored(3,7) = ""
+	Stored(3,8) = ""
+	
+	Stored(4,0) = ""
+	Stored(4,1) = ""
+	Stored(4,2) = "2"
+	Stored(4,3) = ""
+	Stored(4,4) = ""
+	Stored(4,5) = ""
+	Stored(4,6) = "8"
+	Stored(4,7) = ""
+	Stored(4,8) = ""
+
+	Stored(5,0) = ""
+	Stored(5,1) = ""
+	Stored(5,2) = "3"
+	Stored(5,3) = ""
+	Stored(5,4) = ""
+	Stored(5,5) = "1"
+	Stored(5,6) = ""
+	Stored(5,7) = ""
+	Stored(5,8) = "2"
+	
+	Stored(6,0) = ""
+	Stored(6,1) = ""
+	Stored(6,2) = ""
+	Stored(6,3) = ""
+	Stored(6,4) = ""
+	Stored(6,5) = "9"
+	Stored(6,6) = ""
+	Stored(6,7) = ""
+	Stored(6,8) = "8"
+
+	Stored(7,0) = ""
+	Stored(7,1) = ""
+	Stored(7,2) = ""
+	Stored(7,3) = "7"
+	Stored(7,4) = "8"
+	Stored(7,5) = ""
+	Stored(7,6) = "3"
+	Stored(7,7) = ""
+	Stored(7,8) = ""
+	
+	Stored(8,0) = "8"
+	Stored(8,1) = ""
+	Stored(8,2) = ""
+	Stored(8,3) = ""
+	Stored(8,4) = "4"
+	Stored(8,5) = ""
+	Stored(8,6) = ""
+	Stored(8,7) = "5"
+	Stored(8,8) = "1"
+	
+End Sub
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	InitGridLabels
+    InitAnswerLabels
+	lblSolveOnOff.Text=""
+   'PopulateStored_Medium                                 ' TEST ONLY
+	PopulateStored_Hard                                   ' TEST ONLY
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'  SetUp of the grid labels
+'=====================================================================================================
+Sub InitGridLabels
+	Dim row, col As Int
+	For row = 0 To NbRows - 1
+		For col = 0 To NbCols - 1
+			gridlbl(row, col).Initialize("lblValue")
+			Panel1.AddView(gridlbl(row, col), 8dip + col*60dip, 8dip + row *60dip, CellWidth, CellHeight)
+			gridlbl(row, col).Color = Colors.Black
+			gridlbl(row, col).TextColor = Colors.White
+			gridlbl(row, col).TextSize = 30
+			gridlbl(row, col).Gravity = Bit.Or(Gravity.CENTER_HORIZONTAL, Gravity.CENTER_VERTICAL)
+			gridlbl(row,col).Text=""
+		Next
+	Next
+End Sub
+
+'Setup of the answer labels
+'===================================================================================
+Sub InitAnswerLabels
+	For row = 0 To NbRows
+		Answerlbl(row).Initialize("lblAnswer")
+		Panel2.AddView(Answerlbl(row),5dip, 6dip + row *50dip,90,40)
+		Answerlbl(row).Color = Colors.Black
+		Answerlbl(row).TextColor = Colors.White
+		Answerlbl(row).TextSize = 20
+		Answerlbl(row).Gravity = Bit.Or(Gravity.CENTER_HORIZONTAL, Gravity.CENTER_VERTICAL)
+	Next
+	
+End Sub
+
+'Grid Operations
+'=====================================================================================
+'Clears the answers
+Sub ClearAnswers
+	For j=0 To NbRows-1								' clears answers and grand total
+		Answerlbl(j).Text=""
+		Answerlbl(j).Color=Colors.Black
+		AnswerTotal(j)=0    
+	Next
+	  Answerlbl(9).text = ""
+End Sub
+
+' Clears the tags associated with each cell
+Sub ClearGridTags
+	For i=0 To NbCols-1
+		For j=0 To NbRows-1
+			gridlbl(i,j).Tag=""
+		Next
+	Next
+End Sub
+
+'Clears the text
+Sub ClearGridText
+	For i=0 To NbCols-1
+		For j=0 To NbRows-1
+			gridlbl(i,j).Text=""
+		Next
+	Next
+End Sub
+
+'Clears the grid background colour
+Sub ClearGridBackground
+	For i=0 To NbCols-1
+		For j=0 To NbRows-1
+			gridlbl(i,j).Color=Colors.Black
+		Next
+	Next
+End Sub
+
+
+'SECTION : VERIFY
+
+'Verifies Rows. Columns, Squares when the total grid count is 81
+'Operates by placing a dummy variable "A" in TestArray for each cell found to have a number(text) in it.
+'The positions in the test array coincide with the number in the cell
+'This ensures that if two same numbers are in the row/col/square then the TestArray will only have one entry
+'The Test array is checked to see if any position does not have a A.
+'If this is so then the answer is false
+'=====================================================================================================
+Sub VerifySquaresDone(TopRow As Int, TopCol As Int) As Boolean
+	Dim TestArray(10) As String
+	Dim Answer As Boolean=True
+	For i=TopRow To TopRow+2
+		For j=TopCol To TopCol+2
+			If gridlbl(j,i).Text.Length>0 Then
+				Dim Number As Int = gridlbl(j,i).text
+				TestArray(Number) ="A"
+			End If
+		Next
+	Next
+	For k = 1 To 9
+		If TestArray(k)<>"A" Then
+			Answer = False
+		End If
+	Next
+	Return Answer
+End Sub
+
+
+Sub VerifyCompleteSquares As Boolean
+	Return VerifySquaresDone(0,0) And VerifySquaresDone(0,3) And VerifySquaresDone(0,6) And VerifySquaresDone(3,0) And VerifySquaresDone(3,3) And VerifySquaresDone(3,6) _
+	And VerifySquaresDone(6,0) And VerifySquaresDone(6,3) And VerifySquaresDone(6,6)
+End Sub
+
+Sub VerifyCompleteRows As Boolean
+	Dim Answer As Boolean = True
+	For i =0 To NbCols-1
+		Dim TestArray(10) As String
+		For j=0 To NbRows-1
+			If gridlbl(j,i).Text.Length>0 Then
+				Dim Number As Int = gridlbl(j,i).text
+				TestArray(Number) ="A"
+			End If
+		Next
+		For k = 1 To 9
+			If TestArray(k)<>"A" Then
+				Answer = False
+			End If
+		Next
+	Next
+	Return Answer	
+End Sub
+
+
+Sub VerifyCompleteCols As Boolean
+Dim Answer As Boolean = True
+For i =0 To NbRows-1
+		Dim TestArray(10) As String
+	For j=0 To NbCols-1
+		If gridlbl(i,j).Text.Length>0 Then
+			Dim Number As Int = gridlbl(i,j).text
+			TestArray(Number) ="A"
+		End If
+	Next
+	For k = 1 To 9
+		If TestArray(k)<>"A" Then
+			Answer = False
+		End If
+	Next
+Next	
+	Return Answer
+End Sub
+
+
+Sub VerifyTotalGrid
+If VerifyCompleteRows And VerifyCompleteCols And VerifyCompleteSquares Then
+	 If SolveOn Then
+			Msgbox("AUTO SOLVE did it!","Grid Correct!")
+	Else
+			Msgbox("YOU did it!","Grid Correct!")
+	End If
+	
+Else
+		Msgbox("Something is wrong", " Grid Incorrect")
+End If
+End Sub
+
+'===================================================================================================
+
+'SECTION : CHECK
+
+' These routines highlight the positions of rows. colums or squares where the Selected Number
+' cannot be placed by colouring them GRAY 
+
+'This routines checks to see if the selected number is present in a column
+'If so then the row is grayed off and a tag V is included in the grid label tag
+Sub CheckColumns(OnSolveON As Boolean)
+For i= 0 To NbCols-1
+	For j = 0 To NbRows-1                  
+		If gridlbl(i,j).Text=NumberSelected Then
+			For k=0 To NbCols-1
+				If OnSolveON=False Then
+					gridlbl(k,j).Color=Colors.Gray
+				End If
+				gridlbl(k,j).Tag="V"
+			Next
+		End If
+	Next
+Next
+End Sub
+
+'This routine checks to see if the selected number is present in a row
+'If so then the column is grayed off and a tag V is included as a registed in grid label tag
+Sub CheckRows(OnSolveON As Boolean)
+For i= 0 To NbRows-1
+	For j = 0 To NbCols-1                  
+		If gridlbl(i,j).Text=NumberSelected Then
+			For k=0 To NbRows-1
+				If OnSolveON = False Then
+					gridlbl(i,k).Color=Colors.Gray
+				End If
+				gridlbl(i,k).Tag = "V"	
+			Next
+		End If
+	Next
+Next	
+End Sub
+
+
+'Changes all of the colours in a square knowing the
+'top column and the top row if the selected number appears
+Sub ChangeSquareColour(TopRow As Int, TopCol As Int, OnSolveON As Boolean)
+For i=TopRow To TopRow+2
+	For j=TopCol To TopCol+2
+		If OnSolveON=False Then
+			gridlbl(i,j).Color=Colors.Gray
+		End If
+		gridlbl(i,j).Tag="V"
+	Next
+Next
+End Sub
+
+
+'Finds the top row and column of the square the number selected and
+'then changes the colours of that square
+Sub CheckSquares(OnSolveON As Boolean)
+Dim TopRow As Int
+Dim TopCol As Int
+	
+For i= 0 To NbRows-1
+	For j = 0 To NbCols-1                   
+		If gridlbl(i,j).Text=NumberSelected Then
+			 Select True
+			 	Case i>=0 And i<=2
+					 TopRow = 0
+				Case i>=3 And i<=5
+					 TopRow = 3
+				Case i>=6 And i<=8
+					 TopRow = 6	 	
+				End Select
+			Select True
+				Case j>=0 And j<=2
+					TopCol = 0
+				Case j>=3 And j<=5
+					TopCol = 3
+				Case j>=6 And j<=8
+					TopCol = 6
+				End Select
+		ChangeSquareColour(TopRow, TopCol,OnSolveON)
+		End If
+	Next
+Next	
+End Sub
+
+
+'Changes the colours of all squares that have text
+Sub CheckExisting (OnSolveOn As Boolean)
+For i= 0 To NbRows-1
+	For j = 0 To NbCols-1
+		If gridlbl(i,j).Text.Length >0 Then
+			If OnSolveOn=False Then
+				gridlbl(i,j).Color=Colors.Gray
+			End If
+			gridlbl(i,j).Tag="V"	
+		End If
+		Next
+	Next
+End Sub
+
+
+'Sums the totals of all numbers at the end of each select number show and displays
+'Background colour changes according to number found.
+Sub CheckIndividualTotals
+	Dim Count As Int
+	For k=1 To 9
+		Count=0
+		For i = 0 To NbCols-1
+			For j = 0 To NbRows-1
+				If gridlbl(i,j).Text=k Then
+					Count = Count+1
+				End If
+			Next
+		Next
+		Select True
+			Case Count=0
+				Answerlbl(k-1).text=""
+			Case Count>0
+				Answerlbl(k-1).text=Count
+				AnswerTotal(k-1)=Count
+				Answerlbl(k-1).Color=Colors.Black
+		End Select
+		
+		Select True
+			Case Count = 9
+				Answerlbl(k-1).Color=Colors.Blue
+			Case Count>9
+				Answerlbl(k-1).Color=Colors.Red
+		End Select
+	Next
+End Sub
+
+
+' Finds the total number squares filled as TotalCount
+Sub CheckTotalCount
+	TotalCount=0
+	For i= 0 To NbCols-1
+		For j = 0 To NbRows-1
+			If gridlbl(i,j).Text.Length>0 Then
+				TotalCount=TotalCount+1
+			End If
+		Next
+	Next
+	Answerlbl(9).Text=TotalCount	
+End Sub
+
+
+'Searches for the NumberSelected and fills cells where it cannot be with  tag = "V"
+Sub SearchGrid
+	ClearGridBackground
+	CheckRows(SolveOn)
+	CheckColumns(SolveOn)
+	CheckSquares(SolveOn)
+	CheckExisting(SolveOn)
+	CheckIndividualTotals
+	CheckTotalCount						' Finds total count		
+End Sub
+
+'========================================================================
+'SECTION: AUTOSOLVE SECTION
+Sub SolveLabel(Input As Boolean)
+	If Input=True Then
+		lblSolveOnOff.Text="SOLVE ON"
+	Else
+		lblSolveOnOff.Text="SOLVE OFF"
+	End If
+End Sub
+
+
+'Searches each row for the V tag. Counts the number not there
+'If the count is 1 then the Number selected can be added to the
+'last location where there in no tag V.  This signals a change has happened to the row
+Sub SolveRows As Boolean
+	Dim Change As Boolean = False
+	For i =0 To NbRows-1                  ' does each row
+		Dim Count As Int
+		Dim Index As Int
+		For j=0 To NbCols-1
+			If gridlbl(i,j).Tag<>"V" Then
+			   Count=Count+1
+				Index = j									' location of last empty cell
+			End If
+		Next
+		If Count = 1  Then                                   'assumes only one spare
+			gridlbl(i,Index).Text = NumberSelected
+			Change=True
+		End If
+	Next
+	Return Change
+End Sub
+
+'Searches each column for the V tag. Counts the number not there
+'If the count is 1 then the Number selected can be added to the
+'last location where there in no tag V.  This signals a change has happened to the column
+Sub SolveColumns As Boolean
+	Dim Change As Boolean = False
+	For i =0 To NbCols-1
+		Dim Count As Int
+		Dim Index As Int
+		For j=0 To NbRows-1
+			If gridlbl(j,i).Tag<>"V" Then
+				Count=Count+1								' Number of empty cells
+				Index = j									' location of last empty cell
+			End If
+		Next
+		If Count = 1  Then           'assumes only one spare
+			gridlbl(Index,i).Text = NumberSelected
+			Change=True
+		End If
+	Next
+	Return Change
+End Sub
+
+
+'Searches each square for the V tag. Counts the number not there
+'If the count is 1 then the Number selected can be added to the
+'last location where there in no tag V.  This signals a change has happened to the square
+Sub SolveSquaresDone(TopRow As Int, TopCol As Int) As Boolean
+	Dim Change As Boolean = False
+	Dim Count As Int
+	Dim IndexI As Int
+	Dim IndexJ As Int
+	For i=TopRow To TopRow+2
+		For j=TopCol To TopCol+2
+			If gridlbl(j,i).Tag<>"V" Then
+				Count=Count+1								' Number of empty cells
+				IndexI = i
+				IndexJ = j									' location of last empty cell
+			End If
+		Next
+	Next
+	If Count = 1  Then           'assumes only one spare
+		gridlbl(IndexJ,IndexI).Text = NumberSelected
+		Change=True
+	End If
+	Return Change
+End Sub
+
+' Solves each of the 9 squares
+Sub SolveSquares As Boolean
+	Return SolveSquaresDone(0,0) Or SolveSquaresDone(0,3) Or SolveSquaresDone(0,6) Or SolveSquaresDone(3,0) Or SolveSquaresDone(3,3) Or SolveSquaresDone(3,6) _
+	Or SolveSquaresDone(6,0) Or SolveSquaresDone(6,3) Or SolveSquaresDone(6,6)
+End Sub
+
+
+'Recursive program.. Repeats until all of the changes for one
+'number is complete as a change of any one number can cause a subsequent possible locations for a number
+Sub ActionSolveGrid
+		ClearGridTags      ' clears the tags
+		SearchGrid			'Searches for the NumberSelected and fills cells where it cannot be with  tag = "V"
+		If SolveRows Or SolveColumns Or SolveSquares Then        ' Solvexxx is true if there has been a change, so repeats
+			ActionSolveGrid
+		End If
+End Sub
+
+
+'Cycles through numbers 1 to 9 in turn, then checks TotalCount
+'If there has been a change in TotalCount then repeats till there is no change
+'If the TotalCount = 81 then verifies the answers
+Sub AutoSolveGrid
+	For Count = 1 To 9
+		NumberSelected=Count
+		ActionSolveGrid                'Recursive program for each number selected                    
+	Next
+	CheckTotalCount                   ' Checks the total count
+
+	If TotalCount> OldTotalCount Then	
+		OldTotalCount = TotalCount
+		AutoSolveGrid	
+	Else
+		Msgbox("Solve has finished", "Complete")
+		If TotalCount = 81 Then
+			Msgbox("Checking Answers","Grid Completed")
+			VerifyTotalGrid
+		End If
+	SolveOn=False
+	SolveLabel(SolveOn)
+	End If
+End Sub
+
+'===============================================================================================================
+
+
+'========================================================
+'Command Buttons
+'========================================================
+' Selects the number to add to the grid
+' 0 is delete  The grid location is found by dividing by 60
+' the width of a drawn cell on the grid
+Sub Panel1_Touch (Action As Int, X As Float, Y As Float)
+	If Action = 0 Then                  ' touch
+		If NumberSelected=0 Then
+			gridlbl(Y/60,X/60).Text= ""
+		Else
+			gridlbl(Y/60,X/60).Text= NumberSelected
+		End If
+	End If
+End Sub
+
+' Shows all the locations free (not gray) for the number selected
+' After each search the total number of entries is checked and if 81 verified for completeness
+Sub btnShow_Click
+	If  NumberSelected>0 Then
+		SearchGrid  'Searches for the NumberSelected and fills cells where it cannot be with  tag = "V"
+		CheckTotalCount
+		If TotalCount = 81 Then
+			Msgbox("Checking Answers","Grid Completed")
+			VerifyTotalGrid
+		End If
+	Else
+		Msgbox("Select a Number first", "Error!")
+	End If
+End Sub
+
+' Clears the complete game
+Sub btnClearAll_Click
+	If SolveOn=False Then
+		ClearGridBackground
+		ClearGridText
+		ClearGridTags
+		ClearAnswers
+	Else
+		Msgbox("Solve is on - cannot use this feature", "Error!")
+	End If
+End Sub
+
+' Clears the grid background to black
+Sub btnClearBackgound_Click
+	If SolveOn=False Then
+		ClearGridBackground
+	Else
+		Msgbox("Solve is on - cannot use this feature", "Error!")
+	End If
+End Sub
+
+'Saves the present Sudoku grid for later restoration
+'Good to use if you are making a quess
+Sub btnSave_Click
+If SolveOn = False  Then
+	For i= 0 To NbRows-1
+		For j=0 To NbCols-1
+			Stored(i,j)=gridlbl(i,j).Text
+		Next
+	Next
+	Else
+		Msgbox("SolveOn is on - cannot use this feature","Error!")
+	End If
+End Sub
+
+'Restores the last stored Sudoku grid 
+Sub btnRestore_Click
+If SolveOn=False Then
+	ClearGridBackground
+	ClearGridText
+	ClearAnswers
+	For i= 0 To NbRows-1
+		For j=0 To NbCols-1
+			gridlbl(i,j).Text=Stored(i,j)
+		Next
+	Next
+Else
+		Msgbox("Solve is on - cannot use this feature", "Error!")
+End If
+End Sub
+
+' Selects the AutoSolve Feature
+Sub btnSolveOn_Click
+	ButtonColorChange(99)				' forces all buttons to off state
+	ClearGridBackground
+	SolveOn=True
+	SolveLabel(SolveOn)
+	TotalCount = 0
+	OldTotalCount=0
+	AutoSolveGrid
+End Sub
+
+
+'NumberButtons Select
+'=========================================================================================
+'Highlights the number chosen
+'If number is 99 for Autosolve then all turned off
+Sub ButtonColorChange(Number As Int)
+	Dim Buttons(10) As Button
+	Buttons = Array As Button(btn1,btn2,btn3,btn4,btn5,btn6,btn7,btn8,btn9,btnNul)
+	For i=0 To 9
+		Buttons(i).SetBackgroundImage(LoadBitmap(File.DirAssets,"ButtonTop.png"))     'turns off all buttons
+	Next
+	If Number<>99 Then
+		Buttons(Number-1).SetBackgroundImage(LoadBitmap(File.DirAssets,"ButtonBot.png"))
+	End If
+End Sub
+
+
+Sub btn1_Click
+	NumberSelected=1
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn2_Click
+	NumberSelected=2
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn3_Click
+	NumberSelected=3
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn4_Click
+	NumberSelected=4
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn5_Click
+	NumberSelected=5
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn6_Click
+	NumberSelected=6
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn7_Click
+	NumberSelected=7
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn8_Click
+	NumberSelected=8
+	ButtonColorChange(NumberSelected)
+End Sub
+
+Sub btn9_Click
+	NumberSelected=9
+	ButtonColorChange(NumberSelected)
+End Sub
+
+'This uses the Number 10 for the button colour select
+'but once this is done the selected number is change to 0
+'for the delete or not entered function
+Sub btnNul_Click
+	NumberSelected=10
+	ButtonColorChange(NumberSelected)
+	NumberSelected = 0    					'must be zero for delete function
+End Sub
+
+

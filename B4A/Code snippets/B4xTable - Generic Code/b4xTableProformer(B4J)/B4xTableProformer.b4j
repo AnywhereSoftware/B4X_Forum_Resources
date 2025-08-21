@@ -1,0 +1,111 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=DBPanel.bjl
+File2=Selection.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsql
+Library4=b4xtable
+Library5=xui views
+Library6=jxui
+Module1=CableInfo
+Module2=Common
+Module3=DBShow
+Module4=EquipInfo
+Module5=Selection
+Module6=SQLUtil
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=6
+Version=7.8
+@EndOfDesignText@
+'B4XTABLE PROFORMER
+'----------------------------
+'This work just pulls the code snippets from Erel and others into one universal proformer design, 
+'that mimics as close as I can get it to an Excel spreadsheet and includes:
+
+'  - Populating the B4xTable from a database table (it could be from anywhere)
+'  - Adding Rows(Records)
+'  - Deleting Rows
+'  - Duplicating Rows
+'  - Modifying cells individually
+'  - Moving the order of the Rows
+'  - Saving the B4xTable back to the database table
+
+'The B4xTable code is generic for any database. SQLUtils contains common subs
+
+' B4XTABLE AND RECORD HEADER NAMES
+'-----------------------------------------
+'The information for each database table is stored in individual code modules.
+
+'The field names for the table records are used as the column headers in the B4xTable 
+'They are passed to the public process variables in 'Common' before display by B4xTable.
+
+'ADDING RECORDS
+'--------------
+'The field name labels and value edit cells on the editpanel are automatically added from the database table header data 
+'The only limitation is the number of edit cells that can be added to the EditPage, though a scrolling page would fix this
+'I have capped the design at 60 by assigning the column names and types to arrays but lists would be better.
+
+'The B4XColumn Types (int/String) can be used to determine the input type. 
+'It is easier to do this in B4a than B4j by adjusting the keyboard for each type.
+
+'MOVING RECORDS
+'--------------
+'The MoveUp and MoveDown buttons moves the row order but I have not solved the highlighting on a page change, nor
+'an automatic page change. The page number does some funny things on page change!
+
+'The RowListIDs, used for the move sequences, are stored on a cell click but could be updated on first formation, 
+'add, duplicate or delete but with this method the list is always current.
+
+'SAMPLE
+'------
+'The table code modules contain example data which is set up on the first run of this program.
+'Two databases with different column totals are included so that you can swap between. 
+'You can see that the B4X table responds to each without alteration of the generic B4xTable code.
+
+'Rod McMahon
+'Corona Virus Project 2020
+
+#Region Project Attributes 
+	#MainFormWidth: 1250                 
+	#MainFormHeight: 800								
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Initialize("MainForm", 1250, 800)
+	Common.SQL.InitializeSQLite(File.DirApp, "PROJECTS.db", True)       'Opens/created a Projects DB
+	CreateDBTables
+	Selection.Show
+End Sub
+
+'Creates two db Tables
+Sub CreateDBTables		
+SQLUtil.DropTable(Common.SQL,"EQUIPMENT")									        'delete table if you want to start new
+	If SQLUtil.TableExists(Common.SQL,"EQUIPMENT")=False Then						'creates table if doesnt exist
+		EquipInfo.EquipmentHeaders               									'headers for b4Xtable/dbColumns
+		SQLUtil.CreateSQLTable(Common.SQL,Common.DBName, Common.TotColNumber)       'creates the database  
+		EquipInfo.PopulateEquipTable                  								'add records
+	End If
+		
+	SQLUtil.DropTable(Common.SQL,"CABLES")												'delete table if you want to start new
+	If SQLUtil.TableExists(Common.SQL,"CABLES")=False Then							'creates table if doesnt exist
+		CableInfo.CableHeaders														'headers for b4Xtable/dbColumns
+		SQLUtil.CreateSQLTable(Common.SQL,Common.DBName, Common.TotColNumber)		'creates the database
+		CableInfo.PopulateCableTable                      							'add records
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

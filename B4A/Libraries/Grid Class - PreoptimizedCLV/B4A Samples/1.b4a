@@ -1,0 +1,105 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=item.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui views
+Library3=preoptimizedclv
+Library4=okhttputils2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Private CustomListView1 As CustomListView
+	Private PCLV As PreoptimizedCLV
+	Private xui As XUI
+	Private Label1 As B4XView
+	Type MyImageData (IndexOfFirstImage As Int)
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	PCLV.Initialize(Me, "PCLV", CustomListView1)
+	For i = 1 To 600 Step 4
+		PCLV.AddItem(150dip, xui.Color_White, CreateMyImageData(i))
+	Next
+	PCLV.ShowScrollBar = False 'no fast scrolling
+	PCLV.ExtraItems = 5
+	PCLV.Commit
+End Sub
+
+Sub CustomListView1_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	For Each i As Int In PCLV.VisibleRangeChanged(FirstIndex, LastIndex)
+		Dim item As CLVItem = CustomListView1.GetRawListItem(i)
+		Dim pnl As B4XView = xui.CreatePanel("")
+		item.Panel.AddView(pnl, 0, 0, item.Panel.Width, item.Panel.Height)
+		Dim data As MyImageData = item.Value
+		'Create the item layout
+		pnl.LoadLayout("Item")
+		For i = 0 To 3
+			pnl.GetView(0).GetView(i + 4).Text = data.IndexOfFirstImage + i
+			DownloadAndSetImage($"https://i.picsum.photos/id/${data.IndexOfFirstImage + i}/200/300.jpg"$, pnl.GetView(0).GetView(i))
+		Next
+	Next
+End Sub
+
+Sub DownloadAndSetImage(Url As String, ImageView As B4XView)
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download(Url)
+	Wait For (j) JobDone (j As HttpJob)
+	If j.Success Then
+		Try
+			If ImageView.Parent.Parent.IsInitialized Then
+				Dim bmp As B4XBitmap = j.GetBitmapResize(ImageView.Width, ImageView.Height, True)
+				ImageView.SetBitmap(bmp)
+			End If
+		Catch
+			Log(LastException)
+		End Try
+	End If
+	j.Release
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Public Sub CreateMyImageData (IndexOfFirstImage As Int) As MyImageData
+	Dim t1 As MyImageData
+	t1.Initialize
+	t1.IndexOfFirstImage = IndexOfFirstImage
+	Return t1
+End Sub

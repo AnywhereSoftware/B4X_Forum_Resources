@@ -1,0 +1,210 @@
+﻿Build1=Default,b4a.bbb
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=ble2
+Library3=xui
+Library4=stringutils
+Library5=runtimepermissions
+Library6=xcustomlistview
+Library7=dialogs
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddPermission(android.permission.ACCESS_COARSE_LOCATION)~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: BLE Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	Private btnReadData As Button
+	Private btnDisconnect As Button
+	Private btnScan As Button
+	Private lblDeviceStatus As Label
+	Private lblState As Label
+	Private pbReadData As ProgressBar
+	Private pbScan As ProgressBar
+	Private clv As CustomListView
+	Private scanTime As Int = 30000
+	Private devices As List
+	Type Device(Name As String, Id As String)
+	Private myCharacteristics As List
+	Type Characteristic(ServiceId As String, CharacteristicId, Value As String)
+	Private ServiceId As String
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Resume
+	
+	StateChanged
+End Sub
+
+Public Sub StateChanged
+	lblState.Text = Starter.currentStateText
+	If Starter.connected Then
+		lblDeviceStatus.Text = "Connected: " & Starter.ConnectedName
+	Else
+		lblDeviceStatus.Text = "Not Connected"
+	End If
+	btnDisconnect.Enabled = Starter.connected
+	btnScan.Enabled = Not(Starter.connected)
+	pbReadData.Visible = False
+	pbScan.Visible = False
+	btnReadData.Enabled = Starter.connected
+	btnScan.Enabled = (Starter.currentState = Starter.manager.STATE_POWERED_ON) And Starter.connected = False
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnScan_Click
+	If btnScan.Text = "Start Scan" Then
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_COARSE_LOCATION)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result = False Then Return
+		pbScan.Visible = True
+		btnScan.Text = "Stop Scan"
+		clv.Clear
+		devices.Initialize
+		CallSub(Starter, "StartScan")
+		Sleep(scanTime)
+	End If
+	CallSub(Starter, "StopScan")
+	btnScan.Text = "Start Scan"
+	pbScan.Visible = False
+End Sub
+
+Sub DataAvailable (Service As String, characteristics As Map)
+	pbReadData.Visible = False
+	clv.Add(CreateServiceItem(Service), "")
+	For Each id As String In characteristics.Keys
+		clv.Add(CreateCharacteristicItem(id, characteristics.Get(id)), "")
+	Next
+End Sub
+
+Sub DeviceAvailable (name As String, id As String)
+	Dim myDevice As Device
+	myDevice.Name = name
+	myDevice.Id = id
+	devices.Add(myDevice)
+	clv.Add(CreateDeviceItem(name, id), "")
+End Sub
+
+Sub btnDisconnect_Click
+	CallSub(Starter, "Disconnect")
+	clv.Clear
+End Sub
+
+Sub btnReadData_Click
+	pbReadData.Visible = True
+	clv.Clear
+	myCharacteristics.Initialize
+	CallSub(Starter, "ReadData")
+End Sub
+
+Sub CreateDeviceItem (name As String, id As String) As Panel
+	Dim pnl As Panel
+	pnl.Initialize("")
+	pnl.Color = 0xFF808080
+	pnl.SetLayoutAnimated(0, 0, 0, clv.AsView.Width, 30dip)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = name & " (" & id & ")"
+	lbl.Gravity = Gravity.CENTER
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	pnl.AddView(lbl, 0, 0, clv.AsView.Width, 30dip)
+	Return pnl
+End Sub
+
+Sub CreateServiceItem (service As String) As Panel
+	ServiceId = service
+	Dim characteristic As Characteristic
+	characteristic.ServiceId = ServiceId
+	characteristic.CharacteristicId = ""
+	characteristic.Value = ""
+	myCharacteristics.Add(characteristic)
+
+	Dim pnl As Panel
+	pnl.Initialize("")
+	pnl.Color = 0xFF808080
+	pnl.SetLayoutAnimated(0, 0, 0, clv.AsView.Width, 30dip)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = service
+	lbl.Gravity = Gravity.CENTER
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	pnl.AddView(lbl, 0, 0, clv.AsView.Width, 30dip)
+	Return pnl
+End Sub
+
+Sub CreateCharacteristicItem(Id As String, Data() As Byte) As Panel
+	Dim characteristic As Characteristic
+	characteristic.ServiceId = ServiceId
+	characteristic.CharacteristicId = Id
+	characteristic.Value = ""
+	myCharacteristics.Add(characteristic)
+
+	Dim pnl As Panel
+	pnl.Initialize("")
+	pnl.SetLayoutAnimated(0, 0, 0, clv.AsView.Width, 40dip)
+	pnl.Color = Colors.White
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = Id
+	pnl.AddView(lbl, 0, 0, clv.AsView.Width, 20dip)
+	Dim lbl2 As Label
+	lbl2.Initialize("")
+	Try
+		lbl2.Text = BytesToString(Data, 0, Data.Length, "UTF8")
+	Catch
+		Log(LastException)
+		lbl2.Text = "Error reading data as string"
+	End Try
+	lbl2.TextColor = 0xFF909090
+	lbl2.TextSize = 14
+	pnl.AddView(lbl2, 0, 20dip, clv.AsView.Width, 20dip)
+	Return pnl
+End Sub
+
+
+Sub clv_ItemClick (Index As Int, Value As Object)
+	If lblDeviceStatus.Text = "Not Connected" Then
+		Dim myDevice As Device = devices.Get(Index)
+		Log("Device Selected: " & myDevice.Name & " (" & myDevice.Id & ")")
+		CallSub3(Starter, "ConnectDevice", myDevice.Name, myDevice.Id)
+		CallSub(Starter, "StopScan")
+		btnScan.Text = "Start Scan"
+		pbScan.Visible = False
+	Else
+		Dim id As InputDialog
+		Dim sf As Object = id.ShowAsync("", "Text to Send", "Ok", "", "Cancel", Null, False)
+		Wait For (sf) Dialog_Result(Result As Int)
+		If Result = DialogResponse.POSITIVE Then
+			Dim myCharacteristic As Characteristic = myCharacteristics.Get(Index)
+			CallSub3(Starter, "WriteData", myCharacteristic, id.Input)
+		End If
+	End If
+End Sub

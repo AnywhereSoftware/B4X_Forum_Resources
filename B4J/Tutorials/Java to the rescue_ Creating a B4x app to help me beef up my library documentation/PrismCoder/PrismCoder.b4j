@@ -1,0 +1,185 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=cssutils
+Library4=javaobject
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private btnConvert As Button
+	Private btnCopy As Button
+	Private sourceCode As TextArea
+	Private txtColumn As TextField
+	Private txtID As TextField
+	Private txtPrism As TextArea
+	Private txtRow As TextField
+	Private btnPaste As Button
+	Private sbCode As StringBuilder
+	Private txtTitle As TextField
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	'RightToLeft
+	MainForm.Show
+	MainForm.Title = "Prism Coder - BANanoVueMaterial Documentation Helper"
+	MaximizeStage(MainForm)
+End Sub
+
+'change the orientation of the scene
+Sub RightToLeft
+	Dim jo As JavaObject = MainForm
+	jo.GetFieldJO("scene").RunMethod("setNodeOrientation", Array("RIGHT_TO_LEFT"))
+End Sub
+
+'set your screen to maximize mode
+Sub MaximizeStage(frm As Form)
+	Dim jmf As JavaObject = frm
+	Dim stage As JavaObject = jmf.GetField("stage")
+	stage.RunMethod("setMaximized", Array As Object(True))
+End Sub
+
+'copy converted code to clipboard
+Sub btnCopy_Click
+	Dim stext As String = txtPrism.Text
+	stext = stext.Trim
+	If stext = "" Then
+		txtPrism.RequestFocus
+		CSSUtils.SetBorder(txtPrism,1,fx.Colors.Red,1)
+		Return
+	Else
+		'copy the text to the clipboard
+		fx.Clipboard.SetString(txtPrism.text)
+		CSSUtils.SetBorder(sourceCode,1,fx.Colors.LightGray, 1)
+	End If
+	sourceCode.Text = ""
+	txtPrism.Text = ""
+End Sub
+
+'convert code to bvm documentation
+Sub btnConvert_Click
+	'do we have the text
+	CSSUtils.SetBorder(txtID,1,fx.Colors.LightGray, 1)
+	CSSUtils.SetBorder(sourceCode,1,fx.Colors.LightGray, 1)
+	CSSUtils.SetBorder(txtTitle,1,fx.Colors.LightGray, 1)
+	CSSUtils.SetBorder(txtRow,1,fx.Colors.LightGray, 1)
+	CSSUtils.SetBorder(txtColumn,1,fx.Colors.LightGray, 1)
+	
+	Dim sText As String = sourceCode.Text
+	sText = sText.Trim
+	If sText = "" Then
+		sourceCode.RequestFocus
+		CSSUtils.SetBorder(sourceCode,2,fx.Colors.Red,1)
+		Return
+	End If
+	If txtID.Text = "" Then
+		txtID.RequestFocus
+		CSSUtils.SetBorder(txtID,2,fx.Colors.Red,1)
+		Return
+	End If
+	If txtTitle.Text = "" Then
+		txtTitle.RequestFocus
+		CSSUtils.SetBorder(txtTitle,2,fx.Colors.Red,1)
+		Return
+	End If
+	If txtRow.Text = "" Then
+		txtRow.RequestFocus
+		CSSUtils.SetBorder(txtRow,2,fx.Colors.Red,1)
+		Return
+	End If
+	If txtColumn.Text = "" Then
+		txtColumn.RequestFocus
+		CSSUtils.SetBorder(txtColumn,2,fx.Colors.Red,1)
+		Return
+	End If
+	
+	txtPrism.Text = ""
+	'start processing the code
+	sbCode.Initialize 
+	'split the code lines
+	AddComment("initialize code builder")
+	AddCode("vue.SourceCodeBuilder")
+	
+	Dim codeLines() As String = StrParse(CRLF, sourceCode.text)
+	'
+	For Each codeLine As String In codeLines
+		codeLine = codeLine.trim
+		Dim sline As String =  $"~"${codeLine}"~"$
+		AddCode($"vue.AddCode(${sline})"$)
+	Next
+	AddCode($"Main.CreateVBCode(vue, Me, "${txtID.text}", "${txtTitle.text}", vue.GetSourceCode).AddToContainer(cont, ${txtRow.text}, ${txtColumn.text})"$)
+	AddNewLine
+	'
+	'process events
+	AddCode($"Sub ${txtID.text}copy_click(e As BANanoEvent)"$)
+	AddCode($"vue.CopyCode2Clipboard("${txtID.text}")"$)
+	AddCode("End Sub")
+	AddNewLine
+	'
+	AddCode($"Sub ${txtID.text}download_click(e As BANanoEvent)"$)
+	AddCode($"vue.DownloadCode("${txtID.text}", "${txtID.text}.txt")"$)
+	AddCode("End Sub")
+	AddNewLine
+	
+	Dim sout As String = sbCode.ToString
+	sout = sout.Replace("~","$")
+	txtPrism.Text = sout
+End Sub
+
+'paste code from clipboard
+Sub btnPaste_Click
+	txtPrism.Text = ""
+	sourceCode.Text = fx.Clipboard.GetString
+End Sub
+
+'parse lines
+Sub StrParse(Delimiter As String, MV As String) As String()
+	Delimiter = FixDelimiter(Delimiter)
+	Return Regex.Split(Delimiter, MV)
+End Sub
+
+'fix delimiter
+Sub FixDelimiter(sValue As String) As String
+	If sValue = "|" Then sValue = "\|"
+	If sValue = "." Then sValue = "\."
+	If sValue = "\" Then sValue = "\\"
+	If sValue = "^" Then sValue = "\^"
+	If sValue = "$" Then sValue = "\$"
+	If sValue = "?" Then sValue = "\?"
+	If sValue = "*" Then sValue = "\*"
+	If sValue = "+" Then sValue = "\+"
+	If sValue = "(" Then sValue = "\("
+	If sValue = ")" Then sValue = "\)"
+	If sValue = "[" Then sValue = "\["
+	If sValue = "{" Then sValue = "\{"
+	If sValue = ";" Then sValue = "\;"
+	If sValue = "$" Then sValue = "\$"
+	Return sValue
+End Sub
+
+Sub AddNewLine
+	sbCode.append(CRLF)
+End Sub
+
+Sub AddCode(scomment As String)
+	sbCode.append(scomment).append(CRLF)
+End Sub
+
+Sub AddComment(sc As String)
+	sbCode.append($"'${sc}"$).append(CRLF)
+End Sub

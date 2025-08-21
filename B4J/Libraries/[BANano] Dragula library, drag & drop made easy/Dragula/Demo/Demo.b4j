@@ -1,0 +1,120 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=dragdrop.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Library4=bananoskeleton
+Library5=bananodragula
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	#IgnoreWarnings: 16, 10, 14, 15	
+	#LibraryAuthor: Alain Bailleul (AlwaysBusy)
+	#LibraryVersion: 1.01
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	Dim Drake As Dragula
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	' you can change some output params here
+	BANano.Initialize("BANano", "BANanoDragulaDemo",101)
+	BANano.HTML_NAME = "index.html"
+	
+	BANano.Header.Title="BANano Dragula Demo"
+	
+	'BANano.Header.AddJavascriptFile("dragula.min.js")
+	'BANano.Header.AddCSSFile("dragula.min.css")
+			
+	' start the build
+	BANano.Build(File.DirApp)
+	
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	' a layout where we have two colums each with the class 'dragula-container'
+	' this is how Dragula knows it is a container where we can drag from and drag to
+	' and a couple of labels we want to drag/drop
+	BANano.LoadLayout("#body", "dragdrop")
+	
+	' start Dragula
+	Drake.Initialize(Me, "Drake")	
+	Drake.Start
+	
+	' let's get one of the labels and check if it is draggable (id = lowercase!)
+	Dim item As BANanoObject
+	item = BANano.GetElement("#SKLabel1".ToLowerCase).ToObject
+	Log(item)
+	Log(Drake.CanMove(item))
+	
+	' how about one of our columns (containers)?
+	item = BANano.GetElement("#SKLeft".ToLowerCase).ToObject
+	Log(item)
+	Log(Drake.CanMove(item))
+End Sub
+
+' example of overriding a method
+' overrides the default accept method, which always returns true
+Sub Drake_Accepts(el As BANanoObject, target As BANanoObject, source As BANanoObject, sibling As BANanoObject) As Boolean 'ignore
+	Log("using my own function for Accepts!")
+	' for this example, we return false if the id of the element is SKLabel3
+	Dim elELem As BANanoElement = BANano.ToElement(el) ' cast to element	
+	If elELem.GetAttr("id") = "SKLabel3".ToLowerCase Then
+		Return False
+	End If
+	Return True
+End Sub
+
+Sub Drake_Cancel(el As BANanoObject, container As BANanoObject, source As BANanoObject)
+	Log("Cancel")
+End Sub
+
+Sub Drake_Cloned(clone As BANanoObject, original As BANanoObject, typ As BANanoObject)
+	Log("Cloned")
+End Sub
+
+Sub Drake_Drag(el As BANanoObject, source As BANanoObject)
+	Log("Drag")
+End Sub
+
+Sub Drake_DragEnd(el As BANanoObject)
+	Log("DragEnd")
+End Sub
+
+Sub Drake_Drop(el As BANanoObject, target As BANanoObject, source As BANanoObject, sibling As BANanoObject)
+	Log("Drop")
+End Sub
+
+Sub Drake_Out(el As BANanoObject, container As BANanoObject, source As BANanoObject)
+	Log("Out")
+End Sub
+
+Sub Drake_Over(el As BANanoObject, container As BANanoObject, source As BANanoObject)
+	Log("Over")
+End Sub
+
+Sub Drake_Remove(el As BANanoObject, container As BANanoObject, source As BANanoObject)
+	Log("Remove")
+End Sub
+
+Sub Drake_Shadow(el As BANanoObject, container As BANanoObject, source As BANanoObject)
+	Log("Shadow")
+End Sub

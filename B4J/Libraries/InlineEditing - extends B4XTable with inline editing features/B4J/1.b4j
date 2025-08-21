@@ -1,0 +1,131 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=Controls.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=xui views
+Library4=b4xtable
+Module1=|absolute|C:\Users\H\Documents\B4J\DarkLightPalette\InlineEditing
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private B4XTable1 As B4XTable
+	Private xui As XUI
+	Private B4XPlusMinus1 As B4XPlusMinus
+	Private TextField1 As B4XView
+	Private ColorsList As List
+	Private ie As InlineEditing
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.RootPane.LoadLayout("Controls")
+	ie.Initialize(B4XTable1, Me, "ie")
+	B4XPlusMinus1.mBase.RemoveViewFromParent
+	TextField1.RemoveViewFromParent
+	MainForm.Show
+	ColorsList = Array("Red", "Green", "Blue")
+	B4XTable1.AddColumn("Number", B4XTable1.COLUMN_TYPE_NUMBERS)
+	B4XTable1.AddColumn("String", B4XTable1.COLUMN_TYPE_TEXT)
+	B4XTable1.AddColumn("Color", B4XTable1.COLUMN_TYPE_TEXT)
+	B4XTable1.AddColumn("Date", B4XTable1.COLUMN_TYPE_DATE)
+	Dim data As List
+	data.Initialize
+	For i = 1 To 50
+		Dim row() As Object = Array(Rnd(1, 100), "Item #" & i, ColorsList.Get(i Mod ColorsList.Size), DateTime.Now)
+		data.Add(row)
+	Next
+	B4XTable1.SetData(data)
+End Sub
+
+
+Private Sub MainForm_Resize (Width As Double, Height As Double)
+	ie.TableResized
+End Sub
+
+Sub B4XTable1_CellClicked (ColumnId As String, RowId As Long)
+	'avoid calling ie.CellClicked if the column is not editable.
+	ie.CellClicked(ColumnId, RowId)
+End Sub
+
+Sub B4XTable1_DataUpdated
+	ie.DataUpdated
+End Sub
+
+Private Sub IE_EnterEditMode (FC As FocusedCell)
+	'FC.PrevValue holds the current value. It can also be used later to revert changes
+	Select FC.ColumnId
+		Case "Number"
+			B4XPlusMinus1.SetNumericRange(0, 100, 1)
+			B4XPlusMinus1.SelectedValue = FC.PrevValue
+			FC.View = B4XPlusMinus1.mBase
+		Case "String"
+			SetTextField
+			TextField1.Text = FC.PrevValue
+			FC.View = TextField1
+		Case "Color"
+			B4XPlusMinus1.SetStringItems(ColorsList)
+			B4XPlusMinus1.SelectedValue = FC.PrevValue
+			FC.View = B4XPlusMinus1.mBase
+		Case "Date"
+			SetTextField
+			TextField1.Text = DateTime.Date(FC.PrevValue)
+			FC.View = TextField1
+	End Select
+End Sub
+
+Private Sub IE_GetUpdatedValue (FC As FocusedCell) As Object
+	Select FC.ColumnId
+		Case "Number"
+			Return B4XPlusMinus1.SelectedValue
+		Case "String"
+			Return TextField1.Text
+		Case "Color"
+			Return B4XPlusMinus1.SelectedValue
+		Case "Date"
+			Try
+				Return DateTime.DateParse(TextField1.Text)
+			Catch
+				Return FC.PrevValue
+			End Try
+	End Select
+	Return Null
+End Sub
+
+Private Sub SetTextField
+	TextField1.SetColorAndBorder(xui.Color_Transparent, 0, 0, 0)
+	Dim tf As TextField = TextField1
+	Sleep(0)
+	tf.SelectAll
+End Sub
+
+Sub TextField1_Action
+	ie.ExitEditMode
+End Sub
+
+Sub TextField1_TextChanged (Old As String, New As String)
+	If ie.IsInEditingState And ie.CurrentlyFocusedCell.ColumnId = "Date" Then
+		Try
+			DateTime.DateParse(New)
+			TextField1.SetColorAndBorder(xui.Color_Transparent, 0, 0, 0)
+		Catch
+			TextField1.SetColorAndBorder(xui.Color_Transparent, 2, xui.Color_Red, 0)
+		End Try
+	End If
+End Sub
+

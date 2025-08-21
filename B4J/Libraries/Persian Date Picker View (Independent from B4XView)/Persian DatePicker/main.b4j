@@ -1,0 +1,43 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Module1=PerPicker
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private Button1 As Button
+	Private Label1 As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Wait For (PerPicker.ShowPicker(MainForm.RootPane, Button1.Left+Button1.Width, Button1.Top, 1399, 3, True, True)) Complete (Result As String)
+	If Result = "" Then Return
+	Log (Result)
+	Label1.Text = Result
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

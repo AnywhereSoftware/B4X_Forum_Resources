@@ -1,0 +1,134 @@
+﻿Build1=Default,b4a.example
+File1=book1.xlsx
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=apoi
+Library3=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: poi-3.12-android-a
+#AdditionalJar: poi-ooxml-schemas-3.12-20150511-a
+#MultiDex: true
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim xls As XSSFWorkbook
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	File.Copy(File.DirAssets,"book1.xlsx",File.DirInternal,"book1.xlsx")
+	xls.Initialize("",File.Combine(File.DirInternal,"book1.xlsx"))
+	Log($"ActiveSheetIndex=${xls.ActiveSheetIndex}"$)
+	Dim sheet As XLSSheet = xls.getSheetAt(xls.ActiveSheetIndex)
+	Log($"ActiveSheet.ActiveCell=${sheet.ActiveCell}"$)
+	Log($"ActiveSheet.hasComments=${sheet.hasComments}"$)
+	Dim firstrow As Int = sheet.FirstRowNum
+	Dim lastrow As Int = sheet.LastRowNum
+	Log($"Row FirstRow=${firstrow}, LastRow=${lastrow}"$)
+	For i= firstrow To lastrow
+		Dim row As XSSFRow =sheet.getRow(i)
+		'Log(row)
+		Dim firstcell As Int = row.FirstCellNum
+		Dim lastcell As Int = row.LastCellNum
+		Log($"Row #${i} FirstCell=${row.FirstCellNum}, LastCell=${row.LastCellNum}"$)
+'		If i = 1 Then
+'			Dim cell As XSSFCell =row.getCell(13)
+'			cell.StringCellValue = "Test.pdf"
+'		End If
+		For o= firstcell To lastcell-1
+			Dim cell As XSSFCell =row.getCell(o)
+			Log($"Cell #${o}"$)
+			'Log(cell.IsInitialized)
+			If cell.IsInitialized Then
+				Log($"CellValueType=${cell.CellType}"$)
+				'Log("Raw:"&cell.RawValue)
+				If cell.CellType = 1 Then
+					Log(cell.StringCellValue)
+				else if cell.CellType = 0 Then
+					Log(cell.NumericCellValue)
+				End If
+			'	Log(cell)
+			End If
+			'Log(row)
+
+		Next
+	Next
+	
+	
+	Dim row As XSSFRow = sheet.createRow(30)	
+	Dim cell As XSSFCell =row.createCell(0)
+	cell.NumericCellValue = 29
+	Dim cell As XSSFCell =row.createCell(1)
+	cell.StringCellValue = "Erel Rocks"
+	Dim cell As XSSFCell =row.createCell(2)
+	cell.StringCellValue = "B4X :-)"
+	Dim cell As XSSFCell =row.createCell(3)
+	cell.NumericCellValue = 99
+	Dim cell As XSSFCell =row.createCell(4)
+	cell.NumericCellValue = 2019
+	Dim cell As XSSFCell =row.createCell(5)
+	cell.StringCellValue = "aPOI"
+	Dim cell As XSSFCell =row.createCell(6)
+	cell.NumericCellValue = 9.9
+
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	wait for Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		Dim outstream As OutputStream = File.OpenOutput(File.DirRootExternal,"excelout.xlsx",False)
+		xls.write(outstream)
+		outstream.Close
+	End If
+	
+'	Dim rows As List = sheet.Rows
+'	If rows <> Null And rows.IsInitialized And rows.Size > 0 Then
+'		For i= 0 To rows.Size-1
+'			Dim row As XSSFRow = rows.Get(i)
+'			Dim cols As List = row.Cells
+'			For o= 0 To cols.Size-1
+'				Dim cell As XSSFCell = cols.Get(o)
+'				Log(cell.toString)
+'				
+'			Next
+'			
+'		Next
+'	End If
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

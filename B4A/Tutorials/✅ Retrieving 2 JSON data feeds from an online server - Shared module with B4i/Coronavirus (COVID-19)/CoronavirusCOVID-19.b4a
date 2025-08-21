@@ -1,0 +1,139 @@
+﻿Build1=Default,com.simplysoftware.covid19
+File1=confirmed.png
+File2=CoronaInformation.bal
+File3=deceased.png
+File4=planet.png
+File5=recovered.png
+File6=recovering.png
+File7=update.png
+FileGroup1=Images
+FileGroup2=Layouts
+FileGroup3=Images
+FileGroup4=Images
+FileGroup5=Images
+FileGroup6=Images
+FileGroup7=Images
+Group=Default Group
+Library1=core
+Library2=okhttputils2
+Library3=xui views
+Library4=json
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~
+Module1=|relative|..\..\..\..\Shared\Project Classes\Coronavirus - COVID-19\Corona
+Module2=Starter
+NumberOfFiles=7
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: COVID-19
+	#VersionCode: 1
+	#VersionName: 1.0.0.1
+	
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private CoronaClass As Corona
+
+	Private B4XCmbCountry As B4XComboBox
+	Private ImgWorld, ImgCountry, LblWorldConfirmed, LblCountryConfirmed, LblWorldRecovering, LblCountryRecovering, LblWorldRecovered, LblCountryRecovered, _
+	 LblWorldDeceased, LblCountryDeceased, LblWorldConfirmedToday, LblCountryConfirmedToday, LblWorldDeceasedToday, LblCountryDeceasedToday As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+
+	Activity.LoadLayout("CoronaInformation")
+	CoronaClass.Initialize
+	Activity.Title = CoronaClass.AppName
+
+	Wait For (CallSub(CoronaClass, "FetchCoronaJSON")) Complete (Completed As Boolean)
+	B4XCmbCountry.SelectedIndex = 1
+	B4XCmbCountry_SelectedIndexChanged(B4XCmbCountry.SelectedIndex)
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+'POPULATE THE SPINNER WITH THE COUNTRY LIST
+Public Sub PopulateB4XCmbCountry(Countries As List)
+	B4XCmbCountry.SetItems(Countries)
+End Sub
+
+'CENTER IMAGES CLICKED
+Sub ImgClicked_Click
+	Dim ImgClicked As ImageView = Sender
+	
+#If B4A
+	ToastMessageShow(ImgClicked.Tag, False)
+#Else If B4i
+	HD.ToastMessageShow(ImgClicked.Tag, True)
+#End If	
+End Sub
+
+'SPINNER BOX INDEX CHANGED
+Sub B4XCmbCountry_SelectedIndexChanged(Index As Int)
+#If B4A
+	If B4XCmbCountry.cmbBox.SelectedItem = "SELECT COUNTRY" Then Return  
+#Else If B4i
+   	If B4XCmbCountry.mBtn.Text = "SELECT COUNTRY" Then Return
+#End If
+
+	Dim CountryInfo() As Object = CoronaClass.MapCountryInfo.Get(B4XCmbCountry.cmbBox.SelectedItem)
+
+	LblCountryConfirmed.Text = NumberFormat(CountryInfo(0), 0, 0)
+	LblCountryRecovering.Text = NumberFormat(CountryInfo(1), 0, 0)
+	LblCountryRecovered.Text = NumberFormat(CountryInfo(2), 0, 0)
+	LblCountryDeceased.Text = NumberFormat(CountryInfo(3), 0, 0)
+	LblCountryConfirmedToday.Text = NumberFormat(CountryInfo(4), 0, 0)
+	LblCountryDeceasedToday.Text = NumberFormat(CountryInfo(5), 0, 0)
+
+	Wait For (CoronaClass.DownloadFlagImage(CountryInfo(6))) Complete (Flag As Bitmap)	
+	ImgCountry.SetBitmap(Flag)
+	ImgCountry.Tag = B4XCmbCountry.cmbBox.SelectedItem
+End Sub
+
+'POPULATE WORLD TOTALS
+Public Sub PopulateWorldTotals()
+	LblWorldConfirmed.Text = NumberFormat(CoronaClass.WD.Confirmed, 0, 0)
+	LblWorldRecovering.Text = NumberFormat(CoronaClass.WD.Recovering, 0, 0)
+	LblWorldRecovered.Text = NumberFormat(CoronaClass.WD.Recovered, 0, 0)
+	LblWorldDeceased.Text = NumberFormat(CoronaClass.WD.Deceased, 0, 0)
+	LblWorldConfirmedToday.Text = NumberFormat(CoronaClass.WD.ConfirmedToday, 0, 0)
+	LblWorldDeceasedToday.Text = NumberFormat(CoronaClass.WD.DeceasedToday, 0, 0)
+End Sub
+
+'CLICK UPDATE IMAGE TO UPDATE JSON INFORMATION  
+Sub ImgUpdate_Click
+#If B4A
+	ToastMessageShow("Updating all information", False)
+#Else If B4i
+	HD.ToastMessageShow("Updating all information", True)
+#End If
+
+	Dim TmpIndex As Int = B4XCmbCountry.SelectedIndex
+	Wait For (CallSub(CoronaClass, "FetchCoronaJSON")) Complete (Completed As Boolean)
+	
+	B4XCmbCountry.SelectedIndex = TmpIndex
+	B4XCmbCountry_SelectedIndexChanged(B4XCmbCountry.SelectedIndex)
+End Sub

@@ -1,8 +1,9 @@
 ### Run B4J console app by Erel
-### 08/14/2025
+### 08/18/2025
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168233/)
 
 Depends on jShell. Tested on Windows. Expected to work on Mac and Linux as well.  
+This code will not work when called from a standalone package. More powerful implementation is available here: <https://www.b4x.com/android/forum/threads/jarcaller-run-and-kill-non-ui-jars.168284/>  
   
 
 ```B4X
@@ -27,7 +28,7 @@ End Sub
 
   
   
-Usage example:   
+Usage example:  
 
 ```B4X
 RunJar("C:\Users\H\Downloads\projects\ccc\Objects\ccc.jar", Array("aaa", "bbb", "ccc"))

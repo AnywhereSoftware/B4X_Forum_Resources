@@ -1,0 +1,118 @@
+﻿Version=0.01
+IconFile=
+FullScreen=False
+IncludeTitle=True
+NumberOfModules=0
+Package=anywheresoftware.b4a.samples.sql
+Label=SQL
+VersionCode=1
+VersionString=
+Orientation=unspecified
+NumberOfFiles=1
+File1=smiley.gif
+NumberOfLibraries=2
+Library1=core
+Library2=sql
+@EndOfDesignText@
+'Activity module
+Sub Process_Globals
+	Dim SQL1 As SQL
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    If FirstTime Then 
+		SQL1.Initialize(File.DirDefaultExternal, "test1.db", True)
+	End If
+	CreateTables
+	FillSimpleData
+	LogTable1
+	InsertManyRows
+	Log("Number of rows = " & SQL1.ExecQuerySingleResult("SELECT count(*) FROM table1"))
+	
+	InsertBlob 'stores an image in the database.
+	ReadBlob 'load the image from the database and displays it.
+End Sub
+
+Sub CreateTables
+	SQL1.ExecNonQuery("DROP TABLE IF EXISTS table1")
+	SQL1.ExecNonQuery("DROP TABLE IF EXISTS table2")
+	SQL1.ExecNonQuery("CREATE TABLE table1 (col1 TEXT , col2 INTEGER, col3 INTEGER)")
+	SQL1.ExecNonQuery("CREATE TABLE table2 (name TEXT, image BLOB)") 
+End Sub
+
+Sub FillSimpleData
+	SQL1.ExecNonQuery("INSERT INTO table1 VALUES('abc', 1, 2)")
+	SQL1.ExecNonQuery2("INSERT INTO table1 VALUES(?, ?, ?)", Array As Object("def", 3, 4))
+End Sub
+
+Sub InsertManyRows
+	Dim start As Long
+	start = DateTime.Now
+	SQL1.BeginTransaction
+	Try
+		For i = 1 To 500
+			SQL1.ExecNonQuery2("INSERT INTO table1 VALUES ('def', ?, ?)", Array As Object(i, i))
+		Next
+		SQL1.TransactionSuccessful
+	Catch
+		Log(LastException.Message)
+	End Try
+	SQL1.EndTransaction
+	Log(DateTime.Now - start)
+End Sub
+
+Sub LogTable1
+	Dim Cursor1 As Cursor
+	Cursor1 = SQL1.ExecQuery("SELECT col1, col2, col3 FROM table1")
+	For i = 0 To Cursor1.RowCount - 1
+		Cursor1.Position = i
+		Log("************************")
+		Log(Cursor1.GetString("col1"))
+		Log(Cursor1.GetInt("col2"))
+		Log(Cursor1.GetInt("col3"))
+	Next
+	Cursor1.Close
+End Sub
+
+Sub InsertBlob
+	'convert the image file to a bytes array
+	Dim InputStream1 As InputStream
+	InputStream1 = File.OpenInput(File.DirAssets, "smiley.gif")
+	Dim OutputStream1 As OutputStream
+	OutputStream1.InitializeToBytesArray(1000)
+	File.Copy2(InputStream1, OutputStream1)
+	Dim Buffer() As Byte
+	Buffer = OutputStream1.ToBytesArray
+	
+	'write the image to the database
+	SQL1.ExecNonQuery2("INSERT INTO table2 VALUES('smiley', ?)", Array As Object(Buffer))
+End Sub
+
+Sub ReadBlob
+	Dim Cursor1 As Cursor
+	'Using ExecQuery2 is safer as it escapes special characters automatically.
+	'In this case it doesn't really matter.
+	Cursor1 = SQL1.ExecQuery2("SELECT image FROM table2 WHERE name = ?", Array As String("smiley"))
+	Cursor1.Position = 0
+	Dim Buffer() As Byte 'declare an empty byte array
+	Buffer = Cursor1.GetBlob("image")
+	Dim InputStream1 As InputStream
+	InputStream1.InitializeFromBytesArray(Buffer, 0, Buffer.Length)
+	
+	Dim Bitmap1 As Bitmap
+	Bitmap1.Initialize2(InputStream1)
+	InputStream1.Close
+	Activity.SetBackgroundImage(Bitmap1)
+End Sub
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (Finishing As Boolean)
+
+End Sub
+

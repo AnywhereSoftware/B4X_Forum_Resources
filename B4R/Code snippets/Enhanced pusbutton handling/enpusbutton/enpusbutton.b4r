@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=3.31
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public Serial1 As Serial
+	Private Timertasti As Timer
+' ****** Define a block of variables for each pushbutton defined
+	Private premutof1 As Byte=0   ' valore iniziale
+	Private timerstf1 As Byte=0  'timer F1 start repeat
+	Private timerrpf1 As Byte=0  'timer ripetizione
+	Private ButtonF1 As Pin 'pin for the button
+	Private BounceTimeF1 As ULong
+	Private BounceDelayF1 = 10 As ULong
+'********************** End pusbutton define
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Timertasti.Initialize("timertasti_Tick",20)
+	Timertasti.Enabled=True
+	'Using the internal pull up resistor to prevent the pin from floating. define for each buttom
+	ButtonF1.Initialize(22, ButtonF1.MODE_INPUT_PULLUP) ' PinA0
+	ButtonF1.AddListener("ButtonF1_StateChanged")
+End Sub
+
+Private Sub sendtasto(tasto As Byte)
+Log("Key pressed" , tasto)
+End Sub
+
+private Sub timertasti_Tick
+'***** define this block for each button you need *************
+	If premutof1=1 Then
+		timerstf1= timerstf1+1
+		If timerstf1>30 Then
+			premutof1=2
+			sendtasto(0) ' first virtual pushbutton pressed event
+		End If
+	End If
+	If premutof1=2 Then
+		timerrpf1= timerrpf1+1
+		If timerrpf1>10 Then
+			timerrpf1=0
+			sendtasto(0)  ' repeating virtual pushbutton pressed event
+		End If
+	End If
+'************************ End pushbutton block
+End Sub
+
+'**** Event block for each pushbutto defined
+Private Sub ButtonF1_StateChanged (State As Boolean)
+	Log("STATE P1:",State)
+	If State = False Then 'remember, False means button pressed.
+		If Millis - BounceTimeF1 < BounceDelayF1 Then
+			Log("debounce")
+			Return 'Return, bouncing
+		Else
+			BounceTimeF1 = Millis 'reset BounceTime to current time
+			sendtasto( 0)  '***** every button can share the same sub or you can define a different sub
+			premutof1=1  'inizia l'attesa per la ripetizione
+		End If
+	Else
+		premutof1=0   ' valore iniziale
+		timerstf1=0  'timer F1 start repeat
+		timerrpf1=0  'timer ripetizione
+	End If
+End Sub

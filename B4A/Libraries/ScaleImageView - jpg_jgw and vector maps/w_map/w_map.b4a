@@ -1,0 +1,327 @@
+﻿Build1=Default,com.w_map
+File1=info.txt
+File2=Main.bal
+File3=w.jgw
+File4=w.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=scaleimageview
+Library3=phone
+Library4=runtimepermissions
+Library5=stringfunctions
+Library6=ime
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+NumberOfFiles=4
+NumberOfLibraries=6
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: w_map
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#AdditionalJar: ScaleImage
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Private ScaleImageView1 As ScaleImageView
+	Dim sf As StringFunctions
+	Dim IME As IME
+	
+	Dim cestaksuboru As String
+	Dim nazovsuboru As String
+	Private List1b As List
+	Dim naz_sub_poi As String
+
+	'definovanie obrazovych rozmerov
+	Private sir_obr As Double
+	Private vys_obr As Double
+	Private xobr As Double
+	Private yobr As Double
+	
+	Private xpixsize As Double
+	Private ypixsize As Double
+	Private xcoor As Double
+	Private ycoor As Double
+	Private pix_lat As Double
+	Private pix_lon As Double
+	
+	Private kde_lat As Double
+	Private kde_lon As Double
+	Private kde_lat_pix As Double
+	Private kde_lon_pix As Double
+	
+	Private mZoom As Float
+	Private mX As Float
+	Private mY As Float
+	
+	'definovanie stredoveho kruhu
+	Dim stredx As Float ' Easting of circle position, 0 to 1
+	Dim stredy As Float ' Northing of circle position, 0 to 1
+	Dim str_radius As Float = 10dip
+	Dim strlin_sir As Float = 2dip
+	Dim strcirc_sir As Float = 4dip
+	
+	Dim bod_radius As Float = 4dip
+	Dim bod_sir As Float = 2dip
+
+	Private lbl_sirobr As Label
+	Private lbl_vysobr As Label
+	Private lbl_xobr As Label
+	Private lbl_yobr As Label
+	Private lblLat As Label
+	Private lblLon As Label
+
+	Private Button1 As Button
+	Private Button11 As Button
+	Private Button9 As Button
+	Private EditText6 As EditText
+	Private EditText7 As EditText
+	Private Label11 As Label
+	Private Label16 As Label
+	Private Panel4 As Panel
+	Private Label1 As Label
+	Private Label2 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example
+	Activity.LoadLayout("Main")
+	Dim rp As RuntimePermissions
+	cestaksuboru = rp.GetSafeDirDefaultExternal("")
+	cestaksuboru = "Android/data/com.w_map/files/"
+	File.Copy (File.DirAssets,"w.jpg",File.DirRootExternal,cestaksuboru & "w.jpg")
+	File.Copy (File.DirAssets,"w.jgw",File.DirRootExternal,cestaksuboru & "w.jgw")
+	File.Copy (File.DirAssets,"info.txt",File.DirRootExternal,cestaksuboru & "info.txt")
+	
+	Dim po As Phone
+	po.SetScreenOrientation(1)
+
+	sf.Initialize
+	IME.Initialize("IME")
+	
+	Dim cd_ET6 As ColorDrawable
+	cd_ET6.Initialize2(Colors.RGB(255,255,255),5dip,1dip,Colors.Black)
+	EditText6.Background = cd_ET6
+
+	Dim cd_ET7 As ColorDrawable
+	cd_ET7.Initialize2(Colors.RGB(255,255,255),5dip,1dip,Colors.Black)
+	EditText7.Background = cd_ET7
+	
+	Panel4.Visible = False
+	
+	otvor_mapu
+	citaj_jgw
+	otvor_points
+	
+End Sub
+
+Sub Activity_Resume
+	nacitaj_nastav
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	uloz_nastav
+End Sub
+
+Sub otvor_points
+
+	naz_sub_poi = "info.txt"
+	List1b = File.ReadList(File.DirRootExternal, "/" & cestaksuboru & naz_sub_poi)
+	
+End Sub
+
+Sub otvor_mapu
+	
+	nazovsuboru = "w.jpg"
+	ScaleImageView1.ImageFile = File.DirRootExternal & "/" & cestaksuboru & nazovsuboru
+	
+	Dim loops As Int = 1
+	Do Until ScaleImageView1.IsReady
+		Sleep(100)
+		loops = loops + 1
+		If loops > 100 Then ' give it up to 10 seconds
+			Exit
+		End If		
+	Loop
+	
+	sir_obr = ScaleImageView1.SrcWidth
+	vys_obr = ScaleImageView1.SrcHeight
+	lbl_sirobr.Text = sir_obr
+	lbl_vysobr.Text = vys_obr
+
+	If File.Exists(File.DirInternal, "w.set") Then ScaleImageView1.SetScaleAndCenter(mZoom,mX,mY,1)
+	
+End Sub
+
+Sub citaj_jgw
+
+Dim subor_jgw As String
+	subor_jgw = sf.Left(nazovsuboru,sf.Len(nazovsuboru)-4) & ".jgw"
+	
+	Dim List1 As List
+	List1 = File.ReadList(File.DirRootExternal, "/" & cestaksuboru & subor_jgw)
+
+	xpixsize = Abs(List1.Get(0))
+	ypixsize = Abs(List1.Get(3))
+	xcoor = sf.Trim(List1.Get(4))
+	ycoor = sf.Trim(List1.Get(5))
+
+End Sub
+
+Sub pix_to_coor
+	pix_lon = xcoor + Round2((Round2(xobr,6)*xpixsize),6)
+	pix_lat = ycoor - Round2((Round2(yobr,6)*ypixsize),6)
+
+	lblLat.Text = pix_lat
+	lblLon.Text = pix_lon
+
+End Sub
+
+Sub ScaleImageView1_OnDraw(viewcanvas As Canvas) 'The view is being redrawn. Use viewcanvas to draw on it.
+	Dim siv As ScaleImageView = Sender
+	
+	'napln body
+	If naz_sub_poi <> "xxx" Then
+		
+	Dim nazovbodu As String
+	For i = 0 To List1b.Size-1
+		
+				
+			Dim str() As String
+			str = Regex.split(":", List1b.Get(i))
+			
+			'konverzia wgs do pixelov celeho obrazku
+			kde_lon_pix = (str(2) - xcoor)/xpixsize
+			kde_lat_pix = (ycoor - str(1))/ypixsize
+			
+			'konverzia pixelov celeho obrazku do pixelov obrazoveho okna
+			Dim viewxy() As Float = siv.SourceXYtoViewXY(kde_lon_pix, kde_lat_pix)
+			
+			'nakresli nazov bodu
+			nazovbodu = str(0)
+			Dim tx As Float = viewxy(0) '+ bod_radius*1.2
+			Dim ty As Float = viewxy(1) + bod_radius*5
+			viewcanvas.DrawText(nazovbodu, tx , ty, Typeface.DEFAULT_BOLD, 10, Colors.Blue, "CENTER")
+
+			'nakresli bod
+			viewcanvas.DrawCircle( viewxy(0),  viewxy(1), bod_radius, Colors.Red, False, bod_sir)
+
+	Next
+	
+	Else
+	End If
+	'konec napln body
+	
+	'stredovy kruh
+	stredx = siv.Width/2 ' Easting of circle position, 0 to 1
+	stredy = siv.Height/2 ' Northing of circle position, 0 to 1
+	viewcanvas.DrawLine(stredx - str_radius, stredy,stredx + str_radius, stredy, Colors.Black, strlin_sir)
+	viewcanvas.DrawLine(stredx, stredy - str_radius, stredx, stredy + str_radius, Colors.Black, strlin_sir)
+	viewcanvas.DrawCircle(stredx, stredy, str_radius, Colors.Red, False, strcirc_sir)
+	
+	'x y suradnice stredoveho bodu
+	xobr= siv.CenterX
+	yobr= siv.CenterY
+	lbl_xobr.Text = xobr
+	lbl_yobr.Text = yobr
+	
+	pix_to_coor
+	
+End Sub
+
+Sub uloz_nastav
+	mZoom = ScaleImageView1.Scale
+	mX = ScaleImageView1.CenterX / ScaleImageView1.SrcWidth
+	mY = ScaleImageView1.CenterY / ScaleImageView1.SrcHeight
+	
+	Dim nastavenia As String
+	nastavenia = mZoom & ":" & mX & ":" & mY
+	File.WriteString(File.DirInternal,"w.set",nastavenia)
+	
+End Sub
+
+Sub nacitaj_nastav
+	'-------------------------------------------------------------------------------------------
+	If File.Exists(File.DirInternal, "w.set") Then
+		Try
+			Dim List1 As List
+			Dim str() As String
+			List1 = File.ReadList(File.DirInternal, "w.set")
+			For i = 0 To List1.Size-1
+				str = Regex.split(":", List1.Get(i))
+				mZoom=str(0)
+				mX=str(1)
+				mY=str(2)
+			Next
+			
+		Catch
+			mZoom=0
+			mX=0.5
+			mY=0.5
+		End Try
+	Else
+		mZoom=0
+		mX=0.5
+		mY=0.5
+	End If
+	
+End Sub
+
+
+Sub Button9_Click
+	Try
+	kde_lat=EditText6.Text.Replace(",",".")
+	kde_lon=EditText7.Text.Replace(",",".")
+
+	kde_lon_pix = (kde_lon - xcoor)/xpixsize
+	kde_lat_pix = (ycoor - kde_lat)/ypixsize
+	
+	lbl_yobr.Text = kde_lat_pix
+	lbl_xobr.Text = kde_lon_pix
+
+	ScaleImageView1.SetScaleAndCenterPixels(ScaleImageView1.Scale,kde_lon_pix, kde_lat_pix, 1)
+	Catch
+		ToastMessageShow ("Write Lat Lon.", True)
+		EditText6.RequestFocus
+	End Try
+End Sub
+
+Sub Button1_Click
+	If Panel4.Visible=False Then
+		Panel4.Visible=True
+		EditText6.RequestFocus
+	Else
+		IME.HideKeyboard
+		Panel4.Visible=False
+	End If
+End Sub
+
+Sub Button11_Click
+	Panel4.Visible=False
+End Sub

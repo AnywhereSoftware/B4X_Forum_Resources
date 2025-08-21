@@ -1,0 +1,87 @@
+﻿Build1=Default,uni.example
+File1=11186.png
+File2=ItemLayout.bal
+File3=L1.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=reflection
+Library3=xlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: xListView
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+Sub Process_Globals
+
+End Sub
+Sub Activity_Resume
+	
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+Sub Globals
+	Private xLV As xListView
+	Private lblTitle As Label
+	Private lblTime As Label
+End Sub
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("L1")
+	xLV.selectionColor = Colors.Cyan
+	xLV.OffscreenItems=5 'Default = 5 DON'T CHANGE AT RUNTIME
+	xLV.SetScrollbarColor(Colors.Blue)
+	xLV.HideScrollBar(False) ' Set True to hide Scrollbar
+	xLV.DisableSelectionColor=False 
+End Sub
+Sub xLV_PanelRequested(Index As Int)
+	'Load the panel here , the panel will be automatically removed when it's not visible (don't remove it manually) 
+	Dim P As Panel
+	P.Initialize("")
+	P.SetLayout(0,0,xLV.AsView.Width,180dip)
+	P.LoadLayout("ItemLayout") 'Disable animation from the Visual Designer for more smooth scrolling
+	lblTitle.Text= "Number : " & Index
+	xLV.LoadPanel(P,Index) 
+End Sub
+Sub Button1_Click
+	Dim B As Button=Sender 
+	B.Text="Clicked"
+	
+End Sub
+Sub xLV_ItemClick (Index As Int, Value As Object)
+	ToastMessageShow("Item " & Index & " Clicked",False)
+End Sub
+Sub xLV_ItemLongClick (Index As Int, Value As Object)
+	ToastMessageShow("Item " & Index & " Long Clicked",False)
+End Sub
+Sub btnAddItems_Click
+	Dim ms As Long = DateTime.Now
+	For i = 1 To 10000
+		xLV.NewItem(180dip,i)
+	Next
+	xLV.Reload ' you must call reload after adding new items 
+	lblTime.Text = "Load Time : " & (DateTime.Now - ms) & " ms    -   Total Items : " & xLV.Size 
+End Sub
+
+Sub btnresize_Click
+	Dim B As Button=Sender
+	Dim P As Panel = B.Parent
+	If P.Height=180dip Then xLV.ResizeItem(P.Tag,120dip) Else xLV.ResizeItem(P.Tag,180dip)
+	xLV.RefreshList
+End Sub

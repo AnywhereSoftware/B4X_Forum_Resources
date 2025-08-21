@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.02</doclet-version-NOT-library-version>
+    <class>
+        <name>com.biswajit.socketio.SocketIO</name>
+        <shortname>SocketIOClient</shortname>
+        <owner>process</owner>
+        <event>OnConnecting</event>
+        <event>OnConnectError (error As Object)</event>
+        <event>OnConnectionTimeout (timeout As Object)</event>
+        <event>OnConnect</event>
+        <event>OnReconnectAttempt (attemptNumber As Object)</event>
+        <event>OnReconnecting (attemptNumber As Object)</event>
+        <event>OnReconnect (attemptNumber As Object)</event>
+        <event>OnReconnectError (error As Object)</event>
+        <event>OnReconnectFailed</event>
+        <event>OnDisconnect (reason As String)</event>
+        <event>OnError (error As String)</event>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>addEvent</name>
+            <comment>Add event listener
+ 
+ Server Example: socket.emit("notification", somedata)
+ 
+ Example: &lt;code&gt;
+ Sub Activity_Create(FirstTime As Boolean)
+ 	socket.initialize("eventname")
+ 	socket.connect("http://172.0.0.1:999/")
+ 	socket.addEvent("notification","notify")
+ End Sub&lt;/code&gt;
+ 
+ This will add a listener which will call 'eventname_notify' method
+ whenever the server broadcast a 'notification' event and
+ you can get the data received from server as follows
+ &lt;code&gt;
+ Sub eventname_notify(message As Object)
+ 	Log(message)
+ End Sub
+ &lt;/code&gt;
+ * If your server waiting for an acknowledgment
+ &lt;code&gt;
+ Sub eventname_notify(message As Object,ack as Object)
+ 	socket.sendAck(ack,array(1,2,3))
+  Log(message)
+ End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>event</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>callback</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>disconnect</name>
+            <comment>Disconnect SocketIO
+ Example: 
+ &lt;code&gt;
+ Sub Activity_Pause (UserClosed As Boolean)
+ 	socket.disconnect()
+ End Sub
+ &lt;/code&gt;
+ On successful disconnect it will raise 'OnDisconnect' event</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>sendAck</name>
+            <comment>Call an acknowledgment</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ack</name>
+                <type>java.lang.Object</type>
+            </parameter>
+            <parameter>
+                <name>args</name>
+                <type>java.lang.Object[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>removeEvent</name>
+            <comment>Remove event listener
+ 
+ Example: &lt;code&gt;
+ Sub Activity_Create(FirstTime As Boolean)
+ 	socket.initialize("eventname")
+ 	socket.connect("http://172.0.0.1:999/")
+ 	socket.addEvent("notification","notify")
+ End Sub
+ 
+ Sub ButtonClose_click
+ 	socket.removeEvent("notification","notify")
+ End Sub
+ &lt;/code&gt;
+ This will remove already attached listener</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>event</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>callback</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>connectWithOptions</name>
+            <comment>Connect SocketIO to the server with options
+ 
+ It accepts 7 parameters
+ String host = server url (Mandatory)
+ String params = query parameters (Optional)
+ Boolean secure = Whether establish a secure connection or not (Mandatory)
+ Boolean reconnection = Whether to reconnect automatically (Default True)
+ int reconnectionAttempts = Number of reconnection attempts before giving up (Default Infinite)
+ long reconnectionDelay = How long to initially wait before attempting a new reconnection (Default 1000ms)
+ long reconnectionDelayMax = Maximum amount of time to wait between reconnections. Each attempt increases the reconnection delay by 2x (Default 5000ms)
+ long timeout = Connection timeout before a connect_error and connect_timeout events are emitted (Default 20000ms)
+ 
+ Example: &lt;code&gt;
+ Sub Activity_Create(FirstTime As Boolean)
+ 	socket.initialize("eventname")
+ 	socket.connect("http://172.0.0.1:999/","",false, true, 0,1000,5000,30000)
+ End Sub&lt;/code&gt;
+ 
+ 1. 'OnConnecting' event will be raised whenever it tries to connect to the server
+ 2. 'OnConnectError' will be raised if any error occurs when connecting
+ 3. 'OnConnectionTimeout' will be raised if connection does not receive a response from the server after approximately 30 to 60 seconds
+ 4. 'OnConnect' will be raised on successful connection 
+ 5. 'OnDisconnect' will be raised if the disconnection was initiated by the server, you need to reconnect manually
+ 6. 'OnReconnectAttempt' will be raised if it tries to reconnect after connection timeout or if connection disconnected from client side
+ 7. 'OnReconnecting' will be raised on reconnection attempt
+ 8. 'OnReconnect' will be raised on successful connection after connection timeout or if connection disconnected from client side
+ 9. 'OnReconnectError' will be raised if any error occurs when connecting
+ 10. 'OnReconnectFailed' will be raised if any error occurs when connecting
+ 11. 'OnError' will be raised if any error occurs</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>params</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>secure</name>
+                <type>java.lang.Boolean</type>
+            </parameter>
+            <parameter>
+                <name>reconnection</name>
+                <type>java.lang.Boolean</type>
+            </parameter>
+            <parameter>
+                <name>reconnectionAttempts</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>reconnectionDelay</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>reconnectionDelayMax</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>initialize</name>
+            <comment>Initialize SocketIO
+ 
+ Example: &lt;code&gt;socket.initialize("eventname")&lt;/code&gt;
+ 
+ Note: 'eventname' must be in lowercase</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>emit</name>
+            <comment>Emit used to send data to server
+ Example: &lt;code&gt;socket.emit("eventname","something")&lt;/code&gt;
+ 
+ Getting Acknowledgment from server
+ &lt;code&gt;
+ Sub eventname_Ack(data As Object)
+ 	Log(data)
+ End Sub&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>event</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>data</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>connect</name>
+            <comment>Connect SocketIO to the server
+ 
+ It accepts host name, query parameters, and secure flag as boolean , other parameters will have default value as followings:
+ Boolean reconnection = True
+ int reconnectionAttempts = Infinite
+ reconnectionDelay = 1000 or 1s
+ long reconnectionDelayMax = 5000 or 5s
+ long timeout = 30000 or 30s
+ 
+ Example: &lt;code&gt;
+ Sub Activity_Create(FirstTime As Boolean)
+ 	socket.initialize("eventname")
+ 	socket.connect("http://172.0.0.1:999/","",false)
+ End Sub&lt;/code&gt;
+ 
+ 1. 'OnConnecting' event will be raised whenever it tries to connect to the server
+ 2. 'OnConnectError' will be raised if any error occurs when connecting
+ 3. 'OnConnectionTimeout' will be raised if connection does not receive a response from the server after approximately 30 to 60 seconds
+ 4. 'OnConnect' will be raised on successful connection 
+ 5. 'OnDisconnect' will be raised if the disconnection was initiated by the server, you need to reconnect manually
+ 6. 'OnReconnectAttempt' will be raised if it tries to reconnect after connection timeout or if connection disconnected from client side
+ 7. 'OnReconnecting' will be raised on reconnection attempt
+ 8. 'OnReconnect' will be raised on successful connection after connection timeout or if connection disconnected from client side
+ 9. 'OnReconnectError' will be raised if any error occurs when connecting
+ 10. 'OnReconnectFailed' will be raised if any error occurs when connecting
+ 11. 'OnError' will be raised if any error occurs</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>params</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>secure</name>
+                <type>java.lang.Boolean</type>
+            </parameter>
+        </method>
+    </class>
+    <version>2.6</version>
+    <author>Biswajit</author>
+    <dependsOn>engine.io-client-0.8.3</dependsOn>
+    <dependsOn>socket.io-client-0.8.3</dependsOn>
+</root>

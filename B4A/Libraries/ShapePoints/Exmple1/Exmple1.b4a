@@ -1,0 +1,145 @@
+﻿Build1=Default,b4a.example
+File1=delta.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=shapepoints
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Shape Points
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private SP As ShapePoints
+	Private Iv As B4XView
+	Private Pan As B4XView
+	Private cvs As B4XCanvas
+	Private MContours As Map
+	Private SpContour As Spinner
+	Private SpTh As Spinner
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	cvs.Initialize(Pan)
+	MContours.Initialize
+	For i = 0 To 255
+		SpTh.Add(i)
+	Next
+	SpTh.SelectedIndex = 120
+	Dim bmp As B4XBitmap = xui.LoadBitmap(File.DirAssets, "delta.png")
+	FillImageToView(bmp, Iv)
+	Scan
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub Scan
+	SP.Initialize(Iv.GetBitmap,SpTh.SelectedItem)
+	For i = 0 To SP.NumShape -1
+		SpContour.Add(i)
+		SpContour.SelectedIndex = i
+	Next
+End Sub
+
+Sub SpTH_ItemClick (Position As Int, Value As Object)
+	SP.Update(Value)
+	SpContour.Clear
+	For i = 0 To SP.NumShape -1
+		SpContour.Add(i)
+		SpContour.SelectedIndex = i
+	Next
+End Sub
+	
+
+Sub DrawPolygon (cvs1 As B4XCanvas, Points As List, Color As Int, Filled As Boolean, StrokeWidth As Double)
+	If Points.Size < 1 Then Return
+	Dim FirstPoint() As Int = Points.Get(0)
+	Dim p As B4XPath
+	p.Initialize(FirstPoint(0), FirstPoint(1))
+	For i = 1 To Points.Size - 1
+		Dim point() As Int = Points.Get(i)
+		p.LineTo(point(0), point(1))
+	Next
+	cvs1.DrawPath(p, Color, Filled, StrokeWidth)
+End Sub
+
+Sub BtnDraw_Click
+	Dim n As Int = SpContour.SelectedIndex
+	If n > SP.NumShape Then Return
+	Dim SPnts As List = SP.Find(n)
+	DrawPolygon(cvs,SPnts,xui.Color_Red, False, 1dip)
+	cvs.Invalidate
+End Sub
+
+Sub BtnClean_Click
+	Dim n As Int = SpContour.SelectedIndex
+	If n > SP.NumShape Then Return
+	Dim SPnts As List = SP.Find(n)
+	DrawPolygon(cvs,SPnts,xui.Color_Black, False, 2dip)
+	cvs.Invalidate
+End Sub
+
+Sub BtnAuto_Click
+	cvs.ClearRect(cvs.TargetRect)
+	cvs.DrawRect(cvs.TargetRect,xui.Color_Black,True,1)
+	For n = 0 To SP.NumShape-1
+		Dim SPnts As List = SP.Find(n)
+		DrawPolygon(cvs,SPnts,xui.Color_Green, False, 1dip)
+		cvs.Invalidate
+	Next
+End Sub
+
+Sub BtnClear_Click
+	cvs.ClearRect(cvs.TargetRect)
+	cvs.DrawRect(cvs.TargetRect,xui.Color_Black,True,1)
+End Sub
+
+
+Sub FillImageToView(bmp As B4XBitmap, ImageView As B4XView)
+	Dim bmpRatio As Float = bmp.Width / bmp.Height
+	Dim viewRatio As Float = ImageView.Width / ImageView.Height
+	If viewRatio > bmpRatio Then
+		Dim NewHeight As Int = bmp.Width / viewRatio
+		bmp = bmp.Crop(0, bmp.Height / 2 - NewHeight / 2, bmp.Width, NewHeight)
+	Else if viewRatio < bmpRatio Then
+		Dim NewWidth As Int = bmp.Height * viewRatio
+		bmp = bmp.Crop(bmp.Width / 2 - NewWidth / 2, 0, NewWidth, bmp.Height)
+	End If
+	Dim scale As Float = 1
+	ImageView.SetBitmap(bmp.Resize(ImageView.Width * scale, ImageView.Height * scale, True))
+End Sub
+
+

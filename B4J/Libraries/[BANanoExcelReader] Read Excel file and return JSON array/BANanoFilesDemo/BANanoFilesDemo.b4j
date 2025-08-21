@@ -1,0 +1,119 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=jszip.min.js
+File2=lFiles.bjl
+File3=SampleData.xlsx
+File4=xlsx.full.min.js
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Library4=bananoskeleton
+Module1=BANanoExcel
+Module2=BANanoFiles
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=2
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	Private btnReadText As SKButton
+	Private bf As BANanoFiles
+	Private be As BANanoExcel
+	Private bf1 As BANanoFiles
+	Private btnReadExcel As SKButton
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	BANano.Initialize("BANano", "BFD", DateTime.Now)
+	BANano.HTML_NAME = "index.html"
+	BANano.JAVASCRIPT_NAME = "app" & DateTime.Now & ".js"
+	
+	BANano.Header.AddJavascriptFile("xlsx.full.min.js")
+	BANano.Header.AddJavascriptFile("jszip.min.js")
+	
+	BANano.Header.Title="BANano Files Demo"
+	BANano.TranspilerOptions.MinifyOnline = False
+	BANano.Build("c:\laragon\www")
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	BANano.LoadLayout("#body", "lFiles")
+	bf.Initialize.AddFileSelect(Me, "body", "fuconnect")
+	bf1.Initialize.AddFileSelect(Me, "body", "fuexcel")
+End Sub
+
+Sub btnReadText_Click (event As BANanoEvent)
+	bf.ShowFileSelect("fuconnect")
+End Sub
+
+Sub fuconnect_change(e As BANanoEvent)
+	Dim fileList As List = bf.GetFileListFromTarget(e)
+	'no file is selected
+	If fileList.size = 0 Then Return
+	'only process 1 file
+	Dim fr As String = fileList.get(0)
+	'
+	Dim Result As Map
+	Dim promise As BANanoPromise = bf.readAsText(fr)
+	promise.Then(Result)
+		'get the json content
+		Dim txt As String = Result.get("result")
+		Log(txt)
+		'
+	promise.Else(Result)
+		Dim compError As String = Result.get("result")
+		Log(compError)
+	promise.End
+	
+	'nully file component so we can select same file
+	bf.Nullify
+End Sub
+
+Sub btnReadExcel_Click (event As BANanoEvent)
+	bf1.ShowFileSelect("fuexcel")
+End Sub
+
+
+Sub fuexcel_change(e As BANanoEvent)
+	Dim fileList As List = bf1.GetFileListFromTarget(e)
+	If fileList.size = 0 Then Return
+	'only process 1 file
+	Dim fr As String = fileList.get(0)
+	'
+	Dim Result As Map
+	Dim promise As BANanoPromise = bf1.readAsBinaryString(fr)
+	promise.Then(Result)
+		'get the json content
+		Dim data As String = Result.get("result")
+				
+		Dim be As BANanoExcel
+		be.initialize
+		Dim records As List = be.ReadFile(data)
+		Log(records)
+	'
+	promise.Else(Result)
+		Dim compError As String = Result.get("result")
+		Log(compError)
+	promise.End
+	
+	'nully file component so we can select same file
+	bf1.Nullify
+End Sub

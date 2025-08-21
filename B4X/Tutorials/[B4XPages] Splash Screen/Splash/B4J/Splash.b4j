@@ -1,0 +1,76 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=logo.png
+File2=MainPage.bjl
+FileGroup1=Default Group
+FileGroup2=New Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=b4xpages
+Library4=cssutils
+Module1=|relative|..\B4XMainPage
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	Dim sp As Form
+	sp.Initialize("sp", 300, 300)
+	sp.SetFormStyle("TRANSPARENT")
+	Dim fx As JFX
+	sp.BackColor = fx.Colors.Transparent
+	'change image here
+	CSSUtils.SetBackgroundImage(sp.RootPane, File.DirAssets, "logo.png")
+	sp.Show
+	sp.RootPane.Alpha = 0
+	sp.RootPane.SetAlphaAnimated(500, 1)
+	Wait For (sp.RootPane) sp_AnimationCompleted
+	Sleep(3000)
+	sp.RootPane.SetAlphaAnimated(1000, 0)
+	Wait For (sp.RootPane) sp_AnimationCompleted
+	sp.Close
+	MainForm.Show
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+End Sub
+
+'Template version: B4J-1.0 - modified 
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	If B4XPages.Delegate.IsInitialized = False Then Return
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	If B4XPages.Delegate.IsInitialized = False Then Return
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	If B4XPages.Delegate.IsInitialized = False Then Return
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	If B4XPages.Delegate.IsInitialized = False Then Return
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	If B4XPages.Delegate.IsInitialized = False Then Return
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region

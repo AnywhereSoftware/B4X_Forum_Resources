@@ -1,0 +1,106 @@
+﻿Build1=Default,b4a.example3
+File1=smiley.gif
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=randomaccessfile
+Library3=sql
+Library4=b4xencryption
+Library5=keyvaluestore2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=7.95
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: KeyValueStore Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#LibraryName: KeyValueStore2
+#LibraryVersion: 2.20
+Sub Process_Globals
+	Type MyCustomType (Number As Int, Text As String)
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'put a "simple" value
+	Starter.kvs.Put("time", DateTime.Now)
+	'fetch this value
+	Log(DateTime.Time(Starter.kvs.Get("time")))
+	Log(Starter.kvs.Get("doesn't exist"))
+	Log(Starter.kvs.GetDefault("doesn't exist", 10))
+	'put a Bitmap
+	Starter.kvs.PutBitmap("bitmap1", LoadBitmap(File.DirAssets, "smiley.gif"))
+	'fetch a bitmap
+	Activity.SetBackgroundImage(Starter.kvs.GetBitmap("bitmap1"))
+	'remove the bitmap from the store
+	Starter.kvs.Remove("bitmap1")
+	'put an array with two custom types
+	Starter.kvs.Put("2 custom types", Array(CreateCustomType(1, "one"), CreateCustomType(2, "two")))
+	'get them
+	Dim mytypes() As Object = Starter.kvs.Get("2 custom types") 'the array type must be object or bytes
+	Dim ct1 = mytypes(0), ct2 = mytypes(1) As MyCustomType
+	Log(ct1)
+	Log(ct2)
+	'add a collection
+	Dim list1 As List
+	list1.Initialize
+	For i = 1 To 10
+		list1.Add("Item #" & i)
+	Next
+	Starter.kvs.Put("list1", list1)
+	
+	'fetch the collection
+	Dim list2 As List = Starter.kvs.Get("list1")
+	Log(list2)
+	'encrypt the list
+	Starter.kvs.PutEncrypted( "encrypted list", list1, "topsecret")
+	Try 
+		Log("An error message will be printed in debug mode...")
+		list2 = Starter.kvs.GetEncrypted("encrypted list", "wrong password")
+	Catch
+		Log("Wrong password!")
+	End Try
+	list2 = Starter.kvs.GetEncrypted("encrypted list", "topsecret")
+	Log(list2)
+	Dim map As Map = CreateMap("aaa": 100, "bbb": 200)
+	Wait For (Starter.kvs.PutMapAsync(map)) Complete (Success As Boolean)
+	Log("Success: " & Success)
+	Wait For (Starter.kvs.GetMapAsync(Starter.kvs.ListKeys)) Complete (Result As Map)
+	Log(Result)
+	Dim mytypes() As Object = Result.Get("2 custom types")
+	Log(DateTime.Time(Result.Get("time")))
+	
+End Sub
+
+Private Sub CreateCustomType(Number As Int, Text As String) As MyCustomType
+	Dim ct As MyCustomType
+	ct.Initialize
+	ct.Number = Number
+	ct.Text = Text
+	Return ct
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

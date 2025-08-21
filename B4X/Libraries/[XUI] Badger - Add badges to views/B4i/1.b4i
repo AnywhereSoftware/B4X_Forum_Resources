@@ -1,0 +1,59 @@
+﻿Version=4.38
+NumberOfModules=1
+Module1=Badger
+Build1=Default,b4i.example2
+NumberOfFiles=1
+File1=1.bil
+NumberOfLibraries=2
+Library1=icore
+Library2=ixui
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 7
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private TextField1 As TextField
+	Private Label1 As Label
+	Private badger1 As Badger
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	badger1.Initialize
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+Sub Button1_Click
+	badger1.SetBadge(Label1, badger1.GetBadge(Label1) + 1)
+	Dim count As Int = badger1.GetBadge(TextField1)
+	If count > 0 Then count = 0 Else count = 5
+	badger1.SetBadge(TextField1, count)
+End Sub

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RMCP_CAN</name>
+        <shortname>MCP_CAN</shortname>
+        <event>DataAvailable(Data() as Byte, ID As Int, Ext as Boolean)</event>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initializes the module. Returns True if successful.
+DataAvailableSub: The sub to call when data is received
+SPI_CS_PIN: The CS pin that is connected to can module
+CanSpeed: Speed of the bus. Lower speed longer reach.
+Example: &lt;code&gt;
+If can.Initialize(53, "can_DataAvailable", SPEED_1000KBPS) Then
+  Log("Init OK")
+Else
+  Log("Init ERROR")
+  Return
+End If
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>DataSub</name>
+                <type>SubByteArrayInt</type>
+            </parameter>
+            <parameter>
+                <name>SPI_CS_PIN</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>CanSpeed</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendMessage">SendMessage</name>
+            <comment>Sending a "CAN message"
+ID: Identifier, Max 11 bit = 2047
+Msg: Array of data to be sent, Max 8 bytes
+Frame: Set flag extended frame
+Return true if the message length was valid and it was correctly queued for transmit
+Example: &lt;code&gt;
+  	If can.SendMessage(190, "Hi", can.FRAME_STD) Then Log("Sent")
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>ID</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Msg</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Frame</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_10KBPS">B4RMCP_CAN_SPEED_10KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_50KBPS">B4RMCP_CAN_SPEED_50KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_100KBPS">B4RMCP_CAN_SPEED_100KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_250KBPS">B4RMCP_CAN_SPEED_250KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_500KBPS">B4RMCP_CAN_SPEED_500KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="SPEED_1000KBPS">B4RMCP_CAN_SPEED_1000KBPS</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FRAME_STD">B4RMCP_CAN_FRAME_STD</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FRAME_EXT">B4RMCP_CAN_FRAME_EXT</name>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1.1</version>
+    <dependsOn>&lt;SPI.h&gt;</dependsOn>
+</root>

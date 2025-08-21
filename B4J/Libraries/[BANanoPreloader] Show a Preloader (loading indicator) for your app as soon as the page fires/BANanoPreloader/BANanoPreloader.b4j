@@ -1,0 +1,50 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Module1=pgPreloader
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#IgnoreWarnings: 12, 15
+#Region Project Attributes 
+	#MergeLibraries: True
+	#LibraryAuthor: Anele Mashy Mbanga
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "bananopreloader"
+	Public AppTitle As String = "BANanoPreloader"
+	Private Publish As String = "C:\laragon\www"
+	Public ServerIP As String = "localhost"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'post processor
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName, DateTime.now)
+	BANano.HTML_NAME = "index.html"
+	BANano.Header.Title = AppTitle
+	BANano.TranspilerOptions.UseServiceWorker = False
+	BANano.TranspilerOptions.MergeAllCSSFiles = True
+	BANano.TranspilerOptions.MergeAllJavascriptFiles = True
+	BANano.TranspilerOptions.MinifyOnline = False
+	'
+	BANano.Build(Publish)
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub BANano_Ready
+
+End Sub

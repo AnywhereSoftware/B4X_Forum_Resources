@@ -1,0 +1,187 @@
+﻿Build1=Default,JHS.QRImage
+File1=jhs.png
+File2=main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=stringutils
+Library3=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: b4aQRImage
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#AdditionalJar: core-3.3.2.jar
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+	Dim nativeMe As JavaObject
+
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private iv1 As ImageView
+	Private iv2 As ImageView
+	Private iv3 As ImageView
+	
+	Dim  bm As Bitmap
+	
+	Dim su As StringUtils
+	
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("main")
+	nativeMe.InitializeContext
+	
+	bm.Initialize(File.DirAssets, "jhs.png")
+	Dim b() As Byte = GetImageBytes
+	
+    Dim s As String = su.EncodeBase64(b)
+	Log(s)
+	
+	iv2.Bitmap = nativeMe.RunMethod("encodeAsBitmap", Array(s))
+	
+	Dim decoded As String = nativeMe.RunMethod("decodeQRImage", Array(iv2.Bitmap))
+	Log(decoded)
+	
+	Dim nb() As Byte = su.DecodeBase64(decoded)
+	iv3.Bitmap = BytesToImage(nb)
+   
+    
+   
+   iv1.Bitmap = bm
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub GetImageBytes() As Byte() 
+	Dim bytes() As Byte = Bit.InputStreamToBytes(File.OpenInput(File.DirAssets,"jhs.png"))
+	Return bytes
+End Sub
+
+
+Public Sub BytesToImage(bytes() As Byte) As Bitmap
+	Dim In As InputStream
+	In.InitializeFromBytesArray(bytes, 0, bytes.Length - 1)
+	Dim bmp As Bitmap
+	bmp.Initialize2(In)                 
+	Return bmp
+End Sub
+
+
+#if Java
+
+
+import com.google.zxing.MultiFormatWriter;
+import android.graphics.Bitmap;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+
+import android.graphics.BitmapFactory;
+
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.ChecksumException;
+import com.google.zxing.FormatException;
+import com.google.zxing.LuminanceSource;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Reader;
+import com.google.zxing.Result;
+import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.qrcode.QRCodeReader;
+
+
+
+public static int white = 0xFFFFFFFF;
+public static int black = 0xFF000000;
+public final static int WIDTH = 500;
+
+public Bitmap encodeAsBitmap(String str) throws WriterException {
+    BitMatrix result;
+    Bitmap bitmap=null;
+    try
+    {
+        result = new MultiFormatWriter().encode(str,
+                BarcodeFormat.QR_CODE, WIDTH, WIDTH, null);
+
+        int w = result.getWidth();
+        int h = result.getHeight();
+        int[] pixels = new int[w * h];
+        for (int y = 0; y < h; y++) {
+            int offset = y * w;
+            for (int x = 0; x < w; x++) {
+                pixels[offset + x] = result.get(x, y) ? black:white;
+            }
+        }
+        bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        bitmap.setPixels(pixels, 0, WIDTH, 0, 0, w, h);
+    } catch (Exception iae) {
+        iae.printStackTrace();
+        return null;
+    }
+    return bitmap;
+}
+
+public static String decodeQRImage(Bitmap bMap) {
+
+    String decoded = null;
+
+    int[] intArray = new int[bMap.getWidth() * bMap.getHeight()];
+    bMap.getPixels(intArray, 0, bMap.getWidth(), 0, 0, bMap.getWidth(),
+            bMap.getHeight());
+    LuminanceSource source = new RGBLuminanceSource(bMap.getWidth(),
+            bMap.getHeight(), intArray);
+    BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+
+    Reader reader = new QRCodeReader();
+    try {
+        Result result = reader.decode(bitmap);
+        decoded = result.getText();
+    } catch (NotFoundException e) {
+        e.printStackTrace();
+    } catch (ChecksumException e) {
+        e.printStackTrace();
+    } catch (FormatException e) {
+        e.printStackTrace();
+    }
+    return decoded;
+}
+
+#End If
+
+
+

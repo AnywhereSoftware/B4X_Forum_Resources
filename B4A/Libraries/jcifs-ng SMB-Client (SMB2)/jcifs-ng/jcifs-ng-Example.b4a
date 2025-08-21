@@ -1,0 +1,125 @@
+﻿Build1=Default,de.donmanfred.jcifsngex
+File1=Layout1.bal
+File2=LayoutFiles.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+Library3=runtimepermissions
+Library4=jcifs-ng
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=actSMBFiles
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SMB2B4A
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: true
+#AdditionalJar: slf4j-api-1.7.25.jar
+#AdditionalJar: bctls-jdk15on-1.58.0.0.jar
+#AdditionalJar: bcprov-jdk15on-1.59.jar
+
+
+'#AdditionalJar: core-1.58.0.0.jar
+'#AdditionalJar: asn-one-0.4.0.jar
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Type SMBCred(Domain As String, Username As String, Password As String, Share As String)
+	Private edt_Domain As EditText
+	Private edt_Username As EditText
+	Private edt_Password As EditText
+	Private edt_Share As EditText
+	Private btn_Init As Button
+	Dim credentials As SMBCred
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	credentials.Initialize
+	
+	'credentials.Domain = ""
+	'credentials.Username = ""
+	'credentials.Password = ""
+	'credentials.Share = "smb://192.168.192.168/"
+
+	edt_Domain.Text = credentials.Domain
+	edt_Username.Text = credentials.Username
+	edt_Password.Text = credentials.Password
+	edt_Share.Text = credentials.Share
+	
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		
+	End If
+	Log(ListFolders(File.DirRootExternal))
+End Sub
+Sub ListFolders(dir As String)
+	Dim list_files As List
+	Dim lista_folders As List
+	lista_folders.Initialize
+	list_files=File.ListFiles(dir)
+	For i= 0 To list_files.Size -1
+		If File.IsDirectory(dir, list_files.Get(i))=True Then
+			lista_folders.Add(list_files.Get(i))
+		End If
+	Next
+	Return lista_folders
+End Sub
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub CheckEditfields
+	btn_Init.Enabled = False
+	If edt_Domain.Text.Trim.Length > 0 And edt_Username.Text.Trim.Length > 0 And edt_Password.Text.Trim.Length > 0 And edt_Share.Text.Trim.Length > 0 Then
+		btn_Init.Enabled = True			
+	End If
+End Sub
+
+Sub btn_Init_Click
+	Log($"Domain = ${edt_Domain.Text.Trim}"$)
+	Log($"Username = ${edt_Username.Text.Trim}"$)
+	Log($"Password = ${edt_Password.Text.Trim}"$)
+	Log($"Share = ${edt_Share.Text.Trim}"$)
+	
+	
+	Dim credentials As SMBCred
+	credentials.Initialize
+	credentials.Domain = edt_Domain.Text.Trim
+	credentials.Username = edt_Username.Text.Trim
+	credentials.Password = edt_Password.Text.Trim
+	credentials.Share = edt_Share.Text.Trim
+	
+	CallSub2(Starter,"SMBInit",credentials)
+
+End Sub

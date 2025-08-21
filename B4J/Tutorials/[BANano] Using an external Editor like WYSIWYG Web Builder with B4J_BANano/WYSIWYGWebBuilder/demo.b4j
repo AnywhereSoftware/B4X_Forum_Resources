@@ -1,0 +1,88 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=B4X.jpeg
+File2=builtwithwwb15.png
+File3=index.css
+File4=index.html
+File5=Untitled1.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=jcore
+Library2=banano
+NumberOfFiles=5
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	#IgnoreWarnings: 16, 10, 14, 15    
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	
+	Private Button1 As BANanoElement
+	Private Editbox1 As BANanoElement
+End Sub
+
+Sub AppStart (Args() As String)
+	BANano.Initialize("BANano", "BANanoWYSIWYG",1)
+	
+	BANano.Header.AddCSSFile("index.css")	
+	BANano.Header.AddCSSFile("Untitled1.css")	
+		
+	BANano.Build(File.DirApp)	
+	
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	Dim body As BANanoElement
+	body.Initialize("#body")
+	
+	' loading the body from the html file that the WYSIWYG Web Builder generated
+	Dim init As BANanoFetchOptions
+	init.Initialize
+	init.Mode = "no-cors"
+	
+	Dim response As BANanoFetchResponse
+	Dim Text As String
+	
+	Dim getHTML As BANanoFetch
+	getHTML.Initialize("./assets/index.html", init)
+	getHTML.Then(response)
+		Return response.Text 'ignore
+	getHTML.Then(Text) 'ignore
+		body.SetHTML(ExtractBodyPart(Text))
+		
+		Button1.Initialize("#Button1")
+		Editbox1.Initialize("#Editbox1")
+		
+		Button1.On("click", Me, "HandleButton1")
+	getHTML.end
+End Sub
+
+public Sub HandleButton1(event As BANanoEvent)
+	Editbox1.SetValue("Alain Bailleul")
+End Sub
+
+public Sub ExtractBodyPart(html As String) As String
+	Dim bodyBegin As Int = html.IndexOf("<body>")
+	html = html.SubString(bodyBegin + 6)
+	Dim bodyEnd As Int =  html.IndexOf("</body>")
+	html = html.SubString2(0,bodyEnd)	
+	Return html
+End Sub

@@ -1,0 +1,79 @@
+﻿Version=6.8
+NumberOfModules=0
+Build1=Default,de.amberhome.appcompat.serachviewexample
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~
+IconFile=
+NumberOfFiles=0
+NumberOfLibraries=2
+Library1=core
+Library2=parstrianglify
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ParsTrianglify
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+
+#AdditionalRes: ..\res
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim PT As ParsTrianglify
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	PT.Initialize("")
+	Activity.AddView(PT,0,0,-1,-1)
+
+
+
+	Dim sb As SeekBar
+	sb.Initialize("sb")
+	Activity.AddView(sb,0,0,-1,-2)
+
+	Dim sb1 As SeekBar
+	sb1.Initialize("sb1")
+	Activity.AddView(sb1,0,50dip,-1,-2)
+	
+	
+	Dim sb2 As SeekBar
+	sb2.Initialize("sb2")
+	sb2.Max=27
+	Activity.AddView(sb2,0,100dip,-1,-2)
+	
+	
+	Dim sb3 As SeekBar
+	sb3.Initialize("sb3")
+	Activity.AddView(sb3,0,150dip,-1,-2)
+
+End Sub
+Sub sb3_ValueChanged (Value As Int, UserChanged As Boolean)
+	PT.ColorsPalette=Array As Int(Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)),Colors.RGB(Rnd(0,255),Rnd(0,255),Rnd(0,255)))
+	PT.smartUpdate
+End Sub
+Sub sb2_ValueChanged (Value As Int, UserChanged As Boolean)
+	PT.Palette=Value
+	PT.smartUpdate
+End Sub
+Sub sb1_ValueChanged (Value As Int, UserChanged As Boolean)
+	PT.setCellSize(Value+100)
+	PT.smartUpdate
+End Sub
+Sub sb_ValueChanged (Value As Int, UserChanged As Boolean)
+	PT.setVariance(Value)
+	PT.smartUpdate
+End Sub

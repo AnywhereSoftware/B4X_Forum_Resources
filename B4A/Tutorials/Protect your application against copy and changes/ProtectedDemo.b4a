@@ -1,0 +1,147 @@
+﻿Build1=Default,b4a.protecthw.flm
+File1=fred.png
+File2=logo.jpg
+File3=main.bal
+File4=value.zip
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=f5steg_64
+Library3=archiverpluszip
+Library4=randomaccessfile
+Library5=packageutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=4
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Protected Demo
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Dim Const MYTEXT As String = "This is an app protected against copy and changes."
+	Dim Const EncryptedImage As String = "logo.jpg"
+	Dim Const EncryptedArchive As String = "value.zip"
+	Dim Const EncryptedValue As String = "value.txt"
+	Dim M As Map
+End Sub
+
+Sub Globals
+	Dim F5S As F5Steg
+	Dim Arc As ArchiverPlusZip
+
+	Private ImageView1 As ImageView
+	Private Label1 As Label
+	Private Button1 As Button
+	Private Button2 As Button
+
+	Dim Const Password As String = "PW"
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Checks whether the debuggable flag is set
+	Dim PU As PackageUtils
+	Dim AppInfo As PkgApplicationInfo = PU.GetApplicationInfo(PU.GetMyPackageName)
+	If Bit.And(AppInfo.Flags, AppInfo.FLAG_DEBUGGABLE) = AppInfo.FLAG_DEBUGGABLE Then
+		'Log("stop")
+		ExitApplication
+	End If
+
+	'Checks whether the installation origin is the Google Play Store
+	If PU.GetInstallerPackageName(PU.GetMyPackageName) = Null Or PU.GetInstallerPackageName(PU.GetMyPackageName) <> "com.android.vending" Then
+		'Log("stop")
+		ExitApplication
+	End If
+
+	'Loads the layout
+	Activity.LoadLayout("main")
+	Label1.Text = MYTEXT
+	Button1.Enabled = False
+	Button1.Text = "Test"
+	Button2.Text = "Quit"
+	Activity.SetBackgroundImage(LoadBitmapSample(File.DirAssets, "logo.jpg", Activity.Width, Activity.Height))
+End Sub
+
+Sub Activity_Resume
+	'Copies the encrypted resources to the internal cache
+	If Not(File.Exists(File.DirInternalCache, EncryptedImage) And File.Size(File.DirInternalCache, EncryptedImage) > 0) Then
+		'Log("COPY IMAGE")
+		File.Copy(File.DirAssets, EncryptedImage, File.DirInternalCache, EncryptedImage)
+	End If
+	If Not(File.Exists(File.DirInternalCache, EncryptedArchive) And File.Size(File.DirInternalCache, EncryptedArchive) > 0) Then
+		'Log("COPY ARCHIVE")
+		File.Copy(File.DirAssets, EncryptedArchive, File.DirInternalCache, EncryptedArchive)
+	End If
+
+	'Extracts the data embedded in the image
+	If Not(M.IsInitialized And M.Size > 0) Then
+		'Log("GET IMG DATA")
+		F5S.ExtractToArray(File.Combine(File.DirInternalCache, EncryptedImage), "B4A")
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	'If the user quits, destroy the files in cache and the map in memory
+	If UserClosed Then
+		'Log("THE END")
+		Starter.Destroy
+	End If
+End Sub
+
+Sub B4A_ArrayExtracted(SecretMessage() As Byte)
+	'Gets the list from the data embedded in the image
+	Dim L As List
+	Dim Ser As B4XSerializator
+	L = Ser.ConvertBytesToObject(SecretMessage)
+	'Log(L)
+
+	'Gets the map from the list and adds the password to it
+	Dim PW As String = L.Get(0)
+	M = L.Get(1)
+	M.Put(Password, PW.GetBytes("UTF-8"))
+
+	'Updates the user interface
+	ImageView1.Bitmap = LoadBitmapSample(File.DirAssets, M.Get("Pic"), ImageView1.Width, ImageView1.Height)
+	Button1.Enabled = True
+	'Log(M)
+End Sub
+
+Sub Button1_Click
+	'Uncompresses the encrypted archive
+	Dim Bytes() As Byte = M.Get(Password)
+	Arc.DecryptZipWithArray(Bytes, True)
+	Arc.UnZip(File.Combine(File.DirInternalCache, EncryptedArchive), File.DirInternalCache, "")
+
+	'Computes with all retrieved values
+	Dim I As Int = M.Get("Integer")
+	Dim F As Float = M.Get("Float")
+	Dim V As Double = File.ReadString(File.DirInternalCache, EncryptedValue)
+	Dim D As Double = I * F * V
+
+	'Deletes the decrypted file
+	File.Delete(File.DirInternalCache, EncryptedValue)
+
+	'Displays the result
+	Msgbox(NumberFormat(D, 1, 2) & " (computed) = 213.6 (expected)", "Result")
+End Sub
+
+Sub Button2_Click
+	'Quits
+	Activity.Finish
+End Sub

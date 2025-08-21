@@ -1,0 +1,108 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=okhttp
+Library4=jokhttputils2
+Library5=json
+Library6=byteconverter
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Dim ClientID As String = "amzn1.application-oa2-client.xxxxx" ' Your Apps Client-Id
+	Dim ClientSecret As String = "xxxx" ' Your Apps Secret
+	Dim registrationID As String = "amzn1.adm-registration.v3.xxxxx" ' RegistrationId to send a PushNotification to
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	'MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+
+	Dim j As HttpJob
+	j.Initialize("",Me)
+	j.PostString("https://api.amazon.com/auth/O2/token",$"grant_type=client_credentials&scope=messaging:push&client_id=${ClientID}&client_secret=${ClientSecret}"$)
+	j.GetRequest.SetContentType("application/x-www-form-urlencoded")
+	wait for (j) Jobdone(j As HttpJob)
+	If j.Success Then
+		Dim result As String = j.GetString
+		Log(result)
+		Dim parser As JSONParser
+		parser.Initialize(result)
+		Dim root As Map = parser.NextObject
+		Dim access_token As String = root.Get("access_token")
+		'Dim scope As String = root.Get("scope")
+		'Dim token_type As String = root.Get("token_type")
+		Dim expires_in As Int = root.Get("expires_in")
+
+		Dim jsonmap As Map
+		jsonmap.Initialize
+		Dim data As Map
+		data.Initialize
+		data.Put("key1","Value1") ' Each Key and Value must be STRINGS
+		data.Put("key2","Value2")
+		Log("Today is: " & DateTime.Date(DateTime.Now))
+		data.Put("time",DateTime.Date(DateTime.Now)&" "&DateTime.Time(DateTime.Now))
+		data.Put("message","Hello B4X")
+		jsonmap.Put("data",data)
+		'jsonmap.Put("consolidationKey","Something")
+		
+		
+		Dim jgen As JSONGenerator
+		jgen.Initialize(jsonmap)
+		
+		Dim j2 As HttpJob
+		j2.Initialize("",Me)
+		j2.PostString($"https://api.amazon.com/messaging/registrations/${registrationID}/messages"$,$"${jgen.ToPrettyString(0)}"$) 
+		j2.GetRequest.SetHeader("Authorization", "Bearer "&access_token)
+		j2.GetRequest.SetHeader("X-Amzn-Type-Version","com.amazon.device.messaging.ADMMessage@1.0")
+		j2.GetRequest.SetHeader("Accept","application/json")
+		j2.GetRequest.SetHeader("X-Amzn-Accept-Type","com.amazon.device.messaging.ADMSendResult@1.0")
+		j2.GetRequest.SetContentType("application/json")
+		wait for (j2) Jobdone(j3 As HttpJob)
+		If j3.Success Then
+			Dim result As String = j3.GetString
+			Log(result)
+		Else
+			Log(j3.ErrorMessage)
+			Log(j3.Response.StatusCode)
+			Log(j3.Response.ErrorResponse)
+		End If
+		j3.Release
+
+		'POST /messaging/registrations/(REGISTRATION_ID_FOR_DESTINATION_APP_INSTANCE)/messages HTTP/1.1
+		'Host: api.amazon.com
+		'Authorization: Bearer (YOUR_ACCESS_TOKEN)
+		'Content-Type: application/json
+		'X-Amzn-Type-Version: com.amazon.device.messaging.ADMMessage@1.0
+		'Accept: application/json
+		'X-Amzn-Accept-Type: com.amazon.device.messaging.ADMSendResult@1.0
+		'
+		'{
+		'"data":{"key1":"value1","key2":"value2"},
+		'"consolidationKey":"Some Key",
+		'"expiresAfter":86400
+		'}
+	
+	
+	Else
+		Log(j.ErrorMessage)
+	End If
+	j.Release
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

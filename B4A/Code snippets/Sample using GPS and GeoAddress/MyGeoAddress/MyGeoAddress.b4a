@@ -1,0 +1,166 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=gps
+Library3=runtimepermissions
+Library4=geolocation
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+'
+'///////////////////////////////////////////////////////////////////////////////'
+'Date: JUNE 6, 2020
+'Author: Joaquin Ortiz
+'From: Monterrey, Mexico
+'My Location: https://www.google.com/maps/@25.6763168,-100.2752841,13z
+'e-mail: joaquinortiz29@gmail.com
+'
+'///////////////////////////////////////////////////////////////////////////////
+#Region  Project Attributes 
+	#ApplicationLabel: MyGeoAddress
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: Portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: false
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+'	Private nid As Int = 1
+	Private GPS As GPS
+	Private Tracking As Boolean
+'	Private LastUpdateTime As Long
+'	Private lock As PhoneWakeState
+	Public GeoLoc As GeoLocator
+	Private Iniciar As Boolean = False
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Public lblLocation As Label
+	Private lblAddress As Label
+	Private btnSTOP As Button
+	Private btnSTART As Button
+	Private lblInstruction As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Try
+	Activity.LoadLayout("1")
+	GPS.Initialize("gps")
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+			GeoLoc.Initialize("GeoLocation")
+		ToastMessageShow("LOCATION Permission Granted",False)
+	Else
+		ToastMessageShow("No permission...", True)
+	End If
+	
+	Catch
+		MsgboxAsync(LastException.Message,"Error")
+			Log(LastException)
+	End Try
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+'We capture the menu and back keys
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	'Pressing the back key while the slidemenu is open will close it
+	If KeyCode = KeyCodes.KEYCODE_BACK  Then
+		
+		Return True
+	End If
+
+	'Pressing the menu key will open/close the slidemenu
+	If KeyCode = KeyCodes.KEYCODE_MENU Then
+
+		Return True
+	End If
+End Sub
+Public Sub Track
+	If Tracking Then Return
+	If Starter.rp.Check(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION) = False Then
+		Log("No permission")
+		Return
+	End If
+	GPS.Start(0, 0)
+	Tracking = True
+End Sub
+
+Sub GPS_LocationChanged (Location1 As Location)
+	lblLocation.Text = "Latitude: " & Location1.Latitude & CRLF & _
+						"Longitud: " & Location1.Longitude & CRLF & _
+						"Hora: " & DateTime.Time(DateTime.Now)
+						
+	Log("The time now is: " & DateTime.Time(DateTime.Now))
+	
+	GeoLoc.geoAddress2(Location1.Latitude, Location1.Longitude)
+	lblAddress.Text = "Address: " & GeoLoc.Address & CRLF & _
+					  "City: " & GeoLoc.City & CRLF & _
+					  "Country: " & GeoLoc.Country & CRLF & _
+					  "Known Name: " & GeoLoc.KnownName & CRLF & _
+					  "Postal Code: " & GeoLoc.PostalCode & CRLF & _
+					  "State: " & GeoLoc.State 
+End Sub
+Sub GeoLocation_Location(success As Boolean, Lattitude As Double, Longitude As Double, info As String, isMockLocation As Boolean)
+	Log($"GeoLocation_Location(${success}, ${Lattitude}, ${Longitude}, ${info}, ${isMockLocation})"$)
+	If success Then
+'		GeoLoc.geoAddress
+		If Iniciar = True Then
+		lblAddress.Text = "Address: " & GeoLoc.Address & CRLF & _
+					  "City: " & GeoLoc.City & CRLF & _
+					  "Country: " & GeoLoc.Country & CRLF & _
+					  "Known Name: " & GeoLoc.KnownName & CRLF & _
+					  "Postal Code: " & GeoLoc.PostalCode & CRLF & _
+					  "State: " & GeoLoc.State & CRLF & CRLF & _
+					  "Info: " & info
+		End If
+	End If
+End Sub
+Sub btnSTOP_Click
+	If Iniciar = True Then
+		GPS.Stop
+		btnSTART.Enabled = True
+		btnSTOP.Enabled = False
+		lblAddress.Text = ""
+		lblLocation.Text = "APP ENDED"
+		Iniciar = False
+		lblInstruction.Visible = False
+		Tracking = False
+		
+	End If
+End Sub
+
+Sub btnSTART_Click
+	If Iniciar = False Then
+		Iniciar = True
+		Track
+		btnSTART.Enabled = False
+		btnSTOP.Enabled = True
+		lblLocation.Text = "Wait for a couple of seconds, until GPS is connecting......"
+		lblInstruction.Visible = True
+
+	End If
+End Sub

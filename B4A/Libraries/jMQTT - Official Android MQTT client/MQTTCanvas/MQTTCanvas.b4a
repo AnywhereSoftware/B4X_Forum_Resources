@@ -1,0 +1,108 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=jmqtt
+Library3=randomaccessfile
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private mqtt As MqttClient
+	Private mytopic As String
+	Private serializator As B4XSerializator
+	Type CircleData (x As Double, y As Double, clr As Int)
+	'Private serverURI As String = "tcp://10.0.2.2:51044" 'emulator
+	Private serverURI As String = "tcp://m11.cloudmqtt.com:16496"
+End Sub
+
+Sub Globals
+	Private Canvas1 As Canvas
+	Private lblStatus As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		mqtt.Initialize("mqtt", serverURI, Rnd(0, 999999999) & DateTime.Now)
+		Dim mo As MqttConnectOptions
+		mo.Initialize("username", "password")
+		mqtt.Connect2(mo)
+		mytopic = "drawers/" & mqtt.ClientId
+	End If
+	Activity.LoadLayout("1")
+	Canvas1.Initialize(Activity)
+End Sub
+
+Sub mqtt_Connected (Success As Boolean)
+	If Success = False Then 
+		Log(LastException)	
+		lblStatus.Text = "Error connecting"
+	Else
+		lblStatus.Text = "Connected"
+		mqtt.Subscribe("drawers/#", 0)
+	End If
+End Sub
+
+Private Sub mqtt_Disconnected
+	lblStatus.Text = "Disconnected"
+End Sub
+
+Private Sub mqtt_MessageArrived (Topic As String, Payload() As Byte)
+	Dim obj As Object = serializator.ConvertBytesToObject(Payload)
+	If obj Is CircleData Then
+		If Topic = mytopic Then Return 'the circle was already drawn
+		Dim cd As CircleData = obj
+		DrawCircleData(cd)
+	Else 'obj is string
+		Dim s As String = obj
+		Select s
+			Case "clear"
+				Canvas1.DrawColor(Colors.Black)
+				Activity.Invalidate
+			Case "close"
+				Activity.Finish
+		End Select
+	End If
+End Sub
+
+Private Sub DrawCircleData(cd As CircleData)
+	Canvas1.DrawCircle(cd.X * (100dip / 100), cd.Y  * (100dip / 100), 20dip, cd.clr, True, 0)
+	Activity.Invalidate
+End Sub
+
+Sub Activity_Touch (Action As Int, X As Float, Y As Float)
+	If mqtt.Connected = False Then Return
+	Dim cd As CircleData
+	cd.x = x * (100 / 100dip)
+	cd.y = y * (100 / 100dip)
+	cd.clr = Rnd(0x80000000, -1)
+	DrawCircleData(cd)
+	mqtt.Publish(mytopic, serializator.ConvertObjectToBytes(cd))
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

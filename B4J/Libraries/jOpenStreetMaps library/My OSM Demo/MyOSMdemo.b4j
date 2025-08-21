@@ -1,0 +1,264 @@
+﻿AppType=JavaFX
+Build1=Default,starchild.osm.test
+File1=b4a-icon.png
+File2=cairo.kml
+File3=icon64x64.png
+File4=InfoWindow.bjl
+File5=perth.kml
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jopenstreetmaps
+NumberOfFiles=5
+NumberOfLibraries=4
+NumberOfModules=0
+Version=6
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 640
+	#MainFormHeight: 480 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+
+	Private InfoWindow As AnchorPane
+	Private InfoWindowDescLabel As Label
+	Private InfoWindowTitleLabel As Label
+	Private MainForm As Form
+	Private OsmTileSource As OsmTileSource
+	Private TileSourceSelector As ComboBox
+
+	Private OSM As OpenStreetMaps
+	Private MapNodeHost1 As MapNodeHost
+	
+	Private MapIcons As MapIcons
+	Private Pin1 As MapMarker
+	Private Spot1 As MapSpot
+	
+	Private P As MapPolygon
+	
+	Private PerthButton As Button
+	Private CairoButton As Button
+	Private WorldButton As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Title="Open Street Map - Demo"
+	InfoWindow.Initialize("")
+	InfoWindow.LoadLayout("InfoWindow")
+	'SetMaximized(MainForm)
+
+	OsmTileSource.Initialize
+
+	OSM.Initialize3("OSM", OsmTileSource.Create(OsmTileSource.TS_MAPNIK_STD), 0, 0, 640, 480, 13)
+	'OSM.SetShowZoomControls(False)
+
+	Pin1.Initialize2("PerthMarker",MapIcons.PIN_RED,75,0,5, -31.92,115.83)
+	Pin1.SetCursor(fx.Cursors.HAND)
+	Pin1.Title="Perth Marker"
+	Pin1.Description = "This is the description."
+	OSM.AddMarker(Pin1)
+
+	Spot1.Initialize2("CairoSpot", 10, fx.Colors.RGB(0,120,0),2, 30.1,31.2)
+	Spot1.SetCursor(fx.Cursors.HAND)
+	Spot1.Title="Cairo Spot"
+	Spot1.Description = "This is draggable."
+	OSM.AddSpot(Spot1)
+
+	'	the MapNodeHost can be used to anchor any Node to the map
+	'	the Node's position will be updated when the map is panned or zoomed
+	
+	InfoWindow.RemoveNodeFromParent
+	MapNodeHost1.Initialize(InfoWindow, 0, 0, 0, 0)
+	OSM.AddNodeHost(MapNodeHost1)
+	
+	MainForm.RootPane.AddNode(OSM, 0, 0, 640, 480)
+	
+	TileSourceSelector.Initialize("TileSourceSelector")
+	TileSourceSelector.TooltipText="Select tile source"
+	TileSourceSelector.Items.AddAll(Array As String("Mapnik STD", "Mapnik BW", "Open Street Map","BaseMaps Light", "BaseMaps Dark","Stamen BW","Stamen Terrain","My Custom TS"))
+	MainForm.RootPane.AddNode(TileSourceSelector, 530, 10, 135, 25)
+
+	PerthButton.Initialize("PerthButton")
+	PerthButton.Text="Perth"
+	MainForm.RootPane.AddNode(PerthButton, 420, 10, 75, 25)
+
+	CairoButton.Initialize("CairoButton")
+	CairoButton.Text="Cairo"
+	MainForm.RootPane.AddNode(CairoButton, 420, 10, 75, 25)
+
+
+	WorldButton.Initialize("WorldButton")
+	WorldButton.Text="World"
+	MainForm.RootPane.AddNode(WorldButton, 420, 10, 75, 25)
+
+	MainForm.Show
+	
+	WorldButton_Action
+	TileSourceSelector.SelectedIndex = 0
+	
+	ShowTestPolygon
+	OSM.WorkOffline(False)
+	OSM.SetGeoCoordinateLabelVisible(True)
+	OSM.SetAttributionOffset(0)
+End Sub
+
+
+Sub PerthButton_Action
+	Log("PerthButton_Action")
+	InfoWindow.Visible=False
+	OSM.SetDisplayPositionByLatLon2(-31.92,115.83,13)
+End Sub
+
+Sub CairoButton_Action
+	Log("CairoButton_Action")
+	InfoWindow.Visible=False
+	OSM.SetDisplayPositionByLatLon2(30.1,31.2,8)
+End Sub
+
+Sub WorldButton_Action
+	Log("WorldButton_Action")
+	InfoWindow.Visible=False
+	OSM.SetDisplayPositionByLatLon2(12,67,3)
+End Sub
+
+Sub ShowHostedNode(Latitude As Double, Longitude As Double, Text As String, Description As String)
+	MapNodeHost1.SetLat(Latitude)
+	MapNodeHost1.SetLon(Longitude)
+	InfoWindowTitleLabel.Text=Text
+	InfoWindowDescLabel.Text=Description
+	InfoWindow.Visible=True
+	MapNodeHost1.Render(OSM)
+End Sub
+
+Sub TileSourceSelector_SelectedIndexChanged(Index As Int, Value As Object)
+	Dim Name As String = Value
+	Select Name
+		Case "Mapnik STD"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_MAPNIK_STD)
+		Case "Mapnik BW"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_MAPNIK_BW)
+		Case "Open Street Map"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_OPEN_STREET_MAP)
+		Case "BaseMaps Light"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_BASEPAKS_LIGHT)
+		Case "BaseMaps Dark"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_BASEMAPS_DARK)
+		Case "Stamen BW"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_STAMEN_BW)
+		Case "Stamen Terrain"
+			Dim ts As TileSource = OsmTileSource.Create(OsmTileSource.TS_STAMEN_TERRAIN)
+		Case "My Custom TS"
+			Dim ts As TileSource = CreateMyCustomTileSource
+		Case Else
+			Log("TileSourceSelector_SelectedIndexChanged: Unknown Type(" & Name & ")")
+			Return
+	End Select
+	OSM.SetTileSource(ts)
+End Sub
+
+Private Sub MainForm_Resize (Width As Double, Height As Double)
+	Log("MainForm_Resize")
+	OSM.SetMapWidth(Width)
+	OSM.SetMapHeight(Height)
+	TileSourceSelector.Left = Width - TileSourceSelector.Width - 10
+	PerthButton.Left = TileSourceSelector.Left - PerthButton.Width - 10
+	CairoButton.Left = PerthButton.Left - CairoButton.Width - 10
+	WorldButton.Left = CairoButton.Left - WorldButton.Width - 10
+End Sub
+
+Private Sub ShowTestPolygon
+	Dim l As List
+	l.Initialize
+	Dim c As Coordinate
+	c.Initialize(-10,-10)
+	l.Add(c)
+	c.Initialize(10,10)
+	l.Add(c)
+	c.Initialize(-10,20)
+	l.Add(c)
+	P.Initialize2("Test Polygon",fx.Colors.Gray,2,fx.Colors.ARGB(50,0,0,255),l)
+	OSM.AddPolygon(P)
+End Sub
+
+Public Sub SetMaximized(frm As Form)
+	Dim joForm As JavaObject = frm
+	Dim joStage As JavaObject = joForm.GetField("stage")
+	joStage.RunMethod("setMaximized", Array(True))
+End Sub
+
+Sub CreateMyCustomTileSource As TileSource
+	Dim cs As MapCustomTileSource
+	OSM.ClearMapCache2("My-Custom-TS")
+	cs.Initialize2("My-Custom-TS","http://cartodb-basemaps-a.global.ssl.fastly.net/light_all",1,18)
+	'cs.Initialize2("My-Custom-TS","http://cartocdn_b.global.ssl.fastly.net/base-antique",1,15)
+	cs.SetAttributionText("My Custom Tile Source")
+	cs.SetTermsOfUseText("Custom Terms of Use")
+	cs.SetTermsOfUseURL("www.b4x.com")
+	cs.SetAttributionColor(fx.Colors.Black)
+	Return cs
+End Sub
+
+Sub OSM_MousePressed(EventData As MouseEvent)
+	Log("OSM_MousePressed")
+End Sub
+
+Sub OSM_MouseClicked(EventData As MouseEvent)
+	Dim ClickPoint As Coordinate=OSM.GetCoordinate(EventData.X, EventData.Y)
+	Log("OSM_MouseClicked: "&ClickPoint.GetLatitude&", "&ClickPoint.GetLongitude)
+	InfoWindow.Visible=False
+End Sub
+
+Sub OSM_MouseMoved(EventData As MouseEvent)
+	Log("OSM_MouseMoved")
+End Sub
+
+Sub OSM_MouseDragged(EventData As MouseEvent)
+	Log("OSM_MouseDragged")
+End Sub
+
+Sub OSM_MouseReleased(EventData As MouseEvent)
+	Log("OSM_MouseReleased")
+End Sub
+
+Sub OSM_Ready()
+	Log("OSM_Ready")
+End Sub
+
+Sub OSM_Rendered()
+	Log("OSM_Rendered")
+End Sub
+
+Sub PerthMarker_MouseClicked(Marker As MapMarker, MouseEvent1 As MouseEvent)
+	Log("PerthMarker_MouseClicked: "& Marker.GetLat&", "& Marker.GetLon)
+	ShowHostedNode(Marker.GetLat,Marker.GetLon,Marker.Title,Marker.Description)
+	'OSM.MapDraggable = True
+End Sub
+
+Sub CairoSpot_MouseClicked(Spot As MapSpot, MouseEvent1 As MouseEvent)
+	Log("CairoSpot_MouseClicked: "& Spot.GetLat & ", " & Spot.GetLon)
+	ShowHostedNode(Spot.GetLat,Spot.GetLon,Spot.Title,Spot.Description)
+End Sub
+Sub CairoSpot_MousePressed(Spot As MapSpot, MouseEvent1 As MouseEvent)
+	Log("CairoSpot_MousePressed: ")
+	OSM.MapDraggable = False
+End Sub
+Sub CairoSpot_MouseReleased(Spot As MapSpot, MouseEvent1 As MouseEvent)
+	Log("CairoSpot_MouseReleased: ")
+	OSM.MapDraggable = True
+End Sub
+Sub CairoSpot_MouseDragged(Spot As MapSpot, EventData As MouseEvent)
+	'note, the EventData X/Y point is relative to the Spot's original position.
+	Dim DragPoint As Coordinate=OSM.GetCoordinate(Spot.X+EventData.X, Spot.Y+EventData.Y)
+	Log("CairoSpot_MouseDragged: " & EventData.X & "   " & EventData.Y)
+	Spot.MoveTo(DragPoint.GetLatitude,DragPoint.GetLongitude)
+End Sub
+

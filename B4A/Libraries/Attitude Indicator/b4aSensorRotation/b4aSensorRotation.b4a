@@ -1,0 +1,77 @@
+﻿Build1=Default,JHS.SensorRotation
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=attitudeindicator
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: b4aSensorRotation
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private ai1 As AttitudeIndicator
+	Private Label1 As Label
+	Private Label2 As Label
+	Private Label3 As Label
+	Private Label4 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("main")
+	
+	ai1.EarthColor = Colors.ARGB(255, 0x86, 0x5b, 0x4b)
+	ai1.PitchLadderColor = Colors.ARGB(255, 0xff, 0xff, 0xff)
+	ai1.BottomPitchLadderColor = Colors.ARGB(255, 0xff, 0xff, 0x00)
+	ai1.MinPlaneColor = Colors.ARGB(255, 0xe8, 0xd4, 0xbb)
+	ai1.SkyColor = Colors.ARGB(255, 0x36, 0xb4, 0xdd)
+	
+End Sub
+
+Sub Activity_Resume
+	
+	ai1.startListening
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+	ai1.stopListening
+
+End Sub
+
+
+Sub ai1_orientation_changed(pitch As Float, roll As Float)
+	
+'	Log("pitch = " & pitch)
+'	Log("roll = " & roll)
+	Label3.Text = NumberFormat(pitch, 0,2)
+	Label4.text = NumberFormat(roll, 0, 2)
+	
+End Sub

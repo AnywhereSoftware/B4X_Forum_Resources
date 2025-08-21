@@ -1,0 +1,104 @@
+﻿Build1=Default,b4a.example
+File1=DBPanel.bal
+File2=Selection.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=sql
+Library3=b4xtable
+Library4=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CableInfo
+Module2=DBShow
+Module3=EquipInfo
+Module4=Selection
+Module5=SQLUtil
+Module6=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=6
+Version=9.801
+@EndOfDesignText@
+'B4XTABLE PROFORMER
+'----------------------------
+'This work just pulls the code snippets from Erel and others into one universal proformer design, 
+'that mimics as close as I can get it to an Excel spreadsheet and includes:
+
+'  - Populating the B4xTable from a database table (it could be from anywhere)
+'  - Adding Rows(Records)
+'  - Deleting Rows
+'  - Duplicating Rows
+'  - Modifying cells individually
+'  - Moving the order of the Rows
+'  - Saving the B4xTable back to the database table
+
+'The B4xTable code is generic for any database. SQLUtils contains common subs
+
+' B4XTABLE AND RECORD HEADER NAMES
+'-----------------------------------------
+'The information for each database table is stored in individual code modules.
+
+'The field names for the table records are used as the column headers in the B4xTable 
+'They are passed to the public process variables in 'Common' before display by B4xTable.
+
+'ADDING RECORDS
+'--------------
+'The field name labels and value edit cells on the editpanel are automatically added from the database table header data 
+'The only limitation is the number of edit cells that can be added to the EditPage, though a scrolling page would fix this
+'I have capped the design at 60 by assigning the column names and types to arrays but lists would be better.
+
+'The B4XColumn Types (int/String) can be used to determine the input keyboard type. 
+'It is easier to do this in B4a than B4j by adjusting the keyboard for each type.
+
+'MOVING RECORDS
+'--------------
+'The MoveUp and MoveDown buttons moves the row order but I have not solved the highlighting on a page change, nor
+'an automatic page change. The page number does some funny things on page change!
+
+'The RowListIDs, used for the move sequences, are stored on a cell click but could be updated on first formation, 
+'add, duplicate or delete but with this method the list is always current.
+
+'SAMPLE
+'------
+'The table code modules contain example data which is set up on the first run of this program.
+'Two databases with different column totals are included so that you can swap between. 
+'You can see that the B4X table responds to each without alteration of the generic B4xTable code.
+
+'Rod McMahon
+'Corona Virus Project 2020
+
+#Region  Project Attributes 
+	#ApplicationLabel: B4XTableProformer
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: Landscape
+	#CanInstallToExternalStorage: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	
+
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	StartActivity("Selection")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

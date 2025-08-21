@@ -1,0 +1,99 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=archiver
+Library4=jxui
+Library5=draganddrop2
+Library6=xml2map
+Library7=b4xcollections
+Module1=XMLGenerator
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=1
+Version=8.45
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private paneInput As B4XView
+	Private dd As DragAndDrop
+	Private xui As XUI
+	Private gen As XMLGenerator
+	Private fc As FileChooser
+	Private version As Float = 1.23
+	Private LastSavedFolder As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Title = "b4xlib2XML v" & NumberFormat2(version, 1, 2, 2, False)
+	MainForm.Show
+	dd.Initialize(Me)
+	dd.MakeDragTarget(paneInput, "DropTarget")
+	gen.Initialize
+	fc.Initialize
+	If File.Exists(File.DirApp, "settings.txt") Then
+		LastSavedFolder = File.ReadMap(File.DirApp, "settings.txt").GetDefault("last", "")
+		fc.InitialDirectory = LastSavedFolder
+	End If
+End Sub
+
+Sub MainForm_Closed
+	
+	File.WriteMap(File.DirApp, "settings.txt", CreateMap("last": fc.InitialDirectory))
+End Sub
+
+Sub DropTarget_DragEntered(e As DragEvent)
+	Log("DragEntered")
+	Dim clr As Int
+	If IsValidDropEvent(e) Then
+		clr = xui.Color_Green
+	Else
+		clr = xui.Color_Red
+	End If
+	paneInput.SetColorAndBorder(xui.Color_White, 4dip, clr, 0)
+End Sub
+
+Sub DropTarget_DragExited(e As DragEvent)
+	paneInput.SetColorAndBorder(xui.Color_White, 0, 0, 0)
+End Sub
+
+Sub DropTarget_DragOver(e As DragEvent)
+	If IsValidDropEvent(e) Then e.AcceptTransferModes(TransferMode.COPY)
+End Sub
+
+Sub IsValidDropEvent(e As DragEvent) As Boolean
+	If e.GetDragboard.HasFiles Then
+		Dim files As List = e.GetDragboard.GetFiles
+		If files.Size = 1 Then
+			Dim filename As String = files.Get(0)
+			Return filename.EndsWith(".b4xlib")
+		End If
+	End If
+	Return False
+End Sub
+
+Sub DropTarget_DragDropped(e As DragEvent)
+	Log("drag dropped")
+	Dim filename As String = e.GetDragboard.GetFiles.Get(0)
+	e.SetDropCompleted(True)
+	Dim s As String = gen.ParseLib(filename)
+	Sleep(100)
+	fc.SetExtensionFilter("XML", Array("*.xml"))
+	fc.InitialFileName = File.GetName(filename.Replace(".b4xlib", ".xml"))
+	Dim target As String = fc.ShowSave(MainForm)
+	If target <> "" Then
+		File.WriteString(target, "", s)
+	End If
+End Sub
+

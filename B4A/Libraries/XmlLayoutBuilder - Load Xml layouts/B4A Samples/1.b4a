@@ -1,0 +1,88 @@
+﻿Version=3
+IconFile=
+NumberOfModules=0
+Package=b4a.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+UserTypesHint=
+NumberOfFiles=0
+NumberOfLibraries=4
+Library1=animation
+Library2=animationplus
+Library3=core
+Library4=xmllayoutbuilder
+@EndOfDesignText@
+
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#CustomBuildAction: 1, c:\windows\system32\attrib.exe, +r res\*.* /s
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim anim As Animation
+	Dim button1 As Button
+	Dim Panel1 As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim x As XmlLayoutBuilder
+	'load the layout
+	x.LoadXmlLayout(Activity, "layout1")
+	'load the Animation
+	anim = x.LoadAnimation("wave_scale", "anim")
+	'get a view based on the id
+	button1 = x.GetView("fade_animation")
+	'get a drawable object
+	Activity.Background = x.GetDrawable("smlnpatch160dpi")
+	
+	Panel1 = x.GetView("panel1")
+	Panel1.Color = Colors.White
+	Dim spinner1 As Spinner
+	spinner1.Initialize("")
+	spinner1.AddAll(Array As String("1", "2", "3"))
+	Panel1.AddView(spinner1, 0, 0, Panel1.Width, Panel1.Height)
+End Sub
+
+Sub anim_AnimationEnd
+	Log("animation_end")
+End Sub
+
+Sub Button1_Click
+	anim.Start(button1)
+End Sub
+
+Sub Button1_Down
+	Log("down")
+End Sub
+
+Sub chk1_CheckedChange(Checked As Boolean)
+	Log(Checked)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

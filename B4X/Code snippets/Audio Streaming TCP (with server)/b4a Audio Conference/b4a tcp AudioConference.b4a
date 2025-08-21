@@ -1,0 +1,99 @@
+﻿Build1=Default,it.tecnomedia.audioconference
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=network
+Library3=byteconverter
+Library4=javaobject
+Library5=audio
+Library6=xui
+Library7=runtimepermissions
+Library8=xui views
+Library9=randomaccessfile
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=CollectorTCP
+Module2=Starter
+Module3=|relative|..\WaveView
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=3
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AudioConference
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private B4XSwitchSend As B4XSwitch
+	Private B4XSwitchRiceve As B4XSwitch
+	Private WaveView1 As WaveView
+	Private EditTextIP As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	If FirstTime=False Then
+		B4XSwitchRiceve.Value=CollectorTCP.AudioRicever
+		B4XSwitchSend.Value=CollectorTCP.AudioSender
+	End If
+	
+End Sub
+
+Sub Activity_Resume
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_RECORD_AUDIO)
+	
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result=False Then 
+		Msgbox("Sorry, are you dummies","ALARM DUMMY") 'ignore
+		ExitApplication
+	End If
+	
+	If WaveView1.IsInitialized Then 
+		WaveView1.siriwave_start
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub B4XSwitchRiceve_ValueChanged (Value As Boolean)
+	CollectorTCP.AudioRicever=Value
+End Sub
+
+Sub B4XSwitchSend_ValueChanged (Value As Boolean)
+	CollectorTCP.AudioSender=Value
+End Sub
+
+Sub ButtonReverse_Click
+	B4XSwitchRiceve.Value=Not(B4XSwitchRiceve.Value)
+	B4XSwitchSend.Value=Not(B4XSwitchSend.Value)
+	
+	CollectorTCP.AudioRicever=B4XSwitchRiceve.Value
+	CollectorTCP.AudioSender=B4XSwitchSend.Value
+End Sub
+
+Sub ButtonConnect_Click
+	CollectorTCP.address=EditTextIP.Text
+	StartService(CollectorTCP)
+End Sub

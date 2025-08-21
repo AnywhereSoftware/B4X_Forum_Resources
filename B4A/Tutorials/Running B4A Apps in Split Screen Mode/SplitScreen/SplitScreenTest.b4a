@@ -1,0 +1,74 @@
+﻿Build1=Default,b4a.example
+File1=Layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	Dim Screen As LayoutValues = GetDeviceLayoutValues
+	Dim Width As Int = Screen.Width
+	Dim Height As Int = Screen.Height
+	Log("LayoutValues Width x Height = " & Width & " x " & Height)
+	Log("LayoutValues.Scale = " & Screen.Scale)
+	Log("LayoutValues.ApproximateScreenSize = " & Screen.ApproximateScreenSize)
+	Log("Activity width = " & Activity.Width & " height = " & Activity.Height)
+
+	Dim r As Reflector
+	r.Target = r.GetContext
+	r.Target = r.RunMethod("getResources")
+	r.Target = r.RunMethod("getDisplayMetrics")
+	Dim xdpi As Double = r.GetField("xdpi")
+	Dim ydpi As Double = r.GetField("ydpi")
+	Dim xpix As Int = r.GetField("widthPixels")
+	Dim ypix As Int = r.GetField("heightPixels")
+	Log("DisplayMetrics xdpi x ydpi = " & xdpi & " x " & ydpi)
+	Log("DisplayMetrics width x height = " & xpix & " x " & ypix)
+	Dim size As Double  = Sqrt(Power(xpix / xdpi, 2) + Power(ypix / ydpi, 2))
+	Log("ExactSize = " & size)
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

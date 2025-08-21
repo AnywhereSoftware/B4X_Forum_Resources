@@ -1,0 +1,72 @@
+﻿Build1=Default,de.donmanfred.admtest
+File1=api_key.txt
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=okhttp
+Library3=okhttputils2
+Library4=javaobject
+Library5=firebaseanalytics
+Library6=adm
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~~\n~~\n~'This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~CreateResourceFromFile(Macro, ADM.ADM)~\n~CreateResource(values, strings.xml,~\n~<resources>~\n~    <string name="app_name">ADMMessenger</string>~\n~    <string name="menu_settings">Settings</string>~\n~    <string name="title_activity_main">MainActivity</string>~\n~    <string name="json_data_msg_key">message</string>~\n~    <string name="json_data_time_key">timeStamp</string>~\n~    <string name="json_data_consolidation_key">collapse_key</string>~\n~    <string name="intent_msg_action">com.amazon.sample.admmessenger.ON_MESSAGE</string>~\n~    <string name="intent_msg_category">com.amazon.sample.admmessenger.MSG_CATEGORY</string>~\n~    <string name="server_address">http://webhook.basic4android.de/</string>~\n~    <string name="server_port">80</string>~\n~</resources>~\n~~\n~)~\n~'End of default text.~\n~
+Module1=AmazonMessaging
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: true
+#DebuggerForceStandardAssets: true
+#IgnoreWarnings: 32
+
+'#AdditionalJar: amazon-device-messaging-1.1.0.jar, ReferenceOnly
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	Dim token As String = Starter.GetToken
+		
+	Dim j As HttpJob
+	j.Initialize("",Me)
+	j.Download2("http://webhook.basic4android.de",Array As String("action","register","token",token,"deviceID","Username"))
+	Wait For (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log(j.GetString)
+	Else
+		Log(j.ErrorMessage)
+	End If
+	j.Release
+End Sub
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

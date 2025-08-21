@@ -1,0 +1,181 @@
+﻿Build1=Default,com.change.me
+File1=layout1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ilocation
+Module1=dataCommon
+Module2=|relative|Classes\BitmapEx
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=2
+Version=6
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+		
+	#PlistExtra:<key>NSLocationWhenInUseUsageDescription</key><string>Used to display the current navigation data.</string>
+	#PlistExtra:<key>NSLocationUsageDescription</key><string>Used to display the current navigation data.</string>
+	
+	#CertificateFile : ios_development.cer           ' <--- Change
+	#ProvisionFile   : XCodeFirebase.mobileprovision ' <--- Change
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App                                                                  As Application
+	Public NavControl                                                           As NavigationController
+    
+	Private imageViewPicture                                                    As ImageView
+	Private textViewMetadata                                                    As TextView
+	Private panelSafeArea                                                       As Panel
+	Private rectSafeArea                                                        As Rect
+
+	Private bitmapExInstance                                                    As BitmapEx
+	Private pageInstance                                                        As Page
+	Private locationManagerInstance                                             As LocationManager
+	
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)	
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	
+	NavControl = Nav
+	
+	pageInstance_ShowPage
+	
+	locationManagerInstance.Initialize ("locationManagerInstance")
+	
+End Sub
+
+Public Sub pageInstance_ShowPage
+	
+	If pageInstance.IsInitialized = False Then
+		pageInstance.Initialize ("pageInstance")
+		pageInstance.Title = "Metadata"
+		pageInstance.RootPanel.LoadLayout ("layout1")
+	End If
+	NavControl.ShowPage (pageInstance)
+
+End Sub
+
+Private Sub pageInstance_Resize (intWidth As Int, intHeight As Int)
+
+	rectSafeArea = pageInstance.SafeAreaInsets
+	panelSafeArea.SetLayoutAnimated (0, 1, rectSafeArea.Left, rectSafeArea.Top, intWidth - rectSafeArea.Left - rectSafeArea.Right, intHeight - rectSafeArea.Top - rectSafeArea.Bottom)
+	
+	imageViewPicture.SetLayoutAnimated (0, 1, 0, 0, panelSafeArea.Width, panelSafeArea.Height * 0.66 - 10)
+	textViewMetadata.SetLayoutAnimated (0, 1, 0, imageViewPicture.Height + 10, panelSafeArea.Width, panelSafeArea.Height - imageViewPicture.Height - 10)
+	
+End Sub
+
+Private Sub Application_Foreground
+	
+	StartLocationUpdates
+
+End Sub
+
+Private Sub Application_Background
+
+    dataCommon.booleanIsLocationValid = False
+	locationManagerInstance.Stop
+	locationManagerInstance.StopHeading
+		
+End Sub
+
+Private Sub locationManagerInstance_AuthorizationStatusChanged (Status As Int)
+	
+	StartLocationUpdates
+	
+End Sub
+
+Private Sub locationManagerInstance_HeadingChanged (MagneticHeading As Double, TrueHeading As Double)
+	
+	dataCommon.doubleLastMagneticHeading = MagneticHeading
+	dataCommon.doubleLastTrueHeading = TrueHeading
+	
+End Sub
+
+Private Sub locationManagerInstance_LocationChanged (locationInstance As Location)
+	
+	If locationInstance.Accuracy >= 0 Then
+		dataCommon.booleanIsLocationValid = True
+		dataCommon.locationCurrent = locationInstance
+	End If
+	
+End Sub
+
+Sub locationManagerInstance_AllowCalibration As Boolean
+
+	Return False
+
+End Sub
+
+Private Sub locationManagerInstance_LocationError
+
+	dataCommon.booleanIsLocationValid = False
+	
+End Sub
+
+Private Sub StartLocationUpdates
+
+	'if the user allowed us to use the location service or if we never asked the user before then we call LocationManager.Start.
+	If locationManagerInstance.IsAuthorized Or locationManagerInstance.AuthorizationStatus = locationManagerInstance.AUTHORIZATION_NOT_DETERMINED Then locationManagerInstance.Start (0)
+	locationManagerInstance.StartHeading
+		
+End Sub
+
+Sub pageInstance_BarButtonClick (Tag As String)
+	
+	Select Case Tag
+		Case "Camera"
+			CallSubDelayed (Me, "takePhoto")
+		Case "Refresh" ' read from file
+			bitmapExInstance.LoadImage (File.DirTemp, "temp.jpg")
+			imageViewPicture.Bitmap = bitmapExInstance.UIImage
+			textViewMetadata.Text = bitmapExInstance.nsDictionaryMetadata
+			bitmapExInstance.ReleaseMemory
+	End Select
+	
+End Sub
+
+Private Sub takephoto
+
+	bitmapExInstance.Initialize (Me, "bitmapExInstance", pageInstance)
+	bitmapExInstance.takePhoto (False, False, False, False)	
+	
+End Sub
+
+#Region События формы
+
+Public Sub bitmapExInstance_getLocation
+
+	bitmapExInstance.SetLocation (dataCommon.booleanIsLocationValid, dataCommon.locationCurrent, dataCommon.doubleLastMagneticHeading, dataCommon.doubleLastTrueHeading)    
+	
+End Sub
+
+Public Sub bitmapExInstance_Complete (intResult As Int)
+    
+	If intResult = 1 Then
+		imageViewPicture.Bitmap = bitmapExInstance.UIImage
+		textViewMetadata.Text = bitmapExInstance.nsDictionaryMetadata
+	
+		bitmapExInstance.SaveImage (File.DirTemp, "temp.jpg", 85)
+		bitmapExInstance.ReleaseMemory
+	End If
+		
+End Sub
+
+#End Region
+
+
+

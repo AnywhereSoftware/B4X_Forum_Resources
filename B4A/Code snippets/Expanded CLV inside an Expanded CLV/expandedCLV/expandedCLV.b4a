@@ -1,0 +1,478 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File10=fanlo.png
+File11=heat.png
+File12=off.png
+File13=on.png
+File14=smiley.png
+File15=x.png
+File2=catAC.bal
+File3=catAll.bal
+File4=cellitem.bal
+File5=clvRoom.bal
+File6=cool.png
+File7=extPnl1.bal
+File8=fan.png
+File9=fanhi.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=stringutils
+Library3=xui
+Library4=xcustomlistview
+Library5=xui views
+Library6=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=15
+NumberOfLibraries=6
+NumberOfModules=1
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#BridgeLogger: true
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Private clv1, clv2 As CustomListView
+	Private xui As XUI
+	Type tItemData(Name As String, Num1 As Int, Num2 As Int)
+	Private house, housegroup, houseStatus As List
+	Private room1, room2, room3, room4 As List
+	Private ExpandedHeight As Int = 187dip + 90dip	'180dip
+	Private CollapsedHeight As Int = 90dip
+	Private ExpandedHeight1 As Int = 60dip + 60dip
+	Private CollapsedHeight1 As Int = 60dip
+	Type ITEM_CLICK( index As Int, tag As String)
+	Private itemClick As ITEM_CLICK
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	clv1.DefaultTextBackgroundColor = 0xFF8F8F8F
+	clv1.DefaultTextColor = xui.Color_White
+	house.Initialize2(Array As String("Kitchen", "Dining Room", "Living Room", "Bedroom 1", "Bedroom 2", "Bedroom 3", "Study"))
+	houseStatus.Initialize2(Array As Int(0, 0, 0, 0, 0, 0, 0))
+	room1.Initialize2(Array As String("Lamp", "Air Con.", "Downlights", "Microwave", "Power Outlet"))
+	room2.Initialize2(Array As String("Wall Light", "Air Con.", "Ceiling Light", "TV", "Power Board", "Camera"))
+	room3.Initialize2(Array As String("Wall Light", "Air Con", "Ceiling Light", "TV", "Camera"))
+	room4.Initialize2(Array As String("Lamp", "Air Con", "Bedside Lamp", "TV", "Power Outlet"))
+	housegroup.Initialize2(Array As List(room1, room2, room3, room4))
+	For i = 0 To house.Size-1
+		clv1.Add(CreateListItem(house.Get(i)), house.Get(i))
+	Next
+
+End Sub
+#Region SUB_CLV1
+Sub CreateListItem(Text As String) As Panel
+	Dim clr, shade As Int
+	Dim p As B4XView = xui.CreatePanel("")
+	clr = Colors.RGB(234,191,90)
+	shade =  ShadeColor(clr)
+	p.SetLayoutAnimated(0, 0, 0, clv1.AsView.Width, ExpandedHeight)
+	p.LoadLayout("CellItem")
+	Dim pHouse As B4XView = p.GetView(0)
+	For i = 0 To pHouse.NumberOfViews - 1
+		Dim v As B4XView = pHouse.GetView(i)
+		If v.Tag = "1" Then
+			v.Text = "ALL ON"
+		else if v.Tag = "2" Then
+			v.Text = Text
+		else if v.Tag = "3" Then
+			v.Text = "ALL OFF"
+		End If
+	Next
+	p.SetLayoutAnimated(0, 0, 0, p.Width, CollapsedHeight)
+	Dim pn0 As B4XView = p.GetView(0)
+	pn0.Color = clr
+	Dim pn1 As B4XView = p.GetView(1)
+	pn1.Color = shade
+	p.Tag = 0 'collapsed
+	Return p
+End Sub
+
+Sub clv1_ItemClick (Index As Int, Value As Object)
+	Dim i As Int
+	i = FindExapnded
+	If i >= 0 Then  		'only one panel expanded at a time
+		CollapseItem(i)
+	End If
+	If i <> Index Then
+		ExpandItem(Index)
+	End If
+End Sub
+
+Sub btnEvent1_Click					' event from any other "clickable" items on clv1
+	Dim i As Int
+	Dim btn As Button	'Label
+	Dim index As Int = clv1.GetItemFromView(Sender)
+	If Sender Is Button Then
+		btn = Sender
+	End If
+	i = FindExapnded
+	
+	If btn.Tag = "1" Then
+		houseStatus.Set(index, 1)	'all on
+		ToastMessageShow(clv1.GetValue(index) & " All ON", True)
+	else if btn.Tag = "3" Then
+		houseStatus.Set(index, 2)	'all off
+		ToastMessageShow(clv1.GetValue(index) & " All OFF", True)
+	End If
+	If i >= 0 Then				'there is an expanded item
+		Dim j As Int
+		For j = 0 To clv2.Size - 1
+			Dim p As B4XView = clv2.GetPanel(j)
+			Dim pn0 As B4XView = p.GetView(0)
+			For Each v As B4XView In pn0.GetAllViewsRecursive
+				If v Is ImageView Then
+					If v.Tag = "1" Then
+						Select btn.Tag
+							Case "1"			'on
+								v.SetBitmap(LoadBitmap(File.DirAssets, "on.png"))
+							Case "2"			'status
+								ToastMessageShow("Status UNKNOWN", True)
+								v.SetBitmap(LoadBitmap(File.DirAssets, "x.png"))
+							Case "3"			'off
+								v.SetBitmap(LoadBitmap(File.DirAssets, "off.png"))
+						End Select
+'						CollapseItem2(index)
+						Exit
+					End If
+				End If
+			Next
+		Next
+	End If
+	
+End Sub
+
+Sub FindExapnded As Int 				'check if any item is expanded
+	Dim i As Int
+	For i = 0 To clv1.GetSize - 1
+		Dim j As Int
+		j = clv1.GetPanel(i).Tag
+		If j = 1 Then Return i
+	Next
+	Return -1
+End Sub
+
+Sub ExpandItem (index As Int)					
+
+	clv1.ResizeItem(index, ExpandedHeight)
+	clv1.GetPanel(index).Tag = 1					'expanded
+	Dim p As B4XView = clv1.GetPanel(index)
+	Dim pext As B4XView
+	For Each v As B4XView In p.GetAllViewsRecursive
+		If v Is Panel Then
+			If v.Tag = "10" Then
+				pext = v
+				Exit
+			End If
+		End If
+	Next
+'	If p.NumberOfViews > 0 Then
+'		If pext.NumberOfViews > 0 Then
+'			pext.RemoveAllViews
+'		End If
+'	End If
+	pext.LoadLayout("clvRoom")
+	clv2.DefaultTextBackgroundColor = 0xFF8F8F8F
+	clv2.DefaultTextColor = xui.Color_White
+	Dim i As Int
+	Select index
+		Case 0
+			For i = 0 To room1.Size-1
+				clv2.Add(CreateRoomItem(room1.Get(i), houseStatus.Get(index)), house.Get(index))
+			Next
+		Case 1
+			For i = 0 To room2.Size-1
+				clv2.Add(CreateRoomItem(room2.Get(i), houseStatus.Get(index)), house.Get(index))
+			Next
+		Case 2
+			For i = 0 To room3.Size-1
+				clv2.Add(CreateRoomItem(room3.Get(i), houseStatus.Get(index)), house.Get(index))
+			Next
+		Case 3, 4, 5, 6
+			For i = 0 To room4.Size-1
+				clv2.Add(CreateRoomItem(room4.Get(i), houseStatus.Get(index)), house.Get(index))
+			Next
+	End Select
+End Sub
+
+Sub CollapseItem(index As Int)
+	clv1.ResizeItem(index, CollapsedHeight)
+	clv1.GetPanel(index).Tag = 0					'collapese
+End Sub
+
+Sub CreateRoomItem(text As String, status As Int) As B4XView
+	Dim clr, shade As Int
+
+	Dim p As B4XView = xui.CreatePanel("")
+	clr = Colors.RGB(233,221,175)
+	shade =  ShadeColor(clr)
+	p.SetLayoutAnimated(0, 0, 0, clv1.AsView.Width, ExpandedHeight1)
+	If text.Contains("Air") Then
+		p.LoadLayout("catAC")
+	Else
+		p.LoadLayout("catAll")
+	End If
+	Dim pn0 As B4XView = p.GetView(0)
+	For Each v As B4XView In pn0.GetAllViewsRecursive
+		If v Is Label Then
+			If v.Tag = "1" Then
+				v.Text = text
+			End If
+		else if v Is ImageView Then
+			If v.Tag = "1" Then
+				If status = 0 Then
+					v.SetBitmap(LoadBitmap(File.DirAssets, "x.png"))
+				else If status = 1 Then
+					v.SetBitmap(LoadBitmap(File.DirAssets, "on.png"))
+				Else If status = 2 Then
+					v.SetBitmap(LoadBitmap(File.DirAssets, "off.png"))
+				End If
+			End If
+		End If
+	Next
+	p.SetLayoutAnimated(0, 0, 0, p.Width, CollapsedHeight1)
+	p.Tag = 0
+	pn0.Color = clr
+	Dim pn1 As B4XView = p.GetView(1)
+	pn1.Color = shade
+	
+	Dim r As Reflector					'set touch listener for clv2
+	r.Target = p	'v
+	r.SetOnTouchListener("clv2_Touch")
+	Return p
+End Sub
+#End Region
+
+Sub ShadeColor(clr As Int) As Int
+	Dim argb() As Int = GetARGB(clr)
+	Dim factor As Float = 0.75
+	Return xui.Color_RGB(argb(1) * factor, argb(2) * factor, argb(3) * factor)
+End Sub
+
+Sub GetARGB(Color As Int) As Int()
+	Private res(4) As Int
+	res(0) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff000000), 24)
+	res(1) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff0000), 16)
+	res(2) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff00), 8)
+	res(3) = Bit.And(Color, 0xff)
+	Return res
+End Sub
+
+#Region SUB_CLV2
+Sub clv2_ItemClick (Index As Int, Value As Object)					'clv2 clicked
+	Dim i As Int
+	i = FindExapnded2
+	If i >= 0 Then  		'only one panel expanded at a time
+		CollapseItem2(i)
+	End If
+	If i <> Index Then
+		itemClick.index = Index
+		itemClick.tag = "0"
+		ExpandItem2(Index)
+	End If
+End Sub
+
+Sub clv2Event_Click				'clv2 items click
+	Dim i As Int
+	Dim v As B4XView
+	Dim index As Int = clv2.GetItemFromView(Sender)
+
+	v = Sender
+	i = FindExapnded2
+	itemClick.index = index
+	itemClick.tag = v.Tag
+	If i >= 0 Then  		'only one panel expanded at a time, -1 if none
+		CollapseItem2(i)
+		If i <> index Or (i = index And itemClick.tag <> v.Tag) Then
+			ExpandItem2(index)
+		End If
+	Else
+		ExpandItem2(index)
+	End If
+End Sub
+
+Sub btnEvent2_Click				' clv2 expanded buttons click
+	Dim btn As Button	'Label
+	Dim index As Int = clv2.GetItemFromView(Sender)
+	If Sender Is Button Then
+		btn = Sender
+	End If
+	Dim p As B4XView = clv2.GetPanel(index)
+	Dim pn0 As B4XView = p.GetView(0)
+'	Dim pn1 As B4XView = p.GetView(1)
+	For Each v As B4XView In pn0.GetAllViewsRecursive
+		If v Is ImageView Then
+			If itemClick.tag = "21" Then					'tag of the view clicked on clv2
+				If v.Tag = "21" Then	'ac mode
+					Select btn.Tag
+						Case "1"			
+							v.SetBitmap(LoadBitmap(File.DirAssets, "cool.png"))
+						Case "2"			
+							v.SetBitmap(LoadBitmap(File.DirAssets, "fan.png"))
+						Case "3"			
+							v.SetBitmap(LoadBitmap(File.DirAssets, "heat.png"))
+					End Select
+					CollapseItem2(index)
+					Exit
+				End If
+			Else If itemClick.tag = "22" Then			'ac fan
+				If v.Tag = "22" Then	'ac fan			Select btn.Tag
+					Select btn.Tag
+					Case "1"			
+						v.SetBitmap(LoadBitmap(File.DirAssets, "fanlo.png"))
+					Case "3"			
+						v.SetBitmap(LoadBitmap(File.DirAssets, "fanhi.png"))
+					End Select
+					CollapseItem2(index)
+					Exit
+				End If
+			Else
+				If v.Tag = "1" Then						'on/off
+					Select btn.Tag
+						Case "1"			'on
+							v.SetBitmap(LoadBitmap(File.DirAssets, "on.png"))
+						Case "2"			'status
+							ToastMessageShow("Status UNKNOWN", True)
+							v.SetBitmap(LoadBitmap(File.DirAssets, "x.png"))
+						Case "3"			'off
+							v.SetBitmap(LoadBitmap(File.DirAssets, "off.png"))
+					End Select
+					CollapseItem2(index)
+					Exit
+				End If
+			End If
+		End If
+	Next	
+End Sub
+
+Sub FindExapnded2 As Int 			'find if there is any expanded item in clv2
+	Dim i As Int
+	For i = 0 To clv2.GetSize - 1
+		Dim j As Int
+		j = clv2.GetPanel(i).Tag
+		If j = 1 Then Return i				'return 1 if expanded item found
+	Next
+	Return -1					'no expanded item found
+End Sub
+
+Sub ExpandItem2 (index As Int)						'expand clv2 if clv2 is clicked or other "clickable" items are clicked
+	clv2.ResizeItem(index, ExpandedHeight1)
+	clv2.GetPanel(index).Tag = 1					'set tag to 1 = expanded
+	Dim p As B4XView = clv2.GetPanel(index)
+	Dim pext As B4XView
+	For Each v As B4XView In p.GetAllViewsRecursive
+		If v Is Panel Then
+			If v.Tag = "1" Then
+				pext = v
+				Exit
+			End If
+		End If
+	Next
+	If p.NumberOfViews > 0 Then		
+		If pext.NumberOfViews > 0 Then
+			pext.RemoveAllViews
+		End If
+	End If
+	pext.LoadLayout("extPnl1")
+	For Each v As B4XView In pext.GetAllViewsRecursive
+		If v Is Button Then
+			If v.Tag = "1" Then					'button1
+				Select itemClick.tag
+					Case 21		'ac mode
+						v.Text = "COOLING"
+					Case 22		'ac fan
+						v.Text = "LOW"
+					Case Else
+						v.Text = "ON"
+				End Select
+			Else if v.Tag = "2" Then			'button2
+				Select itemClick.tag
+					Case 21		'ac mode
+						v.Text = "FAN"
+					Case 22		'ac fan
+						v.Visible = False
+					Case Else
+						v.Text = "STATUS"
+					End Select
+			else if v.Tag = "3" Then			'button3
+				Select itemClick.tag
+					Case 21		'ac mode
+						v.Text = "HEATING"
+					Case 22		'ac fan
+						v.Text = "HIGH"
+					Case Else
+						v.Text = "OFF"
+				End Select
+			End If
+		Else if v Is Label Then
+			If v.Tag = "2" Then
+				Select itemClick.tag
+					Case 22		'ac fan
+						v.Visible = True
+						v.Text = "Fan Speed"
+					Case Else
+						v.Visible = False
+				End Select
+			End If
+		End If
+	Next
+End Sub
+
+Sub CollapseItem2(index As Int)
+	clv2.ResizeItem(index, CollapsedHeight1)
+	clv2.GetPanel(index).Tag = 0					'set tag to 0 = collapesed
+End Sub
+
+Sub clv2_Touch(ViewTag As Object, Action As Int, X As Float, Y As Float, EventData As Object) As Boolean
+	Log("action " & Action)
+	If Action = 0 Then									'ACTION_DOWN
+		Dim r As Reflector
+		r.Target = clv1.sv
+		r.RunMethod2("requestDisallowInterceptTouchEvent", True, "java.lang.boolean")
+	End If
+	Return False
+End Sub
+#End Region
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

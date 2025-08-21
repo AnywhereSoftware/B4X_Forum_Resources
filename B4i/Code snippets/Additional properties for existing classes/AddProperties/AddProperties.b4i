@@ -1,0 +1,81 @@
+﻿Build1=Default,b4i.example1
+File1=layout1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Module1=OBJC
+NumberOfFiles=1
+NumberOfLibraries=1
+NumberOfModules=1
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private Label1 As Label
+	Private TextField1 As TextField
+	Private TextView1 As TextView
+	
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout ("layout1")	
+	NavControl.ShowPage(Page1)
+		
+	' **** Set own properties ***
+	
+	Dim no1, no2, no3 As NativeObject
+	
+	no1 = Label1
+	no1.SetField ("myProperty1", 12345)
+	no1.SetField ("myProperty2", "string #1")
+
+	no2 = TextField1
+	no2.SetField ("myProperty1", 12345.54321)
+	no2.SetField ("myProperty2", "string #2")
+	
+	no3 = TextView1
+	no3.SetField ("myProperty1", 1234567890)
+	no3.SetField ("myProperty2", "string #3")
+
+	' **** Get own properties ***
+	
+	TextView1.Text = "Label1" & CRLF & _
+	                 "   myProperty1 = " & no1.GetField ("myProperty1").AsNumber & CRLF & _
+	                 "   myProperty2 = " & no1.GetField ("myProperty2").AsString & CRLF & _
+					 "TextField1" & CRLF & _
+	                 "   myProperty1 = " & no2.GetField ("myProperty1").AsNumber & CRLF & _
+					 "   myProperty2 = " & no2.GetField ("myProperty2").AsString & CRLF & _
+					 "TextView1" & CRLF & _
+	                 "   myProperty1 = " & no3.GetField ("myProperty1").AsNumber & CRLF & _
+					 "   myProperty2 = " & no3.GetField ("myProperty2").AsString
+					 		
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub

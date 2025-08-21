@@ -1,0 +1,213 @@
+﻿AppType=JavaFX
+Build1=Default,js.Image_View
+File1=info.txt
+File2=Layout1.bjl
+File3=w.jgw
+File4=w.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	'#VirtualMachineArgs: -Xms2G -Xmx2G
+	#VirtualMachineArgs: -Xms1024m -Xmx1024m
+	'#VirtualMachineArgs: -Xms500m -Xmx500m
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private ImageView1 As ImageView
+	Private P_map As Pane
+	Private StartLeft, StartTop, StartX, StartY As Int
+	Private L_sob_pix As Label
+	Private L_vob_pix As Label
+	Private L_xsur_pix As Label
+	Private L_ysur_pix As Label
+	Private L_zoom As Label
+	Private c_zoom As Float
+	Private sob_pix As Float
+	Private Canvas1 As Canvas
+	Private lblLat As Label
+	Private lblLon As Label
+	Private xobr As Double
+	Private yobr As Double
+	Private xpixsize As Double
+	Private ypixsize As Double
+	Private xcoor As Double
+	Private ycoor As Double
+	Private pix_lat As Double
+	Private pix_lon As Double
+	Private kde_lat_pix As Double
+	Private kde_lon_pix As Double
+	Private List1b As List
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	Dim jo As JavaObject = P_map
+	Dim ScrollEvent As JavaObject = jo.CreateEventFromUI("javafx.event.EventHandler", "ScrollChanged", Null)
+	jo.RunMethod("setOnScroll", Array(ScrollEvent))
+End Sub
+
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+
+Sub Button1_Click
+	c_zoom = 1
+	L_zoom.Text = Round2(c_zoom,2)
+	
+	Dim bmp As Image = fx.LoadImage(File.DirAssets,"w.jpg")
+	
+		Dim List1 As List
+		List1 = File.ReadList(File.DirAssets,"w.jgw")
+		xpixsize = Abs(List1.Get(0))
+		ypixsize = Abs(List1.Get(3))
+		xcoor = List1.Get(4)
+		ycoor = List1.Get(5)
+	
+		ImageView1.SetImage(bmp)
+		ImageView1.SetSize(bmp.Width, bmp.Height)
+		ImageView1.Left = 0
+		ImageView1.Top = 0
+		Canvas1.Width = ImageView1.Width
+		Canvas1.Height = ImageView1.Height
+		Canvas1.Left = ImageView1.Left
+		Canvas1.Top = ImageView1.Top
+		
+		L_sob_pix.Text = bmp.Width
+		L_vob_pix.Text = bmp.Height
+		sob_pix = bmp.Width
+		
+		draw_vector
+End Sub
+
+Sub ImageView1_MouseMoved (EventData As MouseEvent)
+	If L_zoom.Text = "zoom" Then Return
+	
+	L_xsur_pix.Text =	EventData.X / c_zoom
+	L_ysur_pix.Text =	EventData.Y / c_zoom
+	
+	xobr =	EventData.X / c_zoom
+	yobr =	EventData.Y / c_zoom
+	
+	pix_to_coor
+End Sub
+
+Sub Canvas1_MouseMoved (EventData As MouseEvent)
+	If L_zoom.Text = "zoom" Then Return
+	
+	L_xsur_pix.Text =	EventData.X / c_zoom
+	L_ysur_pix.Text =	EventData.Y / c_zoom
+	
+	xobr =	EventData.X / c_zoom
+	yobr =	EventData.Y / c_zoom
+	
+	pix_to_coor
+End Sub
+
+Sub P_map_MousePressed (EventData As MouseEvent)
+	StartLeft = ImageView1.Left
+	StartTop = ImageView1.Top
+	StartX = EventData.X
+	StartY = EventData.Y
+End Sub
+
+Sub P_map_MouseDragged (EventData As MouseEvent)
+	ImageView1.Left = Min(0.5 * P_map.Width, StartLeft + 1.2 * (EventData.X - StartX))
+	Canvas1.Left = ImageView1.Left
+	ImageView1.Left = Max(-(ImageView1.Width - 0.5 * P_map.Width), ImageView1.Left)
+	Canvas1.Left = ImageView1.Left
+	ImageView1.Top = Min(0.5 * P_map.Height, StartTop + 1.2 * (EventData.Y - StartY))
+	Canvas1.Top = ImageView1.Top
+	ImageView1.Top = Max(-(ImageView1.Height - 0.5 * P_map.Height), ImageView1.Top)
+	Canvas1.Top = ImageView1.Top
+End Sub
+
+
+Private Sub ScrollChanged_Event (MethodName As String, Args() As Object) As Object
+	If MethodName = "handle" Then
+		Dim ev As JavaObject = Args(0)
+		Dim delta As Float = ev.RunMethod("getDeltaY", Null)
+		Dim Zoom As Float
+		If delta > 0 And c_zoom < 4 Then
+			Zoom = 1.1
+		Else
+			Zoom = 0.9
+		End If
+		ZoomChanged(ev.RunMethod("getX", Null), ev.RunMethod("getY", Null), Zoom)
+	End If
+	Return Null
+End Sub
+
+Private Sub ZoomChanged (x As Int, y As Int, ZoomDelta As Float)
+	Dim ivx As Float = x - ImageView1.Left
+	Dim ivy As Float = y - ImageView1.Top
+	ZoomDelta = Max(ZoomDelta, P_map.Width / ImageView1.Width)
+	ImageView1.SetLayoutAnimated(0, x - ivx * ZoomDelta, y - ivy * ZoomDelta, ImageView1.Width * ZoomDelta, ImageView1.Height * ZoomDelta)
+	
+
+	
+	Canvas1.Left = ImageView1.Left
+	Canvas1.Top = ImageView1.Top
+	Canvas1.Width = ImageView1.Width
+	Canvas1.Height = ImageView1.Height
+	
+	c_zoom = (ImageView1.Width)/sob_pix
+	L_zoom.Text = Round2(c_zoom,2)
+	draw_vector
+End Sub
+
+
+Sub pix_to_coor
+	pix_lon = xcoor + Round2((Round2(xobr,6)*xpixsize),6)
+	pix_lat = ycoor - Round2((Round2(yobr,6)*ypixsize),6)
+	lblLat.Text = Round2(pix_lat,6)
+	lblLon.Text = Round2(pix_lon,6)
+End Sub
+
+Sub draw_vector ()
+	Canvas1.ClearRect(0,0,Canvas1.Width, Canvas1.Height)
+	open_points
+End Sub
+
+Sub open_points ()
+	Dim nazovbodu As String
+	List1b = File.ReadList(File.DirAssets, "info.txt")
+	
+	For i = 0 To List1b.Size-1
+		Dim str() As String
+		str = Regex.split(":", List1b.Get(i))
+			
+		'konverzia wgs do pixelov celeho obrazku
+		kde_lon_pix = ((str(2) - xcoor)/xpixsize) * c_zoom
+		kde_lat_pix = ((ycoor - str(1))/ypixsize) * c_zoom
+			
+		'nakresli nazov bodu
+		nazovbodu = str(0)
+		Dim tx As Float = kde_lon_pix '+ bod_radius*1.2
+		Dim ty As Float = kde_lat_pix + 4*4
+		Canvas1.DrawText(nazovbodu,tx,ty,fx.DefaultFont(10),fx.Colors.Blue,"CENTER")
+
+		'nakresli bod
+		Canvas1.DrawCircle(kde_lon_pix, kde_lat_pix, 4, fx.Colors.Blue, False, 2)
+	Next
+End Sub
+

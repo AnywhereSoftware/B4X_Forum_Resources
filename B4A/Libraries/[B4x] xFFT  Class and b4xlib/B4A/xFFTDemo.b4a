@@ -1,0 +1,406 @@
+﻿Build1=Default,b4a.FFTDemo
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xfft
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: FFTDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+'	Private cbxNbSamples As ComboBox
+	
+	Private FFT1 As xFFT
+	Private N, N_21 As Int
+	Private TimeReal(), TimeRealINV(), FFTMagnitude(), FFTPhase(), FFTReal(), FFTImag() As Double
+	Private TimeSignalIndex = 2 As Int
+	Private TimeSignalText(6) As String
+	TimeSignalText(0) = "pure sine 20 periods"
+	TimeSignalText(1) = "pure cosine 20 periods"
+	TimeSignalText(2) = "4 sines	10, 20, 30, 100 periods"
+	TimeSignalText(3) = "sine 20.5 periods"
+	TimeSignalText(4) = "sine 20 periods damped"
+	TimeSignalText(5) = "sine 50 periods modulated 10 periods"
+	
+	'variables Graph
+	Private GraphX0, GraphTX1, GraphFX1, GraphdX, Graph2dX, GraphTW, GraphFW, GraphY0, GraphBottom, GraphTop, GraphH, GraphLineWidth As Int
+	Private GraphMin, GraphMax, GraphMaxMin, GraphScale As Double
+	Private TitleTextSize, ScaleTextSize As Float
+End Sub
+
+Sub Globals
+	Private pnlGraph, pnlToolBox As Panel
+	Private cvsGraph As Canvas
+	Private rectGraphT, rectGraphF As Rect
+	Private btnWindow, btnSamples As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Main")
+	Activity.Title = "xFFT Demo"
+	
+	cvsGraph.Initialize(pnlGraph)
+
+	FFT1.Initialize
+	FFT1.ModeDegrees = True
+
+	InitNbSamples
+	cbxNbSamples_SelectedIndexChanged(0, 512)
+
+	GraphInit
+	
+	DrawTime(TimeReal, "Time")
+	
+	'	Private t1 = DateTime.Now As Long
+	FFTCalc
+	'	Log((DateTime.Now - t1))
+	FFTCalcINV
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Activity_Click
+	If GetDeviceLayoutValues.ApproximateScreenSize < 6 Then
+		pnlToolBox.Visible = Not(pnlToolBox.Visible)
+	End If
+End Sub
+
+Private Sub FFTCalc
+	FFTMagnitude = FFT1.Forward(TimeReal)
+	FFTPhase = FFT1.Phase
+	FFTReal = FFT1.Real
+	FFTImag = FFT1.Imag
+End Sub
+
+Private Sub FFTCalcINV
+	TimeRealINV = FFT1.Inverse(FFTReal, FFTImag)
+	DrawTime(TimeRealINV, "Time inverse")
+End Sub
+
+Private Sub InitNbSamples
+	'	cbxNbSamples.Items.AddAll(Array As Int(1024, 512, 256))
+	'	cbxNbSamples.SelectedIndex = 0
+End Sub
+
+Private Sub TimeInit(Index As Int)
+	Private i As Int
+	Private w1, w2, w3, w4 As Double
+
+	N_21 = N / 2 + 1
+	
+	Private TimeReal(N) As Double
+	
+	TimeSignalIndex = Index
+
+	Select TimeSignalIndex
+		Case 0	' pure sine 20 periods
+			w1 = 7200 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i)
+			Next
+		Case 1	'pure cosine 20 periods
+			w1 = 7200 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * CosD(w1 * i)
+			Next
+		Case 2	'4 sines	10, 20, 50, 100 periods
+			w1 = 3600 / N	
+			w2 = 7200 / N
+			w3 = 10800 / N
+			w4 = 36000 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 5 + 10 * SinD(w1 * i + 60) + 5 * SinD(w2 * i) + 7 * SinD(w3 * i) + 3 * SinD(w4 * i)
+			Next
+		Case 3	'sine 20.5 periods
+			w1 = 7380 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i)
+			Next
+		Case 4	'sine 20 periods damped
+			w1 = 7200 / N	
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i) * Power(cE, - 0.003 * i)
+			Next
+		Case 5	'sine 50 periods modulated 10 periods
+			w1 = 36000 / N
+			w2 = 3600 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i) * (1 - 0.8 * (1 - SinD(w2 * i)))' * Power(cE, -0.005 * i)
+			Next
+	End Select
+End Sub
+
+Private Sub GraphInit
+	If GetDeviceLayoutValues.ApproximateScreenSize < 6 Then
+		TitleTextSize = 16
+		ScaleTextSize = 11
+	Else
+		GraphH = pnlGraph.Height - GraphTop - 20dip
+		TitleTextSize = 18
+		ScaleTextSize = 14
+	End If
+	
+	GraphLineWidth = 2
+	GraphX0 = 40dip
+	GraphdX = Floor((pnlGraph.Width - GraphX0 - 30dip)	/ N)
+	Graph2dX = 2 * GraphdX
+	GraphTW = GraphdX * N
+	GraphTX1 = GraphX0 + GraphTW
+	GraphFW = Graph2dX * N_21
+	GraphFX1 = GraphX0 + GraphFW
+	
+	GraphTop = 35dip
+	GraphH = pnlGraph.Height - GraphTop - 20dip
+	GraphBottom = GraphTop + GraphH
+	rectGraphT.Initialize(GraphX0, GraphTop, GraphTX1, GraphBottom)
+	rectGraphF.Initialize(GraphX0, GraphTop, GraphFX1, GraphBottom)
+End Sub
+
+Private Sub DrawTime(TimeSignal() As Double, Title As String)
+	Private i As Int
+	Private x0, x1, y0, y1, y2 As Int
+	
+	cvsGraph.DrawColor(Colors.White)
+	cvsGraph.DrawRect(rectGraphT, Colors.Black, False, GraphLineWidth)
+	
+	GraphMin = TimeSignal(0)
+	GraphMax = TimeSignal(0)
+	For i = 1 To N - 1
+		GraphMin = Min(GraphMin, TimeSignal(i))
+		GraphMax = Max(GraphMax, TimeSignal(i))
+	Next
+	
+	GraphMaxMin = GraphMax - GraphMin
+	GraphScale = GraphH / GraphMaxMin
+	GraphY0 = GraphTop + GraphScale * GraphMax
+
+	x0 = GraphX0
+	y0 = GraphY0 - GraphScale * TimeSignal(0)
+	For i = 1 To N - 1
+		x1 = x0 + GraphdX
+		y1 = GraphY0 - GraphScale * TimeSignal(i)
+		cvsGraph.DrawLine(x0, y0, x1, y1, Colors.Blue, GraphLineWidth)
+		x0 = x1
+		y0 = y1
+	Next
+	
+	cvsGraph.DrawLine(GraphX0, GraphY0, GraphTX1, GraphY0, Colors.Blue, GraphLineWidth)
+	
+	'Draw title
+	cvsGraph.DrawText(Title, GraphX0, GraphTop - 8dip, Typeface.DEFAULT, TitleTextSize, Colors.Black, "LEFT")
+	cvsGraph.DrawText(TimeSignalText(TimeSignalIndex), GraphTX1, GraphTop - 8dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	
+	'Draw scales
+	cvsGraph.DrawText(NumberFormat2(GraphMax, 1, 2, 0, False), GraphX0 - 2dip, GraphTop + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	cvsGraph.DrawText(NumberFormat2(GraphMin, 1, 2, 0, False), GraphX0 - 2dip, GraphBottom + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	If GraphY0 < GraphBottom - 5dip And GraphY0 > GraphTop + 5dip Then
+		cvsGraph.DrawText("0", GraphX0 - 2dip, GraphY0 + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	End If
+
+	y0 = GraphBottom
+	y1 = y0 + 4dip
+	y2 = y0 + 6dip
+	For i = 0 To N - 1 Step 10
+		x0 = GraphX0 + i * GraphdX
+		cvsGraph.DrawLine(x0, y0, x0, y1, Colors.Black, GraphLineWidth)
+		If i Mod 50 = 0 Then
+			cvsGraph.DrawLine(x0, y0, x0, y2, Colors.Black, GraphLineWidth)
+			If i Mod 100 = 0 Then
+				cvsGraph.DrawText(i, x0, y2 + 12dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "CENTER")
+			End If
+		End If
+	Next	
+	
+	pnlGraph.Invalidate
+	
+	If GetDeviceLayoutValues.ApproximateScreenSize < 6 Then
+		pnlToolBox.Visible = False
+	End If
+End Sub
+
+Private Sub DrawFFT(FFTSignal() As Double, Title As String)
+	Private i As Int
+	Private x0, y0, y1, y2 As Int
+
+	cvsGraph.DrawColor(Colors.White)
+	cvsGraph.DrawRect(rectGraphF, Colors.Black, False, GraphLineWidth)
+	
+	GraphMin = FFTSignal(0)
+	GraphMax = FFTSignal(0)
+	For i = 1 To N_21 - 1
+		GraphMin = Min(GraphMin, FFTSignal(i))
+		GraphMax = Max(GraphMax, FFTSignal(i))
+	Next
+	
+	If Abs(GraphMin) < 1e-12 And Abs(GraphMax) < 1e-12 Then
+		GraphMax = 1
+		GraphMin = -1
+	End If
+	
+	GraphMaxMin = GraphMax - GraphMin
+	If GraphMaxMin = 0 Then
+		GraphMaxMin = 1
+	End If
+	GraphScale = GraphH / GraphMaxMin
+	GraphY0 = GraphTop + GraphScale * GraphMax
+
+	x0 = GraphX0
+	If GraphMin = 0 Then
+		GraphY0 = GraphBottom
+	Else
+		GraphY0 = GraphTop + GraphScale * GraphMax
+	End If
+	For i = 0 To N_21 - 1
+		x0 = GraphX0  + i * Graph2dX
+		y0 = GraphY0
+		y1 = GraphY0 - GraphScale * FFTSignal(i)
+		If y1 < GraphY0 Then
+			y0 = y1
+			y1 = GraphY0
+		End If
+		Private rectSample As Rect
+		rectSample.Initialize(x0, y0, x0 + Graph2dX, y1)
+		cvsGraph.DrawRect(rectSample, Colors.Blue, True, 1)
+	Next
+	
+	cvsGraph.DrawLine(GraphX0, GraphY0, GraphFX1, GraphY0, Colors.Blue, GraphLineWidth)
+	
+	'Draw title
+	cvsGraph.DrawText(Title, GraphX0, GraphTop - 8dip, Typeface.DEFAULT, TitleTextSize, Colors.Black, "LEFT")
+	cvsGraph.DrawText(TimeSignalText(TimeSignalIndex), GraphFX1, GraphTop - 8dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+
+	'Draw scales
+	cvsGraph.DrawText(NumberFormat2(GraphMax, 1, 2, 0, False), GraphX0 - 2dip, GraphTop + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	cvsGraph.DrawText(NumberFormat2(GraphMin, 1, 2, 0, False), GraphX0 - 2dip, GraphBottom + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	If y1 < GraphBottom - 5dip And y1 > GraphTop + 5dip Then
+		cvsGraph.DrawText("0", GraphX0 - 2dip, y1 + 3dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "RIGHT")
+	End If
+	
+	y0 = GraphBottom
+	y1 = y0 + 4dip
+	y2 = y0 + 6dip
+	For i = 0 To N_21 - 1 Step 10
+		x0 = GraphX0 + GraphdX + i * Graph2dX
+		cvsGraph.DrawLine(x0, y0, x0, y1, Colors.Black, GraphLineWidth)		
+		If i Mod 50 = 0 Then
+			cvsGraph.DrawLine(x0, y0, x0, y2, Colors.Black, GraphLineWidth)
+			cvsGraph.DrawText(i, x0, y2 + 12dip, Typeface.DEFAULT, ScaleTextSize, Colors.Black, "CENTER")
+		End If
+	Next
+	
+	pnlGraph.Invalidate
+	
+	If GetDeviceLayoutValues.ApproximateScreenSize < 6 Then
+		pnlToolBox.Visible = False
+	End If
+End Sub
+
+Private Sub btnDrawTime_Click
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Private Sub btnDrawTimeINV_Click
+	DrawTime(TimeRealINV, "Time inverse")
+End Sub
+
+Private Sub btnDrawFFTMag_Click
+	DrawFFT(FFTMagnitude, "FFT Magnitude")
+End Sub
+
+Private Sub btnDrawFFTPhase_Click
+	DrawFFT(FFTPhase, "FFT Phase")
+End Sub
+
+Private Sub btnDrawFFTReal_Click
+	DrawFFT(FFTReal, "FFT Real")
+End Sub
+
+Private Sub btnDrawFFTImag_Click
+	DrawFFT(FFTImag, "FFT Imaginary")
+End Sub
+
+Private Sub btnCalcFFTForward_Click
+	FFTCalc
+	btnDrawFFTMag_Click
+End Sub
+
+Private Sub btnCalcFFTInverse_Click
+	FFTCalcINV
+	btnDrawTimeINV_Click
+End Sub
+
+Private Sub btnWindow_Click
+	If FFT1.Window = "NONE" Then
+		FFT1.Window = "Hann"
+		btnWindow.Text = "Hann"
+	Else
+		FFT1.Window = "NONE"
+		btnWindow.Text = "NONE"
+	End If
+	FFTCalc
+	DrawFFT(FFTMagnitude, "FFT Magnitude")
+End Sub
+
+Private Sub btnTimeSignal_Click
+	Private btn As Button
+	Private Tag As Int
+	
+	btn = Sender
+	Tag = btn.Tag
+	
+	TimeInit(Tag)
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Private Sub pnlToolBox_Click
+	If GetDeviceLayoutValues.ApproximateScreenSize < 6 Then
+		pnlToolBox.Visible = False
+	End If
+End Sub
+
+Sub cbxNbSamples_SelectedIndexChanged(Index As Int, Value As Object)
+	N = Value
+	TimeInit(TimeSignalIndex)
+	GraphInit
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Private Sub btnSamples_Click
+	If btnSamples.Text = "512" Then
+		N = 256
+		btnSamples.Text = "256"
+	Else
+		N = 512
+		btnSamples.Text = "512"
+	End If
+	TimeInit(TimeSignalIndex)
+	GraphInit
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub

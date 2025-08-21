@@ -1,0 +1,103 @@
+﻿Build1=Default,b4a.particlejs.example
+File1=bubble.mp3
+File2=Login.bal
+File3=particle.html
+File4=particles.app.js
+File5=particles.min.js
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+Library3=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A ParticleJS
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private wv As WebView
+	Private EditText1 As EditText
+	Private EditText2 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("login")
+	wv.Color = Colors.Black
+	wv.LoadUrl(WebViewAssetFile("particle.html"))
+	SetNinePatchDrawable(EditText1,"b0000")
+	SetNinePatchDrawable(EditText2,"b0000")
+End Sub
+
+Sub WebViewAssetFile (FileName As String) As String
+   #if B4J
+     Return File.GetUri(File.DirAssets, FileName)
+   #Else If B4A
+	Dim jo As JavaObject
+	jo.InitializeStatic("anywheresoftware.b4a.objects.streams.File")
+	If jo.GetField("virtualAssetsFolder") = Null Then
+		Return "file:///android_asset/" & FileName.ToLowerCase
+	Else
+		Return "file://" & File.Combine(jo.GetField("virtualAssetsFolder"), _
+       jo.RunMethod("getUnpackedVirtualAssetFile", Array As Object(FileName)))
+	End If
+   #Else If B4i
+     Return $"file://${File.Combine(File.DirAssets, FileName)}"$
+   #End If
+End Sub
+
+public Sub SetNinePatchDrawable(Control As View, ImageName As String)
+	Dim r As Reflector
+	Dim package As String
+	Dim id As Int
+	package = r.GetStaticField("anywheresoftware.b4a.BA", "packageName")
+	id = r.GetStaticField(package & ".R$drawable", ImageName)
+	r.Target = r.GetContext
+	r.Target = r.RunMethod("getResources")
+	Control.Background = r.RunMethod2("getDrawable", id, "java.lang.int")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub Panel1_Click
+	
+End Sub
+
+Sub Panel2_Click
+	
+End Sub
+
+Sub Button1_Click
+	ToastMessageShow("Welcome " & EditText1.Text,True)
+End Sub

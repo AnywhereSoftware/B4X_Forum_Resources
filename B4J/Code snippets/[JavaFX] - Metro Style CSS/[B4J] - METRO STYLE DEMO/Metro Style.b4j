@@ -1,0 +1,86 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=base.css
+File2=base_extras.css
+File3=base_other_libraries.css
+File4=dark_theme.css
+File5=light_theme.css
+File6=main.bjl
+File7=panes.css
+FileGroup1=Metro
+FileGroup2=Metro
+FileGroup3=Metro
+FileGroup4=Metro
+FileGroup5=Metro
+FileGroup6=Default Group
+FileGroup7=Metro
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Module1=Metro
+NumberOfFiles=7
+NumberOfLibraries=2
+NumberOfModules=1
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 775
+	#MainFormHeight: 640 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Button1 As Button
+	Private Button2 As Button
+	Private CheckBox1 As CheckBox
+	Private ChoiceBox1 As ChoiceBox
+	Private Label1 As Label
+	Private ColorPicker1 As ColorPicker
+	Private DatePicker1 As DatePicker
+	Private ComboBox1 As ComboBox
+	Private ListView1 As ListView
+	Private ProgressBar1 As ProgressBar
+	Private ProgressIndicator1 As ProgressIndicator
+	Private RadioButton1 As RadioButton
+	Private Slider1 As Slider
+	Private Spinner1 As Spinner
+	Private TableView1 As TableView
+	Private TextArea1 As TextArea
+	Private TextField1 As TextField
+	Private ToggleButton1 As ToggleButton
+	Private TreeView1 As TreeView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+	
+	Metro.ApplyTheme(MainForm,"Light") ' For the Light style
+	'Metro.ApplyTheme(MainForm,"Dark") ' For the Dark style
+	
+	Dim tti As TreeItem
+	Dim tti2 As TreeTableItem
+	tti2.Initialize("tt", Array("Column 0 value", "Column 1 value", "Column 2 value"))
+	
+	For i = 0 To 10
+		ListView1.Items.Add("Item #" & (i+1))	
+		ComboBox1.Items.Add("Item #" & (i+1))
+		Spinner1.SetListItems(Array ("Item #1", "Item #2"))
+		ChoiceBox1.Items.Add("Item #" & (i+1))
+		tti.Initialize("tt","Item #" & (i+1))
+		TreeView1.Root.Children.Add(tti)
+	Next
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub Slider1_ValueChange (Value As Double)
+	ProgressBar1.Progress = Value/100
+	ProgressIndicator1.Progress = Value/100
+	Log("Value :" & Value)
+End Sub

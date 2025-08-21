@@ -1,0 +1,130 @@
+﻿Build1=Default,com.visualnet.nessample
+File1=galaga.nes
+File2=joystickborder.png
+File3=pnlMail.bil
+FileGroup1=New Group
+FileGroup2=New Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=icore
+Library2=ines
+Library3=ixui
+Module1=SwiftButton
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=1
+Version=6.3
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: NES Emulator
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+	Dim objNes As NesEmulator
+	Private pnlNES As Panel
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	Page1.RootPanel.LoadLayout("pnlMail")
+	NavControl.ShowPage(Page1)
+	
+	objNes.DebugMode = True
+	objNes.Initialize(pnlNES,"objNes")
+    objNes.Load(File.DirAssets & "/galaga.nes")
+	
+	'objNes.Reset
+	
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+End Sub
+
+Private Sub Application_Background
+End Sub
+
+#Region  Buttons of Joystick
+
+Sub cmdStart_Click
+	objNes.pushStart
+End Sub
+
+Sub cmdStart_Release
+	objNes.releaseStart
+End Sub
+
+Sub cmdSelect_Click
+	objNes.pushSelect
+End Sub
+
+Sub cmdSelect_Release
+	objNes.releaseSelect
+End Sub
+
+Sub cmdButtonA_Click
+	objNes.pushA
+	objNes.releaseA
+End Sub
+
+Sub cmdButtonA_Release
+	objNes.releaseA
+End Sub
+
+Sub cmdButtonB_Click
+	objNes.pushB
+End Sub
+
+Sub cmdButtonB_Release
+	objNes.releaseB
+End Sub
+
+Sub cmdButtonUP_Click
+	objNes.pushUp
+End Sub
+
+Sub cmdButtonUP_Release
+	objNes.releaseUp
+End Sub
+
+Sub cmdButtonLeft_Click
+	objNes.pushLeft
+End Sub
+
+Sub cmdButtonLeft_Release
+	objNes.releaseLeft
+End Sub
+
+Sub cmdButtonRight_Click
+	objNes.pushRight
+End Sub
+
+Sub cmdButtonRight_Release
+	objNes.releaseRight
+End Sub
+
+Sub cmdButtonDown_Click
+	objNes.pushDown
+End Sub
+
+Sub cmdButtonDown_Release
+	objNes.releaseDown
+End Sub
+
+#End Region

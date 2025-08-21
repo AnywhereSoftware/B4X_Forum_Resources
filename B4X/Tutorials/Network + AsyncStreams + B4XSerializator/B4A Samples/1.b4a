@@ -1,0 +1,123 @@
+﻿Version=6.8
+NumberOfModules=1
+Module1=Starter
+Build1=Default,b4a.example
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=1
+File1=1.bal
+NumberOfLibraries=4
+Library1=core
+Library2=randomaccessfile
+Library3=network
+Library4=viewsex
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private ser As B4XSerializator
+	Type MyMessage (Name As String, Age As Int, Image() As Byte)
+End Sub
+
+Sub Globals
+	Private edtIp As FloatLabeledEditText
+	Private lblMyIp As Label
+	Private btnConnect As Button
+	Private lblStatus As Label
+	Private edtAge As FloatLabeledEditText
+	Private edtName As FloatLabeledEditText
+	Private btnSend As Button
+	Private cvs As Canvas
+	Private pnlDrawing As Panel
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	cvs.Initialize(pnlDrawing)
+	edtIp.EditText.ForceDoneButton = True
+	edtAge.EditText.InputType = edtAge.EditText.INPUT_TYPE_NUMBERS
+	edtAge.Text = 10
+End Sub
+
+Sub Activity_Resume
+	SetState
+End Sub
+
+Public Sub SetState
+	btnSend.Enabled = Starter.connected
+	If Starter.connected Then
+		btnConnect.Text = "Disconnect"
+		lblStatus.Text = "Connected"
+	Else
+		btnConnect.Text = "Connect"
+		lblStatus.Text = "Disconnected"
+	End If
+	lblMyIp.Text = "My ip: " & Starter.server.GetMyWifiIP
+End Sub
+
+Sub btnSend_Click
+	Dim mm As MyMessage
+	mm.Initialize
+	mm.Age = edtAge.Text
+	mm.Name = edtName.Text
+	'convert the bitmap to bytes
+	Dim out As OutputStream
+	out.InitializeToBytesArray(0)
+	cvs.Bitmap.WriteToStream(out, 100, "PNG")
+	out.Close
+	mm.Image = out.ToBytesArray
+	CallSub2(Starter, "SendData", ser.ConvertObjectToBytes(mm))
+End Sub
+
+Sub btnConnect_Click
+	If Starter.connected = False Then
+		If edtIp.Text.Length = 0 Then
+			ToastMessageShow("Please enter the server ip address.", True)
+			Return
+		Else
+			CallSub2(Starter, "ConnectToServer", edtIp.Text)
+		End If
+	Else
+		CallSub(Starter, "Disconnect")
+	End If
+End Sub
+
+Public Sub NewData (data() As Byte)
+	Dim mm As MyMessage = ser.ConvertBytesToObject(data)
+	edtAge.Text = mm.Age
+	edtName.Text = mm.Name
+	'convert the array of bytes to image
+	Dim in As InputStream
+	in.InitializeFromBytesArray(mm.Image, 0, mm.Image.Length)
+	Dim bmp As Bitmap
+	bmp.Initialize2(in)
+	'draw the image
+	Dim dest As Rect
+	dest.Initialize(0, 0, pnlDrawing.Width, pnlDrawing.Height)
+	cvs.DrawBitmap(bmp, Null, dest)
+	pnlDrawing.Invalidate
+End Sub
+
+
+Sub pnlDrawing_Touch (Action As Int, X As Float, Y As Float)
+	cvs.DrawCircle(X, Y, 30dip, Rnd(0xFF000000, -1), True, 0)
+	pnlDrawing.Invalidate	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

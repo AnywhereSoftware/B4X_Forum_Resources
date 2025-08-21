@@ -1,0 +1,63 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Library4=bananopostprocessor
+Module1=JSObject
+Module2=pgIndex
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=2
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "BANanoJavaScript"
+	Private Publish As String
+	Private BP As BANanoPostProcessor
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'post processor
+	BP.Initialize
+	BP.RedirectOutput(File.DirApp,"log.txt")
+	Publish = "C:\laragon\www"
+	'
+	Dim Version As Long = DateTime.now
+	Dim appFile As String = $"app${Version}.js"$
+	
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName, Version)
+	BANano.HTML_NAME = "index.html"
+	BANano.Header.Title = AppName
+	BANano.JAVASCRIPT_NAME = appFile
+	BANano.TranspilerOptions.UseServiceWorker = False
+	'
+	BANano.Build(Publish)
+	BP.OpenLog(File.DirApp, "log.txt")
+	
+	BP.PublishPath = Publish
+	BP.ShortName = AppName
+	BP.AssetsPath = BANano.ASSETS_FOLDER
+	BP.ScriptsPath = BANano.SCRIPTS_FOLDER
+	BP.StylesPath = BANano.STYLES_FOLDER
+	BP.ScriptFile = BANano.JAVASCRIPT_NAME
+	BP.Open(True)
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub BANano_Ready
+	pgIndex.Init
+End Sub

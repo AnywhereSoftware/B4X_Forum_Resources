@@ -1,0 +1,61 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rmcp_can
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.31
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public Serial1 As Serial
+	Public can As MCP_CAN
+	Private tim As Timer
+	Private pin As Pin
+	Private JustStarted As Boolean = True
+	Private MyId As Int = 100
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(" ")
+	Log("AppStart")
+	pin.Initialize(8,pin.MODE_INPUT_PULLUP)
+	pin.AddListener("pin_StateChanged")
+	If can.Initialize("can_DataAvailable", 53, can.SPEED_1000KBPS) Then Log("Init OK")
+	tim.Initialize("tim_Tick",1000)
+	tim.Enabled=True
+End Sub
+
+Sub can_DataAvailable(Data() As Byte, ID As Int, Ext As Boolean)
+	Log("Data: ",Data," - ID: ",ID )
+	If Ext Then
+		Log("Ext")
+	End If
+End Sub
+
+Sub tim_Tick
+	If JustStarted Then
+		If can.SendMessage(MyId+89, "Start", can.FRAME_EXT) Then Log("Sent")
+		JustStarted=False
+	Else
+		can.SendMessage(MyId+90, "Timer", can.FRAME_STD)
+	End If
+End Sub
+
+Sub pin_StateChanged(State As Boolean)
+	Delay(30)
+	If Not(State) Then
+		If can.SendMessage(MyId+91, "Hello", can.FRAME_EXT) Then Log("Sent")
+	End If
+End Sub
+

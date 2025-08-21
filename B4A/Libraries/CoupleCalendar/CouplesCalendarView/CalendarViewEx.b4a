@@ -1,0 +1,114 @@
+﻿Build1=Default,b4a.example.calendar
+File1=Layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=couplecalendar
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=8.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+'#AdditionalJar: com.android.support:support-v4
+#AdditionalJar: joda-time-2.1.jar
+#AdditionalRes: ..\res.CouplesCalendar
+#AdditionalJar: com.android.support:support-v4
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	
+	Private ccv1 As CouplesCalendarView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+
+	Dim evList As List
+	evList.Initialize
+
+
+	Dim event As CCEvent
+	event.Initialize("")
+	Dim startAt As Long = DateTime.DateTimeParse("01/12/2019","08:00:00")
+	Dim endAt As Long = DateTime.DateTimeParse("01/14/2019","08:30:00")
+	event.setDurationType
+	event.StartAt = startAt
+	event.EndAt = endAt
+	event.EventColor = Colors.Blue
+	event.LinePosition = ccv1.LinePositionUpper
+	evList.Add(event)
+
+	Dim event As CCEvent
+	event.Initialize("")
+	Dim startAt As Long = DateTime.DateTimeParse("02/01/2019","00:00:00")
+	Dim endAt As Long = DateTime.DateTimeParse("02/01/2019","23:59:59")
+	event.setDurationType
+	event.StartAt = startAt
+	event.EndAt = endAt
+	event.EventColor = Colors.Black
+	event.LinePosition = ccv1.LinePositionUpper
+	evList.Add(event)
+
+	Dim event As CCEvent
+	event.Initialize("")
+	Dim startAt As Long = DateTime.DateTimeParse("02/02/2019","00:00:00")
+	Dim endAt As Long = DateTime.DateTimeParse("02/02/2019","22:00:00")
+	event.setDurationType
+	event.StartAt = startAt
+	event.EndAt = endAt
+	event.EventColor = Colors.Magenta
+	event.LinePosition = ccv1.LinePositionUpper
+	evList.Add(event)
+
+	Dim event As CCEvent
+	event.Initialize("")
+	Dim startAt As Long = DateTime.DateTimeParse("02/18/2019","00:00:00")
+	Dim endAt As Long = DateTime.DateTimeParse("02/22/2019","00:00:00")
+	event.setDurationType
+	event.StartAt = startAt
+	event.EndAt = endAt
+	event.EventColor = Colors.Red
+	event.LinePosition = ccv1.LinePositionLower
+	evList.Add(event)
+
+	ccv1.Events = evList
+	ccv1.Theme = ccv1.ThemeGREEN
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+Sub CCV_onDateClick(date As Long)
+	Log($"Calendar_onDateClick(${DateTime.Date(date)})"$)
+	
+End Sub
+
+Sub CCV_onMonthChange(month As Long)
+	Log($"Calendar_onMonthChange(${DateTime.Date(month)})"$)	
+End Sub

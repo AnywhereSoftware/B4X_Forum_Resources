@@ -1,0 +1,197 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+File2=icon.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsql
+Library4=jcontrolsfx
+Module1=CSVParser
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 230 
+#End Region
+#AdditionalJar: sqlite-jdbc-3.7.2
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private btnBuild As Button
+	Private txtDB As TextField
+	Private fc As FileChooser
+	Private txtXlsx As TextField
+	Private cutils As ControlsUtils
+	Private ui As Boolean = True
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+'	If Args.Length > 0 Then
+'		ui = False
+'		BuildDatabase(Args(0), Args(1))
+'	End If
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	
+	MainForm.Show
+	fc.Initialize
+	If File.Exists(File.DirApp, "settings.txt") Then
+		Dim m As Map = File.ReadMap(File.DirApp, "settings.txt")
+		txtDB.Text = m.Get("db")
+		txtXlsx.Text = m.Get("xlsx")
+	End If
+	btnBuild.RequestFocus
+End Sub
+
+Sub MainForm_Closed
+	File.WriteMap(File.DirApp, "settings.txt", CreateMap("xlsx": txtXlsx.Text, "db": txtDB.Text))
+End Sub
+
+Sub btnXlsx_Action
+	Browse(txtXlsx, "CSV", False)
+End Sub
+
+Sub btnDB_Action
+	Browse(txtDB, "db", True)
+End Sub
+
+Private Sub Browse(tf As TextField, extension As String, save As Boolean)
+	If File.Exists(File.GetFileParent(tf.Text), "") Then fc.InitialDirectory = File.GetFileParent(tf.Text)
+	fc.SetExtensionFilter(extension, Array($"*.${extension}"$))
+	Dim path As String
+	If save Then
+		path = fc.ShowSave(MainForm)
+	Else
+		path = fc.ShowOpen(MainForm)
+	End If
+	If path <> "" Then tf.Text = path
+End Sub
+
+Sub btnBuild_Action
+	If txtDB.Text = "" Or txtXlsx.Text = "" Then
+		fx.Msgbox(MainForm, "Please enter both fields", "")
+		Return
+	End If
+	BuildDatabaseFromCSV(txtXlsx.Text, txtDB.Text)
+	
+End Sub
+
+Private Sub BuildDatabaseFromCSV (Csv As String, Output As String)
+	Dim SeparatorChar As Char = ","' ";"
+	Dim parser As CSVParser
+	parser.Initialize
+	Dim table As List = parser.Parse(File.ReadString(Csv, ""), SeparatorChar, False)
+	
+	Private sql As SQL
+	Dim ExitCode As Int = 0
+	File.Delete(Output, "")
+	sql.InitializeSQLite(Output, "", True)
+	sql.BeginTransaction
+	Try
+		sql.ExecNonQuery("CREATE TABLE data (key TEXT, lang TEXT, value TEXT, PRIMARY KEY (lang, key))")
+		
+		If table.IsInitialized = False Or table.Size = 0 Then
+			cutils.ShowNotification2("", "Languages row not found!", cutils.ICON_ERROR, MainForm)
+			Return
+		End If
+		Dim languagesRow() As String = table.Get(0)
+		
+		Dim langs As List
+		langs.Initialize
+		For Each cell As String In languagesRow
+			If cell.ToLowerCase = "key" Then Continue
+			langs.Add(cell)
+		Next
+		
+		For i = 1 To table.Size - 1
+			Dim sRow() As String = table.Get(i)
+			Dim sKey As String = sRow(0)
+			For j = 1 To sRow.Length - 1
+				Dim lang As String = langs.Get(j - 1)
+				Dim sArr() As String = Array As String (sKey.ToLowerCase, lang, sRow(j))
+				sql.ExecNonQuery2("INSERT INTO data VALUES (?, ?, ?)", sArr)
+			Next
+		Next
+		
+		sql.TransactionSuccessful
+		LogMessage("Database created successfully!", cutils.ICON_INFORMATION)
+	Catch
+		Log(LastException)
+		sql.Rollback
+		LogMessage("Error: " & LastException, cutils.ICON_ERROR)
+		ExitCode = 1
+	End Try
+	sql.Close
+	If Not(ui) Then
+		ExitApplication2(ExitCode)
+	End If
+End Sub
+
+Sub ConvertTextencoding(text As String, fromEncoding As String, toEncoding As String) As String
+	Dim b() As Byte = text.getbytes(fromEncoding) 'Encoding: "UTF-8", "iso-8859-1", ...
+	Return BytesToString( b, 0, b.Length, toEncoding)
+End Sub
+
+'Private Sub BuildDatabase (Xls As String, Output As String)
+'	Private sql As SQL
+'	Dim ExitCode As Int = 0
+'	File.Delete(Output, "")
+'	sql.InitializeSQLite(Output, "", True)
+'	sql.BeginTransaction
+'	Try
+'		sql.ExecNonQuery("CREATE TABLE data (key TEXT, lang TEXT, value TEXT, PRIMARY KEY (lang, key))")
+'		Dim wb As PoiWorkbook
+'		wb.InitializeExisting(Xls, "", "")
+'		Dim sheet As PoiSheet = wb.GetSheet(0)
+'		Dim languagesRow As PoiRow = sheet.GetRow(0)
+'		If languagesRow.IsInitialized = False Then
+'			cutils.ShowNotification2("", "Languages row not found!", cutils.ICON_ERROR, MainForm)
+'			Return
+'		End If
+'		Dim langs As List
+'		langs.Initialize
+'		For Each cell As PoiCell In languagesRow.Cells
+'			If cell.ValueString.ToLowerCase = "key" Then Continue
+'			langs.Add(cell.ValueString)
+'		Next
+'		For Each row As PoiRow In sheet.Rows
+'			If row.RowNumber = 0 Then Continue
+'			Dim key As String
+'			For Each cell As PoiCell In row.Cells
+'				If cell.ColumnIndex = 0 Then 
+'					key = cell.ValueString
+'				Else
+'					Dim lang As String = langs.Get(cell.ColumnIndex - 1)
+'					sql.ExecNonQuery2("INSERT INTO data VALUES (?, ?, ?)", Array (key.ToLowerCase, lang, cell.ValueString))	
+'				End If
+'			Next
+'		Next
+'		sql.TransactionSuccessful
+'		wb.Close
+'		LogMessage("Database created successfully!", cutils.ICON_INFORMATION)
+'	Catch
+'		Log(LastException)
+'		sql.Rollback
+'		LogMessage("Error: " & LastException, cutils.ICON_ERROR)
+'		ExitCode = 1
+'	End Try
+'	sql.Close
+'	If Not(ui) Then
+'		ExitApplication2(ExitCode)
+'	End If
+'End Sub
+
+Sub LogMessage(msg As String, Icon As Int)
+	If ui Then
+		cutils.ShowNotification2("", msg, Icon, MainForm)
+	Else
+		Log(msg)
+	End If
+End Sub
+

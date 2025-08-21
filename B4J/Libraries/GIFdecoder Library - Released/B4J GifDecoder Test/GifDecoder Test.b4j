@@ -1,0 +1,59 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=stepper.gif
+File2=stickman.gif
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jgifdecoder
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Dim gif As GifDecoder
+	Private img1 As ImageView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Show
+	MainForm.BackColor = fx.Colors.LightGray
+	MainForm.Title = "B4J GIFdecoder Test"
+	
+	'gif.Load(File.DirAssets,"stickman.gif")
+	gif.Load(File.DirAssets,"stepper.gif")
+	'gif.Load(File.DirAssets,"jellyfish.gif")
+
+	Log ("Number of Frames: " & gif.NumberOfFrames)
+	Log ("Width: " & gif.Width)
+	Log ("Height: " & gif.Height)
+	Log ("LoopCount: " & gif.LoopCount)
+	
+	img1.Initialize("img1")
+	MainForm.RootPane.AddNode(img1, 50, 50, gif.Width, gif.Height)
+
+	Dim I As Int = 0
+	Do Until False
+		If I = gif.NumberOfFrames Then I = 0
+		img1.SetImage(gif.FrameImage(I))
+		'gif.SaveFrame(I, "C:\Users\me\Desktop\test", "frame" & I & ".png")
+		Dim D As Int = gif.FrameDelay(I)
+		'Log("Delay= " & D)
+		Sleep(D)
+		I=I+1
+	Loop
+	
+	gif.DisposeAllFrames
+End Sub

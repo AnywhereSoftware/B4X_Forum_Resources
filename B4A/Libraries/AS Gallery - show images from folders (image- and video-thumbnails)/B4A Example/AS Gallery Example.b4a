@@ -1,0 +1,83 @@
+﻿Build1=Default,com.as.gallery
+File1=frm_img_big.bal
+File2=frm_main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+Library4=runtimepermissions
+Library5=preoptimizedclv
+Library6=xui views
+Library7=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=am_img_big
+Module2=|relative|..\ASGallery
+Module3=Starter
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=3
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AS Gallery Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private ASGallery1 As ASGallery
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("frm_main")
+	Activity.Title = "AS Gallery Example"
+	
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_READ_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	
+	Dim tmp_lst As List : tmp_lst.Initialize2(Array As String(File.DirRootExternal & "/Snapchat",File.DirRootExternal & "/Fast InstaSaver"))
+	
+	ASGallery1.WildCards = "*.jpg,*.png,*.jpeg,*.bmp"',*.mp4"
+	ASGallery1.GetContent(tmp_lst)
+	
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub ASGallery1_PreviewClick(path As String,isImage As Boolean)
+	Log("ASGallery1_PreviewClick: " & path)
+	ToastMessageShow(path,False)
+	If isImage = True Then
+	CallSubDelayed2(am_img_big,"Initialize",path)
+	End If
+End Sub

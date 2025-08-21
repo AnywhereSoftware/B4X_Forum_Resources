@@ -1,0 +1,115 @@
+﻿Build1=Default,b4a.example
+File1=colors-icon.png
+File2=Hamburger-icon.png
+File3=left.bal
+File4=Login.bal
+File5=Page2.bal
+File6=Page3.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+Group=Default Group
+Library1=core
+Library2=b4xpages
+Library3=xui views
+Library4=runtimepermissions
+Library5=b4xdrawer
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=B4XMainPage
+Module2=B4XPage2
+Module3=B4XPage3
+Module4=Starter
+NumberOfFiles=6
+NumberOfLibraries=5
+NumberOfModules=4
+Version=9.9
+@EndOfDesignText@
+
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim pm As B4XPagesManager	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	pm.Initialize(Activity)		
+End Sub
+
+
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	Log("ActionBarHomeClick " & pm.GetTopPage.Id)
+	If pm.GetTopPage.Id = "page 3" Then
+		Starter.UseHomeClickForDrawer = True
+	End If
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+End Sub
+
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;	
+}
+
+#End If
+
+' This will work in my use Case to close the Drawer when the menu opens 
+' However the PrepareOptionsMenu can be raised in other cases as well.
+' The solution contained entirely within the page is better anyway 
+
+'Sub ReCreate_Menu (Menu As Object)
+'	Log("ReCreate Top Page " & pm.GetTopPage.Id)
+'	If pm.GetTopPage.Id = "page 3" Then
+'		CallSub(pm.GetTopPage.B4XPage, "CloseDrawer")
+'	End If
+'End Sub
+
+'public boolean _onPrepareOptionsMenu(android.view.Menu menu) {
+'	 processBA.raiseEvent(null, "recreate_menu", menu);
+'	 return true;	
+
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

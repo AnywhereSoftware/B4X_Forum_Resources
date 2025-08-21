@@ -1,0 +1,68 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=alasql.min.js
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Module1=UOENowData
+Module2=pgIndex
+Module3=UOENowHTML
+Module4=BANanoSQLUtils
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=4
+Version=7.51
+@EndOfDesignText@
+#Region Project Attributes 
+	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Public BANano As BANano 'ignore
+	Public AppName As String = "BANanoSQLDemo"
+	Public Publish As String
+	Public URL As String
+	Private SQL As BANanoSQL
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	Publish = "C:\xampp\htdocs"
+	Dim version As String = DateTime.now
+	Dim appFile As String = $"app${version}.js"$
+	BANano.Initialize("BANano", AppName,1)
+	BANano.HTML_NAME = "index.html"
+	BANano.Header.Title = AppName
+	BANano.JAVASCRIPT_NAME = appFile
+	BANano.TranspilerOptions.UseServiceWorker = False
+	BANano.Build(Publish)
+	URL = $"http://localhost/${AppName}/index.html"$
+	fx.ShowExternalDocument(URL)
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	Dim alasql As BANanoSQLUtils
+	alasql.Initialize 
+	'open the bananosql db called tests
+	SQL.OpenWait("tests","tests")
+	'create items table with the structure
+	Dim els As Map = CreateMap()
+	els.Put("id", alasql.DB_STRING)
+	els.Put("jsoncontent", alasql.DB_STRING)
+	els.Put("tabindex", alasql.DB_INT)
+	els.put("parentid", alasql.DB_STRING)
+	Dim rs As ResultSet = alasql.CreateTable("items", els, "id")
+	rs.result = SQL.ExecuteWait(rs.query,Null)
+	Log(rs)
+	'open another page
+	pgIndex.init
+End Sub

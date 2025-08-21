@@ -1,0 +1,407 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.FFTDemo
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=xfft
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1200
+	#MainFormHeight: 800 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private btnWindow As Button
+	Private cbxNbSamples As ComboBox
+	Private pnlModulationFactor, pnlDampingFactor As Pane
+	Private cbxModulationFactor, cbxDampingFactor As ComboBox
+	Private FFT1 As xFFT
+	Private N, N_21 As Int
+	Private TimeReal(), TimeRealINV(), FFTMagnitude(), FFTPhase(), FFTReal(), FFTImag() As Double
+	Private TimeSignalIndex = 2 As Int
+	Private TimeSignalText(6) As String
+	TimeSignalText(0) = "1 pure sine 20 periods"
+	TimeSignalText(1) = "1 pure cosine 20 periods"
+	TimeSignalText(2) = "4 sines	10, 20, 30, 100 periods"
+	TimeSignalText(3) = "1 sine 20.5 periods"
+	TimeSignalText(4) = "1 sine 20 periods damped"
+	TimeSignalText(5) = "1 sine 50 periods modulated 10 periods"
+	Private DampingFactorIndex = 3 As Int
+	Private DampingFactor(6) As Double
+	DampingFactor(0) = 0
+	DampingFactor(1) = 0.001
+	DampingFactor(2) = 0.002
+	DampingFactor(3) = 0.003
+	DampingFactor(4) = 0.004
+	DampingFactor(5) = 0.005
+	Private ModulationFactorIndex = 2 As Int
+	Private ModulationFactor(6) As Double
+	ModulationFactor(0) = 0
+	ModulationFactor(1) = 0.1
+	ModulationFactor(2) = 0.25
+	ModulationFactor(3) = 0.5
+	ModulationFactor(4) = 0.75
+	ModulationFactor(5) = 1
+
+	'variables Graph
+	Private cvsGraph As Canvas
+	Private GraphX0, GraphTX1, GraphFX1, GraphdX, Graph2dX, GraphTW, GraphFW, GraphY0, GraphBottom, GraphTop, GraphH, GraphLineWidth As Int
+	Private GraphMin, GraphMax, GraphMaxMin, GraphScale As Double
+	Private TitleTextSize  As Font
+	Private ScaleTextSize  As Font
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Show
+	MainForm.Title = "xFFT Demo"
+	
+	FFT1.Initialize
+	
+	InitNbSamples
+	cbxNbSamples_SelectedIndexChanged(0, 512)
+
+	InitDampingFactors
+	InitModulationFactors
+
+	GraphInit
+	
+	DrawTime(TimeReal, "Time")
+	
+'	Private t1 = DateTime.Now As Long
+	FFTCalc
+'	Log((DateTime.Now - t1))
+	FFTCalcINV
+End Sub
+
+Private Sub FFTCalc
+	FFTMagnitude = FFT1.Forward(TimeReal)
+	FFTPhase = FFT1.Phase
+	FFTReal = FFT1.Real
+	FFTImag = FFT1.Imag
+End Sub
+
+Private Sub FFTCalcINV
+	TimeRealINV = FFT1.Inverse(FFTReal, FFTImag)
+	DrawTime(TimeRealINV, "Time inverse")
+End Sub
+
+Private Sub InitNbSamples
+	cbxNbSamples.Items.AddAll(Array As Int(1024, 512, 256))
+	cbxNbSamples.SelectedIndex = 0
+End Sub
+
+Private Sub InitDampingFactors
+	cbxDampingFactor.Items.Add(" 0")
+	cbxDampingFactor.Items.Add("0.001")
+	cbxDampingFactor.Items.Add("0.002")
+	cbxDampingFactor.Items.Add("0.003")
+	cbxDampingFactor.Items.Add("0.004")
+	cbxDampingFactor.Items.Add("0.005")
+	cbxDampingFactor.SelectedIndex = DampingFactorIndex
+End Sub
+
+Private Sub InitModulationFactors
+	cbxModulationFactor.Items.Add("  0 %")
+	cbxModulationFactor.Items.Add(" 10 %")
+	cbxModulationFactor.Items.Add(" 25 %")
+	cbxModulationFactor.Items.Add(" 50 %")
+	cbxModulationFactor.Items.Add(" 75 %")
+	cbxModulationFactor.Items.Add("100 %")
+	cbxModulationFactor.SelectedIndex = ModulationFactorIndex
+End Sub
+
+Private Sub TimeInit(Index As Int)
+	Private i As Int
+	Private w1, w2, w3, w4 As Double
+
+	N_21 = N / 2 + 1
+	
+	Private TimeReal(N) As Double
+
+	TimeSignalIndex = Index
+	
+	Select Index
+		Case 0	' pure sine 20 periods
+			w1 = 7200 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i)
+			Next
+		Case 1	'pure cosine 20 periods
+			w1 = 7200 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * CosD(w1 * i)
+			Next
+		Case 2	'4 sines	10, 20, 50, 100 periods
+			w1 = 3600 / N
+			w2 = 7200 / N
+			w3 = 10800 / N
+			w4 = 36000 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 5 + 10 * SinD(w1 * i + 60) + 5 * SinD(w2 * i) + 7 * SinD(w3 * i) + 3 * SinD(w4 * i)
+			Next
+		Case 3	'sine 20.5 periods
+			w1 = 7380 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i)
+			Next
+		Case 4	'sine 20 periods damped
+			w1 = 7200 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i) * Power(cE, - DampingFactor(DampingFactorIndex) * i)
+			Next
+		Case 5	'sine 50 periods modulated 10 periods
+			w1 = 36000 / N
+			w2 = 3600 / N
+			For i = 0 To N - 1
+				TimeReal(i) = 10 * SinD(w1 * i) * (1 - ModulationFactor(ModulationFactorIndex) * (1 - SinD(w2 * i)))' * Power(cE, -0.005 * i)
+			Next
+	End Select
+End Sub
+
+Private Sub GraphInit
+	TitleTextSize = fx.CreateFont("Arial", 20, False, False)
+	ScaleTextSize = fx.CreateFont("Arial", 16, False, False)
+
+	GraphLineWidth = 1
+	GraphX0 = 60dip
+	GraphdX = Floor((cvsGraph.Width - GraphX0 - 30)	/ N)
+	Graph2dX = 2 * GraphdX
+	GraphTW = GraphdX * N
+	GraphTX1 = GraphX0 + GraphTW
+	GraphFW = Graph2dX * N_21
+	GraphFX1 = GraphX0 + GraphFW
+	
+	GraphTop = 40
+	GraphH = cvsGraph.Height - 2 * GraphTop
+	GraphBottom = GraphTop + GraphH
+End Sub
+
+Private Sub DrawTime(TimeSignal() As Double, Title As String)
+	Private i As Int
+	Private x0, x1, y0, y1, y2 As Int
+	
+	cvsGraph.ClearRect(0, 0, cvsGraph.Width, cvsGraph.Height)
+	cvsGraph.DrawRect(GraphX0, GraphTop, GraphTW, GraphH, fx.Colors.Black, False, GraphLineWidth)
+	
+	GraphMin = TimeSignal(0)
+	GraphMax = TimeSignal(0)
+	For i = 1 To N - 1
+		GraphMin = Min(GraphMin, TimeSignal(i))
+		GraphMax = Max(GraphMax, TimeSignal(i))
+	Next
+	
+	GraphMaxMin = GraphMax - GraphMin
+	GraphScale = GraphH / GraphMaxMin
+	GraphY0 = GraphTop + GraphScale * GraphMax
+
+	x0 = GraphX0
+	y0 = GraphY0 - GraphScale * TimeSignal(0)
+	For i = 1 To N - 1
+		x1 = x0 + GraphdX
+		y1 = GraphY0 - GraphScale * TimeSignal(i)
+		cvsGraph.DrawLine(x0, y0, x1, y1, fx.Colors.Blue, GraphLineWidth)
+		x0 = x1
+		y0 = y1
+	Next
+	
+	cvsGraph.DrawLine(GraphX0, GraphY0, GraphTX1, GraphY0, fx.Colors.Blue, GraphLineWidth)
+	
+	'Draw title
+	cvsGraph.DrawText(Title, GraphX0, GraphTop - 12, TitleTextSize, fx.Colors.Black, "LEFT")
+	cvsGraph.DrawText(TimeSignalText(TimeSignalIndex), GraphTX1, GraphTop - 12, ScaleTextSize, fx.Colors.Black, "RIGHT")
+
+	'Draw scales
+	cvsGraph.DrawText(NumberFormat2(GraphMax, 1, 2, 0, False), GraphX0 - 5dip, GraphTop + 7dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	cvsGraph.DrawText(NumberFormat2(GraphMin, 1, 2, 0, False), GraphX0 - 5dip, GraphBottom + 7dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	If GraphY0 < GraphBottom - 5dip And GraphY0 > GraphTop + 7dip Then
+		cvsGraph.DrawText("0", GraphX0 - 5dip, GraphY0 + 3dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	End If
+
+	y0 = GraphBottom
+	y1 = y0 + 6dip
+	y2 = y0 + 8dip
+	For i = 0 To N - 1 Step 10
+		x0 = GraphX0 + i * GraphdX
+		cvsGraph.DrawLine(x0, y0, x0, y1, fx.Colors.Black, 1)
+		If i Mod 50 = 0 Then
+			cvsGraph.DrawLine(x0, y0, x0, y2, fx.Colors.Black, GraphLineWidth)
+			If i Mod 100 = 0 Then
+				cvsGraph.DrawText(i, x0, y2 + 18dip, ScaleTextSize, fx.Colors.Black, "CENTER")
+			End If
+		End If
+	Next
+End Sub
+
+Private Sub DrawFFT(FFTSignal() As Double, Title As String)
+	Private i As Int
+	Private x0, y0, y1, y2 As Int
+
+	cvsGraph.ClearRect(0, 0, cvsGraph.Width, cvsGraph.Height)
+	cvsGraph.DrawRect(GraphX0, GraphTop, GraphFW, GraphH, fx.Colors.Black, False, GraphLineWidth)
+	
+	GraphMin = FFTSignal(0)
+	GraphMax = FFTSignal(0)
+	For i = 1 To N_21 - 1
+		GraphMin = Min(GraphMin, FFTSignal(i))
+		GraphMax = Max(GraphMax, FFTSignal(i))
+	Next
+	
+	If Abs(GraphMin) < 1e-12 And Abs(GraphMax) < 1e-12 Then
+		GraphMax = 1
+		GraphMin = -1
+	End If
+	
+	GraphMaxMin = GraphMax - GraphMin
+	If GraphMaxMin = 0 Then
+		GraphMaxMin = 1
+	End If
+	GraphScale = GraphH / GraphMaxMin
+	GraphY0 = GraphTop + GraphScale * GraphMax
+
+	x0 = GraphX0
+	If GraphMin = 0 Then
+		GraphY0 = GraphBottom
+	Else
+		GraphY0 = GraphTop + GraphScale * GraphMax
+	End If
+	For i = 0 To N_21 - 1
+		x0 = GraphX0  + i * Graph2dX
+		y0 = GraphY0
+		y1 = GraphY0 - GraphScale * FFTSignal(i)
+		If y1 < GraphY0 Then
+			y0 = y1
+			y1 = GraphY0
+		End If
+		cvsGraph.DrawRect(x0, y0, Graph2dX, y1 - y0, fx.Colors.Blue, True, 1)
+	Next
+	
+	cvsGraph.DrawLine(GraphX0, GraphY0, GraphFX1, GraphY0, fx.Colors.Blue, GraphLineWidth)
+	
+	'Draw title
+	cvsGraph.DrawText(Title, GraphX0, GraphTop - 12, TitleTextSize, fx.Colors.Black, "LEFT")
+	cvsGraph.DrawText(TimeSignalText(TimeSignalIndex), GraphFX1, GraphTop - 12, ScaleTextSize, fx.Colors.Black, "RIGHT")
+
+	'Draw vertical scales
+	cvsGraph.DrawText(NumberFormat2(GraphMax, 1, 2, 0, False), GraphX0 - 5dip, GraphTop + 7dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	cvsGraph.DrawText(NumberFormat2(GraphMin, 1, 2, 0, False), GraphX0 - 5dip, GraphBottom + 7dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	If y1 < GraphBottom - 5dip And y1 > GraphTop + 5dip Then
+		cvsGraph.DrawText("0", GraphX0 - 2dip, y1 + 7dip, ScaleTextSize, fx.Colors.Black, "RIGHT")
+	End If
+	
+	'Draw horizontal scales
+	y0 = GraphBottom
+	y1 = y0 + 6dip
+	y2 = y0 + 8dip
+	For i = 0 To N_21 - 1 Step 10
+		x0 = GraphX0 + GraphdX + i * Graph2dX
+		cvsGraph.DrawLine(x0, y0, x0, y1, fx.Colors.Black, 1)
+		If i Mod 50 = 0 Then
+			cvsGraph.DrawLine(x0, y0, x0, y2, fx.Colors.Black, GraphLineWidth)
+			cvsGraph.DrawText(i, x0, y2 + 18dip, ScaleTextSize, fx.Colors.Black, "CENTER")
+		End If
+	Next
+End Sub
+
+Private Sub btnDrawTime_Action
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Private Sub btnDrawTimeINV_Action
+	DrawTime(TimeRealINV, "Time inverse")
+End Sub
+
+Private Sub btnDrawFFTMag_Action
+	DrawFFT(FFTMagnitude, "FFT Magnitude")
+End Sub
+
+Private Sub btnDrawFFTPhase_Action
+	DrawFFT(FFTPhase, "FFT Phase")
+End Sub
+
+Private Sub btnDrawFFTReal_Action
+	DrawFFT(FFTReal, "FFT Real")
+End Sub
+
+Private Sub btnDrawFFTImag_Action
+	DrawFFT(FFTImag, "FFT Imaginary")
+End Sub
+
+Private Sub btnCalcFFTForward_Action
+	FFTCalc
+	btnDrawFFTMag_Action
+End Sub
+
+Private Sub btnCalcFFTInverse_Action
+	FFTCalcINV
+	btnDrawTimeINV_Action
+End Sub
+
+Private Sub btnWindow_Action
+	If FFT1.Window = "NONE" Then
+		FFT1.Window = "Hann"
+		btnWindow.Text = "Hann"
+	Else
+		FFT1.Window = "NONE"
+		btnWindow.Text = "NONE"
+	End If
+	FFTCalc
+	DrawFFT(FFTMagnitude, "FFT Magnitude")
+End Sub
+
+Private Sub rbtTimeSignal_SelectedChange(Selected As Boolean)
+	Private rbt As RadioButton
+	Private Tag As Int
+	
+	If Selected = False Then Return
+	
+	rbt = Sender
+	Tag = rbt.Tag
+	
+	pnlDampingFactor.Visible = False
+	pnlModulationFactor.Visible = False
+	
+	TimeInit(Tag)
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+	
+	Select Tag
+		Case 4
+			pnlDampingFactor.Visible = True
+		Case 5
+			pnlModulationFactor.Visible = True
+	End Select
+End Sub
+
+Sub cbxNbSamples_SelectedIndexChanged(Index As Int, Value As Object)
+	N = Value
+	TimeInit(TimeSignalIndex)
+	GraphInit
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Sub cbxDampingFactor_SelectedIndexChanged(Index As Int, Value As Object)
+	DampingFactorIndex = Index
+	TimeInit(TimeSignalIndex)
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub
+
+Sub cbxModulationFactor_SelectedIndexChanged(Index As Int, Value As Object)
+	ModulationFactorIndex = Index
+	TimeInit(TimeSignalIndex)
+	FFTCalc
+	DrawTime(TimeReal, "Time")
+End Sub
+

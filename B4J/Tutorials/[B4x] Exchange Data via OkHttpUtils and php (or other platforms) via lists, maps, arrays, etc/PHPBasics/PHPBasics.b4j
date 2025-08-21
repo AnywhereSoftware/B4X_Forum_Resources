@@ -1,0 +1,348 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=example1.php
+File2=example2.php
+File3=example3.php
+File4=example4.php
+File5=example5.php
+File6=example6.php
+File7=example7.php
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jokhttputils2
+Library4=json
+Library5=jstringutils
+Library6=encryption
+Library7=byteconverter
+NumberOfFiles=7
+NumberOfLibraries=7
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Public JsonList As List
+	Public JsonMap As Map
+	Public JsonGenerator As JSONGenerator
+	Public JsonParser As JSONParser
+	Public JSONString As String
+	Public SU As StringUtils
+	Public BC As ByteConverter
+	
+	
+	
+	'the ip address of the machine where apache runs (can be the same as where B4J runs)
+	Public Servername As String = "http://192.168.178.23" 
+	'the path where the php files are (example 1-5) under htdocs
+	Public ScriptFolder As String = "/phpexamples/"
+	'the name of the php script you're calling
+	Public ScriptFileName As String = ""
+	Public PostString As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'MainForm = Form1
+	'MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	'MainForm.Show
+
+'All examples send a string to the php scripts and the script returns a string, too	
+	
+
+	Example1
+	Example2
+	Example3
+	Example4
+	Example5
+	Example6
+	'Example7
+	
+	
+End Sub
+
+Sub CheckResultString (Resultstring As String)
+	
+	Dim aList As List, aMap As Map
+	aList.Initialize
+	aMap.Initialize
+	
+	If Resultstring.StartsWith("{") Or Resultstring.StartsWith("[") Then
+		Log("   Result looks like a JSON formatted string...")
+		If Resultstring.StartsWith("[{") Then
+			Log("   Result looks like a LIST with MAP(s)...")
+			JsonParser.Initialize(Resultstring)
+			aList=JsonParser.nextarray
+			Log("   LIST has " & aList.Size & " MAP(s)...")
+			For i=0 To aList.Size-1
+				Dim ItemMap As Map
+				ItemMap.Initialize
+				ItemMap=aList.Get(i)
+				Log("   Content of MAP #" &i)
+				For l=0 To ItemMap.Size-1
+					Log("      Key: " & ItemMap.GetKeyAt(l) & " => " & ItemMap.GetValueAt(l))
+				Next
+			Next
+		else If Resultstring.StartsWith("[") Then
+		   Log("   Result looks like a LIST...")
+		   JsonParser.Initialize(Resultstring)
+		   aList=JsonParser.NextArray
+		   For i=0 To aList.Size-1
+		      Log("   ListItem :" & aList.get(i))	
+		   Next
+		else If Resultstring.StartsWith("{") Then
+			Log("   Result looks like a MAP...")
+			JsonParser.Initialize(Resultstring)
+			aMap=JsonParser.NextObject
+			'Note that per definition a map is NOT sorted like you created it!
+			For i=0 To aMap.Size-1
+				Log("   Key: " & aMap.GetKeyAt(i) & " => " & aMap.GetValueAt(i))
+			Next
+		End If
+		
+	Else
+		Log("   Result looks like a simple string...")
+	End If	
+	
+	
+End Sub
+
+Sub Example1
+	ScriptFileName="example1.php"
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #1: " & Result)
+	CheckResultString (Result)
+End Sub
+
+Sub Example2
+	ScriptFileName="example2.php"
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #2: " & Result)
+	CheckResultString (Result)
+End Sub
+
+Sub Example3
+	ScriptFileName="example3.php"
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #3: " & Result)
+	CheckResultString (Result)
+End Sub
+
+Sub Example4
+	ScriptFileName="example4.php"
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #4: " & Result)
+	CheckResultString (Result)
+End Sub
+
+Sub Example5
+	ScriptFileName="example5.php"
+	Dim MyMap As Map = CreateMap("Name":"Jess", "Surname":"Stone","YearOfBirth":"1966")
+	JsonGenerator.Initialize(MyMap)
+	PostString=JsonGenerator.ToString
+	Log("Example #5 Sending: " & PostString)
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #5: " & Result)
+	CheckResultString (Result)
+End Sub
+
+Sub Example6
+	
+	Dim fc As FileChooser
+	fc.Initialize
+	Dim Filename As String = fc.ShowOpen(MainForm)
+	If Filename <> "" Then
+		Dim FileContentAsB64String As String = SU.EncodeBase64(Bit.InputStreamToBytes(File.OpenInput("", Filename)))
+		'Filename contains the complete path plus filename -> file.GetName gets the filename
+		ScriptFileName="example6.php"
+		Dim MyMap As Map = CreateMap("Action":"SaveFile","Filename":File.GetName(Filename),"Foldername":"myfiles", "Filecontent":FileContentAsB64String)
+		JsonGenerator.Initialize(MyMap)
+		PostString=JsonGenerator.ToString
+		Log("Example #6 Sending: " & PostString)
+		Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+		Log("Result #6: " & Result)
+		CheckResultString (Result)
+		
+		' Get the file back from the server
+		ScriptFileName="example6.php"
+		Dim MyMap As Map = CreateMap("Action":"GetFile","Filename":File.GetName(Filename),"Foldername":"myfiles")
+		JsonGenerator.Initialize(MyMap)
+		PostString=JsonGenerator.ToString
+		Log("Example #6 Sending: " & PostString)
+		Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+		Log("Result #6: " & Result)
+		CheckResultString (Result)
+		
+		JsonParser.Initialize(Result)
+		If Result.StartsWith("{") Then 
+		   Dim aMap As Map
+		   aMap.Initialize
+		   aMap=JsonParser.NextObject
+		   Dim Filecontent() As Byte = SU.DecodeBase64(aMap.Get("Filecontent"))
+			Filename=aMap.Get("Filename")
+		   Dim out As OutputStream = File.OpenOutput(File.DirApp, "FromPHP_" & Filename, False)
+		   out.WriteBytes(Filecontent, 0, Filecontent.Length)
+		   out.Close
+		   Log("Ok... File saved under " & File.DirApp)
+		Else
+			Log("Seems that there was an error: " & Result)
+		End If	
+		
+	End If
+End Sub
+
+Sub Example7
+	ScriptFileName="example7.php"
+	Dim MyPW As String ="Secret" 'a password
+	Dim TextToEncrypt As String="This is the message"
+	
+	'AES-256 needs a 256 Bit long pw -> 32 * 8 = 256. SHA256 does the trick (just used to get 32 Bytes)
+	Dim MyPWHashed32(32) As Byte = SHA256Hash32(MyPW)
+	Dim AESEncryptedB64String As String =AES_Encrypt(TextToEncrypt,MyPWHashed32)
+	Log("Encrypted Base64 string: " & AESEncryptedB64String)
+	Log("Decryped: " & AES_Decrypt(AESEncryptedB64String,MyPWHashed32))
+	
+	Dim MyMap As Map = CreateMap("Action":"AESDecrypt", "b4xencrypted":AESEncryptedB64String)
+	JsonGenerator.Initialize(MyMap)
+	PostString=JsonGenerator.ToString
+	Log("Example #7 Sending: " & PostString)
+	Wait For(StartJob(Servername, ScriptFolder, ScriptFileName, PostString)) Complete (Result As String)
+	Log("Result #7: " & Result)
+	CheckResultString (Result)
+	Result = AES_Decrypt(Result,MyPWHashed32)
+	Log("Decrypted from php: " & Result)
+	CheckResultString (Result)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub StartJob(SName As String,SFolder As String, SFName As String, PString As String) As ResumableSub
+	Dim Job As HttpJob
+	Job.Initialize("", Me)
+	Job.PostString(SName & SFolder & SFName, PString)
+	Wait For (Job) JobDone(j As HttpJob)
+	Dim Result As String
+	If j.Success Then
+	   Result = Job.GetString
+	Else
+		Log("Fail! See logs for details...")
+	End If
+	
+	Job.Release
+	
+	Return Result
+	
+End Sub
+
+Sub AES_Encrypt(input As String, passB() As Byte) As String
+	
+	Dim inputB() As Byte = input.GetBytes("UTF8")
+	Dim SaltB() As Byte = SU.DecodeBase64(GenerateSalt(32))
+	Dim IVb() As Byte = SU.DecodeBase64(GenerateIV)
+    
+	Dim kg As KeyGenerator
+	Dim C As Cipher
+ 
+	kg.Initialize("AES")
+	kg.KeyFromBytes(passB)
+ 
+	C.Initialize("AES/CBC/PKCS5Padding")
+	C.InitialisationVector = IVb
+ 
+	Dim datas() As Byte = C.Encrypt(inputB, kg.Key, True)
+	Dim SaltIVMessage(SaltB.Length + datas.Length + IVb.Length) As Byte = AddSaltIVMessage(SaltB,IVb,datas)
+	
+	Return SU.EncodeBase64(SaltIVMessage)
+	
+End Sub
+
+Sub AES_Decrypt(input As String,  passb() As Byte) As String
+
+	Dim inputB() As Byte = SU.DecodeBase64(input)
+	
+	Dim m As Map = SplitSaltIVMessage(inputB)
+	
+	Dim IVb() As Byte = m.Get("iv")
+	Dim MessageB() As Byte = m.Get("message")
+	
+	Dim kg As KeyGenerator
+	Dim C As Cipher
+ 
+	kg.Initialize("AES")
+	kg.KeyFromBytes(passb)
+ 
+	C.Initialize("AES/CBC/PKCS5Padding")
+	C.InitialisationVector = IVb
+ 
+	Dim datas() As Byte = C.Decrypt(MessageB, kg.Key, True)
+ 
+	Return BytesToString(datas, 0, datas.Length, "UTF8")
+
+End Sub
+
+Sub AddSaltIVMessage (Salt() As Byte,IV() As Byte, Message () As Byte) As Byte()
+	
+	Dim SaltIVMessageBytes (Salt.Length+ IV.Length + Message.Length) As Byte
+	BC.ArrayCopy(Salt,0,SaltIVMessageBytes,0,32)
+	BC.ArrayCopy(IV,0,SaltIVMessageBytes,32,16)
+	BC.ArrayCopy(Message,0,SaltIVMessageBytes,48,Message.Length)
+	
+	Return SaltIVMessageBytes
+End Sub
+
+Sub SplitSaltIVMessage (SaltIvMessage () As Byte) As Map
+	
+	Dim Salt(32),IV (16), Message(SaltIvMessage.length-48) As Byte
+	
+	BC.ArrayCopy(SaltIvMessage,0,Salt,0,32)
+	BC.ArrayCopy(SaltIvMessage,32,IV,0,16)
+	BC.ArrayCopy(SaltIvMessage,48,Message,0,Message.Length)
+	
+	Dim m As Map=CreateMap("iv":IV,"message":Message)
+		
+	Return m
+End Sub
+
+Sub GenerateSalt (l As Int) As String
+	Dim SaltB(l) As Byte
+	For i=0 To l-1
+		SaltB(i)=Rnd(0,256)-127
+	Next
+	Return SU.EncodeBase64(SaltB)
+End Sub
+
+Sub GenerateIV As String
+	
+	Dim IVB(16) As Byte
+	For i=0 To 15
+		IVB(i)=Rnd(0,256)-127
+	Next
+	
+	Return SU.EncodeBase64(IVB)
+		
+End Sub
+
+Sub SHA256Hash32 (pw As String) As Byte()
+	Dim md As MessageDigest
+	Dim passwordhash() As Byte
+	passwordhash = md.GetMessageDigest(pw.GetBytes("UTF8"),"SHA-256")
+	Return passwordhash
+	
+End Sub

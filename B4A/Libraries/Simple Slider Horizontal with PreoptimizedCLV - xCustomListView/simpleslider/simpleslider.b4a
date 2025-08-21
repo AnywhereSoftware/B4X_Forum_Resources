@@ -1,0 +1,144 @@
+﻿Build1=Default,b4a.example
+File1=slideritem.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=preoptimizedclv
+Library3=xui
+Library4=okhttputils2
+Library5=xcustomlistview
+Library6=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=CLVSnap
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Private sliderpanel As Panel
+	Private PCLV As PreoptimizedCLV
+	Private clv_slideritem As CustomListView
+	Private xui As XUI
+	Private snap As CLVSnap
+	
+	Private urlmap As Map
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	sliderpanel.Initialize("sliderpanel")
+	Activity.AddView(sliderpanel,0,0,100%x,100%y)
+	
+	urlmap.Initialize
+	For i=1 To 500
+		urlmap.Put("https://i.picsum.photos/id/" & i & "/200/300.jpg","imagen:" & i)
+	Next
+	showslider
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub showslider
+	sliderpanel.RemoveAllViews
+	sliderpanel.LoadLayout("slideritem")
+	PCLV.Initialize(Me, "PCLV", clv_slideritem)
+	PCLV.ShowScrollBar=False
+	clv_slideritem.Clear
+	clv_slideritem.AsView.SetLayoutAnimated(0,0,0,sliderpanel.width,sliderpanel.height)
+	snap.Initialize(clv_slideritem, True)
+	
+	If urlmap.Size>0  Then
+		For a=0 To urlmap.Size -1
+			PCLV.AddItem(sliderpanel.Width, xui.Color_Transparent, a)
+		Next
+		PCLV.Commit
+		sliderpanel.Visible=True
+	End If
+End Sub
+Sub clv_slideritem_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	For Each i As Int In PCLV.VisibleRangeChanged(FirstIndex, LastIndex)
+		If urlmap.Size>0 Then
+			Dim item As CLVItem = clv_slideritem.GetRawListItem(i)
+			Dim i As Int = item.Value
+			
+			Dim pnl As B4XView = xui.CreatePanel("")
+			item.Panel.Color=Colors.white
+			item.Panel.AddView(pnl, 0, 0, sliderpanel.Width, sliderpanel.Height)
+			pnl.AddView(CreateListItem(urlmap.GetValueAt(i),urlmap.GetKeyAt(i)),0,0,sliderpanel.Width,sliderpanel.Height)
+		End If
+	Next
+End Sub
+Sub clv_slideritem_ItemClick (Index As Int, Value As Object)
+	Log(Index & ", " & Value)
+	'CustomListView1.InsertAtTextItem(Index, "New Item", "")
+	'PCLV.ListChangedExternally
+End Sub
+Sub clv_slideritem_ScrollChanged (Offset As Int)
+	snap.ScrollChanged(Offset)
+End Sub
+Sub CreateListItem(Text As String, urlimage As String) As Panel
+	Dim p As Panel
+	p.Initialize("")
+	p.SetLayout(0, 0, clv_slideritem.AsView.Width, clv_slideritem.AsView.Height)
+	p.Color=Colors.White
+
+	Dim sizelabel As Int = 5%y
+
+	Dim img As ImageView
+	img.Initialize("")
+	p.AddView(img,0,0,clv_slideritem.AsView.Width, clv_slideritem.AsView.Height-sizelabel)
+	img.Gravity=Gravity.CENTER
+	CallSubDelayed3(Starter, "DownloadFitimage", urlimage, img)
+
+	Dim Label1 As Label
+	Label1.Initialize("")
+	Label1.Text = Text.ToUpperCase
+	Label1.Color = Colors.ARGB(20,0,0,255)
+	Label1.TextColor = Colors.Black
+	Label1.TextSize = 12
+	Label1.Gravity=Bit.Or(Gravity.LEFT,Gravity.TOP)
+	Label1.Padding = Array As Int (15dip, 5dip, 5dip, 5dip)
+	p.AddView(Label1,0,100%y-sizelabel,clv_slideritem.AsView.Width,clv_slideritem.AsView.Height-(100%y-sizelabel))
+
+	Return p
+End Sub
+Sub clv_slideritem_ReachEnd
+End Sub
+'Return the hint that will be displayed when the user fast scrolls the list. It can be a string or CSBuilder.
+Sub PCLV_HintRequested (Index As Int) As Object
+	Log(Index)
+	Return Null
+	'Dim word As String = CustomListView1.GetValue(Index)
+	'Return word
+End Sub

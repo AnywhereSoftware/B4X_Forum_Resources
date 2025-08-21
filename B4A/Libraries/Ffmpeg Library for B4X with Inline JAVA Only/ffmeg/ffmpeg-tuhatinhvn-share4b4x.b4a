@@ -1,0 +1,236 @@
+﻿Build1=Default,b4a.ffmpeg.share4rum
+File1=frm_main_ffmpeg.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE) ' Allows an application to read from external storage.~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE) ' Allows an application to write to external storage.~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.WAKE_LOCK)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#AdditionalJar: android-ffmpeg-1.1.6.aar
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+'FFmpegAndroid-0.3.2.aar
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private cmdrun As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("frm_main_ffmpeg")
+	Log(checkdevicesupport)
+	'khoitaolib
+End Sub
+Sub cmdrun_Click
+	'run_command_b4a("-version")
+	'-i filename.mp4 filename.mp3
+	'run_command_b4a("-i /storage/emulated/0/1.mp4 /storage/emulated/0/199.mp3")
+	'//String[] cmd = new String[]{"-i","/storage/emulated/0/step.mov","/storage/emulated/0/he.mp4"};
+	
+	Dim command_to_run As List
+	command_to_run.Initialize
+	Dim inputfile="/storage/emulated/0/step.mov" As String
+	Dim outputfile="/storage/emulated/0/he.mp4"  As String
+	'YOU NEED CHANGE HERE , DEMO IS MOV TO MP4
+	
+	command_to_run.AddAll( Array As String("-y","-i",inputfile,outputfile))
+	
+	run_command_b4a(command_to_run)
+	'run_command_b4a("""-i"",""/storage/emulated/0/1.mp4"",""-vcodec"",""libx264"",""-preset"",""veryfast"",""-maxrate"",""500k"",""-bufsize"",""2500k"",""-vf"",""format=yuv420p"",""-g"",""60"",""-acodec"",""libmp3lame"",""-b:a"",""198k"",""-ar"",""44100"",""-f"",""flv"",""rtmp://a.rtmp.youtube.com/live2/7s5s-2rh2-0xwu-2079""")
+	'run_command_b4a("-re -i ""/storage/emulated/0/1.mp4"" -vcodec libx264 -preset veryfast -maxrate 500k -bufsize 2500k -vf ""format=yuv420p"" -g 60 -acodec libmp3lame -b:a 198k -ar 44100 -f flv ""rtmp://a.rtmp.youtube.com/live2/7s5s-2rh2-0xwu-2079""")
+	'-re -i "/storage/emulated/0/1.mp4" -vcodec libx264 -preset veryfast -maxrate 500k -bufsize 2500k -vf "format=yuv420p" -g 60 -acodec libmp3lame -b:a 198k -ar 44100 -f flv "rtmp://a.rtmp.youtube.com/live2/7s5s-2rh2-0xwu-2079"
+End Sub
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub checkdevicesupport As Boolean
+	Dim nt As JavaObject
+	nt.InitializeContext
+	nt.RunMethod("checkdevicesupport", Null)
+	Return nt.RunMethod("checkdevicesupport",Null)
+End Sub
+Sub run_command_b4a(lenh As List) 
+	Dim nt As JavaObject
+	nt.InitializeContext
+	nt.RunMethod("runcommandb4a", Array As Object(lenh))
+	'Return sotrang
+End Sub
+
+Sub startffmpegb4a
+	Log("startffmpegb4a")
+End Sub
+Sub returnduration(giatri As Double)
+	Log(giatri)
+End Sub
+
+Sub currenttimevalue(giatri As Double)
+	Log(giatri)
+End Sub
+
+Sub errornotice(giatri As String)
+	Log(giatri)
+End Sub
+
+
+
+Sub successfunc(giatri As String)
+	Log("Successfull convert!!!")
+End Sub
+Sub GetContext As JavaObject
+	Return GetBA.GetField("context")
+End Sub
+
+Sub GetBA As JavaObject
+	Dim jo As JavaObject
+	Dim cls As String = Me
+	cls = cls.SubString("class ".Length)
+	jo.InitializeStatic(cls)
+	Return jo.GetFieldJO("processBA")
+End Sub
+
+#If Java
+import android.util.Log;
+import nl.bravobit.ffmpeg.ExecuteBinaryResponseHandler;
+import nl.bravobit.ffmpeg.FFmpeg;
+import anywheresoftware.b4a.keywords.Common;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
+ double totalSecs=0;
+ public Boolean checkdevicesupport(){
+     if (FFmpeg.getInstance(this).isSupported()) {
+         // ffmpeg is supported
+		// processBA.raiseEventFromUI(null, "duochotro_log");
+         return true;
+     } else {
+	 // processBA.raiseEventFromUI(null, "khonghotro_log");
+         return false;
+         // ffmpeg is not supported
+     }
+ }
+ 
+public void runcommandb4a(ArrayList<String> danhsachthamsotruyen,Context thamsocontext){
+double hientaisec=0;
+double phantram=0;
+
+     if (FFmpeg.getInstance(thamsocontext).isSupported()) {
+         // ffmpeg is supported
+		// processBA.raiseEventFromUI(null, "duochotro_log");
+         return true;
+     } else {
+	 // processBA.raiseEventFromUI(null, "khonghotro_log");
+         return false;
+         // ffmpeg is not supported
+     }
+	 
+	 
+        FFmpeg ffmpeg = FFmpeg.getInstance(thamsocontext);
+        // to execute "ffmpeg -version" command you just need to pass "-version"
+		//String[] cmd = new String[]{"-i","/storage/emulated/0/step.mov","/storage/emulated/0/he.mp4"};
+        //	String [] countries = list.toArray(new String[list.size()]);
+//	String[] cmd = new String[]{"-re","-stream_loop","-1","-i","/storage/emulated/0/1.mp4","-vcodec","libx264","-preset","veryfast","-maxrate","500k","-bufsize","2500k","-vf","format=yuv420p","-g","60","-acodec","libmp3lame","-b:a","198k","-ar","44100","-f","flv","rtmp://a.rtmp.youtube.com/live2/7s5s-2rh2-0xwu-2079"};
+        String[] cmd = danhsachthamsotruyen.toArray(new String[danhsachthamsotruyen.size()]);
+		//-stream_loop -1
+		ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
+
+            @Override
+            public void onStart() {
+//BA.Log("Bat dau");
+processBA.raiseEventFromUI(null, "startffmpegb4a");
+            }
+
+            @Override
+            public void onProgress(String message) {
+			
+			 try{
+			if (message.contains("Duration:")) {
+         String dur;
+         dur=message.substring(message.indexOf("Duration: ")+10,message.indexOf(", start:"));
+
+         String[] hms = dur.split(":");
+          totalSecs = Integer.parseInt(hms[0]) * 3600
+                 + Integer.parseInt(hms[1]) *   60
+                 + Double.parseDouble(hms[2]);
+//BA.Log("Tong thoi gian" + String.valueOf(totalSecs));
+processBA.raiseEventFromUI(null, "returnduration",totalSecs);
+     }
+	 
+	 	     if (message.contains(" time=") && message.contains("frame=") && message.contains("speed=") && message.contains("fps=") ) {
+//dang xu ly 
+ String hientai;
+         hientai=message.substring(message.indexOf(" time=")+6,message.indexOf(" bitrate"));
+
+         String[] hms = hientai.split(":");
+         double hientaisec = Integer.parseInt(hms[0]) * 3600
+                 + Integer.parseInt(hms[1]) *   60
+                 + Double.parseDouble(hms[2]);
+	//BA.Log("Tong thoi gian la" + String.valueOf(totalSecs) );
+	processBA.raiseEventFromUI(null, "currenttimevalue",hientaisec);			 
+//BA.Log("Thoi gian hien tai" + String.valueOf(hientaisec) );
+//BA.Log("Phan tram la " + String.valueOf(hientaisec*100/totalSecs) );
+//processBA.raiseEventFromUI(null, "currenttimevalue",hientaisec);	
+
+     }
+	 }
+	 catch (Exception e)
+{}
+			
+			//BA.Log(message.substring(message.indexOf("Duration: ")+1, message.lastIndexOf(", start:")));
+		//	BA.Log("Dang xu ly" + message);
+			
+			}
+
+            @Override
+            public void onFailure(String message) {
+			BA.Log(message);
+			processBA.raiseEventFromUI(null, "errornotice",message);			 
+			}
+
+            @Override
+            public void onSuccess(String message) {
+			processBA.raiseEventFromUI(null, "successfunc",message);			 
+			BA.Log(message);
+			}
+
+            @Override
+            public void onFinish() {
+			BA.Log("Hoan thanh!");
+			//processBA.raiseEventFromUI(null, "finish",message);			 
+		//	BA.Log(message);
+			}
+
+        });
+
+    }
+
+
+#End If
+

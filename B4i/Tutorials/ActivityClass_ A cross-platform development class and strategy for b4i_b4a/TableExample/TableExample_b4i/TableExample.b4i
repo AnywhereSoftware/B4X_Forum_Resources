@@ -1,0 +1,115 @@
+﻿Build1=Default,mobi.mindware.tableexample,default
+File1=citylist.csv
+File2=main2_menu.bil
+File3=red-yin-yang-hi.png
+File4=splash.bil
+File5=table_sv.bil
+File6=titlenav.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+Group=Default Group
+Library1=icore
+Library2=istringutils
+Library3=xui views
+Module1=|relative|..\TableExample_b4a\Main2
+Module2=|relative|..\TableExample_b4a\Starter
+Module3=|relative|..\TableExample_b4a\TableActivity
+Module4=Map_B4X
+Module5=ActivityClass
+NumberOfFiles=6
+NumberOfLibraries=3
+NumberOfModules=5
+Version=6
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Table Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 8
+#End Region
+
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Public Page1 As Page
+	'used with android activity modules
+	'keeps a map of activity class / pages for the nav controller
+	Public ActivityPageMap As Map_B4X
+	Public ActivitiesOpenedDuringSession As List ' list of activities that have been opened during the
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	NavControl.NavigationBarVisible=False
+	Starter.Service_Create
+	
+	ActivityPageMap.Initialize
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("splash")
+	NavControl.ShowPage(Page1)
+	Sleep(2000)
+	StartActivity(Main2,"Main2")
+End Sub
+
+
+
+
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	Dim CurrentActivity As ActivityClass = ActivityPageMap.Values.Get(ActivityPageMap.Values.Size-1)
+	CurrentActivity.Activity_Pause(False)
+End Sub
+
+Public Sub Application_Foreground
+	Dim CurrentActivity As ActivityClass = ActivityPageMap.Values.Get(ActivityPageMap.Values.Size-1)
+	CurrentActivity.Activity_Resume
+End Sub
+
+Public Sub StartActivity(Activity As Object,Event As String)
+	Dim ActivityClassHelper As ActivityClass
+	ActivityClassHelper.Initialize(Activity,Event)
+	ActivityPageMap.Put(Event, ActivityClassHelper)
+End Sub
+
+
+'move to activity helper?
+Sub GoBack(Event As String)
+	Log("going back "&Event)
+	If ActivityPageMap.ContainsKey(Event) Then
+		Log("found page in map")
+		ActivityPageMap.Remove(Event)
+	End If
+	NavControl.RemoveCurrentPage
+	If ActivityPageMap.ToMap.Size=0 Then
+		Log("here1")
+		StartActivity(Main2,"Main2")
+	Else
+		Log("here2")
+		Dim AC As ActivityClass=ActivityPageMap.Values.Get(ActivityPageMap.Values.Size-1)
+		Log("here3")
+		AC.Activity_Resume
+		Log("here4")
+	End If
+End Sub
+
+'Mimics Behavior of ExitApplication in b4a when called from another activity
+Sub ExitApplication
+	Dim l As List
+	l.Initialize
+	l.Add(Page1)
+	NavControl.SetPagesStack(l)
+	Application_Start(NavControl)
+End Sub

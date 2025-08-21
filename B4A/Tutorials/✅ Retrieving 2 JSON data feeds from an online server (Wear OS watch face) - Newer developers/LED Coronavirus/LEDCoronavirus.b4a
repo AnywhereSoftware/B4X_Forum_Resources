@@ -1,0 +1,87 @@
+﻿Build1=Default,com.simplysoftware.ledcorona
+File1=led_font.ttf
+File2=settings.bal
+FileGroup1=Fonts
+FileGroup2=Layouts
+Group=Default Group
+Library1=core
+Library2=watchface
+Library3=holocolorpicker
+Library4=javaobject
+Library5=keyvaluestore2
+Library6=okhttputils2
+Library7=json
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28" />~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true" />)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~'AddPermission(android.permission.VIBRATE)~\n~''AddPermission(android.permission.WAKE_LOCK)~\n~  ~\n~' The main activity should not be launched by default. We only want to~\n~' provide the Watchfaces and not a full application~\n~#If RELEASE~\n~	AddReplacement(<action android:name="android.intent.action.MAIN" />, "")	~\n~	AddReplacement(<category android:name="android.intent.category.LAUNCHER" />, "")~\n~#End If~\n~~\n~#Region Watchfaces~\n~~\n~SetServiceAttribute(ledcorona, android:label, "LED Corona")~\n~SetServiceAttribute(ledcorona, android:permission, "android.permission.BIND_WALLPAPER")~\n~~\n~AddServiceText(ledcorona,~\n~    <meta-data~\n~        android:name="android.service.wallpaper"~\n~        android:resource="@xml/watch_face" />~\n~    <meta-data~\n~        android:name="com.google.android.wearable.watchface.preview"~\n~        android:resource="@drawable/round_preview" />~\n~    <meta-data~\n~        android:name="com.google.android.wearable.watchface.preview_circular"~\n~        android:resource="@drawable/round_preview" />~\n~   <intent-filter>~\n~        <action android:name="android.service.wallpaper.WallpaperService" />~\n~        <category~\n~            android:name=~\n~            "com.google.android.wearable.watchface.category.WATCH_FACE" />~\n~    </intent-filter>~\n~)~\n~~\n~~\n~CreateResource(xml, watch_face.xml,~\n~<?xml version="1.0" encoding="UTF-8"?>~\n~<wallpaper xmlns:android="http://schemas.android.com/apk/res/android" />~\n~)~\n~~\n~#End Region~\n~~\n~#Region Configuration Activities (Popup Color Picker) ~\n~~\n~AddServiceText(LEDCorona, ~\n~	android:name =".DigitalWatchFaceService" ... />~\n~~\n~	<!-- wearable configuration activity -->~\n~	<meta-data~\n~		android:name = "com.google.android.wearable.watchface.wearableConfigurationAction"~\n~		android:value = "com.simplysoftware.ledcorona.configuration" />~\n~)~\n~~\n~AddActivityText(Configuration, ~\n~	android:name=".DigitalWatchFaceWearableConfigActivity"~\n~	android:label="@string/digital_config_name">~\n~~\n~	<intent-filter>~\n~		<action android:name = "com.simplysoftware.ledcorona.configuration" />~\n~		<category android:name = "com.google.android.wearable.watchface.category.WEARABLE_CONFIGURATION" />~\n~		<category android:name = "android.intent.category.DEFAULT" />~\n~	</intent-filter>~\n~)~\n~~\n~#End Region~\n~~\n~#Region Creating an activity with a dark grey window ~\n~~\n~'ActionBar~\n~SetApplicationAttribute(android:theme, "@style/LightTheme")~\n~	CreateResource(values, theme.xml,~\n~		<resources>~\n~			<color name="clr">#435054</color>~\n~			<style name="LightTheme" parent="@android:style/Theme.Material.Light">~\n~			<item name="android:windowBackground">@color/clr~\n~			</item></style>~\n~		</resources>~\n~)~\n~~\n~''NoActionBar~\n~'SetApplicationAttribute(android:theme, "@style/LightTheme")~\n~'    CreateResource(values, theme.xml,~\n~'        <resources>~\n~'            <color name="clr">#0055A7</color>~\n~'            <style name="LightTheme" parent="@android:style/Theme.Holo.Light.NoActionBar">~\n~'            <item name="android:windowBackground">@color/clr~\n~'            </item></style>~\n~'        </resources>~\n~')~\n~~\n~#End Region~\n~
+Module1=ColourPicker
+Module2=Configuration
+Module3=GetJSONResults
+Module4=LEDCorona
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=4
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: LED Corona
+	#VersionCode: 1
+	#VersionName: 1.0.0.1
+
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+	#AdditionalRes: ..\resource
+	
+	#AdditionalJar: androidx.wear:wear
+	#AdditionalJar: wearable-2.5.0.aar
+	#AdditionalJar: com.google.android.wearable:wearable, ReferenceOnly
+	#AdditionalJar: com.android.support:support-v4, ReferenceOnly
+	#AdditionalJar: com.android.support:percent, ReferenceOnly
+	#AdditionalJar: com.android.support:support-annotations, ReferenceOnly
+	#AdditionalJar: com.android.support:recyclerview-v7, ReferenceOnly
+
+	' Copy the wear app into the mobile app resource folder
+	'#CustomBuildAction: 4, C:\windows\system32\xcopy.exe, WatchfaceWear.apk ..\..\WatchfaceMobile\resource\raw\watchfacewear.apk /Y	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#If RELEASE
+	'Change resources folder to read only
+	'#CustomBuildAction: 1, c:\windows\system32\attrib.exe, +r res\*.* /s	
+
+	'Copy the wear app into the mobile app resource folder
+	'#CustomBuildAction: 4, C:\windows\system32\xcopy.exe, TixWatchFace.apk ..\..\"Tix Clock"\resource\raw\watchfacewear.apk /Y
+
+	#CustomBuildAction: 1, C:\B4X_Development_Tools\Android-SDK\B4X\platform-tools\adb.exe, kill-server
+	#CustomBuildAction: 1, C:\B4X_Development_Tools\Android-SDK\B4X\platform-tools\adb.exe, start-server
+	#CustomBuildAction: 1, C:\B4X_Development_Tools\Android-SDK\B4X\platform-tools\adb.exe, devices	
+#End If
+	'Forward AVD’s communication port to your Phone (For connecting to Android Wear)
+	'#CustomBuildAction: 1, C:\Android_Development_Tools\Android-SDK-B4X\platform-tools\adb.exe, -d forward tcp:5601 tcp:5601
+
+	'Connect to watch via IP address
+	#CustomBuildAction: 1, C:\B4X_Development_Tools\Android-SDK\B4X\platform-tools\adb.exe, connect 192.168.0.211:5555
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub

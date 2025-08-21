@@ -1,0 +1,44 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rwire
+Library3=rvl53l0x
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.31
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private master As WireMaster
+	Private VL53 As VL53L0X
+	Private RegAddr As VL53L0X_REGISTER_ADDRESSES
+	Private tim As Timer
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(" ")
+	Log("AppStart")
+	master.Initialize
+	Log("Init: ",VL53.Initialize)
+	VL53.SetTimeout(1000)
+	Log("POWER_MANAGEMENT_GO1_POWER_FORCE: ",VL53.ReadReg(RegAddr.POWER_MANAGEMENT_GO1_POWER_FORCE))
+	Log(VL53.SetSignalRateLimit(0.4))
+	Log(VL53.SetMeasurementTimingBudget(100000))
+	tim.Initialize("tim_Tick",500)
+	tim.Enabled=True
+End Sub
+
+private Sub tim_Tick
+	Dim Range As Int = VL53.ReadRangeSingleMillimeters
+	Log("Range: ",Range)
+End Sub
+
+

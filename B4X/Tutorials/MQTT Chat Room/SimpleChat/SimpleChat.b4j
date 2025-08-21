@@ -1,0 +1,91 @@
+﻿Version=3.96
+AppType=JavaFX
+NumberOfModules=1
+Module1=Connector
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=1.bjl
+NumberOfLibraries=4
+Library1=jcore
+Library2=jfx
+Library3=jrandomaccessfile
+Library4=jmqtt
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Public MainForm As Form
+	Private btnConnect As Button
+	Private btnSend As Button
+	Private Label1 As Label
+	Private lstUsers As ListView
+	Private txtHost As TextField
+	Private txtLogs As TextArea
+	Private txtMessage As TextField
+	Type Message (Body As String, From As String)
+	Private txtName As TextField
+	Private DirData As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	DirData = File.DirData("SimpleChat")
+	If File.Exists(DirData, "settings.txt") Then
+		Dim settings As Map = File.ReadMap(DirData, "settings.txt")
+		txtHost.Text = settings.Get("host")
+		txtName.Text = settings.Get("name")
+	End If
+End Sub
+
+Sub txtMessage_Action
+	btnSend_Action
+End Sub
+
+Sub btnSend_Action
+	If txtMessage.Text <> "" Then Connector.SendMessage(txtMessage.Text)
+	txtMessage.SelectAll
+	txtMessage.RequestFocus
+End Sub
+
+Sub txtHost_Action
+	btnConnect_Action
+End Sub
+
+Sub btnConnect_Action
+	If txtName.Text = "" Then
+		fx.Msgbox(MainForm, "Please enter your name.", "")
+		Return
+	End If
+	If txtHost.Text = "" Then
+		fx.Msgbox(MainForm, "Please enter the server ip address.", "")
+		Return
+	End If
+	Connector.ConnectTo(txtHost.Text, txtName.Text)
+End Sub
+
+Public Sub NewMessage(msg As Message) 
+	txtLogs.Text = txtLogs.Text & $"${msg.From}: ${msg.Body}"$ & CRLF
+	txtLogs.SetSelection(txtLogs.Text.Length, txtLogs.Text.Length)
+End Sub
+
+Public Sub NewUsers(Users As List)
+	lstUsers.Items.Clear
+	For Each u As String In Users
+		lstUsers.Items.Add(u)
+	Next
+End Sub
+
+Sub MainForm_Closed
+	Connector.Disconnect
+	File.WriteMap(DirData, "settings.txt", CreateMap("host": txtHost.Text, "name": txtName.Text))
+End Sub
+
+
+

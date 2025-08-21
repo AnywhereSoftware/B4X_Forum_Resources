@@ -1,0 +1,185 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=b4xcollections
+Library5=encryption
+Library6=byteconverter
+Library7=json
+Library8=jdateutils
+Module1=QRGenerator
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=1
+Version=8.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	
+#End Region
+
+Sub Process_Globals
+	Private MainForm As Form
+	Dim bc As ByteConverter
+	Private QRView As B4XView
+	Private t As Timer
+	Private OTPCodeLBL As Label
+	Private SecretPW As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	MainForm.Title="Google Authenticator"
+	
+	t.Initialize("ShowOTPCode",1000)
+	
+	Dim qr As QRGenerator
+	qr.Initialize(QRView.Width)
+		
+	SecretPW="SecretPassword"
+	Dim Issuer,User, Label, Key, QRString As String
+	User="B4xUser"
+	Label="B4xLogin"
+	Issuer="B4X.com"
+	Key=EncodeBase32(SecretPW)
+	QRString="otpauth://totp/" & Label & ":" & User & "?secret=" & Key & "&issuer=" & Issuer 
+	QRView.SetBitmap(qr.Create(QRString))
+
+'Save QR-Code to file	
+	Dim im As Image  = QRView.Snapshot
+	Dim Out As OutputStream = File.OpenOutput(File.DirApp, "qr.png",False)
+	im.WriteToStream(Out)
+	Out.Close
+	
+	t.Enabled=True
+	OTPCodeLBL.Text= GetOTPCode
+End Sub
+
+Sub ShowOTPCode_Tick
+	t.Enabled=False
+	OTPCodeLBL.Text= GetOTPCode
+	t.Enabled=True
+End Sub
+
+Sub GetOTPCode As String
+	
+	bc.LittleEndian=False
+	Dim MyKey As String=SecretPW
+	
+	Dim unixtimestamp As Int = Floor(DateUtils.TicksToUnixTime(DateTime.Now)/30)
+	
+	Dim utshex As String=Bit.ToHexString(unixtimestamp)
+	Do While utshex.Length<16
+		utshex="0" & utshex
+	Loop
+	
+	Dim m As Mac
+	Dim k As KeyGenerator
+	k.Initialize("HMACSHA1")
+	k.KeyFromBytes(MyKey.GetBytes("UTF8"))
+	m.Initialise("HMACSHA1", k.Key)
+	
+	bc.LittleEndian=True
+	m.Update(bc.HexToBytes(utshex))
+	
+	Dim b() As Byte
+	b = m.Sign
+	
+	Dim bc As ByteConverter
+
+	Dim Offs As Int= Bit.And(b(19),15)
+	
+	Dim OTP,p1,p2,p3,p4,pt As Int
+	
+	p1=Bit.ShiftLeft(Bit.And(b(Offs+0),127),24)
+	p2=Bit.ShiftLeft(Bit.And(b(Offs+1),255),16)
+	p3=Bit.ShiftLeft(Bit.And(b(Offs+2),255),8)
+	p4=Bit.And(b(Offs+3),255)
+	pt=Bit.Or(p1,p2)
+	pt=Bit.Or(pt,p3)
+	OTP=Bit.Or(pt,p4) Mod Power(10,6)
+	
+	Return NumberFormat2(OTP,6,0,0,False)
+	
+	
+	
+End Sub
+
+Sub EncodeBase32 (key As String) As String
+	
+	
+	Dim AllBitsString, ByteBinaryString,FinalBase32String As String
+	Dim Fill As Boolean
+	Dim Remaining, take As Int
+	
+	For FiveChars=0 To key.Length-1 Step 5
+		Remaining=key.Length-FiveChars
+		If Remaining>=5 Then 
+			take=4
+		Else 
+			take=Remaining-1
+		End If
+		For i=0 To take
+			ByteBinaryString=Bit.ToBinaryString(Asc(key.SubString2(FiveChars+i,FiveChars+i+1)))
+			If ByteBinaryString.Length<8 Then
+				For f=1 To 8-ByteBinaryString.Length
+					ByteBinaryString="0" & ByteBinaryString 
+				Next
+			End If
+			AllBitsString=AllBitsString&ByteBinaryString
+			
+		Next
+		
+		Dim OriginalLength As Int=AllBitsString.Length
+		Dim rest As Int =AllBitsString.Length Mod 40  
+		If rest>0 Then 
+			For r=0 To 40-rest-1
+				AllBitsString=AllBitsString&"0"
+			Next
+			Fill=True
+		Else
+			Fill=False
+		End If
+		FinalBase32String=FinalBase32String & BuildBlock(AllBitsString,Fill, OriginalLength)
+		AllBitsString=""
+		ByteBinaryString=""	
+	Next 
+	Return FinalBase32String
+End Sub
+Sub BuildBlock (AllBitsString As String, Fill As Boolean, OriginalLength As Int) As String
+	Dim BlockNr As Int =0
+	Dim Base32Alphabet As String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+	Dim cBase32Pad As String = "="
+	Dim BlockBits(8) As String
+	Dim Base32CharNr As Int
+	Dim base32String As String
+	For b=0 To AllBitsString.Length-1 Step 5
+		BlockBits(BlockNr)=""
+		For FiveBits=0 To 4
+			BlockBits(BlockNr)=BlockBits(BlockNr)&AllBitsString.SubString2(b+FiveBits,b+FiveBits+1)
+		Next 
+		Base32CharNr=Bit.ParseInt(BlockBits(BlockNr),2)
+		
+		If Base32CharNr=0 And Fill=True And b+FiveBits>OriginalLength+5 Then 
+			base32String=base32String&cBase32Pad
+		Else
+			base32String=base32String&Base32Alphabet.SubString2(Base32CharNr,Base32CharNr+1)
+		End If
+		
+		BlockNr=BlockNr+1
+		If BlockNr>7 Then BlockNr=0
+	Next
+	Return base32String
+	
+	
+End Sub
+
+
+

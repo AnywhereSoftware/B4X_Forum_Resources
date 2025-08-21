@@ -1,0 +1,157 @@
+﻿Version=5.75
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=1.bjl
+NumberOfLibraries=4
+Library1=jcore
+Library2=jfx
+Library3=jrandomaccessfile
+Library4=jnetwork
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private ser As B4XSerializator
+	Type MyMessage (Name As String, Age As Int, Image() As Byte)
+	Private btnSend As Button
+	Private btnConnect As Button
+	Private connected As Boolean
+	Private client As Socket
+	Public server As ServerSocket
+	Private astream As AsyncStreams
+	Private const PORT As Int = 51042
+	Private working As Boolean = True
+	Private lblStatus As Label
+	Private lblMyIp As Label
+	Private edtName As TextField
+	Private edtAge As TextField
+	Private edtIP As TextField
+	Private cvs As Canvas
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	cvs.DrawRect(0, 0, cvs.Width, cvs.Height, fx.Colors.White, True, 0)
+	server.Initialize(PORT, "server")
+	ListenForConnections
+	UpdateState(False)
+End Sub
+
+Private Sub ListenForConnections
+	Do While working
+		server.Listen
+		Wait For Server_NewConnection (Successful As Boolean, NewSocket As Socket)
+		If Successful Then
+			CloseExistingConnection
+			client = NewSocket
+			astream.InitializePrefix(client.InputStream, False, client.OutputStream, "astream")
+			UpdateState(True)
+		End If
+	Loop
+End Sub
+
+
+Sub CloseExistingConnection
+	If astream.IsInitialized Then astream.Close
+	If client.IsInitialized Then client.Close
+	UpdateState (False)
+End Sub
+
+Sub AStream_Error
+	UpdateState(False)
+End Sub
+
+Sub AStream_Terminated
+	UpdateState(False)
+End Sub
+Sub UpdateState (NewState As Boolean)
+	connected = NewState
+	btnSend.Enabled = connected
+	If connected Then
+		btnConnect.Text = "Disconnect"
+		lblStatus.Text = "Connected"
+	Else
+		btnConnect.Text = "Connect"
+		lblStatus.Text = "Disconnected"
+	End If
+	lblMyIp.Text = "My ip: " & server.GetMyIP
+End Sub
+
+
+Sub AStream_NewData (Buffer() As Byte)
+	Dim mm As MyMessage = ser.ConvertBytesToObject(Buffer)
+	edtAge.Text = mm.Age
+	edtName.Text = mm.Name
+	'convert the array of bytes to image
+	Dim in As InputStream
+	in.InitializeFromBytesArray(mm.Image, 0, mm.Image.Length)
+	Dim bmp As Image
+	bmp.Initialize2(in)
+	'draw the image
+	cvs.DrawImage(bmp, 0, 0, cvs.Width, cvs.Height)
+End Sub
+
+Private Sub ConnectToServer(Host As String)
+	Log("Trying to connect to: " & Host)
+	CloseExistingConnection
+	Dim client As Socket
+	client.Initialize("client")
+	client.Connect(Host, PORT, 10000)
+	Wait For Client_Connected (Successful As Boolean)
+	If Successful Then
+		astream.InitializePrefix(client.InputStream, False, client.OutputStream, "astream")
+		UpdateState (True)
+	Else
+		Log("Failed to connect: " & LastException)
+	End If
+End Sub
+
+Private Sub Disconnect
+	CloseExistingConnection
+End Sub
+
+
+Public Sub SendData (data() As Byte)
+	If connected Then astream.Write(data)
+End Sub
+
+Sub cvs_MouseDragged (EventData As MouseEvent)
+	cvs.DrawCircle(EventData.X, EventData.Y, 30dip, fx.Colors.From32Bit(Rnd(0xFF000000, -1)), True, 0)
+End Sub
+
+Sub btnConnect_Action
+	If connected = False Then
+		If edtIP.Text.Length = 0 Then
+			fx.Msgbox(MainForm, "Please enter the server ip address.", "")
+			Return
+		Else
+			ConnectToServer(edtIP.Text)
+		End If
+	Else
+		Disconnect
+	End If
+End Sub
+
+Sub btnSend_Action
+	Dim mm As MyMessage
+	mm.Initialize
+	If IsNumber(edtAge.Text) Then mm.Age = edtAge.Text Else mm.Age = 0
+	mm.Name = edtName.Text
+	'convert the bitmap to bytes
+	Dim out As OutputStream
+	out.InitializeToBytesArray(0)
+	cvs.Snapshot.WriteToStream(out)
+	out.Close
+	mm.Image = out.ToBytesArray
+	SendData (ser.ConvertObjectToBytes(mm))
+End Sub
+

@@ -1,0 +1,113 @@
+﻿Build1=Default,www.sagital.fp
+File1=fileicon.png
+File2=foldericon.png
+File3=foldericonup.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=icore
+Library2=iui8
+Module1=il_filePicker
+NumberOfFiles=3
+NumberOfLibraries=2
+NumberOfModules=1
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: il_FilePicker
+	#Version: 1
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+ 
+#CertificateFile: ios_development.cer
+#ProvisionFile: iosdev.mobileprovision 
+
+#LibraryName: il_FilePicker
+#LibraryVersion: 0.02
+#LibraryAuthor: Ilan Tetruashvili (ilan)
+  
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private fp As il_filePicker
+	Private btn1 As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	NavControl.NavigationBarVisible = False 
+	NavControl.ToolBarVisible = False
+	
+	btn1.Initialize("btn",btn1.STYLE_SYSTEM)
+	btn1.Text = "Open FilePicker"
+	Page1.RootPanel.AddView(btn1,0,0,0,0)
+	
+	
+	createFilesAndFolder ' ## ATTENTION ## ' uncomment to create Files&Folders 'RUN ONLY ONCE FOR TESTING
+End Sub
+ 
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	btn1.SetLayoutAnimated(0,1,50dip,250dip,250dip,50dip)
+End Sub
+ 
+Private Sub Application_Background
+End Sub
+
+Sub btn_Click
+	If Not(fp.IsInitialized) Then fp.Initialize(Me,Page1.RootPanel,"fp",File.DirDocuments)
+
+	Dim extensions() As Int = Array As Int(fp.Extensions_allfiles)
+	fp.fp_setFileExtensions(extensions)
+	fp.fp_show
+End Sub
+
+Sub fp_selectedFiles(filemap As Map)
+	For Each key As String In filemap.Keys
+		Dim myfile As fileatt = filemap.Get(key)
+		Log(myfile.path)
+		Log(myfile.filename)
+	
+		'you can get the complete filepath like this
+		Log(File.Combine(myfile.path,myfile.filename))
+		
+		'we know we have only text files so i can read the string form it
+		Log(File.ReadString(myfile.path,myfile.filename)) 
+	Next
+End Sub
+ 
+Sub fp_msg(senderaction As String)
+	Log(senderaction)
+	If senderaction = "no_files_added_fromfiledialog" Then 
+		'if App Egnlish
+		Msgbox("You have not selected any Files.","Error")
+		'if App German
+		'Msgbox("Es wurden keine Dateien ausgewählt","Fehlermeldung")
+	End If
+End Sub
+
+Sub createFilesAndFolder 'ignore RUN ONLY ONCE
+	Dim startpath As String = File.DirDocuments
+	Dim foldername As String
+	For i = 0 To 4
+		foldername = $"Folder${i}"$
+		File.MakeDir(startpath,foldername)
+		If i = 4 Then
+			startpath = File.Combine(startpath,foldername)
+			For j = 0 To 5
+				File.WriteString(startpath,$"filename${j}"$,Rnd(0,99999))
+			Next
+		End If
+	Next
+End Sub
+ 

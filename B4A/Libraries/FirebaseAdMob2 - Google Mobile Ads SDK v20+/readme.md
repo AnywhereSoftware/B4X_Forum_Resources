@@ -1,7 +1,9 @@
 ### FirebaseAdMob2 - Google Mobile Ads SDK v20+ by Erel
-### 08/12/2025
+### 08/18/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/129609/)
 
+**Edit:** The underlying Google SDK is compatible with Android 8+ (api 26+). It is recommended to set minSdkVersion in the manifest editor to 26.  
+  
 This is a wrapper for Google Mobile Ads v20+ SDK.  
 It is a modified version of FirebaseAdmob (1).  
 This library works with Google Mobile Ads v20+. The previous library works with v19-.  

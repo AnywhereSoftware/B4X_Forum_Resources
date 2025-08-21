@@ -1,0 +1,47 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=users.php
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Module1=pgIndex
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=7.31
+@EndOfDesignText@
+#Region Project Attributes 
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "AJAX"
+	Public jx As JFX
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName,1)
+	'let us not use service workers
+	BANano.UseServiceWorker = False
+	BANano.HTML_NAME = "index.html"
+	BANano.Header.Title = "AJAX"
+	
+	Dim url As String
+	'save to xampp folder
+	BANano.Build("C:\xampp\htdocs")
+	url = $"http://127.0.0.1/${AppName}/index.html"$
+	jx.ShowExternalDocument(url)
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub BANano_Ready()
+	pgIndex.Init()
+End Sub

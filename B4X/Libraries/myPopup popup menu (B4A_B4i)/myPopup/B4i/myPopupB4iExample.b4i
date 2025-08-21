@@ -1,0 +1,77 @@
+﻿Build1=Default,b4i.example
+File1=Layout1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ihud
+Module1=|relative|..\myPopup
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=5.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+#CertificateFile: ios_development.cer
+#ProvisionFile: dev.mobileprovision
+	
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Dim const popupItemSettings As String = Chr(0xF1DE) & " Settings"
+	Dim const popupItemContactUs As String = Chr(0xF1D9) & " Contact Us"
+	Dim const popupItemHelp As String = Chr(0xF059) & " Help"
+	
+	Dim popExample As myPopup
+	Dim screenX, screenY As Int 'Equivalent to Android 100%x, 100%y..
+	Dim hd As HUD
+
+	Private Button1 As Button
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("Layout1")
+	
+	
+	'Initialize the popup menu
+	popExample.Initialize( Page1.RootPanel, Me, "popExample", Array As String( popupItemSettings, popupItemContactUs, popupItemHelp ), screenX, screenY, Font.CreateFontAwesome(18.0) )
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	screenX = Page1.RootPanel.Width
+	screenY = Page1.RootPanel.Height
+	popExample.Resize( screenX, screenY )
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub Button1_Click
+	popExample.Show(Button1) 'Show the menu, anchored to the button.
+End Sub
+
+'Event called when a menu item is chosen
+Sub popExample_BtnClick( btnText As String )
+	hd.ToastMessageShow( btnText & " selected", False)
+End Sub

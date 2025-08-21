@@ -1,0 +1,1012 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=3
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public Serial1 As Serial
+	
+	Dim pclk, pdat, prst As Pin          'clock, I/O, CE
+	Dim seconds10, seconds1, seconds As Byte = 0
+	Dim minutes10, minutes1, minutes As Byte = 0
+	Dim hours10, hours1, hours As Byte = 0
+	Dim years10, years1, years As Byte = 0
+	Dim months10, months1, months As Byte = 0
+	Dim days10, days1, days As Byte = 0
+	Dim weekdays10, weekdays1, weekdays As Byte = 0
+	
+	Dim data As Byte
+	
+	Dim t As Timer
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	t.Initialize("t_tick", 1000)
+	data = 0
+	
+	pclk.Initialize(10, pclk.MODE_OUTPUT)
+	pdat.Initialize(11, pdat.MODE_OUTPUT)
+	prst.Initialize(12, prst.MODE_OUTPUT)
+	
+	t.Enabled = True
+	
+	pclk.DigitalWrite(False)
+	pdat.DigitalWrite(False)
+	prst.digitalwrite(False)
+	
+'	AddLooper("myLooper")
+	
+	
+	
+End Sub
+
+Sub t_tick
+	
+	getSeconds
+	getMinutes
+	getHours
+	getYear
+	getMonth
+	getDayOfMonth
+	getDayOfWeek
+	Log(" ")
+	
+	
+End Sub
+
+Sub getSeconds
+	
+	'81h = read Seconds (1000 0001) -> need to clock in 81h via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1               LSB
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1         MSB
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	seconds10 = 0
+	seconds1 = 0
+	seconds1 = Bit.And(data, 0x0f)
+	seconds10 = Bit.And(data, 0xf0)
+	seconds10 = Bit.ShiftRight(seconds10,4)
+	seconds = (seconds10 * 10) + seconds1
+	Log("SECONDS = ", seconds)
+
+End Sub
+
+Sub getMinutes
+	
+	'83h = read Minutes (1000 0011) -> need to clock in 83h via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)           '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	minutes10 = 0
+	minutes1 = 0
+	minutes1 = Bit.And(data, 0x0f)
+	minutes10 = Bit.And(data, 0xf0)
+	minutes10 = Bit.ShiftRight(minutes10,4)
+	minutes = (minutes10 * 10) + minutes1
+	Log("MINUTES = ", minutes)
+
+End Sub
+
+Sub getHours
+	
+	'85h = read hours (1000 0101) -> need to clock in 85h via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	hours10 = 0
+	hours1 = 0
+	hours1 = Bit.And(data, 0x0f)
+	hours10 = Bit.And(data, 0xf0)
+	hours10 = Bit.ShiftRight(hours10,4)
+	hours = (hours10 * 10) + hours1
+	Log("HOURS = ", hours)
+
+End Sub
+
+Sub getYear
+	
+	'8Dh = read Year (1000 1101) -> need to clock in 8Dh via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	years10 = 0
+	years1 = 0
+	years1 = Bit.And(data, 0x0f)
+	years10 = Bit.And(data, 0xf0)
+	years10 = Bit.ShiftRight(years10,4)
+	years = (years10 * 10) + years1
+	Log("YEAR = ", years)
+
+End Sub
+
+Sub getMonth
+	
+	'89h = read Year (1000 1001) -> need to clock in 89h via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	months10 = 0
+	months1 = 0
+	months1 = Bit.And(data, 0x0f)
+	months10 = Bit.And(data, 0xf0)
+	months10 = Bit.ShiftRight(months10,4)
+	months = (months10 * 10) + months1
+	Log("MONTH = ", months)
+
+End Sub
+
+Sub getDayOfMonth
+	
+	'87h = read Year (1000 0111) -> need to clock in 87h via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)           '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	days10 = 0
+	days1 = 0
+	days1 = Bit.And(data, 0x0f)
+	days10 = Bit.And(data, 0xf0)
+	days10 = Bit.ShiftRight(days10,4)
+	days = (days10 * 10) + days1
+	Log("DAY OF MONTH = ", days)
+	
+End Sub
+
+
+Sub getDayOfWeek
+	
+	'8Bh = read Year (1000 1011) -> need to clock in 8Bh via the I/O line with the I/O line set to mode output (in this example I/O line = pin 11)
+	
+	prst.Digitalwrite(True)                      'pull CE high                  '
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)           '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)            '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(False)           '0
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	pdat.DigitalWrite(True)            '1
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	
+	data = 0
+	
+	pdat.Initialize(11, pdat.MODE_INPUT)                  'set the I/O line to mode input to read the response from the RTC (DS1302) module
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 1)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 2)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 4)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 8)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 16)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 32)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 64)
+	DelayMicroseconds(4)
+	
+	pclk.DigitalWrite(True)
+	DelayMicroseconds(4)
+	pclk.DigitalWrite(False)
+	DelayMicroseconds(4)
+	If pdat.DigitalRead = True Then data = Bit.Or(data, 128)
+	DelayMicroseconds(4)
+	
+	prst.DigitalWrite(False)                 'pull CE low
+	
+	weekdays10 = 0
+	weekdays1 = 0
+	weekdays1 = Bit.And(data, 0x0f)
+	weekdays10 = Bit.And(data, 0xf0)
+	weekdays10 = Bit.ShiftRight(weekdays10,4)
+	weekdays = (weekdays10 * 10) + weekdays1
+	Log("DAY OF WEEK NO = ", weekdays)
+	
+End Sub
+
+
+
+
+
+
+
+
+
+

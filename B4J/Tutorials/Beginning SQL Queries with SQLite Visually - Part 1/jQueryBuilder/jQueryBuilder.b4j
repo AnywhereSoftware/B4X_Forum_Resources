@@ -1,0 +1,399 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=vMain.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library10=jokhttputils2
+Library11=jshell
+Library12=jstringutils
+Library13=jrandomaccessfile
+Library14=cssutils
+Library15=jtidy
+Library16=jdateutils
+Library2=jfx
+Library3=jsql
+Library4=jserver
+Library5=jcontrolsfx
+Library6=javaobject
+Library7=json
+Library8=jrldialogs8
+Library9=jcustomtoast
+Module1=|absolute|C:\Users\anelembanga\Documents\MEGA\MyApps\b4j\Shared\DBUtils
+Module2=|absolute|C:\Users\anelembanga\Documents\MEGA\MyApps\b4j\Shared\jMash
+Module3=jQueryBuilder
+Module4=|absolute|C:\Users\anelembanga\Documents\MEGA\MyApps\b4j\Shared\KeyValueStore
+Module5=|absolute|C:\Users\anelembanga\Documents\MEGA\MyApps\b4j\Shared\TextFlow
+NumberOfFiles=1
+NumberOfLibraries=16
+NumberOfModules=5
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1200
+	#MainFormHeight: 800
+	#AdditionalJar: sqlite-jdbc-3.7.2
+	'#AdditionalJar: mysql-connector-java-5.1.40-bin
+	#VirtualMachineArgs: -Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m -XX:MinHeapFreeRatio=40 -XX:MaxHeapFreeRatio=70
+	'#AdditionalJar: richtextfx-fat-0.6.10
+	'#AdditionalJar: jtds
+	#MergeLibraries: True
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private btnOpenDatabase As Button
+	Private dbSQL As String
+	Private lstTables As ListView
+	Private sqlite As SQL
+	Private kvs As KeyValueStore
+	Private lastPath As String
+	Private lastFile As String
+	Private btnOpenLast As Button
+	Private cboFields As ComboBox
+	Private lstFields As ListSelectionView
+	Private SelectedTable As String
+	Private cboOperator As ComboBox
+	Private cboValues As ComboBox
+	Private operators As List
+	Private lstQryType As ListView
+	Private btnGoValues As Button
+	Private SelectedField As String
+	Private SelectedOperator As String
+	Private SelectedValue As String
+	Private SelectedFields As StringBuilder
+	Private SelectedType As String
+	Private btnAND As Button
+	Private btnApply As Button
+	Private btnOR As Button
+	Private btnPrepare As Button
+	Private tvRecords As TableView
+	Private txtSQLStatement As TextArea
+	Private oldsql As String
+	Private methods As List
+	Private btnClear As Button
+	Private chkboxHaving As CheckBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("vMain") 'Load the layout file.
+	MainForm.Title = "jQueryBuilder"
+	MainForm.Show
+	kvs.Initialize(File.DirApp,"jQueryBuilder.sqlite")
+	lastFile = kvs.GetSimple("lastfile")
+	If lastFile.Length = 0 Then
+		btnOpenLast.Enabled = False
+	Else
+		btnOpenLast.Enabled = True
+	End If
+	lstFields.SourceItems.Clear
+	lstFields.TargetItems.clear
+	operators.Initialize 
+	operators.Add("=")
+	operators.Add("==")
+	operators.Add(">=")
+	operators.Add("LIKE")
+	operators.Add("<>")
+	operators.Add("!=")
+	operators.Add("NOT LIKE")
+	operators.Add(">")
+	operators.Add("<=")
+	operators.Add("<")
+	operators.Add("IN")
+	operators.Add("BETWEEN")
+	operators.Add("NOT BETWEEN")
+	operators.Add("NOT")
+	cboOperator.Items.clear
+	cboOperator.Items.AddAll(operators)
+	jMash.ListViewAddOneLine(lstQryType,"SELECT","SELECT")
+	jMash.ListViewAddOneLine(lstQryType,"INSERT","INSERT")
+	jMash.ListViewAddOneLine(lstQryType,"UPDATE","UPDATE")
+	jMash.ListViewAddOneLine(lstQryType,"DELETE","DELETE")
+	tvRecords.Items.clear
+	btnApply.Enabled = False
+	CSSUtils.SetBorder(btnApply,2,fx.Colors.Red,2)
+	methods.Initialize 
+	methods.Add("COUNT")
+	methods.Add("SUM")
+	methods.Add("DISTINCT")
+	methods.Add("ABS")
+	methods.Add("HEX")
+	methods.Add("LENGTH")
+	methods.Add("LOWER")
+	methods.Add("LTRIM")
+	methods.Add("MAX")
+	methods.Add("MIN")
+	methods.Add("QUOTE")
+	methods.Add("ROUND")
+	methods.Add("RTRIM")
+	methods.Add("TRIM")
+	methods.Add("UPPER")
+	methods.Add("AVG")	
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub btnOpenDatabase_Action
+	'get the name of the last file accessed from kvs
+	lastFile = kvs.GetSimple("lastfile")
+	If lastFile.Length = 0 Then
+		'if file does not exist, default to the dirapp
+		lastPath = File.DirApp
+	Else
+		'if file exists, default to that path
+		lastPath = File.GetFileParent(lastFile)
+	End If
+	'ask a user for a database file to choose
+	dbSQL = jMash.OpenSaveFileDialog(MainForm,True,"Open SQLite DB",lastPath)
+	If dbSQL.Length = 0 Then Return
+	'save the last file saved
+	
+	kvs.PutSimple("lastfile", dbSQL)
+	lastFile = dbSQL
+	lastPath = File.GetFileParent(lastFile)
+	btnOpenLast.Enabled = True
+	ProcessNewSQL
+End Sub
+
+'load all tables from the database
+Sub LoadTables
+	'clear the tables
+	lstTables.Items.clear
+	'get the table names and add each to the table selector
+	Dim tables As List = DBUtils.GetSQLiteTableNames(sqlite)
+	For Each strTable As String In tables
+		jMash.ListViewAddOneLine(lstTables,strTable,strTable)
+	Next
+	'clear the target and source items in fields
+	lstFields.SourceItems.clear
+	lstFields.TargetItems.clear
+	tvRecords.Items.Clear
+	txtSQLStatement.Text=""
+	chkboxHaving.Checked = False
+End Sub
+
+'put a string in brackets
+Sub InBrackets(sValue As String) As String
+	Dim oValue As String = $"[${sValue}]"$
+	Return oValue
+End Sub
+
+' a table has been selected, load fields
+Sub lstTables_SelectedIndexChanged(Index As Int)
+	'clear the target and source items in fields
+	lstFields.SourceItems.clear
+	lstFields.TargetItems.clear
+	'load fields from selected table
+	SelectedTable = jMash.ListViewGetItemText(lstTables,Index)
+	Dim fields As List = DBUtils.GetFieldNames(sqlite, SelectedTable)
+	'load the combobox use table.field
+	cboFields.Items.Clear
+	cboValues.Items.clear
+	chkboxHaving.Checked = False
+	SelectedType = jMash.ListViewGetSelectedText(lstQryType)
+	If SelectedType = "SELECT" Then lstFields.SourceItems.Add("*")
+	For Each strfield As String In fields
+		cboFields.Items.Add(strfield)
+		lstFields.SourceItems.Add(strfield)
+	Next
+	For Each strfield As String In fields
+		For Each strmethod As String In methods
+			cboFields.Items.Add($"${strmethod}(${strfield})"$)
+			If SelectedType = "SELECT" Then lstFields.SourceItems.Add($"${strmethod}(${strfield})"$)
+		Next
+	Next
+End Sub
+
+'a new database has been selected
+Sub ProcessNewSQL
+	'open the database
+	DBUtils.InitializeSQLite("",lastFile,False)
+	btnApply.Enabled = False
+	CSSUtils.SetBorder(btnApply,2,fx.Colors.Red,2)
+	'get the database connection
+	sqlite = DBUtils.getsql
+	'load the tables
+	LoadTables
+End Sub
+
+
+Sub btnOpenLast_Action
+	ProcessNewSQL
+End Sub
+
+Sub btnGoValues_Action
+	tvRecords.Items.clear
+	cboValues.Items.clear
+	If GetWhereClause = False Then Return
+	Dim values As List
+	DBUtils.ExecuteList(sqlite,$"select ${SelectedField} from ${SelectedTable} order by ${SelectedField}"$,Null,0,values)
+	values.Add("IS NULL")
+	values.Add("IS NOT NULL")
+	cboValues.Items.Clear
+	cboValues.Items.AddAll(values)
+End Sub
+
+Sub GetWhereClause() As Boolean
+	SelectedField = cboFields.Value
+	SelectedOperator = cboOperator.Value
+	SelectedField = SelectedField.Replace("null","")
+	SelectedOperator = SelectedOperator.Replace("null","")
+	If SelectedField.Length = 0 Or SelectedOperator.Length = 0 Then
+		jMash.MsgBoxError(MainForm, "Field/Operator", "Where Field and Operator should be selected first.")
+		Return False
+	End If
+	SelectedValue = cboValues.Value
+	Return True
+End Sub
+
+Sub btnOR_Action
+	tvRecords.Items.clear
+	SelectedType = jMash.ListViewGetSelectedText(lstQryType)
+	If SelectedType = "INSERT" Then Return
+	If GetWhereClause = False Then Return
+	oldsql = txtSQLStatement.Text.trim
+	If oldsql.Length = 0 Then
+		jMash.MsgBoxError(MainForm,"OR Clause","The SQL STATEMENT has not been defined yet. This clause cannot be added.")
+		Return
+	End If
+	BuildWhere("OR",chkboxHaving.checked)
+	CanRun
+End Sub
+
+Sub btnApply_Action
+	oldsql = txtSQLStatement.Text.Trim
+	If oldsql.Length = 0 Then 
+		jMash.MsgBoxError(MainForm,"SQL Statement","The SQL Statement has not been defined, please create it first.")
+		Return
+	End If
+	DBUtils.ExecuteTableView(sqlite,oldsql,Null,0,tvRecords)
+End Sub
+
+Sub btnAND_Action
+	tvRecords.Items.clear
+	If SelectedType = "INSERT" Then Return
+	If GetWhereClause = False Then Return
+	oldsql = txtSQLStatement.Text.trim
+	If oldsql.Length = 0 Then
+		jMash.MsgBoxError(MainForm,"AND Clause","The SQL STATEMENT has not been defined yet. This clause cannot be added.")
+		Return
+	End If
+	BuildWhere("AND",chkboxHaving.checked)
+	CanRun
+End Sub
+
+Sub BuildWhere(Clause As String, useHaving As Boolean)
+	Dim sType As String = "WHERE"
+	If useHaving = True Then sType = "HAVING"
+	Select Case SelectedOperator
+		Case "IN"
+			SelectedValue = $"(${SelectedValue})"$
+		Case "BETWEEN", "NOT BETWEEN"
+			SelectedValue = $"${SelectedValue} AND ${SelectedValue}"$
+	End Select
+	If sType = "HAVING" Then 
+		If oldsql.Contains("GROUP BY") = False Then Return
+	End If
+	If oldsql.Contains($"${SelectedField} ${SelectedOperator} ${SelectedValue}"$) = True Then Return
+	If oldsql.Contains(sType) = True Then
+		oldsql = oldsql & $" ${Clause} ${SelectedField} ${SelectedOperator} ${SelectedValue}"$
+	Else
+		oldsql = oldsql & $" ${sType} ${SelectedField} ${SelectedOperator} ${SelectedValue}"$
+	End If
+	txtSQLStatement.Text = oldsql
+End Sub
+
+Sub btnPrepare_Action
+	'dont process and or
+	SelectedType = jMash.ListViewGetSelectedText(lstQryType)
+	SelectedTable = jMash.ListViewGetSelectedText(lstTables)
+	tvRecords.Items.Clear
+	oldsql = txtSQLStatement.text.trim
+	SelectedFields.Initialize 
+	Dim updatefields As StringBuilder
+	Dim inserts As StringBuilder
+	updatefields.Initialize 
+	inserts.initialize
+	For Each strfield As String In lstFields.TargetItems
+		If strfield = "*" Then
+		    Select Case SelectedType
+			Case "SELECT"
+				SelectedFields.Append(strfield).Append(",")
+				updatefields.Append(strfield).Append("=?").Append(",")
+				inserts.Append("?").Append(",")
+			End Select
+		Else
+			SelectedFields.Append(strfield).Append(",")
+			updatefields.Append(strfield).Append("=?").Append(",")
+			inserts.Append("?").Append(",")
+		End If
+	Next
+	Dim sf As String = jMash.RemDelim(SelectedFields.ToString,",")
+	Dim up As String = jMash.RemDelim(updatefields.ToString,",")
+	Dim ins As String = jMash.RemDelim(inserts.ToString,",") 
+	Dim qry As String = ""
+	Select Case SelectedType
+	Case "SELECT"
+		qry = $"SELECT ${sf} FROM ${SelectedTable}"$
+	Case "INSERT"
+		qry = $"INSERT INTO ${SelectedTable} (${sf}) VALUES (${ins})"$
+	Case "DELETE"
+		qry = $"DELETE FROM ${SelectedTable}"$
+	Case "UPDATE"
+		qry = $"UPDATE ${SelectedTable} SET (${up})"$	
+	End Select
+	If oldsql = "" Then
+		txtSQLStatement.Text = qry
+	Else
+		If oldsql.ToLowerCase.StartsWith("select ") = True Then
+			Select Case SelectedType
+			Case "SELECT"
+				qry = $", ${SelectedTable}"$
+				txtSQLStatement.Text = oldsql & qry
+			Case "INSERT", "DELETE","UPDATE"
+				txtSQLStatement.Text = qry
+			End Select
+		Else
+			txtSQLStatement.Text = oldsql & " " & qry
+		End If
+	End If
+	CanRun
+End Sub
+
+Sub CanRun
+	oldsql = txtSQLStatement.Text.Trim
+	oldsql = oldsql.ToLowerCase
+	If oldsql.StartsWith("select ") = True Then
+		btnApply.Enabled = True
+		CSSUtils.SetBorder(btnApply,2,fx.Colors.green,2)
+	Else
+		btnApply.Enabled = False
+		CSSUtils.SetBorder(btnApply,2,fx.Colors.Red,2)
+	End If
+End Sub
+
+Sub lstQryType_SelectedIndexChanged(Index As Int)
+	SelectedType = jMash.ListViewGetItemText(lstQryType,Index)
+	Select Case SelectedType
+	Case "SELECT"
+		btnApply.Enabled = True
+		CSSUtils.SetBorder(btnApply,2,fx.Colors.green,2)
+	Case Else
+		btnApply.Enabled = False
+		CSSUtils.SetBorder(btnApply,2,fx.Colors.Red,2)
+	End Select
+	txtSQLStatement.Text = ""
+	tvRecords.Items.clear
+	cboFields.items.Clear
+	cboValues.Items.clear
+End Sub
+
+Sub btnClear_Action
+	txtSQLStatement.Text = ""
+	tvRecords.Items.clear
+End Sub

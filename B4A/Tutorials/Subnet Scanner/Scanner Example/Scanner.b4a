@@ -1,0 +1,115 @@
+﻿Build1=Default,b4a.Scanner
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=network
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Scanner
+	#VersionCode: 100
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim etFrom, etTo, etPort, etTimeOut As EditText
+	Dim lvResults As ListView
+	Dim btnScan As Button
+	Dim Scanning As Boolean = False
+	Dim Panel1 As Panel
+End Sub ' Globals
+
+Sub Activity_Create( FirstTime As Boolean )
+	Activity.LoadLayout( "Main" )
+	etTimeOut.Text = Starter.TimeOut
+End Sub ' Activity_Create()
+
+Sub Activity_Resume
+	Dim ip() As String
+	ip = Regex.Split( "\.", Starter.MyIP )
+	etFrom.Text = ip(0) & "." & ip(1) & "." & ip(2) & "." & 2
+	etTo.Text = ip(0) & "." & ip(1) & "." & ip(2) & "." & 254
+	etPort.Text = Starter.Port
+	Panel1.left = 50%x - Panel1.width/2
+	Panel1.Height = 100%y
+	lvResults.Height = Panel1.Height - lvResults.Top - 5dip
+End Sub ' Activity_Resume
+
+Sub Activity_Pause( UserClosed As Boolean )
+
+End Sub ' Activity_Pause()
+
+Sub btnScan_Click
+	Dim ip() As String, i, ipFrom, ipTo As Int
+	If Scanning Then
+		i = 254
+		btnScan.Text = "Start"
+		Scanning = False
+		Return
+	End If
+	ip = Regex.Split( "\.", etTo.Text )
+	ipTo = ip(3)
+	ip = Regex.Split( "\.", etFrom.Text )
+	ipFrom = ip(3)
+	If Starter.TCPSck1.Connected Then Starter.TCPSck1.Close
+	Scanning = True
+	lvResults.Clear
+	btnScan.Text = "Scanning..."
+	For i=ipFrom To ipTo
+		If Scanning = False Then
+			btnScan.Text = "Start"
+			Exit
+		End If
+		Starter.TimeOut = etTimeOut.Text
+		Starter.TargetIP = ip(0) & "." & ip(1) & "." & ip(2) & "." & i
+		etFrom.Text = Starter.TargetIP
+		Starter.Port = etPort.text
+		Log( "Trying " & Starter.TargetIP )
+		CallSub( Starter, "Connect" )
+		Wait For SendCmdComplete( success As Boolean, msg As String )
+		If success Then
+			ToastMessageShow( "Found IP " & Starter.TargetIP, True )
+			lvResults.AddSingleLine( "Found: " & Starter.TargetIP )
+			Starter.TCPSck1.Close
+			Sleep( 500 )
+		End If
+		Starter.TCPSck1.Close
+		Sleep( 200 )
+	Next
+	If i = 254 Then
+		ToastMessageShow( "Not found", False )
+		btnScan.Text = "Start"
+	End If
+End Sub ' btnScan_Click
+
+'==================================================
+' callbacks from Starter
+Sub Connected
+	Log( "Connected" )
+	CallSubDelayed3( Me, "SendCmdComplete", True, "" )
+End Sub ' Connected
+
+Sub ConnectFailure
+	Log( "Failed" )
+	CallSubDelayed3( Me, "SendCmdComplete", False, "" )
+End Sub ' ConnectFailure
+

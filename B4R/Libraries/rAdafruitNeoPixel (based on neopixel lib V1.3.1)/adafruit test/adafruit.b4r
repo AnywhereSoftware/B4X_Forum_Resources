@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitneopixel
+Library3=rrandomaccessfile
+Module1=neopixel
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=3
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+'// neopixel BEST PRACTICES For most reliable operation:
+'// - Add 1000 uF CAPACITOR between neopixel strip's + and - connections.
+'// - MINIMIZE WIRING LENGTH between microcontroller board And first pixel.
+'// - neopixel strip's DATA-IN should pass through a 300-500 OHM RESISTOR.
+'// - AVOID connecting NeoPixels on a LIVE CIRCUIT. If you must, ALWAYS
+'//   connect GROUND (-) first, Then +, Then data.
+'// - When using a 3.3V microcontroller with a 5V-powered neopixel strip,
+'//   a LOGIC-LEVEL CONVERTER on the data line is STRONGLY RECOMMENDED.
+'// (Skipping these may work OK on your workbench but can fail in the field)
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public pixel As AdafruitNeoPixel
+	Public num_leds As Byte = 11 'Number of connected LED's
+	Dim bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	pixel.Initialize(num_leds, 4, pixel.NEO_GRB)
+	AddLooper("effects")
+End Sub
+
+Sub effects
+	
+
+	
+	For a = 0 To 20 'number of loops
+		neopixel.snowsparkle(0,0, 0, 20, Rnd(100,1000))
+	Next
+	
+	For a = 0 To 20 'number of loops
+		neopixel.snowsparkle(20,20,20, 20, Rnd(100,1000))
+	Next
+	neopixel.runninglights(255,255,0,50)
+	neopixel.runninglights(255,0,0,50)
+	neopixel.runninglights(0,255,0,50)
+	neopixel.runninglights(0,0,255,50)
+	
+	
+	neopixel.colorwipe(16711680,50) 'rred
+	neopixel.colorwipe(65280,50)' green
+	neopixel.colorwipe(255 ,50 ) ' blue
+	neopixel.colorwipe(Bit.ParseInt(bc.StringFromBytes("FFFFFF"), 16),50) 'white
+	
+	neopixel.theaterChaseRainbow(50)
+	
+	neopixel.rainbowcycle(10,10 )
+	
+	neopixel.Twinkle(255, 0, 0, 10, 100, True)
+	
+	neopixel.Strobe(255, 255, 255, 20, 50, 1000)
+	
+	For t = 0 To 15 'number of loops
+		neopixel.FadeInOut(Rnd(0,255),Rnd(0,255),Rnd(0,255))
+	Next
+	
+	neopixel.rgbloop
+End Sub
+
+
+

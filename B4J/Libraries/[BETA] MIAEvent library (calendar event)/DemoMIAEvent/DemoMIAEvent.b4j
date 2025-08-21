@@ -1,0 +1,137 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=css-33.css
+File2=mPane.bjl
+File3=User-Male.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=miaevent
+Library4=xui views
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private MIAWeek As MIAEventWeek
+	Private mPane As B4XView
+	Private Button_random As Button
+	Private ComboBox1 As ComboBox
+	Private DatePicker1 As DatePicker
+	Private TextField1 As TextField
+	Private TextField2 As TextField
+	Private Button_add As Button
+	Private Button_clear As Button
+	Private Button_close As Button
+	
+	Private Spinner1 As Spinner
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("mPane") 'Load the layout File.
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets,"css-33.css"))
+	MainForm.Show
+	
+
+	MIAWeek.Initialize(Me,mPane)
+	MIAWeek.WeekPanel
+	
+	For i=0 To 23
+		ComboBox1.Items.Add(i)
+	Next
+	ComboBox1.SelectedIndex=10
+	
+	TextField1.Text = "Ciao Mondo"
+	TextField2.Text = "Fuori da questa (dis) Unione Europea!"
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub mPane_Resize(width As Double, height As Double)
+	If MIAWeek.IsInitialized = True Then
+		MIAWeek.Resize(width,height)
+	End If
+End Sub
+
+Sub Button_close_Click
+	MainForm.Close
+End Sub
+
+Sub Button_clear_Click
+	MIAWeek.ClearAllEvent
+End Sub
+
+Sub Button_add_Click
+	
+	Dim Args1 As List
+	Args1.Initialize
+	Args1.Add(TextField1.Text)
+	Args1.Add(TextField2.Text)
+	Dim img As Image = fx.LoadImage(File.DirAssets,"User-Male.png")
+	Dim color As String = "#EA4B4D"
+	
+	MIAWeek.Add(TextField1.Text,ComboBox1.Value ,MIAWeek.getDayWeek(DateTime.Date(DatePicker1.DateTicks),"dd/MM/yyyy"), 1, Args1, img, color)
+	
+End Sub
+
+Sub Button_random_Click
+	
+	'Simulate a database upload
+	
+	Dim Args1 As List
+	Args1.Initialize
+	Args1.Add(TextField1.Text)
+	Args1.Add(TextField2.Text)
+	Dim img As Image = fx.LoadImage(File.DirAssets,"User-Male.png")
+	Dim color As String = "#EA4B4D"
+	
+	For i =1 To Spinner1.Value
+		Dim hour As Int = Rnd(5,22)
+		Dim day As String = Rnd(4,11)
+		If day.Length = 1 Then day = "0"&day
+		MIAWeek.Add(TextField1.Text & " " & i,hour ,MIAWeek.getDayWeek(DateTime.date(DateTime.DateParse((day&"/05/2020"))),"dd/MM/yyyy"), 5, Args1, img, color)
+	Next
+	
+End Sub
+
+#Region Eventi Class MIACalendar
+
+Sub title_MouseClicked (result As String)
+	Log(result)
+End Sub
+
+Sub Event_MouseClicked (Args As List, mButton As Button)
+	Log(Args & " " & mButton.Text)
+End Sub
+
+Sub HourWeekOfDay_MouseClicked(DayOfWeek As Int, Hour As Int)
+	Log(DayOfWeek)
+	Log(Hour)
+End Sub
+
+Sub EventEdit_Action(Args As List)
+	Log(Args)
+End Sub
+
+Sub EventDelete_Action(Args As List)
+	Log(Args)
+End Sub
+
+#End Region

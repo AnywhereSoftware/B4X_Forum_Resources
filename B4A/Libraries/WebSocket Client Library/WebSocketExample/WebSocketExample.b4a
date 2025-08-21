@@ -1,0 +1,99 @@
+﻿Version=3.5
+IconFile=
+NumberOfModules=1
+Module1=WebSocketHandler
+ModuleVisible1=1
+Package=b4a.example
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+UserTypesHint=WebSocketHandler
+NumberOfFiles=1
+File1=1.bal
+NumberOfLibraries=3
+Library1=core
+Library2=json
+Library3=websocket
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private wsh As WebSocketHandler
+	Private link As String = "ws://192.168.0.100:51042/ws"
+End Sub
+
+Sub Globals
+	Private btnConnect As Button
+	Private lblServerTime As Label
+	Private lblStatus As Label
+	Private btnSend As Button
+	Private EditText1 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		wsh.Initialize(Me, "wsh")
+	End If
+	Activity.LoadLayout("1")
+End Sub
+
+Sub wsh_ServerTime(Params As List)
+	'example of a server push message
+	lblServerTime.Text = "Server Time: " & Params.Get(0)
+End Sub
+
+Sub btnSend_Click
+	Dim data As Map
+	data.Initialize
+	data.Put("message", EditText1.Text)
+	wsh.SendEventToServer("Device_Message", data)
+	EditText1.RequestFocus
+	EditText1.SelectAll
+End Sub
+
+Sub EditText1_EnterPressed
+	If btnSend.Enabled Then btnSend_Click
+End Sub
+
+Sub wsh_Connected
+	UpdateStatus
+End Sub
+
+Sub wsh_Closed (Reason As String)
+	UpdateStatus
+	ToastMessageShow(Reason, True)
+End Sub
+
+Sub Activity_Resume
+ 	UpdateStatus
+End Sub
+
+Sub UpdateStatus
+	If wsh.ws.Connected Then
+		lblStatus.Text = "Status: Connected"
+	Else
+		lblStatus.Text = "Status: Disconnected"
+	End If
+	btnConnect.Enabled = Not(wsh.ws.Connected)
+	btnSend.Enabled = wsh.ws.Connected
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+ 
+End Sub
+
+Sub btnConnect_Click
+	wsh.Connect(link)
+	lblStatus.Text = "Status: Connecting..."
+End Sub

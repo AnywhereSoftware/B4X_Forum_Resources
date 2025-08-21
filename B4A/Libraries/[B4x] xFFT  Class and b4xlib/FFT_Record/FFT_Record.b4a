@@ -1,0 +1,458 @@
+﻿Build1=Default,b4a.example1
+File1=main.bal
+File2=w_500_3.mp3
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=audiorecord
+Library2=core
+Library3=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=xFFT
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: FFT_Record
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private rp As RuntimePermissions
+	
+	'	Public N = 16384 As Int
+	Public N = 1024 As Int
+	Public N_2 = N / 2 As Int
+	Public N_21 = N_2 As Int
+	
+	Public soundD(N) As Double
+
+	Public FFT1 As xFFT
+	
+	Public FFTMag(N_21) As Double
+	Public FFTMax As Double
+	Public TimeMin, TimeMax As Double
+	
+	Public CursorX As Int
+	Public GraphScaleTime, GraphScaleFFT, CursorScaleTime, CursorScaleFFT, CursorScale As Double
+	Public GraphX0, GraphX1, GraphW, GraphTop, GraphBottom, GraphY0Time, GraphY0FFT, GraphTimedx, GraphFFTdx As Int
+	Public GraphTimeSamples, GraphFFTSamples As Int
+	Public GraphRect, CursorRect, GraphRectLine As Rect
+	Public ScreenRatio As Double
+	
+	Public DispTime = True As Boolean
+	Public Scales(8) As Int
+	Public TimeScaleIndex = 6 As Int
+	Public FFTScaleIndex = 6 As Int
+	Public TimeScale, FFTScale  As Int
+	
+	Public MP As MediaPlayer
+	
+	Public Timer1 As Timer
+End Sub
+
+Sub Globals
+	Private BufferSize As Int
+	Private SampleRate As Int
+	Private ChannelConfig As Int
+	Private AudioFormat As Int
+	Private AudioSource As Int
+	Private DataSize As Int
+	
+	Private AR As AudioRecord
+
+	Private StartTime As Long
+
+	Private btnRecord As Button
+	Private btnGraphTimeFFT As ToggleButton
+	Private pnlGraphic, pnlCursor As Panel
+	Private cvsActivity, cvsGraphic, cvsCursor As Canvas
+	Private lblCursorPos, lblCursorVal As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	
+	rp.CheckAndRequest(rp.PERMISSION_RECORD_AUDIO)
+	
+	MP.Initialize
+	MP.Load(File.DirAssets, "w_500_3.mp3")
+	
+	Scales = Array As Int (200, 500, 1000, 2000, 5000, 10000, 15000, 30000)
+	
+	cvsActivity.Initialize(Activity)
+
+	Timer1.Initialize("Timer1", 300)
+	
+	FFT1.Initialize
+	
+	AudioSource = AR.A_Src_Mic
+	SampleRate = 44100
+	ChannelConfig	= AR.Ch_Conf_Mono
+	AudioFormat = AR.Af_PCM_16
+
+	BufferSize = AR.GetMinBufferSize(SampleRate, ChannelConfig, AudioFormat)
+	BufferSize = Max(BufferSize, N * 2)
+	If BufferSize < 0 Then
+		Log("Buffer Error, The hardware doesn't support the recording parameters")
+		Activity.Finish
+	End If
+	
+	InitGraph
+	InitScales
+	
+	GraphTimeInit
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Permission = rp.PERMISSION_RECORD_AUDIO Then
+		Log("Permission OK")
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed = True Then
+		Try
+			AR.Stop
+			AR.release
+			MP.Release
+		Catch
+			Log(LastException.Message)
+		End Try
+	End If
+End Sub
+
+Private Sub Record
+	Dim sound(N) As Short
+	Dim soundD(N) As Double
+'	Dim tt As Long
+	
+'	If AR.GetRecordingState = 3 Then Log("Start Recording") 
+
+'	tt = DateTime.Now
+	DataSize = 0
+'	Log("Sampling...")
+	Do While True
+		sound = AR.ReadShort(0, BufferSize)
+		DataSize = DataSize + sound.Length
+				
+		If DateTime.Now > StartTime + "500" Then Exit
+	Loop
+	
+	TimeMin = 1000000
+	TimeMax = -1000000
+'	Log("End samplig " & (DateTime.Now- tt))
+	
+	For cont = 0 To N - 1 
+		soundD(cont) = sound(cont)
+		TimeMin = Min(TimeMin, soundD(cont))
+		TimeMax = Max(TimeMax, soundD(cont))
+	Next	
+	
+'	Log("End calculation " & (DateTime.Now- tt))
+	FFTMag = FFT1.Forward(soundD)
+'	Log("End FFT " & (DateTime.Now- tt))
+	
+'	If AR.GetRecordingState = 1 Then Log("Stop Recording")
+	
+	If DispTime = True Then
+		GraphTime
+	Else
+		GraphFFT
+	End If
+
+'	Log("End graph " & (DateTime.Now- tt))
+End Sub
+
+Private Sub AudioRecord_PeriodPassed
+	Log("PPCalled")
+End Sub
+
+Private Sub AudioRecord_MarkerReached
+	Log("MRCalled")
+End Sub
+
+Private Sub btnRecord_Click
+	If btnRecord.Text = "Go" Then
+		AR.Initialize(AudioSource, SampleRate, ChannelConfig, AudioFormat, BufferSize)
+		AR.StartRecording
+		StartTime = DateTime.Now
+		Record
+		Timer1.Enabled = True
+		btnRecord.Text = "Stop"
+	Else
+		btnRecord.Text = "Go"
+		AR.Stop
+		Timer1.Enabled = False	
+	End If
+End Sub
+
+Private Sub btnScale_Click
+	Private btn As Button
+	Private Tag As String
+	
+	btn = Sender
+	Tag = btn.Tag
+	
+	If DispTime = True Then		
+		If Tag = "Up" Then
+			TimeScaleIndex = Min(TimeScaleIndex + 1, Scales.Length - 1)
+		Else
+			TimeScaleIndex = Max(TimeScaleIndex - 1, 0)
+		End If
+
+		TimeScale = Scales(TimeScaleIndex)
+
+		GraphScaleTime = pnlGraphic.Height / 2 / TimeScale
+		GraphTimeInit
+		GraphTime
+	Else
+		If Tag = "Up" Then
+			FFTScaleIndex = Min(FFTScaleIndex + 1, Scales.Length - 1)
+		Else
+			FFTScaleIndex = Max(FFTScaleIndex - 1, 0)
+		End If
+
+		FFTScale = Scales(FFTScaleIndex)
+
+		GraphScaleFFT = pnlGraphic.Height / FFTScale
+		GraphFFTInit
+		GraphFFT
+	End If
+End Sub
+
+Private Sub btnSound_Click
+	MP.Play
+End Sub
+
+Private Sub InitGraph
+	
+	ScreenRatio = GetDeviceLayoutValues.ApproximateScreenSize / 5
+	
+	GraphX0 = 45dip
+	GraphW = 100%x - GraphX0 - 15dip
+	
+	If N > GraphW Then
+		GraphTimeSamples = GraphW
+		GraphTimedx = 1
+	Else
+		GraphTimedx = Floor(GraphW / N)
+		GraphTimeSamples = N
+		GraphW = GraphTimedx * N
+	End If
+	
+	If N_2 > GraphW Then
+		GraphFFTSamples = GraphW
+		GraphFFTdx = 1
+	Else
+		GraphFFTdx = Floor(GraphW / N_2)
+		GraphFFTSamples = N_2
+		GraphW = GraphFFTdx * N_2
+	End If
+		
+	GraphX1 = GraphX0 + GraphW
+	
+	GraphTop = btnRecord.Top + btnRecord.Height + 15dip * ScreenRatio
+	GraphBottom = 100%y - 20dip * ScreenRatio
+	GraphRect.Initialize(GraphX0, GraphTop, GraphX1, GraphBottom)
+	GraphRectLine.Initialize(GraphX0 - 1dip, GraphTop - 1dip, GraphX1 + 2dip, GraphBottom + 2dip)
+	
+	GraphY0Time = (GraphTop + GraphBottom) / 2
+	
+	pnlGraphic.Top = GraphTop
+	pnlGraphic.Left = GraphX0
+	pnlGraphic.Width = GraphW
+	pnlGraphic.Height = GraphBottom - GraphTop
+	cvsGraphic.Initialize(pnlGraphic)
+	
+	pnlCursor.Top = GraphTop
+	pnlCursor.Left = GraphX0
+	pnlCursor.Width = GraphW
+	pnlCursor.Height = GraphBottom - GraphTop
+	cvsCursor.Initialize(pnlCursor)
+	cvsCursor.DrawColor(Colors.Transparent)
+End Sub
+
+Private Sub InitScales
+	TimeScale = Scales(TimeScaleIndex)
+	FFTScale = Scales(FFTScaleIndex)
+	
+	GraphScaleTime = pnlGraphic.Height / 2 / TimeScale
+	GraphScaleFFT = pnlGraphic.Height / FFTScale
+	GraphY0FFT = pnlGraphic.Height
+
+	CursorScaleTime = 1 / SampleRate
+	CursorScaleFFT = SampleRate / N
+	CursorScale = CursorScaleTime
+End Sub
+
+Private Sub GraphTimeInit
+	Private x0, dy As Int
+
+	cvsActivity.DrawColor(Colors.White)	
+	cvsActivity.DrawRect(GraphRectLine, Colors.Black, False, 2)
+	cvsGraphic.DrawLine(0, pnlGraphic.Height / 2, pnlGraphic.Width, pnlGraphic.Height / 2, Colors.Blue, 1)
+	x0 = GraphX0 - 4dip
+	dy = 5dip
+	cvsActivity.DrawText(TimeScale, x0, GraphTop + dy, Typeface.DEFAULT, 12, Colors.Black, "RIGHT")
+	cvsActivity.DrawText("0", x0, GraphY0Time + dy, Typeface.DEFAULT, 12, Colors.Black, "RIGHT")
+	cvsActivity.DrawText(-TimeScale, x0, GraphBottom + dy, Typeface.DEFAULT, 12, Colors.Black, "RIGHT")
+
+	Activity.Invalidate
+	pnlGraphic.Invalidate
+End Sub
+
+Private Sub GraphFFTInit
+	Private x0, dy As Int
+	
+	cvsActivity.DrawColor(Colors.White)
+	cvsActivity.DrawRect(GraphRectLine, Colors.Black, False, 2)
+	cvsGraphic.DrawLine(0, pnlGraphic.Height / 2, pnlGraphic.Width, pnlGraphic.Height / 2, Colors.Blue, 1)
+	x0 = GraphX0 - 4dip
+	dy = 5dip
+	cvsActivity.DrawText(FFTScale, x0, GraphTop + dy, Typeface.DEFAULT, 12, Colors.Black, "RIGHT")
+	cvsActivity.DrawText("0", x0, GraphBottom + dy, Typeface.DEFAULT, 12, Colors.Black, "RIGHT")
+
+	Activity.Invalidate
+	pnlGraphic.Invalidate
+End Sub
+
+Private Sub GraphTime
+	Private i, x, y0, y1 As Int
+	Private rct As Rect
+	
+	CursorScale = 1 / SampleRate
+	
+	y0 = pnlGraphic.Height / 2
+	cvsGraphic.DrawColor(Colors.White)
+	cvsGraphic.DrawLine(0, y0, pnlGraphic.Width, y0, Colors.Blue, 1)
+	
+	If GraphTimedx = 1 Then
+		For i = 0 To GraphTimeSamples - 1
+			x = i
+			y1 = y0 - soundD(i) * GraphScaleTime
+			cvsGraphic.DrawLine(x, y0, x, y1, Colors.Blue, 1)
+		Next
+	Else
+		For i = 0 To GraphTimeSamples - 1
+			x = i * GraphTimedx
+			y1 = y0 - soundD(i) * GraphScaleTime
+			rct.Initialize(x, y1, x + GraphTimedx, y0)
+			cvsGraphic.DrawRect(rct, Colors.Blue, True, 1dip)
+		Next
+	End If
+	
+	pnlGraphic.Invalidate
+End Sub
+
+Private Sub GraphFFT
+	Private y0 = pnlGraphic.Height As Int
+	Private i, x, y0, y1 As Int
+	Private rct As Rect
+	
+	CursorScale = SampleRate / N
+	
+	y0 = pnlGraphic.Height
+	cvsGraphic.DrawColor(Colors.White)
+	If GraphFFTdx = 1 Then
+		For i = 0 To GraphFFTSamples - 1
+			y1 = y0 - FFTMag(i) * GraphScaleFFT
+			cvsGraphic.DrawLine(i, y0, i, y1, Colors.Blue, 1)
+		Next	
+	Else
+		For i = 0 To GraphFFTSamples - 1
+			x = i * GraphFFTdx
+			y1 = y0 - FFTMag(i) * GraphScaleFFT
+			rct.Initialize(x, y1, x + GraphFFTdx, y0)
+			cvsGraphic.DrawRect(rct, Colors.Blue, True, 1dip)
+		Next
+	End If
+
+	pnlGraphic.Invalidate
+End Sub
+
+Private Sub btnGraphTimeFFT_CheckedChange(Checked As Boolean)
+	DispTime = Checked
+	
+	If DispTime = True Then
+		GraphTimeInit
+		GraphTime
+	Else
+		GraphFFTInit
+		GraphFFT
+	End If
+End Sub
+
+Sub pnlCursor_Touch (Action As Int, X As Float, Y As Float)
+	Select Action
+		Case Activity.ACTION_DOWN
+			CursorX = X
+			CursorRect.Initialize(Max(CursorX - 1, 0), 0, Min(CursorX + 1, pnlCursor.Width), pnlCursor.Height)
+			cvsCursor.DrawLine(CursorX, 0, CursorX, pnlCursor.Height, Colors.Red, 1)
+			pnlCursor.Invalidate2(CursorRect)
+			DispCursor
+		Case Activity.ACTION_MOVE
+			cvsCursor.DrawLine(CursorX, 0, CursorX, pnlCursor.Height, Colors.Transparent, 1)
+			pnlCursor.Invalidate2(CursorRect)
+			If X >= 0 And X <= pnlCursor.Width Then
+				CursorX = X
+				CursorRect.Initialize(Max(CursorX- 1, 0), 0, Min(CursorX + 1, pnlCursor.Width), pnlCursor.Height)
+				cvsCursor.DrawLine(CursorX, 0, CursorX, pnlCursor.Height, Colors.Red, 1)
+				pnlCursor.Invalidate2(CursorRect)
+				DispCursor
+			End If
+		Case Activity.ACTION_UP
+			cvsCursor.DrawLine(CursorX, 0, CursorX, pnlCursor.Height, Colors.Transparent, 1)
+			pnlCursor.Invalidate2(CursorRect)
+			lblCursorPos.Text = ""
+			lblCursorVal.Text = ""
+	End Select
+End Sub
+
+Sub DispCursor
+	Private i As Int
+	
+	If DispTime = True Then
+		If GraphTimedx = 1 Then
+			i = CursorX
+		Else
+			i = Floor(CursorX / GraphTimedx)
+		End If
+		If i > (N - 1) Or i < 0 Then
+			Return
+		End If	
+		lblCursorPos.Text = "t = " & NumberFormat2(i * CursorScale, 1, 6, 6, False)
+		lblCursorVal.Text = "Ampl = " & NumberFormat2(soundD(i), 1, 0, 0, False)
+	Else
+		If GraphFFTdx = 1 Then
+			i = CursorX
+		Else
+			i = Floor(CursorX / GraphFFTdx)
+		End If
+		If i > (N_2 - 1) Or i < 0 Then
+			Return
+		End If
+		lblCursorPos.Text = "f = " & NumberFormat2(i * CursorScale, 1, 0, 0, False)
+		lblCursorVal.Text = "Ampl = " & NumberFormat2(FFTMag(i), 1, 0, 0, False)
+	End If
+End Sub
+
+Private Sub Timer1_Tick
+	Record
+End Sub

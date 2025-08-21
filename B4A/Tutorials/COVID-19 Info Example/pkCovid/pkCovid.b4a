@@ -1,0 +1,233 @@
+﻿Build1=Default,b4a.covid.pk
+File1=charts.bal
+File10=tests.bal
+File11=virus.png
+File2=countries.bal
+File3=full_data.csv
+File4=hospitals.bal
+File5=item.bal
+File6=main.bal
+File7=privacy.bal
+File8=searchcountry.bal
+File9=searchindia.bal
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library10=stringutils
+Library2=okhttputils2
+Library3=json
+Library4=javaobject
+Library5=ime
+Library6=clipboard
+Library7=xui views
+Library8=xchart
+Library9=preoptimizedclv
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~'************ Google Play Services Base ************~\n~'CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~'************ Google Play Services Base (end) ************~\n~~\n~'************ Firebase Base ************~\n~'CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~'************ Firebase Base (end) ************~\n~~\n~'************ Firebase Analytics ************~\n~'CreateResourceFromFile(Macro, FirebaseAnalytics.FirebaseAnalytics)~\n~'************ Firebase Analytics (end) ~\n~
+Module1=chart_display
+Module10=search
+Module11=search_india
+Module12=Starter
+Module13=teststats
+Module2=countries
+Module3=CSVParser
+Module4=func
+Module5=helplines
+Module6=hospitals
+Module7=India
+Module8=India_unofficial
+Module9=privacy
+NumberOfFiles=11
+NumberOfLibraries=10
+NumberOfModules=13
+Version=9.801
+@EndOfDesignText@
+'#####################################################
+'### Created by Indie Developer (inddev2001@gmail.com)
+'#####################################################
+#Region  Project Attributes 
+	#ApplicationLabel: PK COVID-19 Info
+	#VersionCode: 133
+	#VersionName: 1.3.3
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: True
+#End Region
+
+'	#BridgeLogger: True 
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private Timer1 As Timer
+	Public sVersion As String = " (v" & Application.VersionName & ")"
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private Lbl_TotalCases, Lbl_TotalDeaths, Lbl_TotalRecovered As Label
+	Private Btn_Search As Button
+	Private Btn_All As Button
+	Private Btn_India As Button
+	Private Btn_Testing As Button
+	Private Btn_Help As Button
+'	Private nChkTimerTicks As Int
+	Private sSrcAPI As String = "https://corona.lmao.ninja/v2/all"
+
+	Private Btn_Unofficial As Button
+	Private Lbl_ActiveCases As Label
+	Private Lbl_CriticalCases As Label
+	Private Lbl_AffectedCountries As Label
+	Private Btn_Hospitals As Button
+	Private Btn_Charts As Button
+	Private Lbl_Newcases As Label
+	Private Lbl_NewDeaths As Label
+	Private Lbl_Source As Label
+	Private Btn_indiasearch As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	Activity.AddMenuItem("Privacy Policy", "privacypolicy")
+	Activity.AddMenuItem("About this App", "aboutApp")
+	
+'	Activity.Title = GetDeviceLayoutValues
+
+	Lbl_Source.Text = "source » " & sSrcAPI
+	ProgressDialogShow2("Downloading data...", False)
+	covidworldwide
+		
+End Sub
+
+Sub Activity_Resume
+	covidworldwide
+
+	Timer1.Initialize("Timer1", 60000)
+	Timer1.Enabled = True
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Timer1.Enabled = False
+End Sub
+
+Sub covidworldwide
+	Dim covidinfo As HttpJob
+	
+	covidinfo.Initialize("GetInfo", Me)
+	covidinfo.Download(sSrcAPI)
+	Wait For (covidinfo) JobDone(covidinfo As HttpJob)
+	
+	ProgressDialogHide
+		
+	If covidinfo.Success Then
+		Dim parser As JSONParser
+		parser.Initialize(covidinfo.GetString)
+
+		Try
+			Dim root As Map = parser.NextObject
+'			Dim recoveredPerOneMillion As Double = root.Get("recoveredPerOneMillion")
+			Dim cases As Int = root.Get("cases")
+			Dim critical As Int = root.Get("critical")
+			Dim active As Int = root.Get("active")
+'			Dim testsPerOneMillion As Double = root.Get("testsPerOneMillion")
+'			Dim population As String = root.Get("population")
+			Dim affectedCountries As Int = root.Get("affectedCountries")
+			Dim recovered As Int = root.Get("recovered")
+'			Dim tests As Int = root.Get("tests")
+'			Dim criticalPerOneMillion As Double = root.Get("criticalPerOneMillion")
+'			Dim deathsPerOneMillion As Double = root.Get("deathsPerOneMillion")
+'			Dim casesPerOneMillion As Int = root.Get("casesPerOneMillion")
+'			Dim updated As String = root.Get("updated")
+			Dim deaths As Int = root.Get("deaths")
+'			Dim activePerOneMillion As Double = root.Get("activePerOneMillion")
+			Dim todayCases As Int = root.Get("todayCases")
+			Dim todayDeaths As Int = root.Get("todayDeaths")
+			
+			Lbl_TotalCases.Text = NumberFormat(cases, 0, 0)
+			Lbl_TotalDeaths.Text = NumberFormat(deaths, 0, 0)
+			Lbl_TotalRecovered.Text = NumberFormat(recovered, 0, 0)
+			Lbl_ActiveCases.Text = NumberFormat(active, 0, 0)
+			Lbl_CriticalCases.Text= NumberFormat(critical, 0, 0)
+			Lbl_Newcases.Text = NumberFormat(todayCases, 0, 0)
+			Lbl_NewDeaths.Text = NumberFormat(todayDeaths, 0, 0)
+			Lbl_AffectedCountries.Text = NumberFormat(affectedCountries, 0, 0)
+
+		Catch
+			ToastMessageShow("Error: Could not get info from source", True)
+		End Try
+	End If
+	
+	covidinfo.Release
+End Sub
+
+Sub Btn_All_Click
+	StartActivity(countries)
+End Sub
+
+Sub Btn_Search_Click
+	StartActivity(search)
+End Sub
+
+Sub Timer1_Tick
+	ProgressDialogShow2("Downloading data...", False)
+	covidworldwide
+End Sub
+
+Sub Btn_India_Click
+	StartActivity(India)
+End Sub
+
+Sub Btn_Testing_Click
+	StartActivity(teststats)
+End Sub
+
+Sub Btn_Help_Click
+	StartActivity(helplines)
+End Sub
+
+Sub privacypolicy_Click
+	StartActivity(privacy)
+End Sub
+
+Sub Btn_Unofficial_Click
+	StartActivity(India_unofficial)
+End Sub
+
+Sub Btn_Hospitals_Click
+	StartActivity(hospitals)
+End Sub
+
+Sub Btn_Charts_Click
+	StartActivity(chart_display)
+End Sub
+
+Sub Btn_indiasearch_Click
+	StartActivity(search_india)
+End Sub
+
+Sub aboutApp_Click
+	Dim sAboutMsg As String = sVersion & CRLF & CRLF & _
+								"Developed by: inddev2001@gmail.com" & CRLF & _
+								"(For general public information)" & CRLF & CRLF & _
+								"Credits:" & CRLF & _
+								" » Thanks to the various COVID-19 API's made available by the postman site" & CRLF & CRLF & _
+								" » Thanks to the B4X forum members for various functional codes used in this app"
+	
+	MsgboxAsync(sAboutMsg, "PK COVID-19 Info")
+End Sub
+

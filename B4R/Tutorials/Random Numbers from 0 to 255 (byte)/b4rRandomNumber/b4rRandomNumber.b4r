@@ -1,0 +1,105 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=0
+Version=3
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public Serial1 As Serial
+	
+	Dim myRandomNumber As Byte
+	Dim t As Timer
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Delay(1000)
+	t.Initialize("t_tick", 50)
+	t.Enabled = True
+	
+End Sub
+
+Sub t_tick
+	
+	RunNative("getTrueRotateRandomByte", Null)
+	Log("myRandomNumber = ", myRandomNumber)
+
+End Sub
+
+#if C
+
+	const int waitTime = 16;
+	byte rotate(byte b, int r);
+	void pushLeftStack(byte bitToPush);
+	void pushRightStackRight(byte bitToPush);
+
+	byte lastByte = 0;
+
+	byte leftStack = 0;
+	byte rightStack = 0;
+
+	byte rotate(byte b, int r) {
+	  return (b << r) | (b >> (8-r));
+	}
+
+	void pushLeftStack(byte bitToPush) {
+	  leftStack = (leftStack << 1) ^ bitToPush ^ leftStack;
+	}
+	void pushRightStackRight(byte bitToPush) {
+	  rightStack = (rightStack >> 1) ^ (bitToPush << 7) ^ rightStack;
+	}
+
+	void getTrueRotateRandomByte(B4R::Object* o) {
+	  byte finalByte = 0;
+	  
+	  byte lastStack = leftStack ^ rightStack;
+	  
+	  for (int i=0; i<4; i++) {
+	    delayMicroseconds(waitTime);
+	    int leftBits = analogRead(1);
+	    
+	    delayMicroseconds(waitTime);
+	    int rightBits = analogRead(1);
+	    
+	    finalByte ^= rotate(leftBits, i);
+	    finalByte ^= rotate(rightBits, 7-i);
+	    
+	    for (int j=0; j<8; j++) {
+	      byte leftBit = (leftBits >> j) & 1;
+	      byte rightBit = (rightBits >> j) & 1;
+	  
+	      if (leftBit != rightBit) {
+	        if (lastStack % 2 == 0) {
+	          pushLeftStack(leftBit);
+	        } else {
+	          pushRightStackRight(leftBit);
+	        }
+	      }
+	    }
+	    
+	  }
+	  lastByte ^= (lastByte >> 3) ^ (lastByte << 5) ^ (lastByte >> 4);
+	  lastByte ^= finalByte;
+	  lastByte = lastByte ^ leftStack ^ rightStack;
+	  b4r_main::_myrandomnumber = lastByte;
+	//  return lastByte;
+	}
+
+
+
+
+#End If
+

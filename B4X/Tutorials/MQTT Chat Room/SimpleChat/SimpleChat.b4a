@@ -1,0 +1,68 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=2.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=jmqtt
+Library3=jmqttbroker
+Library4=randomaccessfile
+Library5=network
+Library6=ime
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=Chat
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=2
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Type Message (Body As String, From As String)
+End Sub
+
+Sub Globals
+	Private txtHost As EditText
+	Private btnConnect As Button
+	Private rdbServer As RadioButton
+	Private rdbClient As RadioButton
+	Private txtName As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Sub btnConnect_Click
+	If txtName.Text = "" Then
+		ToastMessageShow("Please enter your name.", True)
+		Return
+	End If
+	If rdbClient.Checked And txtHost.Text = "" Then
+		ToastMessageShow("Please enter the server ip address.", True)
+		Return
+	End If
+	Dim host As String = txtHost.Text
+	If rdbServer.Checked Then host = "127.0.0.1"
+	CallSub3(Starter, "ConnectTo", host, txtName.Text)
+End Sub

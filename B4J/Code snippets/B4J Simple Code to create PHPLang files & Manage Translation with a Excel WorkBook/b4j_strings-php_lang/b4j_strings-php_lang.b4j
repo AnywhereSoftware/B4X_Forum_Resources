@@ -1,0 +1,78 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=strings.xlsx
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jpoi
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.show
+	
+	Dim mapidiomas(1000) As Map
+	Dim idiomas As Map
+	idiomas.Initialize
+	
+	Dim wb As PoiWorkbook
+	wb.InitializeExisting(File.DirAssets, "strings.xlsx", "")
+	Dim sheet1 As PoiSheet = wb.GetSheet(0)
+	For Each row As PoiRow In sheet1.Rows
+		Dim currentkey As String = ""
+		Dim cells As List = row.Cells
+		If row.RowNumber=0 Then
+			For i=1 To row.Cells.Size-1
+				mapidiomas(i).Initialize
+				Dim cell As PoiCell = cells.Get(i)
+				idiomas.Put(i,cell.Value)
+			Next
+			Continue	
+		End If
+		For i = 0 To cells.Size - 1
+			Dim cell As PoiCell = cells.Get(i)
+			Dim valor As String = cell.Value
+			If i=0 Then 
+				currentkey = valor.trim
+				Continue
+			End If
+			mapidiomas(i).Put(currentkey, cell.Value)
+		Next
+	Next
+	wb.Close
+	For a=0 To idiomas.Size-1
+		Dim stringfile As String = ""
+		For i = 0 To mapidiomas(a+1).Size - 1
+			Dim key As String = mapidiomas(a+1).GetKeyAt(i)
+			key=key.ToLowerCase.Replace("'","´")
+			Dim value As String = mapidiomas(a+1).GetValueAt(i)
+			value=value.Replace("'","´")
+			stringfile = stringfile & $"$lang['${key}'] = '${value}';"$ & CRLF
+		Next
+		
+		Dim idiomafile As String = idiomas.GetValueAt(a)
+		If File.Exists(File.DirApp, "language")=False Then File.MakeDir(File.DirApp, "language")
+		File.WriteString(File.DirApp & "/language/", idiomafile & "_lang.php", "<?php" & CRLF & stringfile & CRLF & "?>")
+		
+		Log(idiomas.GetValueAt(a) & "_lang.php")
+		Log(stringfile)
+		Log("----------------")
+	Next
+	ExitApplication
+End Sub
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

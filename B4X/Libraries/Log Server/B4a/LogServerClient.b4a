@@ -1,0 +1,181 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+IconFile=
+Library1=core
+Library2=logserverclient-b4x
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#BridgeLogger: True 
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private LS As LogServerClient
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+'	Activity.LoadLayout("1")
+	
+	LS.Initialize(Me,"192.168.1.15",-1)
+	Wait For Logserver_StreamReady
+	Log("Ready")
+	LogServerTest
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub LogServerTest
+	
+
+	
+	
+	LS.ClearAll
+	LS.Reset
+	
+	LS.MessageColor("Client Version " & LS.Version,Colors.Green)
+	LS.TimeStampColor(Colors.LightGray)
+
+	
+	Log(Colors.Transparent)
+	
+	
+	LS.LEDMatrix.Add("LEDMatrix",LS.LOCATION_RIGHT)
+	
+	LS.LEDMatrix.SetLEDOnColour("LEDMatrix",Colors.Green)
+	LS.LEDMatrix.SetLEDOffColour("LEDMatrix",Colors.Red)
+	Sleep(0)
+'	LS.LEDMatrix.setChannelCount("LEDMatrix",4)
+'	LS.LEDMatrix.setLEDCount("LEDMatrix",4)
+	
+'	LS.LEDMatrix.SetShortNames("LEDMatrix",0,Array As String("4","3","2","1"))
+'	LS.LEDMatrix.SetTooltipText("LEDMatrix",0,Array As String("Dev:1 In","Dev:1 Out","Dev:2 In","Dev:2 Out"))
+	LS.DefaultColor = Colors.Black
+'	LS.ClearAll
+	
+	LS.SetTag("Test : ")
+	LS.SwitchTo("Main")
+	LS.Message("Start")
+	
+	LS.AddLogAreaTo("Found","Main",LS.LOCATION_BOTTOM)
+	LS.TimeStampColor(Colors.Magenta)
+	LS.MessageColor("Found at Index 7",Colors.Red)
+	
+
+	LS.Columns(Array As String("Col1","Col2","Col3","Col4","Col5"),10,LS.JUSTIFY_CENTER, True)
+	
+	For i = 0 To 9
+		LS.Columns(Array As String("C1-Val" & i,"C2-Val" & i,"C3-Val" & i,"C4-Val" & i,"C5-Val" & i),10,LS.JUSTIFY_RIGHT, False)
+	Next
+	LS.SetTag("")
+	LS.SwitchTo("Found")
+	
+	
+	
+	LS.DefaultColor = Colors.Blue
+	LS.AddLogArea("Problem1",LS.LOCATION_RIGHT)
+	
+	LS.CircularProgressBar.AddTo("CPB","Problem1",Colors.Black,Colors.Red,Colors.Blue,LS.LOCATION_RIGHT)
+	
+	LS.TimeStampColor(Colors.green)
+	
+	For i = 0 To 3000
+		LS.Message("Message " & i)
+	Next
+	
+	LS.SpacedColor(Array As String("One","Two","Three"),10,Colors.Magenta)
+
+	LS.AddLogAreaTo("List","CPB",LS.LOCATION_RIGHT)
+	
+	LS.MessageColor("Lists",Colors.Black)
+	Dim L As List
+	L.Initialize
+	For i = 0 To 30
+		L.Add("List Item " & i)
+	Next
+	
+	LS.ListColor(L,LS.ORIENT_VERTICAL,Colors.DarkGray)
+	
+'	LS.AddLogAreaTo("Found","Main",LS.LOCATION_BOTTOM)
+'	LS.TimeStampColor(Colors.Magenta)
+'	LS.MessageColor("Found at Index 7",Colors.Red)
+
+
+	LS.AddLogArea("Arrays",LS.LOCATION_BOTTOM)
+	Dim A(10) As String
+	For i = 0 To 9
+		A(i) = "Array Item " & i
+	Next
+	
+	LS.List(A,LS.ORIENT_HORIZONTAL)
+	
+'	LS.RemoveTimePlot("TimePlot")
+'	
+'	LS.ClearLogArea("TimePlot")
+	
+	LS.TimePlot.Add("TimePlot",150,LS.TEXT_ORIENTATION_VERTICAL,LS.COLOR_SCHEME_DARK,LS.LOCATION_BOTTOM)
+	LS.TImePlot.AddLine("TimePlot","Line1",Colors.Red)
+	LS.TImePlot.AddLine("TimePlot","Line2",Colors.Blue)
+	LS.TImePlot.AddLine("TimePlot","Line3",Colors.Green)
+	LS.TImePlot.AddLine("TimePlot","Line4",Colors.Cyan)
+	
+	Sleep(3000)
+	Dim Channel, State As Int
+	For i = 0 To 149
+		If i < 101 Then LS.CircularProgressBar.Update("CPB",i)
+		LS.TimePlot.AddData("TimePlot",(Array As Double(Rnd(-50,100),Rnd(0,100),Rnd(0,200),Rnd(0,200))))
+		State = Rnd(0,Power(2,8))
+		Channel = Rnd(0,8)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,State)
+		Sleep(55)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,0)
+	Next
+	LS.LEDMatrix.SetLEDOnColour("LEDMatrix",Colors.Blue)
+	LS.LEDMatrix.SetLEDOffColour("LEDMatrix",Colors.Gray)
+	LS.HexView.AddTo("HexView","Arrays",LS.LOCATION_RIGHT)
+'	LS.HexView.HeadingColors("HexView",Colors.Yellow,Colors.Red)
+'	LS.HexView.TextAreaColors("HexView",Colors.White,Colors.Black)
+	For i = 0 To 149
+		If i < 101 Then LS.CircularProgressBar.Update("CPB",i)
+		LS.TimePlot.AddData("TimePlot",(Array As Double(Rnd(-50,100),Rnd(0,100),Rnd(0,200),Rnd(0,200))))
+		State = Rnd(0,Power(2,8))
+		Channel = Rnd(0,8)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,State)
+		Sleep(55)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,0)
+		LS.HexView.AddData("HexView",Array As Byte(Rnd(0,255)))
+	Next
+	LS.TimeStampTo("Main")
+	LS.ServerTimeStampTo("Main")
+	
+	
+End Sub

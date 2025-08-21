@@ -1,0 +1,198 @@
+﻿Version=1.50
+IconFile=
+FullScreen=False
+IncludeTitle=True
+NumberOfModules=0
+Package=anywheresoftware.b4a.agraham.opengl2demo
+Label=OpenGL 2 Demo
+VersionCode=1
+VersionString=
+Orientation=unspecified
+CanInstallToExternalStorage=False
+NumberOfFiles=0
+NumberOfLibraries=3
+Library1=core
+Library2=opengl2
+Library3=threading
+@EndOfDesignText@
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim Timer1 As Timer
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim glsv As GLSurfaceView2
+	Dim imgv As ImageView
+	Dim oglbmp As Bitmap
+	Dim framecount As Int
+	Dim frametoshow As Int
+	Dim ImageShown As Boolean
+	
+	Dim eyeangle As Float
+	Dim coords(0) As Float
+	eyeangle=0
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If glsv.DeviceAPILevel < 8 Then
+		Msgbox("OpenGL 2.0 is not supported on this device", "OpenGL 2.0 error")
+		Activity.Finish
+		Return
+	End If
+	'glsv.Initialize(glsv.RENDERMODE_WHEN_DIRTY, "glsv")
+	glsv.Initialize2(glsv.RENDERMODE_WHEN_DIRTY, "glsv", 16, 0)
+	Activity.AddView(glsv,0,0,Activity.Width,Activity.Height/2)
+	imgv.Initialize("")
+	Activity.AddView(imgv,0,Activity.Height/2,Activity.Width,Activity.Height/2)
+End Sub
+
+Sub Activity_Resume
+	'glsv.DebugFlags = Bit.Or(glsv.DEBUG_CHECK_GL_ERROR, glsv.DEBUG_LOG_GL_CALLS) ' Can set debug flags here if required
+	glsv.Resume ' Must call GLSurfaceView.Resume to restart the rendering thread
+	Timer1.Initialize("Timer1", 100)
+	Timer1.Enabled = True
+	Dim half As Float
+	half=0.5
+	coords = Array As Float(-half,-half,half,half,-half,half,-half,half,half,half,half,half,-half,-half,-half,-half,half,-half,half,-half,-half,half,half,-half,-half,-half,half,-half,half,half,-half,-half,-half,-half,half,-half,half,-half,-half,half,half,-half,half,-half,half,half,half,half,-half,half,half,half,half,half,-half,half,-half,half,half,-half,-half,-half,half,-half,-half,-half,half,-half,half,half,-half,-half)
+	
+	Dim args(1) As Object
+	args(0) = "Testing QueueEvent"
+	glsv.QueueEvent("QueueTest", args)
+	
+	imageShown = False
+	framecount = 0
+	frametoshow = 60
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	glsv.Pause ' Must call GLSurfaceView.Pause to halt the rendering thread
+	Timer1.Enabled = False
+End Sub
+
+Sub Timer1_Tick
+	eyeangle=eyeangle+0.1
+	If eyeangle>(2*3.14159) Then eyeangle=eyeangle-(2*3.14159)
+	glsv.RequestRender
+End Sub
+
+Sub QueueTestGUI(msg As String)
+	ToastMessageShow(msg,False)
+End Sub
+
+Sub ShowOglImage
+	imgv.Bitmap = oglbmp
+	ImageShown = True
+	ToastMessageShow("Frame " & frametoshow & " shown",False)
+End Sub
+
+
+Sub ShowGLError(title As String, msg As String)
+	Msgbox(msg, title)
+	Log(title & " : " & msg)
+End Sub
+
+' The GLSurfaceView events run on a separate thread to the main thread.
+' They therefore must not try to manipulate GUI elements.
+' -------------------------------------------------------------------------------------------
+' DO NOT ATTEMPT TO PAUSE THE DEBUGGER IN ANY OF SUBS BELOW AS IT MAY HAVE UNEXPECTED RESULTS
+' -------------------------------------------------------------------------------------------
+' This may be fixed in a future version of Basic4android. 
+
+Sub glsv_Draw(gl As GL2)
+	' As this is running on a separate thread exceptions will cause the application to force close
+	' and not report the exception as would happen on the main thread so we use a Try Catch block
+	' to trap any errors
+	Try	
+		'The view wants to be drawn using the suppllied GL1
+		
+		gl.glClear(Bit.Or(gl.GL_COLOR_BUFFER_BIT, gl.GL_DEPTH_BUFFER_BIT)) 
+		
+		' we only do this once in this demo as glReadPixelBitmap takes a lot of cycles and we can't do it
+		' repeatedly without taking too much processing time
+		framecount = framecount + 1
+		If Not(ImageShown) AND framecount = frametoshow Then
+			oglbmp = gl.glReadPixelBitmap(0, 0, glsv.Width, glsv.Height)
+			glsv.RunOnGuiThread("ShowOglImage", Null)
+		End If
+
+
+		' one way of reporting OpenGL errors that don't raise exceptions		
+		' set the glsv.DebugFlags to DEBUG_CHECK_GL_ERROR to raise an exception immediately on a GL error
+		glerr = gl.glGetError ' calling this resets the error code so we save it		
+		If glerr <> gl.GL_NO_ERROR Then
+			Dim args(2) As Object
+			args(0) = "OpenGL Error when Drawing"
+			args(1) = gl.gluErrorString(glerr)
+			glsv.RunOnGuiThread("ShowGLError", args)
+		End If
+		
+	Catch
+		' catch and report any exceptions on the rendering thread to the main thread
+		' set the glsv.DebugFlags to DEBUG_CHECK_GL_ERROR to raise an exception immediately on a GL error
+		GLException(gl)	
+	End Try	
+End Sub 
+
+Sub glsv_SurfaceChanged(gl As GL2, width As Int, height As Int)
+	Log("Changed")
+	Try
+		'Called when the surface has changed size.
+		gl.glViewport(0, 0, width, height)
+		Dim ratio As Float
+		ratio = width/height
+		gl.gluPerspective(45,ratio,1,100)
+	Catch
+		' catch and report any exceptions on the rendering thread to the main thread
+		' set the glsv.DebugFlags to DEBUG_CHECK_GL_ERROR to raise an exception immediately on a GL error
+		GLException(gl)	
+	End Try
+End Sub
+	
+Sub glsv_SurfaceCreated(gl As GL2)
+	'Called when the surface is created or recreated.
+	Log("Created") 
+	Try
+		gl.glEnable(gl.GL_DEPTH_TEST)
+		gl.glDepthFunc(gl.GL_LESS)
+	Catch
+		' catch and report any exceptions on the rendering thread to the main thread
+		' set the glsv.DebugFlags to DEBUG_CHECK_GL_ERROR to raise an exception immediately on a GL error
+		GLException(gl)	
+	End Try
+End Sub
+
+Sub GLException(gl As GL2)
+	Dim Ex As ExceptionEx
+	Dim where As String
+	Ex = LastException
+	Dim args(2) As Object
+	args(0) = LastException.Message
+	where = Ex.StackTraceElement(2) ' get Java line of error
+	If where.IndexOf("GLLogWrapper") > 0 Then ' DEBUG_CHECK_GL_ERROR is in use
+		where = Ex.StackTraceElement(4) ' and line is in different place on the stack
+	End If
+	args(1) = where
+	glsv.RunOnGuiThread("ShowGLError", args)
+End Sub
+
+
+Sub QueueTest(msg As String)
+	Dim args(1) As Object
+	args(0) = msg
+	glsv.RunOnGuiThread("QueueTestGUI", args)	
+End Sub
+
+
+
+
+
+
+
+

@@ -1,0 +1,193 @@
+﻿Build1=Default,scott.UploadAFile
+File1=Layout1.bal
+File2=upit.php
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=dialogs
+Library3=runtimepermissions
+Library4=okhttputils2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Upload A File
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+Dim MyFile As String
+	Dim rp As RuntimePermissions
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private Button1 As Button
+	Private ButtonFileDialog As Button
+	
+	Private Label1 As Label
+	Private EditText1 As EditText
+End Sub
+
+
+'4-25-2020
+'Pick a SINGLE file from Dialog box, then upload it to a server on LAN or Internet
+'I wrote this B4A to be very simple, easy to understand on a beginner level
+'In Files is the PHP script to handle single file upload and save as original filename
+'php creates and appends a logfile: b4a.fileupload.log (I found this php on the internet somewhere)
+'Yes, I know about DirDefaultExternal :)
+'The LAN / Remote stuff,  I had to do for MY setup
+'Copy upit.php to your server
+'then make a folder called uploads
+'
+'My php.ini file settings: I like to upload very large files
+'Note: if you can't SAVE changes, set security to Everyone and allow everything
+'file_uploads = On  (default anyways)
+'upload_max_filesize = 6000000M
+'post_max_size = 5000000M
+'max_execution_time = 6000
+'max_input_time = 6000
+'
+'Hope this helps
+'-Scott McKay
+
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Layout1")
+	Logit("Startup")
+	
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		'access here
+		ToastMessageShow("Granted Access !!",False)
+		
+	Else
+		ToastMessageShow("no external storage access",False)
+		'no permission
+	End If
+End Sub
+
+
+
+
+
+
+Sub Activity_Resume
+
+End Sub
+
+
+
+
+
+Sub Logit(a As String)
+	EditText1.Text = EditText1.Text & a & Chr(10) & Chr(13)
+	
+End Sub
+
+
+
+
+
+Sub upit_one
+	Dim TryRemote As Boolean
+	Dim H As HttpJob
+	H.Initialize("",Me)
+  
+	Dim MFD As MultipartFileData
+	MFD.Initialize
+	MFD.Dir = File.DirDefaultExternal
+	MFD.FileName = MyFile
+	MFD.KeyName = "userfile"
+	MFD.ContentType = "application/octet-stream"
+
+    Logit("Attempting to upload file now..")
+	H.PostMultipart("http://192.201.19.44/upit.php",Null,Array(MFD))
+	Wait For (h) JobDone(j As HttpJob)
+
+
+TryRemote = False
+
+	If j.Success Then
+		Logit("sucessful upload to Server on Lan")
+		TryRemote =False
+	Else
+		Logit("Failed to upload to Server on Lan:")
+		TryRemote = True
+	End If
+
+	
+	If TryRemote=True Then
+		H.PostMultipart("http://55.224.9.20/upit.php",Null,Array(MFD))
+		Wait For (h) JobDone(j As HttpJob)
+
+		If j.Success Then
+			Logit("sucessful upload to Server on Internet")
+		Else
+			Logit("Failed to upload to Server on Internet: ")
+		End If
+	End If
+	
+
+
+
+
+
+
+	j.release
+	Logit("DONE")
+End Sub
+
+
+
+
+Sub Button1_Click  'upload file now
+	upit_one
+End Sub
+
+
+
+
+
+Sub ButtonFileDialog_Click
+	Dim fd As FileDialog 
+	fd.FilePath = File.DirRootExternal 'rp.GetSafeDirDefaultExternal("") 'File.DirRootExternal
+	Dim sf As Object = fd.ShowAsync("Select file", "Yes", "Cancel", "No", Null, False)
+	Wait For (sf) Dialog_Result(Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+		Log("File path: " & fd.FilePath)
+		Log("File name: " & fd.ChosenName)
+	End If
+
+	MyFile = fd.ChosenName
+  Label1.Text = MyFile
+
+	File.Copy(fd.FilePath,MyFile,File.DirDefaultExternal,MyFile)
+	Sleep(2000)
+	
+End Sub
+
+
+

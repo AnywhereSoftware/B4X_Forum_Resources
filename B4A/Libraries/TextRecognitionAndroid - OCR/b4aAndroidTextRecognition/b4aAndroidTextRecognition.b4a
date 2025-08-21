@@ -1,0 +1,102 @@
+﻿Build1=Default,jhs.atr
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=androidtextrecognition
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~AddApplicationText(<meta-data~\n~            android:name="com.google.android.gms.version"~\n~            android:value="@integer/google_play_services_version" />~\n~        <meta-data~\n~            android:name="com.google.android.gms.vision.DEPENDENCIES"~\n~            android:value="ocr" />)	~\n~		~\n~AddPermission(android.permission.CAMERA) ' Required to be able to access the camera device.		~\n~AddPermission(android.permission.GET_TASKS)~\n~AddPermission("android.hardware.camera")~\n~AddPermission("android.permission.FLASHLIGHT")~\n~~\n~~\n~~\n~~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AndroidTextRecognition
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#AdditionalRes: ..\resource
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim rp As RuntimePermissions
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private atr1 As AnroidTextRecognition
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("Layout")
+	
+End Sub
+
+Sub Activity_Resume
+	
+
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+
+
+End Sub
+
+Sub Button1_Click
+	
+	Dim Result As Boolean = True                                                                       'ADDED 2 June 2018
+	If Not(rp.Check(rp.PERMISSION_CAMERA)) Then                                                        'ADDED 2 June 2018
+		rp.CheckAndRequest(rp.PERMISSION_CAMERA)                                                       'ADDED 2 June 2018
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)                   'ADDED 2 June 2018
+	End If                                                                                             'ADDED 2 June 2018
+	If Result Then                                                                                     'ADDED 2 June 2018
+		atr1.startScanning
+	End If	
+End Sub
+
+Sub atr1_text_scanned_blocks(Blocks As Object)
+	
+	Dim scannedBlocks As List = Blocks
+	For i = 0 To scannedBlocks.Size - 1
+		Log("scannedBlocks(" & i & ") = " & scannedBlocks.Get(i))
+	Next
+	Log(" ")
+	
+End Sub
+
+Sub atr1_text_scanned_lines(Lines As Object)
+	Dim scannedLines As List = Lines
+	For i = 0 To scannedLines.Size - 1
+		Log("scannedLines(" & i & ") = " & scannedLines.Get(i))
+	Next
+	Log(" ")
+	
+End Sub
+
+Sub atr1_text_scanned_words(Words As Object)
+	Dim scannedWords As List = Words
+	For i = 0 To scannedWords.Size - 1
+		Log("scannedWords(" & i & ") = " & scannedWords.Get(i))
+	Next
+	Log(" ")
+	
+End Sub
+

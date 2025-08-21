@@ -1,0 +1,148 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=BBCodeView.bal
+File3=logo.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=bctextengine
+Library3=preoptimizedclv
+Library4=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private PCLV As PreoptimizedCLV
+	Private xui As XUI
+	Private BBCodes As List
+	Private BBCodeItems As List
+	Private TextEngine As BCTextEngine
+	Private CLV1 As CustomListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	BBCodes.Initialize
+	BBCodeItems.Initialize
+	For i = 1 To 5
+		BBCodeItems.Add( _
+$"[Alignment=Center][TextSize=20][b][u]This is the title [FontAwesome=0xF034/] [FontAwesome=0xF035/][/u][/b][/TextSize][/Alignment]
+Lorem ipsum dolor sit amet, consectetur adipiscing elit? Nunc fermentum elit vitae nisi faucibus, vitae lacinia turpis mattis.
+We can also add links, for example: [url]https://www.google.com[/url]. You can click on the link. The title will be updated.
+Here is a nice logo: [img FileName="logo.png" width=50/]
+We can also download an image here: [url="DonManfred's avatar"][img url="https://b4x-4c17.kxcdn.com/android/forum/data/avatars/l/42/42649.jpg?1432374732" width=60 height=60/][/url]
+Note that you must explicitly set the dimensions of such images.
+Colors:
+[list]
+[*][Color=#ff0000][b][u]Red[/u][/b][/Color]
+[*][Color=#00ff00][b][u color=Magenta]Green[/u][/b][/Color]
+[*][Color=#0000ff][b][u color=DarkGray Thickness=3]Blue[/u][/b][/Color]
+[/list]
+Items:
+[list ]
+[*]Item A wjklef jklwefj klwefj lkwe fjlkwejf lwkefj wef aaaaa
+[*]Item B
+[*]Item C
+[/list]
+${TableRow("[b]Column 1[/b]", "[b]Column 2[/b]", "[b]Column 3[/b]")}
+${TableRow($"[img FileName="logo.png" width=30/]000"$, "100", "200")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+
+"$)
+		BBCodeItems.Add($"[b]Second item[/b]"$)
+		BBCodeItems.Add($"[Color=Green]Third item
+Third item
+Third item
+Third item
+Third item
+Third item
+Third item"$)
+	Next
+	TextEngine.Initialize(Activity)
+	Dim BB As BBCodeView = GetBBCodeView
+	PCLV.Initialize(Me, "PCLV", CLV1)
+	For Each Text As String In BBCodeItems
+		BB.Text = Text
+		PCLV.AddItem(Max(50dip, BB.Paragraph.Height / TextEngine.mScale + 15dip), xui.Color_White, Null)
+	Next
+	PCLV.ShowScrollBar = False
+	PCLV.Commit
+End Sub
+
+Sub CLV1_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	For Each i As Int In PCLV.VisibleRangeChanged(FirstIndex, LastIndex)
+		Dim item As CLVItem = CLV1.GetRawListItem(i)
+		Dim pnl As B4XView = xui.CreatePanel("")
+		item.Panel.AddView(pnl, 0, 0, item.Panel.Width, item.Panel.Height)
+		'Create the item layout
+		Dim bb As BBCodeView = GetBBCodeView
+		pnl.AddView(bb.mBase, 0, 0dip, pnl.Width, pnl.Height)
+		If xui.IsB4A Then bb.Base_Resize(pnl.Width, pnl.Height)
+		bb.Text = BBCodeItems.Get(i)
+	Next
+End Sub
+
+Sub GetBBCodeView As BBCodeView
+	For Each bb As BBCodeView In BBCodes
+		If bb.mBase.Parent.IsInitialized = False Then
+			Return bb
+		End If
+	Next
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 0, CLV1.AsView.Width, 50dip)
+	p.LoadLayout("BBCodeView")
+	Dim bb As BBCodeView = p.GetView(0).Tag
+	bb.TextEngine = TextEngine
+	bb.mBase.RemoveViewFromParent
+	Log("create new BBCode")
+	BBCodes.Add(bb)
+	Return bb
+End Sub
+
+Sub TableRow(Field1 As String, Field2 As String, Field3 As String) As String
+	Return $"[Span MinWidth=33%x Alignment=center]${Field1}[/Span][Span MinWidth=33%x Alignment=center]${Field2}[/Span][Span MinWidth=33%x Alignment=center]${Field3}[/Span]"$
+End Sub
+
+
+Sub BBCodeView1_LinkClicked (URL As String)
+	Log(URL)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

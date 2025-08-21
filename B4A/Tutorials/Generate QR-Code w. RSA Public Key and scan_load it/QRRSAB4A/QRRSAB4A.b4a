@@ -1,0 +1,216 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.camera
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=camera
+Library2=core
+Library3=reflection
+Library4=javaobject
+Library5=runtimepermissions
+Library6=xui
+Library7=stringutils
+Library8=encryption
+Library9=byteconverter
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~'************ Google Play Services Base ************~\n~AddApplicationText(~\n~   <activity android:name="com.google.android.gms.common.api.GoogleApiActivity"~\n~  android:theme="@android:style/Theme.Translucent.NoTitleBar"~\n~  android:exported="false"/>~\n~    <meta-data~\n~  android:name="com.google.android.gms.version"~\n~  android:value="@integer/google_play_services_version" />~\n~)~\n~'************ Google Play Services Base (end) ************~\n~AddApplicationText(<meta-data~\n~    android:name="com.google.android.gms.vision.DEPENDENCIES"~\n~    android:value="barcode,,face" />~\n~)~\n~
+Module1=CameraExClass
+Module2=Encryption
+Module3=Starter
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=3
+Version=9.8
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: False
+	#ApplicationLabel: QRCodeWithRSA
+	#VersionCode: 1
+	#VersionName: V1.0
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#AdditionalJar: com.google.android.gms:play-services-vision
+#BridgeLogger: true
+'Activity module
+Sub Process_Globals
+	Private frontCamera As Boolean = False
+	Private detector As JavaObject
+	Private SearchForBarcodes As Boolean
+	Private LastPreview As Long
+	Private IntervalBetweenPreviewsMs As Int = 100
+End Sub
+
+Sub Globals
+	Private Panel1 As Panel
+	Private camEx As CameraExClass
+	Private pnlDrawing As Panel
+	Private cvs As B4XCanvas
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	If FirstTime Then
+		CreateDetector (Array("QR_CODE"))
+	End If
+	cvs.Initialize(pnlDrawing)
+End Sub
+
+Private Sub CreateDetector (Codes As List)
+	Dim ctxt As JavaObject
+	ctxt.InitializeContext
+	Dim builder As JavaObject
+	builder.InitializeNewInstance("com/google/android/gms/vision/barcode/BarcodeDetector.Builder".Replace("/", "."), Array(ctxt))
+	Dim barcodeClass As String = "com/google/android/gms/vision/barcode/Barcode".Replace("/", ".")
+	Dim barcodeStatic As JavaObject
+	barcodeStatic.InitializeStatic(barcodeClass)
+	Dim format As Int
+	For Each formatName As String In Codes
+		format = Bit.Or(format, barcodeStatic.GetField(formatName))
+	Next
+	builder.RunMethod("setBarcodeFormats", Array(format))
+	detector = builder.RunMethod("build", Null)
+	Dim operational As Boolean = detector.RunMethod("isOperational", Null)
+	Log("Is detector operational: " & operational)
+	SearchForBarcodes = operational
+	
+End Sub
+
+Sub PubKeyRecognized (QRContent As String)
+	Dim PubKeyB64 As String =QRContent.Replace("PubKey:","") 'Remove the heading "PubKey:"
+	Encryption.LoadServerRSAPubKey(PubKeyB64)
+End Sub
+
+Sub Camera1_Preview (data() As Byte)
+	If SearchForBarcodes Then
+		If DateTime.Now > LastPreview + IntervalBetweenPreviewsMs Then
+			'Dim n As Long = DateTime.Now
+			cvs.ClearRect(cvs.TargetRect)
+			Dim frameBuilder As JavaObject
+			Dim bb As JavaObject
+			bb = bb.InitializeStatic("java.nio.ByteBuffer").RunMethod("wrap", Array(data))
+			frameBuilder.InitializeNewInstance("com/google/android/gms/vision/Frame.Builder".Replace("/", "."), Null)
+			Dim cs As CameraSize = camEx.GetPreviewSize
+			frameBuilder.RunMethod("setImageData", Array(bb, cs.Width, cs.Height,  842094169))
+			Dim frame As JavaObject = frameBuilder.RunMethod("build", Null)
+			Dim SparseArray As JavaObject = detector.RunMethod("detect", Array(frame))
+			LastPreview = DateTime.Now
+			Dim Matches As Int = SparseArray.RunMethod("size", Null)
+			For i = 0 To Matches - 1
+				Dim barcode As JavaObject = SparseArray.RunMethod("valueAt", Array(i))
+				Dim raw As String = barcode.GetField("rawValue")
+				Log(raw)
+				ToastMessageShow("Found: " & raw, True)
+				If raw.StartsWith("PubKey:") Then
+				PubKeyRecognized(raw)
+				 
+				   
+				End If
+				Dim points() As Object = barcode.GetField("cornerPoints")
+				Dim tl As JavaObject = points(0)
+'				Dim tr As JavaObject = points(1)
+				Dim br As JavaObject = points(2)
+'				Dim bl As JavaObject = points(3)
+				Dim r As B4XRect
+				
+				Dim size As CameraSize = camEx.GetPreviewSize
+				Dim xscale, yscale As Float
+				If camEx.PreviewOrientation Mod 180 = 0 Then
+					xscale = Panel1.Width / size.Width
+					yscale = Panel1.Height / size.Height
+					r.Initialize(tl.GetField("x"), tl.GetField("y"), br.GetField("x"), br.GetField("y"))
+				Else
+					xscale = Panel1.Width / size.Height
+					yscale = Panel1.Height / size.Width
+					r.Initialize(br.GetField("y"), br.GetField("x"), tl.GetField("y"),tl.GetField("x"))
+				End If
+				
+				Select camEx.PreviewOrientation
+					Case 180
+						r.Initialize(size.Width - r.Right, size.Height - r.Bottom, size.Width - r.Left, size.Height - r.Top)
+					Case 90
+						r.Initialize(size.Height - r.Right, r.Top, size.Height - r.Left, r.Bottom)
+				End Select
+				r.Left = r.Left * xscale
+				r.Right = r.Right * xscale
+				r.Top = r.Top * yscale
+				r.Bottom = r.Bottom * yscale
+				cvs.DrawRect(r, Colors.Red, False, 5dip)
+			Next
+			If Matches = 0 Then
+				cvs.ClearRect(cvs.TargetRect)
+			End If
+			cvs.Invalidate
+			
+			'Log(DateTime.Now - n)
+		End If
+	End If
+End Sub
+
+Sub PubKeyLoaded
+	'Do some stuff here
+	ToastMessageShow("PubKey loaded...", True)
+End Sub
+
+Sub Activity_Resume
+	InitializeCamera
+End Sub
+
+Private Sub InitializeCamera
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_CAMERA)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		camEx.Initialize(Panel1, frontCamera, Me, "Camera1")
+		frontCamera = camEx.Front
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If camEx.IsInitialized Then
+		camEx.Release
+	End If
+End Sub
+
+Sub Camera1_Ready (Success As Boolean)
+	If Success Then
+		camEx.SetJpegQuality(90)
+		camEx.SetContinuousAutoFocus
+		camEx.CommitParameters
+		camEx.StartPreview
+		
+	Else
+		ToastMessageShow("Cannot open camera.", True)
+	End If
+End Sub
+
+
+
+'Sub btnTakePicture_Click
+'	camEx.TakePicture
+'End Sub
+'
+'Sub btnFocus_Click
+'	camEx.FocusAndTakePicture
+'End Sub
+
+Sub Camera1_PictureTaken (Data() As Byte)
+'	Dim filename As String = "1.jpg"
+'	Dim dir As String = File.DirRootExternal
+'	
+'	camEx.SavePictureToFile(Data, dir, filename)
+'	camEx.StartPreview 'restart preview
+'	
+'	'send a broadcast intent to the media scanner to force it to scan the saved file.
+'	Dim Phone As Phone
+'	Dim i As Intent
+'	i.Initialize("android.intent.action.MEDIA_SCANNER_SCAN_FILE", _
+'		"file://" & File.Combine(dir, filename))
+'	Phone.SendBroadcastIntent(i)
+'	ToastMessageShow("Picture saved." & CRLF  & "File size: " & File.Size(dir, filename), True)
+End Sub
+
+Sub ChangeCamera_Click
+	camEx.Release
+	frontCamera = Not(frontCamera)
+	InitializeCamera
+End Sub
+

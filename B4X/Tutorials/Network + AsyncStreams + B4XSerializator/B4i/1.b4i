@@ -1,0 +1,198 @@
+﻿Version=4.01
+NumberOfModules=0
+Build1=Default,b4i.example2
+NumberOfFiles=1
+File1=1.bil
+NumberOfLibraries=5
+Library1=icore
+Library2=inetwork
+Library3=irandomaccessfile
+Library4=ihud
+Library5=iui8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private btnConnect As Button
+	Private btnSend As Button
+	Private edtAge As FloatLabeledTextField
+	Private edtIp As FloatLabeledTextField
+	Private edtName As FloatLabeledTextField
+	Private lblMyIp As Label
+	Private lblStatus As Label
+	Private pnlDrawing As Panel
+	Private connected As Boolean
+	Private client As Socket
+	Private server As ServerSocket
+	Private astream As AsyncStreams
+	Private const PORT As Int = 51042
+	Private working As Boolean = True
+	Private hd As HUD
+	Private ser As B4XSerializator
+	Type MyMessage (Name As String, Age As Int, Image() As Byte)
+	Private cvs As Canvas
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	cvs.Initialize(pnlDrawing)
+End Sub
+
+Private Sub Application_Active
+	'The ServerSocket can become invalid when the app is in the background
+	'so we need to create a new one.
+	ListenForConnections
+	UpdateState(connected)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	cvs.Release
+	cvs.Initialize(pnlDrawing)
+End Sub
+
+Sub pnlDrawing_Touch (Action As Int, X As Float, Y As Float)
+	cvs.DrawCircle(X, Y, 30dip, Rnd(0xFF000000, -1), True, 0)
+	cvs.Refresh	
+End Sub
+
+Private Sub ListenForConnections
+	If server.IsInitialized Then 
+		server.Close
+		Sleep(100)
+	End If
+	Dim server As ServerSocket
+	server.Initialize(PORT, "server")
+	Do While working
+		server.Listen
+		Wait For Server_NewConnection (Successful As Boolean, NewSocket As Socket)
+		If Successful Then
+			CloseExistingConnection
+			client = NewSocket
+			astream.InitializePrefix(client.InputStream, False, client.OutputStream, "astream")
+			UpdateState(True)
+		End If
+	Loop
+End Sub
+
+Private Sub ConnectToServer(Host As String)
+	Log("Trying to connect to: " & Host)
+	CloseExistingConnection
+	Dim client As Socket
+	client.Initialize("client")
+	client.Connect(Host, PORT, 10000)
+	Wait For Client_Connected (Successful As Boolean)
+	If Successful Then
+		astream.InitializePrefix(client.InputStream, False, client.OutputStream, "astream")
+		UpdateState (True)
+	Else
+		Log("Failed to connect: " & LastException)
+	End If
+End Sub
+
+Sub Disconnect
+	CloseExistingConnection
+End Sub
+
+Sub CloseExistingConnection
+	If astream.IsInitialized Then astream.Close
+	If client.IsInitialized Then client.Close
+	UpdateState (False)
+End Sub
+
+Sub UpdateState (NewState As Boolean)
+	connected = NewState
+	btnSend.Enabled = connected
+	If connected Then
+		btnConnect.Text = "Disconnect"
+		lblStatus.Text = "Connected"
+	Else
+		btnConnect.Text = "Connect"
+		lblStatus.Text = "Disconnected"
+	End If
+	lblMyIp.Text = "My ip: " & server.GetMyWifiIP
+End Sub
+
+
+Sub btnSend_Click
+	Dim mm As MyMessage
+	mm.Initialize
+	mm.Age = edtAge.Text
+	mm.Name = edtName.Text
+	'convert the bitmap to bytes
+	Dim out As OutputStream
+	out.InitializeToBytesArray(0)
+	cvs.CreateBitmap.WriteToStream(out, 100, "PNG")
+	out.Close
+	mm.Image = out.ToBytesArray
+	SendData(ser.ConvertObjectToBytes(mm))
+End Sub
+
+Sub btnConnect_Click
+	If connected = False Then
+		If edtIp.Text.Length = 0 Then
+			hd.ToastMessageShow("Please enter the server ip address.", True)
+			Return
+		Else
+			ConnectToServer(edtIp.Text)
+		End If
+	Else
+		Disconnect
+	End If
+	Page1.ResignFocus
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+	Dim mm As MyMessage = ser.ConvertBytesToObject(Buffer)
+	edtAge.Text = mm.Age
+	edtName.Text = mm.Name
+	'convert the array of bytes to image
+	Dim in As InputStream
+	in.InitializeFromBytesArray(mm.Image, 0, mm.Image.Length)
+	Dim bmp As Bitmap
+	bmp.Initialize2(in)
+	'draw the image
+	Dim dest As Rect
+	dest.Initialize(0, 0, pnlDrawing.Width, pnlDrawing.Height)
+	cvs.DrawBitmap(bmp, dest)
+	cvs.Refresh
+End Sub
+
+Sub AStream_Error
+	UpdateState(False)
+End Sub
+
+Sub AStream_Terminated
+	UpdateState(False)
+End Sub
+
+Sub SendData (data() As Byte)
+	If connected Then astream.Write(data)
+End Sub
+
+
+
+
+Private Sub Application_Background
+	
+End Sub
+

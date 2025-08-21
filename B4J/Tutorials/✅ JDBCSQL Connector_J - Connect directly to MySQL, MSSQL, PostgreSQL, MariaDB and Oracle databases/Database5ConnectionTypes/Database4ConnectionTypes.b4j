@@ -1,0 +1,134 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jsql
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=7.51
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes
+    #CommandLineArgs:
+    #MergeLibraries: True
+
+    'MySQL Connector/J Driver
+    #AdditionalJar: mysql-connector-java-5.1.47-bin.jar
+
+    'MSSQL Connector/J Driver
+    #AdditionalJar: jtds-1.3.1.jar
+
+    'PostgreSQL Connector/J Driver
+    #AdditionalJar: postgresql-42.2.6.jar
+    
+    'MariaDB Connector/J Driver
+    #AdditionalJar: mariadb-java-client-2.4.2.jar
+	
+	'Oracle Driver
+	#AdditionalJar: ojdbc8.jar
+#End Region
+
+Sub Process_Globals
+	Private SQL As SQL
+
+#Region Database Location
+	Private DBLocation As String = "DBLocation" 'Can use IP address or domain name
+	Private DBUsername As String = "DBUsername"
+	Private DBPassword As String = "DBPassword"
+#End Region
+End Sub
+
+Sub AppStart (Args() As String)
+	LogError("---------- NorthWind Database (MySQL) ----------")
+	SQL.InitializeAsync("MySQL", "com.mysql.jdbc.Driver", $"jdbc:mysql://${DBLocation}/register_Northwind_MySQL?useSSL=false"$, DBUsername, DBPassword)
+	SQL.Close
+	StartMessageLoop 'only required in a console app
+
+	LogError("---------- NorthWind Database (MSSQL) ----------")
+	SQL.InitializeAsync("MSSQL","net.sourceforge.jtds.jdbc.Driver", $"jdbc:jtds:sqlserver://${DBLocation}/register_Northwind"$, DBUsername, DBPassword)
+	SQL.Close
+	StartMessageLoop 'only required in a console app
+
+	LogError("---------- NorthWind Database (PostgreSQL) ----------")
+	SQL.InitializeAsync("PostgreSQL", "org.postgresql.Driver", $"jdbc:postgresql://${DBLocation}:5432/northwind"$, DBUsername, DBPassword)
+	SQL.Close
+	StartMessageLoop 'only required in a console app
+
+	LogError("---------- NorthWind Database (MariaDB) ----------")
+	SQL.InitializeAsync("MariaDB", "org.mariadb.jdbc.Driver", $"jdbc:mariadb://${DBLocation}:3306/register_Northwind_MySQL"$, DBUsername, DBPassword)
+	SQL.Close
+	StartMessageLoop 'only required in a console app
+	
+	LogError("---------- XE Database (Oracle) ----------")
+	SQL.InitializeAsync("Oracle", "oracle.jdbc.driver.OracleDriver", $"jdbc:oracle:thin:@${DBLocation}:1521:xe"$, DBUsername, DBPassword)
+	SQL.Close
+	StartMessageLoop 'only required in a console app
+    
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+'Connected to MySQL Server
+Sub MySQL_Ready (Success As Boolean)
+	If Success Then
+		Dim RS As ResultSet = SQL.ExecQuery("SHOW TABLES")
+		Do While RS.NextRow
+			Log(RS.GetString2(0))
+		Loop
+		RS.Close
+	End If
+	StopMessageLoop 'only required in a console app
+End Sub
+
+'Connected to MS SQL Server
+Sub MSSQL_Ready (Success As Boolean)
+	If Success Then
+		Dim RS As ResultSet = SQL.ExecQuery("SELECT * FROM SYS.TABLES")
+		Do While RS.NextRow
+			Log(RS.GetString2(0))
+		Loop
+		RS.Close
+	End If
+	StopMessageLoop 'only required in a console app
+End Sub
+
+'Connected to PostgreSQL Server
+Sub PostgreSQL_Ready (Success As Boolean)
+	If Success Then
+		Dim RS As ResultSet = SQL.ExecQuery("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+		Do While RS.NextRow
+			Log(RS.GetString2(0))
+		Loop
+		RS.Close
+	End If
+	StopMessageLoop 'only required in a console app
+End Sub
+
+'Connected to MariaDB SQL Server
+Sub MariaDB_Ready (Success As Boolean)
+	If Success Then
+		Dim RS As ResultSet = SQL.ExecQuery("SHOW TABLES")
+		Do While RS.NextRow
+			Log(RS.GetString2(0))
+		Loop
+		RS.Close
+	End If
+	StopMessageLoop 'only required in a console app
+End Sub
+
+'Connected to Oracle SQL Server
+Sub Oracle_Ready (Success As Boolean)
+	If Success Then
+		Dim RS As ResultSet = SQL.ExecQuery("SELECT table_name FROM user_tables ")
+		Do While RS.NextRow
+			Log(RS.GetString2(0))
+		Loop
+		RS.Close
+	End If
+	StopMessageLoop 'only required in a console app
+End Sub

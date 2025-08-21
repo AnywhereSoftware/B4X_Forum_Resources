@@ -1,0 +1,107 @@
+﻿Build1=Default,com.example.popup
+File1=1.bil
+File2=customview.bil
+File3=img1.jpg
+File4=popupvideo.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=icore
+Library2=iui8
+Library3=ipopupdialog
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=5.81
+@EndOfDesignText@
+'Code module
+
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: false
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private button1 As Button
+	Private Button2 As Button
+	Private Button3 As Button
+	Private Button4 As Button
+	Private Button5 As Button
+	Dim xpd As iPopupDialog
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	xpd.Resize
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub button1_Click
+	xpd.Initialize("xpd",Me,"Title Here","Lorem ipsum dolor sit amet", Array("OK","CANCEL"),True)
+	xpd.PopupVideo = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+	xpd.Show(xpd.STYLE_DARK)
+	Wait For xpd_Result(button As String)
+	Log(button)
+End Sub
+
+Sub Button2_Click
+	xpd.Initialize("xpd",Me,"Title Here","Lorem ipsum dolor sit amet", Array("OK","CANCEL"),True)
+	xpd.PopupImage = LoadBitmap(File.DirAssets,"img1.jpg")
+	xpd.Show(xpd.STYLE_DARK)
+	Wait For xpd_Result(button As String)
+	Log(button)
+End Sub
+
+Sub Button3_Click
+	xpd.Initialize("xpd",Me,"Title Here","Lorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit ametLorem ipsum dolor sit amet", Array("OK","CANCEL"),True).Show(xpd.STYLE_DARK)
+	Wait For xpd_Result(button As String)
+	Log(button)
+End Sub
+
+Sub Button4_Click
+	xpd.Initialize("xpd",Me,"Title Here","Lorem ipsum dolor sit amet", Array("OK","CANCEL","MAY BE LATER"),True).Show(xpd.STYLE_DARK)
+	Wait For xpd_Result(button As String)
+	Log(button)
+End Sub
+
+Sub Button5_Click
+	xpd.Initialize("xpd",Me,"Title Here","Lorem ipsum dolor sit amet", Array("OK","CANCEL"),True)
+	
+	Dim p As Panel
+	p.Initialize("")
+	p.SetLayoutAnimated(0,1,0,0,xpd.PopupWidth,150dip)
+	p.LoadLayout("customview")
+	xpd.CustomView = p
+	
+	xpd.Show(xpd.STYLE_DARK)
+	Wait For xpd_Result(button As String)
+	Log(button)
+End Sub
+
+Sub Page1_KeyboardStateChanged (Height As Float)
+	xpd.UpdatePostion(Height)
+End Sub

@@ -1,0 +1,425 @@
+### Reading Date, Time, and Temperature from a DS3231 RTC module (I2C) using any 2 digital configured pins from an Arduino by Johan Schoeman
+### 01/23/2020
+[B4X Forum - B4R - Tutorials](https://www.b4x.com/android/forum/threads/113172/)
+
+Cracked it - can connect the DS3231 to any 2 digital pins of my Nano and read the date, time, and temperature by making use of the B4A core library only. All control of the SDA (data) and SCL (clock) lines are hard coded. So, don't have to connect it to the traditional I2C pins and don't have to use a DS3231 or the Wire library.  
+  
+By no means perfect and no error checking incorporated - just wanted to see if I could "hard code" a read from the DS3231 by making use of any 2 digital configured pins. In the attached sample I am using pins 10 (data) and 11 (clock) of my Nano to communicate with the DS3231 RTC module (I2C is traditionally pins A4 and A5 on the Nano)  
+  
+It was a bit tricky to figure it out - especially reading from the DS3231 as it involves a start, a write, then a repeated start, a write, and then a read process.  
+  
+Along [**with this project**](https://www.b4x.com/android/forum/threads/setting-date-and-time-of-a-ds3231-rtc-module-i2c-using-any-2-digital-configured-pins-from-and-arduino.113151/) (combining them) one should be able to set time and date of the DS3231 and then also read time, date, and temperature from the DS3231 using any 2 digital pins.  
+  
+  
+![](https://www.b4x.com/android/forum/attachments/87630)  
+
+```B4X
+#Region Project Attributes  
+    #AutoFlushLogs: True  
+    #CheckArrayBounds: True  
+    #StackBufferSize: 300  
+#End Region  
+  
+Sub Process_Globals  
+    'These global variables will be declared once when the application starts.  
+    'Public variables can be accessed from all modules.  
+    Public Serial1 As Serial  
+    Dim pclk, pdat As Pin  
+    'comment out the below two lines and un-comment the following two line to use for eg pins 10 (data) and 11 (clock)  
+'    Dim pdatNo As Byte = pdat.A4                  'pin A4 on the Nano is the default pin for the I2C data line  
+'    Dim pclkNo As Byte = pclk.A5                  'pin A5 on the Nano is the default pin for the I2C clock line  
+    
+    Dim pdatNo As Byte = 10                       'with the code below any digital pin can be used as the data pin - the I2C comms is hard coded and not tied to a specific pin  
+    Dim pclkNo As Byte = 11                       'with the code below any digital pin can be used as the clock pin - the I2C comms is hard coded and not tied to a specific pin  
+  
+    Dim weekday()As String = Array As String("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")  
+    Dim t As Timer  
+    
+End Sub  
+  
+Private Sub AppStart  
+    Serial1.Initialize(115200)  
+    Log("AppStart")  
+    t.Initialize("t_tick", 1000)  
+    
+    pclk.Initialize(pclkNo, pclk.MODE_OUTPUT)  
+    pdat.Initialize(pdatNo, pdat.MODE_OUTPUT)  
+    
+    pclk.DigitalWrite(True)                          'put both lines in idle mode (i.e both lines high)  
+    pdat.DigitalWrite(True)  
+    Delay(100)                                       'give the lines some time to settle to the new states  
+    
+    Delay(100)  
+  
+    t.Enabled = True  
+    
+End Sub  
+  
+  
+Sub t_tick  
+    
+    Dim myminutes As Byte = 0  
+    myminutes = GetMinutes               'get the minutes - 0…..59  
+    
+    Dim myhours As Byte = 0  
+    myhours = GetHours                   'get the hours - 0…..23  
+  
+        
+    Dim myseconds As Byte = 0  
+    myseconds = GetSeconds               'get the seconds - 0…..59  
+    
+    Dim myyear As Byte = 0               'get the year - 0…..99  
+    myyear = GetYear  
+    
+    Dim mymonth As Byte = 0              'get the month - 1….12  
+    mymonth = GetMonth  
+    
+    Dim myday As Byte = 0                'get the day of the month - 1…..31  
+    myday = GetDay  
+    
+    Dim mydow As Byte = 0                'get the day of the week - 1….7 (see array weekday() above)  
+    mydow = GetDayOfWeek  
+    
+    Dim mytemperatureInt As Byte = 0     'get the integer part of the temperature - degrees C  
+    mytemperatureInt = GetTemperatureInt  
+    
+    Dim mytemperatureFrac As Byte = 0     'get the fraction part of the temperature - degrees C (resulotion is 0.25 degrees C)  
+    mytemperatureFrac = GetTemperatureFrac  
+  
+    Dim finaltemperature As Float = mytemperatureInt + (mytemperatureFrac/100)  
+    Log("Time = ", NumberFormat(myhours, 2,0), ":", _  
+                   NumberFormat(myminutes, 2,0), ":", _  
+                   NumberFormat(myseconds, 2,0), "  ", _  
+                   NumberFormat(myyear, 2,0), "/", _  
+                   NumberFormat(mymonth, 2,0), "/", _  
+                   NumberFormat(myday, 2,0), " ", weekday(mydow-1), " Temperature = ", _  
+                   NumberFormat(finaltemperature, 2,2), " degrees C")  
+    
+    
+    
+End Sub  
+  
+  
+Sub GetMinutes() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x01                         'address of the register that holds the MINUTES data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the MINUTES (0….59)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetHours() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x02                         'address of the register that holds the HOURS data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the HOURS (0….23)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetSeconds() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x00                         'address of the register that holds the SECONDS data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the SECONDS (0….59)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetYear() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x06                         'address of the register that holds the YEAR data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the YEAR (0….99)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetMonth() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x05                         'address of the register that holds the MONTH data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the MONTH (1….12)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetDay() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x04                         'address of the register that holds the DAY OF MONTH data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the DAY OF MONTH (1….7)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetDayOfWeek() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x03                         'address of the register that holds the DAY OF WEEK data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the DAY OF WEEK (0….59)  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetTemperatureInt() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x11                         'address of the register that holds the INTEGER OF TEMPERATURE data in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the INTEGER OF TEMPERATURE  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    Dim min10, min1 As Byte = 0  
+    min10 = Bit.And(myvalue, 0xf0)  
+    min10 = Bit.ShiftRight(min10, 4)  
+    min10 = min10 * 10  
+    min1 = Bit.And(myvalue, 0x0f)  
+    myvalue = min10 + min1  
+    Return myvalue  
+    
+End Sub  
+  
+Sub GetTemperatureFrac() As Byte  
+    
+    setStartCondition                                   'create a START condition for the DS3231 - the data line needs to go from high to low while the clock is high  
+    clockInDS3231Address(0xD0)                          'send the DS3231 I2C address out on the I2C bus  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after address has been sent on the bus  
+    Dim register As Byte = 0x12                         'address of the register that holds the FRACTION of the TEMPERATURE in the DS3231  
+    selectRegister(register)                            'tell the DS3231 we want to work with the register that holds the FRACTION OF THE TEMPERATURE  
+    checkAckFromDS3231                                  'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStartCondition                                   'we need to set a new start condition in order to read the register that we have written to above  
+    clockInDS3231Address(0xD1)  
+    checkAckFromDS3231  
+    Dim myvalue As Byte = getValue                      'check if the DS3231 is sending back and ACK after 8 bits have been sent to it  
+    setStopCondition                                    'generate STOP condition for the DS3231  
+    myvalue = Bit.ShiftRight(myvalue,6)  
+    If myvalue = 0 Then  
+        myvalue = 0  
+    else if myvalue = 1 Then  
+        myvalue = 25  
+    else if myvalue = 2 Then  
+        myvalue = 50  
+    else if myvalue = 3 Then  
+        myvalue = 75           
+    End If  
+    Return myvalue  
+    
+End Sub  
+  
+  
+  
+  
+Sub getValue() As Byte  
+    
+    Dim myvalue As Byte = 0  
+    pdat.Initialize(pdatNo, pdat.MODE_INPUT)           'check for the ACK coming from the DS3231 - the line should be pulled low by the DS3231  
+    DelayMicroseconds(2)  
+    
+    For i = 0 To 7  
+        pclk.DigitalWrite(True)  
+        DelayMicroseconds(2)  
+        Dim  pinstate As Boolean = pdat.DigitalRead  
+        If pinstate = True Then  
+            myvalue = Bit.Or(myvalue, 1)  
+        Else  
+            myvalue = Bit.Or(myvalue, 0)  
+        End If  
+        If i < 7 Then  
+            myvalue = Bit.ShiftLeft(myvalue,1)  
+        End If   
+'        Log("data = ", pdat.DigitalRead)  
+        pclk.DigitalWrite(False)  
+        DelayMicroseconds(2)  
+    Next  
+'    Log("myvalue = ", myvalue)  
+    pdat.Initialize(pdatNo, pdat.MODE_OUTPUT)          'We need to send a NACK (i.e not acknowledge)  
+    pdat.DigitalWrite(True)                            'take the data line high  
+    pclk.DigitalWrite(True)                            'take the clock high  
+    DelayMicroseconds(2)  
+    pclk.DigitalWrite(False)                           'take the clock low                 
+    Return myvalue  
+    
+End Sub  
+  
+Sub selectRegister(register As Byte)  
+    
+    For i = 0 To 7  
+        If Bit.And(register, 128) = 128 Then  
+            pdat.DigitalWrite(True)  
+        Else  
+            pdat.DigitalWrite(False)  
+        End If  
+        DelayMicroseconds(2)  
+        pclk.DigitalWrite(True)  
+        DelayMicroseconds(2)  
+        pclk.DigitalWrite(False)  
+        DelayMicroseconds(2)  
+        register = Bit.ShiftLeft(register, 1)  
+    Next  
+    
+End Sub  
+  
+Sub setStopCondition  
+    
+    pdat.DigitalWrite(False)            'generate a stop condition - the data line must go from low to high while the clock is high  
+    DelayMicroseconds(2)  
+    pclk.DigitalWrite(True)  
+    DelayMicroseconds(2)  
+    pdat.DigitalWrite(True)  
+    DelayMicroseconds(2)  
+    
+End Sub  
+  
+Sub setStartCondition  
+  
+    pdat.DigitalWrite(True)            'set a start condition i.e the data line must go from high to low while the clock is high  
+    DelayMicroseconds(2)  
+    pclk.DigitalWrite(True)           
+    DelayMicroseconds(2)  
+    pdat.DigitalWrite(False)  
+    DelayMicroseconds(2)  
+    pclk.DigitalWrite(False)  
+    DelayMicroseconds(2)  
+    
+    
+    
+End Sub  
+  
+Sub clockInDS3231Address(address As Byte)  
+    
+'    Dim address As Byte = 0xD0               'address  (7 bits) plus 8th bit added as LSB to indicate to the DS3231 that we want to write to it (address is 0x68 left shift 1 = 0xD0 to incliude the WRITE bit)  
+    For i = 0 To 7  
+        If Bit.And(address, 128) = 128 Then  'is the bit a 1?  
+            pdat.DigitalWrite(True)  
+        Else  
+            pdat.DigitalWrite(False)  
+        End If  
+        DelayMicroseconds(2)  
+        pclk.DigitalWrite(True)  
+        DelayMicroseconds(2)  
+        pclk.DigitalWrite(False)  
+        DelayMicroseconds(2)  
+        address = Bit.ShiftLeft(address, 1)   'shift the address byte 1 bit to the left for the next Bit.And operation  
+    Next  
+    
+End Sub  
+  
+Sub checkAckFromDS3231  
+    
+    pdat.Initialize(pdatNo, pdat.MODE_INPUT)           'check for the ACK coming from the DS3231 - the line should be pulled low by the DS3231  
+    DelayMicroseconds(2)  
+    pclk.DigitalWrite(True)                            'we need to generate a 9th clock for every byte to read the ACK from the DS3231 - take the clock high  
+    DelayMicroseconds(2)  
+'    Log("pdat mode 1 = ", pdat.DigitalRead)            'check id the DS3231 has pulled the data line low  
+    pclk.DigitalWrite(False)                           'take the clock low  
+    
+    pdat.Initialize(pdatNo, pdat.MODE_OUTPUT)          'put the data pin back into output mode  
+    pdat.DigitalWrite(True)                            'take the data line back to high i.e normal idle mode  
+    
+End Sub
+```

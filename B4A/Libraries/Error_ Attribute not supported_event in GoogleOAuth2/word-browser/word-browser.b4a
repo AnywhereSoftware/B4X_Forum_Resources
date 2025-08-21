@@ -1,0 +1,76 @@
+﻿Build1=Default,word.browser
+File1=Search_Word.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=jsoup
+Library3=sql
+Library4=randomaccessfile
+Library5=phone
+Library6=okhttputils2
+Library7=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~'Below code- AddActivityText- has been copied from the tutorial by Erel: https://www.b4x.com/android/forum/threads/class-b4x-google-oauth2.79426/#content~\n~AddActivityText(Main,~\n~  <intent-filter>~\n~  <action android:name="android.intent.action.VIEW" />~\n~  <category android:name="android.intent.category.DEFAULT" />~\n~  <category android:name="android.intent.category.BROWSABLE" />~\n~  <data android:scheme="$PACKAGE$" />~\n~  </intent-filter>~\n~   )
+Module1=Connection
+Module2=DBUtils
+Module3=GoogleDrive
+Module4=GoogleOAuth2
+Module5=Revise
+Module6=Starter
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=6
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: WORDIE
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private ClientId As String = "261715411818-vddoitmeqkdogjpbmrq8qkgude2hqdr4.apps.googleusercontent.com"
+	Private oauth2 As GoogleOAuth2
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim js As jSoup
+	
+	Private etSearch As EditText
+	Private lblResult As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	
+	If FirstTime Then
+		oauth2.Authenticate
+		GoogleDrive.Initialize 'Hopefully to initialize with the google drive so later the database file can be accesed.
+		'oauth2.ResetToken 'uncomment if you changed the scope or want to reset the token
+	End If
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

@@ -1,0 +1,75 @@
+﻿Build1=Default,b4i.example.ForegroundNotification
+File1=1.png
+File2=Logo.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=xui views
+Library3=iphone
+Module1=Page2
+Module2=ForegroundNotifications
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=2
+Version=6
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: ForegroundNotification Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Dim fn As ForegroundNotifications
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	fn.Initialize(Me, "fn")
+	
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	
+	Dim btn As Button
+	btn.Initialize("btn", btn.STYLE_SYSTEM)
+	btn.Text = "Foreground Notification"
+	Page1.RootPanel.AddView(btn, 0, 0, 100%x, 40dip)
+	
+	NavControl.ShowPage(Page1)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Sub btn_Click
+	fn.ShowNotification(Page1.RootPanel, "Marco", "Text Message 1", "Logo.png", 70dip, 0xEB3A3A3A, Colors.White, 3000, True)
+	fn.ShowNotification(Page1.RootPanel, "Marco", "Text Message 2", "1.png", 70dip, 0xEB3A3A3A, Colors.White, 3000, True)
+	fn.ShowNotification(Page1.RootPanel, "Luca", "Text Message 3", "", 70dip, 0xEB3A3A3A, Colors.White, 3000, False)
+	fn.ShowNotification(Page1.RootPanel, "Ferdinando", "Text Message 4", "Logo.png", 70dip, Colors.Blue, Colors.Red, 3000, True)
+End Sub
+
+Sub fn_OnClick(Data() As String, ID As Int)
+	'Data(0) Notification Title
+	'Data(1) Notification Message
+	
+	Log($"You Clicked the notification by ${Data(0)} saying: ${Data(1)}, with ID: ${ID}"$)
+End Sub

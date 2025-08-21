@@ -1,0 +1,193 @@
+﻿Build1=Default,anywheresoftware.b4i.xalassets
+File1=test_photo.jpg
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Module1=XALAssets
+NumberOfFiles=1
+NumberOfLibraries=1
+NumberOfModules=1
+Version=5.3
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: XALAssets
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#MinVersion: 8
+	#PlistExtra:<key>NSPhotoLibraryUsageDescription</key><string>Need to access photo library.</string>
+#End Region
+
+Sub Process_Globals
+
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1  As Page
+
+	Private MyALAssets As XALAssets
+	
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+
+	NavControl = Nav
+
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	
+	NavControl.ShowPage(Page1)
+	
+	MyALAssets.Initialize(Me,"MyALAssets")
+
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	'You will have to change the following album name each time you launch this
+	'app to get it to fully function
+
+	'Supply a suitable name here, note this codes inability to recreate an album 
+	'with a name that has been previously created and deleted
+	Private test_album_name As String = "Test001"
+	
+	Private wrk_URL As String
+	
+	'Create album
+	MyALAssets.CreateAlbum(test_album_name)
+	
+	Wait For MyALAssets_CreateAlbum_Result(Status As Int)
+	Log("MyALAssets_CreateAlbum_Result: " & Status)
+	
+	'If album created...
+	If Status = 0 Then
+		
+		'Handle of new album should be in MyALAssets.Returned_album_handle
+		Log("New album handle: " & MyALAssets.Returned_album_handle)
+
+		'Create bitmap and load test_photo.jpg from DirAssets
+		Private wrk_bmp As Bitmap
+		wrk_bmp.Initialize(File.DirAssets, "test_photo.jpg")
+
+		'Save it in new album
+		MyALAssets.SaveBitmap(MyALAssets.Returned_album_handle, wrk_bmp)
+		
+		Wait For MyALAssets_SaveBitmap_Result(Status As Int)
+		Log("MyALAssets_SaveBitmap_Result: " & Status)
+
+		'If bitmap saved...
+		If Status = 0 Then
+		
+			'Handle of new photo should be in MyALAssets.Returned_photo_handle
+			Log("New photo handle: " & MyALAssets.Returned_photo_handle)
+
+'			wrk_URL = MyALAssets.GetPhotoURL(MyALAssets.Returned_photo_handle)  'URLs can be saved using B4i file system
+			wrk_URL = MyALAssets.GetPhotoVideoURL(MyALAssets.Returned_photo_handle)  'URLs can be saved using B4i file system
+			Log("New photo URL: " & wrk_URL)
+			
+			'Rebuild new photo handle from URL
+'			MyALAssets.GetPhotoFromURL(wrk_URL)
+			MyALAssets.GetPhotoVideoFromURL(wrk_URL)
+			
+'			Wait For MyALAssets_GetPhotoFromURL_Result(Status As Int)
+			Wait For MyALAssets_GetPhotoVideoFromURL_Result(Status As Int)
+'			Log("MyALAssets_GetAlbumFromURL_Result: " & Status)
+			Log("MyALAssets_GetPhotoVideoFromURL_Result: " & Status)
+			
+			'If new photo handle rebuilt...
+			If Status = 0 Then
+		
+				Log("Rebuilt new photo handle: " & MyALAssets.Returned_photo_handle)
+				
+				'Get fullsize bitmap of saved photo
+				wrk_bmp = MyALAssets.GetBitmap(MyALAssets.Returned_photo_handle)
+				
+				'Create ImageView for fullsize bitmap of saved photo
+				Private wrk_photo As ImageView
+				wrk_photo.Initialize("")
+				Page1.RootPanel.AddView(wrk_photo, 0, 0, wrk_bmp.Width, wrk_bmp.Height)
+				
+				'Pour fullsize bitmap into ImageView
+				wrk_photo.Bitmap = wrk_bmp
+
+				'Thumbnail stuff removed
+'				
+'				'Get thumbnail of new saved photo
+'				wrk_bmp = MyALAssets.GetThumb(MyALAssets.Returned_photo_handle)
+'				
+'				'Create ImageView for thumb of saved photo
+'				Private wrk_thumb As ImageView
+'				wrk_thumb.Initialize("")
+'				Page1.RootPanel.AddView(wrk_thumb, 0, 0, wrk_bmp.Width, wrk_bmp.Height)
+'				
+'				'Pour thumb bitmap into ImageView
+'				wrk_thumb.Bitmap = wrk_bmp
+
+			End If
+			
+		End If
+
+	End If
+	
+	'Get all albums in photo library
+	MyALAssets.GetAlbums
+	
+	Wait For MyALAssets_GetAlbums_Result(Status As Int)
+	Log("MyALAssets_GetAlbums_Result: " & Status)
+
+	'If got all albums in photo library...
+	If Status = 0 Then
+			
+		'Handles of all albums should be in MyALAssets.Album_handle_list
+		
+		Private wrk_album_handle As Object
+		
+'		For i = 0 To MyALAssets.Album_handle_list.Size - 1
+		For i = 0 To MyALAssets.Returned_album_handle_list.Size - 1
+			
+'			wrk_album_handle = MyALAssets.Album_handle_list.Get(i)
+			wrk_album_handle = MyALAssets.Returned_album_handle_list.Get(i)
+			
+			Log("Album " & i)
+			
+			Log("....Handle: " & wrk_album_handle)
+			
+			Log("....Name: " & MyALAssets.GetAlbumName(wrk_album_handle))
+			
+'			Log("....#Photos: " & MyALAssets.GetAlbumPhotoCount(wrk_album_handle))
+			Log("....#Photos/videos: " & MyALAssets.GetAlbumPhotoVideoCount(wrk_album_handle))
+			
+'			'Get all photos in album
+'			MyALAssets.GetPhotos(wrk_album_handle)
+			'Get all photos/videos in album
+			MyALAssets.GetPhotoVideos(wrk_album_handle)
+				
+'			Wait For MyALAssets_GetPhotos_Result(Status As Int)
+			Wait For MyALAssets_GetPhotoVideos_Result(Status As Int)
+'			Log("....MyALAssets_GetPhotos_Result: " & Status)
+			Log("....MyALAssets_GetPhotoVideos_Result: " & Status)
+
+'			'If got all photos in album
+			'If got all photos/videos in album
+			If Status = 0 Then
+
+'				For j = 0 To MyALAssets.Photo_handle_list.Size - 1
+				For j = 0 To MyALAssets.Returned_photovideo_handle_list.Size - 1
+					
+'					Log("........Photo#: " & j)
+					Log("........Photo/video#: " & j)
+					
+'					Log("........Handle: " & MyALAssets.Photo_handle_list.Get(j))
+					Log("........Handle: " & MyALAssets.Returned_photovideo_handle_list.Get(j))
+					
+				Next
+
+			End If
+			
+		Next	
+
+	End If	
+	
+End Sub
+

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	package="de.donmanfred.admtest"
+	android:versionCode="1"
+	android:versionName=""
+	android:installLocation="internalOnly"
+	xmlns:amazon="http://schemas.amazon.com/apk/res/android">
+	
+	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="28"/>
+	<supports-screens android:largeScreens="true" 
+	    android:normalScreens="true" 
+	    android:smallScreens="true" 
+	    android:anyDensity="true"/>
+	<permission android:name="de.donmanfred.admtest.permission.RECEIVE_ADM_MESSAGE" android:protectionLevel="signature" />
+	<uses-permission android:name="de.donmanfred.admtest.permission.RECEIVE_ADM_MESSAGE" />
+	<uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	<application
+		android:icon="@drawable/icon"
+		android:label="B4A Example"
+		android:theme="@style/DarkTheme">
+		
+		<activity android:name="com.google.android.gms.common.api.GoogleApiActivity"
+		  android:theme="@android:style/Theme.Translucent.NoTitleBar"
+		  android:exported="false"/>
+		    <meta-data
+		  android:name="com.google.android.gms.version"
+		  android:value="@integer/google_play_services_version" />
+		<amazon:enable-feature android:name="com.amazon.device.messaging" android:required="true"/>
+		<service
+		  android:name="anywheresoftware.b4a.objects.AmazonNotificationsService"
+		  android:permission="android.permission.BIND_JOB_SERVICE"
+		  android:exported="false" />
+		<receiver
+		     android:name="de.donmanfred.admtest.amazonmessaging$amazonmessaging_BR"
+		     android:permission="com.amazon.device.messaging.permission.SEND" >
+		     <intent-filter>
+		        <action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
+		        <action android:name="com.amazon.device.messaging.intent.RECEIVE" />
+		        <category android:name="de.donmanfred.admtest" />
+		     </intent-filter>
+		     <category android:name="de.donmanfred.admtest" />
+		</receiver>
+		<activity
+			android:windowSoftInputMode="stateHidden"
+			android:launchMode="singleTop"
+			android:name=".main"
+			android:label="B4A Example"
+			android:screenOrientation="unspecified">
+			<intent-filter>
+			   <action android:name="android.intent.action.MAIN" />
+			   <category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			
+		</activity>
+		<service android:name=".starter">
+		</service>
+		<receiver android:name=".starter$starter_BR">
+		</receiver>
+		<service android:name=".amazonmessaging">
+		</service>
+		<receiver android:name=".amazonmessaging$amazonmessaging_BR">
+		</receiver>
+		<service android:name=".httputils2service">
+		</service>
+		<receiver android:name=".httputils2service$httputils2service_BR">
+		</receiver>
+	</application>
+</manifest>

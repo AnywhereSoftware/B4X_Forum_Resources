@@ -1,0 +1,824 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4a.objects.WebSocketWrapper</name>
+        <shortname>WebSocket</shortname>
+        <comment>Implementation of a WebSocket client.</comment>
+        <owner>process</owner>
+        <event>Connected</event>
+        <event>Closed (Reason As String)</event>
+        <event>TextMessage (Message As String)</event>
+        <event>BinaryMessage (Data() As Byte)</event>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>SendText</name>
+            <comment>Sends a text message.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetCustomSSLTrustManager</name>
+            <comment>Sets a custom SSL socket factory (custom factory is available in the Net library).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>TrustManager</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SendBinary</name>
+            <comment>Sends a binary message.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Connect</name>
+            <comment>Tries to connect to the given Url. The Url should start with ws:// or wss://.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Url</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Closes the connection.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the object and sets the subs that will handle the events.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Connected</name>
+            <returntype>boolean</returntype>
+            <comment>Checks whether the connection is open.</comment>
+        </property>
+        <field>
+            <name>Headers</name>
+            <comment></comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketWriter</name>
+        <comment>WebSocket writer, the sending leg of a WebSockets connection.
+ This is run on it's background thread with it's own message loop.
+ The only method that needs to be called (from foreground thread) is forward(),
+ which is used to forward a WebSockets message to this object (running on
+ background thread) so that it can be formatted and sent out on the
+ underlying TCP socket.</comment>
+        <owner>process</owner>
+        <method>
+            <name>sendEmptyMessageAtTime</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>forward</name>
+            <comment>Call this from the foreground (UI) thread to make the writer
+ (running on background thread) send a WebSocket message on the
+ underlying TCP.
+message: Message to send to WebSockets writer. An instance of the message
+                classes inside WebSocketMessage or another type which then needs
+                to be handled within processAppMessage() (in a class derived from
+                this class).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>message</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>handleMessage</name>
+            <comment>Process message received from foreground thread. This is called from
+ the message looper set up for the background thread running this writer.
+msg: Message from thread message queue.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>msg</name>
+                <type>android.os.Message</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dispatchMessage</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendEmptyMessage</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendMessage</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendEmptyMessageDelayed</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>createAsync</name>
+            <comment></comment>
+            <returntype>android.os.Handler</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Looper</type>
+            </parameter>
+        </method>
+        <method>
+            <name>removeCallbacks</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Runnable</type>
+            </parameter>
+        </method>
+        <method>
+            <name>removeCallbacksAndMessages</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>postDelayed</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Runnable</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendMessageAtTime</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>hasMessages</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>postAtFrontOfQueue</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Runnable</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendMessageAtFrontOfQueue</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getMessageName</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+        </method>
+        <method>
+            <name>post</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Runnable</type>
+            </parameter>
+        </method>
+        <method>
+            <name>sendMessageDelayed</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.os.Message</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>toString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>removeMessages</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>dump</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>android.util.Printer</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>postAtTime</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Runnable</type>
+            </parameter>
+            <parameter>
+                <name>arg1</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>obtainMessage</name>
+            <comment></comment>
+            <returntype>android.os.Message</returntype>
+        </method>
+        <property>
+            <name>Looper</name>
+            <returntype>android.os.Looper</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketOptions</name>
+        <comment>WebSockets connection options. This can be supplied to WebSocketConnection in connect().
+ Note that the latter copies the options provided to connect(), so any change after
+ connect will have no effect.</comment>
+        <owner>process</owner>
+        <property>
+            <name>TcpNoDelay</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Get TCP No-Delay ("Nagle") for TCP connection.</comment>
+        </property>
+        <property>
+            <name>MaskClientFrames</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Get mask client frames option.</comment>
+        </property>
+        <property>
+            <name>ReconnectInterval</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>reconnectInterval</name>
+                <type>int</type>
+            </parameter>
+            <comment>Set reconnect interval</comment>
+        </property>
+        <property>
+            <name>MaxMessagePayloadSize</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>size</name>
+                <type>int</type>
+            </parameter>
+            <comment>Get maximum message payload size (after reassembly of fragmented
+ messages) that will be accepted when receiving.</comment>
+        </property>
+        <property>
+            <name>ValidateIncomingUtf8</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Get UTF-8 validation option.</comment>
+        </property>
+        <property>
+            <name>SocketConnectTimeout</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>timeoutMs</name>
+                <type>int</type>
+            </parameter>
+            <comment>Get socket connect timeout.</comment>
+        </property>
+        <property>
+            <name>MaxFramePayloadSize</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>size</name>
+                <type>int</type>
+            </parameter>
+            <comment>Get maxium frame payload size that will be accepted
+ when receiving.</comment>
+        </property>
+        <property>
+            <name>ReceiveTextMessagesRaw</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>When true, WebSockets text messages are provided as
+ verified, but non-decoded UTF-8 in byte arrays.</comment>
+        </property>
+        <property>
+            <name>SocketReceiveTimeout</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>timeoutMs</name>
+                <type>int</type>
+            </parameter>
+            <comment>Get socket receive timeout.</comment>
+        </property>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage</name>
+        <comment>WebSockets message classes.
+ The master thread and the background reader/writer threads communicate using these messages
+ for WebSockets connections.</comment>
+        <owner>process</owner>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Message</name>
+        <owner>process</owner>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Quit</name>
+        <owner>process</owner>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.ClientHandshake</name>
+        <owner>process</owner>
+        <field>
+            <name>mSubprotocols</name>
+            <comment></comment>
+            <returntype>java.lang.String[]</returntype>
+        </field>
+        <field>
+            <name>mHeaderList</name>
+            <comment></comment>
+            <returntype>java.util.Map</returntype>
+        </field>
+        <field>
+            <name>mHost</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>mPath</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>mQuery</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>mOrigin</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.ServerHandshake</name>
+        <owner>process</owner>
+        <field>
+            <name>mSuccess</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.ConnectionLost</name>
+        <owner>process</owner>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.ServerError</name>
+        <owner>process</owner>
+        <field>
+            <name>mStatusMessage</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>mStatusCode</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.ProtocolViolation</name>
+        <owner>process</owner>
+        <field>
+            <name>mException</name>
+            <comment></comment>
+            <returntype>io.crossbar.autobahn.websocket.WebSocketException</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Error</name>
+        <owner>process</owner>
+        <field>
+            <name>mException</name>
+            <comment></comment>
+            <returntype>java.lang.Exception</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.TextMessage</name>
+        <owner>process</owner>
+        <field>
+            <name>mPayload</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.RawTextMessage</name>
+        <owner>process</owner>
+        <field>
+            <name>mPayload</name>
+            <comment></comment>
+            <returntype>byte[]</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.BinaryMessage</name>
+        <owner>process</owner>
+        <field>
+            <name>mPayload</name>
+            <comment></comment>
+            <returntype>byte[]</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Close</name>
+        <owner>process</owner>
+        <field>
+            <name>mReason</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>mIsReply</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>mCode</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Ping</name>
+        <owner>process</owner>
+        <field>
+            <name>mPayload</name>
+            <comment></comment>
+            <returntype>byte[]</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketMessage.Pong</name>
+        <owner>process</owner>
+        <field>
+            <name>mPayload</name>
+            <comment></comment>
+            <returntype>byte[]</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketException</name>
+        <owner>process</owner>
+        <method>
+            <name>printStackTrace</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>addSuppressed</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Throwable</type>
+            </parameter>
+        </method>
+        <method>
+            <name>initCause</name>
+            <comment></comment>
+            <returntype>java.lang.Throwable</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.Throwable</type>
+            </parameter>
+        </method>
+        <method>
+            <name>toString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>fillInStackTrace</name>
+            <comment></comment>
+            <returntype>java.lang.Throwable</returntype>
+        </method>
+        <property>
+            <name>Message</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>StackTrace</name>
+            <returntype>java.lang.StackTraceElement[]</returntype>
+            <parameter>
+                <name>arg0</name>
+                <type>java.lang.StackTraceElement[]</type>
+            </parameter>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Suppressed</name>
+            <returntype>java.lang.Throwable[]</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Cause</name>
+            <returntype>java.lang.Throwable</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>LocalizedMessage</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketConnectionHandler</name>
+        <comment>WebSockets event handler. Users will usually provide an instance of a class
+ derived from this to handle WebSockets received messages and open/close events</comment>
+        <owner>process</owner>
+        <method>
+            <name>onClose</name>
+            <comment>Fired when the WebSockets connection has deceased (or could
+ not established in the first place).
+code: Close code.
+reason: Close reason (human-readable).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>code</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>reason</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>onTextMessage</name>
+            <comment>Fired when a text message has been received (and text
+ messages are not set to be received raw).
+payload: Text message payload or null (empty payload).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>onOpen</name>
+            <comment>Fired when the WebSockets connection has been established.
+ After this happened, messages may be sent.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>onRawTextMessage</name>
+            <comment>Fired when a text message has been received (and text
+ messages are set to be received raw).
+payload: Text message payload as raw UTF-8 or null (empty payload).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>onBinaryMessage</name>
+            <comment>Fired when a binary message has been received.
+payload: Binar message payload or null (empty payload).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.WebSocketConnection</name>
+        <owner>process</owner>
+        <method>
+            <name>sendBinaryMessage</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>disconnect</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>sendRawTextMessage</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>reconnect</name>
+            <comment>Reconnect to the server with the latest options
+Return type: @return:true if reconnection performed</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>sendTextMessage</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>payload</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>isConnected</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>connect</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>wsUri</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>wsHandler</name>
+                <type>io.crossbar.autobahn.websocket.WebSocket.ConnectionHandler</type>
+            </parameter>
+        </method>
+        <field>
+            <name>customTrustManager</name>
+            <comment></comment>
+            <returntype>javax.net.ssl.TrustManager[]</returntype>
+        </field>
+    </class>
+    <class>
+        <name>io.crossbar.autobahn.websocket.Utf8Validator</name>
+        <comment>Incremental UTF-8 validator. The validator runs with constant memory
+ consumption (minimal state). Purpose is to validate UTF-8, not to
+ decode (which could be done easily also, but we rely on Java built in
+ facilities for that).
+ &lt;p&gt;
+ Implements the algorithm "Flexible and Economical UTF-8 Decoder" by
+ Bjoern Hoehrmann (http://bjoern.hoehrmann.de/utf-8/decoder/dfa/).</comment>
+        <owner>process</owner>
+        <method>
+            <name>isValid</name>
+            <comment>Check if incremental validation (currently) has ended on
+ a complete encoded Unicode codepoint.
+Return type: @return:True, iff currently ended on codepoint.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>reset</name>
+            <comment>Reset validator state to begin validation of new
+ UTF-8 stream.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>position</name>
+            <comment>Get end of validated position within stream. When validate()
+ returns false, indicating an UTF-8 error, this function can
+ be used to get the exact position within the stream upon
+ which the violation was encountered.
+Return type: @return:Current position with stream validated.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>validate</name>
+            <comment>Validate a chunk of octets for UTF-8.
+data: Buffer which contains chunk to validate.
+off: Offset within buffer where to continue with validation.
+len: Length in octets to validate within buffer.
+Return type: @return:False as soon as UTF-8 violation occurs, true otherwise.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>data</name>
+                <type>byte[]</type>
+            </parameter>
+            <parameter>
+                <name>off</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>len</name>
+                <type>int</type>
+            </parameter>
+        </method>
+    </class>
+    <version>2.11</version>
+</root>

@@ -1,0 +1,15 @@
+'POST json request and receive a json response.
+Dim job As HttpJob
+job.Initialize("", Me)
+Dim payload As Map = CreateMap("key": "value", "another key": 1000)
+Dim json As String = payload.As(JSON).ToString 'make sure that the json library is checked
+job.PostString("https://link here", json)
+job.GetRequest.SetContentType("application/json")
+Wait For (job) JobDone (job As HttpJob)
+If job.Success Then
+	'assuming that the response is json:
+	Dim response As Map = job.GetString.As(JSON).ToMap
+	Log(response)
+	$end$
+End If
+job.Release

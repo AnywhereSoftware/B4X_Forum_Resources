@@ -1,0 +1,21 @@
+### ✅ Part 2 Examples - Creating long lists using xCustomListView with Lazy Loading - Newer developers by Peter Simpson
+### 04/28/2020
+[B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/113843/)
+
+Hello All,  
+If you're not experienced with using xCustomListView (xCLV) with Lazy Loading (LL) when it comes to loading long lists of data, then I strongly suggest that you read the following post first **>>>**[**? Part 1 Basics**](https://www.b4x.com/android/forum/threads/%F0%9F%92%A1-part-1-basics-creating-long-lists-using-xcustomlistview-with-lazy-loading-newer-developers.114096/#post-712656) **<<<** as this post is all about getting you introduced to the very basics of xCLV with LL.  
+  
+By now most B4X developers should be aware that you can create long lists or card layouts lists by using **>>>** **[XcustomListView](https://www.b4x.com/android/forum/threads/b4x-xui-xcustomlistview-cross-platform-customlistview.84501/#content)** **<<<**, but what many of you are not aware of is the fact that you do not need to pre-load your xCLV (**xCustomListView**) with all the data at once, doing so can and does in many cases slows down the performance of your applications to an extremely slow crawl. In the link above, Erel not only shows B4X developers how to implement xCLV correctly, but has also added a few link to other associated posts that developers may also find useful, one such useful link is about LL (**Lazy loading**). Even though the links are there, I personally believe that some developers are not reading the entire post by Erel and are making the fatal mistake of skipping past the images straight to download the example code. Erel has in fact put all the source code necessary to accomplish xCLV with LL in two separate posts, but either too many B4X developers are skipping the links to Erel multiple posts, or developers have absolutely no idea what the term Lazy Loading actually means.  
+  
+**What is Lazy Loading?**  
+Lazy loading is nothing new and has been around for many years in computer programs and also on the web, for example Google, eBay and Facebook used LL for displaying long lists of images and general information. It's a technique used to only load information into a list or card as and when you are getting closer to viewing that particular information. How exactly does LL work. Let's say you can only see 10 items in a list on your mobile device screen that actually contains 15 items. As you start scrolling down the list more items will be added to the bottom of that list, the list will be populated like this. 15 items, 30 items, 45 items, 60 items, 75 items etc etc etc until it reached the end of the list. Please note, I'm using 15 as an example but you can set the list population to any amount that you want to within reason. If you are getting your results from a database, I highly recommend that you limit your sql query size to 2000 results, or better still to 1000 results by using the sql LIMIT clause. This will lead to greater performance of your mobile or desktop applications over time as users add more information into databases. Using the LIMIT clause is highly recommended for better performance but not essential.  
+  
+I have attached 4 fully working xCLV with LL examples (1 in each of the first 4 posts in this thread) for new and existing B4X developers to hopefully learn from.  
+  
+Here is the Lazy Loading example displaying invoices in a list. The B4X logos are randomly selected from the assets folder as each item is being added to the list. There are only 412 invoices in this particular example, but the xCLV can run extremely smoothly with thousands in invoices populating the list.  
+  
+**>>>** [**CLICK HERE**](https://www.dropbox.com/s/6c669byshlonjrn/xclv%20ll%20invoices.zip?dl=0) **<<<** to download the Invoices example code.  
+  
+![](https://www.b4x.com/android/forum/attachments/88729)  
+  
+Thanks again to Erel for creating the B4X suite of development tools. Creating Android, iOS, Desktop and Microcontroller solutions have never been easier to accomplish as B4X is basically the same language throughout all 4 RAD IDE's…

@@ -1,0 +1,363 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example2
+File1=1.bjl
+File2=icon.png
+File3=Item.bjl
+File4=style.css
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=xui views
+Library4=jreflection
+Library5=javaobject
+Library6=json
+Library7=b4xcollections
+Library8=b4xpreferencesdialog
+Module1=RecentFilesManager
+Module2=CLVDragger
+NumberOfFiles=4
+NumberOfLibraries=8
+NumberOfModules=2
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private list As CustomListView
+	Private Dialog As B4XDialog
+	Private xui As XUI
+	Private dragger As CLVDragger
+	Private cmbTypes As ComboBox
+	Private types As List
+	Private FileChooser As FileChooser
+	Private CurrentFile As String
+	Private CurrentFileString As String
+	Private NewFileString As String
+	Private version As Float = 1.66
+	Private MenuBar1 As MenuBar
+	Private RecentManager As RecentFilesManager
+	Private PrefDialog As PreferencesDialog
+	Private TitleIndex = 3, KeyIndex = 2, OptionsIndex = 4, TypesIndex = 1, RequiredIndex = 8 As Int
+	Private cmbTheme As ComboBox
+	Private Themes As List = Array("Dark Theme", "Light Theme")
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	list.DefaultTextColor = xui.Color_White
+	Dialog.Initialize(MainForm.RootPane)
+	Dialog.Title = "Forms Builder"
+	Dim n As Node = list.sv
+	n.StyleClasses.Add("b4xdialog")
+	MainForm.Show
+	dragger.Initialize(list)
+	types = Array("Separator", "Boolean", "Color", "Date", "Decimal Number", "Explanation", "Multiline Text", "Number", "Numeric Range"  _
+		 , "Options", "Password", "Short Options", "Text","Time")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "style.css"))
+	AddKeyPressedListener
+	FileChooser.Initialize
+	FileChooser.InitialDirectory = File.DirApp
+	FileChooser.SetExtensionFilter("JSON", Array("*.json"))
+	xui.SetDataFolder("FormsBuilder")
+	RecentManager.Initialize(Me, "Recent", MenuBar1.Menus.Get(0))
+	cmbTheme.Items.AddAll(Themes)
+	cmbTheme.SelectedIndex = 0
+	NewFile
+	NewFileString = ExportToString (False)
+	
+	PrefDialog.Initialize(MainForm.RootPane, "FormsBuilder", 300dip, 300dip)
+End Sub
+
+
+Sub Recent_Click (RecentFile As String)
+	LoadFile(RecentFile)
+End Sub
+
+Sub MainForm_Closed
+	RecentManager.SaveList
+End Sub
+
+Sub AddKeyPressedListener
+	Dim r As Reflector
+	r.Target = MainForm.RootPane
+	r.AddEventHandler("keypressed", "javafx.scene.input.KeyEvent.KEY_PRESSED")
+End Sub
+
+Sub KeyPressed_Event (e As Event)
+	If Dialog.Visible Then
+		Dim jo As JavaObject = e
+		Dim keycode As String = jo.RunMethod("getCode", Null)
+		If keycode = "ESCAPE" Or keycode = "C" Then
+			Dialog.Close(xui.DialogResponse_Cancel)
+		Else If keycode = "Y" Then
+			Dialog.Close(xui.DialogResponse_Positive)
+		Else If keycode = "N" Then
+			Dialog.Close(xui.DialogResponse_Negative)
+		End If
+	End If
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	dragger.Resize
+End Sub
+
+Sub ItemToMap (pnl As B4XView, PrepareToShow As Boolean) As Map
+	Dim m As Map
+	m.Initialize
+	Dim title As B4XFloatTextField = pnl.GetView(TitleIndex).Tag
+	Dim options As B4XFloatTextField = pnl.GetView(OptionsIndex).Tag
+	Dim cmb As ComboBox = pnl.GetView(TypesIndex)
+	Dim Key As B4XFloatTextField = pnl.GetView(KeyIndex).Tag
+	Dim switch As B4XSwitch = pnl.GetView(RequiredIndex).Tag
+	m.Put("title", title.Text)
+	If options.Text.Length > 0 Then
+		Dim optlist As List = Regex.Split("\n", options.Text)
+		m.Put("options", optlist)
+	End If
+	m.Put("key", Key.Text)
+	m.Put("type", cmb.Items.Get(cmb.SelectedIndex))
+	If PrepareToShow And (m.Get("type") = "Options" Or m.Get("type") = "Short Options") Then
+		If m.ContainsKey("options") = False Then
+			Dim optlist As List = Array("N/A")
+			m.Put("options", optlist)
+		End If
+	End If
+	m.Put("required", switch.Value)
+	Return m
+End Sub
+
+Sub SetUIBasedOnType (pnl As B4XView)
+	Dim options As B4XFloatTextField = pnl.GetView(OptionsIndex).Tag
+	Dim cmb As ComboBox = pnl.GetView(TypesIndex)
+	Dim Key As B4XFloatTextField = pnl.GetView(KeyIndex).Tag
+	Dim switch As B4XSwitch = pnl.GetView(RequiredIndex).Tag
+	Dim TypeString As String = cmb.Items.Get(cmb.SelectedIndex)
+	switch.Enabled = TypeString <> "Separator" And TypeString <> "Explanation"
+	Key.TextField.Enabled = TypeString <> "Separator"
+	options.TextField.Enabled = TypeString.Contains("Options") Or TypeString = "Multiline Text" Or TypeString = "Numeric Range" Or TypeString = "Explanation" Or TypeString = "Time"
+	If options.TextField.Enabled Then
+		If TypeString = "Multiline Text" Then
+			options.HintText = "Height"
+		Else If TypeString = "Numeric Range" Then
+			options.HintText = "Start, End, Interval (3 lines)"
+		Else If TypeString = "Explanation" Then
+			options.HintText = "Explanation Text"
+		Else If TypeString = "Time" Then
+			options.HintText = "Enter 24 for 24 hours mode."
+		Else
+			options.HintText = "Options"
+		End If
+		options.Update
+	End If
+End Sub
+
+Sub cmbTypes_ValueChanged (Value As Object)
+	SetUIBasedOnType(list.GetPanel(list.GetItemFromView(Sender)))
+End Sub
+
+Sub btnDelete_Click
+	Dim index As Int = list.GetItemFromView(Sender)
+	Wait For (Dialog.Show("Delete item?", "Yes", "No", "")) Complete (Result As Int)
+	If Result = xui.DialogResponse_Positive Then
+		list.RemoveAt(index)
+	End If
+End Sub
+
+Sub btnCopy_Click
+	AddItem(ItemToMap(list.GetPanel(list.GetItemFromView(Sender)), False))
+	Sleep(100)
+	list.JumpToItem(list.Size - 1)
+End Sub
+
+Sub AddItem (m As Map)
+	Dim pnl As B4XView = xui.CreatePanel("")
+	pnl.SetLayoutAnimated(0, 0, 0, list.AsView.Width, 145dip)
+	pnl.LoadLayout("Item")
+	Dim title As B4XFloatTextField = pnl.GetView(TitleIndex).Tag
+	Dim options As B4XFloatTextField = pnl.GetView(OptionsIndex).Tag
+	Dim cmb As ComboBox = pnl.GetView(TypesIndex)
+	Dim Key As B4XFloatTextField = pnl.GetView(KeyIndex).Tag
+	Dim switch As B4XSwitch = pnl.GetView(RequiredIndex).Tag
+	cmb.Items.AddAll(types)
+	cmb.SelectedIndex = 0
+	cmb.Id = "cmbtype"
+	For Each tf As B4XFloatTextField In Array(options, Key, title)
+		tf.LargeLabelTextSize = 14
+		tf.Update
+	Next
+	list.Add(pnl, "")
+	If m.IsInitialized Then
+		Key.Text = m.GetDefault("key", "")
+		switch.Value = m.GetDefault("required", False)
+		title.Text = m.GetDefault("title", "")
+		cmb.SelectedIndex = cmb.Items.IndexOf(m.GetDefault("type", types.Get(0)))
+		If m.ContainsKey("options") Then
+			Dim sb As StringBuilder
+			sb.Initialize
+			Dim optlist As List = m.Get("options")
+			sb.Append(optlist.Get(0))
+			For i = 1 To optlist.Size - 1
+				sb.Append(CRLF).Append(optlist.Get(i))
+			Next
+			options.Text = sb.ToString
+		End If
+	End If
+	dragger.AddDragButtons
+	SetUIBasedOnType(pnl)
+End Sub
+
+
+
+Sub btnAdd_Click
+	AddItem(Null)
+	Sleep(100)
+	list.JumpToItem(list.Size - 1)
+End Sub
+
+Sub ExportToString (PrepareToShow As Boolean) As String
+	Dim Items As List
+	Items.Initialize
+	For i = 0 To list.Size - 1
+		Items.Add(ItemToMap(list.GetPanel(i), PrepareToShow))
+	Next
+	Dim jg As JSONGenerator
+	jg.Initialize(CreateMap("Version": version, "Items": Items, "Theme": cmbTheme.Items.Get(cmbTheme.SelectedIndex)))
+	Return jg.ToPrettyString(4)
+End Sub
+
+Sub mnuLoad_Action
+	Dim f As String = FileChooser.ShowOpen(MainForm)
+	If f <> "" Then LoadFile(f)
+End Sub
+
+Sub LoadFile (f As String)
+	Wait For (CheckChanges) Complete (Cancel As Boolean)
+	If Cancel Then Return
+	Try
+		Dim s As String = File.ReadString(f, "")
+		CurrentFileString = s
+		list.Clear
+		SetCurrentFile(f)
+		AddItemsFromString(s)
+	Catch
+		Dialog.Show(LastException.Message, "Ok", "", "")
+	End Try
+End Sub
+
+Sub SetCurrentFile (f As String)
+	CurrentFile = f
+	MainForm.Title = $"FormsBuilder ($1.2{version})"$
+	If f <> "" Then
+		MainForm.Title = MainForm.Title & " - " & File.GetName(f)
+	End If
+	RecentManager.AddFile(f)
+End Sub
+
+Sub AddItemsFromString (s As String)
+	Dim parser As JSONParser
+	parser.Initialize(s)
+	Dim m As Map = parser.NextObject
+	Dim Theme As String = m.GetDefault("Theme", "Dark Theme")
+	cmbTheme.SelectedIndex = Themes.IndexOf(Theme)
+	Dim Items As List = m.Get("Items")
+	For Each item As Map In Items
+		AddItem(item)
+	Next
+End Sub
+
+Sub mnuNew_Action
+	Wait For (CheckChanges) Complete (Cancel As Boolean)
+	If Cancel Then Return
+	NewFile
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	EventData.Consume
+	Wait For (CheckChanges) Complete (Cancel As Boolean)
+	If Cancel = False Then
+		MainForm.Close
+	End If
+End Sub
+
+Sub NewFile
+	SetCurrentFile("")
+	list.Clear
+	AddItem(Null)
+End Sub
+
+'Returns True if cancel was pressed
+Sub CheckChanges As ResumableSub
+	If CurrentFile = "" Then Return False
+	Dim s As String = ExportToString (False)
+	If s <> CurrentFileString And s <> NewFileString Then
+		Wait For (Dialog.Show("Save Changes?", "Yes", "No", "Cancel")) Complete (Result As Int)
+		Select Result
+			Case xui.DialogResponse_Cancel
+				Return True
+			Case xui.DialogResponse_Negative
+				Return False
+			Case xui.DialogResponse_Positive
+				mnuSave_Action
+		End Select
+	End If
+	Return False
+End Sub
+
+Sub mnuSave_Action
+	If CurrentFile = "" Then
+		mnuSaveAs_Action
+	Else
+		CurrentFileString = ExportToString (False)
+		Wait For (CheckForWarnings) Complete (Unused As Object)
+		File.WriteString(CurrentFile, "", CurrentFileString)
+	End If
+End Sub
+
+Sub CheckForWarnings As ResumableSub
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim keys As B4XSet = B4XCollections.CreateSet
+	For i = 0 To list.Size - 1
+		Dim item As Map = ItemToMap(list.GetPanel(i), False)
+		Dim key As String = item.GetDefault("key", "")
+		Dim ItemType As String = item.GetDefault("type", "Separator")
+		If ItemType <> "Separator" And ItemType <> "Explanation" Then
+			If key = "" Then
+				sb.Append($"Item #${i + 1}: "$).Append("Missing key.").Append(CRLF)
+			Else If keys.Contains(key) Then
+				sb.Append($"Item #${i + 1}: "$).Append("Duplicate key: ").Append(key).Append(CRLF)
+			End If
+			keys.Add(key)
+		End If
+	Next
+	If sb.Length > 0 Then
+		Wait For (Dialog.Show("Warnings: " & CRLF & sb.ToString, "Ok", "", "")) Complete (Result As Int)
+	End If
+	Return Null
+End Sub
+
+
+Sub mnuSaveAs_Action
+	Dim f As String = FileChooser.ShowSave(MainForm)
+	If f = "" Then Return
+	SetCurrentFile(f)
+	mnuSave_Action
+End Sub
+
+Sub btnShow_Click
+	PrefDialog.Clear
+	PrefDialog.LoadFromJson(ExportToString(True))
+	PrefDialog.ShowDialog(CreateMap(), "Ok", "Cancel")
+End Sub
+
+

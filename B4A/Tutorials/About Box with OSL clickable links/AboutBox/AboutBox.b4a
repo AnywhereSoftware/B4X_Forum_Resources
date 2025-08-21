@@ -1,0 +1,143 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+File2=legalcode.txt
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xui views
+Library4=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+'
+'Here is an About Box example with clickable links to open source code, open source license text and the Made With B4A logo
+'Most of all, Have fun. --JagiChan--
+
+'//This program Is free software; you can redistribute it And/Or modify
+'// it under the terms of the GNU General Public License As published by
+'// the Free Software Foundation; either version 2 of the License, Or 
+'//(at your option) any later version.
+'//This program Is distributed in the hope that it will be useful,
+'//but WITHOUT ANY WARRANTY; without even the implied warranty of
+'//MERCHANTABILITY Or FITNESS For A PARTICULAR PURPOSE.  See the
+'//GNU General Public License For more details.
+ 
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private lvOSL As ListView
+	Private clvOSL As CustomListView
+	Private lblMadeWithLove As Label
+	
+	Dim cs As CSBuilder	'String Builder
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	'//here is the code to populate the various fields in the About Box
+	lvOSL.Color=Colors.RGB(198,198,198)
+	SetDivider(lvOSL, Colors.RGB(192,192,192), 1dip)
+	lvOSL.SingleLineLayout.Label.TextSize = 12
+	lvOSL.FastScrollEnabled = True
+	
+	'//Here is the list of clickable Open Source links (add  or remove items as required)
+	lvOSL.Clear
+	lvOSL.AddSingleLine(cs.Initialize.Typeface(Typeface.FONTAWESOME).Size(16).VerticalAlign(1dip).Color(Colors.Black).Append("MaterialDateAndTime Picker Dialog developed by DonManfred : ").Underline.Color(Colors.Blue).Append("https://www.b4x.com/android/forum/threads/materialdatetimepicker.68323/").PopAll)
+	lvOSL.AddSingleLine(cs.Initialize.Typeface(Typeface.FONTAWESOME).Size(16).VerticalAlign(1dip).Color(Colors.Black).Append("Animation Plus developed by Informatix : ").Underline.Color(Colors.Blue).Append("https://www.b4x.com/android/forum/threads/lib-animationplus.21313/").PopAll)
+	lvOSL.AddSingleLine(cs.Initialize.Typeface(Typeface.FONTAWESOME).Size(16).VerticalAlign(1dip).Color(Colors.Black).Append("Arc Menu developed by Barx : ").Underline.Color(Colors.Blue).Append("https://www.b4x.com/android/forum/threads/arc-menu-class-lib.28285/#content").PopAll)
+	lvOSL.AddSingleLine(cs.Initialize.Typeface(Typeface.FONTAWESOME).Size(16).VerticalAlign(1dip).Color(Colors.Black).Append("B4X developed and copyrighted by Anywhere Software : ").Underline.Color(Colors.Blue).Append("https://www.b4x.com/").PopAll)
+	lvOSL.AddSingleLine(cs.Initialize.Typeface(Typeface.FONTAWESOME).Size(16).VerticalAlign(1dip).Color(Colors.Black).Append("Android operating system developed and copyrighted by Google : ").Underline.Color(Colors.Blue).Append("https://developer.android.com/").PopAll)
+	
+	'//Here is the Creative Commons license text copied and pasted from the CC website (again add or remove accordingly)
+	clvOSL.Clear
+	clvOSL.DefaultTextBackgroundColor=0xFFC0C0C0
+	clvOSL.AddTextItem(File.ReadString(File.DirAssets, "legalcode.txt"), "")
+	
+	'//Finally add the made with love text and heart symbol
+	AddMadeWithLoveText
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+'//Handling an item clicked on the opensource list view (add or remove as required)
+'//Will open the default browser on the device and populate the URL
+Sub lvOSL_ItemClick(Position As Int, Value As Object)
+	Dim i As Intent
+	
+	If Position = 0 Then
+		i.Initialize(i.ACTION_VIEW, "https://www.b4x.com/android/forum/threads/materialdatetimepicker.68323/")
+		StartActivity(i)
+	else if Position = 1 Then
+		i.Initialize(i.ACTION_VIEW, "https://www.b4x.com/android/forum/threads/lib-animationplus.21313/")
+		StartActivity(i)
+	else if Position = 2 Then
+		i.Initialize(i.ACTION_VIEW, "https://www.b4x.com/android/forum/threads/arc-menu-class-lib.28285/#content")
+		StartActivity(i)
+	else if Position  = 3 Then
+		i.Initialize(i.ACTION_VIEW, "https://www.b4x.com/")
+		StartActivity(i)
+	else if Position = 4 Then
+		i.Initialize(i.ACTION_VIEW, "https://developer.android.com/")
+		StartActivity(i)
+	End If
+	
+End Sub
+
+'//This will add the Made with Love text to the label (lblMadeWithLove)
+'//Change the text, icon to your hearts desire :)
+Sub AddMadeWithLoveText
+	cs.Initialize.Typeface(Typeface.FONTAWESOME).Append("Made in India With ").Typeface(Typeface.FONTAWESOME).Color(xui.Color_Red).Append(Chr(0xF004)).Pop.Pop _
+        .Typeface(Typeface.FONTAWESOME).Append(" using ").Clickable("cs", "").Underline.Color(xui.Color_Blue).Append("B4A").PopAll
+	cs.EnableClickEvents(lblMadeWithLove)
+	lblMadeWithLove.Text = cs
+End Sub
+
+'//Handle the click on the Made with love label link
+Sub cs_Click (Tag As Object)
+	Dim i As Intent
+	i.Initialize(i.ACTION_VIEW, "https://www.b4x.com")
+	StartActivity(i)
+End Sub
+
+Sub SetDivider(lv As ListView, Color As Int, Height As Int)
+	Dim r As Reflector
+	r.Target = lv
+	Dim CD As ColorDrawable
+	CD.Initialize(Color, 0)
+	r.Runmethod4("setDivider", Array As Object(CD), Array As String("android.graphics.drawable.Drawable"))
+	r.Runmethod2("setDividerHeight", Height, "java.lang.int")
+End Sub

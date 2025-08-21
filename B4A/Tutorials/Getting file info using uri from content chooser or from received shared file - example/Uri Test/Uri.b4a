@@ -1,0 +1,255 @@
+﻿Build1=Default,b4a.Uri
+File1=L1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=contentresolver
+Library3=phone
+Library4=sql
+Library5=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~'to receive share~\n~AddActivityText(Main,~\n~<intent-filter>~\n~   <action android:name="android.intent.action.SEND" />~\n~   <category android:name="android.intent.category.DEFAULT" />~\n~   <data android:mimeType="*/*" />~\n~</intent-filter>)~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Uri Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	'for browsing files
+	Private cc As ContentChooser
+	Private OldIntent As Intent
+			
+End Sub
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Private Button1 As Button
+	Private lbLastModified As Label
+	Private lbMimeType As Label
+	Private lbName As Label
+	Private lbSize As Label
+	Private lbUri As Label
+	Private txtDBColumns As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("L1")
+	Activity.Title = "Uri Example"
+	
+End Sub
+Sub Activity_Resume
+	If IsRelevantIntent(Activity.GetStartingIntent) Then
+		Dim in As JavaObject = Activity.GetStartingIntent
+		Dim uri As String = in.RunMethod("getParcelableExtra", Array("android.intent.extra.STREAM"))
+		Try
+			lbUri.Text = uri
+			ShowInfo(uri)
+			ShowColums(uri)
+		Catch
+			Log(LastException)
+		End Try
+	End If
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	
+	'get file location
+	cc.Initialize("CC")
+	cc.Show("*/*", "Choose File")
+	Wait For CC_Result (Success As Boolean, Dir As String, FileName As String)
+	If Success Then
+		
+		txtDBColumns.Text = ""
+				
+		'getFileInfo(FileName)
+		lbUri.Text = FileName
+		ShowInfo(FileName)
+		ShowColums(FileName)
+		
+	End If
+
+End Sub
+
+Sub ShowInfo(uri As String)
+	
+	Try
+		lbName.Text = GetFileInfoByIndex("_display_name", uri)
+	Catch
+		lbName.Text = "error"
+	End Try
+	Try
+		lbMimeType.Text = GetFileInfoByIndex("mime_type", uri)
+	Catch
+		lbMimeType.Text = "error"
+	End Try
+	Try
+		lbSize.Text = GetFileInfoByIndex("_size", uri)
+	Catch
+		lbSize.Text = "error"
+	End Try
+	Try
+		lbLastModified.Text = DateTime.Date(GetFileInfoByIndex("last_modified", uri))
+	Catch
+		Try	
+			lbLastModified.Text = DateTime.Date(GetFileInfoByIndex("datetaken", uri))
+		Catch
+			lbLastModified.Text = "error"
+		End Try
+	End Try
+	
+End Sub
+Sub getFileInfo(uri As String)
+	
+	Dim Cur As Cursor
+	Dim Uri1 As Uri
+	Dim cr As ContentResolver
+	cr.Initialize("")
+	
+	Uri1.Parse(uri)
+	Cur = cr.Query(Uri1, Null, Null, Null, Null)
+	Cur.Position = 0
+	
+	Try
+		lbName.Text = Cur.GetString("_display_name")
+	Catch
+		lbName.Text = "error"
+	End Try
+	Try
+		lbMimeType.Text = Cur.GetString("mime_type")
+	Catch
+		lbMimeType.Text = "error"
+	End Try
+	Try
+		lbSize.Text = Cur.GetString("_size")
+	Catch
+		lbSize.Text = "error"
+	End Try
+	Try
+		lbLastModified.Text = DateTime.Date(Cur.GetString("last_modified"))
+	Catch
+		lbLastModified.Text = "error"
+	End Try
+	
+	'column index starts at 0
+	
+	'image/media
+	'0 = (document_id) record ID
+	'1 = (mime_type) image/jpeg
+	'2 = (_display_name) full File name
+	'3 = (last_modified) 
+	'4 = (flags)
+	'5 = (_size)
+	
+	'document
+	'6 = (_size)
+	'5 = (flags)
+	'4 = (last_modified)
+	'3 = (summary)
+	'2 = (_display_name)
+	'1 = (mime_type)
+	'0 = (document_id)
+		
+End Sub
+Sub GetFileInfoByIndex(column As String, uri As String) As String
+	
+	Dim results As String
+	Dim Cur As Cursor
+	Dim Uri1 As Uri
+	Dim cr As ContentResolver
+	cr.Initialize("")
+
+	'if viewing by gallery
+	If uri.StartsWith("content://media/") Then
+		Dim i As Int = uri.LastIndexOf("/")
+		Dim id As String = uri.SubString(i + 1)
+		Uri1.Parse(uri)
+		Cur = cr.Query(Uri1, Null, "_id = ?", Array As String(id), Null)
+		Cur.Position = 0
+		If Cur.RowCount <> 0 Then
+			For i = 0 To Cur.ColumnCount - 1
+				If Cur.GetColumnName(i) <> Null Then
+					If Cur.GetColumnName(i) = column Then
+						results = Cur.GetString2(i)
+						Exit
+					End If
+				End If
+			Next
+		End If
+	Else
+		Uri1.Parse(uri)
+		Cur = cr.Query(Uri1, Null, Null, Null, Null)
+		Cur.Position = 0
+		If Cur.RowCount <> 0 Then
+			For i = 0 To Cur.ColumnCount - 1
+				If Cur.GetColumnName(i) <> Null Then
+					If Cur.GetColumnName(i) = column Then
+						results = Cur.GetString2(i)
+						Exit
+					End If
+				End If
+			Next
+		End If	
+	End If
+	
+	Cur.Close
+	
+	Return results
+	
+End Sub
+Sub ShowColums(uri As String)
+	
+	Dim Cur As Cursor
+	Dim Uri1 As Uri
+	Dim cr As ContentResolver
+	cr.Initialize("")
+	
+	Uri1.Parse(uri)
+	Cur = cr.Query(Uri1, Null, Null, Null, Null)
+	Cur.Position = 0
+
+	For i = 0 To Cur.ColumnCount - 1
+		If Cur.GetColumnName(i) <> Null Then
+			txtDBColumns.Text = txtDBColumns.Text & CRLF & "Index: " & i & " Col: " &  Cur.GetColumnName(i)
+		End If
+	Next
+	Cur.Close
+	
+End Sub
+Private Sub IsRelevantIntent(in As Intent) As Boolean
+	If in.IsInitialized And in <> OldIntent And in.Action = in.ACTION_SEND Then
+		OldIntent = in
+		Return True
+	End If
+	Return False
+End Sub
+
+
+
+
+
+
+
+

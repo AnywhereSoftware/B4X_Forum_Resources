@@ -1,0 +1,157 @@
+﻿Version=3.71
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=1.bjl
+NumberOfLibraries=4
+Library1=jcore
+Library2=jfx
+Library3=jbluetooth
+Library4=jrandomaccessfile
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private btnConnect As Button
+	Private btnSearch As Button
+	Private btnSend As Button
+	Private ListView1 As ListView
+	Private txtInput As TextField
+	Private txtLog As TextArea
+	
+	Private bt As Bluetooth
+	Private astream As AsyncStreams
+	Private connected As Boolean
+	Private searchingForDevices As Boolean
+	Private currentConnection As BluetoothConnection
+	
+	Private foundDevices As Map
+	Private btnDisconnect As Button
+	Private lblConnectionState As Label
+	Private lblSearchState As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UNIFIED")
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	bt.Initialize("bt")
+	foundDevices.Initialize
+	If bt.IsEnabled Then
+		bt.Listen
+	End If
+	UpdateState
+End Sub
+
+Private Sub UpdateState
+	If bt.IsEnabled = False Then
+		lblSearchState.Text = "Bluetooth not available"
+		For Each n As Node In MainForm.RootPane
+			n.Enabled = False
+		Next
+	Else
+		btnSearch.Enabled = Not(searchingForDevices)
+		btnConnect.Enabled = Not(connected) And ListView1.SelectedIndex > -1
+		txtInput.Enabled = connected
+		btnSend.Enabled = connected
+		btnDisconnect.Enabled = connected
+		Dim state As String
+		If connected Then 
+			state = "Connected: " & currentConnection.Name 
+		Else 
+			state = "Disconnected"
+		End If
+		lblConnectionState.Text = state
+		lblSearchState.Text = "Searching..."
+		lblSearchState.Visible = searchingForDevices
+	End If
+End Sub
+
+
+Private Sub btnSearch_Action
+	Dim res As Boolean = bt.StartDiscovery
+	If res Then
+		searchingForDevices = True
+		ListView1.Items.Clear
+		UpdateState
+	Else
+		Log("Error starting discovery")
+	End If
+End Sub
+
+Private Sub bt_DeviceFound (Name As String, MacAddress As String)
+	Dim description As String = Name & ": " & MacAddress
+	ListView1.Items.Add(description)
+	foundDevices.Put(description, MacAddress)
+End Sub
+
+Private Sub bt_DiscoveryFinished
+	searchingForDevices = False
+	UpdateState
+End Sub
+
+Private Sub btnConnect_Action
+	Dim address As String = foundDevices.Get(ListView1.SelectedItem)
+	bt.Connect(address)
+End Sub
+
+Private Sub bt_Connected (Success As Boolean, connection As BluetoothConnection)
+	Log($"Connected, success=${Success}"$)
+	If Success Then
+		currentConnection = connection
+		connected = True
+		If astream.IsInitialized Then astream.Close
+		astream.InitializePrefix(connection.InputStream, True, connection.OutputStream, "AStream")
+	End If
+	bt.Listen
+	UpdateState
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+	LogMessage("You", BytesToString(Buffer, 0, Buffer.Length, "UTF8"))
+End Sub
+
+
+Sub AStream_Error
+	connected = False
+	UpdateState
+End Sub
+
+Sub AStream_Terminated
+	AStream_Error
+End Sub
+
+Private Sub txtInput_Action
+	btnSend_Action
+End Sub
+
+Private Sub btnSend_Action
+	If txtInput.Text.Length > 0 Then
+		LogMessage("Me", txtInput.Text)
+		astream.Write(txtInput.Text.GetBytes("utf8"))
+		txtInput.Text = ""
+	End If
+End Sub
+
+Private Sub LogMessage(From As String, Msg As String)
+	txtLog.Text = txtLog.Text & From & ": " & Msg & CRLF
+	txtLog.SetSelection(txtLog.Text.Length, txtLog.Text.Length)
+End Sub
+
+Private Sub ListView1_SelectedIndexChanged(Index As Int)
+	UpdateState
+End Sub
+
+Private Sub btnDisconnect_Action
+	currentConnection.Disconnect
+	If astream.IsInitialized Then astream.Close
+	connected = False
+	UpdateState
+End Sub

@@ -1,0 +1,176 @@
+Version=5.9
+AppType=StandardJava
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=1
+File1=store.db
+NumberOfLibraries=4
+Library1=jcore
+Library2=jmqttbrokerextended
+Library3=jrandomaccessfile
+Library4=jsql
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End Region
+
+Sub Process_Globals
+	Dim Broker As MQTTBrokerExtended
+	Dim Const Port As Int = xxxxx
+
+	Dim ActivePlayers As Map
+	Dim WaitingPlayer As String
+	Public SQL As SQL
+	Dim Const DBName As String = "store.db"
+
+	Dim Serializator As B4XSerializator
+	Type typInitialData(PlayerID1 As String, PlayerID2 As String, MatchID As String)
+End Sub
+
+Sub AppStart (Args() As String)
+	'Copies the database if it's not done yet
+	If Not(File.Exists(File.DirApp, DBName)) Then
+		File.Copy(File.DirAssets, DBName, File.DirApp, DBName)
+	End If
+
+	'Opens the database
+	SQL.InitializeSQLite(File.DirApp, DBName, False)
+
+	'Gets the active players from the DB
+	ActivePlayers.Initialize
+	Dim RS As ResultSet = SQL.ExecQuery("SELECT * FROM ActivePlayers")
+	Do While RS.NextRow
+		Dim PlayerID As String = RS.GetString("PlayerID")
+		Dim MatchID As String = RS.GetString("MatchID")
+		ActivePlayers.Put(PlayerID, MatchID)
+	Loop
+	RS.Close
+	Log("DB: nb. of active players = " & ActivePlayers.Size)
+
+	'Gets the waiting player from the DB
+	WaitingPlayer = ""
+	Dim RS As ResultSet = SQL.ExecQuery("SELECT * FROM WaitingPlayer")
+	Do While RS.NextRow
+		WaitingPlayer = RS.GetString("PlayerID")
+	Loop
+	RS.Close
+	Log("DB: waiting player ID = " & WaitingPlayer)
+
+	'Starts the broker
+	Broker.Initialize(Port, "Broker")
+	Broker.DebugLog = False
+	Broker.Start
+	StartMessageLoop 'Non-UI app
+End Sub
+
+Sub Broker_Connect(ClientID As String, UserName As String, Password() As Byte, ProtocolName As String, ProtocolVersion As Byte, QOS As String, KeepAlive As Int, IsCleanSession As Boolean, IsDupFlag As Boolean, IsUserFlag As Boolean, IsPasswordFlag As Boolean, IsWillFlag As Boolean)
+	If Password = Null Then
+		Log("CONNECT : " & ClientID & " UserName=" & UserName & " Password=null ProtocolName=" & ProtocolName & " ProtocolVersion=" & ProtocolVersion)
+	Else
+		Log("CONNECT : " & ClientID & " UserName=" & UserName & " Password=" & BytesToString(Password, 0, Password.Length, "UTF-8") & " ProtocolName=" & ProtocolName & " ProtocolVersion=" & ProtocolVersion)
+	End If
+	Log("        : QOS=" & QOS & " KeepAlive=" & KeepAlive & " IsCleanSession=" & IsCleanSession & " IsDupFlag=" & IsDupFlag & " IsUserFlag=" & IsUserFlag & " IsPasswordFlag=" & IsPasswordFlag & " IsWillFlag=" & IsWillFlag)
+End Sub
+
+Sub Broker_Disconnect(ClientID As String)
+	Log("DISCONNECT : " & ClientID)
+End Sub
+
+Sub Broker_LastWill(ClientID As String, QOS As Byte, TopicName As String, Payload() As Byte, IsRetain As Boolean)
+	Log("LASTWILL : " & ClientID & " QOS=" & QOS & " Topic=" & TopicName & " Payload=" & Payload.Length & " IsRetain=" & IsRetain)
+End Sub
+
+Sub Broker_Publish(ClientID As String, QOS As String, TopicName As String, Payload() As Byte, IsDup As Boolean, IsRetain As Boolean)
+	Log("PUBLISH : " & ClientID & " QOS=" & QOS & " Topic=" & TopicName & " Payload=" & Payload.Length & " IsDup=" & IsDup & " IsRetain=" & IsRetain)
+End Sub
+
+Sub CreateMessage(Data As Object) As Byte()
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub Broker_Suscribe(ClientID As String, RequestedQOS As String, TopicFilter As String)
+	Log("SUSCRIBE : " & ClientID & " QOS=" & RequestedQOS & " TopicFilter=" & TopicFilter)
+	If TopicFilter = ClientID Then
+		'Is there a pending match for this player?
+		If ActivePlayers.ContainsKey(ClientID) Then
+			'Nothing to do because the broker re-sends automatically the last retained message
+		Else If WaitingPlayer <> ClientID Then
+			'Is there a player waiting for another player?
+			If WaitingPlayer <> "" Then
+				'Creates a match for these players
+				Dim Data As typInitialData
+				Data.Initialize
+				Data.PlayerID1 = WaitingPlayer
+				Data.PlayerID2 = ClientID
+				Data.MatchID = "MID" & DateTime.Now & "|" & Data.PlayerID1 & Data.PlayerID2 & Rnd(100, 999)
+
+				'Updates the DB
+				SQL.BeginTransaction
+				Try
+					SQL.ExecNonQuery("INSERT INTO ActivePlayers VALUES (""" & Data.PlayerID1 & """,""" & Data.MatchID & """)")
+					SQL.ExecNonQuery("INSERT INTO ActivePlayers VALUES (""" & Data.PlayerID2 & """,""" & Data.MatchID & """)")
+					SQL.ExecNonQuery("DELETE FROM WaitingPlayer")
+				Catch
+					Log(LastException)
+					SQL.Rollback
+					Broker.InternalPublish(Data.PlayerID1, CreateMessage("ERROR: The server encountered a database error."), Broker.EXACTLY_ONCE, False)
+					Broker.InternalPublish(Data.PlayerID2, CreateMessage("ERROR: The server encountered a database error."), Broker.EXACTLY_ONCE, False)
+					Return
+				End Try
+				SQL.TransactionSuccessful
+
+				'Updates the internal data
+				ActivePlayers.Put(Data.PlayerID1, Data.MatchID)
+				ActivePlayers.Put(Data.PlayerID2, Data.MatchID)
+				WaitingPlayer = ""
+
+				'Sends the MatchID to the players in a private message
+				Dim Msg() As Byte = CreateMessage(Data)
+				Broker.InternalPublish(Data.PlayerID1, Msg, Broker.EXACTLY_ONCE, True)
+				Broker.InternalPublish(Data.PlayerID2, Msg, Broker.EXACTLY_ONCE, True)
+
+				'Sends a shared message in the match topic to start the sequence of exchanges
+				Broker.InternalPublish(Data.MatchID, Msg, Broker.EXACTLY_ONCE, True)
+			Else
+				'Puts the new player in the waiting room
+				Try
+					SQL.ExecNonQuery("INSERT INTO WaitingPlayer VALUES (""" & ClientID & """)")
+				Catch
+					Log(LastException)
+					Broker.InternalPublish(ClientID, CreateMessage("ERROR: The server encountered a database error."), Broker.EXACTLY_ONCE, False)
+					Return
+				End Try
+				WaitingPlayer = ClientID
+			End If
+		End If
+	End If
+End Sub
+
+Sub Broker_Unsuscribe(ClientID As String, TopicFilter As String)
+	Log("UNSUSCRIBE : " & ClientID & " TopicFilter=" & TopicFilter)
+	If TopicFilter <> ClientID Then
+		'Updates the DB
+		Try
+			SQL.ExecNonQuery("DELETE FROM ActivePlayers WHERE PlayerID=""" & ClientID & """")
+		Catch
+			Log(LastException)
+			Broker.InternalPublish(ClientID, CreateMessage("ERROR: The server encountered a database error."), Broker.EXACTLY_ONCE, False)
+			Return
+		End Try
+
+		'Updates the internal data
+		ActivePlayers.Remove(ClientID)
+		Log(ClientID & " is no longer active")
+
+		'Removes the retained message from the private topic
+		Broker.InternalPublish(ClientID, Array As Byte(), Broker.EXACTLY_ONCE, True)
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

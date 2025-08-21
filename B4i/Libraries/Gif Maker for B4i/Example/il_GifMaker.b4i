@@ -1,0 +1,94 @@
+﻿Build1=Default,www.sagital.gifmaker
+File1=f0.png
+File2=f1.png
+File3=f2.png
+File4=f3.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=icore
+Library2=il_gifmaker
+Library3=iphone
+NumberOfFiles=4
+NumberOfLibraries=3
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: il_GifMaker Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+#CertificateFile: ios_development.cer
+#ProvisionFile: iosdev.mobileprovision 
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	
+	Private myGifmaker As il_GifMaker
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	
+	
+	Dim l As List
+	l.Initialize
+	
+	For i = 0 To 3
+		l.Add(LoadBitmap(File.DirAssets,$"f${i}.png"$)) 'add images to list
+	Next
+	
+	myGifmaker.Initialize
+	myGifmaker.create(l,"mygif.gif",0.1) 'file saved to File.DirDocuments
+	
+	Log(File.ListFiles(File.DirDocuments)) 'ignore - log all files in File.Dirdocuments
+	
+	
+	
+	'###### SHARE THE FILE #####
+	
+	shareGif(Page1,File.DirDocuments,"mygif.gif") 'share the file OPTIONAL
+End Sub
+
+Public Sub shareGif(Page As Page, Dir As String, FileName As String)
+	Dim avc As ActivityViewController
+	avc.Initialize("avc", Array(CreateFileUrl(Dir,FileName)))
+	avc.Show(Page, Page.RootPanel)
+End Sub
+
+Sub CreateFileUrl (Dir As String, FileName As String) As Object
+	Dim no As NativeObject
+	no = no.Initialize("NSURL").RunMethod("fileURLWithPath:", Array(File.Combine(Dir, FileName)))
+	Return no
+End Sub
+
+Sub avc_Complete (Success As Boolean, ActivityType As String)
+	Log($"Success: ${Success}, ActivityType: ${ActivityType}"$)
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub

@@ -1,0 +1,73 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=lFiles.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=banano
+Library4=bananoskeleton
+Module1=BANanoFiles
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	Private btnReadText As SKButton
+	Private bf As BANanoFiles
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	BANano.Initialize("BANano", "BFD", DateTime.Now)
+	BANano.HTML_NAME = "index.html"
+	BANano.JAVASCRIPT_NAME = "app" & DateTime.Now & ".js"
+	BANano.Header.Title="BANano Files Demo"
+	BANano.TranspilerOptions.MinifyOnline = False
+	BANano.Build("c:\laragon\www")
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	BANano.LoadLayout("#body", "lFiles")
+	bf.Initialize.AddFileSelect(Me, "body", "fuconnect")
+End Sub
+
+Sub btnReadText_Click (event As BANanoEvent)
+	bf.ShowFileSelect("fuconnect")
+End Sub
+
+Sub fuconnect_change(e As BANanoEvent)
+	Dim fileList As List = bf.GetFileListFromTarget(e)
+	'no file is selected
+	If fileList.size = 0 Then Return
+	'only process 1 file
+	Dim fr As String = fileList.get(0)
+	'
+	Dim Result As Map
+	Dim promise As BANanoPromise = bf.readAsText(fr)
+	promise.Then(Result)
+		'get the json content
+		Dim txt As String = Result.get("result")
+		Log(txt)
+		'
+	promise.Else(Result)
+		Dim compError As String = Result.get("result")
+		Log(compError)
+	promise.End
+	
+	'nully file component so we can select same file
+	bf.Nullify
+End Sub

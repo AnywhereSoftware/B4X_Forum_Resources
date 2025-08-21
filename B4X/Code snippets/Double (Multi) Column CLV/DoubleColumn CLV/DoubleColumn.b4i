@@ -1,0 +1,152 @@
+﻿Build1=Default,b4i.doubleColumn
+File1=1.bil
+File2=listElement.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=xui views
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: DoubleColumnCLV
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+
+	Private CustomListView1 As CustomListView
+	Private pnlClasse1 As Panel
+	Private pnlClasse2 As Panel
+	Private lblClasse1 As Label
+	Private lblClasse2 As Label
+	Private xui As XUI
+	
+	Private clickedElement as String = ""
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.LoadLayout("1")
+	NavControl.ShowPage(Page1)
+	
+	'changes the color of the navbar (not related to the example)
+	Dim no As NativeObject = NavControl
+	no.GetField("navigationBar").RunMethod("setBarTintColor:", Array(no.ColorToUIColor(Colors.White)))
+	
+		
+	InsertElements
+End Sub
+
+Sub InsertElements
+	'the For loop adds pairs of elements, if you want to add Odd number of element may you can add it after the loop, setting only one parameter in the array
+	For i=0 To 10 Step 2 'adds 11 + 1 elements
+		Dim p As B4XView = xui.CreatePanel("")
+		p.Color = Colors.Transparent
+		p.SetLayoutAnimated(0, 0, 0, CustomListView1.AsView.Width, 210dip)
+		
+		'Text for the left element And right element
+		'you can add two more parameters to store different informations in the Tag property and then change a bit the "GetLabelText" function
+		CustomListView1.Add(p, Array As String($"Click Me ${i}"$, $"Click Me ${i+1}"$))
+	Next
+	
+	'adds only one button instead of a pair
+	Dim p As B4XView = xui.CreatePanel("")
+	p.Color = Colors.Transparent
+	p.SetLayoutAnimated(0, 0, 0, CustomListView1.AsView.Width, 210dip)
+	CustomListView1.Add(p, Array As String("Click Me Odd"))
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+Sub CustomListView1_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	Dim ExtraSize As Int = 15
+	For i = 0 To CustomListView1.Size - 1
+		Dim p As B4XView = CustomListView1.GetPanel(i)
+		If CustomListView1.GetValue(i) <> "" Then
+			Dim value() As String = CustomListView1.GetValue(i)
+		End If
+		If i > FirstIndex - ExtraSize And i < LastIndex + ExtraSize Then
+			'visible
+			If p.NumberOfViews = 0 Then
+				Try
+					p.LoadLayout("listElement")
+					p.Height = pnlClasse1.Height + 20dip
+					pnlClasse1.SetShadow(Colors.Black, 0,0,0.3, False)
+					pnlClasse2.SetShadow(Colors.Black, 0,0,0.3, False)
+					
+					If value.Length > 1 Then
+						lblClasse1.Text = value(0)
+						lblClasse2.Text = value(1)
+						
+						'pnlClasse1.Color = Colors.RGB(Rnd(0, 255), Rnd(0, 255), Rnd(0, 255))
+						'pnlClasse2.Color = Colors.RGB(Rnd(0, 255), Rnd(0, 255), Rnd(0, 255))
+					Else
+						pnlClasse2.Visible = False
+						lblClasse1.Text = value(0)
+						
+						'pnlClasse1.Color = Colors.RGB(Rnd(0, 255), Rnd(0, 255), Rnd(0, 255))
+					End If
+				Catch
+					Log(LastException)
+				End Try
+		
+			End If
+		Else
+			If (p.NumberOfViews > 0) Then
+				p.RemoveAllViews '<--- remove the layout
+			End If
+		End If
+	Next
+End Sub
+
+Sub pnlClasse2_Touch(Action As Int, X As Float, Y As Float)
+	
+End Sub
+
+Sub pnlClasse1_Touch(Action As Int, X As Float, Y As Float)
+	
+End Sub
+
+Sub pnlClasse2_Click
+	clickedElement = GetLabelText(CustomListView1.GetPanel(CustomListView1.GetItemFromView(Sender)), 1)
+	Log(clickedElement)
+	Msgbox($"You clicked '${clickedElement}'"$, "Clicked")
+End Sub
+
+Sub pnlClasse1_Click
+	clickedElement = GetLabelText(CustomListView1.GetPanel(CustomListView1.GetItemFromView(Sender)), 0)
+	Log(clickedElement)
+	Msgbox($"You clicked '${clickedElement}'"$, "Clicked")
+End Sub
+
+Sub GetLabelText(parent As B4XView, Index As Int) As String '0 left column - 1 right column
+	Dim p2 As Panel = parent.GetView(Index)
+	Dim l As Label = p2.GetView(0)
+	Return l.Text
+End Sub

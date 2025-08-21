@@ -1,0 +1,73 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsd_b4xviewevent
+Library4=javaobject
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=6.01
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Dim Manager As ManagerEvent
+	Private Label1 As Label
+	Private Label2 As Label
+	Dim left,Top As Int
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+	
+	Manager.Initialize(Me)
+	Manager.SetEvent(Label1,"Label1")
+	Manager.SetEvent(Label2,"Label2")
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub Label1_TouchEvent (action As Int, Coordinate() As TCoordinate)
+	Select action
+		Case Manager.Action_Down
+			Log($"Label1: Press- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+			left=Coordinate(0).X - Label1.Left
+			Top=Coordinate(0).y - Label1.Top
+		Case Manager.Action_Drag ' Drag
+			Log($"Label1: Drag- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+			Label1.Left=Label1.Left-left+Coordinate(0).X
+			Label1.Top=Label1.Top-Top+Coordinate(0).y
+			
+		Case Manager.Action_Up ' Release click
+			Log($"Label1: Release - X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+			Label1.Left=20
+			Label1.Top=20
+		Case Manager.Action_Click
+			Log($"Label1: Click- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+		Case Manager.Action_DoubleClick
+			Log($"Label1: DoubleClick- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+		Case Manager.Action_LongClick
+			Log($"Label1: LongClick- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+		Case Else
+			Log($"Label1: ${action}- X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+	End Select
+End Sub
+
+Sub Label2_TouchEvent (action As Int, Coordinate() As TCoordinate)
+	Log($"Label2: action:${action} -  X:${Coordinate(0).X} Y:${Coordinate(0).y}"$)
+End Sub

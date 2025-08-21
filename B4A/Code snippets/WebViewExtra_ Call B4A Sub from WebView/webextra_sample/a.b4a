@@ -1,0 +1,78 @@
+﻿Build1=Default,b4a.example
+File1=1.bal
+File2=index.html
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=webviewextras
+Library3=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private WebView1 As WebView
+	Dim we As WebViewExtras
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	we.addJavascriptInterface(WebView1,"B4A")
+	WebView1.LoadUrl(WebViewAssetFile("index.html"))
+End Sub
+
+Sub TheContentIs(content As String)
+	Msgbox(content,"Content From JS")
+End Sub
+
+Sub WebViewAssetFile (FileName As String) As String
+   #if B4J
+     Return File.GetUri(File.DirAssets, FileName)
+   #Else If B4A
+	Dim jo As JavaObject
+	jo.InitializeStatic("anywheresoftware.b4a.objects.streams.File")
+	If jo.GetField("virtualAssetsFolder") = Null Then
+		Return "file:///android_asset/" & FileName.ToLowerCase
+	Else
+		Return "file://" & File.Combine(jo.GetField("virtualAssetsFolder"), _
+       jo.RunMethod("getUnpackedVirtualAssetFile", Array As Object(FileName)))
+	End If
+   #Else If B4i
+     Return $"file://${File.Combine(File.DirAssets, FileName)}"$
+   #End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	we.executeJavascript(WebView1,"javascript: doCallBack();")
+End Sub

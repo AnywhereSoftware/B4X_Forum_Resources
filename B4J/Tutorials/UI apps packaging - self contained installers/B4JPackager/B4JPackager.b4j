@@ -1,0 +1,208 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.packager
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+Library4=jcontrolsfx
+Library5=archiver
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=6.01
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 350 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private btnBuild As Button
+	Private btnIconBrowse As Button
+	Private btnJarBrowse As Button
+	Private txtJar As TextField
+	Private txtIcon As TextField
+	Private txtName As TextField
+	Private txtTitle As TextField
+	Private fileChooser As FileChooser
+	Private iconExtension As String
+	Private packageExtension As String
+	Private cutils As ControlsUtils
+	Private txtVersion As TextField
+	Private btnPackagerBrowse As Button
+	Private txtPackager As TextField
+	Private ProgressBar1 As ProgressBar
+	Private timer1 As Timer
+	Private filename As String
+	Private shl As Shell
+	Private windows As Boolean
+	Private workingFolder As String
+	Private version As String = "1.50"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	Dim os As String = GetSystemProperty("os.name", "").ToLowerCase
+	If os.Contains("win") Then
+	   iconExtension = "ico"
+	   packageExtension = "exe"
+	   windows = True
+	   workingFolder = File.Combine(GetEnvironmentVariable("AppData", ""), "B4JPackager")
+	   File.MakeDir(workingFolder, "")
+	Else If os.Contains("mac") Then
+		iconExtension = "icns"
+		packageExtension = "dmg"
+		windows = False
+		workingFolder = File.DirApp
+	Else
+		cutils.ShowNotification2("", "Platform not supported", cutils.ICON_ERROR, MainForm)
+	End If
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Title = MainForm.Title & " " & version
+	fileChooser.Initialize
+	MainForm.Show
+	Dim jp As String = File.Combine(GetSystemProperty("java.home", ""), "../bin/javapackager.exe")
+	If File.Exists(jp, "") Then txtPackager.Text = jp
+	If File.Exists(workingFolder, "settings.txt") Then
+		Dim map As Map = File.ReadMap(workingFolder, "settings.txt")
+		 txtJar.Text = map.Get("jar")
+		 txtIcon.Text = map.Get("icon")
+		 txtName.Text = map.Get("name")
+		 txtTitle.Text = map.Get("title")
+		 txtVersion.Text = map.Get("version")
+		 txtPackager.Text = map.Get("packager")
+	End If
+	timer1.Initialize("timer1", 1000)
+End Sub
+
+Sub MainForm_Closed
+	File.WriteMap(workingFolder, "settings.txt", CreateMap("jar": txtJar.Text, "icon": txtIcon.Text, _
+		"name": txtName.Text, "title": txtTitle.Text, "version": txtVersion.Text, _
+		"packager": txtPackager.Text))
+End Sub
+
+Sub btnPackagerBrowse_Action
+	If txtJar.Text = "" Then fileChooser.InitialDirectory = File.GetFileParent(GetSystemProperty("java.home", ""))
+	fileChooser.SetExtensionFilter("javapackager", Array("javapackager.*"))
+	HandleBrowse(txtPackager)
+End Sub
+
+Sub btnJarBrowse_Action
+	fileChooser.SetExtensionFilter("Jar", Array("*.jar"))
+	HandleBrowse(txtJar)
+End Sub
+
+Sub btnIconBrowse_Action
+	fileChooser.SetExtensionFilter("Icon", Array("*." & iconExtension))
+	HandleBrowse(txtIcon)
+End Sub
+
+Private Sub HandleBrowse(tf As TextField)
+	If tf.Text <> "" And File.GetFileParent(tf.Text) <> "" Then
+		fileChooser.InitialDirectory = File.GetFileParent(tf.Text)
+	End If
+	Dim res As String = fileChooser.ShowOpen(MainForm)
+	If  res <> "" Then
+		tf.Text = res
+	End If	
+End Sub
+
+Sub btnBuild_Action
+	If txtJar.Text = "" Then
+		cutils.ShowNotification2("", "Please set the jar file", cutils.ICON_ERROR, MainForm)
+		Return
+	End If
+	If txtPackager.Text = "" Then
+		cutils.ShowNotification2("", "Please set the path to javapackager", cutils.ICON_ERROR, MainForm)
+		Return
+	End If
+	Try
+		Dim archiver As Archiver
+		If archiver.UnZipFiles(txtJar.Text, "",workingFolder, Array As String("META-INF/MANIFEST.MF"), "") <> 1 Then
+			cutils.ShowNotification2("", "Manifest file not found. Make sure that the jar file was compiled in release mode.", _
+				cutils.ICON_ERROR, MainForm)
+			Return
+		End If
+		Dim manifest As String = File.ReadString(workingFolder, "META-INF/MANIFEST.MF")
+		Dim m As Matcher = Regex.Matcher2("JavaFX-Application-Class:\s*(.*)$", Regex.MULTILINE, manifest)
+		Dim appClass As String
+		If m.Find Then
+			appClass = m.Group(1)
+		Else
+			cutils.ShowNotification2("", "Error parsing manifest file.", _
+				cutils.ICON_ERROR, MainForm)
+			Return
+		End If
+		Log("App identifier: " & appClass)
+		Dim shl As Shell
+		Dim args As List
+		args.Initialize
+		args.AddAll(Array ("-deploy", "-verbose", "-srcdir", File.GetFileParent(txtJar.Text), _
+			"-srcfiles", File.GetName(txtJar.Text), "-Bmainjar=" & File.GetName(txtJar.Text), "-native", packageExtension, _
+			"-BsystemWide=true", "-title", txtTitle.Text, "-name", txtName.Text, "-outdir", workingFolder, _
+			"-outfile", "1.exe", "-BappVersion=" & txtVersion.Text, "-appclass", appClass, _
+			"-Bidentifier=" & appClass))
+		If windows Then
+			args.Add("-Bruntime=" & GetSystemProperty("java.home", ""))
+		End If
+		If txtIcon.Text <> "" Then args.Add($"-Bicon=${txtIcon.Text}"$)
+		filename = File.Combine(workingFolder, "bundles/" & txtName.Text & "-" & txtVersion.Text & "." & packageExtension)
+		File.Delete(filename, "")
+		shl.InitializeDoNotHandleQuotes("shl", txtPackager.Text, args)
+'		For Each a As String In shl.Arguments
+'			Log(a)
+'		Next
+		shl.RunWithOutputEvents(-1)
+		If windows Then
+			ProgressBar1.Progress = 0
+			timer1.Enabled = True
+		Else
+			ProgressBar1.Progress = -1 'indeterminate
+		End If
+		btnBuild.Enabled = False
+		ProgressBar1.Visible = True
+	Catch
+		Log(LastException)
+		cutils.ShowNotification2("", "Error: " & LastException.Message, _
+				cutils.ICON_ERROR, MainForm)
+	End Try
+End Sub
+
+Sub Shl_StdOut (Buffer() As Byte, Length As Int)
+	Log(BytesToString(Buffer, 0, Length, "utf8"))
+End Sub
+
+Sub Shl_StdErr (Buffer() As Byte, Length As Int)
+	LogError(BytesToString(Buffer, 0, Length, "utf8"))
+End Sub
+
+Sub Timer1_Tick
+	If File.Exists(filename, "") Then
+		ProgressBar1.Progress = File.Size(filename, "") / 50000000
+	End If
+End Sub
+
+Sub shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	Log("Success: " & Success)
+	Log("ExitCode: " & ExitCode)
+	timer1.Enabled = False
+	btnBuild.Enabled = True
+	ProgressBar1.Progress = 1
+	If ExitCode <> 0  Or Success = False Then
+		cutils.ShowNotification2("", "Error: " & StdErr, _
+				cutils.ICON_ERROR, MainForm)
+	Else
+		fx.ShowExternalDocument(File.GetUri(File.GetFileParent(filename), ""))
+		cutils.ShowNotification2("", "Package built successfully." , _
+				cutils.ICON_INFORMATION, MainForm)
+	End If
+End Sub
+
+
+
+

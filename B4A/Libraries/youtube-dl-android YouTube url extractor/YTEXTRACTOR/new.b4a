@@ -1,0 +1,90 @@
+﻿Build1=Default,b4a.example.ytextr
+Group=Default Group
+IconFile=
+Library1=core
+Library2=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#AdditionalJar:android-youtubeExtractor-master-SNAPSHOT.aar
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim NativeMe As JavaObject
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	NativeMe.InitializeContext
+	NativeMe.RunMethod("getlinkyt", Array As Object("https://www.youtube.com/watch?v=n_pTueTt26A"))
+	Wait For finishgetlink(listlink As List)
+	For i=0 To listlink.Size-1
+		Log(listlink.Get(i))
+	Next
+	Log("Finish")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+#If JAVA
+import android.util.SparseArray;
+import java.util.ArrayList;
+import at.huber.youtubeExtractor.VideoMeta;
+import at.huber.youtubeExtractor.YouTubeExtractor;
+import at.huber.youtubeExtractor.YtFile;
+import anywheresoftware.b4a.keywords.Common;
+import anywheresoftware.b4a.objects.collections.List;
+public void getlinkyt(String linkyt){
+        String youtubeLink = linkyt;
+        new YouTubeExtractor(this) {
+            @Override
+            public void onExtractionComplete(SparseArray<YtFile> ytFiles, VideoMeta vMeta) {
+                ArrayList<String> dslink = new ArrayList<String>();
+                List list = new List();
+                if (ytFiles != null) {
+                    for (int i = 0, itag; i < ytFiles.size(); i++) {
+                        itag = ytFiles.keyAt(i);
+                        YtFile ytFile = ytFiles.get(itag);
+                        dslink.add(ytFile.toString());
+                        //BA.Log("Str " + ytFile.toString());
+                        // String downloadUrl = ytFiles.get(itag).getUrl();
+                    }
+                }
+            //    BA.Log("Finish");
+			                            list.setObject((java.util.ArrayList)dslink);
+
+              processBA.raiseEventFromDifferentThread(this, null, 0, "finishgetlink", false, new Object[] {list});
+            }
+        }.extract(youtubeLink, true, true);
+
+    }
+#End If

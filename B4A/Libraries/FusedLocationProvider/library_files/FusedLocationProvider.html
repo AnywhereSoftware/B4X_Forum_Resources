@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>FusedLocationProvider</title>
+		<style type="text/css">
+			body{
+				background-color:#E1DEE6;
+				color:#222;
+				font-family:Arial,Helvetica,sans-serif;
+				font-size:14px;
+				margin:0;
+				padding:0;
+			}
+			h3{
+				background-color:#869BBF;
+				margin:0;
+				padding:5px;
+			}
+			ul{
+				list-style:none;
+				margin:5px;
+				padding:0;
+			}
+			ul li{
+				background-color:#FFF;
+				border:1px solid #666;
+				margin:0;
+				padding:5px;
+			}
+			ul li:first-child, h3{
+				border-top-left-radius:5px;
+				border-top-right-radius:5px;
+			}
+			ul li:last-child, h3{
+				border-bottom-left-radius:5px;
+				border-bottom-right-radius:5px;
+			}
+			ul h3:first-child{
+				background-color:#869BDF;
+				margin-bottom:5px;
+			}
+		</style>
+    </head>
+    <body><h3>FusedLocationProvider</h3>
+<ul><li><h3>Comment:</h3></li><li>The FusedLocationProvider intelligently manages the underlying location technology and gives you the best location according to your needs.
+ https://developer.android.com/google/play-services/location.html
+ This library depends on the Google Play Services library, android-support-v4 library and the GPS library.
+ The GPS library is required in order to use it's Location object.</li></ul>
+<ul>
+<li><h3>ConnectionResult</h3>
+<h3>Fields:</h3>
+<ul>
+<li><b>API_UNAVAILABLE <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>One of the API components you attempted to connect to is not available.</i>
+</li>
+<li><b>CANCELLED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The client cancelled the connection by calling Disconnect().</i>
+</li>
+<li><b>DEVELOPER_ERROR <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The application is misconfigured.</i>
+</li>
+<li><b>INTERNAL_ERROR <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>An internal error occurred.</i>
+</li>
+<li><b>INVALID_ACCOUNT <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The client attempted to connect to the service with an invalid account name specified.</i>
+</li>
+<li><b>LICENSE_CHECK_FAILED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The application is not licensed to the user. This error is not recoverable and will be treated as fatal.</i>
+</li>
+<li><b>NETWORK_ERROR <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>A network error occurred. Retrying should resolve the problem.</i>
+</li>
+<li><b>RESOLUTION_REQUIRED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Completing the connection requires some form of resolution.</i>
+</li>
+<li><b>SERVICE_DISABLED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The installed version of Google Play services has been disabled on this device.</i>
+</li>
+<li><b>SERVICE_INVALID <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The version of the Google Play services installed on this device is not authentic.</i>
+</li>
+<li><b>SERVICE_MISSING <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Google Play services is missing on this device.</i>
+</li>
+<li><b>SERVICE_VERSION_UPDATE_REQUIRED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The installed version of Google Play services is out of date.</i>
+</li>
+<li><b>SIGN_IN_REQUIRED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The client attempted to connect to the service but the user is not signed in.</i>
+</li>
+<li><b>SUCCESS <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>The connection was successful.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>FusedLocationProvider</h3>
+<h3>Events:</h3>
+<ul>
+<li><b>ConnectionFailed</b> (ConnectionResult1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>)</li>
+<li><b>ConnectionSuccess</b></li>
+<li><b>ConnectionSuspended</b> (SuspendedCause1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>)</li>
+<li><b>LocationChanged</b> (Location1 <span style='color:blue'>As</span> <span style='color:#008B8B'>Location</span>)</li>
+<li><b>LocationSettingsChecked</b> (LocationSettingsResult1 <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsResult</span>)</li>
+</ul>
+<h3>Fields:</h3>
+<ul>
+<li><b>ConnectionResult <span style='color:blue'>As</span> <span style='color:#008B8B'>ConnectionResult</span></b>
+<br><i>Contains the various ConnectionResult constants.</i>
+</li>
+<li><b>SuspendedCause <span style='color:blue'>As</span> <span style='color:#008B8B'>SuspendedCause</span></b>
+<br><i>Contains the various SuspendedCause constants.</i>
+</li>
+</ul>
+<h3>Methods:</h3>
+<ul>
+<li><b>CheckLocationSettings</b> (LocationSettingsRequest1 <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsRequest</span>)<b></b>
+<br><i>Checks if the relevant system settings are enabled on the device to carry out the desired location requests.
+ Raises the event:
+ LocationSettingsChecked(LocationSettingsResult1 As LocationSettingsResult)</i>
+</li>
+<li><b>Connect</b>
+<br><i>Attempt to connect to the Location Services.
+ Will raise either event:
+ ConnectionFailed(ConnectionResult1 As Int)
+ ConnectionSuccess</i>
+</li>
+<li><b>Disconnect</b>
+<br><i>Disconnect from the Location Services.</i>
+</li>
+<li><b>GetLastKnownLocation <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationWrapper</span></b>
+<br><i>Returns the best most recent location currently available. 
+ Can only be called if the FusedLocationProvider is connected.
+ The returned Location object will not be initialized if no last known location is available.</i>
+</li>
+<li><b>Initialize</b> (EventName <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>)<b></b>
+<br><i>Initialize the FusedLocationProvider object.</i>
+</li>
+<li><b>IsConnected <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Returns whether the FusedLocationProvider is connected to the Location Services.</i>
+</li>
+<li><b>IsConnecting <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Returns whether the FusedLocationProvider is trying to connect to the Location Services.</i>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+<li><b>RemoveLocationUpdates</b>
+<br><i>Remove all requests for location updates.</i>
+</li>
+<li><b>RequestLocationUpdates</b> (LocationRequest1 <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span>)<b></b>
+<br><i>Request for location updates.
+ The LocationRequest object defines the criteria for which location updates are requested.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>LocationRequest</h3>
+<h3>Fields:</h3>
+<ul>
+<li><b>Priority <span style='color:blue'>As</span> <span style='color:#008B8B'>Priority</span></b>
+<br><i>Contains the various priority constants.</i>
+</li>
+</ul>
+<h3>Methods:</h3>
+<ul>
+<li><b>GetExpirationTime <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span></b>
+<br><i>Get the request expiration time, in milliseconds since boot.</i>
+</li>
+<li><b>GetFastestInterval <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span></b>
+<br><i>Get the fastest interval of this request, in milliseconds.</i>
+</li>
+<li><b>GetInterval <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span></b>
+<br><i>Get the desired interval of this request, in milliseconds.</i>
+</li>
+<li><b>GetNumUpdates <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Get the number of updates requested.</i>
+</li>
+<li><b>GetPriority <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Get the quality of the request.</i>
+</li>
+<li><b>GetSmallestDisplacement <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span></b>
+<br><i>Get the minimum displacement between location updates in meters.
+ By default this is 0.</i>
+</li>
+<li><b>Initialize</b>
+<br><i>Initialize the LocationRequest with default parameters.
+ Default parameters are for a block accuracy, slowly updated location.</i>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+<li><b>SetExpirationDuration</b> (Millis <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the duration of this request, in milliseconds.</i>
+</li>
+<li><b>SetExpirationTime</b> (Millis <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the request expiration time, in millisecond since boot.</i>
+</li>
+<li><b>SetFastestInterval</b> (Millis <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Explicitly set the fastest interval for location updates, in milliseconds.</i>
+</li>
+<li><b>SetInterval</b> (Millis <span style='color:blue'>As</span> <span style='color:#008B8B'>Long</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the desired interval for active location updates, in milliseconds.</i>
+</li>
+<li><b>SetNumUpdates</b> (NumUpdates <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the number of location updates.</i>
+</li>
+<li><b>SetPriority</b> (Priority <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the priority of the request.</i>
+</li>
+<li><b>SetSmallestDisplacement</b> (SmallestDisplacementMeters <span style='color:blue'>As</span> <span style='color:#008B8B'>Float</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span></b>
+<br><i>Set the minimum displacement between location updates in meters.
+ By default this is 0.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>LocationSettingsRequestBuilder</h3>
+<h3>Methods:</h3>
+<ul>
+<li><b>AddLocationRequest</b> (LocationRequest1 <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationRequest</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsRequestBuilder</span></b>
+<br><i>Adds one LocationRequest that the client is interested in.
+ This method can be called multiple times if required to add additional location requests.</i>
+</li>
+<li><b>Build <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsRequest</span></b>
+<br><i>Creates a LocationSettingsRequest.</i>
+</li>
+<li><b>Initialize</b>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+<li><b>SetAlwaysShow</b> (AlwaysShow <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsRequestBuilder</span></b>
+<br><i>Always show the dialog, without the "Never" option to suppress future dialogs from this app.
+ When this flag is set to true, the dialog will show up if the location settings do not satisfy the request, even if a user has previously chosen "Never".
+ NOTE: Only use this method if your dialog is the result of an explicit user-initiated action that requires location to proceed.
+ Cancelling this dialog should also cancel the initiated action.</i>
+</li>
+<li><b>SetNeedBle</b> (NeedBle <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>)<b> <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsRequestBuilder</span></b>
+<br><i>Sets whether the client wants BLE scan to be enabled.
+ When this flag is set to true, if the platform supports BLE scan mode and Bluetooth is off, the dialog will prompt the user to enable BLE scan.
+ If the platform doesn't support BLE scan mode, the dialog will prompt to enable Bluetooth.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>LocationSettingsResult</h3>
+<h3>Methods:</h3>
+<ul>
+<li><b>GetLocationSettingsStates <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsStates</span></b>
+<br><i>Returns the location settings states.</i>
+</li>
+<li><b>GetLocationSettingsStatus <span style='color:blue'>As</span> <span style='color:#008B8B'>LocationSettingsStatus</span></b>
+<br><i>Returns the location settings result status.</i>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>LocationSettingsStates</h3>
+<h3>Methods:</h3>
+<ul>
+<li><b>IsBlePresent <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether BLE is present on the device.</i>
+</li>
+<li><b>IsBleusable <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether BLE is enabled and is usable by the app.</i>
+</li>
+<li><b>IsGpsPresent <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether GPS provider is present on the device.</i>
+</li>
+<li><b>IsGpsUsable <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether GPS provider is enabled and is usable by the app.</i>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+<li><b>IsLocationPresent <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether location is present on the device.
+ This method returns true when either GPS or network location provider is present.</i>
+</li>
+<li><b>IsLocationUsable <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether location is enabled and is usable by the app.
+ This method returns true when either GPS or network location provider is usable.</i>
+</li>
+<li><b>IsNetworkLocationPresent <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether network location provider is present on the device.</i>
+</li>
+<li><b>IsNetworkLocationUsable <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+<br><i>Whether network location provider is enabled and usable by the app.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>LocationSettingsStatus</h3>
+<h3>Events:</h3>
+<ul>
+<li><b>ResolutionDialogDismissed</b> (LocationSettingsUpdated <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span>)</li>
+</ul>
+<h3>Fields:</h3>
+<ul>
+<li><b>StatusCodes <span style='color:blue'>As</span> <span style='color:#008B8B'>StatusCodes</span></b>
+<br><i>Contains the various StatusCode constants.</i>
+</li>
+</ul>
+<h3>Methods:</h3>
+<ul>
+<li><b>GetStatusCode <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Returns the status code that describes whether the location settings meet the location request requirements.</i>
+</li>
+<li><b>IsInitialized <span style='color:blue'>As</span> <span style='color:#008B8B'>Boolean</span></b>
+</li>
+<li><b>StartResolutionDialog</b> (EventName <span style='color:blue'>As</span> <span style='color:#008B8B'>String</span>)<b></b>
+<br><i>Starts the resolution dialog.
+ The user can then enable the location settings required to meet the location request requirements.
+ This method must be called from an Activity.
+ Raises the event:
+ ResolutionDialogDismissed(LocationSettingsUpdated As Boolean)</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>Priority</h3>
+<h3>Fields:</h3>
+<ul>
+<li><b>PRIORITY_BALANCED_POWER_ACCURACY <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Used with SetPriority(Int) to request "block" level accuracy.</i>
+</li>
+<li><b>PRIORITY_HIGH_ACCURACY <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Used with SetPriority(Int) to request the most accurate locations available.</i>
+</li>
+<li><b>PRIORITY_LOW_POWER <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Used with SetPriority(Int) to request "city" level accuracy.</i>
+</li>
+<li><b>PRIORITY_NO_POWER <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Used with SetPriority(Int) to request the best accuracy possible with zero additional power consumption.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>StatusCodes</h3>
+<h3>Fields:</h3>
+<ul>
+<li><b>RESOLUTION_REQUIRED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Location settings do not meet the location request requirements.
+ Location settings can be changed to meet the location request requirements.
+ A resolution dialog is available.</i>
+</li>
+<li><b>SETTINGS_CHANGE_UNAVAILABLE <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Location settings do not meet the location request requirements.
+ Location settings can't be changed to meet the location request requirements.
+ No resolution dialog is available.</i>
+</li>
+<li><b>SUCCESS <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>Location settings meet the location request requirements.</i>
+</li>
+</ul>
+</ul>
+<ul>
+<li><h3>SuspendedCause</h3>
+<h3>Fields:</h3>
+<ul>
+<li><b>CAUSE_NETWORK_LOST <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>A connection suspended cause informing you that a peer device connection was lost.</i>
+</li>
+<li><b>CAUSE_SERVICE_DISCONNECTED <span style='color:blue'>As</span> <span style='color:#008B8B'>Int</span></b>
+<br><i>A connection suspended cause informing that the service has been killed.</i>
+</li>
+</ul>
+</ul>
+<ul><li><h3>Author: Martin Pearman</h3></li></ul>
+<ul><li><h3>Version: 1.31</h3></li></ul></body>
+</html>								

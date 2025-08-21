@@ -1,0 +1,78 @@
+﻿Version=7.3
+NumberOfModules=1
+Module1=MyAsyncTask
+Build1=Default,b4a.example.asynctask
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="11" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+IconFile=
+NumberOfFiles=1
+File1=Layout1.bal
+NumberOfLibraries=2
+Library1=core
+Library2=asynctask
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AsyncTask Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private COUNT_TO_VALUE As Long=99000000
+	Private PUBLISH_PROGRESS As Boolean=True
+	Private MyAsyncTask1 As MyAsyncTask
+End Sub
+
+Sub Globals
+	
+	Private LabelProgress As Label
+	Private LabelResult As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout1")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub ButtonCancel_Click
+	If MyAsyncTask1.IsInitialized Then
+		MyAsyncTask1.Cancel(True)
+	End If
+End Sub
+
+Sub ButtonStart_Click
+	LabelProgress.Text=""
+	LabelResult.Text=""
+	If Not(MyAsyncTask1.IsInitialized) Then
+		MyAsyncTask1.Initialize(Me, "MyAsyncTask1")
+		MyAsyncTask1.Execute(COUNT_TO_VALUE, PUBLISH_PROGRESS)
+	End If
+End Sub
+
+Sub MyAsyncTask1_TaskCancelled(ValueReached As Long)
+	LabelResult.Text="The task was cancelled, a value of "&ValueReached&" was reached, target was "&COUNT_TO_VALUE
+	Dim MyAsyncTask1 As MyAsyncTask
+End Sub
+
+Sub MyAsyncTask1_TaskComplete(ValueReached As Long)
+	LabelResult.Text="The task completed, a value of "&ValueReached&" was reached, target was "&COUNT_TO_VALUE
+	Dim MyAsyncTask1 As MyAsyncTask
+End Sub
+
+Sub MyAsyncTask1_TaskProgress(PercentProgress As Int)
+	LabelProgress.Text = PercentProgress & "%"
+End Sub

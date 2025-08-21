@@ -1,0 +1,237 @@
+﻿Version=5.9
+AppType=JavaFX
+NumberOfModules=0
+Build1=Default,b4j.example
+NumberOfFiles=2
+File1=button.css
+File2=main.bjl
+NumberOfLibraries=4
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private etLog As TextArea
+	Private btnConnect As Button
+	Private btnPlay As Button
+	Private btnLeave As Button
+	Private btnDisconnect As Button
+
+	Dim Client As MqttClient
+	Dim ClientID As String
+
+	Dim Const IPAddress As String = "xxx.xxx.xxx.xxx"
+	Dim Const Port As Int = xxxxx
+
+	Dim Serializator As B4XSerializator
+
+	Dim MatchID As String
+	Dim CurrentTurn As Int
+	Dim Const MATCH_PLAYING As Byte = 1
+	Dim Const MATCH_LEAVING As Byte = 2
+	Type typInitialData(PlayerID1 As String, PlayerID2 As String, MatchID As String)
+	Type typData(Code As Byte, Origin As String, Turn As Int, OtherData As String)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+	etLog.Editable = False
+	etLog.WrapText = True
+	MainForm.Show
+
+	MatchID = ""
+	CurrentTurn = -1
+
+	ClientID = "MyComputer"
+End Sub
+
+Sub btnConnect_Action
+	Client.Initialize("Monitor", "tcp://" & IPAddress & ":" & Port, ClientID)
+	Client.Connect
+End Sub
+
+Sub btnPlay_Action
+	CurrentTurn = CurrentTurn + 1
+	Dim Data As typData
+	Data.Initialize
+	Data.Code = MATCH_PLAYING
+	Data.Origin = ClientID
+	Data.Turn = CurrentTurn
+	Data.OtherData = "data" & Rnd(1, 99999999)
+	AddToLog("Sending updated data for turn " & Data.Turn & "...")
+	Client.Publish2(MatchID, CreateMessage(Data), 2, True)
+	btnPlay.Enabled = False
+End Sub
+
+Sub btnLeave_Action
+	Dim Data As typData
+	Data.Initialize
+	Data.Code = MATCH_LEAVING
+	Data.Origin = ClientID
+	Client.Publish2(MatchID, CreateMessage(Data), 2, True)
+	Client.Unsubscribe(MatchID)
+	btnPlay.Enabled = False
+	btnLeave.Enabled = False
+	fx.Msgbox(MainForm, "Bye bye...", "GAME OVER")
+	AddToLog("Waiting for disconnection...")
+	btnDisconnect.Enabled = False
+	Client.Close
+End Sub
+
+Sub btnDisconnect_Action
+	Client.Close
+End Sub
+
+Sub AddToLog(Text As String)
+	Log(Text)
+	etLog.Text = etLog.Text & Text & CRLF
+	etLog.SetSelection(etLog.Text.Length, etLog.Text.Length)
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	etLog.Text = ""
+	AddToLog("Connected=" & Success)
+	If Success = True Then
+		AddToLog("My ID=" & ClientID)
+		AddToLog("Suscribing to private topic...")
+		Client.Subscribe(ClientID, Client.QOS_2_EXACTLY_ONCE)
+		AddToLog("Waiting for another player...")
+		btnConnect.Enabled = False
+		btnDisconnect.Enabled = True
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+	AddToLog("Disconnected")
+	btnConnect.Enabled = True
+	btnPlay.Enabled = False
+	btnLeave.Enabled = False
+	btnDisconnect.Enabled = False
+	CurrentTurn = -1
+End Sub
+
+Sub CreateMessage(Data As Object) As Byte()
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub DecodeMessage(Data() As Byte) As Object
+	Return Serializator.ConvertBytesToObject(Data)
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	AddToLog("Message arrived: Topic=" & Topic & " / IsPrivate=" & (Topic = ClientID) & " / Length=" & Payload.Length)
+	If Payload.Length = 0 Then
+		'Ignores the message
+		Return
+	End If
+	If Topic = ClientID Then
+		'Private message sent by the broker
+		Dim Obj As Object = DecodeMessage(Payload)
+		If Obj Is typInitialData Then
+			'Gets the match ID and the players ID
+			Dim InitialData As typInitialData = Obj
+			MatchID = InitialData.MatchID
+			AddToLog("MatchID=" & MatchID)
+			AddToLog("Player1=" & InitialData.PlayerID1)
+			AddToLog("Player2=" & InitialData.PlayerID2)
+			If MatchID <> "" Then
+				'There's a pending match
+				AddToLog("Suscribing to the match topic...")
+				Client.Subscribe(MatchID, 2)
+				btnLeave.Enabled = True
+			End If
+		Else If Obj Is String Then
+			'The broker returned an error
+			Dim ErrorText As String = Obj
+			AddToLog(ErrorText)
+			'...
+			Return
+		Else
+			'ERROR : Invalid message
+			AddToLog("ERROR : Invalid message")
+			'...
+			Return
+		End If
+	Else
+		'Shared message with a MatchID
+		Dim Obj As Object = DecodeMessage(Payload)
+		If Obj Is typInitialData Then
+			'The match has not started yet
+			Dim InitialData As typInitialData = Obj
+			If InitialData.MatchID <> MatchID Then
+				'ERROR : Invalid MatchID
+				AddToLog("ERROR : Invalid MatchID")
+				'...
+				Return
+			End If
+			If InitialData.PlayerID1 = ClientID Then
+				'I'm the first player so let's begin
+				fx.Msgbox(MainForm, "The game begins. It's your turn.", "NEW MATCH")
+				CurrentTurn = 0
+				btnPlay.Enabled = True
+			Else
+				fx.Msgbox(MainForm, "The game begins. It's the turn of the other player.", "NEW MATCH")
+			End If
+		Else If Obj Is typData Then
+			'The match is in progress
+			Dim Data As typData = Obj
+			AddToLog("Data.Turn=" & Data.Turn & " / CurrentTurn=" & CurrentTurn)
+			If Data.Turn <> CurrentTurn Then
+				AddToLog("Sender=" & Data.Origin)
+				AddToLog("Code=" & Data.Code)
+				AddToLog("Turn=" & Data.Turn)
+				AddToLog("Data=" & Data.OtherData)
+				If Data.Code = MATCH_PLAYING Then
+					'Updates the game with the received data
+					CurrentTurn = Data.Turn
+					'...
+					AddToLog("My turn=" & (Data.Origin <> ClientID))
+					btnPlay.Enabled = (Data.Origin <> ClientID)
+				Else IF Data.Code = MATCH_LEAVING Then
+					'The other player quitted
+					Client.Unsubscribe(MatchID)
+					btnPlay.Enabled = False
+					btnLeave.Enabled = False
+					fx.Msgbox(MainForm, "The other player left the match.", "GAME OVER")
+					AddToLog("Waiting for disconnection...")
+					btnDisconnect.Enabled = False
+					Client.Close
+				Else
+					'ERROR : Unknown code
+					AddToLog("ERROR : Unknown code")
+					'...
+					Return
+				End If
+			Else
+				AddToLog("Waiting for other player's turn...")
+			End If
+		Else If Obj Is String Then
+			'The broker returned an error
+			Dim ErrorText As String = Obj
+			AddToLog(ErrorText)
+			'...
+			Return
+		Else
+			'ERROR : Invalid message
+			AddToLog("ERROR : Invalid message")
+			'...
+			Return
+		End If
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

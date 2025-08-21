@@ -1,0 +1,51 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2_nonui
+Library3=json
+Module1=CloudFlareAPI
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.1
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim folder As String = File.GetFileParent(Args(0))
+	Dim fn As String = File.GetName(Args(0))
+
+	Dim mp As Map = File.ReadMap(folder, fn)
+
+	Dim email As String = mp.Get("email")
+	Dim apikey As String = mp.Get("apikey")
+	Dim zonename As String = mp.Get("zonename")
+	Dim challenges As String = mp.Get("challenges")
+	
+	Dim challengesAsArray() As String = Regex.Split(",", challenges)
+	
+	Dim cf As CloudFlareAPI
+	cf.Initialize(Me, "cf", email, apikey)
+	cf.UpdateACMEChallenges(zonename, challengesAsArray)
+	
+	StartMessageLoop
+End Sub
+
+private Sub cf_OnDone (success As Boolean)
+	Log ("Cloudflare done: [success:" & success & "]")
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

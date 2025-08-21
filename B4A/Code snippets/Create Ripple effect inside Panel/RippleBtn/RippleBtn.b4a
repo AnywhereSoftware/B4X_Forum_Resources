@@ -1,0 +1,104 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: true
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private pnlBtn As B4XView
+	Private Panel1 As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub pnlBtn_Touch (Action As Int, X As Float, Y As Float)
+	Select Action
+		Case Activity.ACTION_UP
+			'capture current appearance into bitmap
+			Dim iv As ImageView
+			iv.Initialize("")
+			Dim fra As B4XView = iv 'frame
+			fra.SetColorAndBorder(Colors.Transparent,0,0,0)
+			Activity.AddView(fra,pnlBtn.Left,pnlBtn.Top,pnlBtn.Width, pnlBtn.Height)
+			Dim bmp As B4XBitmap = fra.Parent.Snapshot
+			fra.RemoveViewFromParent
+			
+			'set view with captured image
+			fra.SetBitmap(bmp)
+			Activity.AddView(fra,pnlBtn.Left,pnlBtn.Top,pnlBtn.Width,pnlBtn.Height)
+			
+			'preparing to remove inner image region
+			Dim cvs As B4XCanvas
+			Dim path As B4XPath
+			Dim r As B4XRect
+
+			cvs.Initialize(fra)
+			r.Initialize(0,0,cvs.TargetRect.Width, cvs.TargetRect.Height)
+			path.InitializeRoundedRect(r, 50dip) 'this radius should equal with pnlBtn radius in designer
+			cvs.ClipPath(path)
+			cvs.ClearRect(r) 'make hole effect, remove inner region
+			cvs.Invalidate
+			
+			'update view image with recent image after removing inner region
+			fra.SetBitmap(cvs.CreateBitmap)
+			
+			'start ripple effect
+			DoRipple(X,Y,1000,xui.Color_ARGB(100,0,0,0))
+		Case Activity.ACTION_MOVE
+			'create water ripple efect (wannabe :p)
+			Dim cX As Long = x
+			If (cX Mod 5 = 0) Then DoRipple(X,Y,2000,xui.Color_ARGB(75,255,255,255))
+	End Select
+End Sub
+
+Sub DoRipple(X As Float, Y As Float, duration As Int,clr As Int)
+	'create ripple effect
+	Dim radius As Int = pnlBtn.Width * .75
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetColorAndBorder(clr,0,0,radius)
+	pnlBtn.AddView(p,X, Y,0,0)
+	p.SetLayoutAnimated(duration,x-radius, y-radius,2 * radius, 2 * radius)
+	p.SetVisibleAnimated(duration,False)
+	Sleep(duration)
+	p.RemoveViewFromParent
+End Sub

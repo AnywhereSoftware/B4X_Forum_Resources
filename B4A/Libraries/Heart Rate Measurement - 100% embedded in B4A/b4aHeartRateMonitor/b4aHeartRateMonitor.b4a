@@ -1,0 +1,177 @@
+﻿Build1=Default,JHS.hrm
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=heartratemonitornew
+Library3=androidplot_0_6_2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~~\n~~\n~~\n~'AddApplicationText(~\n~'		<activity android:name="com.google.zxing.client.android.CaptureActivity"~\n~'			android:screenOrientation="landscape" android:configChanges="orientation|keyboardHidden">~\n~'		</activity>)~\n~SetActivityAttribute(Main, android:screenOrientation, "portrait")	~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: HeartRateMonitor
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+    Dim myscanner As HeartRateMonitorNew
+	
+	
+	Private lc1 As RealTimeLineChart
+	
+	Dim bufsize As Int = 100                                 'set the data buffer size here i.e how many values to display in the plot area
+	Dim xlab(bufsize) As String
+	
+	Private lc1 As RealTimeLineChart
+	Dim a As Int = 0
+	Dim xlabeltrack As Int = 0
+	
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	
+	Activity.LoadLayout("main")
+	
+	
+	lc1.GraphTitleColor = Colors.Magenta
+	lc1.GraphTitleSkewX = -0.15
+	lc1.GraphTitleBold = True
+	lc1.GraphTitleTextSize = 15.0
+	lc1.GraphPlotAreaBackgroundColor = Colors.Black          'this will paint the plotting area DrakGray regardless of what GraphBackgroundColor has been set to
+	lc1.GraphBackgroundColor = Colors.Transparent               'this will paint everything within the outer frame to be white
+	lc1.GraphFrameColor = Colors.Red                            'this adjusts only the outer frame color
+	lc1.GraphFrameWidth = 2.0
+	lc1.GraphBufferSize = bufsize
+	lc1.GraphTitle = "Heart Rate Monitor"
+
+	lc1.DomainLabelColor = Colors.White
+	lc1.DomainLabelTextSize = 25
+	lc1.DomianLabel = "Time in Seconds"
+	
+	lc1.YaxisRangeMode = lc1.YaxisMode_FIXED                    'the other option is FIXED
+	lc1.YaxisRange(0.0, 200.0)
+	lc1.YaxisDivisions = 10
+	lc1.YaxisLabelTicks = 1
+	lc1.YaxisShowZero = True
+	lc1.YaxisTitleTextSize = 30
+	lc1.YaxisTitleColor = Colors.White
+	lc1.YaxisGridLineColor = Colors.Yellow
+	lc1.YaxisLabelTextSize = 25
+	lc1.YaxisLabelColor = Colors.White
+	lc1.YaxisLabelOrientation = 0
+	lc1.YaxisTitle = "BPM"
+	
+	'************************ If you comment this code then the x-axis labels will be the index value of the buffer
+	For i = 0 To bufsize - 1
+		xlab(i) = "" & i
+	Next
+	lc1.XAxisLabels = xlab
+	'*************************************************************************************************************
+		
+	lc1.XaxisLabelTextSize = 20
+	lc1.XaxisLabelTextColor = Colors.White
+	lc1.XaxisGridLineColor = Colors.Yellow
+	lc1.XaxisLabelOrientation = 0
+	lc1.XaxisDivisions = 30
+	lc1.XaxisLabelTicks = 1
+	
+
+
+	
+	lc1.LegendTextSize = 15.0
+	lc1.LegendTextColor = Colors.White
+	lc1.LegendBackgroundColor = Colors.Transparent
+	
+	'setup for Line 1
+	lc1.Line_1_LineColor = Colors.Red
+	lc1.Line_1_LineWidth = 2.0
+	lc1.Line_1_DrawDash = False
+	lc1.Line_1_LegendText = "Heart Rate"
+	lc1.Line_1_DrawCubic = True
+
+	lc1.NumberOfLineCharts = 1
+	lc1.DrawTheGraphs
+	
+
+End Sub
+
+Sub Activity_Resume
+	
+	myscanner.CameraFocus = myscanner.FOCUS_AUTO     'or myscannner.FOCUS_MACRO
+	myscanner.onResumeInitializeResources	
+	lc1.START
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+	myscanner.onPauseReleaseResources
+
+End Sub
+
+'A new beatsAvg will be available every 2 seconds
+Sub myscanner_heart_beat_state(beatsAvg As Int, imgAvg As Int, rollingAverage As Int)
+	
+	Log("beat = " & beatsAvg)
+	lc1.addData(beatsAvg, 0, 0, 0, 0)
+	a = a + 1
+	If a = bufsize + 1 Then a = 0
+   
+	If xlabeltrack = bufsize + 1 Then
+		xlabeltrack = 0
+		lc1.ClearAllData                        'THIS WILL CLEAR THE DATA
+		a = 0
+		For i = 0 To bufsize - 1
+			xlab(i) = "" & i
+		Next
+		lc1.XAxisLabels = xlab
+		lc1.DrawTheGraphs
+		lc1.START
+	End If
+ 
+	'************************ If you comment this code then the x-axis labels will be the index of the buffer
+'	xlabeltrack = xlabeltrack + 1
+'	If xlabeltrack > bufsize Then
+'		xlab = shiftarray(xlab)
+'		xlab(bufsize - 1) = "" & xlabeltrack
+'		lc1.XAxisLabels = xlab
+'	End If
+'	xlab(bufsize - 1) = "" & xlabeltrack
+	'**************************************************************************************************************
+	
+End Sub
+
+Sub shiftarray (oldarray() As String) As String()
+	
+	Dim newarray(bufsize)
+	For i = 0 To bufsize - 2
+		newarray(i) = oldarray(i + 1)
+	Next
+	Return newarray
+	
+End Sub

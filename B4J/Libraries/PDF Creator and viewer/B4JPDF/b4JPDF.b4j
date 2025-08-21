@@ -1,0 +1,279 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=b4Jimage.png
+File2=main.bjl
+File3=tahoma.ttf
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jreflection
+Module1=clsFormPDF
+Module2=pdfBoxCreator
+Module3=pdfBoxViewer
+NumberOfFiles=3
+NumberOfLibraries=4
+NumberOfModules=3
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	#AdditionalJar: pdfbox-app-2.0.20.jar
+	#AdditionalJar: icu4j-67_1.jar
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub fButtonPDF_Click
+	Dim b As Button=Sender
+	Dim i As Int=b.Tag
+	createPDF(i)
+End Sub
+
+Sub createPDF(aPDF As Int)
+	'get pdf as array of byte
+	Dim b() As Byte=CallSub(Me,"PDF_" & aPDF)
+	'prepare preview window
+	Dim f As clsFormPDF
+	f.Initialize(Me,"pdfpreview",MainForm,b,100,Null)
+	'show preview window
+	f.Show
+End Sub
+
+Sub PDF_1 As Byte()
+	Dim pdfcreator As pdfBoxCreator
+	Dim pages As List
+	Dim font As JavaObject
+	Dim top As Float
+	Dim s As String
+
+	'select unit : mm or pts	
+	pdfcreator.Initialize("mm")
+	'select font (see https://pdfbox.apache.org/docs/2.0.1/javadocs/org/apache/pdfbox/pdmodel/font/PDType1Font.html)
+	font=pdfcreator.createFont("TIMES_ROMAN")
+	'initialize page's list
+	pages.Initialize
+	'create a new page 
+	'size : see https://pdfbox.apache.org/docs/2.0.3/javadocs/org/apache/pdfbox/pdmodel/common/PDRectangle.html
+	'orientation : P portrait, L landscape
+	Dim page As JavaObject=pdfcreator.newPage("A4","P")
+	'Add new page to page's list
+	pages.Add(page)
+	'set y position 
+	' top of the page is the page height
+	' bottom of the page is 0
+	top=pdfcreator.pageHeight(page)-10
+	'create page's content
+	Dim content As JavaObject=pdfcreator.createContent(page,False)
+	s=$"PDF with B4J"$
+	'draw text on page
+	pdfcreator.drawText(content,font,15,(pdfcreator.pageWidth(page)-pdfcreator.stringWidth(font,15,s))/2,top,s)
+	top=top-8
+	pdfcreator.drawText(content,font,10,35,top,"Creator : ")
+	pdfcreator.drawText(content,font,10,60,top,"create PDF")
+	top=top-8
+	pdfcreator.drawText(content,font,10,35,top,"Viewer : ")
+	pdfcreator.drawText(content,font,10,60,top,"render PDF")
+	top=top-8
+	pdfcreator.drawText(content,font,10,35,top,"formPDF : ")
+	pdfcreator.drawText(content,font,10,60,top,"preview window")
+	top=top-8
+	
+	'close page's content
+	pdfcreator.closeContent(content)
+	
+	'add page to pdf
+	pdfcreator.addPage(page)
+	
+	'write pdf to stream (array of byte)
+	Dim ost As OutputStream
+	ost.InitializeToBytesArray(0)
+	pdfcreator.saveToStream(ost)
+	pdfcreator.close
+	Return ost.ToBytesArray
+End Sub
+
+Sub PDF_2 As Byte()
+	Dim pdfcreator As pdfBoxCreator
+	Dim pages As List
+	Dim font As JavaObject
+	Dim Widths(3) As Float=Array As Float(50,20,30)
+	Dim titles(3) As String=Array As String("Col 1","Col 2","Col 3")
+	Dim texts(3) As String
+	Dim left As Float
+	Dim top As Float
+	Dim first As Boolean
+	Dim s As String
+	
+	pdfcreator.Initialize("mm")
+	font=pdfcreator.createFont("TIMES_ROMAN")
+	pages.Initialize
+	first=True
+	'we generate between 100 and 500 lines=
+	For i=0 To Rnd(100,500)
+		If first Then
+			'create a new page
+			Dim page As JavaObject=pdfcreator.newPage("A4","P")
+			pages.Add(page)
+			'create content for this page
+			Dim content As JavaObject=pdfcreator.createContent(page,False)
+			'write title
+			top=pdfcreator.pageHeight(page)-10
+			s="List with 100 to 500 lines"
+			'change text color
+			pdfcreator.setNonStrokingColor(content,255,0,0)
+			pdfcreator.drawTextAlign(content,font,15,10,top,s,190,1,5)
+			'draw table hearder
+			top=top-20
+			left=10
+			For c=0 To Widths.Length-1
+				pdfcreator.drawRect(content,left,top-2,Widths(c)+2,7)
+				'change background color
+				pdfcreator.setNonStrokingColor(content,200,200,200)
+				'change border color
+				pdfcreator.setStrokingColor(content,0,255,0)
+				pdfcreator.fillAndStroke(content)
+				'change text color
+				pdfcreator.setNonStrokingColor(content,0,0,0)
+				pdfcreator.drawTextalign(content,font,10,left,top,titles(c),Widths(c)+2,1,1)
+				left=left+Widths(c)+2
+			Next
+			top=top-7
+			first=False
+		End If
+		'add one line to the table
+		texts(0)=NumberFormat2(Rnd(0,1000),1,0,0,False)
+		texts(1)=NumberFormat2(Rnd(0,1000),1,0,0,False)
+		texts(2)=NumberFormat2(Rnd(0,1000),1,0,0,False)
+		left=10
+		For c=0 To Widths.Length-1
+			pdfcreator.drawRect(content,left,top-2,Widths(c)+2,7)
+			pdfcreator.stroke(content)
+			pdfcreator.drawTextalign(content,font,10,left,top,texts(c),Widths(c)+2,1,1)
+			left=left+Widths(c)+2
+		Next
+		top=top-7
+		'check if we are at the bottom of the page 
+		If top<30 Then
+			pdfcreator.closeContent(content)
+			first=True
+		End If
+	Next
+	
+	pdfcreator.closeContent(content)
+	
+	'load image to byte array
+	Dim img As Image=fx.LoadImage(File.DirAssets,"b4Jimage.png")
+	Dim imgbytes() As Byte=ImageToBytes(img)
+	
+	DateTime.DateFormat="MM/dd/Y HH:mm"
+	Dim t As String=DateTime.Date(DateTime.Now)
+	Dim n As Int=pages.Size
+	'loop over each page to add footer
+	For i=1 To pages.Size
+		Dim page As JavaObject=pages.Get(i-1)
+		Dim content As JavaObject=pdfcreator.createContent(page,True)
+		pdfcreator.drawText(content,font,8,10,10,$"printed ${t}"$)
+		pdfcreator.drawTextAlign(content,font,8,10,10,$"Page ${i}/${n}"$,190,2,0)
+		pdfcreator.drawImage(content,imgbytes,"logo",5,275,20,20)
+		pdfcreator.closeContent(content)
+		pdfcreator.addPage(page)
+	Next
+
+	'write pdf to stream (array of byte)
+	Dim ost As OutputStream
+	ost.InitializeToBytesArray(0)
+	pdfcreator.saveToStream(ost)
+	pdfcreator.close
+	Return ost.ToBytesArray
+	
+End Sub
+
+Public Sub ImageToBytes(aimg As Image) As Byte()
+	Dim out As OutputStream
+	out.InitializeToBytesArray(0)
+	aimg.WriteToStream(out)
+	out.Close
+	Return out.ToBytesArray
+End Sub
+
+Sub PDF_3 As Byte()
+	Dim pdfcreator As pdfBoxCreator
+	Dim pages As List
+	Dim font As JavaObject
+	Dim top As Float
+	Dim s As String
+	Dim fonts() As String=Array As String("COURIER","COURIER_BOLD","COURIER_BOLD_OBLIQUE","COURIER_OBLIQUE","HELVETICA","HELVETICA_BOLD","HELVETICA_BOLD_OBLIQUE","HELVETICA_OBLIQUE","TIMES_BOLD","TIMES_BOLD_ITALIC","TIMES_ITALIC","TIMES_ROMAN")
+
+	'select unit : mm or pts	
+	pdfcreator.Initialize("mm")
+	'initialize page's list
+	pages.Initialize
+	'create a new page 
+	'size : see https://pdfbox.apache.org/docs/2.0.3/javadocs/org/apache/pdfbox/pdmodel/common/PDRectangle.html
+	'orientation : P portrait, L landscape
+	Dim page As JavaObject=pdfcreator.newPage("A4","P")
+	'Add new page to page's list
+	pages.Add(page)
+	'set y position 
+	' top of the page is the page height
+	' bottom of the page is 0
+	top=pdfcreator.pageHeight(page)-10
+	'create page's content
+	Dim content As JavaObject=pdfcreator.createContent(page,False)
+	'draw text on page
+	For Each s As String In fonts
+		font=pdfcreator.createFont(s)
+		pdfcreator.drawText(content,font,15,10,top,s)
+		top=top-8
+	Next
+	
+	'close page's content
+	pdfcreator.closeContent(content)
+	
+	'add page to pdf
+	pdfcreator.addPage(page)
+
+	Dim page As JavaObject=pdfcreator.newPage("A4","P")
+	pages.Add(page)
+	top=pdfcreator.pageHeight(page)-10
+	Dim content As JavaObject=pdfcreator.createContent(page,False)
+	s=pdfcreator.bidi("صباحا")
+	font=pdfcreator.loadfont(File.dirassets,"tahoma.ttf")
+	For i=10 To 20
+		pdfcreator.drawTextAlign(content,font,i,50,top,s,110,2,0)
+		top=top-i
+	Next
+	
+	'close page's content
+	pdfcreator.closeContent(content)
+	
+	'add page to pdf
+	pdfcreator.addPage(page)
+
+	'write pdf to stream (array of byte)
+	Dim ost As OutputStream
+	ost.InitializeToBytesArray(0)
+	pdfcreator.saveToStream(ost)
+	pdfcreator.close
+	Return ost.ToBytesArray
+End Sub
+

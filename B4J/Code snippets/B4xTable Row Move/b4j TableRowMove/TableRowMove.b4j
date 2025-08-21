@@ -1,0 +1,83 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=DBPanel.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jsql
+Library4=b4xtable
+Library5=xui views
+Library6=jxui
+Module1=Common
+Module2=EquipInfo
+Module3=TableShow
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=3
+Version=8.1
+@EndOfDesignText@
+'Table Row Move
+
+'This demonstrates moving rows in table
+'The row IDs are stored and used to change the values for each row move
+
+'Rod McMahon
+'3 Jun 2020
+
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Initialize("MainForm", 1250, 800)
+	
+	Common.SQL.InitializeSQLite(File.DirApp, "PROJECTS.db", True)       'Opens/created a Projects DB
+	'DropTable(Common.SQL,"EQUIPMENT")									
+	
+	EquipInfo.EquipmentHeaders               							'Headers for Equipment table
+	
+	If TableExists(Common.SQL,"EQUIPMENT")=False Then
+		EquipInfo.CreateEquipDB                      					'Create table and add records
+	End If
+	
+	TableShow.show                   									 'Show the table
+End Sub
+
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+'Drops a table 
+Sub DropTable(SQL As SQL, DBName As String)
+	Dim Query As String
+	Query = "DROP TABLE IF EXISTS " & DBName
+	SQL.ExecNonQuery(Query)
+End Sub
+
+'Checks if table exists
+Sub TableExists(SQL As SQL, DBName As Object) As Boolean
+	Dim rs As ResultSet
+	Dim Found As Boolean = False
+	Dim cmd As String = "SELECT * FROM sqlite_master WHERE TYPE=""table"" ORDER BY name;"
+	Try
+		rs= SQL.ExecQuery (cmd)
+		Do While rs.NextRow
+			If rs.GetString("name") = DBName Then
+				Found = True
+			End If
+		Loop
+	Catch
+		Log("ERROR: " & LastException.Message)
+	End Try
+	Return Found
+End Sub

@@ -1,0 +1,107 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.sensors
+Group=Default Group
+Library1=core
+Library2=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Sensors
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'This map maps between PhoneSensors and SensorData objects.
+	Dim SensorsMap As Map
+	Type SensorData (Name As String, ThreeValues As Boolean)
+End Sub
+
+Sub Globals
+	'This map maps between PhoneSensors and Labels.
+	Dim SensorsLabels As Map
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		SensorsMap.Initialize
+		Dim ps As PhoneSensors 'This object is only used to access the type constants.
+		AddSensor(ps.TYPE_ACCELEROMETER, "ACCELEROMETER", True)
+		AddSensor(ps.TYPE_GYROSCOPE, "GYROSCOPE", True)
+		AddSensor(ps.TYPE_LIGHT, "LIGHT", False)
+		AddSensor(ps.TYPE_MAGNETIC_FIELD, "MAGNETIC", True)
+		AddSensor(ps.TYPE_ORIENTATION, "ORIENTATION", True)
+		AddSensor(ps.TYPE_PRESSURE, "PRESSURE", False)
+		AddSensor(ps.TYPE_PROXIMITY, "PROXIMITY", False)
+		AddSensor(ps.TYPE_TEMPERATURE, "TEMPERATURE", False)
+	End If
+	SensorsLabels.Initialize 'SensorsLabels is not a Process_Globals object so we need to create it each time
+	For i = 0 To SensorsMap.Size - 1
+		Dim ps As PhoneSensors
+		ps = SensorsMap.GetKeyAt(i)
+		Dim lbl As Label
+		lbl.Initialize("")
+		lbl.TextColor = Colors.White 
+		Activity.AddView(lbl, 10dip, 10dip + 50dip * i, 100%x - 10dip, 45dip)
+		SensorsLabels.Put(ps, lbl)
+	Next
+	
+End Sub
+Sub AddSensor(SensorType As Int, Name As String, ThreeValues As Boolean) 
+	Dim sd As SensorData
+	sd.Initialize
+	sd.Name = Name
+	sd.ThreeValues = ThreeValues
+	Dim ps As PhoneSensors
+	ps.Initialize(SensorType)
+	SensorsMap.Put(ps, sd)
+	Log(Name & " MaxValue = " & ps.MaxValue)
+End Sub
+Sub Activity_Resume
+	'Here we start listening for SensorChanged events.
+	'By checking the return value we knoe if the sensor is supported.
+	For i = 0 To SensorsMap.Size - 1
+		Dim ps As PhoneSensors
+		Dim sd As SensorData
+		Dim lbl As Label
+		ps = SensorsMap.GetKeyAt(i)
+		sd = SensorsMap.GetValueAt(i)
+		lbl = SensorsLabels.Get(ps)
+		If ps.StartListening("Sensor") = False Then
+			lbl.Text = sd.Name & " is not supported."
+			Log(sd.Name & " is not supported.")
+		End If
+	Next
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+	'Stop listening for events.
+	For i = 0 To SensorsMap.Size - 1
+		Dim ps As PhoneSensors
+		ps = SensorsMap.GetKeyAt(i)
+		ps.StopListening
+	Next
+End Sub
+Sub Sensor_SensorChanged (Values() As Float)
+	Dim ps As PhoneSensors
+	Dim sd As SensorData
+	Dim lbl As Label
+	'Get the PhoneSensors object that raised this event.
+	ps = Sender
+	sd = SensorsMap.Get(ps) 'Get the associated SensorData obejct
+	lbl = SensorsLabels.Get(ps) 'Get the associated Label.
+	If sd.ThreeValues Then
+		lbl.Text = sd.Name & " X=" & NumberFormat(Values(0), 0, 3) & ", Y=" & NumberFormat(Values(1), 0, 3) _ 
+			& ", Z=" & NumberFormat(Values(2), 0, 3)
+	Else
+		lbl.Text = sd.Name & " = " & NumberFormat(Values(0), 0, 3)
+	End If
+End Sub

@@ -1,0 +1,94 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.preferenceactivity
+Group=Default Group
+Library1=core
+Library2=preferenceactivity
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddApplicationText(<activity android:name="anywheresoftware.b4a.objects.preferenceactivity"/>)
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.801
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: PreferenceActivity example
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	Dim manager As PreferenceManager
+	Dim screen As PreferenceScreen
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		CreatePreferenceScreen
+		If manager.GetAll.Size = 0 Then SetDefaults
+	End If
+	Dim btn As Button
+	btn.Initialize("btn")
+	btn.Text = "Settings"
+	Activity.AddView(btn, 10dip, 10dip, 200dip, 100dip)
+End Sub
+
+Sub SetDefaults
+	'defaults are only set on the first run.
+	manager.SetBoolean("check1", True)
+	manager.SetBoolean("check2", False)
+	manager.SetString("edit1", "Hello!")
+	manager.SetString("list1", "Black")
+End Sub
+
+Sub btn_Click
+	StartActivity(screen.CreateIntent)
+End Sub
+
+
+Sub CreatePreferenceScreen
+	screen.Initialize("Settings", "")
+	'create two categories
+	Dim cat1, cat2 As PreferenceCategory
+	cat1.Initialize("Category 1")
+	cat1.AddCheckBox("check1", "Checkbox1", "This is Checkbox1", True)
+	cat1.AddCheckBox("check2", "Checkbox2", "This is Checkbox2", False)
+	cat1.AddEditText("edit1", "EditText1", "This is EditText1", "")
+	
+	cat2.Initialize("Category 2")
+	cat2.AddList("list1", "List1", "This is List1", "", _
+        Array As String("Black", "Red", "Green", "Blue"))
+		
+	'add the categories to the main screen
+	screen.AddPreferenceCategory(cat1)
+	screen.AddPreferenceCategory(cat2)
+End Sub
+
+Sub Activity_Resume
+	HandleSettings
+End Sub
+
+Sub HandleSettings
+	Select manager.GetString("list1")
+		Case "Black"
+			Activity.Color = Colors.Black
+		Case "Red"
+			Activity.Color = Colors.Red
+		Case "Green"
+			Activity.Color = Colors.Green
+		Case "Blue"
+			Activity.Color = Colors.Blue
+	End Select
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+

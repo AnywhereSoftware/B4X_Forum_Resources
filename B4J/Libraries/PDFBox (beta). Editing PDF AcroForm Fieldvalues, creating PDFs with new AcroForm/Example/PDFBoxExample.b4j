@@ -1,0 +1,275 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=acroformtest.pdf
+File2=acroformtest-mustermann.xfdf
+File3=mytemplate-empty.pdf
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pdfbox
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=0
+Version=7.98
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#AdditionalJar: fontbox-2.0.17.jar
+#AdditionalJar: pdfbox-examples-2.0.17.jar
+#AdditionalJar: bcprov-jdk15on-1.61.jar
+#AdditionalJar: bcpkix-jdk15on-1.64.jar
+
+' If you want to use Barcodes 
+#AdditionalJar: barcode4j-2.1.jar
+
+' If you want to use QRCode (using ZXING)
+#AdditionalJar: zxing-core-3.4.0.jar
+#AdditionalJar: javase-3.4.0.jar
+
+' To Export a PDF to PNG you need
+#AdditionalJar: pdfbox-tools-2.0.17.jar
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Public hlp As FontandColorHelper
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	'MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	'MainForm.Show
+	CopyFromAsset("acroformtest.pdf","acroformtest.pdf")
+	CopyFromAsset("acroformtest-mustermann.xfdf","acroformtest-mustermann.xfdf")
+	CopyFromAsset("mytemplate-empty.pdf","mytemplate-empty.pdf")
+
+	ExportXFDF(File.DirData("PDFBox"),"acroformtest.pdf",File.Combine(File.DirData("PDFBox"),"acroformtest.xfdf"))
+	ImportXFDF(File.DirData("PDFBox"),"acroformtest.pdf",File.Combine(File.DirData("PDFBox"),"acroformtest-mustermann.xfdf"),File.Combine(File.DirData("PDFBox"),"acroformtest-mustermann.pdf"))
+	
+	createPDF("mytemplate-empty.pdf",File.Combine(File.DirData("PDFBox"),"templatewithacroform.pdf"))
+	
+	fx.ShowExternalDocument(File.GetUri(File.DirData("PDFBox"), ""))
+
+	ExitApplication2(0)
+End Sub
+
+Sub CopyFromAsset(filename As String, destfilename As String)
+	Wait For (File.CopyAsync(File.DirAssets,filename, File.DirData("PDFBox"), destfilename)) Complete (Success As Boolean)
+End Sub
+
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub DrawBox(cs As PDPageContentStream, x As Float, y As Float, width As Float, height As Float, r As Int, g As Int, b As Int)
+	cs.setNonStrokingColor(r,g,b)
+	cs.addRect(x,y,width,height)
+	cs.fill2
+	'cs.close
+End Sub
+Sub DrawQRCode(cs As PDPageContentStream, doc As PDDocument, text As String, x As Float, y As Float, width As Float, height As Float)
+	Private box As PDFBox
+	box.addBarcodeImage(cs,doc,"QR_CODE",text,x,y,width,height)
+End Sub
+Sub CreateEdit(af As PDAcroForm, page As PDPage, fieldName As String, value As String, posX As Float, posY As Float, width As Float, height As Float)
+	Dim textfield As PDTextField
+	textfield.Initialize(af)
+	textfield.PartialName = fieldName ' This is the Field we are refering in the javascript above.
+	textfield.DefaultValue = ""
+	textfield.DefaultAppearance = "/Cour 12 Tf 1 0 0 rg"
+	'
+	af.addField(textfield)
+	textfield.Value = value
+	textfield.Multiline = False
+	textfield.Password = False
+	textfield.Required = True
+	
+	Dim widget As PDAnnotationWidget = textfield.Widget
+	widget.constructAppearances
+	
+	Dim p1rec As PDRectangle = page.CropBox
+	Log($"Width=${p1rec.Width}/Heigth=${p1rec.Height}"$)
+
+	
+	Dim rect As PDRectangle
+	rect.Initialize(posX,posY,width,height)
+	widget.Rectangle = rect
+	widget.Page = page
+	'widget.Color = hlp.createColor(Array As Float(32,64,96))
+	'
+
+	Dim fieldAppearance As PDAppearanceCharacteristicsDictionary
+	fieldAppearance.Initialize
+	fieldAppearance.BorderColour = hlp.createColor(Array As Float(8,16,32))
+	fieldAppearance.Background = hlp.createColor(Array As Float(32,64,8))
+	widget.AppearanceCharacteristics = fieldAppearance
+	widget.Printed = True
+	'
+	page.addAnnotation(widget)
+
+End Sub
+
+Sub createPDF(sourcepdf As String, destinationfilename As String)
+	Private box As PDFBox
+	box.Initialize("",File.Combine(File.DirData("PDFBox"),sourcepdf))
+	Dim r As PDRectangle
+	Dim hlp As FontandColorHelper
+
+	Dim doc As PDDocument = box.Document
+
+	Dim p1 As PDPage = doc.GetPage(0)
+
+
+	Dim cat As PDDocumentCatalog = doc.DocumentCatalog
+	
+	Dim acroform As PDAcroForm
+	acroform.Initialize(doc)
+	cat.AcroForm = acroform
+	Dim res As PDResources
+	If acroform.DefaultResources <> Null Then
+		res = acroform.DefaultResources
+	Else
+		res.Initialize
+		res.putFont(hlp.HELVETICA,"Helv")
+		res.putFont(hlp.COURIER,"Cour")
+		res.putFont(hlp.ZAPF_DINGBATS,"Zapf")
+		acroform.DefaultResources = res
+	End If
+	
+	Dim p1rec As PDRectangle = p1.CropBox
+	Log($"Width=${p1rec.Width}/Heigth=${p1rec.Height}"$)
+
+	acroform.NeedAppearances = True
+	
+	box.addBarcode128(doc,p1,"1234567890",300,450,p1rec.Height-100,100,20)
+	
+	CreateEdit(acroform,p1,"Auftragsnummer","123 456 7890",160,p1rec.Height-130,320,16)
+	CreateEdit(acroform,p1,"Firma","Firma",130,p1rec.Height-160,150,16)
+	CreateEdit(acroform,p1,"Vorname","Vorname",130,p1rec.Height-180,150,16)
+	CreateEdit(acroform,p1,"Strasse","Straße",130,p1rec.Height-200,150,16)
+	CreateEdit(acroform,p1,"TelDirekt","Tel direkt",130,p1rec.Height-220,150,16)
+	CreateEdit(acroform,p1,"Mobil","Mobil",130,p1rec.Height-240,150,16)
+	
+	CreateEdit(acroform,p1,"Funktion","Funktion",380,p1rec.Height-160,140,16)
+	CreateEdit(acroform,p1,"Nachname","Name",380,p1rec.Height-180,140,16)
+	CreateEdit(acroform,p1,"PLZ","PLZ",380,p1rec.Height-200,50,16)
+	CreateEdit(acroform,p1,"Ort","Ort",440,p1rec.Height-200,90,16)
+	CreateEdit(acroform,p1,"Email","email",380,p1rec.Height-220,140,16)
+	CreateEdit(acroform,p1,"Rechtsform","rechtsform",380,p1rec.Height-240,140,16)
+
+	' auftragsumfang
+	CreateEdit(acroform,p1,"Pos1","pos1",55,p1rec.Height-285,150,16)
+	CreateEdit(acroform,p1,"Pos1Anzahl","1",323,p1rec.Height-285,25,16)
+	CreateEdit(acroform,p1,"Pos1Summe","333,44",490,p1rec.Height-285,60,16)
+
+	CreateEdit(acroform,p1,"Pos2","pos2",55,p1rec.Height-305,150,16)
+	CreateEdit(acroform,p1,"Pos2Anzahl","1",323,p1rec.Height-305,25,16)
+	CreateEdit(acroform,p1,"Pos2Summe","444,55",490,p1rec.Height-305,60,16)
+
+	CreateEdit(acroform,p1,"Pos3","pos3",55,p1rec.Height-325,150,16)
+	CreateEdit(acroform,p1,"Pos3Anzahl","1",323,p1rec.Height-325,25,16)
+	CreateEdit(acroform,p1,"Pos3Summe","1234,56",490,p1rec.Height-325,60,16)
+
+	CreateEdit(acroform,p1,"Pos4","pos4",55,p1rec.Height-345,150,16)
+	CreateEdit(acroform,p1,"Pos4Anzahl","1",323,p1rec.Height-345,25,16)
+	CreateEdit(acroform,p1,"Pos4Summe","3333,66",490,p1rec.Height-345,60,16)
+
+	CreateEdit(acroform,p1,"GesamtNetto","16384,00",195,p1rec.Height-385,65,16)
+	CreateEdit(acroform,p1,"MWST","19,00",340,p1rec.Height-385,40,16)
+	CreateEdit(acroform,p1,"EndPreis","6666,33",470,p1rec.Height-385,80,16)
+
+	CreateEdit(acroform,p1,"Berater","Someone",60,p1rec.Height-650,220,16)
+
+	'
+	'COSDictionary normalAppearances = new COSDictionary();
+	Dim dict As COSDictionary
+	dict.Initialize()
+	Dim appdict As PDAppearanceDictionary
+	appdict.Initialize
+
+	Dim normalentry As PDAppearanceEntry
+	normalentry.Initialize(dict)
+	
+	appdict.NormalAppearance = normalentry
+
+	Dim downentry As PDAppearanceEntry
+	downentry.Initialize(dict)
+
+	'	pdAppearanceStream = new PDAppearanceStream(document);
+	Dim appstream As PDAppearanceStream
+	appstream.Initialize(doc)
+	'
+	'	pdAppearanceStream.setResources(new PDResources());
+	appstream.Resources = res
+
+	Dim contentStream As PDPageContentStream 						' Create a PageContentStream
+	contentStream.Initialize("",doc,p1,"APPEND",False,False) ' Initialize it with Document and Page
+
+	DrawQRCode(contentStream,doc,"https://b4x.com", 160,p1rec.Height-100,100,100)
+
+	
+
+
+
+	
+	
+'	contentStream.beginText()
+'	contentStream.setFont(hlp.COURIER,20) ' needed before writing Text
+'	contentStream.setNonStrokingColor(0,50,150)
+'	contentStream.setStrokingColor(60,100,150)
+'	contentStream.newLineAtOffset(160, p1rec.Height-128) ' Position of "next Text" to add
+'	contentStream.showText("123 4567 8901") ' Output the Text
+'	contentStream.endText()
+
+
+	'contentStream.addLine(60,715,330,715) 		' Create a Line under the text
+	'contentStream.closeAndStroke
+	
+	'contentStream.addLine(60,p1rec.Height-1,330,p1rec.Height-1) 		' Create a Line 1px from Top
+	'contentStream.closeAndStroke
+
+
+	'Dim img As PDImageXObject									' Create PDImageXObject which holds an Image to add to the PDF
+	'img.Initialize(doc,"d:\\donmanfred_avatar.bmp") ' The Image
+	'contentStream.drawImage2(img,p1rec.Width-64,p1rec.Height-10,64,64) 		' Draw Image on Page at x/y=435 with a size of 64x64
+	
+	contentStream.close() 													' Close the ContentStream
+	doc.save(destinationfilename)	' Save PDF to Disc
+	doc.close()	' Close PDF
+
+End Sub
+
+Sub ExportXFDF(path As String, filename As String, xfdffilename As String)
+	Log($"PDF2XFDF"$)
+	Private box As PDFBox
+	box.Initialize("",File.Combine(path,filename))
+	Dim doc As PDDocument = box.Document
+	Dim cat As PDDocumentCatalog = doc.DocumentCatalog
+	Dim acroform As PDAcroForm = cat.AcroForm
+	Dim fdfdoc As FDFDocument = acroform.exportFDF
+	fdfdoc.saveXFDF(xfdffilename)
+	doc.close()	' Close PDF
+End Sub
+Sub ImportXFDF(path As String, filename As String, xfdffilename As String, destinationpdfFilename As String)
+	Private box As PDFBox
+	box.Initialize("",File.Combine(path,filename))
+	Dim doc As PDDocument = box.Document
+	Dim cat As PDDocumentCatalog = doc.DocumentCatalog
+	Dim acroform As PDAcroForm = cat.AcroForm
+	Dim fdfdoc As FDFDocument = acroform.exportFDF
+	fdfdoc.loadXFDF(xfdffilename)
+	acroform.importFDF(fdfdoc)
+	fdfdoc.close
+	doc.save(destinationpdfFilename)	' Save PDF to Disc
+	doc.close()	' Close PDF
+	
+End Sub

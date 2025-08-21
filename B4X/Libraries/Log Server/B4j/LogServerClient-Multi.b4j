@@ -1,0 +1,171 @@
+﻿AppType=JavaFX
+Build1=Default,com.stevel05.logserverclient
+Build2=Thread,com.stevel05.logserverclient,Thread
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=logserverclient-b4x
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private LS As LogServerClient
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	'MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+	
+	LS.Initialize(Me,"-1",-1)
+	Wait For Logserver_StreamReady
+	Log("Ready")
+	
+'	Sleep(5000)
+
+	LogServerTest
+	
+End Sub
+
+Sub LogServerTest
+	'	LS.ClearAll
+	LS.Reset
+
+	LS.MessageColor("Client Version " & LS.Version,fx.Colors.Green)
+	LS.TimeStampColor(fx.Colors.Yellow)
+	
+	
+	Log(fx.Colors.Transparent)
+	
+	
+	LS.LEDMatrix.Add("LEDMatrix",LS.LOCATION_RIGHT)
+	
+	LS.LEDMatrix.SetLEDOnColour("LEDMatrix",fx.Colors.Green)
+	LS.LEDMatrix.SetLEDOffColour("LEDMatrix",fx.Colors.Red)
+	Sleep(0)
+'	LS.LEDMatrix.setChannelCount("LEDMatrix",4)
+'	LS.LEDMatrix.setLEDCount("LEDMatrix",4)
+	
+'	LS.LEDMatrix.SetShortNames("LEDMatrix",0,Array As String("4","3","2","1"))
+'	LS.LEDMatrix.SetTooltipText("LEDMatrix",0,Array As String("Dev:1 In","Dev:1 Out","Dev:2 In","Dev:2 Out"))
+	LS.DefaultColor = fx.Colors.Black
+'	LS.ClearAll
+	
+	LS.SetTag("Test : ")
+	LS.SwitchTo("Main")
+	LS.Message("Start")
+	
+	LS.AddLogAreaTo("Found","Main",LS.LOCATION_BOTTOM)
+	LS.TimeStampColor(fx.Colors.Magenta)
+	LS.MessageColor("Found at Index 7",fx.Colors.Red)
+	
+
+	LS.Columns(Array As String("Col1","Col2","Col3","Col4","Col5"),10,LS.JUSTIFY_CENTER, True)
+	
+	For i = 0 To 9
+		LS.Columns(Array As String("C1-Val" & i,"C2-Val" & i,"C3-Val" & i,"C4-Val" & i,"C5-Val" & i),10,LS.JUSTIFY_RIGHT, False)
+	Next
+	LS.SetTag("")
+	LS.SwitchTo("Found")
+	
+	
+	
+	LS.DefaultColor = fx.Colors.Blue
+	LS.AddLogArea("Problem1",LS.LOCATION_RIGHT)
+	
+	LS.CircularProgressBar.AddTo("CPB","Problem1",fx.colors.Black,fx.Colors.Red,fx.Colors.Blue,LS.LOCATION_RIGHT)
+	
+	LS.TimeStampColor(fx.Colors.green)
+	
+	For i = 0 To 3000
+		LS.Message("Message " & i)
+	Next
+	
+	LS.SpacedColor(Array As String("One","Two","Three"),10,fx.Colors.Magenta)
+
+	LS.AddLogAreaTo("List","CPB",LS.LOCATION_RIGHT)
+	
+	LS.MessageColor("Lists",fx.Colors.Black)
+	Dim L As List
+	L.Initialize
+	For i = 0 To 30
+		L.Add("List Item " & i)
+	Next
+	
+	LS.ListColor(L,LS.ORIENT_VERTICAL,fx.Colors.DarkGray)
+	
+'	LS.AddLogAreaTo("Found","Main",LS.LOCATION_BOTTOM)
+'	LS.TimeStampColor(fx.Colors.Magenta)
+'	LS.MessageColor("Found at Index 7",fx.Colors.Red)
+
+
+	LS.AddLogArea("Arrays",LS.LOCATION_BOTTOM)
+	Dim A(10) As String
+	For i = 0 To 9
+		A(i) = "Array Item " & i
+	Next
+	
+	LS.List(A,LS.ORIENT_HORIZONTAL)
+	
+'	LS.RemoveTimePlot("TimePlot")
+'	
+'	LS.ClearLogArea("TimePlot")
+	
+	LS.TimePlot.Add("TimePlot",150,LS.TEXT_ORIENTATION_VERTICAL,LS.COLOR_SCHEME_DARK,LS.LOCATION_BOTTOM)
+	LS.TImePlot.AddLine("TimePlot","Line1",fx.Colors.Red)
+	LS.TImePlot.AddLine("TimePlot","Line2",fx.Colors.Blue)
+	LS.TImePlot.AddLine("TimePlot","Line3",fx.Colors.Green)
+	LS.TImePlot.AddLine("TimePlot","Line4",fx.Colors.Cyan)
+	
+	Sleep(3000)
+	Dim Channel, State As Int
+	For i = 0 To 149
+		If i < 101 Then LS.CircularProgressBar.Update("CPB",i)
+		LS.TimePlot.AddData("TimePlot",(Array As Double(Rnd(-50,100),Rnd(0,100),Rnd(0,200),Rnd(0,200))))
+		State = Rnd(0,Power(2,8))
+		Channel = Rnd(0,8)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,State)
+		Sleep(55)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,0)
+	Next
+	LS.LEDMatrix.SetLEDOnColour("LEDMatrix",fx.Colors.Blue)
+	LS.LEDMatrix.SetLEDOffColour("LEDMatrix",fx.Colors.Gray)
+	LS.HexView.AddTo("HexView","Arrays",LS.LOCATION_RIGHT)
+'	LS.HexView.HeadingColors("HexView",fx.Colors.Yellow,fx.Colors.Red)
+'	LS.HexView.TextAreaColors("HexView",fx.Colors.White,fx.Colors.Black)
+	For i = 0 To 149
+		If i < 101 Then LS.CircularProgressBar.Update("CPB",i)
+		LS.TimePlot.AddData("TimePlot",(Array As Double(Rnd(-50,100),Rnd(0,100),Rnd(0,200),Rnd(0,200))))
+		State = Rnd(0,Power(2,8))
+		Channel = Rnd(0,8)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,State)
+		Sleep(55)
+		LS.LEDMatrix.SetLEDStates("LEDMatrix",Channel,0)
+		LS.HexView.AddData("HexView",Array As Byte(Rnd(0,255)))
+	Next
+	LS.TimeStampTo("Main")
+	LS.ServerTimeStampTo("Main")
+	
+	
+
+End Sub
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	LS.Close
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	LogError(StackTrace)
+	LS.MessageTo ("Main",Error & " Please check the IDE log window")
+	Return False
+End Sub

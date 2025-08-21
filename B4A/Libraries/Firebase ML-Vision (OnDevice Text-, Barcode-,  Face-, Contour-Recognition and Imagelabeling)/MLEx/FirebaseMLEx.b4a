@@ -1,0 +1,225 @@
+﻿Build1=Default,de.donmanfred.mlex
+File1=clown_nose.png
+File2=Layout1.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+IconFile=
+Library1=core
+Library2=firebaseml
+Library3=firebaseauth
+Library4=runtimepermissions
+Library5=reflection
+Library6=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="26"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~CreateResourceFromFile(Macro, FirebaseAuth.FirebaseAuth)~\n~AddPermission(android.permission.CAMERA) ' Required to be able to access the camera device.~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE) ' Allows an application to write to external storage.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=1
+Version=9.01
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MLVision
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+#AdditionalJar: com.google.android.gms:play-services-base
+#AdditionalJar: com.google.android.gms:play-services-tasks
+#AdditionalJar: com.google.firebase:firebase-ml-vision
+#AdditionalJar: com.google.firebase:firebase-ml-vision-face-model
+#AdditionalJar: com.google.firebase:firebase-ml-vision-image-label-model
+#AdditionalJar: com.google.firebase:firebase-ml-common
+#AdditionalJar: com.google.firebase:firebase-ml-model-interpreter
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private auth As FirebaseAuth
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim detector As FirebaseDetector
+	Dim vision As FirebaseVision
+	Private CameraSourcePreview1 As CameraSourcePreview
+	Private GraphicOverlay1 As GraphicOverlay
+	Private Button1 As Button
+	Private btnStop As Button
+	Private btnStart As Button
+	Private spRegognizers As Spinner
+	Private btnFacing As Button
+	Private camFacing As Int = 0
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	vision.Initialize("MLVision",vision.BARCODE_DETECTION)
+	If FirstTime Then
+		auth.Initialize("auth")
+	End If
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_CAMERA)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then
+		ToastMessageShow("No permission for Camera!", True)
+		'Return
+	End If
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = False Then
+		ToastMessageShow("No permission for External Storage!", True)
+		'Return
+	End If
+
+	Activity.LoadLayout("Layout1")
+	spRegognizers.Clear
+	spRegognizers.Add(vision.BARCODE_DETECTION)
+	spRegognizers.Add(vision.TEXT_DETECTION)
+	spRegognizers.Add(vision.IMAGE_LABEL_DETECTION)
+	spRegognizers.Add(vision.FACE_DETECTION)
+	spRegognizers.Add(vision.FACE_CONTOUR)
+	'spRegognizers.Add(detector.CLASSIFICATION_FLOAT) ' Does not work
+	'spRegognizers.Add(detector.CLASSIFICATION_QUANT) ' Does not work
+	
+	detector.Initialize("MLVision",CameraSourcePreview1,GraphicOverlay1,File.Combine(File.DirAssets,"clown_nose.png"),vision.BARCODE_DETECTION)
+	detector.Facing = 0
+
+	If auth.CurrentUser.IsInitialized Then Auth_SignedIn(auth.CurrentUser)
+End Sub
+Sub MLVision_TextDetected(success As Boolean, texts As List)
+	If texts.IsInitialized And texts.Size > 0 Then
+		Log($"MLVision_TextDetected(${success}, ${texts.Size})"$)
+		For i=0 To texts.Size-1
+			Log(texts.Get(i))
+		Next
+	End If
+	
+End Sub
+Sub MLVision_ImageLabeled(success As Boolean, labels As List)
+	If success And labels.IsInitialized And labels.Size > 0 Then
+		Log($"MLVision_ImageLabeled(${success}, ${labels.Size})"$)
+		For i=0 To labels.Size-1
+			Log(labels.Get(i))
+		Next
+	End If
+End Sub
+Sub MLVision_FaceDetected(success As Boolean, faces As List, cameraImageObj As Object)
+	If faces.IsInitialized And faces.Size > 0 Then
+		Log($"MLVision_FaceDetected(${success}, ${faces.Size})"$)
+		For i=0 To faces.Size-1
+			Dim facemap As Map = faces.Get(i)
+			Log(facemap)
+			Dim face As FirebaseVisionFace = facemap.Get("Face")
+			Log($"Face.BoundingBox = ${face.BoundingBox}"$)
+			Log($"Face.Contour(0) = ${face.getContour(0)}"$)
+			Log($"Face.Landmark(0) = ${face.getLandmark(0)}"$)
+			Log($"Face.TrackingId = ${face.TrackingId}"$)
+			Log(faces.Get(i))
+		Next
+		If cameraImageObj <> Null Then
+			Log(cameraImageObj)
+		End If
+	End If
+End Sub
+Sub MLVision_FaceContourDetected(success As Boolean, contours As List)
+	If contours.IsInitialized And contours.Size > 0 Then
+		Log($"MLVision_FaceContourDetected(${success}, ${contours.Size})"$)
+		For i=0 To contours.Size-1
+			Dim contourmap As Map = contours.Get(i)
+			Log(contourmap)
+			Dim face As FirebaseVisionFace = contourmap.Get("Face")
+			Log($"Face.BoundingBox = ${face.BoundingBox}"$)
+			Dim cont As FirebaseVisionFaceContour = face.getContour(1)
+			Log($"Face.Contour(0) = ${face.getContour(1)}"$)
+			Log($"Face.Contour.FaceContourType = ${cont.FaceContourType}"$)
+			If cont.Points <> Null Then
+				Dim pointlist As List = cont.Points
+				If pointlist.IsInitialized And pointlist.Size > 0 Then
+					For i=0 To pointlist.Size-1
+						Dim point As FirebaseVisionPoint = pointlist.Get(i)
+						Log($"Point#${i}: X=${point.X}, Y=${point.Y}"$)
+					Next
+				End If
+			End If
+			'Log($"Face.Contour.Points = ${cont.Points}"$)
+			Log($"Face.Landmark = ${face.getLandmark(1)}"$)
+			Log($"Face.TrackingId = ${face.TrackingId}"$)
+		Next
+	End If	
+End Sub
+Sub MLVision_BarcodeDetected(success As Boolean, Barcodes As List)
+	If success And Barcodes.IsInitialized And Barcodes.Size > 0 Then
+		Log($"MLVision_BarcodeDetected(${success}, ${Barcodes.Size})"$)
+		For i=0 To Barcodes.Size-1
+			Dim bc As FirebaseVisionBarcode = Barcodes.Get(i)
+			Log($"BarcodeType: ${bc.BarcodeType}"$)
+			Log($"BoundingBox: ${bc.BoundingBox}"$)
+			Log($"RawValue: ${bc.RawValue}"$)
+			Log(Barcodes.Get(i))	
+		Next
+	End If
+End Sub
+Sub MLVision_DetectText(success As Boolean, info As String)
+	Log($"MLVision_DetectText(${success}, ${info})"$)
+End Sub
+Sub ReadFile(Dir As String, FileName As String) As Byte()
+	Dim out As OutputStream
+	out.InitializeToBytesArray(100) 'size not really important
+	File.Copy2(File.OpenInput(Dir, FileName), out)
+	Return out.ToBytesArray
+End Sub
+
+Sub Auth_SignedIn (User As FirebaseUser)
+	Log("SignedIn: " & User.DisplayName)
+End Sub
+Sub Activity_Resume
+	detector.onResume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	detector.onPause
+End Sub
+
+
+Sub Button1_Click
+	'Dim bytes() As Byte = ReadFile(File.DirAssets, "ilovecats.png")
+End Sub
+
+Sub btnStop_Click
+	detector.stop
+End Sub
+
+Sub btnStart_Click
+	detector.start
+End Sub
+
+Sub spRegognizers_ItemClick(Position As Int, Value As Object)
+	Log($"spRegognizers_ItemClick(${Position}, ${Value})"$)
+	detector.stop
+	detector.switchRecognizer(Value)
+	detector.start
+End Sub
+
+Sub btnFacing_Click
+	detector.stop
+	If camFacing = 0 Then
+		detector.Facing = 1
+		camFacing = 1
+	Else
+		detector.Facing = 0
+		camFacing = 0
+	End If
+	detector.start
+End Sub

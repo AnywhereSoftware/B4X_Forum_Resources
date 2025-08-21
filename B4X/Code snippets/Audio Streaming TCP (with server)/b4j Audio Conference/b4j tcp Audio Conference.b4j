@@ -1,0 +1,72 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xui views
+Library5=jnetwork
+Library6=byteconverter
+Library7=jaudiorecord
+Library8=jrandomaccessfile
+Module1=CollectorTCP
+Module2=PlayDataAudio
+Module3=|relative|..\WaveView
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=3
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 400 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private B4XSwitchSend As B4XSwitch
+	Private B4XSwitchRiceve As B4XSwitch
+	Private EditTextIP As TextField
+	
+	Dim clt_TCP As CollectorTCP
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	clt_TCP.CloseTrasmits
+	clt_TCP.Close
+End Sub
+
+Sub B4XSwitchRiceve_ValueChanged (Value As Boolean)
+	clt_TCP.AudioRicever=Value
+End Sub
+
+Sub B4XSwitchSend_ValueChanged (Value As Boolean)
+	clt_TCP.AudioSender=Value
+End Sub
+
+Sub ButtonReverse_Click
+	B4XSwitchRiceve.Value=Not(B4XSwitchRiceve.Value)
+	B4XSwitchSend.Value=Not(B4XSwitchSend.Value)
+	
+	clt_TCP.AudioRicever=B4XSwitchRiceve.Value
+	clt_TCP.AudioSender=B4XSwitchSend.Value
+End Sub
+
+Sub ButtonConnect_Click
+	clt_TCP.address=EditTextIP.Text
+	clt_TCP.Initialize
+End Sub

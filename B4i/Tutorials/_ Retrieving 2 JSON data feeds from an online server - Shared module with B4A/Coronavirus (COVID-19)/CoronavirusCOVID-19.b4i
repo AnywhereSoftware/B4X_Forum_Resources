@@ -1,0 +1,141 @@
+﻿Build1=Default,com.simplysoftware.covid19
+File1=confirmed.png
+File2=CoronaInformation.bil
+File3=deceased.png
+File4=planet.png
+File5=recovered.png
+File6=recovering.png
+File7=update.png
+FileGroup1=Images
+FileGroup2=Layouts
+FileGroup3=Images
+FileGroup4=Images
+FileGroup5=Images
+FileGroup6=Images
+FileGroup7=Default Group
+Group=Default Group
+Library1=icore
+Library2=ihttputils2
+Library3=xui views
+Library4=ijson
+Library5=ihud
+Module1=|relative|..\..\..\..\Shared\Project Classes\Coronavirus - COVID-19\Corona
+NumberOfFiles=7
+NumberOfLibraries=5
+NumberOfModules=1
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: COVID-19
+	#Version: 1.0.0.1
+	
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait
+	#iPadOrientations: Portrait
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+
+	Public App As Application
+	Public NavControl As NavigationController
+	Private PgMain As Page
+
+	Private HD As HUD
+	Private CoronaClass As Corona
+
+	Private B4XCmbCountry As B4XComboBox
+	Private ImgCountry, LblWorldConfirmed, LblCountryConfirmed, LblWorldRecovering, LblCountryRecovering, LblWorldRecovered, LblCountryRecovered, _
+	 LblWorldDeceased, LblCountryDeceased, LblWorldConfirmedToday, LblCountryConfirmedToday, LblWorldDeceasedToday, LblCountryDeceasedToday As B4XView
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	
+	NavControl = Nav
+	PgMain.Initialize("PgMain")
+	PgMain.RootPanel.Color = Colors.White
+	PgMain.RootPanel.LoadLayout("CoronaInformation")
+
+	CoronaClass.Initialize
+	PgMain.Title = CoronaClass.AppName
+
+	Wait For (CoronaClass.FetchCoronaJSON) Complete (Completed As Boolean)
+	B4XCmbCountry.SelectedIndex = 1
+	B4XCmbCountry_SelectedIndexChanged(B4XCmbCountry.SelectedIndex)
+
+	NavControl.ShowPage(PgMain)	
+End Sub
+
+Private Sub PgMain_Resize(Width As Int, Height As Int)
+End Sub
+
+Private Sub Application_Background
+End Sub
+
+'POPULATE THE SPINNER WITH THE COUNTRY LIST
+Public Sub PopulateB4XCmbCountry(Countries As List)
+	B4XCmbCountry.SetItems(Countries)
+End Sub
+
+'CENTER IMAGES CLICKED
+Sub ImgClicked_Click
+	Dim ImgClicked As ImageView = Sender
+
+#If B4A
+	ToastMessageShow(ImgClicked.Tag, False)
+#Else If B4i
+	HD.ToastMessageShow(ImgClicked.Tag, True)
+#End If
+End Sub
+
+'SPINNER BOX INDEX CHANGED
+Sub B4XCmbCountry_SelectedIndexChanged(Index As Int)
+#If B4A
+	If B4XCmbCountry.cmbBox.SelectedItem = "SELECT COUNTRY" Then Return  
+#Else If B4i
+	If B4XCmbCountry.mBtn.Text = "SELECT COUNTRY" Then Return
+#End If
+
+	Dim CountryInfo() As Object = CoronaClass.MapCountryInfo.Get(B4XCmbCountry.GetItem(Index))
+
+	LblCountryConfirmed.Text = NumberFormat(CountryInfo(0), 0, 0)
+	LblCountryRecovering.Text = NumberFormat(CountryInfo(1), 0, 0)
+	LblCountryRecovered.Text = NumberFormat(CountryInfo(2), 0, 0)
+	LblCountryDeceased.Text = NumberFormat(CountryInfo(3), 0, 0)
+	LblCountryConfirmedToday.Text = NumberFormat(CountryInfo(4), 0, 0)
+	LblCountryDeceasedToday.Text = NumberFormat(CountryInfo(5), 0, 0)
+
+	Wait For (CoronaClass.DownloadFlagImage(CountryInfo(6))) Complete (Flag As Bitmap)
+	ImgCountry.SetBitmap(Flag)
+End Sub
+
+'POPULATE WORLD TOTALS
+Public Sub PopulateWorldTotals
+	LblWorldConfirmed.Text = NumberFormat(CoronaClass.WD.Confirmed, 0, 0)
+	LblWorldRecovering.Text = NumberFormat(CoronaClass.WD.Recovering, 0, 0)
+	LblWorldRecovered.Text = NumberFormat(CoronaClass.WD.Recovered, 0, 0)
+	LblWorldDeceased.Text = NumberFormat(CoronaClass.WD.Deceased, 0, 0)
+	LblWorldConfirmedToday.Text = NumberFormat(CoronaClass.WD.ConfirmedToday, 0, 0)
+	LblWorldDeceasedToday.Text = NumberFormat(CoronaClass.WD.DeceasedToday, 0, 0)
+End Sub
+
+'CLICK UPDATE IMAGE TO UPDATE JSON INFORMATION  
+Sub ImgUpdate_Click
+#If B4A
+	ToastMessageShow("Updating all information", False)
+#Else If B4i
+	HD.ToastMessageShow("Updating all information", True)
+#End If
+	
+	Dim TmpIndex As Int = B4XCmbCountry.SelectedIndex
+	Wait For (CallSub(CoronaClass, "FetchCoronaJSON")) Complete (Completed As Boolean)
+	
+	B4XCmbCountry.SelectedIndex = TmpIndex
+	B4XCmbCountry_SelectedIndexChanged(B4XCmbCountry.SelectedIndex)
+End Sub

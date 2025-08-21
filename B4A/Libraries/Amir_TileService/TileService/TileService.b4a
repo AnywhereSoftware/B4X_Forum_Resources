@@ -1,0 +1,79 @@
+﻿Build1=Default,com.aghajari.tileservice.sample
+Group=Default Group
+Library1=core
+Library2=phone
+Library3=javaobject
+Library4=amir_tileservice
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~~\n~'Theme~\n~SetApplicationAttribute(android:theme,"@style/AppTheme")~\n~CreateResource(values,styles.xml,~\n~<resources>~\n~    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">~\n~        <item name="colorPrimary">#3F51B5</item>~\n~        <item name="colorPrimaryDark">#303F9F</item>~\n~        <item name="colorAccent">#FF4081</item>~\n~    </style>~\n~</resources>)~\n~~\n~'Tile Service (AmirTileService)~\n~AddApplicationText(~\n~<service~\n~	android:name="com.aghajari.tileservice.TileService"~\n~	android:icon="@android:drawable/ic_media_play"~\n~	android:label="Disconnected"~\n~	android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">~\n~	~\n~	<meta-data android:name="com.aghajari.tileservice.TileService"~\n~			   android:value="AmirTileService" />~\n~	~\n~	<intent-filter>~\n~		<action android:name="android.service.quicksettings.action.QS_TILE" />~\n~	</intent-filter>~\n~</service>)
+Module1=AmirTileService
+Module2=PreferenceManager
+Module3=Starter
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=3
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TileService
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+	'AppCompat
+	#AdditionalJar : androidx.appcompat:appcompat
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+	#Extends :  androidx.appcompat.app.AppCompatActivity
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Dim Label As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Label.Initialize("Label")
+	Activity.AddView(Label,0,0,-1,-1)
+	Label.Gravity = Gravity.CENTER
+	Label.Typeface = Typeface.DEFAULT_BOLD
+	Label.TextSize = 20
+End Sub
+
+Sub Activity_Resume
+	Reload(False)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Public Sub Reload (UpdateTile As Boolean)
+	If PreferenceManager.GetValue(PreferenceManager.TILE_KEY,False) Then
+		Label.Text = "Connected"
+		Label.TextColor = Colors.Blue
+	Else
+		Label.Text = "Disconnected"
+		Label.TextColor = Colors.Red
+	End If
+	
+	If Not(UpdateTile) Then Return
+	Dim p As Phone
+	If p.SdkVersion>=24 Then
+		Dim TS As Amir_TileService
+		TS.Initialize(Null)
+		TS.RequestListeningState2(1)
+	End If
+End Sub
+
+Private Sub Label_Click
+	PreferenceManager.SaveValue(PreferenceManager.TILE_KEY,Not(PreferenceManager.GetValue(PreferenceManager.TILE_KEY,False)))
+	Reload(True)
+End Sub

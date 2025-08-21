@@ -1,0 +1,103 @@
+﻿Build1=Default,b4a.example.tms.message
+File1=drawer_message.bal
+File2=main.bal
+File3=overlay_message.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=3
+NumberOfLibraries=2
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: TMS Message
+	#VersionCode: 1
+	#VersionName: 1.0 ToastMessageShow2
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private xui As XUI
+	Private Overlay, pnlMessage As B4XView
+	Private Label1, Label2 As Label
+
+	Private corners As Int = 125dip
+	Private OverlayVisible As Boolean
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+	Overlay = xui.CreatePanel("Overlay")
+	Overlay.Visible = False
+
+	Activity.AddView(Overlay, 0, 0, 100%x, 100%y)
+	
+	Overlay.LoadLayout("overlay_message")
+	pnlMessage.LoadLayout("drawer_message")
+	pnlMessage.SetColorAndBorder(xui.Color_ARGB(20,0,0,0), 0, 0, corners)
+End Sub
+
+Sub ToastMessageShow2
+	Dim Duration As Int = 600
+	OverlayVisible = Not(OverlayVisible)
+	
+	Dim pnl As Panel = pnlMessage
+	pnl.SetColorAnimated(600,Colors.ARGB(20,0,0,0),Colors.ARGB(80,0,0,0))
+	
+	Overlay.SetVisibleAnimated(Duration, OverlayVisible)
+	Dim pnlMessageVisibleHeight As Int = pnlMessage.Height - corners 'hide bottom round corners.
+
+	'show.
+	Label1.TextSize = 17
+	pnlMessage.SetLayoutAnimated(0, 0, pnlMessage.Parent.Height, pnlMessage.Width, pnlMessage.Height)
+	pnlMessage.SetLayoutAnimated(Duration, 0, pnlMessage.Parent.Height - pnlMessageVisibleHeight, pnlMessage.Width, pnlMessage.Height)
+	
+	Sleep(2800)
+	If OverlayVisible Then ToastMessageShow2_Hide
+
+End Sub
+
+Sub ToastMessageShow2_Hide
+	Dim Duration As Int = 800
+	OverlayVisible = False
+	Overlay.SetVisibleAnimated(Duration, OverlayVisible)
+	Dim pnlMessageVisibleHeight As Int = pnlMessage.Height - corners 'hide bottom round corners.
+
+	'hide.
+	Label1.SetTextSizeAnimated(800,4)
+	pnlMessage.SetLayoutAnimated(0, 0, pnlMessage.Parent.Height - pnlMessageVisibleHeight, pnlMessage.Width, pnlMessage.Height)
+	pnlMessage.SetLayoutAnimated(Duration, 0, pnlMessage.Parent.Height, pnlMessage.Width, pnlMessage.Height)
+End Sub
+
+Sub btnShow_Click
+	If OverlayVisible Then Return
+	ToastMessageShow2
+End Sub
+
+Sub Overlay_Click
+	If OverlayVisible Then ToastMessageShow2_Hide
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
