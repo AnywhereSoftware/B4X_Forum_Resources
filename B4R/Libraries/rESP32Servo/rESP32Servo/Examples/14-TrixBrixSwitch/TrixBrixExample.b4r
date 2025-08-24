@@ -1,0 +1,77 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32servo
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rESP32Servo
+' Brief:	Example moving the servo between straight & diverging using a TrixBrix switch with servo HD1160A.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-08-21
+' License:	MIT — see LICENSE file.
+
+' Hardware
+' Servo:	PowerHD 1160A, Pulse width range 800-2200 mV.
+' MCU:		ESP-WROOM-32, B4R 4.00 (64 bit), IDE ESP32 Dev Module, Arduino Board Manager ESP32 3.0.0.
+
+' Wiring
+' Servo = ESP32
+' Signal = D4
+' VCC = VIn
+' GND = GND
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private ANGLE_MIN_POS As UInt = 58
+	Private ANGLE_MAX_POS As UInt = 100
+    Public Serial1 As Serial
+    Public Servo1 As ESP32Servo
+	Private ServoPinNr As Byte = 4			' Recommended pin 4 of the ESP32
+    Public PinServo As Pin
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[Main.AppStart]")
+	PinServo.Initialize(ServoPinNr, PinServo.MODE_OUTPUT)
+	TestServoEnds(Servo1, ServoPinNr, ANGLE_MIN_POS, ANGLE_MAX_POS, 1000)
+	Log("[Main.AppStart] Done")
+End Sub
+
+' Move servo to min and max positions only
+Private Sub TestServoEnds(servo As ESP32Servo, pinNumber As Byte, minAngle As Int, maxAngle As Int, holdTimeMs As Int)
+	Log("[TestServoEnds] Start")
+
+	servo.Attach(pinNumber)
+	Delay(20)
+
+	For i = 1 To 3
+		servo.Write(minAngle)
+		Delay(20)
+		Log("[TestServoEnds] Moved to min angle=", servo.Read)
+
+		Delay(holdTimeMs)
+
+		servo.Write(maxAngle)
+		Delay(20)
+		Log("[TestServoEnds] Moved to max angle=", servo.Read)
+
+		Delay(holdTimeMs)
+	Next
+
+	servo.Detach
+	Log("[TestServoEnds] Done")
+End Sub

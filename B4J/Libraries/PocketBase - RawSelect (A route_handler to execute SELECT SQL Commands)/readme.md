@@ -1,5 +1,5 @@
 ### PocketBase - RawSelect (A route/handler to execute SELECT SQL Commands) by Mashiane
-### 08/19/2025
+### 08/22/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/168257/)
 
 Hi Fam  
@@ -22,6 +22,20 @@ And in the body enter the SELECT SQL Command like this
 
 ```B4X
 "query": "select id, provinceid, programmeid, count(*) as records, isyouth,created from bma_beneficiary where onmaster = 'true' group by isyouth, provinceid"
+```
+
+  
+  
+**NB: Boolean Casting - fields starting with is,has,can & those ending with active,enabled,disabled are treated as boolean.**  
+  
+
+```B4X
+// Boolean-ish names  
+if (  
+  /^(is|has|can)[a-z0-9_]*$/.test(nl) ||  
+  /(active|enabled|disabled)$/.test(nl)  
+)  
+  return false;
 ```
 
   

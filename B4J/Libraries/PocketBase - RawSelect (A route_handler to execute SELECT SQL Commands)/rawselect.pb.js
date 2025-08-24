@@ -399,8 +399,9 @@ routerAdd(
         try {
           const selectList = getTopLevelSelectList(sql);
           if (!selectList) return new DynamicModel({});
+          const cleanedList = selectList.replace(/^\s*DISTINCT\s+ON\s*\([^)]*\)\s*/i, "").replace(/^\s*DISTINCT\s+/i, "").trim();
 
-          const items = splitTopLevel(selectList);
+          const items = splitTopLevel(cleanedList);
           const modelObj = {};
 
           // Collect parsed fields first
