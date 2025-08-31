@@ -1,5 +1,5 @@
 ### jShell library by Erel
-### 05/12/2021
+### 08/27/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/34661/)
 
 The jShell library allows you to start other programs. It is based on Apache Commons Exec project: <http://commons.apache.org/proper/commons-exec/index.html>  
@@ -32,7 +32,4 @@ End Sub
 ```
 
   
-The Shell library can be used in a UI app in the same way.  
-  
-  
-**V1.30 is released** - Includes a method to start a process and wait for it to complete. You should normally not use this method in a UI application as it will block the UI thread.
+The Shell library can be used in a UI app in the same way.

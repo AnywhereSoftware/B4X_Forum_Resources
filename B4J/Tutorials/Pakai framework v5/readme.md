@@ -1,5 +1,5 @@
 ### Pakai framework v5 by aeric
-### 07/16/2025
+### 08/27/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/167796/)
 
 **[SIZE=5]Part #1: Get Started  
@@ -11,7 +11,7 @@ This tutorial is based on [**[Project Template] Pakai Server v5**](https://www.b
   
 [SIZE=4]Option 1:[/SIZE]**  
 
-1. Download and put the following files to Additional Libraries folder
+1. Download and put the following files to Additional Libraries folder (don't put inside new subfolder)
 B4J:
 **-** [**Pakai Server (5.00).b4xtemplate**](https://www.b4x.com/android/forum/threads/project-template-pakai-server-v5.167788/)
 - [**EndsMeet.b4xlib**](https://www.b4x.com/android/forum/threads/web-server-endsmeet-v1-10.167395/) (v1.10)

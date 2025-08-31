@@ -1,5 +1,5 @@
 ###  [XUI] AS BottomActionSheet by Alexander Stolte
-### 12/03/2024
+### 08/25/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/159328/)
 
 This view makes it quick and easy to let the user make an action.  
@@ -232,6 +232,13 @@ Version: 1.03
 
 - Auto, Left, Right
 - Default: Auto
+
+- **1.06**
+
+- New AddItemRow - Add items side by side
+- New CreateItem and CreateItem2, does the same as AddItem and AddItem2 but it is not added to the list
+
+- is needed for AddItemRow
 
 Have Fun :)  
 [![](https://www.b4x.com/android/forum/attachments/paypal-donate-button-png-clipart-png.79848/)](https://www.paypal.com/donate/?hosted_button_id=PBJGJWDDSM6ZG)

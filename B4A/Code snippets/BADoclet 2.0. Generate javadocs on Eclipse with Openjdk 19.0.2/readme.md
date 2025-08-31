@@ -1,5 +1,5 @@
 ### BADoclet 2.0. Generate javadocs on Eclipse with Openjdk 19.0.2 by max123
-### 06/24/2025
+### 08/24/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/167061/)
 
 Hi all,  
@@ -9,7 +9,7 @@ This worked well for me on Eclipse right away, from the first time I tried it , 
   
 After that I asked permission to release the doclet on this forum for peoples that need it in future.  
   
-Always cortesely I received the permission to do it, so I will post that here now.  
+Always courtesely I received the permission to do it, so I will post that here now.  
   
 All credits, and many thanks to [USER=52836]@Daestrum[/USER]  
   

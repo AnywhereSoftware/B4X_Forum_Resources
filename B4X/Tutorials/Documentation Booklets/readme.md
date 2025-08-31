@@ -1,5 +1,5 @@
 ###  Documentation Booklets by klaus
-### 01/11/2024
+### 08/24/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/88985/)
 
 The B4X documentation booklets are available in PDF format, [**Download Link**](https://www.b4x.com/android/files/Booklets.zip).  
@@ -13,8 +13,8 @@ Some don't cover B4R because the subject is not relevant for B4R like Visual Des
 Example projects with source code are included.  
   
 All booklets can be accessed online with the links below.  
-The generic link is: <https://www.b4x.com/guides/BookletName/?page=xx>  
-In this example we reach the B4xCustomViews booklet page 59: <https://www.b4x.com/guides/B4xCustomViews/?page=59>  
+The generic link is: <https://www.b4x.com/guides/BookletName.html#pfxx> (this link does not work the page does not exist, but the text is automatically converted to a link.)  
+In this example we reach the B4xCustomViews booklet page 59, page number hexadecimal: <https://www.b4x.com/guides/B4XCustomViews.html#pf3a>  
 The booklet names must begin with B4x (the x is in lower case) and without blank characters.  
 The summary of the list can be found here: [Documentation](https://www.b4x.com/android/documentation.html)  
 To get the source code of the example projects you can either download the entire zip file with the pdf booklets or only the source codes with the SourceCode link on top or at the end in the list below.  

@@ -1,5 +1,5 @@
 ###  PreoptimizedCLV - Lazy loading extension for xCustomListView by Erel
-### 01/04/2022
+### 08/28/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/115289/)
 
 This is a cross platform class that extends xCustomListView and makes it "lazier".  
@@ -117,4 +117,5 @@ Data source: <https://ourworldindata.org/coronavirus-source-data>
   
 Updates:  
   
+PCLV\_Example1 is based on B4XPages and is cross platform.  
 v1.21 - Fixes an issue with horizontal orientation in B4i.

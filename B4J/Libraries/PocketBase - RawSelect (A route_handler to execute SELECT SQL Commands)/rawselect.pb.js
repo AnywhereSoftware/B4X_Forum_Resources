@@ -371,7 +371,7 @@ routerAdd(
         // Boolean-ish names
         if (
           /^(is|has|can)[a-z0-9_]*$/.test(nl) ||
-          /(active|enabled|disabled|status)$/.test(nl)
+          /(active|enabled|disabled)$/.test(nl)
         )
           return false;
 
@@ -426,25 +426,36 @@ routerAdd(
       function buildDynamicModelArrayFromSQL(sql) {
         return arrayOf(buildDynamicModelFromSQLSorted(sql));
       }
+
+      // -----------------------------
+      // --- Detect query type ---
+      // -----------------------------
+      const hasAggregate = /\b(count|sum|avg|total|min|max)\s*\(/i.test(sqlQuery);
+      const hasGroupBy   = /\bgroup\s+by\b/i.test(sqlQuery);
+      const hasDistinct  = /\bselect\s+distinct\b/i.test(sqlQuery);
+
+      const isSingleRowAggregate = hasAggregate && !hasGroupBy && !hasDistinct;
+
       //we have build everything, ready to execute
       let offset = 0;
       let batch;
       let allRecords = [];
-      //execute the calls in batches until done
-      do {
-        batch = buildDynamicModelArrayFromSQL(
-          sqlQuery + ` LIMIT ${perPage} OFFSET ${offset}`
-        );
-        $app
-          .db()
-          .newQuery(sqlQuery + ` LIMIT ${perPage} OFFSET ${offset}`)
-          .all(batch);
-
-        allRecords = allRecords.concat(batch);
-
-        offset += parseInt(perPage);
-      } while (batch.length > 0);
-
+      
+      if (isSingleRowAggregate) {
+        // Single-row aggregate → execute once
+        batch = buildDynamicModelArrayFromSQL(sqlQuery);
+        $app.db().newQuery(sqlQuery).all(batch);
+        allRecords = batch;
+      } else {
+        // Paginated query (normal, GROUP BY, DISTINCT)
+        do {
+          const pagedQuery = sqlQuery + ` LIMIT ${perPage} OFFSET ${offset}`;
+          batch = buildDynamicModelArrayFromSQL(pagedQuery);
+          $app.db().newQuery(pagedQuery).all(batch);
+          allRecords = allRecords.concat(batch);
+          offset += parseInt(perPage);
+        } while (batch.length > 0);
+      }
       // --- Total count ---
       let rowcount = allRecords.length;
       totalPages = Math.ceil(rowcount / perPage);      

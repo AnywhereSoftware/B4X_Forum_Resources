@@ -1,5 +1,5 @@
 ### Massimo Meli Overview by max123
-### 08/05/2025
+### 08/25/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/144941/)
 
 **[SIZE=5]B4A-B4J-B4R[/SIZE]** [SIZE=5]**Libraries, Classes,**[/SIZE] **[SIZE=5]Code Snippets[/SIZE]**  
@@ -25,12 +25,13 @@ annoying search libraries in the library tab prefixed in alphabetical order not 
 ******B4J Libraries******  
 [[B4J-B4A] AsyncCanvas, B4XCanvas wrapper with Invalidate for B4J](https://www.b4x.com/android/forum/threads/asynccanvas-b4xcanvas-wrapper-with-invalidate-for-b4j.148736/)  
 [[B4J] WebGL library](https://www.b4x.com/android/forum/threads/b4j-webgl-library.164553/#post-1008848)  
+[[B4J] GIFDecoder library](https://www.b4x.com/android/forum/threads/gifdecoder-library-released.120980)  
   
 ********B4R Libraries******  
   
 Code Snippets**  
 [[B4A] External Storage Extras](https://www.b4x.com/android/forum/threads/external-storage-extras.143576/#post-909906)  
-[[B4A-B4J-B4R] Check if an IP Address is Private or Public](https://www.b4x.com/android/forum/threads/check-if-an-ip-address-is-private-or-public.144370/)  
+[[](https://www.b4x.com/android/forum/threads/check-if-an-ip-address-is-private-or-public.144370/)[B4A-B4J-B4R] Check if an IP Address is Private or Public](https://www.b4x.com/android/forum/threads/check-if-an-ip-address-is-private-or-public.144370/)  
 [[B4J] Remove Aliasing on Canvas horizontal and vertical lines](https://www.b4x.com/android/forum/threads/remove-aliasing-on-canvas-horizontal-and-vertical-lines.72236/)  
 [[algorithm] First post. Map a value from one range to another range. The simple way.](https://www.b4x.com/android/forum/threads/algorithm-first-post-map-a-value-from-one-range-to-another-range-the-simple-way.144391/)  
 [[algorithm] Digital Low-Pass Filter](https://www.b4x.com/android/forum/threads/algorithm-digital-low-pass-filter.144946/#post-918919)  
@@ -49,4 +50,5 @@ Code Snippets**
 [WebGL library, working with physics engines - Part 2](https://www.b4x.com/android/forum/threads/webgl-library-working-with-physics-engines-part-2.166414/)  
 [WebGL library, working with static and animated models](https://www.b4x.com/android/forum/threads/webgl-library-working-with-static-and-animated-models.166523/)  
 [WebGL library, working with fog](https://www.b4x.com/android/forum/threads/webgl-library-working-with-fog.168091/)  
-[Develop full 3D games with WebGL library](https://www.b4x.com/android/forum/threads/develop-full-3d-games-with-webgl-library.167783/)
+[Develop full 3D games with WebGL library](https://www.b4x.com/android/forum/threads/develop-full-3d-games-with-webgl-library.167783/)  
+[The first playable 3D game developed with WebGL library](https://www.b4x.com/android/forum/threads/the-first-playable-3d-game-developed-with-webgl-library.168178/)

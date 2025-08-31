@@ -1,5 +1,5 @@
 ###  [XUI] AS TextFieldAdvanced - Title, Information, Counter, Password, Button, Prefix, Suffix, Icons, Multiline by Alexander Stolte
-### 07/01/2025
+### 08/25/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/141337/)
 
 With this view you can quickly and easily add good looking text fields, with title and or bottom text. Additionally you can make the TextField a button, so that you can open menus, but still keep the design of the text fields.  
@@ -699,6 +699,10 @@ Version: 1.23**
 - **1.45**
 
 - New get OldText - Returns the text that was there before
+
+- **1.46**
+
+- BugFix on Multiline
 
 **Github:** [github.com/StolteX/AS\_TextFieldAdvanced](https://github.com/StolteX/AS_TextFieldAdvanced)  
   

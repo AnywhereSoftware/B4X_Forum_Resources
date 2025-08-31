@@ -1,5 +1,5 @@
 ### jSD_OpenMaps by Star-Dust
-### 05/27/2025
+### 08/25/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166066/)
 
 As many currently know Googlemaps' Webapi do not work correctly on the webview because the latest versions use webgl  
@@ -9,7 +9,7 @@ I decided to do a new library that uses OpenMap and Leaflet with the same method
 **jSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.15  
+**Version:** 1.16  
 
 - **CameraPosition**
 
@@ -400,4 +400,8 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 
 - added **AddMarker3bis -** Adds the marker, hitting it in height in the coordinate indicated
 - The possibility of the escape seques in the panel text (GMap.MessageToPanel)
+- Fixed the bug that prevented having more openmaps classes started at the same time
+
+- 1.16
+
 - Fixed the bug that prevented having more openmaps classes started at the same time
