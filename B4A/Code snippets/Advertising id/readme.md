@@ -1,12 +1,13 @@
 ### Advertising id by Erel
-### 12/15/2021
+### 09/03/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/101050/)
 
 1. Add a reference to FirebaseAdMob2.  
 2. Add to manifest editor:  
 
 ```B4X
-CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)
+CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)  
+AddPermission(com.google.android.gms.permission.AD_ID)
 ```
 
   
@@ -70,10 +71,15 @@ public static void GetAdvertisingId() {
 Usage example:  
 
 ```B4X
-Wait For (GetAdvertisingId) Complete (Id As String)  
-If Id <> "" Then  
-   Log(Id)  
-End If
+Private Sub Button1_Click  
+    Wait For (GetAdvertisingId) Complete (Id As String)  
+    If Id <> "" Then  
+        Log(Id)  
+    Else  
+        Log("Error retreiving key")  
+        Log(LastException)  
+    End If  
+End Sub
 ```
 
   

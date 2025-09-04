@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.HoneywellMobilityEnhanced.HoneywellMobilityEnhanced</name>
+        <shortname>HoneywellMobilityEnhanced</shortname>
+        <comment>B4A SDK Wrapper for Honeywell Barcode Reader (Aidc SDK)
+ Based on Android Data Collection Java API V1.97.00.0084</comment>
+        <owner>process</owner>
+        <event>BarcodeScanned (Data As String)</event>
+        <event>ScannerStatusChanged (Status As String)</event>
+        <event>TriggerChanged (Pressed As Boolean)</event>
+        <event>OnFailureEvent (Message As String)</event>
+        <event>ScannerConnectionChanged (IsConnected As Boolean)</event>
+        <event>ScannerUnavailable (Message As String)</event>
+        <event>OnImageCaptured (Image() As Byte)</event>
+        <event>OnImageCaptureFailed (Message As String)</event>
+        <permission>com.honeywell.decode.permission.DECODE</permission>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>EnableLogging</name>
+            <comment>Enables or disables library logging for debugging purposes.
+ Enabled true to enable logging, false to disable.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Notify</name>
+            <comment>Triggers a pre-configured notification for the user.
+ You must have a BarcodeReader instance that is claimed and available.
+
+ NotificationType The type of notification to trigger.
+ Accepted values are: "GOOD_READ_NOTIFICATION" or "BAD_READ_NOTIFICATION".</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NotificationType</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetScannerSerialNumber</name>
+            <comment>Retrieves the serial number as a string, or null if not available.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetAllProperties</name>
+            <comment>Retrieves a Map of all properties currently set on the BarcodeReader.
+ You must have a BarcodeReader instance that is claimed and available.
+ Return A Map containing all properties, or an empty Map on error.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>SelectScannerByFriendlyName</name>
+            <comment>Selects a specific barcode scanner to use by its friendly name.
+ The friendly name of the scanner to select.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>FriendlyName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment>Checks if the AIDC manager is fully initialized and able to communicate with the device.
+ This is a more robust check than simply verifying the aidcManager object is not null.
+ True if the AIDC manager is ready for use, false otherwise.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the Honeywell Mobility library for barcode scanners.
+ This will automatically claims a barcode scanner if one is availiable.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsClaimed</name>
+            <comment>Checks if the barcode reader is currently claimed by this application.
+ Returns true if the scanner is claimes, false otherwise.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>SetEventPrefix</name>
+            <comment>Sets a custom event prefix for the library's events.
+ Change the prefix initialize event name string to a new prefix event name string.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Prefix</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ListScanners</name>
+            <comment>Lists the technical names of all connected barcode scanners.
+ These names are unique identifiers required for the `createBarcodeReaderConnection` method.
+
+ Use `BarcodeReaderInfo.getName()` for the technical name and `BarcodeReaderInfo.getFriendlyName()`
+ for the user-friendly name. For a list of user-friendly names, use `ListAvailableScanners`.
+
+ Return A list of strings containing the technical names of connected scanners.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>ManageTrigger</name>
+            <comment>Enable or disable manually controlling the trigger and how it works, default is false.
+ True if you the developer wants to manage the trigger, false if not (leave automatic).
+ When true, the TriggerChanged event will be triggered</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ManageTrigger</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OnDestroy</name>
+            <comment>Cleans up and releases all resources associated with the scanner.
+ This method is called to gracefully disconnect from the barcode reader and the
+ AIDC service. You should use the OnDestroy method when your application 
+ is about to be shut down.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>OnResume</name>
+            <comment>Reclaims the scanner when the application resumes from the background.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetSymbologyStates</name>
+            <comment>Retrieves the state (enabled/disabled) of a list of common symbologies.
+
+ This function gets all current properties from the scanner and checks
+ the state of a predefined list of common symbologies.
+
+ A List of strings where each element is a symbology name followed by its state,
+ e.g. "Code 128: Enabled". Returns an empty list if the scanner is not ready.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetConnectionStatus</name>
+            <comment>Retrieves a formatted connection status of the barcode.
+ Return Connected if the scanner is connected, Disconnected if disconnected, or Unknown if the status is unknown.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetConnectedScannerName</name>
+            <comment>Gets the friendly name of the currently connected barcode scanner.
+ Returns the scanner's name as a string, or an empty string if none is connected.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetScannerFirmwareVersion</name>
+            <comment>Retrieves the scanner's firmware version.
+ The firmware version as a string, or null if not available.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>ListAvailableScanners</name>
+            <comment>Return a list of friendly names for all available barcode scanners.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>StartScan</name>
+            <comment>Initiates a software trigger to start a scan.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetScannerId</name>
+            <comment>Retrieves the scanner ID as a string, or null if not available.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>ClaimScanner</name>
+            <comment>Claims control of the barcode reader, allowing the application to use it.
+ This is automatically handled internally but can be called manually if needed.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>IsScannerReady</name>
+            <comment>Checks if the scanner is ready for use, including being connected and available.
+ This is a more robust check than simply verifying the barcodeReader object is not null.
+ True if the scanner is ready for use, false otherwise.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>ClearScanHistory</name>
+            <comment>Clears the locally stored history of scanned barcodes.
+ This will reset the list of the last 50 scanned barcodes
+ that is maintained by the wrapper.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>OnPause</name>
+            <comment>Releases the scanner claim when the application is paused.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetBarcodeReaderInfo</name>
+            <comment>This method retrieves information about the last connected barcode reader and returns its properties as a Map.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>SetSoftwareTriggerState</name>
+            <comment>Programmatically triggers the scanner.
+ True to start a scan, False to stop it.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>state</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetIlluminationEnabled</name>
+            <comment>Enables or disables the scanner illumination.
+ True to turn on the illumination, False to turn it off.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetScanHistory</name>
+            <comment>Retrieves the locally stored history of scanned barcodes.
+ An array of strings containing the last 50
+ history of scanned barcodes.</comment>
+            <returntype>java.lang.String[]</returntype>
+        </method>
+        <method>
+            <name>ReleaseScanner</name>
+            <comment>Releases the barcode reader, allowing other applications to claim it.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetTriggerScanMode</name>
+            <comment>Sets the scan mode of the trigger.
+
+ This allows you to configure the desired scan mode as a string.
+ Accepted values are: "continuous", "oneShot", "readOnRelease".</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Mode</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetGoodReadNotification</name>
+            <comment>Enables or disables the good read notification sound/vibration.
+ True to enable, False to disable.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CaptureLastScannedImage</name>
+            <comment>Captures and returns the last scanned bitmap image.
+ This method raises the OnImageCaptured event with the captured image
+ or OnImageCaptureFailed if the capture is unsuccessful.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetAimerEnabled</name>
+            <comment>Enables or disables the scanner aimer.
+ True to turn on the aimer, False to turn it off.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>StopScan</name>
+            <comment>Stops the software trigger, ending an active scan.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetProperty</name>
+            <comment>Retrieves the value of a single scanner property.
+ e.g. "PROPERTY_EAN_13_ENABLED", "PROPERTY_DECODER_TIMEOUT", "PROPERTY_ILLUMINATION_MODE".
+ CHECK THE SCANNER MANUAL FOR THE FULL LIST OF PROPERTIES.
+ 
+ propertyName: The name of the property to retrieve.
+ Return the value of the property as an Object, or null if the property
+ is not found or an error occurs.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>propertyName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetBadReadNotification</name>
+            <comment>Enables or disables the bad read notification sound/vibration.
+ True to enable, False to disable.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ResetScannerToDefaults</name>
+            <comment>Resets the barcode scanner's properties to their default values.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetProperty</name>
+            <comment>Sets the value of a single scanner property, 
+ e.g. "PROPERTY_EAN_13_ENABLED", "PROPERTY_DECODER_TIMEOUT", "PROPERTY_ILLUMINATION_MODE".
+ CHECK THE SCANNER MANUAL FOR THE FULL LIST OF PROPERTIES.
+ 
+ propertyName: The name of the property to retrieve.
+ propertyValue: Sets the property value, Boolean, Int, String.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>propertyName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>propertyValue</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetDecoderTimeout</name>
+            <comment>Sets the maximum time (in milliseconds) the scanner will attempt to decode a barcode.
+ The timeout value in milliseconds.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.02</version>
+    <author>Peter Simpson</author>
+    <dependsOn>DataCollection.aar</dependsOn>
+</root>

@@ -9,7 +9,7 @@ Version=9.85
 'Ctrl + click to sync files: ide://run?file=%WINDIR%\System32\Robocopy.exe&args=..\..\Shared+Files&args=..\Files&FilesSync=True
 #End Region
 
-'Ctrl + click to export as zip: ide://run?File=%B4X%\Zipper.jar&Args=Project.zip
+'Ctrl + click to export as zip: ide://run?File=%B4X%\Zipper.jar&Args=AdsHelper.zip
 
 Sub Class_Globals
 	Private Root As B4XView
@@ -17,7 +17,8 @@ Sub Class_Globals
 	Private BannerAd As AdView
 	Private iAd As InterstitialAd
 	Private Ads As AdsHelper
-	Private AppOpenAdUnit As String = "ca-app-pub-3940256099942544/3419835294"
+	Private AppOpenAdUnit As String = "ca-app-pub-3940256099942544/9257395921"
+	Private Button1 As B4XView
 End Sub
 
 Public Sub Initialize
@@ -29,16 +30,18 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	B4XPages.GetManager.LogEvents = True
 	Root = Root1
 	Root.LoadLayout("MainPage")
+	Button1.Enabled = False
 	CheckConsentAndAddAds
 End Sub
 
 Private Sub CheckConsentAndAddAds
 	Dim m As MobileAds
 	Wait For (m.Initialize) MobileAds_Ready
-	m.SetConfiguration(m.CreateRequestConfigurationBuilder(Array("0BAB27F6EE97F9B5FA3B8C59548E8A34"))) 'optional. Array with test device ids. See unfiltered logs to find correct id.
+	'optional. Array with test device ids. See unfiltered logs to find correct id. Look for setTestDeviceIds.
+	m.SetConfiguration(m.CreateRequestConfigurationBuilder(Array("8A2BC683096DA70A5AB35C9F69DA8B52"))) 
 	
 '	Ads.ResetConsentStatus
-'	Ads.SetConsentDebugParameters("0BAB27F6EE97F9B5FA3B8C59548E8A34", True) 'same id as above
+'	Ads.SetConsentDebugParameters("8A2BC683096DA70A5AB35C9F69DA8B52", True) 'same id as above
 	
 	If Ads.GetConsentStatus = "UNKNOWN" Or Ads.GetConsentStatus = "REQUIRED" Then
 		Wait For (Ads.RequestConsentInformation(False)) Complete (Success As Boolean)
@@ -54,6 +57,7 @@ Private Sub CheckConsentAndAddAds
 	iAd.Initialize("iad", "ca-app-pub-3940256099942544/1033173712")
 	iAd.LoadAd
 	Ads.FetchOpenAd(AppOpenAdUnit)
+	Button1.Enabled = True
 End Sub
 
 Private Sub Button1_Click

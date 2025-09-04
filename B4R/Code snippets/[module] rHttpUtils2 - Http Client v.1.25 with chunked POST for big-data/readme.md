@@ -1,5 +1,5 @@
 ### [module] rHttpUtils2 - Http Client v.1.25 with chunked POST for big-data by peacemaker
-### 08/13/2025
+### 08/31/2025
 [B4X Forum - B4R - Code snippets](https://www.b4x.com/android/forum/threads/167557/)
 
 Updated [Erel's module](https://www.b4x.com/android/forum/threads/module-rhttputils2-http-client.74785): for big data sending to a server i have added the sending POST request by chunks.  
@@ -54,6 +54,10 @@ Private Sub AppStart
         Next  
         bc.ArrayCopy2(postData, i, HttpJob.chunkBuffer, 0, chunkSize)  
         HttpJob.PostChunkedSend(HttpJob.chunkBuffer, chunkSize)  
+        If HttpJob.WorkingFlag = False Then    'error  
+            Log("Chunked POST is interrupted !")  
+            Exit  
+        End If  
         i = i + chunkSize  
     Loop  
     HttpJob.PostChunkedFinish  
@@ -79,12 +83,12 @@ End Sub
   
 
 ```B4X
-'version 1.25  
+'version 1.26  
 'added chunked POST request  
 '© Erel, Peacemakerv  
 Sub Process_Globals  
-    Private requestCache(500) As Byte  
-    Private responseCache(5000) As Byte  
+    Private requestCache(2500) As Byte  
+    Private responseCache(1500) As Byte  
     Private responseIndex As Int  
     Private mJobname(32) As Byte  
     Private mVerb(8) As Byte  
@@ -99,16 +103,19 @@ Sub Process_Globals
     Type JobResult (JobName() As Byte, ErrorMessage() As Byte, Success As Boolean, Response() As Byte, Status As Int)  
     Private ResponseTimer As Timer  
     Public ResponseTimeout As UInt = 8000  
+    Public WorkingFlag As Boolean  
+    Public HttpErrorsCounter As ULong  
    
     Dim raf As RandomAccessFile  
   
     'For chunks  
     Private isChunked As Boolean  
-    Public chunkLength As Int = 7    'needed to save, edit for your need  
-    Public chunkBuffer(chunkLength) As Byte  
+    Public chunkLength As Int = 512    'needed to save, edit for your need  
+    Public chunkBuffer(512) As Byte  
 End Sub  
   
 Public Sub Initialize(JobName As String)  
+    WorkingFlag = True    'start working  
     bc.ArrayCopy(JobName, mJobname)  
     headersIndex = 0  
     headersLen = 0  
@@ -129,22 +136,22 @@ End Sub
 Public Sub Download (Link() As Byte)  
     ParseLink(Link, Null)  
     bc.ArrayCopy("GET", mVerb)  
-    SendRequest(0)  
+    SendRequest(1)  
 End Sub  
   
 Public Sub Post (Link() As Byte, Payload() As Byte)  
     ParseLink(Link, Payload)  
     bc.ArrayCopy("POST", mVerb)  
-    SendRequest(0)  
+    SendRequest(2)  
 End Sub  
   
 ' === SendRequest with chunks support ===  
   
-Private Sub SendRequest (unused As Byte)  
+Private Sub SendRequest (reqtype As Byte)  
     Dim host As String = bc.StringFromBytes(bc.SubString2(requestCache, hostIndex, hostIndex + hostLen))  
     Dim st As Stream = Null  
   
-    Log("trying to connect to: ", host, " port: ", port, " ssl: ", ssl)  
+    Log(reqtype, ": trying to connect to: ", host, " port: ", port, " ssl: ", ssl)  
   
     If ssl Then  
         sslsocket.Close  
@@ -160,6 +167,7 @@ Private Sub SendRequest (unused As Byte)
   
     If st = Null Then  
         SetError("Failed to connect")  
+        WorkingFlag = False  
         Return  
     End If  
   
@@ -191,6 +199,7 @@ Private Sub SendRequest (unused As Byte)
         If payload.Length > 0 Then  
             astream.Write(payload)  
         End If  
+        Log("HTTP request is sent OK: ", reqtype)  
     End If  
 End Sub  
   
@@ -199,6 +208,7 @@ Private Sub AStream_NewData (Buffer() As Byte)
     'Log("AStream_NewData: ", Buffer)  
     If responseIndex + Buffer.Length > responseCache.Length Then  
         Log("ResponseCache is full (", Buffer.Length, ")")  
+        WorkingFlag = False  
         Return  
     End If  
     bc.ArrayCopy2(Buffer, 0, responseCache, responseIndex, Buffer.Length)  
@@ -212,7 +222,9 @@ End Sub
 Private Sub ParseResult  
     ResponseTimer.Enabled = False  
     If responseIndex = 0 Then  
+        Log("ParseResult: Response not available.")  
         SetError("Response not available.")  
+        WorkingFlag = False  
         Return  
     End If  
   
@@ -229,7 +241,7 @@ Private Sub ParseResult
             Dim NewPath() As Byte = bc.Trim(bc.SubString2(response, i1 + 9, i2))  
             Log("Redirecting to: ", NewPath)  
             ParseLink(NewPath, bc.SubString2(requestCache, payloadIndex, payloadIndex + payloadLen))  
-            CallSubPlus("SendRequest", 1, 0)  
+            CallSubPlus("SendRequest", 1, 0) 'to avoid stack overflows  
             Return  
         End If  
     End If  
@@ -242,7 +254,9 @@ Private Sub ParseResult
     jr.ErrorMessage = Array As Byte()  
     jr.Status = status  
     isChunked = False  
-    Main.JobDone(jr)  
+    HttpErrorsCounter = 0    'reset  
+    webapi.JobDone(jr)  
+    WorkingFlag = False  
 End Sub  
   
 Private Sub ParseLink (Link() As Byte, Payload() As Byte)  
@@ -254,7 +268,9 @@ Private Sub ParseLink (Link() As Byte, Payload() As Byte)
         ssl = False  
         hostStart = 7  
     Else  
+        Log("Invalid link")  
         SetError("Invalid link")  
+        WorkingFlag = False  
         Return  
     End If  
   
@@ -296,13 +312,15 @@ Private Sub SetRequestCache(host() As Byte, path() As Byte, payload() As Byte)
 End Sub  
   
 Private Sub SetError (msg() As Byte)  
+    HttpErrorsCounter = HttpErrorsCounter + 1  
     Dim jr As JobResult  
     jr.JobName = mJobname  
     jr.ErrorMessage = msg  
     jr.Response = Array As Byte()  
     jr.Success = False  
     jr.Status = 0  
-    Main.JobDone(jr)  
+    webapi.JobDone(jr)  
+    WorkingFlag = False  
 End Sub  
   
 ' === New methods for chunked POST ===  
@@ -324,17 +342,17 @@ Public Sub PostChunkedSend(Buffer() As Byte, Length As Int)
     chunkLength = Length  
     isChunked = True  
    
-    Log("Chunk being sent now: ", Buffer)  
+    'Log("Chunk being sent now: ", Buffer)  
     Dim hexLength() As Byte = ToHexString(chunkLength)  
     astream.Write(hexLength).Write(EOL)  
     astream.Write2(Buffer, 0, Length).Write(EOL)  
     Log("Chunk is sent")  
-    chunkLength = 512    'UPD: restore the initial full buffer size  
+    chunkLength = 512    'restore1  
 End Sub  
   
 Public Sub PostChunkedFinish  
     Log("Chunks are finished")  
-    chunkLength = 0  
+    chunkLength = 512    'restore2  
     astream.Write("0".GetBytes).Write(EOL).Write(EOL)  
     isChunked = False  
     Log("Chunk posting is finished")  
@@ -346,7 +364,7 @@ Sub ToHexString(value As Int) As Byte()
     raf.Initialize(b, False) 'big endian  
     raf.WriteInt16(value, 0)  
     Dim res() As Byte = bc.HexFromBytes(b)  
-    Log("Hex chunk length = ", res)  
+    'Log("Hex chunk length = ", res)  
     Return res  
 End Sub
 ```

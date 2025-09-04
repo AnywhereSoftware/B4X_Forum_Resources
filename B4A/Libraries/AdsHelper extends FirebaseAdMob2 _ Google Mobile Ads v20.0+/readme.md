@@ -1,5 +1,5 @@
 ### AdsHelper extends FirebaseAdMob2 / Google Mobile Ads v20.0+ by Erel
-### 07/13/2025
+### 09/03/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/129696/)
 
 AdsHelper is a class that adds the following features:  
@@ -15,7 +15,7 @@ Instructions:
 
 ```B4X
 CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)  
-CreateResourceFromFile (Macro, FirebaseAdMob.FirebaseAds)  
+CreateResourceFromFile (Macro, FirebaseAdMob2.FirebaseAds)  
 AddReplacement($ADMOB_APP_ID$, ca-app-pub-1267570xxxxx0~676xxxxx) 'your app id here
 ```
 
