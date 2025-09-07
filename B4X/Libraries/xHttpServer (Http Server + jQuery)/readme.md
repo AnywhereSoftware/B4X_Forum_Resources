@@ -1,5 +1,5 @@
 ###  xHttpServer (Http Server + jQuery) by Star-Dust
-### 01/28/2025
+### 09/05/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/129190/)
 
 It is a personal project of mine that I started as a hobby on B4i and it has become an interesting project, so that I have modified it to be multiplatform.  
@@ -17,7 +17,7 @@ It does not support SSL / TLS. I didn't understand how it works.
 **aHttpServer  
   
 Author:** Star-Dust  
-**Version:** 0.78  
+**Version:** 0.79  
 
 - **QueryElement**
 
@@ -179,6 +179,7 @@ Author:** Star-Dust
 
 - **Fields:**
 
+- **CharacterEncoding** As String
 - **DigestAuthentication** As Boolean
 - **DigestPath** As String
 - **htdigest** As List

@@ -28,6 +28,7 @@
 @public B4IList* __htdigest;
 @public BOOL __ignorenc;
 @public int __timeout;
+@public NSString* __character_encoding;
 @public b4i_xcollections* __xcollections;
 
 }- (NSString*)  _class_globals;
@@ -42,16 +43,19 @@
 @property (nonatomic)B4IList* _htdigest;
 @property (nonatomic)BOOL _ignorenc;
 @property (nonatomic)int _timeout;
+@property (nonatomic)NSString* _character_encoding;
 @property (nonatomic)b4i_xcollections* _xcollections;
 - (NSString*)  _data_handle:(b4i_servletrequest*) _req :(b4i_servletresponse*) _res;
 - (NSString*)  _data_handlewebsocket:(b4i_servletrequest*) _req :(b4i_servletresponse*) _resp;
 - (NSString*)  _data_switchtowebsocket:(b4i_servletrequest*) _req :(b4i_servletresponse*) _resp;
 - (NSString*)  _data_uploadedfile:(b4i_servletrequest*) _req :(b4i_servletresponse*) _resp;
 - (NSString*)  _data_websocketclose:(int) _closecode :(NSString*) _closemessage;
+- (NSString*)  _getcharacterencoding;
 - (NSString*)  _getmyip;
 - (NSString*)  _getmywifiip;
 - (NSString*)  _gettemppath;
 - (NSString*)  _initialize:(B4I*) _ba :(NSObject*) _callback :(NSString*) _eventname;
+- (NSString*)  _setcharacterencoding:(NSString*) _s;
 - (void)  _start:(int) _port;
 - (void)  _serv_newconnection:(BOOL) _successful :(B4ISocketWrapper*) _newsocket;
 - (NSString*)  _stop;
@@ -170,7 +174,7 @@
 @public B4IMap* __requestcookies;
 @public B4IList* __requestpostdatarow;
 @public BOOL __connectionalive;
-@public NSString* __characterencoding;
+@public NSString* __character_encoding;
 @public b4i_httpserver* __callserver;
 @public b4i_servletresponse* __response;
 @public B4IMap* __users;
@@ -227,7 +231,7 @@
 @property (nonatomic)B4IMap* _requestcookies;
 @property (nonatomic)B4IList* _requestpostdatarow;
 @property (nonatomic)BOOL _connectionalive;
-@property (nonatomic)NSString* _characterencoding;
+@property (nonatomic)NSString* _character_encoding;
 @property (nonatomic)b4i_httpserver* _callserver;
 @property (nonatomic)b4i_servletresponse* _response;
 @property (nonatomic)B4IMap* _users;
@@ -266,6 +270,7 @@
 - (NSString*)  _extractparameterfromdata;
 - (NSString*)  _findcredential:(NSString*) _un;
 - (_tuser*)  _finduser:(NSString*) _naddress :(NSString*) _opaque;
+- (NSString*)  _getcharacterencoding;
 - (NSString*)  _getheader:(NSString*) _name;
 - (B4IList*)  _getheadersname;
 - (B4IInputStream*)  _getinputstream;
@@ -288,6 +293,7 @@
 - (int)  _remoteport;
 - (NSString*)  _sendacceptkeyws;
 - (NSString*)  _sendrefuse:(b4i_servletresponse*) _sresponse :(_tuser*) _user;
+- (NSString*)  _setcharacterencoding:(NSString*) _s;
 - (B4IArray*)  _subarray:(B4IArray*) _data :(int) _pos;
 - (B4IArray*)  _subarray2:(B4IArray*) _data :(int) _start :(int) _last;
 - (BOOL)  _subexists2:(NSObject*) _callobject :(NSString*) _eventname :(int) _param;
@@ -343,7 +349,7 @@
 @public B4ISocketWrapper* __client;
 @public int __status;
 @public NSString* __contenttype;
-@public NSString* __characterencoding;
+@public NSString* __character_encoding;
 @public int __contentlenght;
 @public B4IArray* __dday;
 @public B4IArray* __mmmonth;
@@ -365,7 +371,7 @@
 @property (nonatomic)B4ISocketWrapper* _client;
 @property (nonatomic)int _status;
 @property (nonatomic)NSString* _contenttype;
-@property (nonatomic)NSString* _characterencoding;
+@property (nonatomic)NSString* _character_encoding;
 @property (nonatomic)int _contentlenght;
 @property (nonatomic)B4IArray* _dday;
 @property (nonatomic)B4IArray* _mmmonth;
@@ -378,6 +384,7 @@
 - (BOOL)  _connected;
 - (B4IArray*)  _datamask:(B4IArray*) _data :(B4IArray*) _maskingkey;
 - (B4IArray*)  _deflatedate:(B4IArray*) _data;
+- (NSString*)  _getcharacterencoding;
 - (B4IOutputStream*)  _getoutputstream;
 - (b4i_queryelement*)  _getquery;
 - (NSString*)  _handshakefile:(NSString*) _lastmodified :(long long) _filesize;
@@ -396,6 +403,7 @@
 - (NSString*)  _sendwebsocketping;
 - (NSString*)  _sendwebsocketpong;
 - (NSString*)  _sendwebsocketstring:(NSString*) _text :(BOOL) _masked :(NSString*) _compressed;
+- (NSString*)  _setcharacterencoding:(NSString*) _s;
 - (NSString*)  _setcookies:(NSString*) _name :(NSString*) _value;
 - (NSString*)  _setheader:(NSString*) _name :(NSString*) _value;
 - (NSString*)  _statuscode:(int) _sts;
