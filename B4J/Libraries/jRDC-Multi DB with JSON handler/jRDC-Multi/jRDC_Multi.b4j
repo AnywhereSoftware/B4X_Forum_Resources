@@ -1,0 +1,175 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.JRDCMulti
+File1=config.DB2.properties
+File10=stop.bat
+File2=config.DB3.properties
+File3=config.DB4.properties
+File4=config.properties
+File5=login.html
+File6=reiniciaProcesoBow.bat
+File7=reiniciaProcesoPM2.bat
+File8=start.bat
+File9=start2.bat
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=javaobject
+Library3=jcore
+Library4=jrandomaccessfile
+Library5=jserver
+Library6=jshell
+Library7=json
+Library8=jsql
+Library9=bcrypt
+Module1=ChangePassHandler
+Module10=ping
+Module11=RDCConnector
+Module12=TestHandler
+Module2=DBHandlerB4X
+Module3=DBHandlerJSON
+Module4=DoLoginHandler
+Module5=faviconHandler
+Module6=GlobalParameters
+Module7=LoginHandler
+Module8=LogoutHandler
+Module9=Manager
+NumberOfFiles=10
+NumberOfLibraries=9
+NumberOfModules=12
+Version=10.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True
+	' VERSION 5.09.08
+	'###########################################################################################################
+	'######################           PULL         #############################################################
+	'Ctrl + click ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=git&Args=pull
+	'###########################################################################################################
+	'######################           PUSH         #############################################################
+	'Ctrl + click ide://run?file=%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe&Args=github&Args=..\..\
+	'###########################################################################################################
+	'######################      PUSH TORTOISE GIT     #########################################################
+	'Ctrl + click ide://run?file=%WINDIR%\System32\WindowsPowerShell\v1.0\powershell.exe&Args=TortoiseGitProc&Args=/command:commit&Args=/path:"../"&Args=/closeonend:2
+	'###########################################################################################################
+#End Region
+
+'change based on the jdbc jar file
+'#AdditionalJar: mysql-connector-java-5.1.27-bin
+'#AdditionalJar: postgresql-42.7.0
+#AdditionalJar: ojdbc11
+' Librería para manejar la base de datos SQLite
+#AdditionalJar: sqlite-jdbc-3.7.2
+
+Sub Process_Globals
+	Public srvr As Server
+	Public const VERSION As Float = 2.23
+	Type DBCommand (Name As String, Parameters() As Object)
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+	Dim listaDeCP As List
+	Dim cpFiles As List
+	Public Connectors, commandsMap As Map
+	Public SQL1 As SQL ' Objeto SQL para la base de datos de usuarios
+	Private bc As BCrypt
+End Sub
+
+Sub AppStart (Args() As String)
+	' --- INICIO DE CAMBIOS ---
+	' Inicializamos la base de datos. Se creará si no existe.
+	InitializeSQLiteDatabase
+	' --- FIN DE CAMBIOS ---
+	listaDeCP.Initialize
+	srvr.Initialize("")
+	Dim con As RDCConnector
+	Connectors = srvr.CreateThreadSafeMap
+	commandsMap.Initialize
+	con.Initialize("DB1") 'Inicializamos el default de config.properties
+	Connectors.Put("DB1", con)
+	srvr.Port = con.serverPort
+	listaDeCP.Add("DB1")
+	cpFiles = File.ListFiles("./")
+	If cpFiles.Size > 0 Then
+		Log(cpFiles)
+		For i = 0 To cpFiles.Size - 1
+			If cpFiles.Get(i) = "config.DB2.properties" Then ' Si existe el archivo DB2, lo usamos.
+				Dim con As RDCConnector
+				con.Initialize("DB2")
+				Connectors.Put("DB2", con)
+				listaDeCP.Add("DB2")
+			End If
+			If cpFiles.Get(i) = "config.DB3.properties" Then ' Si existe el archivo DB3, lo usamos.
+				Dim con As RDCConnector
+				con.Initialize("DB3")
+				Connectors.Put("DB3", con)
+				listaDeCP.Add("DB3")
+			End If
+			If cpFiles.Get(i) = "config.DB4.properties" Then ' Si existe el archivo DB4, lo usamos.
+				con.Initialize("DB4")
+				Connectors.Put("DB4", con)
+				listaDeCP.Add("DB4")
+			End If
+		Next
+	End If
+	srvr.AddHandler("/ping", "ping", True) ' Agrega un manejador a la ruta "/test", asignando las solicitudes a la clase TestHandler, el último parámetro indica si el manejador debe ejecutar en un nuevo hilo (False en este caso)
+	srvr.AddHandler("/test", "TestHandler", True) ' Agrega un manejador a la ruta "/test", asignando las solicitudes a la clase TestHandler, el último parámetro indica si el manejador debe ejecutar en un nuevo hilo (False en este caso)
+	
+	' --- INICIO DE CAMBIOS ---
+	' 1. Rutas para el sistema de Login
+	srvr.AddHandler("/login", "LoginHandler", True) ' Sirve la página de login
+	srvr.AddHandler("/dologin", "DoLoginHandler", True) ' Procesa el intento de login
+	srvr.AddHandler("/logout", "LogoutHandler", True) ' Cierra la sesión
+	srvr.AddHandler("/changepass", "ChangePassHandler", True)
+	' 2. El handler del manager se queda igual, pero ahora estará protegido
+	srvr.AddHandler("/manager", "Manager", True)
+	' --- FIN DE CAMBIOS ---
+	
+	srvr.AddHandler("/DBJ", "DBHandlerJSON", True)
+	srvr.AddHandler("/dbrquery", "DBHandlerJSON", True)
+	srvr.AddHandler("/favicon.ico", "faviconHandler", True)
+'	srvr.AddHandler("/*", "DB1Handler", False) ' Si no se especifica una base de datos, entonces asignamos la solicitud a la DB1.
+	
+	srvr.AddHandler("/*", "DBHandlerB4X", True)
+	
+	srvr.Start
+	Log("===========================================================")
+	Log($"-===  jRDC is running on port: ${srvr.port} (version = $1.2{VERSION})   ===-"$)
+	Log("===========================================================")
+	StartMessageLoop
+End Sub
+
+' Nueva subrutina para crear y configurar la base de datos de usuarios
+Sub InitializeSQLiteDatabase
+	Dim dbFileName As String = "users.db"
+	' Si la base de datos no existe en la carpeta del .jar, la creamos
+	If File.Exists(File.DirApp, dbFileName) = False Then
+		Log("Creando nueva base de datos de usuarios: " & dbFileName)
+		' Inicializamos la conexión
+		SQL1.InitializeSQLite(File.DirApp, dbFileName, True)
+		' Creamos la tabla de usuarios
+		Dim createUserTable As String = "CREATE TABLE users (username TEXT PRIMARY KEY, password_hash TEXT NOT NULL)"
+		SQL1.ExecNonQuery(createUserTable)
+		
+		' Creamos un usuario por defecto para el primer inicio
+		Dim defaultUser As String = "admin"
+		Dim defaultPass As String = "12345"
+		Dim hashedPass As String = bc.hashpw(defaultPass, bc.gensalt) '  bc.HashPassword(defaultPass)
+		
+		SQL1.ExecNonQuery2("INSERT INTO users (username, password_hash) VALUES (?, ?)", Array As Object(defaultUser, hashedPass))
+		Log($"Usuario por defecto creado -> user: ${defaultUser}, pass: ${defaultPass}"$)
+	Else
+		' Si ya existe, solo la abrimos
+		SQL1.InitializeSQLite(File.DirApp, dbFileName, True)
+		Log("Base de datos de usuarios cargada.")
+	End If
+End Sub
+' --- FIN DE CAMBIOS ---

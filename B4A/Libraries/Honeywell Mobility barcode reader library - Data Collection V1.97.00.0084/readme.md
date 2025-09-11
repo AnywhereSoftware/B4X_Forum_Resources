@@ -1,7 +1,9 @@
 ### Honeywell Mobility barcode reader library - Data Collection V1.97.00.0084 by Peter Simpson
-### 09/04/2025
+### 09/06/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/168447/)
 
+**If this library works for you, post your Honeywell mobility mobile computer (barcode reader) model number below.**  
+  
 Hello everyone,  
 Here is a library that I wrapped for using with Honeywell Mobility mobile computers (barcode readers). This library uses the official Honeywell Data Collection Java API V1.97.00.0084.  
   

@@ -1,10 +1,15 @@
 ###  B4XEncryption by Erel
-### 09/20/2022
+### 09/10/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/48177/)
 
 This library allows you to encrypt or decrypt data using the AES encryption method.  
   
-It is simple to use and it is compatible with B4J jB4XEncryption library and B4i Encryption library (Encrypt and Decrypt method) which means that you can encrypt the data on one platform and decrypt it on a different platform.  
+To prevent confusion, B4XEncryptino is not a b4xlib and is made of three platform specific libraries:  
+B4XEncryption - B4A  
+jB4XEncryption - B4J  
+iEncryption - B4i (Encrypt and Decrypt methods)  
+  
+It is simple to use and is cross platform, which means that you can encrypt the data on one platform and decrypt it on a different platform.  
   
 Usage example:  
 

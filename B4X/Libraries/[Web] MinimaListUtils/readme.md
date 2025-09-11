@@ -1,9 +1,9 @@
 ###  [Web] MinimaListUtils by aeric
-### 11/11/2024
+### 09/10/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/155724/)
 
 **MinimaListUtils**  
-Version : 1.07  
+Version : 1.80  
 A utility class to manipulate a simple List of Map to do basic CRUD.  
   
 Treat it as some kind of a NoSQL for key-value pairs.  
@@ -28,6 +28,7 @@ This b4xlib replaces the class from [MinimaList](https://www.b4x.com/android/for
 
 - Add (M As Map)
 - Clone As MinimaList
+- ContainsKey (key As String) As Boolean
 - CopyList As Object
 - CopyObject (xo As Object) As Object
 - Count (key As String, id As Long) As Int
@@ -51,6 +52,11 @@ This b4xlib replaces the class from [MinimaList](https://www.b4x.com/android/for
 - SortByKey2 (key As String, ascending As Boolean, default As Object)
 
 What's New  
+
+- Version 1.80
+
+- Added ContainsKey
+- Renamed CreatemType to CreateType
 
 - Version 1.07
 

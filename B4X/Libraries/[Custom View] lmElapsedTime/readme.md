@@ -1,7 +1,9 @@
 ###  [Custom View] lmElapsedTime by LucaMs
-### 04/01/2025
+### 09/10/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166301/)
 
+**This custom view is cross-platform, works for B4A, B4J and should work also for B4I.**  
+  
 Ok, I'm publishing it (remember: I have to drink coffee, so **use now** the link in my signature 😁).  
   
 You can see the description of this library in the next ("older") lines of this post.  
