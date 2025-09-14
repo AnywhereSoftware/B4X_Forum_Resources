@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RAdafruitMCP23X17</name>
+        <shortname>AdafruitMCP23017_I2C</shortname>
+        <comment>@class AdafruitMCP23017
+@brief Wrapper class that exposes the Adafruit MCP23017 expander MCP23017 to B4R.
+       Enhanced with custom constants &amp; functions.</comment>
+        <event>StateChanged (InputPin As Byte, State As Boolean)</event>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initialize MCP using I2C with default I2C address 0x20.
+@return true if initialization successful, otherwise false.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="Initialize2">Initialize2</name>
+            <comment>Initialize MCP using I2C with custom I2C address.
+Example: 0x27 = MCP23017 module has the address jumpers A0/A1/A2 pulled high.
+@param i2c_addr I2C address.
+@return true if initialization successful, otherwise false.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>addr</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPinMode">SetPinMode</name>
+            <comment>Configures the specified pin to behave either as an input or an output.
+@param pin the Arduino pin number to set the mode of.
+@param mode INPUT, OUTPUT, or INPUT_PULLUP.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetPinMode">GetPinMode</name>
+            <comment>Get the specified pin mode.
+@param pin the Arduino pin number to get the mode of.
+@param mode INPUT, OUTPUT, or INPUT_PULLUP.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DigitalRead">DigitalRead</name>
+            <comment>Reads the value from a specified digital pin, either HIGH or LOW.
+@param pin the Arduino pin number you want to read.
+Returns - HIGH or LOW</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DigitalWrite">DigitalWrite</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadGPIO">ReadGPIO</name>
+            <comment>Bulk read all pins on a port.
+@param port 0 for Port A, 1 for Port B (MCP23X17 only).
+Returns - current pin states of port as a uint8_t.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="WriteGPIO">WriteGPIO</name>
+            <comment>Bulk write all pins on a port.
+@param value pin states to write as a uint8_t.
+@param port 0 for Port A, 1 for Port B (MCP23X17 only).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>value</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetupInterrupts">SetupInterrupts</name>
+            <comment>Configure the interrupt system.
+@param mirroring true to OR both INTA and INTB pins.
+@param openDrain true for open drain output, false for active drive output.
+@param polarity HIGH or LOW</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>mirroring</name>
+                <type>bool</type>
+            </parameter>
+            <parameter>
+                <name>openDrain</name>
+                <type>bool</type>
+            </parameter>
+            <parameter>
+                <name>polarity</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetupInterruptPin">SetupInterruptPin</name>
+            <comment>Enable interrupt and set mode for given pin.
+@param pin Pin to enable.
+@param mode CHANGE, LOW, HIGH</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DisableInterruptPin">DisableInterruptPin</name>
+            <comment>Disable interrupt for given pin.
+@param pin Pin to disable.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearInterrupts">ClearInterrupts</name>
+            <comment>Clear interrupts. NOTE:If using DEFVAL, INT clears only if interrupt
+condition does not exist. See Fig 1-7 in datasheet.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetLastInterruptPin">GetLastInterruptPin</name>
+            <comment>Gets the pin that caused the latest interrupt, from INTF, without
+clearing any interrupt flags.
+Returns - Pin that caused lastest interrupt.</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetCapturedInterrupt">GetCapturedInterrupt</name>
+            <comment>Get pin states captured at time of interrupt.
+Returns - Multi-bit value representing pin states.</comment>
+            <returntype>UInt</returntype>
+        </method>
+        <method>
+            <name DesignerName="AddInputHandler">AddInputHandler</name>
+            <comment>Add input handler for the input/input_pullup pins.
+The Input_StateChanged in B4R only sees clean transitions:
+Button press &gt; 1 clean LOW event.
+Button release &gt; 1 clean HIGH event.
+No multiple toggles caused by bouncing contacts.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>StateChangedSub</name>
+                <type>SubVoidPinState</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="AttachInterrupt">AttachInterrupt</name>
+            <comment>Attach MCP pin interrupt with MCU pin for INTA/B.
+intPin - Interrupt pin INTA or INTB.
+buttonPin - Button pin GPA0-7 or GPB0-GPB7.
+StateChangedSub - Event name handling the input state change.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>intPin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>buttonPin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>StateChangedSub</name>
+                <type>SubVoidPinState</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ByteToHex">ByteToHex</name>
+            <comment>Convert a single byte into a 2-character uppercase hexadecimal string.
+
+This helper is useful for logging or debugging register values, I2C data, etc.
+It returns a B4R-managed string (B4RString*) so it can be directly used inside
+B4R code (e.g. Log, concatenation, publishing to MQTT).
+
+b - The byte to convert (0–255).
+Returns - B4RString* Managed string containing the 2-digit hex representation,
+          e.g. 0x0A -&gt; "0A", 0xFF -&gt; "FF".</comment>
+            <returntype>B4R::B4RString*</returntype>
+            <parameter>
+                <name>b</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ByteArrayToHex">ByteArrayToHex</name>
+            <comment>Convert a byte array into a continuous uppercase hexadecimal string.
+
+This helper is useful for logging or publishing raw data arrays (e.g. I2C, SPI,
+BLE, or MQTT payloads) in a human-readable format.
+
+Example:
+  Input:  [0x12, 0xAB, 0x00]
+  Output: "12AB00"
+
+data - Pointer to the byte array.
+length - Number of bytes in the array.
+Returns - B4RString* Managed B4R string with the hex representation.</comment>
+            <returntype>B4R::B4RString*</returntype>
+            <parameter>
+                <name>b</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="MCP23XXX_ADDR">B4RAdafruitMCP23X17_MCP23XXX_ADDR</name>
+            <comment>Default I2C Address.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="MODE_OUTPUT">MODE_OUTPUT</name>
+            <comment>Pin modes output, input, input pullup.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="MODE_INPUT">MODE_INPUT</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="MODE_INPUT_PULLUP">MODE_INPUT_PULLUP</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="STATE_CHANGE">STATE_CHANGE</name>
+            <comment>Pin states change, high or low.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="STATE_HIGH">STATE_HIGH</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="STATE_LOW">STATE_LOW</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PINS">PINS</name>
+            <comment>Number of pins 16 (0-15).</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA0">PIN_PA0</name>
+            <comment>Pin codes.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA1">PIN_PA1</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA2">PIN_PA2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA3">PIN_PA3</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA4">PIN_PA4</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA5">PIN_PA5</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA6">PIN_PA6</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PA7">PIN_PA7</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB0">PIN_PB0</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB1">PIN_PB1</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB2">PIN_PB2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB3">PIN_PB3</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB4">PIN_PB4</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB5">PIN_PB5</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB6">PIN_PB6</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="PIN_PB7">PIN_PB7</name>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

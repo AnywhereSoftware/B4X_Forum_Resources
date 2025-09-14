@@ -1,0 +1,101 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitmcp23017_i2c
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rAdafruitMCP23017
+' Brief:	Example listening to button state pressed using the library InputHandler (debounce+polling) which triggers the statechanged event.
+'			Button Pressed: state=0, Button Released: state=1.
+'			If the button is pressed, an LED is turned ON.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-09-08
+' License:	MIT — see LICENSE file.
+
+' Hardware:
+' MCU:		Arduino UNO
+' MCP23017:	Adafruit MCP23017 Breakout board I2C 0x27
+' Button:	Keyes Pushbutton
+
+' Wiring:
+' MCP23017 = MCU
+' VCC = 5V (red)
+' GND = GND (black)
+' SDA = A4 (blue)
+' SCL = A5 (yellow)
+'
+' MCP23017 = Button
+' PA0 = Signal (yellow)
+' GND = GND (black)
+'
+' MCP23017 = LED
+' PB7 = + with 330Ohm resistor (white) 
+' GND = GND (black)
+'
+' MCP23017 I2C: 0x27
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+    Public Serial1 As Serial
+    Private mcp As AdafruitMCP23017_I2C
+	
+	' MCP23XXX pin button = PA0
+	Private BUTTON_PIN As Byte = 0
+	' MCP23XXX LED button = PB7
+	Private LED_PIN As Byte = 15
+	
+	' Flag to indicate first time to avoid event with state 1
+	Private FirstTime As Boolean = True
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the expander with address 0x27
+	If Not(mcp.Initialize2(0x27)) Then
+		Log("[Main.AppStart][ERROR] Initialize expander.")
+		Return
+	End If
+	
+	' Configure button pin as input with mode pull up
+	mcp.SetPinMode(BUTTON_PIN, mcp.MODE_INPUT_PULLUP)
+	' Configure led pin as output
+	mcp.SetPinMode(LED_PIN, mcp.MODE_OUTPUT)
+
+	' Add the state changed handler for the input pins
+	mcp.AddInputHandler("Input_StateChanged")
+
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+' Handle button state changed. 
+' Button pressed = state LOW (0)
+' Button released = state HIGH (1)
+Sub Input_StateChanged (InputPin As Byte, State As Boolean)
+	If FirstTime Then
+		FirstTime = False
+		Return
+	End If
+	Log("[Input_StateChanged ] inputpin=", InputPin, ",state=", State)
+	If Not(State) Then
+		mcp.DigitalWrite(LED_PIN, 1)
+	Else
+		mcp.DigitalWrite(LED_PIN, 0)
+	End If
+	
+End Sub

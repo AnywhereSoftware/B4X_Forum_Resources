@@ -1,5 +1,5 @@
 ###  B4XPages + B4XDrawer by Erel
-### 09/19/2021
+### 09/11/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/120246/)
 
 B4XDrawer v1.53 adds support for B4J. This is a good opportunity to create a B4XPages example using B4XDrawer.  
@@ -10,26 +10,8 @@ It does require some configuration so pay attention.
 The example is based on the three pages example: <https://www.b4x.com/android/forum/threads/b4x-b4xpages-cross-platform-and-simple-framework-for-managing-multiple-pages.118901/#content>  
 A drawer is added to the second page. Everything is implemented in the attached example.  
   
-1. **This is already part of the template.**   
-Only required in B4A and will be part of the template in the next version of B4XPages.b4xtemplate:  
-In Main module:  
-
-```B4X
-'modify the existing subs  
-Sub Process_Globals  
-    Public ActionBarHomeClicked As Boolean  
-End Sub  
   
-Sub Activity_ActionBarHomeClick  
-    ActionBarHomeClicked = True  
-    B4XPages.Delegate.Activity_ActionBarHomeClick  
-    ActionBarHomeClicked = False  
-End Sub
-```
-
-  
-  
-2. In the page where you want to add the drawer:  
+In the page where you want to add the drawer:  
 Add to B4XPage\_Created:  
 
 ```B4X

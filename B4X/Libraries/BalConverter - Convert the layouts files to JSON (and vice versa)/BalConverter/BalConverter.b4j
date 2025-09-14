@@ -1,0 +1,98 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jrandomaccessfile
+Library5=jstringutils
+Library6=json
+Library7=byteconverter
+Module1=|absolute|C:\Users\H\Documents\B4J\Bal2Bil\BalConverter
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=1
+Version=7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 300 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Public MainForm As Form
+	Private converter As BalConverter
+	Private rbBalToJson As RadioButton
+	Private rbJsonToBal As RadioButton
+	Private txtFolder As TextField
+	Private btnBrowse As Button
+	Private btnConvert As Button
+	Private xui As XUI
+	Private settingsFile As String = "settings.txt"
+	Private dc As DirectoryChooser
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1")
+	MainForm.Show
+	MainForm.Title = "BAL converter - v2.30"
+	dc.Initialize
+	dc.Title = "Select Folder"
+	converter.Initialize (False)
+	If File.Exists(File.DirApp, settingsFile) Then
+		Dim m As Map = File.ReadMap(File.DirApp, settingsFile)
+		txtFolder.Text = m.Get("folder")
+		dc.InitialDirectory = txtFolder.Text
+	End If
+End Sub
+
+Sub MainForm_Closed
+	File.WriteMap(File.DirApp, settingsFile, CreateMap("folder": txtFolder.Text))
+End Sub
+
+Sub btnConvert_Action
+	If txtFolder.Text.Length = 0 Then
+		btnBrowse_Action
+		If txtFolder.Text.Length = 0 Then Return
+	End If
+	If File.Exists(txtFolder.Text, "") = False Then
+		xui.MsgboxAsync("Folder does not exist", "")
+		Return
+	End If
+	If rbJsonToBal.Selected = False And rbBalToJson.Selected = False Then
+		xui.MsgboxAsync("Please select conversion mode.", "")
+		Return
+	End If
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("The following files were converted: ").Append(CRLF)
+	If rbBalToJson.Selected Then
+		For Each f As String In File.ListFiles(txtFolder.Text)
+			If Regex.IsMatch2(".*\.b.l$", Regex.CASE_INSENSITIVE, f) Then
+				If converter.ConvertBalToJson(txtFolder.Text, f) Then
+					sb.Append(f).Append(CRLF)
+				End If
+			End If
+		Next
+	Else
+		For Each f As String In File.ListFiles(txtFolder.Text)
+			If Regex.IsMatch2(".*\.b.l\.json$", Regex.CASE_INSENSITIVE, f) Then
+				converter.mToBIL = f.ToLowerCase.EndsWith(".bil.json")
+				converter.ConvertJsonToBal(txtFolder.Text, f)
+				sb.Append(f).Append(CRLF)
+			End If
+		Next
+	End If
+	xui.MsgboxAsync(sb.ToString, "")
+End Sub
+
+Sub btnBrowse_Action
+	
+	
+	Dim selected As String = dc.Show(MainForm)
+	If selected.Length > 0 Then txtFolder.Text = selected
+End Sub
