@@ -1,0 +1,10 @@
+' Return Web Page
+Private Sub ShowPage
+	Dim strMain As String = WebApiUtils.ReadTextFile("main.html")
+	Dim strView As String = WebApiUtils.ReadTextFile("controller.html")
+	strMain = WebApiUtils.BuildDocView(strMain, strView)
+	strMain = WebApiUtils.BuildHtml(strMain, Main.config)
+	Dim strScripts As String = $$"<script src="$$${Main.ROOT_URL}/assets/js/controller.js"></script>"$$
+	strMain = WebApiUtils.BuildScript(strMain, strScripts)
+	WebApiUtils.ReturnHTML(strMain, Response)
+End Sub

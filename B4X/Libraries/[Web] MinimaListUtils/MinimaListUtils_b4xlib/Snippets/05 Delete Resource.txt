@@ -1,0 +1,17 @@
+' Remove the resource by id using DELETE
+Private Sub Delete$Controller$ (id As Long)
+	' #Desc = Remove an item in $Controller$List by Id
+	' #Elements = [":id"]
+
+	Dim Index As Int = Main.$Controller$List.IndexFromId(id)
+	If Index < 0 Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$Controller$ not found"
+	Else
+		Main.$Controller$List.Remove(Index)
+		HRM.ResponseCode = 200
+		HRM.ResponseMessage = "$Controller$ Deleted"
+		If Main.KVS_ENABLED Then Main.WriteKVS("$Controller$List", Main.$Controller$List)
+	End If
+	ReturnApiResponse
+End Sub

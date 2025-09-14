@@ -1,0 +1,233 @@
+Public Sub Initialize
+	HRM.Initialize
+	HRM.VerboseMode = Main.conf.VerboseMode
+End Sub
+$end$
+Sub Handle (req As ServletRequest, resp As ServletResponse)
+	Request = req
+	Response = resp
+	Method = Request.Method.ToUpperCase
+	Dim FullElements() As String = WebApiUtils.GetUriElements(Request.RequestURI)
+	Elements = WebApiUtils.CropElements(FullElements, 3) ' 3 For Api handler
+	Select Method
+		Case "GET"
+			If ElementMatch("") Then
+				Get$EndPoints$
+				Return
+			End If
+			If ElementMatch("id") Then
+				Get$EndPoint$ById(ElementId)
+				Return
+			End If
+		Case "POST"
+			If ElementMatch("") Then
+				Post$EndPoint$
+				Return
+			End If
+		Case "PUT"
+			If ElementMatch("id") Then
+				Put$EndPoint$ById(ElementId)
+				Return
+			End If
+		Case "DELETE"
+			If ElementMatch("id") Then
+				Delete$EndPoint$ById(ElementId)
+				Return
+			End If
+		Case Else
+			Log("Unsupported method: " & Method)
+			ReturnMethodNotAllow
+			Return
+	End Select
+	ReturnBadRequest
+End Sub
+
+Private Sub ElementMatch (Pattern As String) As Boolean
+	Select Pattern
+		Case ""
+			If Elements.Length = 0 Then
+				Return True
+			End If
+		Case "id"
+			If Elements.Length = 1 Then
+				If IsNumber(Elements(0)) Then
+					ElementId = Elements(0)
+					Return True
+				End If
+			End If
+	End Select
+	Return False
+End Sub
+
+Private Sub ReturnApiResponse
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+Private Sub ReturnBadRequest
+	WebApiUtils.ReturnBadRequest(HRM, Response)
+End Sub
+
+Private Sub ReturnMethodNotAllow
+	WebApiUtils.ReturnMethodNotAllow(HRM, Response)
+End Sub
+
+Private Sub Get$EndPoints$
+	DB.Initialize(Main.DBType, Main.DBOpen)
+	DB.Table = "$TableName$"
+	DB.Query
+	HRM.ResponseCode = 200
+	HRM.ResponseData = DB.Results
+	ReturnApiResponse
+	DB.Close
+End Sub
+
+Private Sub Get$EndPoint$ById (Id As Int)
+	DB.Initialize(Main.DBType, Main.DBOpen)
+	DB.Table = "$TableName$"
+	DB.Find(Id)
+	If DB.Found Then
+		HRM.ResponseCode = 200
+		HRM.ResponseObject = DB.First
+	Else
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$EndPoint$ not found"
+	End If
+	ReturnApiResponse
+	DB.Close
+End Sub
+
+Private Sub Post$EndPoint$
+	Dim data As Map
+	If HRM.ContentType = WebApiUtils.CONTENT_TYPE_XML Then
+		data = WebApiUtils.RequestDataXml(Request)
+		data = data.Get("root")
+	Else
+		data = WebApiUtils.RequestDataJson(Request)
+	End If
+	If Not(data.IsInitialized) Then
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid json object"
+		ReturnApiResponse
+		Return
+	End If
+
+	' Check whether required keys are provided
+	Dim RequiredKeys As List = Array As String("key1", "key2", "key3")
+	For Each requiredkey As String In RequiredKeys
+		If data.ContainsKey(requiredkey) = False Then
+			HRM.ResponseCode = 400
+			HRM.ResponseError = $"Key '${requiredkey}' not found"$
+			ReturnApiResponse
+			Return
+		End If
+	Next
+	
+	' Check conflict $EndPoint$ name
+	DB.Initialize(Main.DBType, Main.DBOpen)
+	DB.Table = "$TableName$"
+	DB.Where = Array("$EndPoint$_name = ?")
+	DB.Parameters = Array As String(data.Get("$EndPoint$_name"))
+	DB.Query
+	If DB.Found Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "$EndPoint$ already exist"
+		ReturnApiResponse
+		DB.Close
+		Return
+	End If
+	
+	' Insert new row
+	DB.Reset
+	DB.Columns = Array("$EndPoint$_name", "created_date")
+	DB.Parameters = Array(data.Get("$EndPoint$_name"), data.GetDefault("created_date", WebApiUtils.CurrentDateTime))
+	DB.Save
+	
+	' Retrieve new row
+	HRM.ResponseCode = 201
+	HRM.ResponseObject = DB.First
+	HRM.ResponseMessage = "$EndPoint$ created successfully"
+	ReturnApiResponse
+	DB.Close
+End Sub
+
+Private Sub Put$EndPoint$ById (Id As Int)
+	Dim data As Map
+	If HRM.ContentType = WebApiUtils.CONTENT_TYPE_XML Then
+		data = WebApiUtils.RequestDataXml(Request)
+		data = data.Get("root")
+	Else
+		data = WebApiUtils.RequestDataJson(Request)
+	End If
+	If Not(data.IsInitialized) Then
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid json object"
+		ReturnApiResponse
+		Return
+	End If
+	
+	' Check whether required keys are provided
+	If data.ContainsKey("$EndPoint$_name") = False Then
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Key '$EndPoint$_name' not found"
+		ReturnApiResponse
+		Return
+	End If
+	
+	' Check conflict $EndPoint$ name
+	DB.Initialize(Main.DBType, Main.DBOpen)
+	DB.Table = "$TableName$"
+	DB.Where = Array("$EndPoint$_name = ?", "id <> ?")
+	DB.Parameters = Array As String(data.Get("$EndPoint$_name"), Id)
+	DB.Query
+	If DB.Found Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "$EndPoint$ already exist"
+		ReturnApiResponse
+		DB.Close
+		Return
+	End If
+	
+	DB.Find(Id)
+	If DB.Found = False Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$EndPoint$ not found"
+		ReturnApiResponse
+		DB.Close
+		Return
+	End If
+
+	DB.Reset
+	DB.Columns = Array("$EndPoint$_name", _
+	"modified_date")
+	DB.Parameters = Array(data.Get("$EndPoint$_name"), _
+	data.GetDefault("created_date", WebApiUtils.CurrentDateTime))
+	DB.Id = Id
+	DB.Save
+
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "$EndPoint$ updated successfully"
+	HRM.ResponseObject = DB.First
+	ReturnApiResponse
+	DB.Close
+End Sub
+
+Private Sub Delete$EndPoint$ById (Id As Int)
+	DB.Initialize(Main.DBType, Main.DBOpen)
+	DB.Table = "$TableName$"
+	DB.Find(Id)
+	If DB.Found = False Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$EndPoint$ not found"
+		ReturnApiResponse
+		DB.Close
+		Return
+	End If
+	
+	DB.Reset
+	DB.Id = Id
+	DB.Delete
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "$EndPoint$ deleted successfully"
+	ReturnApiResponse
+	DB.Close
+End Sub

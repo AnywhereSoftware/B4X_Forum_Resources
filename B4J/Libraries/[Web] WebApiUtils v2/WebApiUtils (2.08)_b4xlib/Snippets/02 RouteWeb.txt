@@ -1,0 +1,27 @@
+' RouteWeb
+Public Sub RouteWeb
+	Method = Request.Method.ToUpperCase
+	RequestURI = Request.RequestURI
+	Elements = WebApiUtils.GetUriElements(RequestURI)
+	ElementLastIndex = Elements.Length - 1
+	ControllerIndex = Main.Element.WebControllerIndex
+	ControllerElement = Elements(ControllerIndex)
+	If ElementLastIndex > ControllerIndex Then
+		FirstIndex = ControllerIndex + 1
+		FirstElement = Elements(FirstIndex)
+	End If
+	'If ElementLastIndex > ControllerIndex + 1 Then
+	'	SecondIndex = ControllerIndex + 2
+	'	SecondElement = Elements(SecondIndex)
+	'End If
+	
+	Select Method
+		Case "GET"
+			RouteWebGet
+		Case "POST"
+			RouteWebPost
+		Case Else
+			Log("Unsupported method: " & Method)
+			ReturnMethodNotAllow
+	End Select
+End Sub

@@ -1,0 +1,31 @@
+' Create new resource using POST
+Private Sub Post$Controller$
+	' #Desc = Add a new item into $Controller$
+	' #Body = {<br>&nbsp; "key1": "value1",<br>&nbsp; "key2": "value2"<br>}
+
+	Dim data As Map = WebApiUtils.RequestData(Request)
+	If Not(data.IsInitialized) Then
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid json object"
+	Else If data.ContainsKey("") Then
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid key value"
+	Else
+		If Main.$Controller$List.FindAll(Array("name"), Array(data.Get("name"))).Size > 0 Then
+			HRM.ResponseCode = 409
+			HRM.ResponseError = "Name already exist"
+			ReturnApiResponse
+			Return
+		End If
+		
+		If Not(data.ContainsKey("created_date")) Then
+			data.Put("created_date", WebApiUtils.CurrentDateTime)
+		End If
+		Main.$Controller$List.Add(data)
+		HRM.ResponseCode = 201
+		HRM.ResponseMessage = "$Controller$ Created"
+		HRM.ResponseObject = Main.$Controller$List.Last
+		If Main.KVS_ENABLED Then Main.WriteKVS("$Controller$List", Main.$Controller$List)
+	End If
+	ReturnApiResponse
+End Sub
