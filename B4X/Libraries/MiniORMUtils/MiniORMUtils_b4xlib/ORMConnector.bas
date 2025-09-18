@@ -5,7 +5,7 @@ Type=Class
 Version=9.1
 @EndOfDesignText@
 ' Database Connector class
-' Version 3.30
+' Version 3.50
 Sub Class_Globals
 	Private SQL 			As SQL
 	Private CN 				As ConnectionInfo
@@ -17,6 +17,7 @@ Sub Class_Globals
 	Private mCharacterSet 	As String = "utf8mb4"
 	Private mCollate 		As String = "utf8mb4_unicode_ci"
 	Private Const MYSQL 	As String = "MYSQL"
+	Private Const MARIADB 	As String = "MARIADB"
 	#End If
 	Private Const SQLITE 	As String = "SQLITE"
 	Type ConnectionInfo ( _
@@ -44,7 +45,7 @@ Public Sub Initialize (Info As ConnectionInfo)
 		CN.JdbcUrl = Info.JdbcUrl.Replace("{DbDir}", Info.DBDir)
 		CN.JdbcUrl = CN.JdbcUrl.Replace("{DbFile}", CN.DBFile)
 	End If
-	If mType = MYSQL Then
+	If mType = MYSQL Or mType = MARIADB Then
 		CN.User = Info.User
 		CN.DBHost = Info.DBHost
 		CN.DBPort = Info.DBPort
@@ -65,7 +66,7 @@ End Sub
 Public Sub DBCreate As ResumableSub
 	Try
 		Select mType
-			Case MYSQL
+			Case MYSQL, MARIADB
 				If SQL.IsInitialized = False Then
 					Wait For (InitSchema) Complete (Success As Boolean)
 					If Success = False Then
@@ -86,7 +87,7 @@ Public Sub DBCreate As ResumableSub
 				End Select
 		End Select
 	Catch
-		Log(LastException)
+		Log(LastException.Message)
 		Return False
 	End Try
 	DBClose
@@ -110,7 +111,7 @@ End Sub
 #End If
 
 #If B4J
-' Connect to database name (MySQL)
+' Connect to database name (MySQL, MariaDB)
 Public Sub InitPool
 	Try
 		Dim JdbcUrl As String = CN.JdbcUrl
@@ -123,7 +124,7 @@ Public Sub InitPool
 	End Try
 End Sub
 
-' Connect to database schema (MySQL)
+' Asynchronously initialize database schema (MySQL, MariaDB)
 Public Sub InitSchema As ResumableSub
 	Dim JdbcUrl As String = CN.JdbcUrl
 	JdbcUrl = JdbcUrl.Replace("{DbHost}", CN.DBHost)
@@ -136,6 +137,15 @@ Public Sub InitSchema As ResumableSub
 		Return False
 	End If
 	Return Success
+End Sub
+
+' Initialize database schema (MySQL, MariaDB)
+Public Sub InitSchema2
+	Dim JdbcUrl As String = CN.JdbcUrl
+	JdbcUrl = JdbcUrl.Replace("{DbHost}", CN.DBHost)
+	JdbcUrl = JdbcUrl.Replace("{DbName}", "information_schema")
+	JdbcUrl = IIf(CN.DBPort.Length = 0, JdbcUrl.Replace(":{DbPort}", ""), JdbcUrl.Replace("{DbPort}", CN.DBPort))
+	SQL.Initialize2(CN.DriverClass, JdbcUrl, CN.User, CN.Password)
 End Sub
 #End If
 
@@ -178,7 +188,7 @@ End Sub
 Public Sub DBOpen As SQL
 	#If B4J
 	Select mType
-		Case MYSQL
+		Case MYSQL, MARIADB
 			Return Pool.GetConnection
 		Case SQLITE
 			SQL.InitializeSQLite(CN.DBDir, CN.DBFile, False)
@@ -197,7 +207,7 @@ End Sub
 Public Sub DBOpen2 As ResumableSub
 	Try
 		Select mType
-			Case MYSQL
+			Case MYSQL, MARIADB
 				Pool.GetConnectionAsync("Pool")
 				Wait For Pool_ConnectionReady (DB1 As SQL)
 				SQL = DB1
@@ -205,7 +215,7 @@ Public Sub DBOpen2 As ResumableSub
 				SQL.InitializeAsync("DB", CN.DriverClass, CN.JdbcUrl, CN.User, CN.Password)
 				Wait For DB_Ready (Success As Boolean)
 				If Success = False Then
-					Log(LastException)
+					Log(LastException.Message)
 				End If
 		End Select
 	Catch
@@ -249,7 +259,7 @@ Public Sub GetDate As String
 	Try
 		Select mType
 			#If B4J
-			Case MYSQL
+			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT CURDATE()"$
 			#End If
 			Case SQLITE
@@ -277,7 +287,7 @@ Public Sub GetDate2 As ResumableSub
 	Try
 		Select mType
 			#If B4J
-			Case MYSQL
+			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT CURDATE()"$
 			#End If
 			Case SQLITE
@@ -302,7 +312,7 @@ Public Sub GetDateTime As String
 	Try
 		Select mType
 			#If B4J
-			Case MYSQL
+			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT NOW()"$
 			#End If
 			Case SQLITE
@@ -330,7 +340,7 @@ Public Sub GetDateTime2 As ResumableSub
 	Try
 		Select mType
 			#If B4J
-			Case MYSQL
+			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT NOW()"$
 			#End If
 			Case SQLITE
@@ -384,7 +394,7 @@ End Sub
 Public Sub getLastInsertIDQuery As String
 	Select mType
 		#If B4J
-		Case MYSQL
+		Case MYSQL, MARIADB
 			Dim qry As String = "SELECT LAST_INSERT_ID()"
 		#End If
 		Case SQLITE

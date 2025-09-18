@@ -1,5 +1,5 @@
 ### Integrated B4JPackager11 - The simple way to distribute standalone UI apps by Erel
-### 02/06/2023
+### 09/16/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/117880/)
 
 B4JPackager11 is a utility written in B4J that uses the underlying Java tools to create a standalone package that doesn't depend on any other software being installed.  
@@ -108,4 +108,4 @@ Starting from B4J 9.00, the same property can appear multiple times and the valu
 ```
 
 It will add about 9mb to the built package.
-(Don't miss tip #6 if you need to add multiple modules.)
+(Don't miss tip #6 if you need to add multiple modules.)13. Packaging of jServer projects: <https://www.b4x.com/android/forum/threads/jserver-v4-0-based-on-jetty-11.140437/>

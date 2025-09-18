@@ -1,0 +1,83 @@
+﻿Build1=Default,de.filipposoftware.glass
+File1=layout.bil
+File2=main.bil
+File3=spac_satellite_gps_iif_lg.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=ibitmapcreator
+Module1=fsGlassmorphism
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=1
+Version=8.9
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: B4i Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private pMain As Page
+	Private xui As XUI
+	Private pnlRoot As Panel
+	
+	Private glass As fsGlassmorphism
+	Private pnlDialog As B4XView
+	Private btnShow As B4XView
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	pMain.Initialize("pMain")
+	pMain.RootPanel.LoadLayout("Main")
+
+	pnlRoot.LoadLayout("layout")
+	NavControl.ShowPage(pMain)
+	
+#Region Conditional Compilation
+	#CertificateFile: ios_development.cer
+	#ProvisionFile: developer.mobileprovision
+#End Region
+
+	glass.Initialize
+	glass.BorderColor = Colors.Gray
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	Dim r As Rect = pMain.SafeAreaInsets
+	pnlRoot.SetLayoutAnimated(0, 1, r.Left, r.Top, Width - r.Right - r.Left, Height - r.Bottom - r.Top)
+End Sub
+
+Private Sub pnlRoot_Resize(Width As Int, Height As Int)
+	glass.SetGlassProprety(pnlRoot.GetView(0), pnlDialog, 15dip)
+	glass.SetGlassProprety(pnlRoot.GetView(0), btnShow, 10dip)
+End Sub
+
+Private Sub btnShow_Click
+	pnlDialog.Visible = True
+End Sub
+
+Private Sub btnCancel_Click
+	Log("btnCancel_Click")
+	pnlDialog.Visible = False
+End Sub
+
+Private Sub btnOk_Click
+	Log("btnOk_Click")
+	pnlDialog.Visible = False
+End Sub

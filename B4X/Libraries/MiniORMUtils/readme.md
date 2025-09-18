@@ -1,16 +1,16 @@
 ###  MiniORMUtils by aeric
-### 07/11/2025
+### 09/15/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 3.30  
+Version: 3.50  
 
 ---
 
   
 This library can be use for creating db schema and performing CRUD operations.  
 It is suitable for Web API Template or any database system.  
-Currently it supports **SQLite** and **MySQL** (B4J).  
+Currently it supports **SQLite** (for B4A, B4i, B4J), **MariaDB** and **MySQL** (for B4J only).  
   
 ![](https://www.b4x.com/android/forum/attachments/164272)  
   
@@ -21,10 +21,10 @@ Project Template:
 Create ConnectionInfo object  
 
 ```B4X
-Dim Info As ConnectionInfo  
-Info.Initialize  
+Dim info As ConnectionInfo  
+info.Initialize  
 info.DBType = "SQLite"  
-Info.DBFile = "data.db"
+info.DBFile = "data.db"
 ```
 
   
@@ -32,8 +32,8 @@ Info.DBFile = "data.db"
 Create ORMConnector object  
 
 ```B4X
-Dim Conn As ORMConnector  
-Conn.Initialize(Info)
+Dim conn As ORMConnector  
+conn.Initialize(info)
 ```
 
   
@@ -41,9 +41,9 @@ Conn.Initialize(Info)
 Check if database exist  
 
 ```B4X
-Dim DBFound As Boolean = Conn.DBExist  
+Dim DBFound As Boolean = conn.DBExist  
 If DBFound = False Then  
-    LogColor($"${Conn.DBType} database not found!"$, COLOR_RED)  
+    LogColor($"${conn.DBType} database not found!"$, COLOR_RED)  
     CreateDatabase  
 End If
 ```
@@ -54,7 +54,7 @@ Create database
 
 ```B4X
 Private Sub CreateDatabase  
-    Dim Success As Boolean = Conn.DBCreate  
+    Dim Success As Boolean = conn.DBCreate  
     If Success = False Then  
         Log("Database creation failed!")  
         Return  

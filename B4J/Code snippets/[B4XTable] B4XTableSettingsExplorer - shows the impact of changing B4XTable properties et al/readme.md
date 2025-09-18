@@ -1,5 +1,5 @@
 ### [B4XTable] B4XTableSettingsExplorer - shows the impact of changing B4XTable properties et al by walt61
-### 10/25/2023
+### 09/13/2025
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/157007/)
 
 The title more or less says it all. I wanted to better understand the myriad of properties of the B4XTable, and here they are. Change a property and immediately see which part of the table is impacted. Here's what it covers (these are the options in the ChoiceBox):  
@@ -51,4 +51,6 @@ Wrap text
   
 Project attached.  
   
-![](https://www.b4x.com/android/forum/attachments/147209)
+Edit: 2025-09-13: added 'Copy' button (top right corner) to copy the selected changes' source code to the clipboard; project updated  
+  
+![](https://www.b4x.com/android/forum/attachments/166825)

@@ -1,13 +1,23 @@
 ###  [Custom View] lmElapsedTime by LucaMs
-### 09/10/2025
+### 09/16/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166301/)
 
-**This custom view is cross-platform, works for B4A, B4J and should work also for B4I.**  
+**This custom view is cross-platform, works for B4A, B4J and should work also for B4I.  
   
-Ok, I'm publishing it (remember: I have to drink coffee, so **use now** the link in my signature 😁).  
+UPDATE: V. 2.00 09/15/2025**  
+Added: **ActAsCountDown**. As the property name suggests, you can now use it as both a countdown timer and an elapsed time counter.  
+![](https://www.b4x.com/android/forum/attachments/166894)  
   
-You can see the description of this library in the next ("older") lines of this post.  
-I later added the ability to activate (/resume) /pause the counter by clicking (or tapping) on the View (it's optional, it's a property (\*)).  
+It is a time counter or "elapsed time" (v. 2 - also countdown timer).  
+  
+You can:  
+decide whether to display the milliseconds / hours numbers or not;  
+change the colors;  
+border and corners;  
+pause and resume.  
+  
+![](https://www.b4x.com/android/forum/attachments/162909)  
+  
   
 **UPDATE: V. 1.10**  
 Added two properties and two methods to start counting with an initial value (methods) or to set the initial value (properties).  
@@ -48,22 +58,6 @@ Added two properties and two methods to start counting with an initial value (me
 - StateChanged
 
   
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
-  
-I am undecided whether to publish this custom view or not (I am also undecided about its name). If you like it, if you find it useful.  
-  
-It is a time counter or "elapsed time".  
-  
-You can:  
-decide whether to display the milliseconds / hours numbers or not;  
-change the colors;  
-border and corners;  
-pause and resume.  
-  
-Oops, I almost forgot something important (not done yet): the font property. Later.  
-  
-![](https://www.b4x.com/android/forum/attachments/162909)  
   
   
 BTW, used for a (famous) little game created for testing (to test ChatGPT capabilities).  

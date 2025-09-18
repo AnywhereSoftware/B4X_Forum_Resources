@@ -1,5 +1,5 @@
 ### [Web][SithasoDaisy5]🚀 Building Responsive Low-Code Web Apps with BANano in B4X by Mashiane
-### 09/13/2025
+### 09/14/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/168618/)
 
 Hi Fam  
@@ -61,4 +61,35 @@ The SithasoDaisy5 LowCode App stores your project in the web indexedDB back-end.
   
 Please ensure that you copy and paste the additional libraries contents to your b4j additional libraries folder.  
   
-![](https://www.b4x.com/android/forum/attachments/166813)
+![](https://www.b4x.com/android/forum/attachments/166813)  
+  
+**[SIZE=6]How to get started?[/SIZE]**  
+  
+***Get the latest version of BANano here…***  
+  
+<https://www.b4x.com/android/forum/threads/web-banano-website-app-pwa-library-with-abstract-designer-support.99740/#content>  
+  
+***Get SithasoDaisy5 here..***  
+<https://github.com/Mashiane/SithasoDaisy5>  
+  
+Remember to copy the additional libraries to your additional libraries folder.  
+  
+*SithasoDaisy5 Low Code is available online on this link, however you can download and publish in on your webser and use it.*  
+  
+Source Code  
+<https://github.com/Mashiane/SithasoDaisy5-Low-Code>  
+  
+Online Version  
+<https://sithaso-daisy5-low-code.vercel.app/>  
+  
+I'm here should you need help and have questions to ask, just start a new question thread for your question…  
+  
+Let's do this…  
+  
+Mashy  
+  
+  
+**Complete Video Tutorial of creating the relational address book with SithasoDaisy5 Low Code**  
+  
+  
+[MEDIA=youtube]6-fVLzcbvi4[/MEDIA]

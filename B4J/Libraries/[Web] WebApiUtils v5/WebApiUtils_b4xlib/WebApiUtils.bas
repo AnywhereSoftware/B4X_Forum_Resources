@@ -5,7 +5,7 @@ Type=StaticCode
 Version=10
 @EndOfDesignText@
 ' Web API Utility
-' Version 5.00
+' Version 5.10
 Sub Process_Globals
 	Public Const CONTENT_TYPE_HTML As String = "text/html"
 	Public Const CONTENT_TYPE_JSON As String = "application/json"
@@ -477,6 +477,9 @@ Public Sub ProcessOrderedJsonFromList (L As List, Indent As String, Indentation 
 			First = False
 		End If
 		SB.Append(CRLF)
+		If value.As(String).StartsWith("[B@") Then
+			Log("Blob Field")
+		End If
 		Select True
 			Case value Is List
 				SB.Append(ProcessOrderedJsonFromList(value, Indent, Indentation))
@@ -485,7 +488,12 @@ Public Sub ProcessOrderedJsonFromList (L As List, Indent As String, Indentation 
 			Case value Is String
 				SB.Append(Indent & QUOTE & value & QUOTE)
 			Case Else
-				SB.Append(Indent & value)
+				If value.As(String).StartsWith("[B@") Then ' Maybe a blob/byte object
+					SB.Append(Indent & QUOTE & EncodeBase64(value) & QUOTE)
+					'File.WriteBytes(File.DirApp, "temp.png", DecodeBase64(EncodeBase64(value)))
+				Else
+					SB.Append(Indent & value)
+				End If
 		End Select
 	Next
 	SB.Append(CRLF & Indent & "]")
@@ -507,6 +515,9 @@ Public Sub ProcessOrderedJsonFromMap (M As Map, Indent As String, Indentation As
 		End If
 		SB.Append(CRLF)
 		Dim value As Object = m.Get(key)
+		If value.As(String).StartsWith("[B@") Then
+			Log("Blob Field")
+		End If
 		If key <> "__order" Then
 			Select True
 				Case value Is List
@@ -516,7 +527,12 @@ Public Sub ProcessOrderedJsonFromMap (M As Map, Indent As String, Indentation As
 				Case value Is String
 					SB.Append(Indent & Indentation & QUOTE & key & QUOTE & ": " & QUOTE & value & QUOTE)
 				Case Else
-					SB.Append(Indent & Indentation & QUOTE & key & QUOTE & ": " & value)
+					If value.As(String).StartsWith("[B@") Then ' Maybe a blob/byte object
+						SB.Append(Indent & Indentation & QUOTE & key & QUOTE & ": " & QUOTE & EncodeBase64(value) & QUOTE)
+						'File.WriteBytes(File.DirApp, "temp.png", DecodeBase64(EncodeBase64(value)))
+					Else
+						SB.Append(Indent & Indentation & QUOTE & key & QUOTE & ": " & value)
+					End If
 			End Select
 		End If
 	Next
@@ -538,7 +554,11 @@ Public Sub ProcessOrderedXmlFromList (Tag As String, L As List, Indent As String
 			Case value Is String
 				child = EscapeXml(value)
 			Case Else
-				child = value
+				If value.As(String).StartsWith("[B@") Then ' Maybe a blob/byte object
+					child = EncodeBase64(value)
+				Else
+					child = value
+				End If
 		End Select
 		If First Then
 			First = False
@@ -570,7 +590,11 @@ Public Sub ProcessOrderedXmlFromMap (Tag As String, M As Map, Indent As String, 
 				Case value Is String
 					child = EscapeXml(value)
 				Case Else
-					child = value
+					If value.As(String).StartsWith("[B@") Then ' Maybe a blob/byte object
+						child = EncodeBase64(value)
+					Else
+						child = value
+					End If
 			End Select
 			If First Then
 				First = False
@@ -602,7 +626,11 @@ Public Sub ProcessOrderedXmlFromMap (Tag As String, M As Map, Indent As String, 
 				Case value Is String
 					child = EscapeXml(value)
 				Case Else
-					child = value
+					If value.As(String).StartsWith("[B@") Then ' Maybe a blob/byte object
+						child = EncodeBase64(value)
+					Else
+						child = value
+					End If
 			End Select
 			SB.Append(Indent).Append("<").Append(key).Append(">")
 			SB.Append(child)
@@ -613,8 +641,10 @@ Public Sub ProcessOrderedXmlFromMap (Tag As String, M As Map, Indent As String, 
 End Sub
 
 ' To initialize: <code>
+' App = Main.app
+' Api = App.api
 ' HRM.Initialize
-' HRM.VerboseMode = Main.conf.VerboseMode</code>
+' HRM.VerboseMode = Api.VerboseMode</code>
 ' ---------------------------------------------------------------
 ' <em>Output:</em> 
 ' {
