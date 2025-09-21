@@ -2,10 +2,10 @@
 Group=Classes
 ModulesStructureVersion=1
 Type=Class
-Version=9.71
+Version=10.3
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 3.50
+' Version 3.70
 Sub Class_Globals
 	Private DBSQL 					As SQL
 	Private DBID 					As Int
@@ -26,7 +26,7 @@ Sub Class_Globals
 	Private DBCondition 			As String
 	Private DBHaving 				As String
 	Private mType 					As String
-	Private mError 					As String
+	Private mError 					As Exception
 	Private mJournalMode 			As String = "DELETE" 'ignore
 	Private StrDefaultUserId 		As String = "1"
 	Private DBParameters() 			As Object
@@ -246,11 +246,11 @@ Public Sub Find2 (mCondition As String, mValue As Object)
 	Query
 End Sub
 
-Public Sub setError (mMessage As String)
+Public Sub setError (mMessage As Exception)
 	mError = mMessage
 End Sub
 
-Public Sub getError As String
+Public Sub getError As Exception
 	Return mError
 End Sub
 
@@ -598,24 +598,34 @@ Public Sub Execute2 (Parameter() As Object)
 End Sub
 
 Private Sub ExecQuery As ResultSet
-	If ParametersCount = 0 Then
-		If BlnShowExtraLogs Then LogQuery
-		Dim RS As ResultSet = DBSQL.ExecQuery(DBStatement)
-	Else
-		If BlnShowExtraLogs Then LogQuery2
-		Dim RS As ResultSet = DBSQL.ExecQuery2(DBStatement, DBParameters)
-	End If
+	Try
+		If ParametersCount = 0 Then
+			If BlnShowExtraLogs Then LogQuery
+			Dim RS As ResultSet = DBSQL.ExecQuery(DBStatement)
+		Else
+			If BlnShowExtraLogs Then LogQuery2
+			Dim RS As ResultSet = DBSQL.ExecQuery2(DBStatement, DBParameters)
+		End If
+	Catch
+		Log(LastException)
+		mError = LastException
+	End Try
 	Return RS
 End Sub
 
 Private Sub ExecNonQuery
-	If ParametersCount = 0 Then
-		If BlnShowExtraLogs Then LogQuery
-		DBSQL.ExecNonQuery(DBStatement)
-	Else
-		If BlnShowExtraLogs Then LogQuery2
-		DBSQL.ExecNonQuery2(DBStatement, DBParameters)
-	End If
+	Try
+		If ParametersCount = 0 Then
+			If BlnShowExtraLogs Then LogQuery
+			DBSQL.ExecNonQuery(DBStatement)
+		Else
+			If BlnShowExtraLogs Then LogQuery2
+			DBSQL.ExecNonQuery2(DBStatement, DBParameters)
+		End If
+	Catch
+		Log(LastException)
+		mError = LastException
+	End Try
 End Sub
 
 ' Execute Non Query batch <code>
@@ -683,6 +693,10 @@ Public Sub Query
 		If DBOrderBy.Length > 0 Then DBStatement = DBStatement & DBOrderBy
 		If DBLimit.Length > 0 Then DBStatement = DBStatement & $" LIMIT ${DBLimit}"$ ' Limit 10, 10 <-- second parameter is OFFSET
 		Dim RS As ResultSet = ExecQuery
+		If mError.IsInitialized Then
+			If Initialized(RS) Then RS.Close
+			Return
+		End If
 		
 		ORMResult.Initialize
 		ORMResult.Columns.Initialize
@@ -795,7 +809,8 @@ Public Sub Query
 		Loop
 		ORMResult.Columns = Columns
 		#End If
-
+		RS.Close ' test 2025-09-18
+		
 		For Each Rows As List In ORMTable.Rows
 			Dim Result As Map
 			Dim Result2 As Map
@@ -817,16 +832,16 @@ Public Sub Query
 		End If
 		'RS.Close ' test 2023-10-24
 	Catch
-		Log(LastException.Message)
+		Log(LastException)
 		'LogColor("Are you missing ' = ?' in query?", COLOR_RED)
 		mError = LastException
 	End Try
-	#If B4J
-	If Initialized(RS) Then RS.Close ' 2025-03-19
-	#Else
-	' B4A yet support Initialized() function
-	If RS <> Null Or RS.IsInitialized Then RS.Close ' 2025-04-24
-	#End If
+	'#If B4J
+	'If Initialized(RS) Then RS.Close ' 2025-03-19
+	'#Else
+	'' B4A yet support Initialized() function
+	'If RS <> Null Or RS.IsInitialized Then RS.Close ' 2025-04-24
+	'#End If
 	Reset2
 	ResetParameters
 End Sub

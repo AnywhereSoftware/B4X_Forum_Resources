@@ -2,16 +2,16 @@
 Group=App
 ModulesStructureVersion=1
 Type=StaticCode
-Version=10
+Version=10.3
 @EndOfDesignText@
 ' Web API Utility
-' Version 5.10
+' Version 5.30
 Sub Process_Globals
-	Public Const CONTENT_TYPE_HTML As String = "text/html"
-	Public Const CONTENT_TYPE_JSON As String = "application/json"
-	Public Const CONTENT_TYPE_XML As String = "application/xml"
-	Public Const CONTENT_TYPE_PDF As String = "application/pdf"
-	Public Const CONTENT_TYPE_PNG As String = "image/png"
+	Public Const MIME_TYPE_HTML As String = "text/html"
+	Public Const MIME_TYPE_JSON As String = "application/json"
+	Public Const MIME_TYPE_XML As String = "application/xml"
+	Public Const MIME_TYPE_PDF As String = "application/pdf"
+	Public Const MIME_TYPE_PNG As String = "image/png"
 	Public Const RESPONSE_ELEMENT_MESSAGE As String = "m"
 	Public Const RESPONSE_ELEMENT_CODE As String 	= "a"
 	Public Const RESPONSE_ELEMENT_STATUS As String 	= "s"
@@ -253,6 +253,10 @@ Public Sub ParseXML (Text As String) As Map
 	Return data
 End Sub
 
+Public Sub ParseJSON (Text As String) As Map
+	Return Text.As(JSON).ToMap
+End Sub
+
 Public Sub RequestMultiPart (Request As ServletRequest, Folder As String, MaxSize As Long) As Part
 	Dim part As Part
 	Dim config As JavaObject
@@ -477,9 +481,6 @@ Public Sub ProcessOrderedJsonFromList (L As List, Indent As String, Indentation 
 			First = False
 		End If
 		SB.Append(CRLF)
-		If value.As(String).StartsWith("[B@") Then
-			Log("Blob Field")
-		End If
 		Select True
 			Case value Is List
 				SB.Append(ProcessOrderedJsonFromList(value, Indent, Indentation))
@@ -515,9 +516,6 @@ Public Sub ProcessOrderedJsonFromMap (M As Map, Indent As String, Indentation As
 		End If
 		SB.Append(CRLF)
 		Dim value As Object = m.Get(key)
-		If value.As(String).StartsWith("[B@") Then
-			Log("Blob Field")
-		End If
 		If key <> "__order" Then
 			Select True
 				Case value Is List
@@ -642,9 +640,8 @@ End Sub
 
 ' To initialize: <code>
 ' App = Main.app
-' Api = App.api
 ' HRM.Initialize
-' HRM.VerboseMode = Api.VerboseMode</code>
+' HRM = WebApiUtils.SetApiMessage(HRM, App.api)</code>
 ' ---------------------------------------------------------------
 ' <em>Output:</em> 
 ' {
@@ -658,8 +655,7 @@ End Sub
 ' }
 Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As ServletResponse)
 	If Message.XmlRoot = "" Then Message.XmlRoot = "root"
-	If Message.ContentType = "" Then Message.ContentType = CONTENT_TYPE_JSON
-	If Message.PayloadType = "" Then Message.PayloadType = "json"
+	If Message.ContentType = "" Then Message.ContentType = MIME_TYPE_JSON ' Default as json
 	If Message.ResponseCode >= 200 And Message.ResponseCode < 300 Then ' SUCCESS
 		If Message.ResponseType = "" Then Message.ResponseType = "SUCCESS"
 		If Message.ResponseStatus = "" Then Message.ResponseStatus = "ok"
@@ -742,22 +738,23 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 		End If
 		If Message.OrderedKeys Then
 			Select Message.ContentType
-				Case CONTENT_TYPE_XML
+				Case MIME_TYPE_XML
 					SB.Append($"<${Message.XmlRoot}>"$)
+					If Message.XmlElement = "" Then Message.XmlElement = "item"
 					SB.Append(CRLF).Append("  ").Append(ProcessOrderedXmlFromMap(Message.XmlElement, ResponseElementsVerbose, "  ", "  "))
 					SB.Append(CRLF).Append($"</${Message.XmlRoot}>"$)
-				Case CONTENT_TYPE_JSON
+				Case MIME_TYPE_JSON
 					SB.Append(ProcessOrderedJsonFromMap(ResponseElementsVerbose, "", "  "))
 			End Select
 		Else
 			' order not preserved
 			Select Message.ContentType
-				Case CONTENT_TYPE_XML
+				Case MIME_TYPE_XML
 					Message.ResponseObject = CreateMap(Message.XmlRoot: ResponseElementsVerbose)
 					Dim m2x As Map2Xml
 					m2x.Initialize
 					SB.Append(m2x.MapToXml(Message.ResponseObject))
-				Case CONTENT_TYPE_JSON
+				Case MIME_TYPE_JSON
 					SB.Append(ResponseElementsVerbose.As(JSON).ToString)
 			End Select
 		End If
@@ -766,15 +763,16 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 		If Message.OrderedKeys Then
 			Select True
 				Case Message.ResponseObject.IsInitialized
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						SB.Append($"<${Message.XmlRoot}>"$)
+						If Message.XmlElement = "" Then Message.XmlElement = "item"
 						SB.Append(CRLF).Append("  ").Append(ProcessOrderedXmlFromMap(Message.XmlElement, Message.ResponseObject, "  ", "  "))
 						SB.Append(CRLF).Append($"</${Message.XmlRoot}>"$)
 					Else
 						SB.Append(ProcessOrderedJsonFromMap(Message.ResponseObject, "", "  "))
 					End If
 				Case Message.ResponseData.IsInitialized
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						If Message.XmlElement = "" Then Message.XmlElement = "item"
 						SB.Append($"<${Message.XmlRoot}>"$)
 						SB.Append(CRLF).Append(ProcessOrderedXmlFromList(Message.XmlElement, Message.ResponseData, "  ", "  "))
@@ -785,7 +783,7 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 				Case Message.ResponseBody Is String
 					SB.Append(Message.ResponseBody)
 				Case Else
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						Message.ResponseObject = CreateMap("error": Message.ResponseError)
 						SB.Append($"<${Message.XmlRoot}>"$)
 						SB.Append(CRLF).Append("  ").Append($"<error>${Message.ResponseError}</error>"$)
@@ -798,7 +796,7 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 		Else
 			Select True
 				Case Message.ResponseObject.IsInitialized
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						If Message.XmlElement = "" Then Message.XmlElement = "item"
 						Message.ResponseObject = CreateMap(Message.XmlRoot: CreateMap(Message.XmlElement: Message.ResponseObject))
 						Dim m2x As Map2Xml
@@ -808,7 +806,7 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 						SB.Append(Message.ResponseObject.As(JSON).ToString)
 					End If
 				Case Message.ResponseData.IsInitialized
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						If Message.XmlElement = "" Then Message.XmlElement = "item"
 						Message.ResponseObject = CreateMap(Message.XmlRoot: CreateMap(Message.XmlElement: Message.ResponseData))
 						Dim m2x As Map2Xml
@@ -820,7 +818,7 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 				Case Message.ResponseBody Is String
 					SB.Append(Message.ResponseBody)
 				Case Else
-					If Message.ContentType = CONTENT_TYPE_XML Then
+					If Message.ContentType = MIME_TYPE_XML Then
 						Message.ResponseObject = CreateMap("error": Message.ResponseError)
 						SB.Append($"<${Message.XmlRoot}>"$)
 						SB.Append(CRLF).Append("  ").Append($"<error>${Message.ResponseError}</error>"$)
@@ -841,11 +839,11 @@ Public Sub ReturnContent (Content As Object, ContentType As String, Response As 
 End Sub
 
 Public Sub ReturnHtml (Str As String, Response As ServletResponse)
-	ReturnContent(Str, CONTENT_TYPE_HTML, Response)
+	ReturnContent(Str, MIME_TYPE_HTML, Response)
 End Sub
 
 Public Sub ReturnHtmlBody (Cont As HttpResponseContent, Response As ServletResponse)
-	ReturnContent(Cont.ResponseBody, CONTENT_TYPE_HTML, Response)
+	ReturnContent(Cont.ResponseBody, MIME_TYPE_HTML, Response)
 End Sub
 
 Public Sub ReturnHtmlPageNotFound (Response As ServletResponse)
