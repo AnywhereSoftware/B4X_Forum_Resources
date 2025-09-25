@@ -1,9 +1,9 @@
 ### Rename result.jar using #Macro or #CustomBuildAction by aeric
-### 09/18/2025
+### 09/24/2025
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168616/)
 
 ```B4X
-#Macro: Title, Rename, ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=ren&Args=result.jar&Args=libget-non-ui.jar
+#Macro: Title, Rename, ide://run?file=%COMSPEC%&Args=/c&Args=ren&Args=result.jar&Args=libget-non-ui.jar
 ```
 
   

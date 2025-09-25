@@ -1,5 +1,5 @@
 ###  B4XTable - Cross platform, sortable, searchable, customizable table by Erel
-### 02/08/2024
+### 09/21/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/102322/)
 
 B4XTable is a paged based table. The UI is made of a horizontal xCLV. The data is stored in an in-memory SQLite database.  
@@ -34,7 +34,8 @@ Dim data As List
 data.Initialize  
 data.Add(Array(1, 2, 3))  
 data.Add(Array(4, 5, 6))  
-B4XTable1.SetData(data)
+B4XTable1.SetData(data) 'this is an asynchronous method. If you want to access the table immediately after SetData completes then call it with Wait For instead:  
+'Wait For (B4XTable1.SetData(data)) Complete (unused As Boolean) 'either this line or the one above. Not both.
 ```
 
   

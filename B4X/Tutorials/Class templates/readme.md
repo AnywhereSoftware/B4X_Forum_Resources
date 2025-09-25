@@ -1,5 +1,5 @@
 ###  Class templates by LucaMs
-### 09/19/2025
+### 09/21/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/168700/)
 
 \*\*\* This is a trick, a discovery **[SIZE=6]by [USER=74499]@aeric[/USER][/SIZE]**, really very useful \*\*\*  
@@ -45,7 +45,7 @@ etc.
   
 Once this is done, place the library in the additional libraries folders, depending on the type of project you support. For example, if the classes work on all three "platforms," place the library in the B4X additional libraries folder.  
   
-Import (select) the library (MyClass Templates.zip) into your project and yours will be among the class templates you can add.  
+Import (select) the library (MyClassTemplates.b4xlib) into your project and yours will be among the class templates you can add.  
   
   
 ![](https://www.b4x.com/android/forum/attachments/167045)  

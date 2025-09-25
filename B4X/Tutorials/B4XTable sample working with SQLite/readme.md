@@ -1,10 +1,16 @@
 ###  B4XTable sample working with SQLite by aeric
-### 08/22/2025
+### 09/20/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/168336/)
 
-[HEADING=2][B4X] B4XTableSample[/HEADING]  
+[HEADING=2][B4X] B4XTable Sample 1[/HEADING]  
 A sample project to demonstrate loading SQLite data into B4XTable  
+Android Devices data (JSON) downloaded from Internet  
 GitHub: <https://github.com/pyhoon/B4XTableSample-B4X>  
+  
+[HEADING=2][B4X] B4XTable Sample 2[/HEADING]  
+Another sample project to demonstrate loading SQLite data into B4XTable  
+Sample Customers data inserted from code  
+GitHub: <https://github.com/pyhoon/B4XTableSample-B4X/tree/main/example2>  
 [HEADING=2]Features[/HEADING]  
 
 - Use OkHttpUtils to download json file from a URL
