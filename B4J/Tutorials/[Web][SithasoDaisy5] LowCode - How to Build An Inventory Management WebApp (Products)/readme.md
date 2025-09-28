@@ -1,8 +1,10 @@
 ### [Web][SithasoDaisy5] LowCode - How to Build An Inventory Management WebApp (Products) by Mashiane
-### 09/24/2025
+### 09/25/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/168766/)
 
 Hi Fam  
+  
+[SithasoDaisy5 Low Code Generator](https://github.com/Mashiane/SithasoDaisy5-Low-Code)  
   
 This tutorial is inspired by [USER=74499]@aeric[/USER] post here…  
   

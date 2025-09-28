@@ -1,5 +1,5 @@
 ### Collection of #Macro and #CustomBuildAction by aeric
-### 09/22/2025
+### 09/24/2025
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168732/)
 
 With new version of B4X, #Macro is a useful addition.  
@@ -7,10 +7,11 @@ It is a shortcut to automate some tasks and provide a very convenient way of usi
 It is an alternative to Comment links where you only need a mouse click instead of pressing the Control key and mouse click.  
 However, for those who prefer to use keyboard shortcuts, e.g Ctrl + 1, Ctrl + 2 it is still supported.  
   
-Tutorial : <https://www.b4x.com/android/forum/threads/b4x-comment-links-and-macros.119897/>  
+Tutorial :   
+<https://www.b4x.com/android/forum/threads/b4x-comment-links-and-macros.119897/>  
 <https://www.b4x.com/android/forum/threads/b4x-custombuildaction.168654/>  
   
-Here are my collection.  
+Here is my collection.  
 You can rename the Title to any name as you like.  
 You can also convert them back to comment links.  
   
@@ -73,7 +74,7 @@ I find this useful for B4J projects to open the Objects folder (File.DirApp) for
 This macro is used to be a comment link to open GitHub Desktop app.  
 
 ```B4X
-#Macro: Title, GitHub Desktop, ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=github&Args=..\..\
+#Macro: Title, GitHub Desktop, ide://run?file=%COMSPEC%&Args=/c&Args=github&Args=..\..\
 ```
 
   
@@ -92,7 +93,7 @@ This is a convenient way to download all required libraries instead of searching
 If the b4xlib has only a single class, this macro can copy or overwrite the destination file.  
 
 ```B4X
-#Macro: Title, Copy, ide://run?file=%WINDIR%\System32\cmd.exe&Args=/c&Args=copy&Args=%PROJECT%\MinimaList.bas&Args=%PROJECT%\..\release\MinimaList.bas
+#Macro: Title, Copy, ide://run?file=%COMSPEC%&Args=/c&Args=copy&Args=%PROJECT%\MinimaList.bas&Args=%PROJECT%\..\release\MinimaList.bas
 ```
 
   
@@ -102,6 +103,16 @@ I use this macro to copy certain files that need to be updated in release folder
 
 ```B4X
 #Macro: Title, Update, ide://run?file=%WINDIR%\System32\Robocopy.exe&args=%PROJECT%&args=%PROJECT%\..\release\&args=*.bas&args=*.json&args=*.b4j&args=*.html&args=*.example&args=help.css&args=main.css&args=main.js&args=/S
+```
+
+  
+  
+**Rename result.jar**  
+You can also check other methods here:  
+<https://www.b4x.com/android/forum/threads/rename-result-jar-using-macro-or-custombuildaction.168616/>  
+
+```B4X
+#Macro: Title, Rename, ide://run?file=%COMSPEC%&Args=/c&Args=IF+EXIST+result.jar&Args=ren&Args=result.jar&Args=libget-non-ui.jar
 ```
 
   
@@ -178,7 +189,7 @@ This CustomBuildAction is useful for copying the compiled result.jar as a new na
 
 ```B4X
 #If Release  
-#CustomBuildAction: 2, C:\Windows\System32\cmd.exe, /c copy %PROJECT%\Objects\result.jar %ADDITIONAL%\..\B4X\manifest-writer-non-ui.jar  
+#CustomBuildAction: 2, %COMSPEC%, /c copy %PROJECT%\Objects\result.jar %ADDITIONAL%\..\B4X\manifest-writer-non-ui.jar  
 #End If
 ```
 
