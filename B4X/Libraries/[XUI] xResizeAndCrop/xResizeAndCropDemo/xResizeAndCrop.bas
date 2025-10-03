@@ -7,8 +7,11 @@ Version=6.78
 'xResizeAndCrop Custom View class
 'This CustomView allows cropping and resizing images
 '
-'Version 1.8
-'Added the code to load an image for B4i.
+'Version 1.9	
+'Amenden problem with mMinCroppedWidth and mMinCroppedHeight, wrong scale
+'
+'Version 1.8	
+'Added code, in the B4XMainPage module, to load an image with B4i.
 
 'Version 1.7  2023.03.24
 'Set the crop window to the entire image when the width / height ratio is NONE
@@ -152,6 +155,10 @@ Private Sub InitClass
 End Sub
 
 Private Sub DrawImage
+	If xbmpImage.IsInitialized = False Then
+		Return
+	End If
+	
 	imvTop = HandleDot
 	rectAction.Initialize(0, 0, xpnlAction.Width, xpnlAction.Height)
 	
@@ -344,7 +351,7 @@ Private Sub DrawImage
 			imvWidth = imvHeight / xbmpImage.Height * xbmpImage.Width
 			imvLeft = (xpnlAction.Width - imvWidth) / 2
 			Select mWidthHeightRatio
-				Case "None"OK
+				Case "None"
 					rWidth = imvHeight
 					rTop = imvTop
 					rBottom = rTop + imvHeight
@@ -504,14 +511,27 @@ Private Sub DrawRoundCorners(Radius As Float)
 End Sub
 
 'loads the given image file to the xResizeAndCrop Customview
+'the same as LoadBitmap
 Public Sub LoadImage(Dir As String, FileName As String)
 	xbmpImage = xui.LoadBitmap(Dir, FileName)
-'	xbmpImage = xui.LoadBitmapResize(Dir, FileName, 3000, 2000, True)
 	DrawImage
+End Sub
+
+'loads the given image file to the xResizeAndCrop Customview resized
+'the same as LoadBitmapResize
+Public Sub LoadImageResize(Dir As String, FileName As String, Width As Int, Height As Int, KeepAspectRatio As Boolean)
+	If File.Exists(Dir, FileName) Then
+		xbmpImage = xui.LoadBitmapResize(Dir, FileName, Width, Height, KeepAspectRatio)
+		DrawImage
+	End If
 End Sub
 
 Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 	Private x1, y1 As Int
+	Private mMinCroppedWidth1, mMinCroppedHeight1 As Double
+
+	mMinCroppedWidth1 = mMinCroppedWidth / PixelScale
+	mMinCroppedHeight1 = mMinCroppedHeight / PixelScale
 	
 	Select Action
 		Case xpnlAction.TOUCH_ACTION_DOWN
@@ -587,10 +607,10 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 					If fLeft = True Or fTopLeft = True Or fBottomLeft = True Then
 						If rLeft + DeltaX > ximvImage.Left Then
 							x1 = rLeft + DeltaX
-							If rectImage.Right - x1 >= mMinCroppedWidth Then
+							If rectImage.Right - x1 >= mMinCroppedWidth1 Then
 								rectImage.Left = x1
 							Else
-								rectImage.Left = rectImage.Right - mMinCroppedWidth
+								rectImage.Left = rectImage.Right - mMinCroppedWidth1
 							End If
 						End If
 					End If
@@ -598,10 +618,10 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 					If fTop = True Or fTopLeft = True Or fTopRight = True Then
 						If rTop + DeltaY > ximvImage.Top Then
 							y1 = rTop + DeltaY
-							If rectImage.Bottom - y1 >= mMinCroppedHeight Then
+							If rectImage.Bottom - y1 >= mMinCroppedHeight1 Then
 								rectImage.Top = y1
 							Else
-								rectImage.Top = rectImage.Bottom - mMinCroppedHeight
+								rectImage.Top = rectImage.Bottom - mMinCroppedHeight1
 							End If
 						End If
 					End If
@@ -609,10 +629,10 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 					If fRight = True Or fTopRight = True Or fBottomRight = True Then
 						If rRight + DeltaX < ximvImage.Left + ximvImage.Width Then
 							x1 = rRight + DeltaX
-							If x1 - rectImage.Left >= mMinCroppedWidth Then
+							If x1 - rectImage.Left >= mMinCroppedWidth1 Then
 								rectImage.Right = x1
 							Else
-								rectImage.Right = rectImage.Left + mMinCroppedWidth
+								rectImage.Right = rectImage.Left + mMinCroppedWidth1
 							End If
 						End If
 					End If
@@ -620,10 +640,10 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 					If fBottom = True Or fBottomLeft = True Or fBottomRight = True Then
 						If rBottom + DeltaY < ximvImage.Top + ximvImage.Height Then
 							y1 = rBottom + DeltaY
-							If y1 - rectImage.Top > mMinCroppedHeight Then
+							If y1 - rectImage.Top > mMinCroppedHeight1 Then
 								rectImage.Bottom = y1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
 							End If
 						End If
 					End If
@@ -639,12 +659,12 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 						If rLeft + Delta > imvImage.Left And rTop + Delta > ximvImage.Top Then
 							x1 = rLeft + Delta
 							y1 = rTop + Delta
-							If rectImage.Right - x1 >= mMinCroppedWidth And rectImage.Bottom - y1 >= mMinCroppedHeight Then
+							If rectImage.Right - x1 >= mMinCroppedWidth1 And rectImage.Bottom - y1 >= mMinCroppedHeight1 Then
 								rectImage.Left = x1
 								rectImage.Top = y1
 							Else
-								rectImage.Left = rectImage.Right - mMinCroppedWidth
-								rectImage.Top = rectImage.Bottom - mMinCroppedHeight
+								rectImage.Left = rectImage.Right - mMinCroppedWidth1
+								rectImage.Top = rectImage.Bottom - mMinCroppedHeight1
 							End If
 						End If
 					End If
@@ -659,12 +679,12 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 						If rTop + Delta > imvImage.Top And rRight - Delta < imvImage.Left + imvImage.Width Then
 							x1 = rRight - Delta
 							y1 = rTop + Delta
-							If rectImage.Bottom - y1 >= mMinCroppedHeight And rectImage.Bottom - y1 >= mMinCroppedHeight Then
+							If rectImage.Bottom - y1 >= mMinCroppedHeight1 And rectImage.Bottom - y1 >= mMinCroppedHeight1 Then
 								rectImage.Top = y1
 								rectImage.Right = x1
 							Else
-								rectImage.Top = rectImage.Bottom - mMinCroppedHeight
-								rectImage.Right = rectImage.Left + mMinCroppedWidth
+								rectImage.Top = rectImage.Bottom - mMinCroppedHeight1
+								rectImage.Right = rectImage.Left + mMinCroppedWidth1
 							End If
 						End If
 					End If
@@ -679,12 +699,12 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 						If rBottom + Delta < imvImage.Top + imvImage.Height And rLeft - Delta > imvImage.Left Then
 							y1 = rBottom + Delta
 							x1 = rLeft - Delta
-							If y1 - rectImage.Top > mMinCroppedHeight And rectImage.Right - x1 >= mMinCroppedWidth Then
+							If y1 - rectImage.Top > mMinCroppedHeight1 And rectImage.Right - x1 >= mMinCroppedWidth1 Then
 								rectImage.Bottom = y1
 								rectImage.Left = x1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
-								rectImage.Left = rectImage.Right - mMinCroppedWidth
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
+								rectImage.Left = rectImage.Right - mMinCroppedWidth1
 							End If
 						End If
 					End If
@@ -693,12 +713,12 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 						If rBottom + Delta < imvImage.Top + imvImage.Height And rRight + Delta < imvImage.Left + imvImage.Width Then
 							y1 = rBottom + Delta
 							x1 = rRight + Delta
-							If y1 - rectImage.Top > mMinCroppedHeight And x1 - rectImage.Left >= mMinCroppedWidth Then
+							If y1 - rectImage.Top > mMinCroppedHeight1 And x1 - rectImage.Left >= mMinCroppedWidth1 Then
 								rectImage.Bottom = y1
 								rectImage.Right = x1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
-								rectImage.Right = rectImage.Left + mMinCroppedWidth
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
+								rectImage.Right = rectImage.Left + mMinCroppedWidth1
 							End If
 						End If
 					End If
@@ -708,48 +728,48 @@ Private Sub xpnlAction_Touch (Action As Int, x As Float, y As Float)
 						If rRight + DeltaX < imvImage.Left + imvImage.Width And rTop - DeltaY > imvImage.Top Then
 							x1 = rRight + DeltaX
 							y1 = rTop - DeltaY
-							If rectImage.Bottom - y1 >= mMinCroppedHeight And rectImage.Bottom - y1 >= mMinCroppedHeight Then
+							If rectImage.Bottom - y1 >= mMinCroppedHeight1 And rectImage.Bottom - y1 >= mMinCroppedHeight1 Then
 								rectImage.Top = y1
 								rectImage.Right = x1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
-								rectImage.Right = rectImage.Left + mMinCroppedWidth
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
+								rectImage.Right = rectImage.Left + mMinCroppedWidth1
 							End If
 						End If
 					Else If fBottomRight = True Then
 						If rRight + DeltaX < imvImage.Left + imvImage.Width And rBottom + DeltaY < imvImage.Top + imvImage.Height Then
 							x1 = rRight + DeltaX
 							y1 = rBottom + DeltaY
-							If y1 - rectImage.Top > mMinCroppedHeight And x1 - rectImage.Left >= mMinCroppedWidth Then
+							If y1 - rectImage.Top > mMinCroppedHeight1 And x1 - rectImage.Left >= mMinCroppedWidth1 Then
 								rectImage.Bottom = y1
 								rectImage.Right = x1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
-								rectImage.Right = rectImage.Left + mMinCroppedWidth
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
+								rectImage.Right = rectImage.Left + mMinCroppedWidth1
 							End If
 						End If
 					Else If fTopLeft = True Then
 						If rLeft + DeltaX > imvImage.Left And rTop + DeltaY > imvImage.Top Then
 							x1 = rLeft + DeltaX
 							y1 = rTop + DeltaY
-							If rectImage.Right - x1 >= mMinCroppedWidth And rectImage.Bottom - y1 >= mMinCroppedHeight Then
+							If rectImage.Right - x1 >= mMinCroppedWidth1 And rectImage.Bottom - y1 >= mMinCroppedHeight1 Then
 								rectImage.Top = y1
 								rectImage.Left = x1
 							Else
-								rectImage.Left = rectImage.Right - mMinCroppedWidth
-								rectImage.Top = rectImage.Bottom - mMinCroppedHeight
+								rectImage.Left = rectImage.Right - mMinCroppedWidth1
+								rectImage.Top = rectImage.Bottom - mMinCroppedHeight1
 							End If
 						End If
 					Else If fBottomLeft = True Then
 						If rLeft + DeltaX > imvImage.Left And rBottom - DeltaY < imvImage.Top + imvImage.Height Then
 							x1 = rLeft + DeltaX
 							y1 = rBottom - DeltaY
-							If y1 - rectImage.Top >= mMinCroppedHeight And rectImage.Right - x1 >= mMinCroppedWidth Then
+							If y1 - rectImage.Top >= mMinCroppedHeight1 And rectImage.Right - x1 >= mMinCroppedWidth1 Then
 								rectImage.Bottom = y1
 								rectImage.Left = x1
 							Else
-								rectImage.Bottom = rectImage.Top + mMinCroppedHeight
-								rectImage.Left = rectImage.Right - mMinCroppedWidth
+								rectImage.Bottom = rectImage.Top + mMinCroppedHeight1
+								rectImage.Left = rectImage.Right - mMinCroppedWidth1
 							End If
 						End If
 					End If

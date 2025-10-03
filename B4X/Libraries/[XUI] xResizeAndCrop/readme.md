@@ -1,9 +1,9 @@
 ###  [XUI] xResizeAndCrop by klaus
-### 01/14/2025
+### 09/27/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/100109/)
 
 The xResizeAndCrop Class is a B4X libary.  
-Current version 1.8  
+Current version 1.9  
   
 It works on all three platforms: B4A, B4i and B4J.  
 The xResizeAndCrop.b4xlib and the xResizeAndCrop.xml files are attached.  
@@ -19,6 +19,9 @@ To make a B4X CustomView was inspired by this thread: [[B4X] [XUI] CropView.](ht
   
 The demo program is a B4XPages project for all three platforms.  
 Tested on PC, Android Samsung S6, iPhone 6.  
+  
+EDIT: 2025.09.27 Version 1.9  
+Amenden problem with mMinCroppedWidth and mMinCroppedHeight, wrong scale  
   
 EDIT: 2023.03.28 Version 1.8  
 Added the code to load an image for B4i.  
@@ -56,7 +59,7 @@ When Square = True then the resized image is always square.
 **xResizeAndCrop  
   
 Author:** Klaus CHRISTL (klaus)  
-**Version: 1.8**  
+**Version: 1.9**  
 
 - **xResizeAndCrop**
 
