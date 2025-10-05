@@ -12,35 +12,60 @@ Version=4
 '				Use the method ReverseBytes to change endian.
 ' DependsOn:    rRandomAccessFile
 ' Author:       Robert W.B. Linn
-' Date:         2025-08-16
+' Date:         2025-09-30
+' Version:		1.1.0
 ' License:      MIT
-'
-' Function Index (one-liners)
+#End Region
+
+#Region Function Index (one-liners)
 ' -- Bytes --
 ' ByteToBool(bytes)            		: First byte "1" > True, else False.
 ' ByteToInt(bytes)             		: ASCII digit byte "0"-"9" > integer 0–9.
 ' BytesToHex(bytes)            		: Byte array > hex string.
 ' OneByteToHex(byte)				: Convert single byte to HEX string.
 ' TwoBytesToHex(b1,b2)				: Convert 2 bytes to HEX string.
-'
+' ReverseBytes(b)					: Reverse byte order in array.
+
 ' -- Bool --
 ' BoolToString(state)          		: True > "1", False > "0".
 ' BoolToOnOff(state)           		: True > "ON", False > "OFF".
 ' OnOffToBool(value)           		: "ON"/"On"/"on"/"oN" > True.
 ' IntToBool(value)			   		: Convert int to bool.
-'
+
 ' -- UInt --
 ' UIntToBytes(value)           		: 16-bit unsigned > little-endian bytes.
 ' BytesToUInt(b)               		: Little-endian 2 bytes > unsigned 16-bit.
-'
+
 ' -- ULong --
 ' ULongToBytes(value)          		: 32-bit unsigned > little-endian bytes.
 ' BytesToULong(b)              		: Little-endian 4 bytes > unsigned 32-bit.
-'
+
 ' -- Float --
 ' FloatToBytes(value)          		: 32-bit float > little-endian bytes.
 ' BytesToFloat(b)              		: Little-endian 4 bytes > 32-bit float.
-'
+
+' -- Bin --
+' ByteToBin(b)						: Convert 0–255 byte > "xxxxxxxx" binary string.
+' NibbleToBin(nibble)				: Convert 0–15 nibble > "xxxx" binary string.
+
+' -- BCD --
+' ByteToBCD(value)					: Decimal 0–99 > single-byte BCD.
+' ByteToBCDBin(value)				: Decimal 0–99 > BCD > binary string.
+' BCDToByte(b)						: Single-byte BCD > decimal 0–99.
+' UIntToBCDArray(value)				: UInt 0–9999 > 2-byte BCD array.
+' BCDArrayToUInt(b)					: 2-byte BCD array > integer 0–9999.
+
+' -- Checksum --
+' XORChecksum(b)					: XOR of all bytes.
+
+' -- Endianness --
+' SwapUInt16(value)					: Swap 2-byte unsigned integer.
+' SwapUInt32(value)					: Swap 4-byte unsigned integer.
+' SwapUInt16ToBytes(value)			: UInt16 > reversed 2-byte array.
+' BytesToUInt16Swapped(b)			: Reversed 2-byte array > UInt16.
+' SwapUInt32ToBytes(value)			: UInt32 > reversed 4-byte array.
+' BytesToUInt32Swapped(b)			: Reversed 4-byte array > UInt32.
+
 ' -- String --
 ' StringTrim(s)                		: Trim spaces/tabs from both ends.
 ' ToUpperCase(s)               		: ASCII lowercase > uppercase.
@@ -48,9 +73,62 @@ Version=4
 ' EqualsIgnoreCase(s1,s2)      		: Compare ignoring ASCII case.
 ' ReplaceString(orig,search,repl)	: Replace all occurrences in byte array.
 ' GetSplitCount(buffer)				: Get number of items from CSV string.
+' AsciiBufferToInt(buffer)			: Convert buffer containing ASCII digits to an integer.
 #End Region
 
-Private Sub Process_Globals
+#Region Numeric Ranges Reference
+'| Type       | Size      | Min (AVR / Other) | Max (AVR / Other) | Min (ESP32)             | Max (ESP32)            | Notes                                                            |
+'| ---------- | --------- | ----------------- | ----------------- | ----------------------- | ---------------------- | ---------------------------------------------------------------- |
+'| Byte       | 8-Bit     | 0                 | 255               | 0                       | 255                    | Unsigned                                                         |
+'| Int16      | 16-Bit    | -32,768           | 32,767            | -32,768                 | 32,767                 | Signed 16-Bit                                                    |
+'| UInt16     | 16-Bit    | 0                 | 65,535            | 0                       | 65,535                 | Unsigned 16-Bit stored in ULong                                  |
+'| ULong      | 32-Bit    | 0                 | 4,294,967,295     | 0                       | 4,294,967,295          | Unsigned 32-Bit                                                  |
+'| Float      | 32-Bit    | -3.4028235E38     | 3.4028235E38      | -3.4028235E38           | 3.4028235E38           | Single-precision                                                 |
+'| Double     | AVR/Other | -3.4028235E38     | 3.4028235E38      | -1.7976931348623157E308 | 1.7976931348623157E308 | On AVR/UNO/MEGA: same As Float (32-Bit); on ESP32: 64-Bit double |
+#End Region
+
+Sub Process_Globals
+
+	' Constants for numeric ranges
+	' Based on Arduino / C standard integer sizes
+
+    ' -------------------------
+    ' Integer types
+    ' -------------------------
+    ' Byte (unsigned 8-bit)
+    Public Const BYTE_MIN As Byte = 0
+    Public Const BYTE_MAX As Byte = 255
+
+    ' Int (signed 16-bit)
+    Public Const INT16_MIN As Int = -32768
+    Public Const INT16_MAX As Int = 32767
+
+    ' UInt16 (unsigned 16-bit, stored in ULong in B4R)
+    Public Const UINT16_MIN As ULong = 0
+    Public Const UINT16_MAX As ULong = 65535
+
+    ' ULong (unsigned 32-bit)
+    Public Const UINT32_MIN As ULong = 0
+    Public Const UINT32_MAX As ULong = 4294967295
+
+    ' -------------------------
+    ' Floating point types
+    ' -------------------------
+    ' Float (4-byte single precision)
+    Public Const FLOAT_MIN As Float = -3.4028235E38
+    Public Const FLOAT_MAX As Float = 3.4028235E38
+
+    ' Double (platform-dependent)
+    #If ESP32
+        ' ESP32: 64-bit double
+        Public Const DOUBLE_MIN As Double = -1.7976931348623157E308
+        Public Const DOUBLE_MAX As Double = 1.7976931348623157E308
+    #Else
+        ' AVR / smaller boards: double same as float (32-bit)
+        Public Const DOUBLE_MIN As Double = -3.4028235E38
+        Public Const DOUBLE_MAX As Double = 3.4028235E38
+    #End If
+	
 	' Byte converter instance for conversions between bytes and strings
 	Private bc As ByteConverter
 End Sub
@@ -176,7 +254,7 @@ End Sub
 ' Converts a 2-byte array (little-endian) to an unsigned 16-bit integer (ULong).
 '----------------------------------------------
 Public Sub BytesToUInt(b() As Byte) As ULong
-	If b.Length < 2 Then Return 0
+	If b == Null Or b.Length < 2 Then Return 0
 	Return Bit.Or(Bit.And(b(0), 0xFF), Bit.ShiftLeft(Bit.And(b(1), 0xFF), 8))
 End Sub
 #End Region
@@ -231,6 +309,203 @@ Public Sub BytesToFloat(b() As Byte) As Float
 	Else
 		Return -1
 	End If
+End Sub
+#End Region
+
+#Region Bin
+'----------------------------------------------
+' ByteToBin
+' Convert any byte (0–255) to an 8-bit binary string.
+'----------------------------------------------
+Public Sub ByteToBin(b As Byte) As String
+	Dim bits(8) As Byte
+	For i = 0 To 7
+		bits(i) = 48 + Bit.And(Bit.ShiftRight(b, 7 - i), 1)  ' ASCII '0' = 48
+	Next
+	Return bc.StringFromBytes(bits)
+End Sub
+
+'----------------------------------------------
+' NibbleToBin
+' Convert a 4-bit nibble (0–15) to a 4-character binary string.
+'----------------------------------------------
+Public Sub NibbleToBin(nibble As Byte) As String
+	If nibble > 15 Then Return "Invalid"
+    
+	Dim bits(4) As Byte
+	For i = 0 To 3
+		bits(i) = 48 + Bit.And(Bit.ShiftRight(nibble, 3 - i), 1)  ' ASCII '0' = 48
+	Next
+	Return bc.StringFromBytes(bits)
+End Sub
+#End Region
+
+#Region BCD
+' BCD, or Binary-Coded Decimal, is a number system where each decimal digit (0-9) is represented by a four-bit binary code. 
+' Unlike standard binary, BCD uses codes 0000 to 1001, leaving codes 1010 to 1111 unused for each digit.
+' Digit-by-digit encoding: Instead of converting an entire decimal number into a single binary value, BCD converts each decimal digit individually into its four-Bit binary equivalent. 
+' Example: The decimal number 15 is represented As 0001 (For 1) And 0101 (For 5) in BCD, resulting in 00010101. 
+' No rounding errors:
+' BCD ensures precise decimal encoding without any rounding errors, which is crucial in applications like financial calculations
+
+'----------------------------------------------
+' ByteToBCD
+' Convert 0–99 decimal to single-byte BCD.
+' Returns 0xFF if out of range.
+'----------------------------------------------
+Public Sub ByteToBCD(value As Byte) As Byte
+    If value > 99 Then Return 0xFF
+    Return Bit.Or(Bit.ShiftLeft(value / 10, 4), value Mod 10)
+End Sub
+
+'----------------------------------------------
+' ByteToBCDBin
+' Convert decimal byte (0-99) to BCD, then return 8-bit binary string
+' Example: 15 -> 0x15 -> "00010101"
+'----------------------------------------------
+Public Sub ByteToBCDBin(value As Byte) As String
+	Dim bcd As Byte = ByteToBCD(value)
+	If bcd = 0xFF Then Return "Invalid"
+
+	Dim bits(8) As Byte
+	' Loop over the bits and extract
+	For i = 0 To 7
+		' 48 + Bit converts 0/1 To ASCII '0'/'1'
+		bits(i) = 48 + Bit.And(Bit.ShiftRight(bcd, 7 - i), 1)  ' ASCII '0' = 48
+	Next
+	Return bc.StringFromBytes(bits)
+End Sub
+
+'----------------------------------------------
+' BCDToByte
+' Convert single-byte BCD to decimal 0–99
+'----------------------------------------------
+Public Sub BCDToByte(b As Byte) As Byte
+    Return Bit.ShiftRight(b, 4) * 10 + Bit.And(b, 0x0F)
+End Sub
+
+'----------------------------------------------
+' UIntToBCDArray
+' Convert integer 0–9999 to BCD byte array (high-to-low)
+' Example: 1985 -> [0x19, 0x85]
+' Returns Null if value > 9999
+'----------------------------------------------
+Public Sub UIntToBCDArray(value As ULong) As Byte()
+    If value > 9999 Then Return Null
+    Dim b(2) As Byte   ' 2 bytes = 4 digits
+    b(0) = ByteToBCD(value / 100)      ' high two digits
+    b(1) = ByteToBCD(value Mod 100)    ' low two digits
+    Return b
+End Sub
+
+'----------------------------------------------
+' BCDArrayToUInt
+' Convert 2-byte BCD array to integer
+'----------------------------------------------
+Public Sub BCDArrayToUInt(b() As Byte) As ULong
+    If b.Length < 2 Then Return 0
+    Return BCDToByte(b(0)) * 100 + BCDToByte(b(1))
+End Sub
+#End Region
+
+#Region Checksum
+'----------------------------------------------
+' XORChecksum: returns XOR of all bytes
+'----------------------------------------------
+Public Sub XORChecksum(b() As Byte) As Byte
+	Dim c As Byte = 0
+	For i = 0 To b.Length - 1
+		c = Bit.Xor(c, b(i))
+	Next
+	Return c
+End Sub
+#End Region
+
+#Region Endianness
+' SwapUIntNN moves the bytes around.
+' Examples:
+' Input 23 (0x0017) -> Swap = 5888 (0x1700)
+' Input = 0x1234 (4660 decimal) -> Swap = 0x3412 (13330 decimal)
+
+' Swap logic explained for 16-bit value 23 on Arduino UNO.
+' DEC 23 is swapped DEC 5888.
+' Step 1 – 16-Bit representation
+' On AVR, an UInt16 value of 23 is stored As:
+' 0x0017   (hex)   ->   [00000000 00010111] (binary)
+' LSB = 0x17 (23 decimal), MSB = 0x00
+' Step 2 – Swap the bytes
+' Swapping LSB/MSB gives:
+' 0x1700   (hex)   ->   [00010111 00000000] (binary)
+' Step 3 – Decimal interpretation
+' 0x1700 in decimal = 5888
+
+'----------------------------------------------
+' SwapUInt16: swap byte order of 16-bit unsigned integer
+' Byte order b(0)b(1) -> b(1)b(0)
+'----------------------------------------------
+Public Sub SwapUInt16(value As ULong) As ULong
+	Return Bit.Or(Bit.ShiftLeft(Bit.And(value, 0xFF), 8), Bit.And(Bit.ShiftRight(value, 8), 0xFF))
+End Sub
+
+'----------------------------------------------
+' SwapUInt32: swap byte order of 32-bit unsigned integer
+' Byte order b(0)b(1)b(2)b(3) -> b(3)b(2)b(1)b(0)
+'----------------------------------------------
+Public Sub SwapUInt32(value As ULong) As ULong
+	Dim b(4) As Byte
+	b(0) = Bit.And(value, 0xFF)
+	b(1) = Bit.And(Bit.ShiftRight(value, 8), 0xFF)
+	b(2) = Bit.And(Bit.ShiftRight(value, 16), 0xFF)
+	b(3) = Bit.And(Bit.ShiftRight(value, 24), 0xFF)
+	Return Bit.Or(Bit.Or(Bit.ShiftLeft(b(0), 24), Bit.ShiftLeft(b(1), 16)), Bit.Or(Bit.ShiftLeft(b(2), 8), b(3)))
+End Sub
+
+'----------------------------------------------
+' SwapUInt16ToBytes: convert UInt16 to reversed byte array
+' Example: value=0x0017 -> [0x17, 0x00]
+'----------------------------------------------
+Public Sub SwapUInt16ToBytes(value As ULong) As Byte()
+	Dim b(2) As Byte
+	b(0) = Bit.And(value, 0xFF)                      ' low byte
+	b(1) = Bit.And(Bit.ShiftRight(value, 8), 0xFF)   ' high byte
+	Return b
+End Sub
+
+'----------------------------------------------
+' BytesToUInt16Swapped: convert reversed byte array back to UInt16
+' Example: [0x17, 0x00] -> 0x0017 = 23
+'----------------------------------------------
+Public Sub BytesToUInt16Swapped(b() As Byte) As ULong
+	If b.Length < 2 Then Return 0
+	Return Bit.Or(Bit.And(b(0), 0xFF), Bit.ShiftLeft(Bit.And(b(1), 0xFF), 8))
+End Sub
+
+
+'----------------------------------------------
+' SwapUInt32ToBytes: convert UInt32 to reversed byte array
+' Example: value=0x12345678 -> [0x78, 0x56, 0x34, 0x12]
+'----------------------------------------------
+Public Sub SwapUInt32ToBytes(value As ULong) As Byte()
+	Dim b(4) As Byte
+	b(0) = Bit.And(value, 0xFF)
+	b(1) = Bit.And(Bit.ShiftRight(value, 8), 0xFF)
+	b(2) = Bit.And(Bit.ShiftRight(value, 16), 0xFF)
+	b(3) = Bit.And(Bit.ShiftRight(value, 24), 0xFF)
+	Return b
+End Sub
+
+'----------------------------------------------
+' BytesToUInt32Swapped: convert reversed byte array back to UInt32
+' Example: [0x78, 0x56, 0x34, 0x12] -> 0x12345678
+'----------------------------------------------
+Public Sub BytesToUInt32Swapped(b() As Byte) As ULong
+	If b.Length < 4 Then Return 0
+	Dim result As ULong = 0
+	result = Bit.Or(result, Bit.And(b(0), 0xFF))
+	result = Bit.Or(result, Bit.ShiftLeft(Bit.And(b(1), 0xFF), 8))
+	result = Bit.Or(result, Bit.ShiftLeft(Bit.And(b(2), 0xFF), 16))
+	result = Bit.Or(result, Bit.ShiftLeft(Bit.And(b(3), 0xFF), 24))
+	Return result
 End Sub
 #End Region
 
@@ -360,5 +635,22 @@ Public Sub GetSplitCount(buffer() As Byte) As Int	'ignore
 		counter = counter + 1
 	Next
 	Return counter
+End Sub
+
+'----------------------------------------------
+' AsciiBufferToInt
+' Convert buffer containing ASCII digits to an integer
+' Example: [57,48] -> 90, [49,56,48] -> 180
+'----------------------------------------------
+Public Sub AsciiBufferToInt(Buffer() As Byte) As Int
+	Dim value As Int = 0
+	For i = 0 To Buffer.Length - 1
+		Dim digit As Int = Buffer(i) - 48   ' '0' = 48
+		If digit < 0 Or digit > 9 Then
+			Return -1   ' invalid input
+		End If
+		value = value * 10 + digit
+	Next
+	Return value
 End Sub
 #End Region
