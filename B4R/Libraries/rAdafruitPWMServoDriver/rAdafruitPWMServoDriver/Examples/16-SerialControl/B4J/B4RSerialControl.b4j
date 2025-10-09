@@ -1,0 +1,196 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=icon.png
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jrandomaccessfile
+Library5=jserial
+Module1=B4RSerializator
+Module2=CallSubUtils
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.3
+@EndOfDesignText@
+#Region Project Header
+' File:		B4RSerialControl
+' Brief: 	Control servos connected to Arduino UNO using a PWM servo driver.
+'			Send serialized data (using the B4RSerializer) over the serial line to B4R.
+'			Data objects 2: Channel (PWM channel 0-15) & Angle (Servo 0-180).
+' Depends:	jSerial 1.40, jRandomAccessFile 2.35.
+' Software:	B4J 10.30 (64 bit).
+' Author: 	Robert W.B. Linn
+' Created: 	2025-10-04
+' License:	MIT
+' Credits:	Based on http://www.b4x.com/android/forum/threads/tool-external-serial-connector.65724/#content. Thank you.
+#End Region
+
+#Region  Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	' UI
+	Private MainForm As Form
+	Private ComboBoxPort As ComboBox
+	Private ButtonOpen As Button
+	Private TextAreaLogs As TextArea
+	Private SerialLine As Serial
+	Private chkReset As CheckBox
+	Private SpinnerChannel As Spinner
+	Private ButtonSetServo As Button
+	Private SpinnerAngle As Spinner
+	Private LabelConnected As Label
+
+	' Communication
+	Private const BAUDRATE As Int = 115200
+	Private Ser As B4RSerializator
+	Private AStream As AsyncStreams
+	Private Connected As Boolean
+
+	' Settings
+	Private const settingsFile As String = "Settings.txt"
+
+	' Helper
+	Private csu As CallSubUtils
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	' Init the CallSubUtils
+	csu.Initialize
+
+	' UI
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Show
+	
+	' UI additional settings
+	MainForm.Title = "rAdafruitPWMServoDriver - B4RSerialControl Example"
+	LabelConnected.Text = "Disconnected"
+	
+	' Serialine
+	SerialLine.Initialize("")
+
+	' B4R Serializer for serialized data transfer between B4J and B4R
+	Ser.Initialize
+
+	' Create the list of com ports found
+	ComboBoxPort.Items.AddAll(SerialLine.ListPorts)
+	
+	' Get the last com port from the settings file
+	If File.Exists(File.DirApp, settingsFile) Then
+		Dim m As Map = File.ReadMap(File.DirApp, settingsFile)
+		Dim i As Int = ComboBoxPort.Items.IndexOf(m.Get("port"))
+		If i > -1 Then ComboBoxPort.SelectedIndex = i
+		chkReset.Checked = m.Get("reset")
+	End If
+	' Select the com port
+	If ComboBoxPort.SelectedIndex = -1 Then ComboBoxPort.SelectedIndex = ComboBoxPort.Items.Size - 1
+
+	AddToLog("B4RSerialControl started - Select and open the COM port")
+End Sub
+
+Sub MainForm_Closed
+	Dim m As Map = CreateMap("reset": chkReset.Checked)
+	If ComboBoxPort.SelectedIndex > -1 Then m.Put("port", ComboBoxPort.Items.Get(ComboBoxPort.SelectedIndex))
+	File.WriteMap(File.DirApp, settingsFile, m)
+End Sub
+
+#Region UI Events
+Sub ButtonOpen_Action
+	' If connected > disconnect
+	If Connected Then
+		Connected = False
+		Try
+			AStream.Close
+			SerialLine.Close
+			ButtonOpen.Text = "Open"
+			LabelConnected.Text = "Disconnected"
+			AddToLog($"[ButtonOpen] Disconnected"$)
+		Catch
+			AddToLog($"[ButtonOpen][Error] ${LastException}"$)
+		End Try
+		Return
+	End If
+
+	' No comport selected > leave
+	If ComboBoxPort.SelectedIndex = -1 Then Return
+
+	' Open com port
+	OpenCOMPort(ComboBoxPort.Items.Get(ComboBoxPort.SelectedIndex))
+End Sub
+
+' Send serialized data over the serial line to B4R
+Private Sub ButtonSetServo_Click
+	If Not(Connected) Then Return
+	AddToLog($"[ButtonSetServo_Click] channel=${SpinnerChannel.Value}, angle=${SpinnerAngle.Value}"$)
+	AStream.Write(Ser.ConvertArrayToBytes(Array(SpinnerChannel.Value, SpinnerAngle.Value)))
+End Sub
+
+Sub ButtonClear_Action
+	TextAreaLogs.Text = ""
+End Sub
+#End Region
+
+#Region COM Port
+Private Sub OpenCOMPort(portname As String)
+	Connected = False
+	' Open com port
+	Try
+		SerialLine.Open(portname)
+		If chkReset.Checked Then
+			SerialLine.SetParams(BAUDRATE, 8, 1, 0)
+		Else
+			Dim jo As JavaObject = SerialLine
+			jo = jo.GetField("sp")
+			jo.RunMethod("setParams", Array(BAUDRATE, 8, 1, 0, False, False))
+		End If
+		AStream.Initialize(SerialLine.GetInputStream, SerialLine.GetOutputStream, "astream")
+		ButtonSetServo.Enabled = True
+		ButtonOpen.Text = "Close"
+		LabelConnected.Text = "Connected"
+		AddToLog($"[OpenCOMPort] COM port ${portname } opened."$)
+	Catch
+		AddToLog($"[OpenCOMPort][Error] ${LastException}"$)
+		fx.Msgbox(MainForm, "Failed to open port", "")
+		LabelConnected.Text = "Disconnected"
+	End Try
+	Connected = True
+End Sub
+#End Region
+
+#Region ASyncStreams
+Sub AStream_NewData (Buffer() As Byte)
+	If Buffer == Null Then Return
+	Try
+		AddToLog(BytesToString(Buffer, 0, Buffer.Length, "utf8"))
+		TextAreaLogs.SetSelection(TextAreaLogs.Text.Length, TextAreaLogs.Text.Length)		
+	Catch
+		AddToLog($"[AStream_Newdata][ERROR] ${LastException}"$)
+	End Try
+End Sub
+
+Sub AStream_Error
+	LabelConnected.Text = "Error"
+	AddToLog($"[AStream_Error] ${LastException}"$)
+End Sub
+
+Sub AStream_Terminated
+	LabelConnected.Text = "Terminated"
+	AddToLog($"[AStream_Terminated] Has been terminated ${LastException}"$)
+End Sub
+#End Region
+
+#Region Logging
+Private Sub AddToLog(msg As String)
+	TextAreaLogs.Text = TextAreaLogs.Text & msg & CRLF
+	Log(msg)
+End Sub
+#End Region

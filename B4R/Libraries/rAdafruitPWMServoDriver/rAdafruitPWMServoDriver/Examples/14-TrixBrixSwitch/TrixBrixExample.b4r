@@ -1,0 +1,120 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitpwmservodriver
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rAdafruitPWMServoDriver
+' Brief:		Example LEGO(r) RailRoad TrixBrix switch between states straight & diverging.
+'				See http://trixbrix.eu/en_US/i/Control-Automation-FAQ/23 for the advised track switch servo positions (best to try out as might differ by servo used).
+'				If the servo is jittering, consider after switching to release the servo by 5 degrees and set PWM disabled.
+'				External power 5V 2A for the servo (advised to use 1A per servo).
+' Author: 		Robert W.B. Linn
+' Version: 		1.0
+' Created: 		2025-09-30
+' License:		MIT — see LICENSE file.
+
+' Hardware
+' MCU:			Arduino UNO
+' Servodriver:	Adafruit 16-Channel 12-bit PWM/Servo Driver (PCA9685).
+' Servo:		PowerHD 1160A (provided by TrixBrix), Pulse width range 800-2200 mV.
+' Wiring:
+' PCA9685 = MCU
+' SDA = A4 (green)
+' SCL = A5 (blue)
+' OE = Not used
+' GND = GND [common] (black)
+' VCC = 5V [logic] (orange)
+' V+ = External Power 5V (yellow)
+'
+' PCA9685 = Servo 1
+' Channel 15
+' PWM = Signal
+' V+ = VCC
+' GND = GND
+'
+' External Power = PCA9685
+' V+ = VCC (orange)
+' GND = GND (black)
+'
+' External Power = Arduino
+' GND = GND (black)
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	' TrixBrix switch servo positions
+	Private ANGLE_STRAIGHT_POS As UInt = 58				' Switch position straight
+	Private ANGLE_DIVERGING_POS As UInt = 100			' Switch position diverging
+
+	Private SWITCH_POSITION_STRAIGHT As Byte = 0			
+	Private SWITCH_POSITION_DIVERGING As Byte = 1
+
+	' PCA channels for the switches - tested with 1 switch
+	' Private SWITCH_CHANNEL As Byte = 0
+	Private SWITCH_CHANNEL As Byte = 15
+
+    Private Serial1 As Serial
+    Private PWMServoDriver As AdafruitPWMServoDriver
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the PWM servo driver	
+	PWMServoDriver.Initialize
+	' Set the PWM frequency - analog servos typically run at ~60 Hz
+	PWMServoDriver.SetPWMFreq(PWMServoDriver.PWM_FREQUENCY_DEFAULT)
+
+	' Set the servo angle position limits. These can be set per channel.
+	PWMServoDriver.SetLimits(SWITCH_CHANNEL, ANGLE_STRAIGHT_POS, ANGLE_DIVERGING_POS)
+
+	' Run some switching tests
+	CallSubPlus("TestTrixBrixServo", 1, 5)
+
+	' Thats it
+	Log("[Main.AppStart] Done")
+End Sub
+
+' Switch the TrixBrix servo a few times to position straight and diverging (min and max servo position)
+Private Sub TestTrixBrixServo(Tag As Byte)
+	Log("[TestTrixBrixServo] Start")
+
+	For i = 1 To 2
+		Log("[TestTrixBrixServo] Loop=", i)
+		SetTrixBrixSwitch(SWITCH_CHANNEL, SWITCH_POSITION_DIVERGING)
+		Delay(2000)
+		SetTrixBrixSwitch(SWITCH_CHANNEL, SWITCH_POSITION_STRAIGHT)
+		Delay(2000)
+	Next
+
+	PWMServoDriver.DisablePWM(SWITCH_CHANNEL)
+
+	Log("[TestTrixBrixServo] Done")
+End Sub
+
+' Set the state of a trixbrix switch to straight or diverging
+Private Sub SetTrixBrixSwitch(channel As Byte, position As Byte)
+	Select position
+		Case SWITCH_POSITION_STRAIGHT
+			Log("[SetTrixBrixSwitch] position=straight ,angle=", ANGLE_STRAIGHT_POS)
+			PWMServoDriver.SetAngle(SWITCH_CHANNEL, ANGLE_STRAIGHT_POS, True)
+
+		Case SWITCH_POSITION_DIVERGING
+			Log("[SetTrixBrixSwitch] position=diverging ,angle=", ANGLE_DIVERGING_POS)
+			PWMServoDriver.SetAngle(SWITCH_CHANNEL, ANGLE_DIVERGING_POS, True)
+	End Select
+End Sub
+

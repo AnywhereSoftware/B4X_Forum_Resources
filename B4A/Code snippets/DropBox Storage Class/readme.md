@@ -1,63 +1,15 @@
 ### DropBox Storage Class by Robert Valentino
-### 10/03/2025
+### 10/05/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/168910/)
 
-In same form of Koofr storage class I did DropBox now I can bop from one to another  
+Want to say Sorry for posting some bad code yesterday.  
   
-
-```B4X
-'            Public        DropBoxToken    As String  = <your drop box DropBoxToken>  
-              
-            Dim DropBox As cDropBox  
-              
-            DropBox.Initialize(DropBoxToken) ' your token here  
+I had ChatGPT help me with writing the renewing of tokens and it has such a bad habit of trying to set header values before calling job.download or job.poststring  
   
-            ' Upload  
-            'Dim ok As Boolean = Dropbox.UploadFile(File.DirRootExternal, "test.txt", "/test.txt")  
-            'Log(ok)  
+Not even going to mention that it took all my define strings and hard-coded in the function.  
   
-            ' Download  
-            'ok = Dropbox.DownloadFile("/test.txt", File.DirRootExternal, "downloaded.txt")  
-            'Log(ok)  
+ANY way, Upload a new version. ALL Functions have been tested and I included a complete test program (minus your dropbox info)  
   
-            ' List files  
-            wait for (DropBox.ListFiles("/BBs/BBsViewer")) Complete(files As List)  
-              
-'            Dim files As List = Dropbox.ListFiles("")  
-              
-            For Each DBFile As cDropBoxListFileItem In files  
-                   Log($"DBFile: ${DBFile.Name}  ${IIf(DBFile.IsDir, "Is Directory", DBFile.LastModified)}"$)  
-            Next  
-              
-            wait for (DropBox.ResourceExists("/BBs")) Complete(Exists As Boolean)  
-              
-            Log(IIf(Exists, "Directory Exists", "Does Not Exists"))  
-              
-            If  Exists = False Then  
-                wait for (DropBox.CreateDirectory("/BBs")) Complete(Success As Boolean)  
-              
-                If  Success Then  
-                    wait for (DropBox.ResourceExists("/BBs")) Complete(Exists As Boolean)  
-              
-                    Log(IIf(Exists, "Directory Exists", "Does Not Exists"))                 
-                End If  
-            End If  
+Be well. Hope this works for everyone.  
   
-            wait for (DropBox.ResourceExists("/BBs/BBsViewer")) Complete(Exists As Boolean)  
-              
-            Log(IIf(Exists, "Directory Exists", "Does Not Exists"))  
-  
-            If  Exists = False Then  
-                wait for (DropBox.CreateDirectory("/BBs/BBsViewer")) Complete(Success As Boolean)  
-              
-                If  Success Then  
-                    wait for (DropBox.ResourceExists("/BBs/BBsViewer")) Complete(Exists As Boolean)  
-              
-                    Log(IIf(Exists, "Directory Exists", "Does Not Exists"))                 
-                End If  
-            End If  
-  
-            ' Delete  
-            'ok = Dropbox.DeleteFile("/test.txt")  
-            'Log(ok)
-```
+Again sorry for yesterdays code. Will try not to let that happen again.

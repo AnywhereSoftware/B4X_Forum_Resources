@@ -1,5 +1,5 @@
 ### New Net library - Android FTP, SMTP and POP3 by Erel
-### 02/14/2021
+### 10/06/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/10892/)
 
 The Net library supports FTP, SMTP and POP3 protocols. This library replaces the FTP library. Both regular connections and SSL connections are supported.  
@@ -10,7 +10,7 @@ Installation instructions:
 - Download the attach file.  
 - Copy Net.xml and Net.jar to the additional libraries folder. Make sure that there are no older copies in the internal libraries folder.  
   
-**V1.81** - latest version  
+**V1.83** - Fixes an issue with SMTP and IPv6 clients.  
 **V1.80** - SMTP, POP and FTP can be configured to use a custom trust manager. This allows accepting invalid certificates.  
   
 **V1.77 -** New Sender.MailFrom field. Allows setting the mail address that is sent with the MAIL command. By default it is the same as the Username field.  

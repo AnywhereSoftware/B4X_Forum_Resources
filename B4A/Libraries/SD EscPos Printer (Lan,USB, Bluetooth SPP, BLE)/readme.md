@@ -1,5 +1,5 @@
 ### SD EscPos Printer (Lan,USB, Bluetooth SPP, BLE) by Star-Dust
-### 04/20/2025
+### 10/07/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/142512/)
 
 This library allows you to print with thermal printers compatible with the ESC POS language in 4 different communication channels (USB, Bluetooth SPP, BLE, LAN)  
@@ -73,8 +73,8 @@ For ZEBRA printer see [**Here**](https://www.b4x.com/android/forum/threads/b4x-s
   
 **SD\_EscPosPrinter  
   
-Author:** Star-Dust   
-**Version:** 1.09  
+Author:** Star-Dust  
+**Version:** 1.11  
 
 - **BLE\_Printer**
 
@@ -387,6 +387,7 @@ Author:** Star-Dust
 *Verifica se l'oggetto sia stato inizializzato.*- **LeftJustify** As String
  *after this command calls SendBufferToPrinter*- **OpenConnection** As String
 - **PrintBitmap** (bmp As Bitmap) As String
+- **ReadDataResponse** As Byte()
 - **RequestPermission** As String
 - **RightJustify** As String
  *after this command calls SendBufferToPrinter*- **SetCodePage** (Code As Byte) As String
@@ -436,3 +437,7 @@ log release
 - 1.09
 
 - Disconnect method now flushes before closing
+
+- 1.11
+
+- Added **ReadDataResponse** method to USB\_printer class

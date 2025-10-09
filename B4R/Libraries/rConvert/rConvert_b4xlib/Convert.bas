@@ -5,75 +5,93 @@ Type=StaticCode
 Version=4
 @EndOfDesignText@
 #Region Module Header
-' File:         Conversions.bas
+' File:         Convert.bas
 ' Brief:        Code module with various conversions
 ' Notes:		On ESP32, ESP8266, Arduino AVR, B4R ByteConverter uses the MCU’s native endian.
 '				Most ARM/AVR microcontrollers are little-endian, so bc.DoublesToBytes produces little-endian bytes.
 '				Use the method ReverseBytes to change endian.
-' DependsOn:    rRandomAccessFile
+' DependsOn:    rRandomAccessFile 1.91 or higher.
 ' Author:       Robert W.B. Linn
-' Date:         2025-09-30
-' Version:		1.1.0
+' Date:         2025-10-04
+' Version:		1.2.0
 ' License:      MIT
 #End Region
 
 #Region Function Index (one-liners)
-' -- Bytes --
-' ByteToBool(bytes)            		: First byte "1" > True, else False.
-' ByteToInt(bytes)             		: ASCII digit byte "0"-"9" > integer 0–9.
-' BytesToHex(bytes)            		: Byte array > hex string.
-' OneByteToHex(byte)				: Convert single byte to HEX string.
-' TwoBytesToHex(b1,b2)				: Convert 2 bytes to HEX string.
-' ReverseBytes(b)					: Reverse byte order in array.
-
-' -- Bool --
-' BoolToString(state)          		: True > "1", False > "0".
-' BoolToOnOff(state)           		: True > "ON", False > "OFF".
-' OnOffToBool(value)           		: "ON"/"On"/"on"/"oN" > True.
-' IntToBool(value)			   		: Convert int to bool.
-
-' -- UInt --
-' UIntToBytes(value)           		: 16-bit unsigned > little-endian bytes.
-' BytesToUInt(b)               		: Little-endian 2 bytes > unsigned 16-bit.
-
-' -- ULong --
-' ULongToBytes(value)          		: 32-bit unsigned > little-endian bytes.
-' BytesToULong(b)              		: Little-endian 4 bytes > unsigned 32-bit.
-
-' -- Float --
-' FloatToBytes(value)          		: 32-bit float > little-endian bytes.
-' BytesToFloat(b)              		: Little-endian 4 bytes > 32-bit float.
-
-' -- Bin --
-' ByteToBin(b)						: Convert 0–255 byte > "xxxxxxxx" binary string.
-' NibbleToBin(nibble)				: Convert 0–15 nibble > "xxxx" binary string.
-
-' -- BCD --
-' ByteToBCD(value)					: Decimal 0–99 > single-byte BCD.
-' ByteToBCDBin(value)				: Decimal 0–99 > BCD > binary string.
-' BCDToByte(b)						: Single-byte BCD > decimal 0–99.
-' UIntToBCDArray(value)				: UInt 0–9999 > 2-byte BCD array.
-' BCDArrayToUInt(b)					: 2-byte BCD array > integer 0–9999.
-
-' -- Checksum --
-' XORChecksum(b)					: XOR of all bytes.
-
-' -- Endianness --
-' SwapUInt16(value)					: Swap 2-byte unsigned integer.
-' SwapUInt32(value)					: Swap 4-byte unsigned integer.
-' SwapUInt16ToBytes(value)			: UInt16 > reversed 2-byte array.
-' BytesToUInt16Swapped(b)			: Reversed 2-byte array > UInt16.
-' SwapUInt32ToBytes(value)			: UInt32 > reversed 4-byte array.
-' BytesToUInt32Swapped(b)			: Reversed 4-byte array > UInt32.
-
-' -- String --
-' StringTrim(s)                		: Trim spaces/tabs from both ends.
-' ToUpperCase(s)               		: ASCII lowercase > uppercase.
-' ToLowerCase(s)               		: ASCII uppercase > lowercase.
-' EqualsIgnoreCase(s1,s2)      		: Compare ignoring ASCII case.
-' ReplaceString(orig,search,repl)	: Replace all occurrences in byte array.
-' GetSplitCount(buffer)				: Get number of items from CSV string.
-' AsciiBufferToInt(buffer)			: Convert buffer containing ASCII digits to an integer.
+'-- Bytes --
+'ByteToBool(bytes) : First byte "1" > True, Else False.
+'ByteToInt(bytes) : ASCII digit byte "0"-"9" > integer 0–9.
+'BytesToHex(bytes) : Byte Array > hex string.
+'OneByteToHex(byte) : Convert single byte To HEX string.
+'TwoBytesToHex(b1,b2) : Convert 2 bytes To HEX string.
+'ReverseBytes(b) : Reverse byte order in Array.
+'
+'-- Bool --
+'BoolToString(state) : True > "1", False > "0".
+'BoolToOnOff(state) : True > "ON", False > "OFF".
+'OnOffToBool(value) : "ON"/"On"/"on"/"oN" > True.
+'IntToBool(value) : Convert int To bool.
+'
+'-- UInt --
+'UIntToBytes(value) : 16-Bit unsigned > little-endian bytes.
+'BytesToUInt(b) : Little-endian 2 bytes > unsigned 16-Bit.
+'UIntToHex(value) : Converts an UInt To HEX string with 2 bytes.
+'
+'-- ULong --
+'ULongToBytes(value) : 32-Bit unsigned > little-endian bytes.
+'BytesToULong(b) : Little-endian 4 bytes > unsigned 32-Bit.
+'ULongToHex(value) : Converts an ULong To HEX string with 4 bytes.
+'
+'-- Float --
+'FloatToBytes(value) : 32-Bit float > little-endian bytes.
+'BytesToFloat(b) : Little-endian 4 bytes > 32-Bit float.
+'  
+'-- Bin --
+'ByteToBin(b) : Convert 0–255 byte > "xxxxxxxx" binary string.
+'BytesToBin(b()) : Converts a byte Array To a binary string representation.
+'NibbleToBin(nibble) : Convert 0–15 nibble > "xxxx" binary string.
+'
+'-- BCD --
+'ByteToBCD(value) : Decimal 0–99 > single-byte BCD.
+'ByteToBCDBin(value) : Decimal 0–99 > BCD > binary string.
+'BCDToByte(b) : Single-byte BCD > decimal 0–99.
+'UIntToBCDArray(value) : UInt 0–9999 > 2-byte BCD Array.
+'BCDArrayToUInt(b) : 2-byte BCD Array > integer 0–9999.
+'
+'-- Checksum --
+'XORChecksum(b) : XOR of all bytes.
+'
+'-- Endianness --
+'SwapUInt16(value) : Swap 2-byte unsigned integer.
+'SwapUInt32(value) : Swap 4-byte unsigned integer.
+'SwapUInt16ToBytes(value) : UInt16 > reversed 2-byte Array.
+'BytesToUInt16Swapped(b) : Reversed 2-byte Array > UInt16.
+'SwapUInt32ToBytes(value) : UInt32 > reversed 4-byte Array.
+'BytesToUInt32Swapped(b) : Reversed 4-byte Array > UInt32.
+'
+'-- String --
+'StringTrim(s) : Trim spaces/tabs from both ends.
+'ToUpperCase(s) : ASCII lowercase > uppercase.
+'ToLowerCase(s) : ASCII uppercase > lowercase.
+'EqualsIgnoreCase(s1,s2) : Compare ignoring ASCII Case.
+'ReplaceString(orig,search,repl) : Replace all occurrences in byte Array.
+'GetSplitCount(buffer) : Get number of items from CSV string.
+'AsciiBufferToInt(buffer) : Convert buffer containing ASCII digits To an integer.
+'
+'-- Modbus CRC-16 --
+'ModbusCRC16(frame) : Calculate CRC16 (Modbus RTU) And Return As 2-byte Array in little-endian order: [low byte, high byte].
+'ModbusCRC16UInt(frame) : Calculate CRC16 (Modbus RTU) And Return As numeric 16-Bit value [high byte, low byte].
+'ModbusCRC16TransmittedFrame(frame) : Append CRC16 To the end of a frame (low byte first, high byte second).
+'ModbusCheckCRC16 : Validate that a frame ends with the correct Modbus CRC.
+'ModbusCRC16Test(frame) : Test the Modbus CRC16 functions For a frame.
+'
+'-- BitWise ---
+'SetBit(b, index, on) : Sets Or clears a Bit in a byte at the given index.
+'ToggleBit(b, index) : Flips (toggles) a Bit in a byte at the given index.
+'GetBit(b, index) : Tests If a Bit at the given index in a byte is set.
+'ByteToBitsString(b) : Converts a single byte To an 8-character binary string (same As ByteToBin).
+'BytesToBitsString)b()) : Converts a byte Array To a binary string representation (same As BytesToBin).
+'
 #End Region
 
 #Region Numeric Ranges Reference
@@ -128,6 +146,9 @@ Sub Process_Globals
         Public Const DOUBLE_MIN As Double = -3.4028235E38
         Public Const DOUBLE_MAX As Double = 3.4028235E38
     #End If
+	
+	' Modbus RTU
+	Private Const MODBUS_POLYNOMIAL As ULong = 0xA001
 	
 	' Byte converter instance for conversions between bytes and strings
 	Private bc As ByteConverter
@@ -250,12 +271,38 @@ Public Sub UIntToBytes(value As ULong) As Byte()
 End Sub
 
 '----------------------------------------------
+' UIntToBytesEndian
+' Converts an unsigned 16-bit integer (ULong, lower 2 bytes used) to a byte array (big or little-endian).
+' b(0) = LSB, b(1) = MSB
+'----------------------------------------------
+Public Sub UIntToBytesEndian(value As ULong, littleendian As Boolean) As Byte()
+	Dim b(2) As Byte
+	If littleendian Then
+		b(0) = Bit.And(value, 0xFF)                     ' Low byte
+		b(1) = Bit.And(Bit.ShiftRight(value, 8), 0xFF)  ' High byte
+	Else
+		b(0) = Bit.And(Bit.ShiftRight(value, 8), 0xFF)  ' Low byte
+		b(1) = Bit.And(value, 0xFF)                     ' High byte
+	End If
+	Return b
+End Sub
+
+'----------------------------------------------
 ' BytesToUInt
 ' Converts a 2-byte array (little-endian) to an unsigned 16-bit integer (ULong).
 '----------------------------------------------
 Public Sub BytesToUInt(b() As Byte) As ULong
 	If b == Null Or b.Length < 2 Then Return 0
 	Return Bit.Or(Bit.And(b(0), 0xFF), Bit.ShiftLeft(Bit.And(b(1), 0xFF), 8))
+End Sub
+
+'----------------------------------------------
+' UIntToHex
+' Converts an UInt to HEX string with 2 bytes.
+'----------------------------------------------
+Public Sub UIntToHex(value As UInt) As String
+	
+	Return bc.HexFromBytes(UIntToBytes(value))
 End Sub
 #End Region
 
@@ -284,6 +331,14 @@ Public Sub BytesToULong(b() As Byte) As ULong
 	result = Bit.Or(result, Bit.ShiftLeft(Bit.And(b(2), 0xFF), 16))
 	result = Bit.Or(result, Bit.ShiftLeft(Bit.And(b(3), 0xFF), 24))
 	Return result
+End Sub
+
+'----------------------------------------------
+' ULongToHex
+' Converts an ULong to HEX string with 4 bytes.
+'----------------------------------------------
+Public Sub ULongToHex(value As ULong) As String
+	Return bc.HexFromBytes(ULongToBytes(value))
 End Sub
 #End Region
 
@@ -317,12 +372,39 @@ End Sub
 ' ByteToBin
 ' Convert any byte (0–255) to an 8-bit binary string.
 '----------------------------------------------
-Public Sub ByteToBin(b As Byte) As String
+Public Sub ByteToBin(b As Byte) As Byte()
 	Dim bits(8) As Byte
 	For i = 0 To 7
 		bits(i) = 48 + Bit.And(Bit.ShiftRight(b, 7 - i), 1)  ' ASCII '0' = 48
 	Next
-	Return bc.StringFromBytes(bits)
+	Return bits
+End Sub
+
+'----------------------------------------------
+' BytesToBin
+' Converts a byte array to a binary string representation.
+' Each byte is represented by 8 bits in "01010101" format.
+' Returns: Concatenated string of all bits.
+' Example: BytesToBin(Array As Byte(5,170)) > "0000010110101010"
+'----------------------------------------------
+Public Sub BytesToBin(bytes() As Byte) As Byte()
+	' Get the number of bytes = array length
+	Dim nrofbytes As UInt = bytes.Length
+	
+	' Define the size of the bits array
+	Dim bitsarraylen As UInt = nrofbytes * 8
+	
+	' Define the bits array
+	Dim bits(bitsarraylen) As Byte
+	
+	' Loop over the bytes
+	For j = 0 To nrofbytes - 1
+		Dim b As Byte = bytes(j)
+		For i = 0 To 7
+			bits(j * 8 + i) = 48 + Bit.And(Bit.ShiftRight(b, 7 - i), 1)  ' ASCII '0' = 48
+		Next
+	Next
+	Return bits
 End Sub
 
 '----------------------------------------------
@@ -654,3 +736,161 @@ Public Sub AsciiBufferToInt(Buffer() As Byte) As Int
 	Return value
 End Sub
 #End Region
+
+#Region ModbusCRC16
+' ------------------------------------------------------------
+' ModbusCRC16 Functions for B4R
+' This library uses the Modbus RTU CRC-16 algorithm, which is equivalent to the IBM CRC-16 (poly 0xA001), with initial value 0xFFFF and little-endian transmission order (low byte first).
+'
+' Example
+' Frame To send (without CRC):	01 03 00 00 00 0A
+' Calculated CRC:				
+'	Numeric (big-endian):		0xCDC5 (decimal 52677)
+'	Bytes (low, high): 			C5 CD
+' Transmitted CRC: 				C5 CD (little-endian, low byte high byte)
+' Transmitted frame: 			01 03 00 00 00 0A C5 CD
+'------------------------------------------------------------
+
+' ------------------------------------------------------------
+' ModbusCRC16
+' Calculate Modbus RTU CRC-16.
+' Returns array [low, high].
+' ------------------------------------------------------------
+Public Sub ModbusCRC16(frame() As Byte) As Byte()
+	Dim CRC As UInt = 0xFFFF
+    
+	For i = 0 To frame.Length - 1
+		CRC = Bit.Xor(CRC, frame(i))
+		For j = 0 To 7
+			If Bit.And(CRC, 1) <> 0 Then
+				CRC = Bit.ShiftRight(CRC, 1)
+				CRC = Bit.Xor(CRC, MODBUS_POLYNOMIAL)
+			Else
+				CRC = Bit.ShiftRight(CRC, 1)
+			End If
+		Next
+	Next
+    
+	Dim result(2) As Byte
+	result(0) = Bit.And(CRC, 0xFF)                  ' Low byte
+	result(1) = Bit.And(Bit.ShiftRight(CRC, 8), 0xFF) ' High byte
+	Return result
+End Sub
+
+' ------------------------------------------------------------
+' ModbusCRC16UInt
+' Numeric representation swaps the byte order to match usual 16-Bit notation.
+' Return CRC as numeric 16-bit value for debugging.
+' Example: 0xCDC5 = 52677 
+' Converts [low, high] > numeric: (high<<8) | low = 0xCD<<8 | 0xC5 = 0xCDC5 = 52677 decimal.
+' ------------------------------------------------------------
+Public Sub ModbusCRC16UInt(frame() As Byte) As ULong
+	Dim crcBytes() As Byte = ModbusCRC16(frame)   ' [low, high]
+	Dim low As ULong  = crcBytes(0)
+	Dim high As ULong = crcBytes(1)
+	' Swap
+	Dim result As ULong = Bit.Or(Bit.ShiftLeft(high, 8), low)  ' high<<8 | low
+	Return result
+End Sub
+
+' ------------------------------------------------------------
+' ModbusCRC16TransmittedFrame
+' Modbus standard: send low byte first, then high byte:
+' Append CRC (low, high) to data frame.
+' ------------------------------------------------------------
+Public Sub ModbusCRC16TransmittedFrame(frame() As Byte) As Byte()
+	Dim crcBytes() As Byte = ModbusCRC16(frame)
+	Dim out(frame.Length + 2) As Byte
+	bc.ArrayCopy2(frame, 0, out, 0, frame.Length)
+	out(frame.Length)     = crcBytes(0)   ' Low byte
+	out(frame.Length + 1) = crcBytes(1)   ' High byte
+	Return out
+End Sub
+
+' ------------------------------------------------------------
+' ModbusCRC16Check
+' Verify frame ends with correct CRC.
+' Return 1=true or 0=false
+' ------------------------------------------------------------
+Public Sub ModbusCRC16Check(frame() As Byte) As Boolean
+	If frame = Null Or frame.Length < 3 Then Return False
+    
+	Dim data(frame.Length - 2) As Byte
+	bc.ArrayCopy2(frame, 0, data, 0, frame.Length - 2)
+    
+	Dim expected() As Byte = ModbusCRC16(data)
+	Return expected(0) = frame(frame.Length - 2) And _
+           expected(1) = frame(frame.Length - 1)
+End Sub
+#End Region
+
+#Region BitWise
+'----------------------------------------------
+' SetBit
+' Sets or clears a bit in a byte at the given index.
+' b: Input byte value.
+' index: Bit index (0–7).
+' on: True to set the bit, False to clear it.
+' Returns: The modified byte.
+' Example: SetBit(0, 3, True) > 8 (0b00001000)
+'----------------------------------------------
+Public Sub SetBit(b As Byte, index As Int, on As Boolean) As Byte
+	If on Then
+		Return Bit.Or(b, Bit.ShiftLeft(1, index))
+	Else
+		Return Bit.And(b, Bit.Not(Bit.ShiftLeft(1, index)))
+	End If
+End Sub
+
+'----------------------------------------------
+' ToggleBit
+' Flips (toggles) a bit in a byte at the given index.
+' b: Input byte value.
+' index: Bit index (0–7).
+' Returns: The modified byte.
+' Example: ToggleBit(8, 3) > 0 (0b00000000)
+'----------------------------------------------
+Public Sub ToggleBit(b As Byte, index As Int) As Byte
+	Dim mask As Byte = Bit.ShiftLeft(1, index)
+	If Bit.And(b, mask) = 0 Then
+		Return Bit.Or(b, mask)
+	Else
+		Return Bit.And(b, Bit.Not(mask))
+	End If
+End Sub
+
+'----------------------------------------------
+' GetBit
+' Tests if a bit at the given index in a byte is set.
+' b: Input byte value.
+' index: Bit index (0–7).
+' Returns: True if the bit is set, otherwise False.
+' Example: GetBit(8, 3) > True
+'----------------------------------------------
+Public Sub GetBit(b As Byte, index As Int) As Boolean
+	Dim mask As Byte = Bit.ShiftLeft(1, index)
+	Return Bit.And(b, mask) = mask
+End Sub
+
+'----------------------------------------------
+' ByteToBitsString (same as ByteToBin)
+' Converts a single byte to an 8-character binary string.
+' Returns: "01010101" representation of the byte.
+' Example: ByteToBitsString(170) > "10101010"
+'----------------------------------------------
+Public Sub ByteToBitsString(b As Byte) As Byte()
+	Return ByteToBin(b)
+End Sub
+
+'----------------------------------------------
+' BytesToBitsString
+' Converts a byte array to a binary string representation.
+' Each byte is represented by 8 bits in "01010101" format.
+' Returns: Concatenated string of all bits.
+' Example: BytesToBitsString(Array As Byte(5,170)) > "0000010110101010"
+'----------------------------------------------
+Public Sub BytesToBitsString(bytes() As Byte) As Byte()
+	Return BytesToBin(bytes)
+End Sub
+#End Region
+

@@ -1,0 +1,99 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitpwmservodriver
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rAdafruitPWMServoDriver
+' Brief:		Example moving the servo smooth between min & max angle.
+' DependsOn:	Library rAdafruitPWMServoDriver
+' Author: 		Robert W.B. Linn
+' Version: 		1.0
+' Created: 		2025-09-30
+' License:		MIT — see LICENSE file.
+
+' Hardware
+' MCU:			Arduino UNO
+' Servodriver:	Adafruit 16-Channel 12-bit PWM/Servo Driver (PCA9685).
+' Servo:		Tower Pro Micro Servo SG90.
+' Wiring:
+' PCA9685 = MCU
+' SDA = A4 (green)
+' SCL = A5 (blue)
+' OE = Not used
+' GND = GND [common] (black)
+' VCC = 5V [logic] (orange)
+' V+ = External Power 5V (yellow)
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private ANGLE_MIN_POS As UInt = 20
+	Private ANGLE_MID_POS As UInt = 90
+	Private ANGLE_MAX_POS As UInt = 160		
+	Private SERVO_CHANNEL As Byte = 0		' 0-15
+
+    Public Serial1 As Serial
+    Public PWMServoDriver As AdafruitPWMServoDriver
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the servo driver
+	PWMServoDriver.Initialize
+	
+	' Set pwm frequency - analog servos typically run at ~60 Hz
+	PWMServoDriver.SetPWMFreq(PWMServoDriver.PWM_FREQUENCY_DEFAULT)
+
+	' Set servo angle pos limits
+	PWMServoDriver.SetLimits(SERVO_CHANNEL, ANGLE_MIN_POS, ANGLE_MAX_POS)
+	Log(CRLF, "[Main.AppStart] SetLimits channel=", SERVO_CHANNEL, ",pos min=", ANGLE_MIN_POS, ",posmax=", ANGLE_MAX_POS)
+
+	' Set servo initial @ mid position
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, ANGLE_MID_POS, True)
+	Delay(2000)
+	
+	' Move smooth from min to max position
+	CallSubPlus("TestServoSmooth", 1, 5)
+	
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+' Move smooth from min to max position (as defined in process globals) in 7 steps
+Private Sub TestServoSmooth(Tag As Byte)
+	Dim angle As Int
+	Dim steps As Int = 7
+	Dim movestep As Int = Round((ANGLE_MAX_POS - ANGLE_MIN_POS) / steps)
+
+	' Set initial position for the servo at min pos
+	angle = ANGLE_MIN_POS
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, True)
+	Log("[TestServoSmooth] start angle=",PWMServoDriver.GetAngle(SERVO_CHANNEL))
+	Delay(1000)
+	
+	For i = 1 To steps
+		angle = angle + movestep
+		PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, False)
+		Log("[TestServoSmooth] step=",i, ",set angle=",angle,",get angle=",PWMServoDriver.GetAngle(SERVO_CHANNEL))
+		Delay(1000)
+	Next
+
+	' Set servo @ mid position
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, ANGLE_MID_POS, True)
+
+	Log("[TestServoSmooth] end angle=",PWMServoDriver.GetAngle(SERVO_CHANNEL))
+End Sub

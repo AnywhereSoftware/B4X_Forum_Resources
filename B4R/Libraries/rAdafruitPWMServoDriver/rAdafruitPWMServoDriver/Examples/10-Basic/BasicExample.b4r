@@ -1,0 +1,122 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitpwmservodriver
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rAdafruitPWMServoDriver
+' Brief:		Example moving a servo between various angles using the Adafruit 16-Channel 12-bit PWM/Servo Driver (drive up to 16 servos over I2C with only 2 pins).
+' DependsOn:	Library rAdafruitPWMServoDriver
+' Author: 		Robert W.B. Linn
+' Version: 		1.0
+' Created: 		2025-09-30
+' License:		MIT — see LICENSE file.
+
+' Hardware
+' MCU:			Arduino UNO
+' Servodriver:	Adafruit 16-Channel 12-bit PWM/Servo Driver (PCA9685).
+' Servo:		Tower Pro Micro Servo SG90.
+' Wiring:
+' PCA9685 = MCU
+' SDA = A4 (green)
+' SCL = A5 (blue)
+' OE = Not used
+' GND = GND [common] (black)
+' VCC = 5V [logic] (orange)
+' V+ = External Power 5V (yellow)
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private ANGLE_MIN_POS As UInt = 0
+	Private ANGLE_MID_POS As UInt = 90
+	Private ANGLE_MAX_POS As UInt = 180		
+	Private SERVO_CHANNEL As Byte = 0		' Range 0-15 for 16 servos
+
+    Public Serial1 As Serial
+    Public PWMServoDriver As AdafruitPWMServoDriver
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the servo driver
+	PWMServoDriver.Initialize
+	
+	' Set the pwm frequency - analog servos typically run at ~60 Hz
+	PWMServoDriver.SetPWMFreq(PWMServoDriver.PWM_FREQUENCY_DEFAULT)
+
+	' Set the servo angle pos limits
+	PWMServoDriver.SetLimits(SERVO_CHANNEL, ANGLE_MIN_POS, ANGLE_MAX_POS)
+
+	' Set initial position for the servo at mid pos
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, ANGLE_MID_POS, True)
+	Delay(2000)
+	
+	' Move test positions
+	CallSubPlus("TestServo", 1, 5)
+	
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+' Move servo to min, mid, max, mid positions.
+Private Sub TestServo(Tag As Byte)	'ignore
+	Log("[TestServoEnds] Start")
+	Dim angle As Int 
+	
+	angle = ANGLE_MIN_POS
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, True)
+	Log("[TestServo] set angle=",angle)
+	Delay(2000)
+
+	angle = ANGLE_MID_POS
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, True)
+	Log("[TestServo] set angle=",angle)
+	Delay(2000)
+ 
+	angle = ANGLE_MAX_POS
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, True)
+	Log("[TestServo] set angle=",angle)
+	Delay(2000)
+
+	angle = ANGLE_MID_POS
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, angle, True)
+	Log("[TestServo] set angle=",angle)
+
+	Log("[TestServo] last angle=",PWMServoDriver.GetAngle(SERVO_CHANNEL))
+
+	Log("[TestServo] Done")
+End Sub
+
+' Example own methods with checks
+
+'' Set a servo angle for a channel
+'' SetServoAngle(15, ANGLE_MAX_POS)
+'Public Sub SetServoAngle(channel As Byte, angle As Int)
+'	If (angle < ANGLE_MIN_POS) Then angle = ANGLE_MIN_POS
+'	If (angle > ANGLE_MAX_POS) Then angle = ANGLE_MAX_POS
+'
+'	Log("[SetServoAngle] channel=",channel,",angle=",angle)
+'  
+'	Dim pulselen As Int = AngleToPulse(angle)
+'
+'	PWMServoDriver.setPWM(channel, 0, pulselen)
+'End Sub
+
+'' Map the angle range 0-180 to PWM pulse.
+'Public Sub AngleToPulse(angle As Int)  As Int
+'	Return MapRange(angle, 0, 180, PWMServoDriver.SERVO_MIN, PWMServoDriver.SERVO_MAX)
+'End Sub
