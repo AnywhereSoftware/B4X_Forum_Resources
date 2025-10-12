@@ -1,10 +1,25 @@
 ### Android 16KB Page Size Compatibility Checker by mcqueccu
-### 10/07/2025
+### 10/08/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/168942/)
 
 This script checks for all the necessary markers to be sure your APK/AAB/SO files are 16KB page size compatible.  
 It has been simplified to easy usage.  
   
+  
+[HEADING=1]What Does This Check?[/HEADING]  
+Starting with Android 15, devices may use 16KB memory page sizes instead of the traditional 4KB. Apps with improperly aligned native libraries will fail to load on these devices.  
+  
+This script performs **comprehensive validation** that goes beyond simple alignment checks:  
+  
+
+- ✅ **PT\_LOAD segment alignment** (p\_align >= 16384)
+- ✅ **Virtual address alignment** (p\_vaddr % p\_align == 0)
+- ✅ **File offset alignment** (p\_offset % p\_align == 0)
+- ✅ **Congruence requirement** (p\_vaddr % p\_align == p\_offset % p\_align)
+- ✅ **Android property note detection** (.note.gnu.property)
+
+  
+**STEPS**  
 1. Make sure to download the NDK tools and extract to a location.Make sure to scroll down to get the latest version, v28 and above  
 <https://developer.android.com/ndk/downloads>  
   
