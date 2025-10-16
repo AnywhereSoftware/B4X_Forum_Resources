@@ -1,0 +1,166 @@
+﻿Build1=Default,com.mfs.useradmin.demo
+File1=ForgotPassword.bal
+File2=Login.bal
+File3=ResetPassword.bal
+File4=User_Detail.bal
+File5=User_Edit.bal
+File6=User_List.bal
+File7=UserPage.bal
+File8=users.sqlite
+FileGroup1=Layouts
+FileGroup2=Layouts
+FileGroup3=Layouts
+FileGroup4=Layouts
+FileGroup5=Layouts
+FileGroup6=Layouts
+FileGroup7=Layouts
+FileGroup8=Database
+Group=Default Group
+Library1=core
+Library2=ime
+Library3=javaobject
+Library4=phone
+Library5=sql
+Library6=stdactionbar
+Library7=xcustomlistview
+Library8=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.VIBRATE)~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~SetActivityAttribute(resetpassword, android:windowSoftInputMode, adjustResize|stateHidden)
+Module1=DBCalls
+Module2=ForgotPassword
+Module3=ResetPassword
+Module4=Starter
+Module5=UserEdit
+Module6=UserPage
+Module7=UsersList
+Module8=Utils
+NumberOfFiles=8
+NumberOfLibraries=8
+NumberOfModules=8
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: User Admin Demo
+	#VersionCode: 116
+	#VersionName: 1.16
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	Private ime As IME
+	Private txtUsername As EditText
+	Private txtPassword As EditText
+	Private lblForgotPassword As Label
+	Private btnReveal As Button
+	Private btnHide As Button
+	Private btnLogin As Button
+	Private lblCopyVersion As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Login")
+	Activity.Title = "Welcome"
+	
+	txtPassword.InputType = Utils.TYPE_PASSWORD
+	
+	btnLogin.Text = Chr(0xE5CA) & " LOGIN"
+	
+	Utils.SetETHint(txtUsername)
+	Utils.SetETHint(txtPassword)
+	Utils.SetETStyle(txtUsername,xui.Color_Black)
+	Utils.SetPasswordETStyle(txtPassword)
+	lblForgotPassword.Text = Utils.ClickableWords("Forgot Password?")
+	
+	ime.Initialize("IME")
+	ime.AddHeightChangedEvent
+	IME_HeightChanged(100%y,0)
+	
+	btnReveal.Visible = True
+	btnHide.Visible = False
+	
+	lblCopyVersion.Text = Utils.GetAppCopyright & CRLF & Utils.GetAppVersion
+End Sub
+
+Sub Activity_Resume
+	Clear
+	ime.ShowKeyboard(txtUsername)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Private Sub lblForgotPassword_Click
+	StartActivity(ForgotPassword)
+End Sub
+
+Private Sub btnLogin_Click
+	Dim uname As String = txtUsername.Text.Trim
+	Dim pw As String = txtPassword.Text.Trim
+	
+	If uname = "" Then
+		txtUsername.RequestFocus
+		ToastMessageShow("User name required!", False)
+		Return
+	End If
+	
+	If pw = "" Then
+		txtPassword.RequestFocus
+		ToastMessageShow("Password required!", False)
+		Return
+	End If
+    
+	Dim user As Map = DBCalls.GetUserByName(uname, pw)
+	If user.IsInitialized And user.ContainsKey("id") Then
+		Starter.LoggedInUser = uname
+		If user.Get("is_admin") Then
+			StartActivity(UsersList)
+		Else
+			StartActivity(UserPage)
+		End If
+	Else
+		ToastMessageShow("Invalid username or password!", False)
+	End If
+End Sub
+
+Sub Clear
+	txtUsername.Text = ""
+	txtPassword.Text = ""
+	'If the user presses the Reveal button,
+	'showing the Hide button,
+	'make sure the Reveal button is visible on return
+	'and txtPassword.PasswordMode = True
+	btnReveal.Visible = True
+	btnHide.Visible = False
+	txtPassword.PasswordMode = True
+End Sub
+
+Private Sub btnReveal_Click
+	txtPassword.PasswordMode = False
+	btnReveal.Visible = False
+	btnHide.Visible = True
+End Sub
+
+Private Sub btnHide_Click
+	txtPassword.PasswordMode = True
+	btnReveal.Visible = True
+	btnHide.Visible = False
+End Sub
+
+Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	If NewHeight < OldHeight Then
+		lblCopyVersion.Top = NewHeight - lblCopyVersion.Height
+	Else
+		lblCopyVersion.Top = 100%y - lblCopyVersion.Height
+	End If
+End Sub

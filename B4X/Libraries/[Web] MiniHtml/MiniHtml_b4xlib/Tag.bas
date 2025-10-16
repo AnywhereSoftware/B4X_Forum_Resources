@@ -121,6 +121,15 @@ Public Sub innerTag (index As Int) As Tag
 	Return innerTags.Get(index)
 End Sub
 
+Public Sub innerTagById (Id As String) As Tag
+	For i = 0 To innerTags.Size - 1
+		If innerTag(i).mAttributes.Get("id") = Id Then
+			Return innerTag(i)
+		End If
+	Next
+	Return Null
+End Sub
+
 Public Sub PrintInnerTags
 	For Each item As Tag In innerTags
 		If item.IsInitialized Then

@@ -1,8 +1,8 @@
 ### [Web] MiniHtml by aeric
-### 04/02/2025
+### 10/12/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/158846/)
 
-Version: 0.09  
+Version: 0.10  
   
 Yet the potential or use cases of this library may be unknown as you can literally write plain HTML and save it as a file.  
   

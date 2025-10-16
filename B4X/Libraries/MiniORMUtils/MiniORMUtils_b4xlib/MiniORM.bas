@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 3.70
+' Version 3.80
 Sub Class_Globals
 	Private DBSQL 					As SQL
 	Private DBID 					As Int
@@ -51,18 +51,15 @@ Sub Class_Globals
 	Public TEXT 					As String
 	Public ORMTable 				As ORMTable
 	Public ORMResult 				As ORMResult
-	Public Const MYSQL 				As String = "MYSQL"
-	Public Const SQLITE 			As String = "SQLITE"
-	Public Const MARIADB 			As String = "MARIADB"
-	Private Const COLOR_RED 		As Int = -65536		'ignore
-	Private Const COLOR_GREEN 		As Int = -16711936	'ignore
-	Private Const COLOR_BLUE 		As Int = -16776961	'ignore
-	Private Const COLOR_MAGENTA 	As Int = -65281		'ignore
+	Public Const MYSQL 				As String = "MySQL"
+	Public Const SQLITE 			As String = "SQLite"
+	Public Const MARIADB 			As String = "MariaDB"
+	Private Const COLOR_RED 		As Int = -65536
 	Type ORMResult (Tag As Object, Columns As Map, Rows As List)
 	Type ORMFilter (Column As String, Operator As String, Value As String)
 	Type ORMJoin (Table2 As String, OnConditions As String, Mode As String)
 	Type ORMTable (ResultSet As ResultSet, Columns As List, Rows As List, Results As List, Results2 As List, First As Map, First2 As Map, Last As Map, RowCount As Int) ' Columns = list of keys, Rows = list of values, Results = list of maps, Results2 = Results + map ("__order": ["column1", "column2", "column3"])
-	Type ORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, AllowNull As Boolean, Unique As Boolean, AutoIncrement As Boolean) ' B4i dislike word Nullable
+	Type ORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, UseFunction As Boolean, AllowNull As Boolean, Unique As Boolean, AutoIncrement As Boolean) ' B4i dislike word Nullable
 End Sub
 
 'Initialize MiniORM
@@ -75,18 +72,8 @@ Public Sub Initialize (mDBType As String, mSQL As SQL)
 End Sub
 
 Public Sub setDBType (mDBType As String)
-	mType = mDBType.ToUpperCase
-	Select mType
-		Case MYSQL, MARIADB
-			BLOB = "mediumblob"
-			INTEGER = "int"
-			BIG_INT = "bigint"
-			DECIMAL = "decimal"
-			VARCHAR = "varchar"
-			TEXT = "text"
-			DATE_TIME = "datetime"
-			TIMESTAMP = "timestamp"
-		Case SQLITE
+	Select mDBType.ToUpperCase
+		Case "SQLITE"
 			BLOB = "BLOB"
 			INTEGER = "INTEGER"
 			BIG_INT = "INTEGER"
@@ -95,6 +82,17 @@ Public Sub setDBType (mDBType As String)
 			TEXT = "TEXT"
 			DATE_TIME = "TEXT"
 			TIMESTAMP = "TEXT"
+			mType = SQLITE
+		Case "MYSQL", "MARIADB"
+			BLOB = "mediumblob"
+			INTEGER = "int"
+			BIG_INT = "bigint"
+			DECIMAL = "decimal"
+			VARCHAR = "varchar"
+			TEXT = "text"
+			DATE_TIME = "datetime"
+			TIMESTAMP = "timestamp"
+			If mDBType.EqualsIgnoreCase(MYSQL) Then mType = MYSQL Else mType = MARIADB
 	End Select
 End Sub
 
@@ -391,6 +389,8 @@ Public Sub Create
 		sb.Append(col.ColumnName)
 		sb.Append(" ")
 		Select mType
+			Case SQLITE
+				sb.Append(col.ColumnType)
 			Case MYSQL, MARIADB
 				Select col.ColumnType
 					Case INTEGER, BIG_INT, DECIMAL, TIMESTAMP, DATE_TIME, TEXT, BLOB
@@ -404,34 +404,64 @@ Public Sub Create
 				If col.Collation.Length > 0 Then
 					sb.Append(" ").Append(col.Collation)
 				End If
-			Case SQLITE
-				sb.Append(col.ColumnType)
 		End Select
-
-		Select col.ColumnType
-			Case INTEGER, BIG_INT, TIMESTAMP, DATE_TIME
-				If mType = SQLITE And col.ColumnType.EqualsIgnoreCase("TEXT") Then
-					If col.DefaultValue.Length > 0 Then sb.Append(" DEFAULT ").Append("'").Append(col.DefaultValue).Append("'")
-				Else
-					If col.DefaultValue.Length > 0 Then sb.Append(" DEFAULT ").Append(col.DefaultValue)
-				End If
-			Case Else
-				If col.DefaultValue.Length > 0 Then sb.Append(" DEFAULT ").Append("'").Append(col.DefaultValue).Append("'")
-		End Select
+		
+		If col.DefaultValue.Length > 0 Then
+			Select col.ColumnType
+				Case INTEGER, BIG_INT, TIMESTAMP, DATE_TIME
+					Select mType
+						Case SQLITE
+							If col.DefaultValue.StartsWith("(") And col.DefaultValue.EndsWith(")") Then
+								sb.Append(" DEFAULT ").Append(col.DefaultValue)
+							Else
+								sb.Append(" DEFAULT ").Append("(").Append(col.DefaultValue).Append(")")
+							End If
+						Case MYSQL, MARIADB
+							sb.Append(" DEFAULT ").Append(col.DefaultValue)
+					End Select
+				Case Else
+					If col.UseFunction Then
+						If col.DefaultValue.StartsWith("(") And col.DefaultValue.EndsWith(")") Then
+							sb.Append(" DEFAULT ").Append(col.DefaultValue)
+						Else
+							Select mType
+								Case SQLITE
+									sb.Append(" DEFAULT ").Append("(").Append(col.DefaultValue).Append(")")
+								Case MYSQL, MARIADB
+									sb.Append(" DEFAULT ").Append(col.DefaultValue)
+							End Select
+						End If
+					Else
+						sb.Append(" DEFAULT ").Append("'").Append(col.DefaultValue).Append("'")
+					End If
+			End Select
+		End If
+		
 		If col.AllowNull Then sb.Append(" NULL") Else sb.Append(" NOT NULL")
 		If col.Unique Then sb.Append(" UNIQUE")
 		If col.AutoIncrement Then
 			Select mType
-				Case MYSQL, MARIADB
-					sb.Append(" AUTO_INCREMENT")
 				Case SQLITE
 					sb.Append(" AUTOINCREMENT")
+				Case MYSQL, MARIADB
+					sb.Append(" AUTO_INCREMENT")
 			End Select
 		End If
 		sb.Append(",").Append(CRLF)
 	Next
 	
 	Select mType
+		Case SQLITE
+			If BlnUseDataAuditUserId Then
+				sb.Append("created_by " & INTEGER & " DEFAULT " & StrDefaultUserId & ",").Append(CRLF)
+				sb.Append("modified_by " & INTEGER & ",").Append(CRLF)
+				sb.Append("deleted_by " & INTEGER & ",").Append(CRLF)
+			End If
+			If BlnUseTimestamps Then
+				sb.Append("created_date " & VARCHAR & " DEFAULT (datetime('now')),").Append(CRLF)
+				sb.Append("modified_date " & VARCHAR & ",").Append(CRLF)
+				sb.Append("deleted_date " & VARCHAR & ",")
+			End If
 		Case MYSQL, MARIADB
 			If BlnUseDataAuditUserId Then
 				sb.Append("created_by " & INTEGER & " DEFAULT " & StrDefaultUserId & ",").Append(CRLF)
@@ -443,17 +473,6 @@ Public Sub Create
 				sb.Append("created_date " & TIMESTAMP & " DEFAULT CURRENT_TIMESTAMP,").Append(CRLF)
 				sb.Append("modified_date " & DATE_TIME & " DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,").Append(CRLF)
 				sb.Append("deleted_date " & DATE_TIME & " DEFAULT NULL,")
-			End If
-		Case SQLITE
-			If BlnUseDataAuditUserId Then
-				sb.Append("created_by " & INTEGER & " DEFAULT " & StrDefaultUserId & ",").Append(CRLF)
-				sb.Append("modified_by " & INTEGER & ",").Append(CRLF)
-				sb.Append("deleted_by " & INTEGER & ",").Append(CRLF)
-			End If
-			If BlnUseTimestamps Then
-				sb.Append("created_date " & VARCHAR & " DEFAULT (datetime('now')),").Append(CRLF)
-				sb.Append("modified_date " & VARCHAR & ",").Append(CRLF)
-				sb.Append("deleted_date " & VARCHAR & ",")
 			End If
 	End Select
 
@@ -468,39 +487,34 @@ Public Sub Create
 	
 	' id column added by default
 	Dim Pk As String = "id"
-	If DBPrimaryKey.Length > 0 Then
+	If DBPrimaryKey.Length > 0 And Not(DBPrimaryKey.Contains(",")) Then
 		Pk = DBPrimaryKey
 	End If
-	Select mType
-		Case MYSQL, MARIADB
-			If BlnAutoIncrement Then
+	If BlnAutoIncrement Then
+		Select mType
+			Case MYSQL, MARIADB
 				stmt.Append($"${Pk} ${INTEGER}(11) NOT NULL AUTO_INCREMENT,"$).Append(CRLF)
-			Else
-				stmt.Append($"${Pk} ${INTEGER}(11) NOT NULL,"$).Append(CRLF)
-			End If
-		Case SQLITE
-			stmt.Append($"${Pk} ${INTEGER},"$).Append(CRLF)
-	End Select
+			Case SQLITE
+				stmt.Append($"${Pk} ${INTEGER},"$).Append(CRLF)
+		End Select
+	End If
 
 	' Put the columns here
 	stmt.Append(sb.ToString)
-	
-	If DBPrimaryKey.Length > 0 Then
-		stmt.Append(CRLF)
+
+	If BlnAutoIncrement Then
 		Select mType
-			Case MYSQL, MARIADB
-				stmt.Append($"PRIMARY KEY(${Pk})"$)
 			Case SQLITE
-				If BlnAutoIncrement Then
-					stmt.Append($"PRIMARY KEY(${Pk}${IIf(BlnAutoIncrement, " AUTOINCREMENT", "")})"$)
-				Else
-					stmt.Append($"PRIMARY KEY(${Pk})"$)
-				End If
+				stmt.Append(CRLF)
+				stmt.Append($"PRIMARY KEY(${Pk} AUTOINCREMENT)"$)
+			Case MYSQL, MARIADB
+				stmt.Append(CRLF)
+				stmt.Append($"PRIMARY KEY(${Pk})"$)
 		End Select
 	Else
-		If BlnAutoIncrement Then
+		If DBPrimaryKey.Length > 0 Then
 			stmt.Append(CRLF)
-			stmt.Append($"PRIMARY KEY(${Pk})"$)
+			stmt.Append($"PRIMARY KEY(${DBPrimaryKey})"$)
 		Else
 			stmt.Remove(stmt.Length - 1, stmt.Length) ' remove the last comma
 		End If
@@ -891,10 +905,10 @@ Public Sub Insert
 		End If
 		sb.Append("created_date")
 		Select mType
-			Case MYSQL, MARIADB
-				vb.Append("NOW()")
 			Case SQLITE
-				vb.Append("DATETIME('now')")
+				vb.Append("(datetime('now'))")			
+			Case MYSQL, MARIADB
+				vb.Append("now()")
 		End Select
 	End If
 	DBStatement = $"INSERT INTO ${DBObject} (${sb.ToString}) VALUES (${vb.ToString})"$
@@ -932,9 +946,9 @@ Public Sub Save
 		If BlnUpdateModifiedDate And Not(md) Then
 			Select mType
 				Case MYSQL, MARIADB
-					DBStatement = DBStatement & ", modified_date = NOW()"
+					DBStatement = DBStatement & ", modified_date = now()"
 				Case SQLITE
-					DBStatement = DBStatement & ", modified_date = DATETIME('now')"
+					DBStatement = DBStatement & ", modified_date = (datetime('now'))"
 			End Select
 		End If
 		DBStatement = DBStatement & DBCondition
@@ -960,10 +974,10 @@ Public Sub Save
 			End If
 			sb.Append("created_date")
 			Select mType
-				Case MYSQL, MARIADB
-					vb.Append("NOW()")
 				Case SQLITE
-					vb.Append("DATETIME('now')")
+					vb.Append("(datetime('now'))")				
+				Case MYSQL, MARIADB
+					vb.Append("now()")
 			End Select
 		End If
 		DBStatement = $"INSERT INTO ${DBObject} (${sb.ToString}) VALUES (${vb.ToString})"$
@@ -971,8 +985,8 @@ Public Sub Save
 	End If
 	ExecNonQuery
 	If BlnNew Then
-		' View does not support auto-increment id
-		If DBObject = DBView Then Return
+		' View does not support auto-increment id or ID is not autoincrement
+		If DBObject = DBView Or BlnAutoIncrement = False Then Return
 		Dim NewID As Int = getLastInsertID
 		' Return new row
 		Find(NewID)
@@ -1021,9 +1035,9 @@ Public Sub Save3 (mColumn As String)
 		If BlnUpdateModifiedDate And Not(md) Then
 			Select mType
 				Case MYSQL, MARIADB
-					DBStatement = DBStatement & ", modified_date = NOW()"
+					DBStatement = DBStatement & ", modified_date = now()"
 				Case SQLITE
-					DBStatement = DBStatement & ", modified_date = DATETIME('now')"
+					DBStatement = DBStatement & ", modified_date = (datetime('now'))"
 			End Select
 		End If
 		DBStatement = DBStatement & DBCondition
@@ -1050,9 +1064,9 @@ Public Sub Save3 (mColumn As String)
 			sb.Append("created_date")
 			Select mType
 				Case MYSQL, MARIADB
-					vb.Append("NOW()")
+					vb.Append("now()")
 				Case SQLITE
-					vb.Append("DATETIME('now')")
+					vb.Append("(datetime('now'))")
 			End Select
 		End If
 		DBStatement = $"INSERT INTO ${DBObject} (${sb.ToString}) VALUES (${vb.ToString})"$
@@ -1206,6 +1220,76 @@ Public Sub ViewExists2 (ViewName As String, DatabaseName As String) As Boolean
 	End Try
 End Sub
 
+' List tables (SQLite)
+Public Sub ListTables As List
+	Try
+		Dim lst As List
+		lst.Initialize
+		DBStatement = "SELECT name FROM sqlite_master WHERE type = 'table'"
+		Dim RS As ResultSet = DBSQL.ExecQuery(DBStatement)
+		Do While RS.NextRow
+			lst.Add(RS.GetString("name"))
+		Loop
+	Catch
+		LogColor(LastException, COLOR_RED)
+		mError = LastException
+	End Try
+	RS.Close
+	Return lst
+End Sub
+
+' List tables (MySQL, MariaDB)
+Public Sub ListTables2 (DatabaseName As String) As List
+	Try
+		Dim lst As List
+		lst.Initialize
+		DBStatement = "SELECT TABLE_NAME FROM TABLES WHERE TABLE_SCHEMA = ?"
+		Dim RS As ResultSet = DBSQL.ExecQuery2(DBStatement, Array As String(DatabaseName))
+		Do While RS.NextRow
+			lst.Add(RS.GetString("TABLE_NAME"))
+		Loop
+	Catch
+		LogColor(LastException, COLOR_RED)
+		mError = LastException
+	End Try
+	RS.Close
+	Return lst
+End Sub
+
+' Show Create Table query (SQLite)
+Public Sub ShowCreateTable (TableName As String) As String
+	Try
+		DBStatement = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?"
+		Dim RS As ResultSet = DBSQL.ExecQuery2(DBStatement, Array As String(TableName))
+		Do While RS.NextRow
+			Return RS.GetString("sql")
+		Loop
+	Catch
+		LogColor(LastException, COLOR_RED)
+		mError = LastException
+	End Try
+	RS.Close
+	Return ""
+End Sub
+
+' Show Create Table query (MySQL, MariaDB)
+Public Sub ShowCreateTable2 (TableName As String) As String
+	Try
+		Dim lst As List
+		lst.Initialize
+		DBStatement = $"SHOW CREATE TABLE ${TableName}"$
+		Dim RS As ResultSet = DBSQL.ExecQuery(DBStatement)
+		Do While RS.NextRow
+			Return RS.GetString("CREATE TABLE")
+		Loop
+	Catch
+		LogColor(LastException, COLOR_RED)
+		mError = LastException
+	End Try
+	RS.Close
+	Return ""
+End Sub
+
 ' Append to the end of SQL statement
 Public Sub Append (strSQL As String) As String
 	DBStatement = DBStatement & strSQL
@@ -1290,7 +1374,7 @@ Private Sub CountChar (c As String, Word As String) As Int
 	Return count
 End Sub
 
-Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
+Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, UseFunction As Boolean, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
 	Dim t1 As ORMColumn
 	t1.Initialize
 	t1.ColumnName = ColumnName
@@ -1298,13 +1382,13 @@ Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLengt
 	t1.ColumnLength = ColumnLength
 	t1.Collation = Collation
 	t1.DefaultValue = DefaultValue
+	t1.UseFunction = UseFunction
 	t1.AllowNull = AllowNull
 	t1.Unique = IsUnique
 	t1.AutoIncrement = AutoIncrement
 	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
 	If t1.ColumnType = VARCHAR And t1.ColumnLength = "" Then t1.ColumnLength = "255"
 	If t1.ColumnType = BIG_INT And t1.ColumnLength = "" Then t1.ColumnLength = "20"
-	'If t1.ColumnType = INTEGER Or t1.ColumnType = TIMESTAMP Or t1.ColumnLength = "0" Then t1.ColumnLength = ""
 	If t1.ColumnType = INTEGER Then t1.ColumnLength = "11"
 	If t1.ColumnType = TIMESTAMP Then t1.ColumnLength = ""
 	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
@@ -1315,7 +1399,8 @@ End Sub
 ' Type - Column Type (String) e.g INTEGER/DECIMAL/VARCHAR/TIMESTAMP
 ' Size - Column Length (String) e.g 255/10,2
 ' Collation - Collation for char (String) e.g COLLATE utf8mb4_unicode_ci
-' Default - Default Value (String) e.g CURRENT_TIMESTAMP/now()/1
+' Default - Default Value (String) e.g "Unknown", 0
+' DefaultUseFunction - Not String Value e.g utc_timestamp(), datetime('now')
 ' Null - Allow Null (Boolean)
 ' Unique - Is Unique (Boolean)
 ' AutoIncrement - Auto increment (Boolean)
@@ -1327,6 +1412,7 @@ Public Sub CreateColumn2 (Props As Map) As ORMColumn
 	t1.ColumnLength = ""
 	t1.Collation = ""
 	t1.DefaultValue = ""
+	t1.UseFunction = False
 	t1.AllowNull = True
 	t1.Unique = False
 	t1.AutoIncrement = False
@@ -1342,6 +1428,8 @@ Public Sub CreateColumn2 (Props As Map) As ORMColumn
 				t1.Collation = Props.Get(Key)
 			Case "DefaultValue".ToLowerCase, "Default".ToLowerCase
 				t1.DefaultValue = Props.Get(Key)
+			Case "UseFunction".ToLowerCase, "Function".ToLowerCase
+				t1.UseFunction = Props.Get(Key)
 			Case "Nullable".ToLowerCase, "Null".ToLowerCase, "AllowNull".ToLowerCase
 				t1.AllowNull = Props.Get(Key)
 			Case "Unique".ToLowerCase

@@ -5,14 +5,15 @@ Type=Class
 Version=8.3
 @EndOfDesignText@
 Sub Class_Globals
-	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
-	Type HtmlAttribute (Key As String, Value As String)
-	Private Index As Int
+	Public NoNode As HtmlNode
+	Public EscapedEntitiesMap As Map
+	Private mIndex As Int
 	Private mHtml As String
 	Private WhiteSpace As String = " " & TAB & Chr(10) & Chr(13)
 	Private VoidTags As B4XSet
-	Public NoNode As HtmlNode
-	Public EscapedEntitiesMap As Map
+	Private Const COLOR_ORANGE As Int = -29696
+	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
+	Type HtmlAttribute (Key As String, Value As String)
 End Sub
 
 Public Sub Initialize
@@ -23,7 +24,7 @@ Public Sub Initialize
 End Sub
 
 Public Sub Parse (HtmlText As String) As HtmlNode
-	Index = 0
+	mIndex = 0
 	mHtml = HtmlText
 	Dim root As HtmlNode = CreateHtmlNode("root", NoNode)
 	ParseImpl(root)
@@ -31,9 +32,9 @@ Public Sub Parse (HtmlText As String) As HtmlNode
 End Sub
 
 Private Sub ParseImpl (Parent As HtmlNode)
-	Do While Index < mHtml.Length
+	Do While mIndex < mHtml.Length
 		Dim WhiteSpaceIgnored As Boolean = IgnoreWhiteSpace
-		If Index >= mHtml.Length Then Exit
+		If mIndex >= mHtml.Length Then Exit
 		Dim c As String = GetNextChar
 		If c = "<" Then
 			If PeekNextChar = "/" Then
@@ -60,9 +61,9 @@ Public Sub IsRoot(n As HtmlNode) As Boolean
 End Sub
 
 Private Sub CloseElement (Parent As HtmlNode)
-	Dim start As Int = Index + 1
+	Dim start As Int = mIndex + 1
 	ReadUntil(">")
-	Dim name As String = mHtml.SubString2(start, Index - 1).Trim
+	Dim name As String = mHtml.SubString2(start, mIndex - 1).Trim
 	Parent.Closed = True
 	If name <> Parent.Name Then
 		Dim CorrectParent As HtmlNode
@@ -87,40 +88,40 @@ End Sub
 
 Private Sub CreateTextNode (Parent As HtmlNode, AddSpaceAtBeginning As Boolean) As HtmlNode
 	Dim TextNode As HtmlNode = CreateHtmlNode("text", Parent)
-	Dim start As Int = Index - 1
+	Dim start As Int = mIndex - 1
 	ReadUntil("<")
-	If Index < mHtml.Length Then
-		Index = Index - 1
+	If mIndex < mHtml.Length Then
+		mIndex = mIndex - 1
 	End If
-	Dim value As String = mHtml.SubString2(start, Index)
+	Dim value As String = mHtml.SubString2(start, mIndex)
 	If AddSpaceAtBeginning Then value = " " & value
 	TextNode.Attributes.Add(CreateHtmlAttribute("value", value))
 	Return TextNode
 End Sub
 
 Private Sub ParseRawTextNode(n As HtmlNode)
-	Dim start As Int = Index
+	Dim start As Int = mIndex
 	ReadUntil($"</${n.Name}>"$)
-	n.Attributes.Add(CreateHtmlAttribute("value", mHtml.SubString2(start, Index - 1)))
+	n.Attributes.Add(CreateHtmlAttribute("value", mHtml.SubString2(start, mIndex - 1)))
 	ReadUntil(">")
 End Sub
 
 Private Sub ReadUntil (s As String)
-	Dim i As Int = mHtml.IndexOf2(s, Index)
+	Dim i As Int = mHtml.IndexOf2(s, mIndex)
 	If i = -1 Then
 '		Log("not found: " & s)
-		Index = mHtml.Length
+		mIndex = mHtml.Length
 	Else
-		Index = i + 1
+		mIndex = i + 1
 	End If
 End Sub
 
 Private Sub IgnoreWhiteSpace As Boolean
 	Dim ignored As Boolean
-	Do While Index < mHtml.Length
+	Do While mIndex < mHtml.Length
 		Dim c As String = GetNextChar
 		If WhiteSpace.IndexOf(c) = -1 Then 
-			Index = Index - 1
+			mIndex = mIndex - 1
 			Return ignored
 		End If
 		ignored = True
@@ -133,17 +134,17 @@ Private Sub IsWhiteSpace (c As String) As Boolean
 End Sub
 
 Private Sub PeekPrevChar (offset As Int) As String
-	Return mHtml.CharAt(Index - offset)
+	Return mHtml.CharAt(mIndex - offset)
 End Sub
 
 Private Sub PeekNextChar As String
-	If Index >= mHtml.Length Then Return ""
-	Return mHtml.CharAt(Index)
+	If mIndex >= mHtml.Length Then Return ""
+	Return mHtml.CharAt(mIndex)
 End Sub
 
 Private Sub GetNextChar As String
-	Dim c As String = mHtml.CharAt(Index)
-	Index = Index + 1
+	Dim c As String = mHtml.CharAt(mIndex)
+	mIndex = mIndex + 1
 	Return c
 End Sub
 
@@ -186,16 +187,16 @@ End Sub
 Private Sub ParseComment (n As HtmlNode)
 	n.Closed = True
 	n.Name = "comment"
-	Dim start As Int = Index
+	Dim start As Int = mIndex
 	ReadUntil("-->")
-	n.Attributes.Add(CreateHtmlAttribute("value", mHtml.SubString2(start, Index - 1)))
+	n.Attributes.Add(CreateHtmlAttribute("value", mHtml.SubString2(start, mIndex - 1)))
 	ReadUntil(">")
 End Sub
 
 Private Sub ParseAttributes (Parent As HtmlNode)
-	Dim start As Int = Index
+	Dim start As Int = mIndex
 	ReadUntil(">")
-	Dim s As String = mHtml.SubString2(start, Index - 1)
+	Dim s As String = mHtml.SubString2(start, mIndex - 1)
 	For Each EscapeChar As String In Array("'", $"""$)
 		'allow attribute names contain dashes (-), e.g data-value or aria-label
 		'Dim m As Matcher = Regex.Matcher($"(\w+)\s*=\s*\${EscapeChar}([^${EscapeChar}]+)\${EscapeChar}"$, s)
@@ -225,13 +226,13 @@ Public Sub CreateHtmlAttribute (Key As String, Value As String) As HtmlAttribute
 End Sub
 
 Public Sub PrintNode (node As HtmlNode)
-	PrintNodeHelper(node, "")
+	PrintNodeHelper(node, "  ")
 End Sub
 
 Private Sub PrintNodeHelper (node As HtmlNode, Indent As String)
-	Log($"${Indent}*** ${node.Name} ***"$)
+	LogColor($"${Indent}*** ${node.Name} ***"$, COLOR_ORANGE)
 	For Each attribute As HtmlAttribute In node.Attributes
-		Log($"${Indent}|${attribute.Key}: ${attribute.Value}|"$)
+		Log($"${Indent}${attribute.Key}: "${attribute.Value}""$)
 	Next
 	For Each child As HtmlNode In node.Children
 		PrintNodeHelper(child, Indent & " ")

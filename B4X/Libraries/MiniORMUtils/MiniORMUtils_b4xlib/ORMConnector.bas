@@ -5,21 +5,21 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Database Connector class
-' Version 3.70
+' Version 3.80
 Sub Class_Globals
 	Private SQL 			As SQL
 	Private CN 				As ConnectionInfo
+	Private mJournalMode 	As String = "DELETE" 'ignore
 	Private mType			As String
 	Private mError			As Exception
-	Private mJournalMode 	As String = "DELETE" 'ignore
 	#If B4J
 	Private Pool 			As ConnectionPool
 	Private mCharacterSet 	As String = "utf8mb4"
 	Private mCollate 		As String = "utf8mb4_unicode_ci"
-	Private Const MYSQL 	As String = "MYSQL"
-	Private Const MARIADB 	As String = "MARIADB"
+	Private Const MYSQL 	As String = "MySQL"
+	Private Const MARIADB 	As String = "MariaDB"
 	#End If
-	Private Const SQLITE 	As String = "SQLITE"
+	Private Const SQLITE 	As String = "SQLite"
 	Type ConnectionInfo ( _
 	DBDir As String, _
 	DBFile As String, _
@@ -36,24 +36,25 @@ Sub Class_Globals
 End Sub
 
 Public Sub Initialize (Info As ConnectionInfo)
-	mType = Info.DBType.ToUpperCase
 	CN.Initialize
 	#If B4J
-	If mType = SQLITE Then
-		CN.DBDir = IIf(Info.DBDir = "", File.DirApp, Info.DBDir)
-		CN.DBFile = IIf(Info.DBFile = "", "data.db", Info.DBFile)
-		CN.JdbcUrl = Info.JdbcUrl.Replace("{DbDir}", Info.DBDir)
-		CN.JdbcUrl = CN.JdbcUrl.Replace("{DbFile}", CN.DBFile)
-	End If
-	If mType = MYSQL Or mType = MARIADB Then
-		CN.User = Info.User
-		CN.DBHost = Info.DBHost
-		CN.DBPort = Info.DBPort
-		CN.DBName = Info.DBName
-		CN.JdbcUrl = Info.JdbcUrl
-		CN.Password = Info.Password
-		CN.DriverClass = Info.DriverClass
-	End If
+	Select True
+		Case Info.DBType.EqualsIgnoreCase(SQLITE)
+			CN.DBDir = IIf(Info.DBDir = "", File.DirApp, Info.DBDir)
+			CN.DBFile = IIf(Info.DBFile = "", "data.db", Info.DBFile)
+			CN.JdbcUrl = Info.JdbcUrl.Replace("{DbDir}", Info.DBDir)
+			CN.JdbcUrl = CN.JdbcUrl.Replace("{DbFile}", CN.DBFile)
+			mType = SQLITE
+		Case Info.DBType.EqualsIgnoreCase(MYSQL), Info.DBType.EqualsIgnoreCase(MARIADB)
+			CN.User = Info.User
+			CN.DBHost = Info.DBHost
+			CN.DBPort = Info.DBPort
+			CN.DBName = Info.DBName
+			CN.JdbcUrl = Info.JdbcUrl
+			CN.Password = Info.Password
+			CN.DriverClass = Info.DriverClass
+			If Info.DBType.EqualsIgnoreCase(MYSQL) Then mType = MYSQL Else mType = MARIADB
+	End Select
 	#Else
 	Dim xui As XUI
 	CN.DBDir = IIf(Info.DBDir = "", xui.DefaultFolder, Info.DBDir)
@@ -193,10 +194,10 @@ End Sub
 Public Sub DBOpen As SQL
 	#If B4J
 	Select mType
+		Case SQLITE
+			SQL.InitializeSQLite(CN.DBDir, CN.DBFile, False)		
 		Case MYSQL, MARIADB
 			Return Pool.GetConnection
-		Case SQLITE
-			SQL.InitializeSQLite(CN.DBDir, CN.DBFile, False)
 	End Select
 	#Else
 	If DBExist Then
@@ -322,10 +323,10 @@ Public Sub GetDateTime As String
 		Select mType
 			#If B4J
 			Case MYSQL, MARIADB
-				Dim qry As String = $"SELECT NOW()"$
+				Dim qry As String = $"SELECT now()"$
 			#End If
 			Case SQLITE
-				Dim qry As String = $"SELECT DATETIME('now')"$
+				Dim qry As String = $"SELECT datetime('now')"$
 			Case Else	
 				Dim CurrentDateFormat As String = DateTime.DateFormat
 				DateTime.DateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -351,10 +352,10 @@ Public Sub GetDateTime2 As ResumableSub
 		Select mType
 			#If B4J
 			Case MYSQL, MARIADB
-				Dim qry As String = $"SELECT NOW()"$
+				Dim qry As String = $"SELECT now()"$
 			#End If
 			Case SQLITE
-				Dim qry As String = $"SELECT DATETIME('now')"$
+				Dim qry As String = $"SELECT datetime('now')"$
 			Case Else
 				DateTime.DateFormat = "yyyy-MM-dd HH:mm:ss"
 				Return DateTime.Date(DateTime.Now)

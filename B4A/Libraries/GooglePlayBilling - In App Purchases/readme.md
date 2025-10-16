@@ -1,9 +1,7 @@
 ### GooglePlayBilling - In App Purchases by Erel
-### 07/07/2024
+### 10/12/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/109945/)
 
-The previous service which was used by InAppBilling3 library is being deprecated and will soon won't be available.  
-  
 GooglePlayBilling is based on the new in app purchases service: <https://developer.android.com/google/play/billing/billing_library_overview>  
   
 Usage instructions:  
