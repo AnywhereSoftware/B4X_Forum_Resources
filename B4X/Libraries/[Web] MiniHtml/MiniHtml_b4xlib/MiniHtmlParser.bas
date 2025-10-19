@@ -12,6 +12,9 @@ Sub Class_Globals
 	Private WhiteSpace As String = " " & TAB & Chr(10) & Chr(13)
 	Private VoidTags As B4XSet
 	Private Const COLOR_ORANGE As Int = -29696
+	Public Const COLOR_RED 		As Int = -65536
+	Public Const COLOR_BLUE 	As Int = -16776961
+	Public Const COLOR_BLACK 	As Int = 0
 	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
 	Type HtmlAttribute (Key As String, Value As String)
 End Sub
@@ -50,7 +53,6 @@ Private Sub ParseImpl (Parent As HtmlNode)
 				If Parent.Closed And IsRoot(Parent) = False Then Return
 			End If
 		Else
-			
 			Parent.Children.Add(CreateTextNode(Parent, WhiteSpaceIgnored))
 		End If
 	Loop
@@ -63,13 +65,13 @@ End Sub
 Private Sub CloseElement (Parent As HtmlNode)
 	Dim start As Int = mIndex + 1
 	ReadUntil(">")
-	Dim name As String = mHtml.SubString2(start, mIndex - 1).Trim
+	Dim pname As String = mHtml.SubString2(start, mIndex - 1).Trim
 	Parent.Closed = True
-	If name <> Parent.Name Then
+	If pname <> Parent.Name Then
 		Dim CorrectParent As HtmlNode
 		Dim p As HtmlNode = Parent.Parent
 		Do While p.IsInitialized
-			If p.Name = name Then
+			If p.Name = pname Then
 				CorrectParent = p
 				Exit
 			End If
@@ -318,4 +320,45 @@ Public Sub UnescapeEntities(XmlInput As String) As String
 	Loop
 	If lastMatchEnd < XmlInput.Length Then sb.Append(XmlInput.SubString(lastMatchEnd))
 	Return sb.ToString
+End Sub
+
+Public Sub ConvertToTag (node1 As HtmlNode) As Tag
+	Dim parent As Tag
+	parent.Initialize(node1.Name)
+	Dim class1 As String = GetAttributeValue(node1, "class", "")
+	Dim style1 As String = GetAttributeValue(node1, "style", "")
+	If class1 <> "" Then parent.addClass(class1)
+	If style1 <> "" Then parent.addStyle(style1)
+	For Each att As HtmlAttribute In node1.Attributes
+		If att.Key <> "class" And att.Key <> "style" Then ' find other attributes
+			If att.Key = "value" And att.Value.Trim.Length > 0 Then
+				If node1.Name = "input" Then ' has value key
+					LogColor($"${att.Key}=${att.Value}"$, COLOR_ORANGE)
+					parent.attr(att.Key, att.Value.Trim)
+				Else
+					' ignore empty values (experimental)
+					If att.Value.Trim.Length > 0 Then
+						LogColor($"${att.Key}=${att.Value}"$, COLOR_ORANGE)
+						parent.Text(att.Value.Trim) ' value
+					End If
+				End If
+			Else
+				parent.attr(att.Key, att.Value) ' type, id, placeholder, for
+			End If
+		End If
+	Next
+	For Each child As HtmlNode In node1.Children
+		Dim tag2 As Tag = ConvertToTag(child)
+		If tag2.TagName = "text" Then
+			If tag2.Attributes.ContainsKey("value") Then
+				LogColor(tag2.Build & "         ** ignored **", COLOR_RED) ' ignore this
+			Else
+				LogColor(tag2.Build & "         " & tag2.Attributes, COLOR_BLUE) ' Text
+				parent.add(tag2)
+			End If
+		Else
+			parent.add(tag2)
+		End If
+	Next
+	Return parent
 End Sub

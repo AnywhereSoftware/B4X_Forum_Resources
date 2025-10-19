@@ -5,61 +5,79 @@ Type=Class
 Version=10
 @EndOfDesignText@
 Sub Class_Globals
-	Private mBuilder As StringBuilder
-	Private mTabs As Int
-	Private mFlat As Boolean
+	Private mFlat         As Boolean
+	Private mBuilder      As StringBuilder
+	Private mIndents      As Int
+	Private mIndentString As String
 End Sub
 
-Public Sub Initialize '(Name As String)
+Public Sub Initialize
 	mBuilder.Initialize
+	mIndentString = "  "
 End Sub
 
-Public Sub setTabs (Value As Int)
-	mTabs = Value
+' Set amount of Indent
+Public Sub setIndents (Value As Int)
+	mIndents = Value
 End Sub
 
-' set to true for no tabs and CRLF
+' Set Indent String
+' Default = "  " (2 whitespaes)
+Public Sub setIndentString (Value As String)
+	mIndentString = Value
+End Sub
+
+' set to true for no indents and CRLF
 Public Sub setFlat (Value As Boolean)
 	mFlat = Value
 End Sub
 
-Public Sub AddTab
+' Add Indent based on amount of Indent
+Public Sub AddIndent
 	If mFlat Then Return
-	For n = 0 To mTabs - 1
-		mBuilder.Append(TAB)
+	For n = 0 To mIndents - 1
+		mBuilder.Append(mIndentString)
 	Next
 End Sub
 
-Public Sub AddTabs (Value As Int)
+' Add Indent by value
+' Amount of Indent is not change
+Public Sub AddIndent2 (Value As Int)
+	If mFlat Then Return
 	For n = 0 To Value - 1
-		mBuilder.Append(TAB)
+		mBuilder.Append(mIndentString)
 	Next
 End Sub
 
-Public Sub TabsIncrease
-	mTabs = mTabs + 1
+' Increase amount of Indent
+Public Sub IndentMore
+	mIndents = mIndents + 1
 End Sub
 
-Public Sub TabsDecrease
-	mTabs = mTabs - 1
+' Reduce amount of Indent
+Public Sub IndentLess
+	mIndents = mIndents - 1
 End Sub
 
 ' Add raw text
-Public Sub Append (mText As String)
-	AddTab
-	mBuilder.Append(mText)
+Public Sub Append (mText As String) As Document
 	If Not(mFlat) Then mBuilder.Append(CRLF)
-End Sub
-
-Public Sub Append2 (mText As String)
+	AddIndent
 	mBuilder.Append(mText)
 	'If Not(mFlat) Then mBuilder.Append(CRLF)
+	Return Me
+End Sub
+
+' Add raw text (No Indent or append CRLF)
+Public Sub Append2 (mText As String) As Document
+	'If Not(mFlat) Then mBuilder.Append(CRLF)
+	mBuilder.Append(mText)
+	Return Me
 End Sub
 
 ' returns <code><!DOCTYPE html></code>
 Public Sub AppendDocType
 	mBuilder.Append($"<!DOCTYPE html>"$)
-	'If Not(mFlat) Then mBuilder.Append(CRLF)
 End Sub
 
 Public Sub ToString As String

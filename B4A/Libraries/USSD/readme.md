@@ -1,5 +1,5 @@
 ### USSD by somed3v3loper
-### 09/30/2025
+### 10/16/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/110039/)
 
 Hello all,  
@@ -15,14 +15,14 @@ End Sub
 Sub Globals  
     'These global variables will be redeclared each time the activity is created.  
     'These variables can only be accessed from this module.  
-    
+   
 End Sub  
   
 Sub Activity_Create(FirstTime As Boolean)  
     'Do not forget to load the layout file created with the visual designer. For example:  
     'Activity.LoadLayout("Layout1")  
     myussd.Initialize("ussd")  
-    
+   
   
     Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_CALL_PHONE )  
     Wait For Activity_PermissionResult(perm As String,res As Boolean)  
@@ -38,7 +38,7 @@ Sub Activity_Create(FirstTime As Boolean)
     Else  
         ToastMessageShow("Permission not granted",False)  
     End If  
-    
+   
 End Sub  
   
 Sub ussd_onreceiveussdresponse(request As String,response As String)  

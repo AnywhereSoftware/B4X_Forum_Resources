@@ -1,5 +1,5 @@
 ###  GPBilling by Jerryk
-### 10/29/2024
+### 10/16/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/163010/)
 
 This library wraps the GooglePlayBilling base library. It returns the results in structures as they are built in the Google accounting system.  

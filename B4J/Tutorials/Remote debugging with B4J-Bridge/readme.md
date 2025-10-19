@@ -1,9 +1,9 @@
 ### Remote debugging with B4J-Bridge by Erel
-### 05/20/2021
+### 10/15/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/38804/)
 
 B4J v1.80 adds support for remote debugging using B4J-Bridge, a tool similar to the beloved [B4A-Bridge](http://www.b4x.com/android/forum/threads/7978/#content).  
-  
+   
 The purpose of B4J-Bridge is to allow you to connect the IDE to a remote machine such as a Mac computer or a Raspberry Pi board and to easily debug your app on the remote machine. The connection is done over the network (usually the local network).  
   
 **Instructions**  
@@ -12,7 +12,9 @@ The purpose of B4J-Bridge is to allow you to connect the IDE to a remote machine
 Note that you can download it with this command:
 
 ```B4X
-wget www.b4x.com/b4j/files/b4j-bridge.jar
+wget www.b4x.com/b4j/files/b4j-bridge.jar  
+'or (remove space between 'c' and 'url')  
+c url -o b4j-bridge.jar https://www.b4x.com/b4j/files/b4j-bridge.jar
 ```
 
 Tip: delete the previous version before download: rm b4j-bridge.jar- Make sure that Java 8+ is installed on the remote machine.

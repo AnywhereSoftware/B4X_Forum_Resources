@@ -6,7 +6,10 @@ Version=12.8
 @EndOfDesignText@
 'GPPurchases 
 'Author Jerryk
-'version 1.0
+'version 1.12
+'version 1.2 added AcknowledgeProducts function
+'version 1.3 added GetPurchasedProducts function
+
 #DesignerProperty: Key: dHidePurchInapp, DisplayName: Hide purchased inapp, FieldType: Boolean, DefaultValue: False, Description: Hide purchased inapp.
 #DesignerProperty: Key: dShowTimePurchase, DisplayName: Show time of purchase, FieldType: Boolean, DefaultValue: True, Description: Show time of purchase.
 #DesignerProperty: Key: dHideInappDesc, DisplayName: Hide Inapp description, FieldType: Boolean, DefaultValue: False, Description: Hide Inapp description.
@@ -45,8 +48,8 @@ Sub Class_Globals
 	Private pnlBackground As B4XView
 	Private clv As CustomListView
 	Private rx As ReadXml
-	Type ItemData (Sku As String, CollapsedHeight As Int, ExpandedHeight As Int, Value As Object, Expanded As Boolean)
-	Private xItemData As ItemData
+	Type clvItemData (Sku As String, CollapsedHeight As Int, ExpandedHeight As Int, Value As Object, Expanded As Boolean)
+	Private xItemData As clvItemData
 	 
 	Private skutype As String
 	Private lSKU_INAPP As List
@@ -181,7 +184,7 @@ Private Sub FillClvInapp
 			
 			Wait For(gpb.IsPurchased("inapp",iap.ProductId)) Complete (pResult As PurchasedResult)
 			
-			Dim idata As ItemData
+			Dim idata As clvItemData
 			idata.Initialize
 			idata.Sku = iap.ProductId
 			idata.CollapsedHeight = 70
@@ -217,8 +220,9 @@ Private Sub CreateListItemInap(iapp As InAppProduct, pResult As PurchasedResult,
 	ddDesc.TextColor = InappDescTextColor
 	ddDesc.TextSize = InappDescTextSize
 	ddDesc.Top = Max(ddName.Height + 5dip, 70dip)
-	ddDesc.Height = su.MeasureMultilineTextHeight(ddDesc, ddDesc.Text)
+	ddDesc.Height = su.MeasureMultilineTextHeight(ddDesc, ddDesc.Text) + 5dip
 	xItemData.ExpandedHeight = 10dip + ddName.Height + ddDesc.Height
+	dd.GetViewByName(p, "IArrow").Top = ddDesc.Top - dd.GetViewByName(p, "IArrow").Height 
 
 	If HideInappDesc Then
 		ExpInappDesc = False
@@ -252,7 +256,7 @@ End Sub
 Private Sub btnBuyI_Click
 '	Dim button As B4XView = Sender
 	Dim index As Int = clv.GetItemFromView(Sender)
-	Dim idata As ItemData = clv.GetValue(index)
+	Dim idata As clvItemData = clv.GetValue(index)
 	Dim lSKUs As List
 	lSKUs.Initialize
 	lSKUs.Add(idata.sku)
@@ -293,7 +297,7 @@ Private Sub FillClvSubs
 			
 			Wait For(gpb.IsPurchased("subs",sup.ProductId)) Complete (pResult As PurchasedResult)
 
-			Dim idata As ItemData
+			Dim idata As clvItemData
 			idata.Initialize
 			idata.Sku = sup.ProductId
 			idata.CollapsedHeight = 70
@@ -339,8 +343,9 @@ Private Sub CreateListItemSub(supp As SubsProduct, pResult As PurchasedResult,  
 	ddDesc.TextColor = SubsDescTextColor
 	ddDesc.TextSize = SubsDescTextSize
 	ddDesc.Top = Max(ddName.Height + 5dip, 70dip)
-	ddDesc.Height = su.MeasureMultilineTextHeight(ddDesc, ddDesc.Text)
+	ddDesc.Height = su.MeasureMultilineTextHeight(ddDesc, ddDesc.Text) + 5dip
 	xItemData.ExpandedHeight = 10dip + ddName.Height + ddDesc.Height
+	dd.GetViewByName(p, "IArrow").Top = ddDesc.Top - dd.GetViewByName(p, "IArrow").Height
 
 	If HideSubsDesc Then
 		ExpSubsDesc = False
@@ -443,7 +448,7 @@ End Sub
 
 Private Sub btnUnsub_Click
 	Dim index As Int = clv.GetItemFromView(Sender)
-	Dim idata As ItemData = clv.GetValue(index)
+	Dim idata As clvItemData = clv.GetValue(index)
 '	Dim sku As String = clv.GetValue(index)
 	Dim ph As PhoneIntents
 	Dim sPack As String = Application.PackageName
@@ -458,10 +463,23 @@ Private Sub HandleError(Error As Int)
 	End If
 End Sub
 
-'Consume ConsumeProduct, stype: INAPP, SUBS, sku - SKU id
+'Consume Product, stype: INAPP, SUBS, sku - SKU id
 Public Sub ConsumeProduct(stype As String, sku As String) As ResumableSub
 	Wait For(gpb.ConsumeProducts(stype, sku)) Complete (Result As BillingResult)
 	Return Result
+End Sub
+
+'Acknowledge Product
+Public Sub AcknowledgeProducts(p As Purchase) As ResumableSub
+	Wait For(gpb.AcknowledgeProducts(p)) Complete (Result As BillingResult)
+	Return Result
+End Sub
+
+'gets list of all purchased products
+'return ProductResult
+Public Sub GetPurchasedProducts As ResumableSub
+	Wait For(gpb.GetPurchasedProducts) Complete (pr As ProductResult)
+	Return pr
 End Sub
 
 'convert error to string
@@ -623,7 +641,7 @@ End Sub
 Private Sub IArrow_Click
 	Dim index As Int = clv.GetItemFromView(Sender)
 	Dim p As B4XView = clv.GetPanel(index)
-	Dim idata As ItemData = clv.GetRawListItem(index).Value
+	Dim idata As clvItemData = clv.GetRawListItem(index).Value
 	If idata.Expanded Then
 		p.Visible = False
 		clv.ResizeItem(index, idata.CollapsedHeight)
