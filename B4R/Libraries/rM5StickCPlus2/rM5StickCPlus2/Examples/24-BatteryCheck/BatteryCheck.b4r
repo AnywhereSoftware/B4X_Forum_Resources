@@ -1,0 +1,122 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rm5stickcplus2
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		BatteryCheck
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Check the battery level and if below threshold, shut the M5StickCPlus2 down.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' Secrets:		N/A.
+' Author:		Robert W.B. Linn
+' Date:			20251021
+' Wiring:		None.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Private m5 As M5StickCPlus2
+	Private BatteryTimer As Timer
+	Private BATTERYTIMER_INTERVAL As ULong = 30000	' Every 30 seconds
+	Private SHUTDOWN_DELAY As ULong = 3000			' 3 Seconds
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart]")
+
+	' Init the M5
+	m5.Initialize
+	Log("[Main.AppStart][I] M5 initialized with no button event")
+
+	' Set landscape
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+
+	' Set header
+	m5.SetHeader("BatteryCheck", 2, 0, m5.COLOR_WHITE, m5.COLOR_BLACK, True)
+	m5.SetHorLine(20, m5.COLOR_BLUE, 2)
+
+	' Set footer with font height 1
+	m5.SetHorLine(m5.GetHeight - (m5.GetFontHeight * 1), m5.COLOR_BLUE, 2)
+	m5.SetFooter("rStckCPlus2 Demo", 1, 1, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+		
+	' Initialize battery check every NN seconds
+	BatteryTimer.Initialize("BatteryTimer_Tick", BATTERYTIMER_INTERVAL)
+	BatteryTimer.Enabled = True
+	' First time tick
+	BatteryTimer_Tick
+End Sub
+
+' Handle timer tick to show battery value & check threshold.
+' If below threshold, shut the MCU down.
+Private Sub BatteryTimer_Tick
+	' Position helpers
+	Dim x, y As Int	
+	
+	' Get battery level 0-100%
+	Dim level As Float = m5.BatteryLevel
+	' Get battery voltage mV
+	Dim voltage As Float = m5.BatteryVoltage
+	Log("[BatteryTimer_Tick][I] voltage=", voltage, "mV, level=", level, "%")
+	' [BatteryTimer_Tick][I] voltage=4206mV, level=100%
+
+	' Icon with battery state as bar at the display top right [### ] or with percentage top right NNN%[### ]
+	m5.DrawBattery(voltage, True)
+
+	m5.ClearArea(0, m5.GetHeight / 4, m5.GetWidth, m5.GetHeight / 2)
+
+	' Text with battery voltage 3 decimals
+	x = 10
+	y = m5.GetHeight / 4
+	m5.SetTextAt(x, y, "V:", 3, m5.COLOR_white)
+	x = m5.GetCenterX
+	m5.SetCursor(x,y)
+	m5.PrintNumDecimals(voltage/1000, 3)
+
+	' Text with battery level 0 decimals
+	x = 10
+	y = m5.GetHeight / 2
+	m5.SetTextAt(x,y,"L:", 3, m5.COLOR_white)
+	x = m5.GetCenterX
+	m5.SetCursor(x,y)
+	m5.PrintNumDecimals(level,0)
+
+	' Check for low battery
+	If voltage <= m5.M5_BATTERY_LOW Then
+		m5.SetTextAt(20, m5.GetHeight / 2, "LOW BATTERY!", 2 , m5.color_red)
+	End If
+
+	' Check critical battery - if below then shut the M5 down
+	If m5.BatteryCheck(m5.M5_BATTERY_CRITICAL, SHUTDOWN_DELAY) Then
+		' This is never logged because M5 is shutdown.
+		Log("[BatteryTimer_Tick][W] Battery critical > Auto power off triggered")
+	End If
+End Sub
+
+
+'	' m5.DrawBatteryIconPercentage(210, 5, v)
+'	Dim startx As Int
+'	If m5.Rotation == m5.M5_ROTATION_PORTRAIT Or m5.Rotation == m5.M5_ROTATION_PORTRAIT_INV Then
+'		startx = m5.M5_LCD_HEIGHT-30
+'	Else
+'		startx = m5.M5_LCD_WIDTH-30
+'	End If
+'	m5.DrawBatteryIcon(startx, 5, v)
+'	m5.DrawBatteryIconPercentage(startx, 30, v)
+'	Log("[BatteryTimer_Tick][I] BatteryVoltage=", v/1000, "V, ", v, "mV, critical threshold=", m5.M5_BATTERY_CRITICAL, "mV")
+'	' [BatteryTimer_Tick][I] BatteryVoltage=4.2360V, 4236mV, critical threshold=3300mV
+

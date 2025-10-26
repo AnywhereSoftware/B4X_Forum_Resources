@@ -1,0 +1,86 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rm5stickcplus2
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		Basic
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Print the string Hello World on a M5 Stick-CPlus 2.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' Secrets:		N/A.
+' Author:		Robert W.B. Linn
+' Date:			20251021
+' Wiring:		None.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Private m5 As M5StickCPlus2
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart]")
+
+	' Init the device
+	m5.Initialize
+	Log("[Main.AppStart][I] M5 initialized.")
+	
+	' Show the red led beside the button power
+	m5.SetLed(True)
+	
+	' Display mode landscape (power supply right)
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+	Log("[Main.AppStart][I] Rotation portrait=", m5.IsPortrait)
+
+	m5.SetHeader("Basic Demo", 2, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+	m5.SetHorLine((m5.GetFontHeight * 2), m5.COLOR_WHITE, 2)
+
+	' LCD Display
+	Log("[Main.AppStart][I] LCD width/height=", m5.GetWidth,"/",m5.GetHeight)
+	' [Main.AppStart][I] LCD width/height=240/135
+	
+	Log("[Main.AppStart][I] LCD center x/y=", m5.GetCenterX, "/", m5.GetCenterY)
+	' [Main.AppStart][I] LCD center x/y=120/67
+	
+	' Text size 1 (default)
+	Log("[Main.AppStart][I] Textsize 1 width/height=", m5.GetFontWidth, "/", m5.GetFontHeight)
+	' [Main.AppStart][I] Textsize 3 width/height=18/24
+	
+	' Text size 3
+	m5.SetTextSize(3)
+	Log("[Main.AppStart][I] Textsize 3 width/height=", m5.GetFontWidth, "/", m5.GetFontHeight)
+	' [Main.AppStart][I] Textsize 3 width/height=18/24
+
+	m5.SetTextColor(m5.COLOR_WHITE)
+	m5.SetTextAt(20, 50, "Hello World", 3, m5.COLOR_WHITE)
+	
+	' Text length for text size 3 (font width 18) and text hello world (11 characters)
+	Log("[Main.AppStart][I] Textsize 3 'Hello World' length=", m5.GetTextLengthInPixel("Hello World"))
+	' [Main.AppStart][I] Textsize 3 'Hello World' length=198
+	' 198 = 11 characters * font width 18
+	
+	' Set text centered X at lcd bottom
+'	Dim s As String = "rStickCPlus2 Demo"
+'	m5.SetTextSize(1)
+'	m5.SetTextColor(m5.COLOR_GREEN)
+'	m5.SetTextAt(m5.GetCenterX - (m5.GetTextLengthInPixel(s) / 2) , m5.GetHeight - m5.GetFontHeight, s)
+
+	m5.SetHorLine(m5.GetHeight - (m5.GetFontHeight * 1), m5.COLOR_WHITE, 1)	
+	m5.SetFooter("rStickCPlus2", 1, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_RED, True)
+End Sub
+

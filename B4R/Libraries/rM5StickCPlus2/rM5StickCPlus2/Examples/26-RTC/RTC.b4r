@@ -1,0 +1,87 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rm5stickcplus2
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		RTC
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Real Time Clock test with time set manually and display showing time & date updated every second via timer.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' Secrets:		N/A.
+' Author:		Robert W.B. Linn
+' Date:			20251021
+' Wiring:		None.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Private m5 As M5StickCPlus2
+	Private RTCTimer As Timer
+	Private RTCTIMER_INTERVAL As ULong = 1000	' Every second
+
+	' Store the prev date & time to only update if current date & time has changed
+	Private prevDate As ULong
+	Private prevTime As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart]")
+
+	m5.Initialize
+	Log("[Main.AppStart][I] M5 core and RTC initialized")
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+	m5.Clear
+
+	' RTC
+	Log("[Main.AppStart][I] RTC enabled=", m5.RTC_IsEnabled)
+		
+	m5.RTC_SetDateTime(2025, 10, 16, 17, 43, 0)
+
+	' Initialize rtc timer every second
+	RTCTimer.Initialize("RTCTimer_Tick", RTCTIMER_INTERVAL)
+	RTCTimer.Enabled = True
+
+	' First time tick
+	RTCTimer_Tick
+End Sub
+
+' Handle timer tick to update the date and time
+Private Sub RTCTimer_Tick
+	Dim textsize As Int
+	' Get the now time
+	m5.RTC_UpdateDateTime
+	Dim nowDate As ULong = m5.RTC_Year * 10000 + m5.RTC_Month * 100 + m5.RTC_Date
+	Dim nowTime As ULong = m5.RTC_Hour * 10000 + m5.RTC_Minute * 100 + m5.RTC_Second
+	Log("[RTCTimer_Tick] ", m5.RTC_Date, "-", m5.RTC_Month, "-", m5.RTC_Year, " - ", m5.RTC_Hour, ":", m5.RTC_Minute, ":", m5.RTC_Second)
+
+	' Update time only if changed
+	If prevTime <> nowTime Then
+		Log("[RTCTimer_Tick] Update time")
+		textsize = 3
+		m5.PrintCentered(m5.GetCenterX, 50, m5.RTC_GetTimeString, textsize, m5.COLOR_WHITE, m5.COLOR_BLACK)
+		prevTime = nowTime
+	End If
+
+	' Update date only if changed
+	If prevDate <> nowDate Then
+		Log("[RTCTimer_Tick] Update date")
+		textsize = 2
+		m5.PrintCentered(m5.GetCenterX, m5.GetHeight - (m5.GetFontHeight * textsize), m5.RTC_GetDateString, textsize, m5.COLOR_WHITE, m5.COLOR_BLACK)
+		prevDate = nowDate
+	End If
+End Sub

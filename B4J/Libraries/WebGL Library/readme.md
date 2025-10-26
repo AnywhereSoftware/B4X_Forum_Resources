@@ -1,5 +1,5 @@
 ###  WebGL Library by max123
-### 08/13/2025
+### 10/21/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/164553/)
 
 Hi all,  
@@ -33,7 +33,7 @@ To get more on THREEJS library you can visit: <https://threejs.org/>
 To get some examples on what you can develop with this library you can visit: <https://threejs.org/examples/>  
 scroll down a long list (of 100 and more examples) and test them on your browser, these are just simple examples to show the threejs library functionalities, they are very good point to start, on every example you can get (by clicking on the bottom-right symbol) the code to get the scene. **All these example codes will work on B4J WebGL library.**  
   
-The B4J WebGL library is a bridge to help write JavaScript code and have some useful methods to do it, it is small and minimalistic (with few commands) and very simple to use, but you need at least some JavaScript knowledge, the more you are expert here, the more you are able to get best results in small time.  
+The B4J WebGL library is a bridge to help write JavaScript code and have some useful methods to do it, it is small and minimalistic (with few commands) and very simple to use, but you need at least some JavaScript knowledge, the more you are expert here, the more you are able to get best results in short time.  
   
 With this library you can:  
 
@@ -79,7 +79,7 @@ With this library you can:
    ```
 
    where B4XWebGL is not mandatory, but it is just to mantain compatibility with my example demos distribuited with this library. You can change it's name but then you need to change it on all example demos and on all your projects. I advise you to leave this name unchanged. This line show me on the log the follow on Windows 11: C:\Users\MyUserName\AppData\Roaming\B4XWebGL. Finally go to this position (eg. C:\Users\MyUserName\AppData\Roaming\ in my case) create a new folder and call it B4XWebGL
-4. Go to THREEJS github page and download the distribution zip file. Note that I have tested it on version r164, but because it's community is very active, it will continue to evolve, improve, fix small bugs etc… You can just download the latest version (at moment I wrote this, the r171) or search old versions on the history. Searching very old versions (like r120-r130) helped on old devices that not fully support WebGL, but break some compatibility with new code. Here the github page where you can download the latest library version: <https://github.com/mrdoob/three.js>
+4. Go to THREEJS github page and download the distribution zip file. Note that I have tested it on version r164, but because it's community is very active, it will continue to evolve, improve, fix small bugs etc… You can just download the latest version (at moment I wrote this, the r171) or search old versions on the history. Use very old versions (like r120-r130) helped on old devices that not fully support WebGL, but break some compatibility with new code. Here the github page where you can download the latest library version: <https://github.com/mrdoob/three.js>
 5. After you download the zip file named three.js-dev.zip, open it, you will find a three.js-dev folder inside, **double click and open it**
 6. Select all files and folders of threejs distibution, you will have to copy/paste inside the already created B4XWebGL folder
 7. Ensure you have Archiver 1.11 library installed
@@ -105,7 +105,7 @@ From demo 4 you will start to see and know that if you want to make something co
   
 The space for upload is limited so I cannot post demos with complex scenes where I use animated detailed 3D models with textures, mipmapping and more …  
   
-**As promised when first time I released this library, to get more complex demos, you can refer to my [Overview](https://www.b4x.com/android/forum/threads/massimo-meli-overview.144941/#post-918893) in the Tutorials section.**  
+**To get more complex demos, you can refer to my [Overview](https://www.b4x.com/android/forum/threads/massimo-meli-overview.144941/#post-918893) in the Tutorials section.**  
   
 You will be noticed that every time you access files over HTTP, the B4J WebGL library offer you a way to get the server logs for any request file, they are passed as string to the \_ServerLog Event, you can use them to show the log where you want, in a TextArea, collect all to a ListView and more…. in the demo projects I just show them in the IDE log with different color based on the HTTP Response code that the message contains …. 202, 304, 404.  
   

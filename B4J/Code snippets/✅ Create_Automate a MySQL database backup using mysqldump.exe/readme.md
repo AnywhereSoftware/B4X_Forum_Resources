@@ -1,9 +1,9 @@
 ### ✅ Create/Automate a MySQL database backup using mysqldump.exe by Peter Simpson
-### 10/18/2025
+### 10/19/2025
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/169066/)
 
 **SubName:** Create a single .sql backup file of a MySQL database that is ready to restore.  
-**Description:** You can use the following code to create a backup of MySQL databases, the backup file is saved in a folder on your desktop called 'Backup Database'. The code below creates an .sql file that you can use to restore/recreate your MySQL database. MySQLDumpPath **NEEDS** to point to any mysqldump.exe file.  
+**Description:** You can use the following code to create a backup of MySQL databases, the backup file is saved in a folder on your desktop called 'Backup Database'. The code below creates a single .sql file that you can use to restore/recreate your backed up MySQL database. MySQLDumpPath **NEEDS** to point to any mysqldump.exe file on your PC.  
   
 
 ```B4X
@@ -38,12 +38,15 @@ Public Sub BackupMySQL
         Args.Add("–routines")                'Include stored procedures and functions  
         Args.Add("–triggers")                'Include triggers  
         Args.Add("–events")                'Include scheduled events  
+        'Args.Add("–compatible")            'Output is more compatible with older MySQL servers (Use on newer MySQL servers)  
+        'Args.Add("–force")                    'Continue even if an error occurs (Use with causion)  
         Args.Add("–single-transaction")    'Ensures consistency for InnoDB tables  
         Args.Add("–quick")                    'Essential for large tables/memory management  
-        Args.Add("–lock-tables")            'Lock tables - Uncomment this line after commenting out the line below          
-        'Args.Add("–skip-lock-tables")        'Skip locking tables (useful for live DBs)  
+        Args.Add("–lock-tables")            'Lock tables - Uncomment this line after commenting out the line below         
+        'Args.Add("–skip-lock-tables")        'Skip locking tables (Useful for live DBs)  
         Args.Add("–complete-insert")        'Ensures all column names are included  
         Args.Add("–extended-insert")        'Compact insert statements  
+        'Args.Add("–skip-extended-insert")    'Skip compact insert statements  
         Args.Add("–add-drop-table")        'Adds DROP TABLE before CREATE TABLE  
         Args.Add("–set-gtid-purged=OFF")    'Avoids GTID errors on some setups  
         Args.Add(DB_NAME)  

@@ -1,0 +1,292 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rdfrobot_multigassensor
+Library4=resp8266wifi
+Library5=rm5stickcplus2
+Library6=rmqtt
+Module1=HAMQTTMod
+Module2=JSONUtils
+Module3=MQTTMod
+Module4=WiFiMod
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=4
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		COSensorHomeAssistant
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Reads CO gas concentration, VO voltage, and on-board temperature from a CO-sensor connected to the M5StickCPlus2 and publish to Home Assistant (HA).
+'				The data can also be refreshed on-demand by a HA button (lovelace).
+'				The LED (red) is turned on in case of error (M5 not initialized, no wifi or mqtt connection).
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32, DFRobot Grafity CO sensor SEN0466.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' 				B4R Additional libraries: rESP8266WiFi 1.60, rDFRobot_MultiGasSensor 1.00, rMStickCPlus2 0.30, rConvert 1.30.
+' Modules:		WiFiMod - Handle WiFi connection.
+'				MQTTMod - Handle MQTT Broker connection.
+'				HAMQTTMod - Define HA topics & payloads.
+'				JSONUtils - JSON conversion functions.
+' Secrets:		Defined in WiFiMod, MQTTMod.
+' Author:		Robert W.B. Linn
+' Date:			20251018
+' Wiring:
+' CO Sensor = M5StickCPlus2 - wire
+' VCC 		= 3V3 - Red (MUST BE 3V3)
+' GND 		= GND - Black
+' D/T SDA	= GPIO26 - Green
+' C/R SCL	= GPIO25 - Blue
+' I2C 		= 0x74 - Default I2C address
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	' Communication
+	Public SerialLine As Serial
+	Public Serial1 As Serial
+
+	' Timer Measurement
+	Private MeasurementTimer As Timer
+	Private MEASUREMENTTIMER_INTERVAL As ULong = 60000	' ms, every 60 seconds
+
+	' COSensor SEN0466
+	Private COSensor As DFRobot_MultiGasSensor
+	Private CO_LEVEL_GREEN As Int = 10	' 0–10 ppm
+	Private CO_LEVEL_YELLOW As Int = 11	' 11-30 ppm
+	Private CO_LEVEL_RED As Int = 31	' >30 ppm		'ignore
+
+	' M5
+	Private m5 As M5StickCPlus2
+	Private SDA_PIN As Int = 26							' SDA Serial Data Line = GPIO25 (blue) - D/T = Data / Transmit
+	Private SCL_PIN As Int = 25							' SCL Serial Clock Line= GPIO26 (green) - C/R = Clock / Receive
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log("[Main.AppStart][I] rStickCPuls2 Example COSensorHomeAssistant")
+	Log("[Main.AppStart][I] Measurement interval=", MEASUREMENTTIMER_INTERVAL / 1000, "s")
+
+	' Init the M5 device
+	m5.Initialize
+	Log("[Main.AppStart][I] M5 initialized.")
+		
+	' Set M5 Display mode landscape (power supply right)
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+	Log("[Main.AppStart][I] Rotation portrait=", m5.IsPortrait)
+
+	' Set M5 header & initial message
+	SetMessage("Initializing...", m5.COLOR_WHITE)
+	
+	' Init the CO sensor module
+	If Not(COSensor.InitializeWithPins(SDA_PIN, SCL_PIN)) Then
+		Log("[Main.AppStart][E] Init CO sensor failed. Check the wiring.")
+		SetMessage("Error Init CO Sensor...", m5.COLOR_RED)
+		m5.SetLed(True)
+		Return
+	Else
+		Log("[Main.AppStart][I] Init CO sensor OK")
+		m5.SetLed(False)
+	End If
+	' Give the CO sensor some time to settle
+	Delay(1000)
+
+	' Init the measurement timer reading data from the co sensor
+	MeasurementTimer.Initialize("PerformMeasurement", MEASUREMENTTIMER_INTERVAL)
+	' Disable first because need wifi & mqtt connection - see MQTTPublishConfig
+	MeasurementTimer.Enabled = False
+
+	' Connect to the WiFi
+	WiFiMod.Connected = WiFiMod.Connect
+
+	' Wifi connected
+	If WiFiMod.Connected Then
+		' Connect to the broker
+		MQTTMod.Initialize(HAMQTTMod.CLIENT_ID, WiFiMod.Client.Stream)
+		MQTTMod.Connect(0)
+		Delay(1000)
+
+		' Connected to the MQTT broker
+		If MQTTMod.Connected Then
+			' Publish availability offline
+			MQTTMod.Publish(Array As String(HAMQTTMod.STATE_TOPIC_AVAILABILITY), Array As String("offline"))
+
+			' Subscribe to availability topic
+			MQTTMod.Subscribe(Array As String(HAMQTTMod.STATE_TOPIC_AVAILABILITY))
+			Delay(HAMQTTMod.DELAY_AFTER_TASK)
+
+			' Publish topic availability with state online
+			MQTTMod.Publish(Array As String(HAMQTTMod.STATE_TOPIC_AVAILABILITY), Array As String("online"))
+			Delay(HAMQTTMod.DELAY_AFTER_TASK)
+
+			' Publish the MQTT discovery config messages
+			CallSubPlus("MQTTPublishConfig", 100, 5)
+			Delay(HAMQTTMod.DELAY_AFTER_TASK)
+			m5.SetLed(False)
+		Else
+			SetMessage("Error WiFi connection", m5.COLOR_RED)
+			' Show the red led beside the button power
+			m5.SetLed(True)
+			Log("[Main.AppStart][E] WiFi connection failed.")		
+		End If
+	Else
+		m5.SetLed(True)
+	End If
+	SetMessage("Initializing OK...", m5.COLOR_WHITE)
+End Sub
+
+#Region M5
+' Helper to set the LCD page header
+Private Sub SetPageHeader
+	Dim textsize As Int = 2
+	Dim linethickness As Int = 1
+	m5.SetHeader("CO Sensor HA Demo", textsize, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+	m5.SetHorLine((m5.GetFontHeight + 2), m5.COLOR_WHITE, linethickness)
+End Sub
+
+' Helper to set the LCD page footer
+Private Sub SetPageFooter	'ignore
+	Dim textsize As Int = 1
+	Dim linethickness As Int = 1
+	m5.SetFooter("rM5StickCPuls2 Demo", textsize, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+	m5.SetHorLine(m5.GetHeight - (m5.GetFontHeight * textsize) - (linethickness * 2), m5.COLOR_BLUE, linethickness)
+End Sub
+
+' Set a message at the center of the display.
+Private Sub SetMessage(msg As String, clr As Int)
+	m5.Clear
+	SetPageHeader
+	m5.PrintCentered(m5.GetCenterX, m5.GetCenterY, msg, 2, clr, m5.COLOR_BLACK)
+	SetPageFooter
+End Sub
+
+' Set sensor reading as row with:
+' Label Value Unit
+Private Sub SetSensorRow(label As String, value As String, unit As String, y As Int, textcolor As Int)
+	' Text settings
+	Dim textsize As Int = 3
+
+	' Text position
+	Dim xlabel As Int = 10
+	Dim xvalue As Int = (m5.GetWidth / 2) - 30
+	Dim xunit As Int = m5.GetWidth - 50
+
+	' Label
+	m5.SetTextAt(xlabel, y, label, textsize, textcolor)
+	m5.SetTextAt(xvalue, y, value, textsize, textcolor)
+	m5.SetTextAt(xunit, y, unit, textsize * 0.9, textcolor)
+End Sub
+
+' Update the display with the measured values.
+Private Sub UpdateDisplay(co As Float, temp As Float, volt As Float)
+	Dim coColor As Int
+
+	m5.Clear
+	SetPageHeader
+
+	If co <= CO_LEVEL_GREEN Then
+		coColor = m5.COLOR_WHITE  ' normal, keep it subtle
+	Else If co <= CO_LEVEL_YELLOW Then
+		coColor = m5.COLOR_YELLOW ' warning
+	Else
+		coColor = m5.COLOR_RED    ' danger
+	End If
+
+	SetSensorRow("CO", NumberFormat(co,4,0), "ppm", 40, coColor)
+	SetSensorRow("Temp", NumberFormat(temp,2,2), "C", 70, m5.COLOR_WHITE)
+	SetSensorRow("Volt", NumberFormat(volt,1,3), "V", 100, m5.COLOR_WHITE)
+End Sub
+#End Region
+
+#Region MQTTPublishConfig
+' Publish the MQTT configuration messages and subscribe to topics
+Private Sub MQTTPublishConfig(Tag As Byte)
+
+	' Only action if MQTT is connected
+	If Not(MQTTMod.Connected) Then
+		MeasurementTimer.Enabled = False
+		SetMessage("Error MQTT connection", m5.COLOR_RED)
+		Log("[Main.MQTTPublishConfig][E] Not connected to MQTT.")
+		Return
+	End If
+
+	Log("[Main.MQTTPublishConfig][I] Publishing topics...")
+
+	' Publish the entity config topics with payload
+	MQTTMod.Publish(Array As String(HAMQTTMod.CONFIG_TOPIC_TEMPERATURE, HAMQTTMod.CONFIG_TOPIC_CO, HAMQTTMod.CONFIG_TOPIC_VOLTAGE), _			' Config Topic
+					Array As String(HAMQTTMod.CONFIG_PAYLOAD_TEMPERATURE, HAMQTTMod.CONFIG_PAYLOAD_CO, HAMQTTMod.CONFIG_PAYLOAD_VOLTAGE))		' Config Payload
+	Delay(HAMQTTMod.DELAY_AFTER_TASK)
+	
+	' Subscribe to the command topics
+	MQTTMod.Subscribe(Array As String( _ 
+		HAMQTTMod.COMMAND_REFRESH_TOPIC, _ 
+		HAMQTTMod.COMMAND_LED_STATUS_TOPIC))
+	Delay(HAMQTTMod.DELAY_AFTER_TASK)
+
+	' Start the measurement timer
+	MeasurementTimer.Enabled = True
+	' MeasurementTimer_Tick
+	
+	SetMessage("Waiting data...", m5.COLOR_WHITE)
+	Log("[Main.MQTTPublishConfig][I] Done. Waiting for data...")
+End Sub
+#End Region
+
+#Region PerformMeasurement
+Private Sub PerformMeasurement
+
+	If Not(WiFiMod.Connected) Then
+		MeasurementTimer.Enabled = False
+		SetMessage("Error WiFi connection", m5.COLOR_RED)
+		Log("[Main.PerformMeasurement][E] Not connected to WiFi. Timer stopped.")
+		Return
+	End If
+
+	If Not(MQTTMod.Connected) Then
+		MeasurementTimer.Enabled = False
+		SetMessage("Error MQTT connection", m5.COLOR_RED)
+		Log("[Main.PerformMeasurement][E] Not connected to MQTT. Timer stopped.")
+		Return
+	End If
+
+	' Read the data from the sensor
+	Private concentration As Float = COSensor.ReadConcentrationPPM
+	Private temperature As Float = COSensor.ReadTemperatureC
+	Private voltage As Float = COSensor.ReadVoltage
+	Log("[Main.PerformMeasurement][I] data co=", concentration, " ppm, t=", temperature," °C, v=", voltage," V")
+
+	' Publish the state topics to HA
+	MQTTMod.Publish(Array As String(HAMQTTMod.STATE_TOPIC_CO, HAMQTTMod.STATE_TOPIC_TEMPERATURE, HAMQTTMod.STATE_TOPIC_VOLTAGE), _
+				    Array As String(concentration, temperature, voltage))
+
+	' Update the M5 display
+	UpdateDisplay(concentration, temperature, voltage)
+End Sub
+#End Region
+
+#Region MQTT
+' Handle command topics sent by HA.
+Public Sub MQTT_MessageArrived (Topic As String, Payload() As Byte)
+	Log("[Main.HAMQTTMod.MessageArrived][I] topic=", Topic, ", payload=", Convert.BytesToString(Payload), ", length=", Payload.Length)
+	
+	If Topic == HAMQTTMod.COMMAND_REFRESH_TOPIC Then
+		' Refresh the data (payload is not used)
+		' [Main.HAMQTTMod.MessageArrived][I] topic=hawe/cosensor/command/refresh, payload=1
+		Log("[Main.HAMQTTMod.MessageArrived][I] Received command refresh.")
+		PerformMeasurement
+	End If
+
+	If Topic == HAMQTTMod.COMMAND_LED_STATUS_TOPIC Then
+		' Set the led status to on (payload "1") or off (payload "0")
+		' [Main.HAMQTTMod.MessageArrived][I] Topic=hawe/COSensor/command/led_status, Payload=1 length=1
+		Log("[Main.HAMQTTMod.MessageArrived][I] Received command led_status. ", Convert.BoolToOnOff(Payload == "1"))
+		m5.SetLed(Payload == "1")
+	End If
+End Sub
+#End Region

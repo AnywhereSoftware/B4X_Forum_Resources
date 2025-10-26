@@ -1,0 +1,189 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=resp8266wifi
+Library4=rhttputils2
+Library5=rm5stickcplus2
+Library6=rrandomaccessfile
+Module1=PanelMod
+Module2=WiFiMod
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=2
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		SolarBatteryMonitorHomeAssistant
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Sent in regular interval (60s) a HTTP GET request to the Home Assistant (HA) server, parse the response containing solar data and display.
+'				There are multiple pages to display selective solar data.
+'				A push-button enables to select a page with dedicated solar info, i.e. dashboard, battery charge, power from solar, information.
+'				Button press: 
+'				Btn A = Big button device top - show selected page
+'				Btn B = Small button top left - show page dashboard
+'				Btn PWR = Small button bottom right - show page information. Note: press > 6 seconds shuts M5 down
+'				Network credentials are defined in the code module WiFiMod.
+'				In Home Assistant a Node-RED flow listens to HTTP requests with parameter '/endpoint/solarinfo&data=all'.
+'				See region PerformMeasurement for more data parsing info.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+'				B4R IDE settings: M5StickCPlus2, COM16, Partition scheme HUge App.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' 				B4R Additional libraries: rESP8266WiFi 1.60, rHttpUtils2 1.01, rMStickCPlus2 0.40, rConvert 1.40.
+' Modules:		WiFiMod - Handle WiFi connection.
+'				PanelMod - Handle M5 panel drawings.
+' Secrets:		Defined in WiFiMod.
+' Author:		Robert W.B. Linn
+' Date:			See Process_Globals VERSION
+' Wiring:		N/A
+' ToDo:			Btn A to change interval in minutes with max interval of 60 minutes.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Private Sub Process_Globals
+	Public VERSION As String = "20251023"
+
+	' Communication
+	Public SerialLine As Serial
+	Public Serial1 As Serial
+
+	' Timer Measurement
+	Private MeasurementTimer As Timer
+	Private MEASUREMENTTIMER_INTERVAL As ULong = 60000	' ms, every 60 seconds
+
+	' Data
+	Type TPowerData (PowerFromSolar As UInt,PowerToHouse As UInt,PowerToGrid As UInt,PowerFromGrid As UInt,PowerBattery As UInt,PowerFromBattery As UInt,PowerToBattery As UInt,PowerBatteryChargeState As UInt,PowerTimeStamp As UInt,PowerDateStamp As ULong)
+	Public PowerData As TPowerData
+
+	' Helper
+	Private bc As ByteConverter
+End Sub
+
+#Region Start
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log("[Main.AppStart][I] rStickCPlus2 Example PowerPanel HA")
+	Log("[Main.AppStart][I] Measurement interval=", MEASUREMENTTIMER_INTERVAL / 1000, "s")
+
+	' Init the M5 device as the power panel
+	PanelMod.Initialize
+
+	' Set M5 header & initial message
+	PanelMod.SetMessage("PowerPanel HA", "", "Initializing...", PanelMod.M5.COLOR_WHITE)
+
+	' Init the measurement timer reading data from the co sensor
+	MeasurementTimer.Initialize("PerformMeasurement", MEASUREMENTTIMER_INTERVAL)
+	' Disable first because need wifi
+	MeasurementTimer.Enabled = False
+
+	' Connect to the WiFi
+	WiFiMod.Connected = WiFiMod.Connect
+
+	' Wifi connected - start measurements
+	If WiFiMod.Connected Then
+		MeasurementTimer.Enabled = True
+		PanelMod.m5.SetLed(False)
+		PanelMod.SetMessage("PowerPanel HA", "", "WiFi connected", PanelMod.m5.COLOR_RED)
+		' Do not wait for the timer, but sent HA data request
+		HADataRequest
+	Else
+		PanelMod.SetMessage("PowerPanel HA", "", "Error WiFi disconnected", PanelMod.m5.COLOR_RED)
+		PanelMod.m5.SetLed(True)
+		Log("[Main.AppStart][E] WiFi connection failed.")
+	End If
+	PanelMod.SetMessage("PowerPanel HA", "", "Initializing OK...", PanelMod.m5.COLOR_WHITE)
+End Sub
+#End Region
+
+#Region PerformMeasurement
+' Perform a measurement by sending HTTP download (GET) request to HA Node-RED flow.
+' Node-RED flow to gather the requested data values and return a CSV string.
+' The event JobDone triggered by the HTTP request handles the Node-RED response.
+' The CSV string is split and assigned to global vars.
+' The selected page is updated.
+' Example CSV string received:
+' "powerfromsolar", "powerfromgrid", "powertogrid", "powertohouse", "powertobattery", "powerfrombattery", "batterychargestate", "powerdatestamp", "powertimestamp"
+' 2352,0,2071,281,0,0,100,20250414,1156
+' TODO: Strings are the least suitable format for communication with microcontrollers > use the B4RSerializator.
+
+' Perform a measurement by sending HTTP download (GET) request to HA Node-RED flow.
+Private Sub PerformMeasurement
+	' Check if wifi connected = abort if not connected
+	If Not(WiFiMod.Connected) Then
+		MeasurementTimer.Enabled = False
+		PanelMod.SetMessage("Perform Measurement", "", "Error WiFi connection", PanelMod.m5.COLOR_RED)
+		Log("[Main.PerformMeasurement][E] Not connected to WiFi. Timer stopped.")
+		Return
+	End If
+
+	' Get the data from the HA server by sending HTTP download (GET) request
+	HADataRequest
+	' Event JobDone is handling the result.
+End Sub
+
+' Ihit HTTP job and submit download request
+Private Sub HADataRequest
+	HttpJob.Initialize("HADataRequest")
+	'Log("[HARequest] url=", WiFiMod.HA_URL)
+
+	'Place the HTTP get request
+	HttpJob.Download(WiFiMod.HA_URL)
+	' Event JobDone handles the HTTP response
+End Sub
+
+' Handle HTTP request response
+Sub JobDone (Job As JobResult)
+	' Check if job is OK
+	If Job.Success Then
+		'Split the CVS string and set the data
+		Dim i As Byte = 0
+		For Each s() As Byte In bc.Split(Job.Response, ",")
+			i = i + 1
+			' Assign the data item to the global var
+			SetData(i, s)
+		Next
+		'Update the selected page
+		PanelMod.ShowPage
+		Log("[Main.JobDone][OK] name=", Job.JobName, ",success=", Job.Success, ",status=", Job.Status, ",response=", Job.Response,",timestamp=", PowerData.PowerTimeStamp)
+	Else
+		Log("[Main.JobDone][ERROR] status=", Job.status, ", message=", Job.ErrorMessage, ",response=",Job.Response)
+	End If
+End Sub
+
+'Assign the data received from HTTP request to the solar vars.
+Private Sub SetData(idx As Byte, s() As Byte)
+	'Convert arrays of bytes to numbers is not possible > convert to string first then assign to the number (will be casted by B4R)
+	Dim str As String = Convert.BytesToString(s)
+
+	'Assign the value to the solar data
+	If idx == 1 Then PowerData.PowerFromSolar = str
+	If idx == 2 Then PowerData.PowerFromGrid = str
+	If idx == 3 Then PowerData.PowerToGrid = str
+	If idx == 4 Then PowerData.PowerToHouse = str
+	If idx == 5 Then PowerData.PowerToBattery = str
+	If idx == 6 Then PowerData.PowerFromBattery = str
+	If idx == 7 Then PowerData.PowerBatteryChargeState = str
+	If idx == 8 Then PowerData.PowerDateStamp = str
+	
+	'Handle the last value with special actions
+	If idx == 9 Then
+		PowerData.PowerTimeStamp = str
+		
+		'Adjust the powertobattery valu
+		If PowerData.PowerToBattery > 0 Then
+			PowerData.PowerBattery = PowerData.PowerToBattery
+		Else
+			PowerData.PowerBattery = PowerData.PowerFromBattery * -1
+		End If
+	End If
+
+	Log("[Main.SetData][I] idx=", idx, ", data=", str, ", powertimestamp=", PowerData.PowerTimeStamp)
+End Sub
+#End Region
+

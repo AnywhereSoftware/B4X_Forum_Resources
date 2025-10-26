@@ -1,5 +1,5 @@
 ### [Web][SithasoDaisy5]🚀 Building Responsive Low-Code Web Apps with BANano in B4X by Mashiane
-### 09/14/2025
+### 10/19/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/168618/)
 
 Hi Fam  
@@ -92,4 +92,10 @@ Mashy
 **Complete Video Tutorial of creating the relational address book with SithasoDaisy5 Low Code**  
   
   
-[MEDIA=youtube]6-fVLzcbvi4[/MEDIA]
+[MEDIA=youtube]6-fVLzcbvi4[/MEDIA]  
+  
+  
+  
+**Tour SithasoDaisy5 LowCode**   
+  
+[MEDIA=youtube]NFuJpI7bAmI[/MEDIA]
