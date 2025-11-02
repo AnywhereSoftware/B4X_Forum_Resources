@@ -1,8 +1,8 @@
 ### [class] Google OAuth2 by Erel
-### 03/19/2024
+### 10/29/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/79426/)
 
-**GoogleOAuth2 class is compatible with B4A, B4i and B4J (new).**  
+**Edit:** The Android implementation will not work with Google services due to new restrictions. Use GoogleAuthorization instead with B4A: <https://www.b4x.com/android/forum/threads/google-authorization-with-authorizationclient.169164/>  
   
 It is no longer possible to use WebView to implement Google's OAuth2 authentication.  
 The solution is to open the default browser and set the redirection uri in such a way that the browser will redirect the response back to our app.  

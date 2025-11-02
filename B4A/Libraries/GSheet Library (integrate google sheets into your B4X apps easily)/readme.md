@@ -1,5 +1,5 @@
 ### GSheet Library (integrate google sheets into your B4X apps easily) by fernando1987
-### 01/23/2025
+### 10/31/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/138967/)
 
 **Gsheet  
@@ -83,14 +83,7 @@ Add this in your manifest:
   
 
 ```B4X
-AddActivityText(Main,  
-  <intent-filter>  
-  <action android:name="android.intent.action.VIEW" />  
-  <category android:name="android.intent.category.DEFAULT" />  
-  <category android:name="android.intent.category.BROWSABLE" />  
-  <data android:scheme="$PACKAGE$" />  
-  </intent-filter>  
-   )
+CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)
 ```
 
   
