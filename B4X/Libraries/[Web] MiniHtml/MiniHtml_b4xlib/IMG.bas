@@ -37,6 +37,14 @@ Public Sub src (value As String) As Tag
 	Return init.srcOf(value)
 End Sub
 
+Public Sub width (value As String) As Tag
+	Return init.attr("width", value)
+End Sub
+
+Public Sub height (value As String) As Tag
+	Return init.attr("height", value)
+End Sub
+
 'Set id attribute
 Public Sub id (value As String) As Tag
 	Return init.attr("id", value)

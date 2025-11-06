@@ -1,5 +1,5 @@
 ### Sign in with Apple and Firebase by Erel
-### 06/11/2021
+### 11/05/2025
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/116280/)
 
 If you want to authenticate without Firebase: <https://www.b4x.com/android/forum/threads/user-authentication-with-apple-id.113671/#content>  
@@ -38,4 +38,5 @@ Note that this class is different than the class from the previous tutorial.
   
 Updates:  
   
+v10.00 - Compatible with B4i v10.00.  
 v1.01 - Adds Auth\_Error event inside the class.

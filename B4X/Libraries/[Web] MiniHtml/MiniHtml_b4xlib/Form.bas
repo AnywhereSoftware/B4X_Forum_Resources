@@ -60,3 +60,23 @@ End Sub
 Public Sub sty (value As String) As Tag
 	Return init.sty(value)
 End Sub
+
+Public Sub hxGet (url As String) As Tag
+	Return init.attr("hx-get", url)
+End Sub
+
+Public Sub hxPost (url As String) As Tag
+	Return init.attr("hx-post", url)
+End Sub
+
+Public Sub hxPut (url As String) As Tag
+	Return init.attr("hx-put", url)
+End Sub
+
+Public Sub hxPatch (url As String) As Tag
+	Return init.attr("hx-patch", url)
+End Sub
+
+Public Sub hxDelete (url As String) As Tag
+	Return init.attr("hx-delete", url)
+End Sub

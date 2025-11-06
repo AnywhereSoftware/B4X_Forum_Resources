@@ -6,7 +6,7 @@ Version=4.5
 @EndOfDesignText@
 ' Created by: Aeric
 ' Credit to:  EnriqueGonzalez
-' Version: 0.20
+' Version: 0.30
 Sub Class_Globals
 	Private mId As String
 	Private mName As String
@@ -20,11 +20,11 @@ Sub Class_Globals
 	Private mAttributes As Map
 	Private mStyles As Map
 	Private mClasses As List
-	Public Const mNoTag 	As String = ""
-	Public Const mMeta 		As String = "meta"		' <meta>
-	Public Const mLink 		As String = "link"		' <tag />
-	Public Const mUniline 	As String = "uniline" 	' <tag></tag>
-	Public Const mMultiline	As String = "multiline"	' <tag> CRLF </tag>
+	Private Const mNoTag     As String = ""
+	Private Const mMeta      As String = "meta"		' <meta>
+	Private Const mLink      As String = "link"		' <tag />
+	Private Const mUniline   As String = "uniline" 	' <tag></tag>
+	Private Const mMultiline As String = "multiline"	' <tag> CRLF </tag>
 End Sub
 
 ' Initialize tag with tagName
@@ -44,7 +44,7 @@ Public Sub Initialize (tagName As String) As Tag
 			mMode = mMultiline
 		Case "meta", "input"
 			mMode = mMeta
-		Case "title", "h1", "h2", "h3", "h4", "h5", "script", "label", "button", "span", "li", "a", "i", "b", "u", "option", "bold", "italic", "underline", "strong", "em", "del", "th", "td", "small"
+		Case "title", "h1", "h2", "h3", "h4", "h5", "p", "script", "label", "button", "span", "li", "a", "i", "b", "u", "option", "bold", "italic", "underline", "strong", "em", "del", "th", "td", "small", "textarea"
 			mMode = mUniline
 		Case "img", "link", "br"
 			mMode = mLink
@@ -107,10 +107,14 @@ Public Sub Build3 (indent As Int, Line1CRLF As Boolean) As String
 		If tagOrString Is Tag Then
 			Dim mCurrent As Tag = tagOrString
 			Select mCurrent.TagName
-				Case "span", "strong", "small", "em", "b", "u"
+				Case "span", "strong", "small", "em", "b", "u", "textarea"
 					SB.Append(mCurrent.build) ' stay on same line
 				Case Else
-					SB.Append(mCurrent.build3(indent + 1, True))
+					If mTagName = "textarea" Then
+						SB.Append(mCurrent.build)
+					Else
+						SB.Append(mCurrent.build3(indent + 1, True))
+					End If
 			End Select
 		Else
 			SB.Append(tagOrString)
@@ -143,13 +147,25 @@ Public Sub setTagName (tagName As String) As Tag
 	Return Me
 End Sub
 
+' Get child by index
 Public Sub Child (tagIndex As Int) As Tag
 	Return mChildren.Get(tagIndex)
 End Sub
 
+' Get child matches id attribute
 Public Sub ChildById (value As String) As Tag
 	For i = 0 To mChildren.Size - 1
 		If Child(i).mAttributes.Get("id") = value Then
+			Return Child(i)
+		End If
+	Next
+	Return Null
+End Sub
+
+' Get first child matches Tag Name
+Public Sub ChildByTagName (value As String) As Tag
+	For i = 0 To mChildren.Size - 1
+		If Child(i).TagName = value Then
 			Return Child(i)
 		End If
 	Next
@@ -260,9 +276,8 @@ End Sub
 
 'code: <code>script("js/bootstrap.js")</code>
 'output: <code><script src="js/bootstrap.js"></script></code>
-Public Sub script (src As String) As Tag
-	mChildren.Add(Html.create("script").attr("src", src))
-	Return Me
+Public Sub script (value As String) As Tag
+	Return script2(CreateMap("src": value))
 End Sub
 
 'code: <code>script2(CreateMap("src": "js/bootstrap.js"))</code>
@@ -273,12 +288,19 @@ End Sub
 
 'code: <code>script3("$cdn$/dist/htmx.min.js", "sha384...", "anonymous")</code>
 Public Sub script3 (src As String, integrity As String, crossorigin As String) As Tag
-	Dim Map1 As Map
-	Map1.Initialize
-	Map1.Put("src", src)
-	If integrity <> "" Then Map1.Put("integrity", integrity)
-	If crossorigin <> "" Then Map1.Put("crossorigin", crossorigin)
-	Return script2(Map1)
+	Dim keyvals As Map
+	keyvals.Initialize
+	keyvals.Put("src", src)
+	If integrity <> "" Then keyvals.Put("integrity", integrity)
+	If crossorigin <> "" Then keyvals.Put("crossorigin", crossorigin)
+	Return script2(keyvals)
+End Sub
+
+' Wrap script inside script tags
+'output: <code><script>value</script></code>
+Public Sub script4 (value As String) As Tag
+	mChildren.Add(Html.create("script").multiline.text(value))
+	Return Me
 End Sub
 
 'Public Sub style (value As String) As Tag
@@ -325,47 +347,47 @@ Public Sub setSiblings (SiblingsTag As List)
 End Sub
 
 'Add a Child and return the added tag (child)
-Public Sub Add (ChildTag As Tag) As Tag
+Public Sub add (ChildTag As Tag) As Tag
 	mChildren.Add(ChildTag)
 	ChildTag.Parent = Me
 	Return ChildTag
 End Sub
 
 'Add a Child and return current tag (parent)
-Public Sub Add2 (ChildTag As Tag) As Tag
+Public Sub add2 (ChildTag As Tag) As Tag
 	mChildren.Add(ChildTag)
 	ChildTag.Parent = Me
 	Return Me
 End Sub
 
 'Add a Child only (no tag)
-Public Sub Add3 (ChildTag As Tag)
+Public Sub add3 (ChildTag As Tag)
 	mChildren.Add(ChildTag)
 	ChildTag.Parent = Me
 End Sub
 
 'Add to Parent and return current tag (child)
-Public Sub AddTo (ParentTag As Tag) As Tag
+Public Sub addTo (ParentTag As Tag) As Tag
 	ParentTag.add(Me)
 	mParent = ParentTag
 	Return Me
 End Sub
 
 'Add to Parent and return the parent tag (parent)
-Public Sub AddTo2 (ParentTag As Tag) As Tag
+Public Sub addTo2 (ParentTag As Tag) As Tag
 	ParentTag.add(Me)
 	mParent = ParentTag
 	Return ParentTag
 End Sub
 
 'Add to Parent only (no tag)
-Public Sub AddTo3 (ParentTag As Tag)
+Public Sub addTo3 (ParentTag As Tag)
 	ParentTag.add(Me)
 	mParent = ParentTag
 End Sub
 
 'Add a Sibling and return the sibling tag (sibling)
-Public Sub AddSibling (siblingTag As Tag) As Tag
+Public Sub addSibling (siblingTag As Tag) As Tag
 	mSiblings.Add(siblingTag)
 	mParent.Add(siblingTag)
 	siblingTag.Parent = mParent
@@ -373,7 +395,7 @@ Public Sub AddSibling (siblingTag As Tag) As Tag
 End Sub
 
 'Add a Sibling and return parent tag (parent)
-Public Sub AddSibling2 (siblingTag As Tag) As Tag
+Public Sub addSibling2 (siblingTag As Tag) As Tag
 	mSiblings.Add(siblingTag)
 	mParent.Add(siblingTag)
 	siblingTag.Parent = mParent
@@ -381,14 +403,14 @@ Public Sub AddSibling2 (siblingTag As Tag) As Tag
 End Sub
 
 'Add a Sibling only (no tag)
-Public Sub AddSibling3 (siblingTag As Tag)
+Public Sub addSibling3 (siblingTag As Tag)
 	mSiblings.Add(siblingTag)
 	mParent.Add(siblingTag)
 	siblingTag.Parent = mParent
 End Sub
 
 'Add a Sibling and return the current tag (current)
-Public Sub AddSibling4 (siblingTag As Tag) As Tag
+Public Sub addSibling4 (siblingTag As Tag) As Tag
 	mSiblings.Add(siblingTag)
 	mParent.Add(siblingTag)
 	Return Me
@@ -396,52 +418,52 @@ End Sub
 
 'Same as add (child)
 Public Sub down (ChildTag As Tag) As Tag
-	Return Add(ChildTag)
+	Return add(ChildTag)
 End Sub
 
 'Same as add2 (parent)
 Public Sub down2 (ChildTag As Tag)
-	Add2(ChildTag)
+	add2(ChildTag)
 End Sub
 
 'Same as add3
 Public Sub down3 (ChildTag As Tag)
-	Add3(ChildTag)
+	add3(ChildTag)
 End Sub
 
 'same as addTo (child)
 Public Sub up (ParentTag As Tag) As Tag
-	Return AddTo(ParentTag)
+	Return addTo(ParentTag)
 End Sub
 
 'same as addTo2 (parent)
 Public Sub up2 (ParentTag As Tag) As Tag
-	Return AddTo2(ParentTag)
+	Return addTo2(ParentTag)
 End Sub
 
 'same as addTo3 (no tag)
 Public Sub up3 (ParentTag As Tag)
-	AddTo3(ParentTag)
+	addTo3(ParentTag)
 End Sub
 
 'Add a Sibling and return the sibling tag (sibling)
 Public Sub sib (siblingTag As Tag) As Tag
-	Return AddSibling(siblingTag)
+	Return addSibling(siblingTag)
 End Sub
 
 'Add a Sibling and return parent tag (parent)
 Public Sub sib2 (siblingTag As Tag) As Tag
-	Return AddSibling2(siblingTag)
+	Return addSibling2(siblingTag)
 End Sub
 
 'Add a Sibling only (no tag)
 Public Sub sib3 (siblingTag As Tag)
-	AddSibling3(siblingTag)
+	addSibling3(siblingTag)
 End Sub
 
 'Add a Sibling and return the current tag (current)
 Public Sub sib4 (siblingTag As Tag) As Tag
-	Return AddSibling4(siblingTag)
+	Return addSibling4(siblingTag)
 End Sub
 
 'Replace/return maps of attributes
@@ -646,15 +668,39 @@ Public Sub name (value As String) As Tag
 	Return Me
 End Sub
 
+'Set data- attribute
+Public Sub data (key As String, value As Object) As Tag
+	mAttributes.Put("data-" & key, value)
+	Return Me
+End Sub
+
+'Set aria- attribute
+Public Sub aria (key As String, value As Object) As Tag
+	mAttributes.Put("aria-" & key, value)
+	Return Me
+End Sub
+
 'Set action attribute
 Public Sub action (value As String) As Tag
 	mAttributes.Put("action", value)
 	Return Me
 End Sub
 
+'Set value attribute
+Public Sub valueOf (value As String) As Tag
+	mAttributes.Put("value", value)
+	Return Me	
+End Sub
+
 'Set type attribute
 Public Sub typeOf (value As String) As Tag
 	mAttributes.Put("type", value)
+	Return Me
+End Sub
+
+'Set form attribute
+Public Sub formOf (value As String) As Tag
+	mAttributes.Put("form", value)
 	Return Me
 End Sub
 
@@ -667,6 +713,24 @@ End Sub
 'Set src attribute
 Public Sub srcOf (value As String) As Tag
 	mAttributes.Put("src", value)
+	Return Me
+End Sub
+
+'Set target attribute
+Public Sub targetOf (value As String) As Tag
+	mAttributes.Put("target", value)
+	Return Me	
+End Sub
+
+'Set width attribute
+Public Sub width (value As String) As Tag
+	mAttributes.Put("width", value)
+	Return Me
+End Sub
+
+'Set height attribute
+Public Sub height (value As String) As Tag
+	mAttributes.Put("height", value)
 	Return Me
 End Sub
 
@@ -683,6 +747,13 @@ End Sub
 'Add link with rel="stylesheet"
 Public Sub linkCss (href As String) As Tag
 	Return addLink(href, "stylesheet", "", "")
+End Sub
+
+'Add link with rel="icon"
+Public Sub linkIcon (linktype As String, href As String) As Tag
+	Dim keyvals As Map = CreateMap("rel": "icon", "href": href)
+	If linktype <> "" Then keyvals.Put("type", linktype)
+	Return addLink2(keyvals)
 End Sub
 
 'Add a class
@@ -802,5 +873,11 @@ End Sub
 
 Public Sub hxSwapOob (value As String) As Tag
 	mAttributes.Put("hx-swap-oob", value)
+	Return Me
+End Sub
+
+'e.g <code>hxOn(":after-request", statement)</code>
+Public Sub hxOn (event As String, value As String) As Tag
+	mAttributes.Put("hx-on:" & event, value)
 	Return Me
 End Sub

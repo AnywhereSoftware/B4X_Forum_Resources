@@ -9,6 +9,7 @@ Sub Class_Globals
 	Public EscapedEntitiesMap As Map
 	Private mIndex As Int
 	Private mHtml As String
+	Private mShowParserLogs As Boolean
 	Private WhiteSpace As String = " " & TAB & Chr(10) & Chr(13)
 	Private VoidTags As B4XSet
 	Private Const COLOR_ORANGE As Int = -29696
@@ -24,6 +25,10 @@ Public Sub Initialize
 		"embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"))
 	EscapedEntitiesMap = CreateMap("quot": $"""$, "amp": "&", "apos": "'", "lt": "<", "gt": ">", _
 		"nbsp": " ")
+End Sub
+
+Public Sub setShowParserLogs (value As Boolean)
+	mShowParserLogs = value
 End Sub
 
 Public Sub Parse (HtmlText As String) As HtmlNode
@@ -199,14 +204,46 @@ Private Sub ParseAttributes (Parent As HtmlNode)
 	Dim start As Int = mIndex
 	ReadUntil(">")
 	Dim s As String = mHtml.SubString2(start, mIndex - 1)
+	
+	' Parse attributes with values (key="value" or key='value')
 	For Each EscapeChar As String In Array("'", $"""$)
-		'allow attribute names contain dashes (-), e.g data-value or aria-label
-		'Dim m As Matcher = Regex.Matcher($"(\w+)\s*=\s*\${EscapeChar}([^${EscapeChar}]+)\${EscapeChar}"$, s)
 		Dim m As Matcher = Regex.Matcher($"([a-zA-Z0-9-]+)\s*=\s*\${EscapeChar}([^${EscapeChar}]+)\${EscapeChar}"$, s)
 		Do While m.Find
 			Parent.Attributes.Add(CreateHtmlAttribute(m.Group(1), m.Group(2)))
 		Loop
 	Next
+	
+	' Parse boolean attributes (standalone keys like "disabled")
+	' More precise regex to avoid matching class values
+	Dim m As Matcher = Regex.Matcher($"\b([a-zA-Z0-9-]+)(?=\s*[/>]|\s*$)"$, s)
+	Do While m.Find
+		Dim attrName As String = m.Group(1)
+		
+		' Skip if this is part of a key=value pair (already processed above)
+		Dim isAlreadyProcessed As Boolean = False
+		For Each existingAttr As HtmlAttribute In Parent.Attributes
+			If existingAttr.Key = attrName Then
+				isAlreadyProcessed = True
+				Exit
+			End If
+		Next
+		
+		' Also check if this might be part of a class value by looking at the context
+		If isAlreadyProcessed = False Then
+			' More validation: check if this looks like a valid boolean attribute
+			' Common boolean attributes in HTML
+			Dim commonBooleanAttrs As List = Array As String("disabled", "readonly", "checked", "required", "selected", "multiple", "autofocus", "novalidate", "formnovalidate", "hidden")
+			
+			If commonBooleanAttrs.IndexOf(attrName) > -1 Then
+				Parent.Attributes.Add(CreateHtmlAttribute(attrName, attrName))
+			Else
+				' Log unexpected boolean attributes for debugging
+				If mShowParserLogs Then
+					LogColor($"Warning: Unexpected boolean attribute: ${attrName}"$, COLOR_RED)
+				End If
+			End If
+		End If
+	Loop
 End Sub
 
 Private Sub CreateHtmlNode (Name As String, Parent As HtmlNode) As HtmlNode
@@ -232,7 +269,9 @@ Public Sub PrintNode (node As HtmlNode)
 End Sub
 
 Private Sub PrintNodeHelper (node As HtmlNode, Indent As String)
-	LogColor($"${Indent}*** ${node.Name} ***"$, COLOR_ORANGE)
+	If mShowParserLogs Then
+		LogColor($"${Indent}*** ${node.Name} ***"$, COLOR_ORANGE)
+	End If
 	For Each attribute As HtmlAttribute In node.Attributes
 		Log($"${Indent}${attribute.Key}: "${attribute.Value}""$)
 	Next
@@ -281,7 +320,6 @@ Public Sub IsNodeMatches(Node As HtmlNode, TagName As String, Attribute As HtmlA
 	Return False
 End Sub
 
-
 'Returns the text value from a node.
 Public Sub GetTextFromNode (Node As HtmlNode, ChildIndex As Int) As String
 	Dim tn As HtmlNode = Node.Children.Get(ChildIndex)
@@ -323,42 +361,47 @@ Public Sub UnescapeEntities(XmlInput As String) As String
 End Sub
 
 Public Sub ConvertToTag (node1 As HtmlNode) As Tag
-	Dim parent As Tag
-	parent.Initialize(node1.Name)
-	Dim class1 As String = GetAttributeValue(node1, "class", "")
-	Dim style1 As String = GetAttributeValue(node1, "style", "")
-	If class1 <> "" Then parent.addClass(class1)
-	If style1 <> "" Then parent.addStyle(style1)
-	For Each att As HtmlAttribute In node1.Attributes
-		If att.Key <> "class" And att.Key <> "style" Then ' find other attributes
-			If att.Key = "value" And att.Value.Trim.Length > 0 Then
-				If node1.Name = "input" Then ' has value key
-					LogColor($"${att.Key}=${att.Value}"$, COLOR_ORANGE)
-					parent.attr(att.Key, att.Value.Trim)
-				Else
-					' ignore empty values (experimental)
-					If att.Value.Trim.Length > 0 Then
-						LogColor($"${att.Key}=${att.Value}"$, COLOR_ORANGE)
-						parent.Text(att.Value.Trim) ' value
-					End If
-				End If
-			Else
-				parent.attr(att.Key, att.Value) ' type, id, placeholder, for
-			End If
-		End If
-	Next
-	For Each child As HtmlNode In node1.Children
-		Dim tag2 As Tag = ConvertToTag(child)
-		If tag2.TagName = "text" Then
-			If tag2.Attributes.ContainsKey("value") Then
-				LogColor(tag2.Build & "         ** ignored **", COLOR_RED) ' ignore this
-			Else
-				LogColor(tag2.Build & "         " & tag2.Attributes, COLOR_BLUE) ' Text
-				parent.add(tag2)
-			End If
-		Else
-			parent.add(tag2)
-		End If
-	Next
-	Return parent
+    Dim parent As Tag
+    parent.Initialize(node1.Name)
+    
+    ' Handle class and style attributes first
+    Dim class1 As String = GetAttributeValue(node1, "class", "")
+    Dim style1 As String = GetAttributeValue(node1, "style", "")
+    If class1 <> "" Then parent.addClass(class1)
+    If style1 <> "" Then parent.addStyle(style1)
+
+    For Each att As HtmlAttribute In node1.Attributes
+        ' Skip class and style as we already handled them
+        If att.Key = "class" Or att.Key = "style" Then Continue
+        If att.Key = "value" And att.Value.Trim.Length > 0 Then
+            If node1.Name = "input" Or node1.Name = "option" Then
+                parent.attr(att.Key, att.Value.Trim)
+            Else
+                If att.Value.Trim.Length > 0 Then
+                    parent.Text(att.Value.Trim)
+                End If
+            End If
+        Else
+            ' Handle boolean attributes (where key = value)
+            If att.Key = att.Value Then
+                parent.attr3(att.Key) ' boolean attribute
+            Else
+                parent.attr(att.Key, att.Value) ' regular attribute
+            End If
+        End If
+    Next
+    
+    For Each child As HtmlNode In node1.Children
+        Dim tag2 As Tag = ConvertToTag(child)
+        If tag2.TagName = "text" Then
+            If tag2.Attributes.ContainsKey("value") Then
+                ' ignore text nodes with "value" attribute
+            Else
+                parent.add(tag2)
+            End If
+        Else
+            parent.add(tag2)
+        End If
+    Next
+    Return parent
 End Sub

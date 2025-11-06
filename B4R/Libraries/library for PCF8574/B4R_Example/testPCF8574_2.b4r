@@ -1,0 +1,174 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rpcf8574
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private pcf As PCF8574
+	Private pcf2 As PCF8574
+	Private bc As ByteConverter
+	Dim keyPin=1 As Byte '//Taste auf PCF8574 - Pin 1
+	Dim ledPin=2 As Byte '//LED auf PCF8574 - Pin 2
+	Dim millisave1=0, millisave2=0, millisave3=0 As ULong
+	Dim LedRun= True As bool
+	Dim rebond = 0 As Byte
+	Private pfcOK As Byte = 0
+End Sub
+
+'=======================================
+'I2C config depending depending of hard:
+'=======================================
+'esp32 
+'  with defaumt Wire, pins by default For only one I2C
+'    SCL : GPIO 22  (I2C -> Data)
+'    SDA : GPIO 21  (I2C -> Clock)
+'	pcf.Initialize(0x20)
+'   pcf.begin(0xFF)  
+
+'  with TwoWire pins can be changed
+'    SDA : GPIO 33
+'    SCL : GPIO 32
+'	pcf.Initializeesp32(0x20,pcf.I2C_TwoWire0)
+'	pcf.beginesp(33,32,0xFF)
+
+'  with TwoWire both I2C can be used
+'    pins by default can be used For I2C one, but can be changes also
+'    I2C Bus 1: uses GPIO 27 (SDA) And GPIO 26 (SCL);
+'    I2C Bus 2: uses GPIO 33 (SDA) And GPIO 32 (SCL);
+'    pins must be defined For second I2C
+'	Private pcf1 As PCF8574
+'	Private pcf2 As PCF8574
+'	pcf1.Initializeesp32(0x20,pcf.I2C_TwoWire0)
+'	pcf1.beginesp(27,26,0xFF)
+'	pcf2.Initializeesp32(0x20,pcf.I2C_TwoWire1)
+'	pcf2.beginesp(33,32,0xFF)
+
+'esp8266
+' with Wire pins by default:
+'   SCL : GPIO 5 D1
+'   SDA : GPIO 4 D2
+'	pcf.Initialize(0x20)
+'   pcf.begin(0xFF)          pins by default
+' pins can be changed 
+'	pcf.Initialize(0x20)
+'	pcf.beginesp(33,32,0xFF) if pins must be changed
+ 
+'Arduino Nano
+'   SDA: A4
+'   SCL: A5
+'	pcf.Initialize(0x20)
+'   pcf.begin(0xFF)  
+
+'Arduino Uno
+'   SDA: PIN18
+'   SCL: PIN19
+'	pcf.Initialize(0x20)
+'   pcf.begin(0xFF)  
+
+'Arduino Mega
+'   SDA: PIN20
+'   SCL: PIN21
+'	pcf.Initialize(0x20)
+'   pcf.begin(0xFF)  
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	CallSubPlus("PCF8574",1000,0)
+End Sub
+	
+private Sub PCF8574(tag As Byte)
+	Log("***** start PCF8574 run *****")
+	pcf.Initialize(0x20)                       'case Mega, Uno, Nano, esp8266 or esp32 with wire by default
+	pcf.begin(pcf.PCF8574_INITIAL_VALUE)       'default 0xFF  case with pins by default
+	If pcf.isConnected Then
+		Log("PCF8574 connected")
+		pfcOK = 1
+	Else
+		Log("PCF8574 not connected")
+		pfcOK = 0
+	End If
+	
+'	pcf2.Initialize(0x22)
+	pcf2.InitializeEsp8266(0x22, 5, 14)
+'	pcf2.InitializeEsp32(0x22,pcf2.Wire1, 5, 14)
+	pcf2.begin(0xFF)
+	If pcf2.isConnected Then
+		Log("PCF8574_2 connected")
+		pfcOK = pfcOK + 1
+	Else
+		Log("PCF8574_2 not connected")
+		pfcOK = 0
+	End If
+	If pfcOK <> 0 Then
+		pcf2.write8(0xFF)
+		pcf.write8(0xFF)
+		AddLooper("looper")
+	Else
+		CallSubPlus("PCF8574",3000,0)
+	End If
+End Sub
+
+Sub looper
+	If LedRun And (Millis > (millisave1+150)) Then
+		millisave1 = Millis
+		LedOn_Off
+	End If
+	If Millis > (millisave2+300) Then
+		millisave2 = Millis
+		check_key
+	End If
+	If Millis > (millisave3+300) Then
+		millisave3 = Millis
+		check_button
+	End If
+	
+End Sub
+
+Sub check_key
+	Dim check = pcf.read8 As Byte
+'	If check <> 0xFF Then Log(check)
+	If Bit.And(check,0x01) =0 Then Log( "button UP")
+	If Bit.And(check,0x02) =0 Then Log( "button DOWN")
+	If Bit.And(check,0x04) =0 Then Log( "button LEFT")
+	If Bit.And(check,0x08) =0 Then Log( "button RIGHT")
+	If Bit.And(check,0x10) =0 Then Log( "button PUSH")
+	If Bit.And(check,0x20) =0 Then Log( "button SET")
+	If Bit.And(check,0x40) =0 Then Log( "button RESET")
+End Sub
+
+Sub LedOn_Off
+
+	pcf2.toggle(ledPin)
+	
+End Sub
+
+Sub check_button
+	If pcf2.readButton(keyPin) = 0 Then
+		If rebond <  1 Then
+			LedRun = Not(LedRun)
+			rebond = 2
+		Else
+			If rebond > 0 Then rebond = rebond -1
+		End If
+		Log("button ON")
+	Else
+		If rebond > 0 Then rebond = rebond -1
+	End If
+
+End Sub

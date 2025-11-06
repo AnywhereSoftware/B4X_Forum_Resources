@@ -41,6 +41,12 @@ Public Sub href (value As String) As Tag
 	Return init.hrefOf(value)
 End Sub
 
+'Set target attribute
+Public Sub target (value As String) As Tag
+	Return init.targetOf(value)
+End Sub
+
+
 'Add a class
 Public Sub cls (value As String) As Tag
 	Return init.cls(value)

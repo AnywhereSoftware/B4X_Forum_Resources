@@ -1,5 +1,5 @@
 ### Local Mac Builder Installation by Erel
-### 10/16/2025
+### 11/04/2025
 [B4X Forum - B4i - Tutorials](https://www.b4x.com/android/forum/threads/46402/)
 
 iOS compilation requires an Apple Mac computer. Developers have two options with B4i:  
@@ -9,7 +9,7 @@ iOS compilation requires an Apple Mac computer. Developers have two options with
 These instructions explain how to install the builder on a local Mac machine.  
   
 1. Download OpenJDK 19.0.1: <https://jdk.java.net/archive/> (Mac/AArch64 for Arm based Mac or Mac/x64 for Intel based Mac).  
-2. Install **Xcode 16:** <https://developer.apple.com/download/all/?q=xcode+16>  
+2. Install **Xcode 26** from the app store or**:** <https://developer.apple.com/download/all/?q=xcode+26>  
 3. You need to run Xcode at least once. Approve installation of additional components when asked.  
 4. Download and unzip the B4i-Builder.  
 5. Open a terminal and navigate to B4i-Builder folder.  
@@ -38,5 +38,4 @@ Click on the "Always allow" button. This will be fixed in the next update.
   
 **Troubleshooting**  
   
-BuildServer v1.02 includes a new test page which provides information about the server, including the SSL key ip address and the libraries versions.  
-You can access this page with: <Mac ip>:51041/test
+Check the "Test" page: <Mac ip>:51041/test

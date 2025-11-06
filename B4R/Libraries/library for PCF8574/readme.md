@@ -1,5 +1,5 @@
 ### library for PCF8574 by candide
-### 08/02/2022
+### 11/01/2025
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/127531/)
 
 it is a wrapper for PCF8574 based of arduino library from <https://github.com/RobTillaart/PCF8574/>  
@@ -53,7 +53,7 @@ a few changes in initialize and begin to be compatible multiple boards
 =======================================  
 'I2C config is depending depending of hard:  
 '=======================================  
-'esp32   
+'esp32  
 ' with defaumt Wire, pins by default For only one I2C  
 ' SCL : GPIO 22 (I2C -> Data)  
 ' SDA : GPIO 21 (I2C -> Clock)  
@@ -84,7 +84,7 @@ a few changes in initialize and begin to be compatible multiple boards
 ' SDA : GPIO 4 D2  
 ' pcf.Initialize(0x20)  
 ' pcf.begin(0xFF) pins by default  
-' pins can be changed   
+' pins can be changed  
 ' pcf.Initialize(0x20)  
 ' pcf.beginesp(33,32,0xFF) if pins must be changed  
    
@@ -104,4 +104,6 @@ a few changes in initialize and begin to be compatible multiple boards
 ' SDA: PIN20  
 ' SCL: PIN21  
 ' pcf.Initialize(0x20)  
-' pcf.begin(0xFF)
+' pcf.begin(0xFF)  
+  
+25-11-01 new version based on 0.4.4 delivery in Githib <https://github.com/RobTillaart/PCF8574>

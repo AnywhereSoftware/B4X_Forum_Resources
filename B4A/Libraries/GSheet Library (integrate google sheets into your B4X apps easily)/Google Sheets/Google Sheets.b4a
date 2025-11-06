@@ -1,0 +1,471 @@
+﻿Build1=Default,google.sheets.example
+File1=add.bal
+File2=Layout.bal
+File3=Login.bal
+File4=Notes.bal
+File5=reloj.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=core
+Library2=gsheets
+Library3=wobblemenu
+Library4=xui
+Library5=xui views
+Library6=bitmapsasync
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~~\n~~\n~
+Module1=codes
+Module2=Starter
+NumberOfFiles=5
+NumberOfLibraries=6
+NumberOfModules=2
+Version=13.4
+@EndOfDesignText@
+#Region Project Attributes
+    #ApplicationLabel:TaskApp
+    #VersionCode: 1
+    #VersionName: 
+    'SupportedOrientations possible values: unspecified, landscape or portrait.
+    #SupportedOrientations: portrait
+    #CanInstallToExternalStorage: False
+#End Region
+
+#Region Activity Attributes
+    #FullScreen: false
+    #IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Type task(NameTask As String, StatusTask As String, DateTask As String, Id As Int)
+	Private WobbleMenu1 As WobbleMenu
+	Private Panel1 As Panel
+	Private Connect As Button
+	Private Disconnect As Button
+	Dim gs As GSheets
+	Private Save As Button
+	Dim state As String = "Initiated"
+	Private CheckBox1 As CheckBox
+	Private CheckBox2 As CheckBox
+	Private CheckBox3 As CheckBox
+	Private B4XFloatTextField1 As B4XFloatTextField ' Task Name/Title
+	Private B4XFloatTextField2 As B4XFloatTextField ' Task Date
+	Private CustomListView1 As CustomListView
+	Private IdRow As Int = 0 ' Used for updating an existing row in Google Sheets
+
+	Private ImageView1 As ImageView ' For user profile image
+	Private LabelMail As Label
+	Private LabelName As Label
+	Private ImageLoader As BitmapsAsync
+	Private xIV As B4XView
+	Private DeleteLb As Label
+End Sub
+
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	ImageLoader.Initialize
+	gs.Initialize(Me,"gs")
+	gs.Sheets_name = "Hoja 1" ' Assuming this is your target sheet name
+	gs.SpreadsheetsId = "1rSe34K-uTDmHdQObDSa9Nr0Hm6UPlf818OKC4FkioUU"
+	codes.SetStatusBarColor(0xFF4F8E6C)
+	codes.SetNavigationBarColor(xui.Color_White)
+	Activity.LoadLayout("Layout")
+	Panel1.RemoveAllViews
+	Panel1.LoadLayout("Login") ' Load the initial login/account view
+	xIV = ImageView1
+    
+	' Set up WobbleMenu tabs
+	WobbleMenu1.SetTabTextIcon(1,"Account",Chr(0xF2BE),Typeface.FONTAWESOME)
+	WobbleMenu1.SetTabTextIcon(2,"New",Chr(0xF067),Typeface.FONTAWESOME)
+	WobbleMenu1.SetTabTextIcon(3,"Tasks",Chr(0xF046),Typeface.FONTAWESOME)
+    
+	LoadUserProfile ' Load profile info on startup
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Private Sub WobbleMenu1_Tab1Click ' Account Tab
+	Panel1.RemoveAllViews
+	Panel1.LoadLayout("Login")
+	LoadUserProfile
+End Sub
+
+Private Sub WobbleMenu1_Tab2Click ' New Task Tab
+	Panel1.RemoveAllViews
+	Panel1.LoadLayout("add")
+End Sub
+
+Private Sub WobbleMenu1_Tab3Click ' Tasks List Tab
+	Panel1.RemoveAllViews
+	Panel1.LoadLayout("Notes")
+	list ' Load the task list
+End Sub
+
+
+#Region Login
+Private Sub Connect_Click
+	gs.Connect
+End Sub
+
+Private Sub Disconnect_Click
+	gs.GoogleAndroidAuthorization.SignOut
+End Sub
+
+Private Sub gs_Connect (Success As Boolean)
+	If Success Then
+		' Actions after successful connection
+	End If
+End Sub
+
+Private Sub LoadUserProfile
+	gs.GetDriveUserInfo
+	Wait For gs_AccountInfoAvailable (Success As Boolean, AccountInfo As UserInformation)
+    
+	If Success Then
+		LabelName.Text = AccountInfo.displayName
+		LabelMail.Text = AccountInfo.emailAddress
+		LabelName.Visible = True
+		LabelMail.Visible = True
+        
+		' Hide image until it's ready
+		ImageView1.Visible = False
+        
+		If AccountInfo.photoLink <> "" And AccountInfo.photoLink <> Null Then
+			DownloadAndSetImage(AccountInfo.photoLink, ImageView1)
+		Else
+			' SetDefaultUserImage (Uncomment if default image is implemented)
+		End If
+		gs.GetSheet(gs.Sheets_name)
+Wait For gs_get_success(x As List, Success As Boolean)
+	If Success = True Then
+		Log(x.Size)
+			WobbleMenu1.SetBadge(3,x.Size,xui.Color_RGB(95, 159, 124),xui.Color_White)
+	Else
+
+	End If
+
+	Else
+		' No account connected
+		LabelName.Visible = False
+		LabelMail.Visible = False
+		' SetDefaultUserImage (Uncomment if default image is implemented)
+	End If
+End Sub
+
+'=== Download and Round Image ===
+Sub DownloadAndSetImage(Url As String, iv As ImageView)
+	iv.Visible = False ' Ensure it is hidden initially
+    
+	If Url = "" Or Url = Null Then
+		' SetDefaultUserImage (Uncomment if default image is implemented)
+		Return
+	End If
+    
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download(Url)
+    
+	Wait For (j) JobDone(j As HttpJob)
+    
+	If j.Success Then
+		Try
+			Wait For (ImageLoader.LoadFromHttpJob(j, 500dip, 500dip)) Complete (bmp As B4XBitmap)
+            
+			' Round and assign
+			Dim roundBmp As B4XBitmap = CreateRoundBitmap(bmp, iv.Width)
+			iv.Bitmap = roundBmp
+			iv.Visible = True ' Only visible when ready
+            
+		Catch
+			Log("Error processing image: " & LastException)
+			' SetDefaultUserImage (Uncomment if default image is implemented)
+		End Try
+	Else
+		Log("Error downloading image: " & j.ErrorMessage)
+		' SetDefaultUserImage (Uncomment if default image is implemented)
+	End If
+    
+	j.Release
+End Sub
+
+Sub CreateRoundBitmap(Input As B4XBitmap, Size As Int) As B4XBitmap
+	If Input.Width <> Input.Height Then
+		Dim l As Int = Min(Input.Width, Input.Height)
+		Input = Input.Crop(Input.Width / 2 - l / 2, Input.Height / 2 - l / 2, l, l)
+	End If
+	Dim c As B4XCanvas
+	Dim xview As B4XView = xui.CreatePanel("")
+	xview.SetLayoutAnimated(0, 0, 0, Size, Size)
+	c.Initialize(xview)
+	Dim path As B4XPath
+	path.InitializeOval(c.TargetRect)
+	c.ClipPath(path)
+	c.DrawBitmap(Input.Resize(Size, Size, False), c.TargetRect)
+	c.RemoveClip
+	c.DrawCircle(c.TargetRect.CenterX, c.TargetRect.CenterY, c.TargetRect.Width / 2 - 2dip, xui.Color_RGB(213, 210, 245), False, 5dip)
+	c.Invalidate
+	Dim res As B4XBitmap = c.CreateBitmap
+	c.Release
+	Return res
+End Sub
+#End Region
+
+
+#Region Add_Task
+Private Sub Save_Click
+	' Validate fields are not empty
+	If B4XFloatTextField1.Text.Trim = "" Then
+		xui.MsgboxAsync("Please enter the task name.", "Required Field")
+		Return
+	End If
+    
+	If B4XFloatTextField2.Text.Trim = "" Then
+		xui.MsgboxAsync("Please enter the date.", "Required Field")
+		Return
+	End If
+    
+	If state = "" Or (state <> "Initiated" And state <> "Earring" And state <> "Finalized") Then
+		xui.MsgboxAsync("Please select a status.", "Required Status")
+		Return
+	End If
+    
+	Dim l1 As List
+	l1.Initialize
+	l1.Add(Array As String(B4XFloatTextField1.Text.Trim, state, B4XFloatTextField2.Text.Trim))
+    
+	If IdRow > 0 Then ' Update existing task
+		gs.Updatesheet(IdRow, l1)
+		Wait For gs_Updatesheet_success(success As Boolean)
+		If success Then
+			xui.MsgboxAsync("Task updated successfully.", "Success")
+            
+			' Clear form
+			B4XFloatTextField1.Text = ""
+			B4XFloatTextField2.Text = ""
+			state = "Initiated"
+			CheckBox1.Checked = True
+			CheckBox2.Checked = False
+			CheckBox3.Checked = False
+            
+			' Optional: return to the list
+			WobbleMenu1.SetCurrentTab(3)
+		End If
+	Else ' Insert new task
+		gs.insert_list(l1)
+		Wait For gs_insert_list_success(success As Boolean)
+		If success Then
+			xui.MsgboxAsync("Task saved successfully.", "Success")
+            
+			' Clear form
+			B4XFloatTextField1.Text = ""
+			B4XFloatTextField2.Text = ""
+			state = "Initiated"
+			CheckBox1.Checked = True
+			CheckBox2.Checked = False
+			CheckBox3.Checked = False
+            
+			' Optional: return to the list
+			WobbleMenu1.SetCurrentTab(3)
+		End If
+	End If
+	DeleteLb.Visible = False
+	DeleteLb.Enabled  = False
+	IdRow = 0 ' Reset the row ID after save/update
+End Sub
+
+Private Sub CheckBox1_CheckedChange(Checked As Boolean) ' Initiated
+	If Checked Then
+		CheckBox2.Checked = False
+		CheckBox3.Checked = False
+		state = "Initiated"
+	End If
+End Sub
+
+Private Sub CheckBox2_CheckedChange(Checked As Boolean) ' Earring (Pending)
+	If Checked Then
+		CheckBox1.Checked = False
+		CheckBox3.Checked = False
+		state = "Earring"
+	End If
+End Sub
+
+Private Sub CheckBox3_CheckedChange(Checked As Boolean) ' Finalized (Completed)
+	If Checked Then
+		CheckBox1.Checked = False
+		CheckBox2.Checked = False
+		state = "Finalized"
+	End If
+End Sub
+
+Private Sub DeleteLb_Click
+	' Ask user for confirmation before proceeding with deletion
+	xui.Msgbox2Async("Are you sure you want to delete this task?", "Confirm Deletion", "Yes", "No", "", Null)
+	Wait For Msgbox_Result (Result As Int)
+
+	If Result = xui.DialogResponse_Positive Then
+		' User confirmed deletion
+		gs.delete(IdRow)
+		Wait For gs_delete_success(success As Boolean)
+
+		If success Then
+			xui.MsgboxAsync("Task deleted successfully.", "Success")
+
+			' Optional: Clear the form and reload the task list
+			B4XFloatTextField1.Text = ""
+			B4XFloatTextField2.Text = ""
+			IdRow = 0 ' Reset the row ID
+
+			' Go to the task list view and refresh
+			WobbleMenu1.SetCurrentTab(3)
+			list
+		Else
+			xui.MsgboxAsync("An error occurred during deletion. Please try again.", "Error")
+		End If
+	Else
+		Log("Deletion canceled by user.")
+	End If
+End Sub
+
+
+
+#End Region
+
+
+
+
+
+#Region Task_List
+Private Sub list ' Get and display the list of tasks
+	gs.GetSheet(gs.Sheets_name)
+    
+	Wait For gs_get_success(x As List, success As Boolean)
+	CustomListView1.Clear
+	WobbleMenu1.SetBadge(3,x.Size,xui.Color_RGB(95, 159, 124),xui.Color_White)
+	If success = True Then
+		For Each col As Map In x
+			Log(col.Get("id_row"))
+			CustomListView1.Add(CreateItem(col.Get("Task"), col.Get("State"), col.Get("Date"), col.Get("id_row")), col.Get("id_row"))
+		Next
+	Else
+		' Handle error or empty list case
+	End If
+End Sub
+
+Private Sub CreateItem(Title As String, status As String, Date As String, id As Int) As Panel
+    
+	Dim gd As GradientDrawable
+    
+	Dim cls(5) As Int
+	cls(0) = Colors.RGB(250, 250, 250)
+	cls(1) = Colors.RGB(250, 250, 250)
+	cls(2) = Colors.RGB(250, 250, 250)
+	cls(3) = Colors.RGB(250, 250, 250)
+	cls(4) = Colors.RGB(250, 250, 250)
+    
+	gd.Initialize("BOTTOM_TOP", cls)
+	gd.CornerRadius = 2%x
+    
+    
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0, 0, 1%y, 100%x, 20%y)
+	p.Color = Colors.Transparent
+    
+	' Inner panel for card-like appearance
+	Dim p2 As Panel
+	p2.Initialize("p") ' Click event handler p_Click is registered here
+	p.AddView(p2, 5%x, 3%y, 90%x, 14%y)
+	p2.Background = gd
+	p2.Elevation = 3dip
+    
+	' Icon (calendar image)
+	Dim im As ImageView
+	im.Initialize("")
+	im.Bitmap = LoadBitmap(File.DirAssets,"reloj.png")
+	im.Gravity = Gravity.FILL
+	p2.AddView(im, 5%x, 1%y, 10%y, 10%y)
+    
+	' Task Title (was 'fecha' - date in original comment, but used for Title)
+	Dim lTitle As Label
+	lTitle.Initialize("")
+	codes.Lblcolor(lTitle, Colors.RGB(78, 144, 113), 20, Title, xui.CreateDefaultBoldFont(20), "LEFT")
+	lTitle.Gravity = Gravity.TOP
+	p2.AddView(lTitle, 13%y, 0, 55%X, 30dip)
+    
+	' Task Date (was 'direccion' - address in original comment, but used for Date)
+	Dim lDate As Label
+	lDate.Initialize("")
+	codes.Lblcolor(lDate, Colors.DarkGray, 30, Date, xui.CreateDefaultBoldFont(30), "CENTER")
+	lDate.Gravity = Gravity.TOP
+	p2.AddView(lDate, 13%y, 30dip, 85%X-70dip, 400dip)
+    
+	' Status color indicator bar
+	If status = "Initiated" Then
+		Dim p3 As B4XView = xui.CreatePanel("")
+		p2.AddView(p3, 0, 0, 2%x, 100%y)
+		p3.Color = Colors.RGB(242, 203, 215) ' Pinkish
+	Else If status = "Earring" Then ' Pending
+		Dim p3 As B4XView = xui.CreatePanel("")
+		p2.AddView(p3, 0, 0, 2%x, 100%y)
+		p3.Color = Colors.RGB(255, 233, 193) ' Yellowish
+	Else If status = "Finalized" Then ' Completed
+		Dim p3 As B4XView = xui.CreatePanel("")
+		p2.AddView(p3, 0, 0, 2%x, 100%y)
+		p3.Color = Colors.RGB(209, 242, 226) ' Greenish
+	End If
+    
+	' Attach task data to the panel tag
+	Dim task1 As task
+	task1.Initialize
+	task1.NameTask = Title
+	task1.StatusTask = status
+	task1.DateTask = Date
+	task1.id = id
+	p2.Tag = task1
+    
+	Return p ' Return the container panel
+End Sub
+
+Private Sub p_Click ' Handles clicking on a task item to edit it
+	Dim p As B4XView = Sender
+	Dim task1 As task = p.Tag
+    
+	WobbleMenu1.SetCurrentTab(2) ' Switch to the "New/Edit" tab
+    
+	' Populate the form fields
+	B4XFloatTextField1.Text = task1.NameTask
+	B4XFloatTextField2.Text = task1.DateTask
+	IdRow = task1.id ' Set IdRow to enable update logic in Save_Click
+    
+	' Reset checkboxes and set the correct one based on status
+	CheckBox1.Checked = False
+	CheckBox2.Checked = False
+	CheckBox3.Checked = False
+    
+	Select Case task1.StatusTask
+		Case "Initiated"  : CheckBox1.Checked = True
+		Case "Earring"    : CheckBox2.Checked = True
+		Case "Finalized"  : CheckBox3.Checked = True
+	End Select
+	
+	DeleteLb.Visible = True
+	DeleteLb.Enabled  = True
+End Sub
+#End Region
+

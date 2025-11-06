@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 3.80
+' Version 3.90
 Sub Class_Globals
 	Private DBSQL 					As SQL
 	Private DBID 					As Int
@@ -25,11 +25,11 @@ Sub Class_Globals
 	Private DBLimit 				As String
 	Private DBCondition 			As String
 	Private DBHaving 				As String
-	Private mType 					As String
-	Private mError 					As Exception
-	Private mJournalMode 			As String = "DELETE" 'ignore
-	Private StrDefaultUserId 		As String = "1"
 	Private DBParameters() 			As Object
+	Private mError 					As Exception
+	Private mType 					As String
+	Private StrDefaultUserId 		As String = "1"
+	Private mJournalMode 			As String = "DELETE"
 	Private BlnShowExtraLogs 		As Boolean
 	Private BlnUseTimestamps 		As Boolean ' may need to disable when working on view
 	Private BlnAutoIncrement 		As Boolean
@@ -64,15 +64,19 @@ End Sub
 
 'Initialize MiniORM
 '<code>DB.Initialize("sqlite", Null)</code>
-Public Sub Initialize (mDBType As String, mSQL As SQL)
-	setDBType(mDBType)
-	setSQL(mSQL)
+Public Sub Initialize (DBType As String, SQL As SQL)
+	setDBType(DBType)
+	setSQL(SQL)
 	DBBatch.Initialize
 	BlnAutoIncrement = True
 End Sub
 
-Public Sub setDBType (mDBType As String)
-	Select mDBType.ToUpperCase
+'Set DB Type to SQLite, MySQL or MariaDB
+Public Sub getDBType As String
+	Return mType
+End Sub
+Public Sub setDBType (DBType As String)
+	Select DBType.ToUpperCase
 		Case "SQLITE"
 			BLOB = "BLOB"
 			INTEGER = "INTEGER"
@@ -92,20 +96,16 @@ Public Sub setDBType (mDBType As String)
 			TEXT = "text"
 			DATE_TIME = "datetime"
 			TIMESTAMP = "timestamp"
-			If mDBType.EqualsIgnoreCase(MYSQL) Then mType = MYSQL Else mType = MARIADB
+			If DBType.EqualsIgnoreCase(MYSQL) Then mType = MYSQL Else mType = MARIADB
 	End Select
-End Sub
-
-Public Sub getDBType As String
-	Return mType
 End Sub
 
 Public Sub setJournalMode (Mode As String)
 	mJournalMode = Mode
 End Sub
 
-Public Sub setSQL (mSQL As SQL)
-	DBSQL = mSQL
+Public Sub setSQL (SQL As SQL)
+	DBSQL = SQL
 End Sub
 
 Public Sub getSQL As SQL
@@ -142,6 +142,7 @@ End Sub
 
 Public Sub setColumns (mColumns As List)
 	DBColumns = mColumns
+	SelectFromTableOrView
 End Sub
 
 Public Sub getColumns As List
@@ -268,9 +269,27 @@ Public Sub getFirst As Map
 	Return ORMTable.First
 End Sub
 
-' Returns first queried row
+' Returns first queried row with ordered keys
 Public Sub getFirst2 As Map
 	Return ORMTable.First2
+End Sub
+
+' (formerly known as SelectOnly)
+' Return first queried row with specified columns
+Public Sub FirstPick (mColumns As List) As Map
+	Dim NewMap As Map
+	NewMap.Initialize
+	For Each Col In mColumns
+		If ORMTable.First.ContainsKey(Col) Then
+			NewMap.Put(Col, ORMTable.First.Get(Col))
+		End If
+	Next
+	Return NewMap
+End Sub
+
+' Deprecated: Will be removed in future version
+Public Sub SelectOnly (mColumns As List) As Map
+	Return FirstPick(mColumns)
 End Sub
 
 ' Returns new inserted row
@@ -320,25 +339,10 @@ Public Sub IfNull (ColumnName As String, DefaultValue As Object, AliasName As St
 	Return $"IFNULL(${ColumnName}, '${DefaultValue}')"$ & IIf(AliasName = "", $" AS ${ColumnName}"$, $" AS ${AliasName}"$)
 End Sub
 
-' Pass Columns and set DBStatement with SELECT FROM Table or View
-Public Sub setSelect (Columns As List)
-	DBColumns = Columns
-	SelectFromTableOrView
-End Sub
-
-' Return map of only selected columns from a row
-' Useful for filtering new row
-Public Sub SelectOnly (Columns As List) As Map
-	Dim NewMap As Map
-	NewMap.Initialize
-	If ORMTable.IsInitialized And ORMTable.First.IsInitialized Then
-		For Each Col In Columns
-			If ORMTable.First.ContainsKey(Col) Then
-				NewMap.Put(Col, ORMTable.First.Get(Col))
-			End If
-		Next
-	End If
-	Return NewMap
+' Deprecated: Will be removed in future version
+' SelectFromTableOrView with specified Columns
+Public Sub setSelect (mColumns As List)
+	setColumns(mColumns)
 End Sub
 
 Public Sub setGroupBy (Columns As List)
@@ -994,7 +998,7 @@ Public Sub Save
 		' Count numbers of ?
 		Dim ParamChars As Int = CountChar("?", DBCondition)
 		Dim ParamCount As Int = ParametersCount
-		DBStatement = $"SELECT * FROM ${DBObject}"$
+		SelectAllFromDBObject
 		Dim ConditionParams(ParamChars) As Object
 		For i = 0 To ParamChars - 1
 			ConditionParams(i) = DBParameters(ParamCount - ParamChars + i)
@@ -1083,7 +1087,7 @@ Public Sub Save3 (mColumn As String)
 		' Count numbers of ?
 		Dim ParamChars As Int = CountChar("?", DBCondition)
 		Dim ParamCount As Int = ParametersCount
-		DBStatement = $"SELECT * FROM ${DBObject}"$
+		SelectAllFromDBObject
 		Dim ConditionParams(ParamChars) As Object
 		For i = 0 To ParamChars - 1
 			ConditionParams(i) = DBParameters(ParamCount - ParamChars + i)
@@ -1101,7 +1105,7 @@ Public Sub getLastInsertID As Object
 		Case SQLITE
 			DBStatement = "SELECT LAST_INSERT_ROWID()"
 		Case Else
-			If BlnShowExtraLogs Then Log("Unknown DBType")
+			If BlnShowExtraLogs Then Log("Unknown DB Type")
 			Return -1
 	End Select
 	If BlnShowExtraLogs Then LogQuery
@@ -1167,7 +1171,7 @@ Public Sub SoftDelete
 		Case SQLITE
 			DBStatement = $"UPDATE ${DBObject} SET deleted_date = strftime('%s000', 'now')"$
 		Case Else
-			If BlnShowExtraLogs Then Log("Unknown DBType")
+			If BlnShowExtraLogs Then Log("Unknown DB Type")
 			Return
 	End Select
 	If DBCondition.Length > 0 Then DBStatement = DBStatement & DBCondition

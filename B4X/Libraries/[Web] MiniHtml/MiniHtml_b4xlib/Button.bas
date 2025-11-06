@@ -41,6 +41,11 @@ Public Sub typeOf (value As String) As Tag
 	Return init.typeOf(value)
 End Sub
 
+'Set form attribute
+Public Sub formOf (value As String) As Tag
+	Return init.formOf(value)
+End Sub
+
 'Add a class
 Public Sub cls (value As String) As Tag
 	Return init.cls(value)

@@ -1,0 +1,1256 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=cssutils
+Library2=jbitmapcreator
+Library3=jcore
+Library4=jfx
+Library5=jxui
+Library6=javaobject
+Module1=Shape
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=10.3
+@EndOfDesignText@
+
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+
+#End Region
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+    
+	' Display
+	Private ImageView1 As ImageView
+	Private ButtonStart As Button
+	Private ButtonStop As Button
+	Private LabelProgress As Label
+    
+	' === ESSENTIAL CONTROLS ===
+	Private SliderShapeCount As Slider
+	Private LabelShapeCount As Label
+    
+	Private ComboBoxQuality As ComboBox
+    
+	Private CheckBoxTriangle As CheckBox
+	Private CheckBoxRectangle As CheckBox
+	Private CheckBoxCircle As CheckBox
+	Private CheckBoxEllipse As CheckBox
+    
+	Private ComboBoxImageSize As ComboBox
+    
+	Private RadioButtonBgAuto As RadioButton
+	Private RadioButtonBgCustom As RadioButton
+	Private PanelBgColor As Pane  ' Visual color indicator
+	Private ButtonChooseBgColor As Button
+    
+	' === ADVANCED CONTROLS (in collapsible pane) ===
+	Private PanelAdvanced As Pane
+	Private ButtonToggleAdvanced As Button
+	Private AdvancedVisible As Boolean = False
+    
+	Private SliderCandidates As Slider
+	Private LabelCandidates As Label
+    
+	Private SliderMutations As Slider
+	Private LabelMutations As Label
+    
+	Private SliderMutationSize As Slider
+	Private SliderColorMutationSize As Slider
+	Private SliderAlphaMutationSize As Slider
+    
+	Private SliderMinShapeSize As Slider
+	Private SliderMaxShapeSize As Slider
+    
+	Private CheckBoxSimulatedAnnealing As CheckBox
+	Private SliderEarlyExitThreshold As Slider
+    
+	Private CheckBoxSaveFrames As CheckBox
+	Private SliderSaveInterval As Slider
+	Private TextFieldOutputPrefix As TextField
+    
+	Private ButtonLoadImage As Button
+	Private LabelImageInfo As Label
+    
+	' Algorithm parameters
+	Private TargetImage As BitmapCreator
+	Private CurrentImage As BitmapCreator
+	Private BackgroundColor As Int
+	Private CustomBackgroundColor As Int '= fx.Colors.White
+	Private ShapesAdded As Int = 0
+	Private TargetShapeCount As Int = 200
+    
+	' Dynamic settings from GUI
+	Private CandidatesPerShape As Int = 50
+	Private MutationsPerCandidate As Int = 50
+	Private MutationGeometryDelta As Int = 32
+	Private MutationColorDelta As Int = 20
+	Private MutationAlphaDelta As Int = 30
+	Private MinShapeSize As Int = 5
+	Private MaxShapeSizeDivisor As Int = 4
+	Private UseSimulatedAnnealing As Boolean = True
+	Private EarlyExitThreshold As Int = 50
+	Private SaveFrames As Boolean = False
+	Private SaveInterval As Int = 10
+	Private OutputPrefix As String = "output"
+    
+	' Shape types
+	Private Type_Triangle As String = "TRIANGLE"
+	Private Type_Rectangle As String = "RECTANGLE"
+	Private Type_Ellipse As String = "ELLIPSE"
+	Private Type_Circle As String = "CIRCLE"
+    
+	Private StartTime As Long
+	Private StopRequested As Boolean = False
+	Private LoadedImagePath As String = ""
+	
+	Private AppTitle = "Geometrize B4J"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = AppTitle
+	InitializeControls
+    
+	MainForm.Show
+End Sub
+
+Sub InitializeControls
+	' === SHAPE COUNT ===
+	SliderShapeCount.MinValue = 50
+	SliderShapeCount.Maxvalue = 500
+	SliderShapeCount.Value = 200
+	UpdateShapeCountLabel
+    
+	' === QUALITY PRESETS ===
+	ComboBoxQuality.Items.Clear
+	ComboBoxQuality.Items.Add("Fast (25 candidates, 25 mutations)")
+	ComboBoxQuality.Items.Add("Normal (50 candidates, 50 mutations)")
+	ComboBoxQuality.Items.Add("High (100 candidates, 100 mutations)")
+	ComboBoxQuality.Items.Add("Best (200 candidates, 200 mutations)")
+	ComboBoxQuality.Items.Add("Custom")
+	ComboBoxQuality.SelectedIndex = 1  ' Normal
+    
+	' === SHAPE TYPES ===
+	CheckBoxTriangle.Checked = True
+	CheckBoxRectangle.Checked = True
+	CheckBoxCircle.Checked = True
+	CheckBoxEllipse.Checked = True
+    
+	' === IMAGE SIZE ===
+	ComboBoxImageSize.Items.Clear
+	ComboBoxImageSize.Items.Add("Original Size")
+	ComboBoxImageSize.Items.Add("256x256 (Fast)")
+	ComboBoxImageSize.Items.Add("512x512 (Balanced)")
+	ComboBoxImageSize.Items.Add("1024x1024 (Large)")
+	ComboBoxImageSize.SelectedIndex = 0
+    
+	' === BACKGROUND ===
+	RadioButtonBgAuto.Selected = True
+	'PanelBgColor. .Color = Colors.White
+    
+	' === ADVANCED SETTINGS ===
+	SliderCandidates.MinValue = 10
+	SliderCandidates.MaxValue = 200
+	SliderCandidates.Value = 50
+    
+	SliderMutations.MinValue = 10
+	SliderMutations.MaxValue = 200
+	SliderMutations.Value = 50
+    
+	SliderMutationSize.MinValue = 8
+	SliderMutationSize.MaxValue = 64
+	SliderMutationSize.Value = 32
+    
+	SliderColorMutationSize.MinValue = 5
+	SliderColorMutationSize.MaxValue = 40
+	SliderColorMutationSize.Value = 20
+    
+	SliderAlphaMutationSize.MinValue = 10
+	SliderAlphaMutationSize.MaxValue = 50
+	SliderAlphaMutationSize.Value = 30
+    
+	SliderMinShapeSize.MinValue = 3
+	SliderMinShapeSize.MaxValue = 50
+	SliderMinShapeSize.Value = 5
+    
+	SliderMaxShapeSize.MinValue = 2
+	SliderMaxShapeSize.MaxValue = 8
+	SliderMaxShapeSize.Value = 4
+    
+	CheckBoxSimulatedAnnealing.Checked = True
+    
+	SliderEarlyExitThreshold.MinValue = 10
+	SliderEarlyExitThreshold.MaxValue = 100
+	SliderEarlyExitThreshold.Value = 50
+    
+	SliderSaveInterval.MinValue = 1
+	SliderSaveInterval.MaxValue = 50
+	SliderSaveInterval.Value = 10
+    
+	TextFieldOutputPrefix.Text = "geometrized"
+    
+	UpdateAdvancedLabels
+    
+	' Hide advanced panel by default
+	PanelAdvanced.Visible = False
+	ButtonToggleAdvanced.Text = "Show Advanced ▼"
+    
+	ButtonStop.Enabled = False
+End Sub
+
+Sub SliderShapeCount_ValueChange(Value As Double)
+	TargetShapeCount = Value
+	UpdateShapeCountLabel
+End Sub
+
+Sub UpdateShapeCountLabel
+	LabelShapeCount.Text = $"Number of Shapes: ${TargetShapeCount}"$
+End Sub
+
+Sub ComboBoxQuality_SelectedIndexChanged(Index As Int,value As Object)
+	Select Index
+		Case 0  ' Fast
+			SliderCandidates.Value = 25
+			SliderMutations.Value = 25
+		Case 1  ' Normal
+			SliderCandidates.Value = 50
+			SliderMutations.Value = 50
+		Case 2  ' High
+			SliderCandidates.Value = 100
+			SliderMutations.Value = 100
+		Case 3  ' Best
+			SliderCandidates.Value = 200
+			SliderMutations.Value = 200
+		Case 4  ' Custom - user adjusts manually
+			' Do nothing
+	End Select
+    
+	If Index < 4 Then
+		UpdateAdvancedLabels
+	End If
+End Sub
+
+Sub SliderCandidates_ValueChange(Value As Double)
+	CandidatesPerShape = Value
+	UpdateAdvancedLabels
+	' Switch to Custom when manually adjusted
+	If ComboBoxQuality.SelectedIndex < 4 Then
+		ComboBoxQuality.SelectedIndex = 4
+	End If
+End Sub
+
+Sub SliderMutations_ValueChange(Value As Double)
+	MutationsPerCandidate = Value
+	UpdateAdvancedLabels
+	If ComboBoxQuality.SelectedIndex < 4 Then
+		ComboBoxQuality.SelectedIndex = 4
+	End If
+End Sub
+
+Sub UpdateAdvancedLabels
+	LabelCandidates.Text = $"Candidates per Shape: ${CandidatesPerShape}"$
+	LabelMutations.Text = $"Mutations per Candidate: ${MutationsPerCandidate}"$
+End Sub
+
+Sub ButtonToggleAdvanced_Click
+	AdvancedVisible = Not(AdvancedVisible)
+	PanelAdvanced.Visible = AdvancedVisible
+    
+	If AdvancedVisible Then
+		ButtonToggleAdvanced.Text = "Hide Advanced ▲"
+		MainForm.WindowHeight = 800  ' Expand window
+	Else
+		ButtonToggleAdvanced.Text = "Show Advanced ▼"
+		MainForm.WindowHeight = 600  ' Collapse window
+	End If
+End Sub
+
+Sub ButtonChooseBgColor_Click
+'	Dim cc As mColorChooser ' not working, need fix. One day ;) 
+'	cc.Initialize
+'	cc.Color = CustomBackgroundColor
+'	Dim result As Int = cc.ShowAndWait(MainForm)
+'    
+'	If result = cc.DialogResult.OK Then
+'		CustomBackgroundColor = cc.Color
+'		PanelBgColor.Color = CustomBackgroundColor
+'	End If
+End Sub
+
+Sub ButtonLoadImage_Click
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.Title = "Select Image"
+	fc.SetExtensionFilter("Image Files", Array As String("*.jpg", "*.jpeg", "*.png", "*.bmp"))
+    
+	Dim result As String = fc.ShowOpen(MainForm)
+    
+	If result <> "" Then
+		
+		Dim JO As JavaObject
+		JO.InitializeStatic("java.lang.System")
+		Dim Sep As String = JO.RunMethod("getProperty", Array("file.separator"))
+		
+		Dim Parts() As String
+		Parts = Regex.Split("\" & Sep, result)
+		
+		LoadedImagePath = result
+'		Dim f As File = File(result)
+		MainForm.Title = AppTitle& $"   Loaded: ${Parts(Parts.Length-1)}"$
+		Log($"Image loaded: ${result}"$)
+	End If
+End Sub
+
+
+Sub ButtonStart1_Click
+	ButtonStart.Enabled = False
+    
+	Dim bmp As B4XBitmap = xui.LoadBitmap(File.DirAssets, "shorts.jpg")
+    
+	TargetImage.Initialize(bmp.Width, bmp.Height)
+	TargetImage.CopyPixelsFromBitmap(bmp)
+    
+	BackgroundColor = GetAverageColor(TargetImage)
+    
+	CurrentImage.Initialize(bmp.Width, bmp.Height)
+	For x = 0 To CurrentImage.mWidth - 1
+		For y = 0 To CurrentImage.mHeight - 1
+			CurrentImage.SetColor(x, y, BackgroundColor)
+		Next
+	Next
+    
+	ShapesAdded = 0
+	StartTime = DateTime.Now
+    
+	Log("Starting with TRUE OPTIMAL COLOR COMPUTATION...")
+    
+	GeometrizeImage
+End Sub
+
+Sub ButtonStart_Click
+	If LoadedImagePath = "" Then
+		fx.Msgbox(MainForm, "Please load an image first!", "No Image")
+		Return
+	End If
+    
+	' Validate shape selection
+	If Not(CheckBoxTriangle.Checked) And Not(CheckBoxRectangle.Checked) And _
+       Not(CheckBoxCircle.Checked) And Not(CheckBoxEllipse.Checked) Then
+		fx.Msgbox(MainForm, "Please select at least one shape type!", "No Shapes Selected")
+		Return
+	End If
+    
+	ButtonStart.Enabled = False
+	ButtonStop.Enabled = True
+	StopRequested = False
+    
+	' Read GUI settings
+	ReadGUISettings
+    
+	' Load and process image
+	StartGeometrization
+End Sub
+
+Sub ButtonStop_Click
+	StopRequested = True
+	ButtonStop.Enabled = False
+	Log("Stop requested...")
+End Sub
+
+Sub ReadGUISettings
+	' Read all settings from GUI
+	TargetShapeCount = SliderShapeCount.Value
+	CandidatesPerShape = SliderCandidates.Value
+	MutationsPerCandidate = SliderMutations.Value
+    
+	MutationGeometryDelta = SliderMutationSize.Value
+	MutationColorDelta = SliderColorMutationSize.Value
+	MutationAlphaDelta = SliderAlphaMutationSize.Value
+    
+	MinShapeSize = SliderMinShapeSize.Value
+	MaxShapeSizeDivisor = SliderMaxShapeSize.Value
+    
+	UseSimulatedAnnealing = CheckBoxSimulatedAnnealing.Checked
+	EarlyExitThreshold = SliderEarlyExitThreshold.Value
+    
+	SaveFrames = CheckBoxSaveFrames.Checked
+	SaveInterval = SliderSaveInterval.Value
+	OutputPrefix = TextFieldOutputPrefix.Text
+    
+	Log($"Settings: ${CandidatesPerShape} candidates, ${MutationsPerCandidate} mutations"$)
+End Sub
+
+Sub StartGeometrization
+	' Load image
+	Dim bmp As B4XBitmap = xui.LoadBitmap(File.GetFileParent(LoadedImagePath), File.GetName(LoadedImagePath))
+    
+	' Resize if needed
+	Dim targetWidth, targetHeight As Int
+	Select ComboBoxImageSize.SelectedIndex
+		Case 0  ' Original
+			targetWidth = bmp.Width
+			targetHeight = bmp.Height
+		Case 1  ' 256
+			targetWidth = 256
+			targetHeight = 256
+		Case 2  ' 512
+			targetWidth = 512
+			targetHeight = 512
+		Case 3  ' 1024
+			targetWidth = 1024
+			targetHeight = 1024
+	End Select
+    
+	' Resize if needed
+	If targetWidth <> bmp.Width Or targetHeight <> bmp.Height Then
+		bmp = bmp.Resize(targetWidth, targetHeight, True)
+	End If
+    
+	TargetImage.Initialize(bmp.Width, bmp.Height)
+	TargetImage.CopyPixelsFromBitmap(bmp)
+    
+	' Set background color
+	If RadioButtonBgAuto.Selected Then
+		BackgroundColor = GetAverageColor(TargetImage)
+	Else
+		BackgroundColor = CustomBackgroundColor
+	End If
+    
+	CurrentImage.Initialize(bmp.Width, bmp.Height)
+	For x = 0 To CurrentImage.mWidth - 1
+		For y = 0 To CurrentImage.mHeight - 1
+			CurrentImage.SetColor(x, y, BackgroundColor)
+		Next
+	Next
+    
+	ShapesAdded = 0
+	StartTime = DateTime.Now
+    
+	Log("Starting geometrization...")
+    
+	GeometrizeImage
+End Sub
+
+Sub GeometrizeImage
+	Do While ShapesAdded < TargetShapeCount And Not(StopRequested)
+		Dim shapeTypes As List
+		shapeTypes.Initialize
+        
+		' Build shape list from checkboxes
+		If CheckBoxTriangle.Checked Then shapeTypes.Add(Type_Triangle)
+		If CheckBoxRectangle.Checked Then shapeTypes.Add(Type_Rectangle)
+		If CheckBoxCircle.Checked Then shapeTypes.Add(Type_Circle)
+		If CheckBoxEllipse.Checked Then shapeTypes.Add(Type_Ellipse)
+        
+		Dim bestShape As Map = FindBestShape(shapeTypes)
+		bestShape = ComputeOptimalColor(bestShape)
+		DrawShapeOnBitmapCreator(CurrentImage, bestShape)
+        
+		ShapesAdded = ShapesAdded + 1
+		UpdateProgress
+        
+		' Save frame if enabled
+		If SaveFrames And (ShapesAdded Mod SaveInterval = 0) Then
+			SaveCurrentFrame
+		End If
+        
+		'If ShapesAdded Mod 5 = 0 Then
+			ImageView1.SetImage(CurrentImage.Bitmap)
+			Sleep(0)
+		'End If
+	Loop
+    
+	ImageView1.SetImage(CurrentImage.Bitmap)
+    
+
+	
+	
+	' Save final output
+	SaveFinalOutput
+    
+	ButtonStart.Enabled = True
+	ButtonStop.Enabled = False
+    
+	If StopRequested Then
+		LabelProgress.Text = "Stopped by user"
+		Log("Stopped by user")
+	Else
+		LabelProgress.Text = "Complete!"
+		Log("Geometrization complete!")
+	End If
+End Sub
+
+Sub SaveCurrentFrame
+	Dim filename As String = $"${OutputPrefix}_${NumberFormat(ShapesAdded, 4, 0)}.png"$
+	Dim out As OutputStream = File.OpenOutput(File.DirApp, filename, False)
+	CurrentImage.Bitmap.WriteToStream(out, 100, "PNG")
+	out.Close
+	Log($"Saved frame: ${filename}"$)
+End Sub
+
+Sub SaveFinalOutput
+	Dim filename As String = $"${OutputPrefix}_final_${ShapesAdded}shapes.png"$
+	Dim out As OutputStream = File.OpenOutput(File.DirApp, filename, False)
+	CurrentImage.Bitmap.WriteToStream(out, 100, "PNG")
+	out.Close
+	Log($"Saved final output: ${filename}"$)
+End Sub
+
+Sub UpdateProgress
+	Dim elapsed As Long = DateTime.Now - StartTime
+	Dim elapsedSeconds As Int = elapsed / 1000
+	Dim avgTimePerShape As Double = elapsed / ShapesAdded
+	Dim remainingShapes As Int = TargetShapeCount - ShapesAdded
+	Dim estimatedRemaining As Long = avgTimePerShape * remainingShapes
+	Dim remainingSeconds As Int = estimatedRemaining / 1000
+    
+	Dim progress As Double = ShapesAdded / TargetShapeCount
+	LabelProgress.Text = $"Shape ${ShapesAdded}/${TargetShapeCount} (${NumberFormat(progress * 100, 1, 1)}%) | Elapsed: ${elapsedSeconds}s | ETA: ${remainingSeconds}s"$
+End Sub
+
+' ... [Rest of the algorithm code: FindBestShape, HillClimbShape, etc. - USE MUTATION SETTINGS FROM GUI]
+
+Sub MutateShape(shape As Map) As Map
+	Dim mutated As Map = CopyMap(shape)
+	Dim mutationType As Int = Rnd(0, 3)
+    
+	Select mutationType
+		Case 0 ' Mutate geometry
+			Dim points() As Int = mutated.Get("Points")
+			Dim newPoints(points.Length) As Int
+			For i = 0 To points.Length - 1
+				newPoints(i) = points(i)
+			Next
+            
+			Dim pointIndex As Int = Rnd(0, newPoints.Length)
+			' USE GUI SETTING
+			Dim delta As Int = Rnd(-MutationGeometryDelta, MutationGeometryDelta + 1)
+			Dim maxVal As Int = IIf(pointIndex Mod 2 = 0, TargetImage.mWidth - 1, TargetImage.mHeight - 1)
+			newPoints(pointIndex) = Max(0, Min(newPoints(pointIndex) + delta, maxVal))
+			mutated.Put("Points", newPoints)
+            
+			Dim scanlines As List = RasterizeShape(mutated)
+			mutated.Put("scanlines", scanlines)
+            
+		Case 1 ' Mutate color RGB
+			Dim oldColor As Int = mutated.Get("Color")
+			Dim a As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 24), 0xFF)
+			Dim r As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 16), 0xFF)
+			Dim g As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 8), 0xFF)
+			Dim b As Int = Bit.And(oldColor, 0xFF)
+            
+			Dim channel As Int = Rnd(0, 3)
+			' USE GUI SETTING
+			Select channel
+				Case 0: r = Max(0, Min(255, r + Rnd(-MutationColorDelta, MutationColorDelta + 1)))
+				Case 1: g = Max(0, Min(255, g + Rnd(-MutationColorDelta, MutationColorDelta + 1)))
+				Case 2: b = Max(0, Min(255, b + Rnd(-MutationColorDelta, MutationColorDelta + 1)))
+			End Select
+			
+			mutated.Put("Color", Bit.Or(Bit.ShiftLeft(a, 24), _
+			Bit.Or(Bit.ShiftLeft(r, 16), Bit.Or(Bit.ShiftLeft(g, 8), b))))
+			
+		Case 2 ' Mutate alpha
+			Dim oldColor As Int = mutated.Get("Color")
+			Dim a As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 24), 0xFF)
+			' USE GUI SETTING
+			a = Max(30, Min(240, a + Rnd(-MutationAlphaDelta, MutationAlphaDelta + 1)))
+			mutated.Put("Color", Bit.Or(Bit.ShiftLeft(a, 24), Bit.And(oldColor, 0xFFFFFF)))
+	End Select
+    
+	Return mutated
+End Sub
+
+
+' [Include all other algorithm functions from previous code]
+'Sub GeometrizeImage1
+'	Do While ShapesAdded < TargetShapeCount
+'		Dim shapeTypes As List
+'		shapeTypes.Initialize
+'        
+'		Select ComboBox1.SelectedIndex
+'			Case 0
+'				shapeTypes.Add(Type_Triangle)
+'				shapeTypes.Add(Type_Rectangle)
+'				shapeTypes.Add(Type_Ellipse)
+'				shapeTypes.Add(Type_Circle)
+'			Case 1: shapeTypes.Add(Type_Triangle)
+'			Case 2: shapeTypes.Add(Type_Circle)
+'			Case 3: shapeTypes.Add(Type_Rectangle)
+'			Case 4: shapeTypes.Add(Type_Ellipse)
+'		End Select
+'		
+'		Dim bestShape As Map = FindBestShape(shapeTypes)
+'		
+'		' OPTIMAL: Direct mathematical computation
+'		bestShape = ComputeOptimalColor(bestShape)
+'		
+'		DrawShapeOnBitmapCreator(CurrentImage, bestShape)
+'        
+'		ShapesAdded = ShapesAdded + 1
+'		UpdateProgress
+'        
+'		If ShapesAdded Mod 5 = 0 Then
+'			ImageView1.SetImage(CurrentImage.Bitmap)
+'			Sleep(0)
+'		End If
+'	Loop
+'    
+'	ImageView1.SetImage(CurrentImage.Bitmap)
+'	ButtonStart.Enabled = True
+'	LabelProgress.Text = "Complete!"
+'	Log("Geometrization complete!")
+'End Sub
+
+'Sub UpdateProgress
+'	Dim elapsed As Long = DateTime.Now - StartTime
+'	Dim elapsedSeconds As Int = elapsed / 1000
+'	Dim avgTimePerShape As Double = elapsed / ShapesAdded
+'	Dim remainingShapes As Int = TargetShapeCount - ShapesAdded
+'	Dim estimatedRemaining As Long = avgTimePerShape * remainingShapes
+'	Dim remainingSeconds As Int = estimatedRemaining / 1000
+'    
+'	Dim progress As Double = ShapesAdded / TargetShapeCount
+'	LabelProgress.Text = $"Shape ${ShapesAdded}/${TargetShapeCount} (${NumberFormat(progress * 100, 1, 1)}%) | Elapsed: ${elapsedSeconds}s | ETA: ${remainingSeconds}s"$
+'End Sub
+
+Sub FindBestShape(shapeTypes As List) As Map
+	Dim bestShape As Map
+	Dim bestScore As Double = 999999999
+    
+	For i = 0 To CandidatesPerShape - 1
+		Dim shapeType As String = shapeTypes.Get(Rnd(0, shapeTypes.Size))
+		Dim shape As Map = CreateRandomShape(shapeType)
+        
+		shape = HillClimbShape(shape)
+        
+		Dim score As Double = CalculateShapeScore(shape)
+        
+		If score < bestScore Then
+			bestScore = score
+			bestShape = shape
+		End If
+	Next
+    
+	Return bestShape
+End Sub
+
+Sub HillClimbShape(initialShape As Map) As Map
+	Dim currentShape As Map = CopyMap(initialShape)
+	Dim currentScore As Double = CalculateShapeScore(currentShape)
+    
+	Dim noImprovementCount As Int = 0
+    
+	For i = 0 To MutationsPerCandidate - 1
+		Dim mutatedShape As Map = MutateShape(currentShape)
+		Dim mutatedScore As Double = CalculateShapeScore(mutatedShape)
+        
+		If mutatedScore < currentScore Then
+			currentShape = mutatedShape
+			currentScore = mutatedScore
+			noImprovementCount = 0
+		Else
+			noImprovementCount = noImprovementCount + 1
+            
+			' Simulated annealing: occasionally accept worse solutions
+			If Rnd(0, 100) < 5 Then
+				currentShape = mutatedShape
+				currentScore = mutatedScore
+				noImprovementCount = 0
+			End If
+		End If
+        
+		If noImprovementCount > 50 Then Exit
+	Next
+    
+	Return currentShape
+End Sub
+
+Sub CalculateShapeScore(shape As Map) As Double
+	Dim scanlines As List = shape.Get("scanlines")
+	If scanlines.Size = 0 Then Return 999999999
+    
+	Dim shapeColor As Int = shape.Get("Color")
+	Dim alpha As Int = Bit.And(Bit.UnsignedShiftRight(shapeColor, 24), 0xFF)
+    
+	Dim scoreBefore As Double = 0
+	Dim scoreAfter As Double = 0
+    
+	For Each scanline As Map In scanlines
+		Dim y As Int = scanline.Get("y")
+		Dim x1 As Int = scanline.Get("x1")
+		Dim x2 As Int = scanline.Get("x2")
+        
+		For x = x1 To x2
+			Dim targetColor As Int = TargetImage.GetColor(x, y)
+			Dim currentColor As Int = CurrentImage.GetColor(x, y)
+            
+			scoreBefore = scoreBefore + ColorDifference(currentColor, targetColor)
+            
+			Dim blendedColor As Int = BlendColors(currentColor, shapeColor, alpha)
+			scoreAfter = scoreAfter + ColorDifference(blendedColor, targetColor)
+		Next
+	Next
+    
+	Return scoreAfter - scoreBefore
+End Sub
+
+Sub ColorDifference(c1 As Int, c2 As Int) As Double
+	Dim r1 As Int = Bit.And(Bit.UnsignedShiftRight(c1, 16), 0xFF)
+	Dim g1 As Int = Bit.And(Bit.UnsignedShiftRight(c1, 8), 0xFF)
+	Dim b1 As Int = Bit.And(c1, 0xFF)
+	Dim r2 As Int = Bit.And(Bit.UnsignedShiftRight(c2, 16), 0xFF)
+	Dim g2 As Int = Bit.And(Bit.UnsignedShiftRight(c2, 8), 0xFF)
+	Dim b2 As Int = Bit.And(c2, 0xFF)
+    
+	Dim dr As Int = r1 - r2
+	Dim dg As Int = g1 - g2
+	Dim db As Int = b1 - b2
+	Return dr*dr + dg*dg + db*db
+End Sub
+
+' ============================================================
+' OPTIMAL COLOR COMPUTATION - Closed-Form Mathematical Solution
+' ============================================================
+Sub ComputeOptimalColor(shape As Map) As Map
+	Dim scanlines As List = shape.Get("scanlines")
+	If scanlines.Size = 0 Then Return shape
+    
+	' Accumulate statistics for least-squares solution
+	Dim n As Long = 0  ' Pixel count
+    
+	' Sums for each channel
+	Dim sumR, sumG, sumB As Double
+	Dim sumR2, sumG2, sumB2 As Double  ' Squared sums
+    
+	' Target channel values
+	Dim sumTR, sumTG, sumTB As Double
+	Dim sumTR2, sumTG2, sumTB2 As Double
+    
+	' Cross terms (target * current)
+	Dim sumTRR, sumTGG, sumTBB As Double
+    
+	' Process all pixels in shape
+	For Each scanline As Map In scanlines
+		Dim y As Int = scanline.Get("y")
+		Dim x1 As Int = scanline.Get("x1")
+		Dim x2 As Int = scanline.Get("x2")
+        
+		For x = x1 To x2
+			Dim tc As Int = TargetImage.GetColor(x, y)
+			Dim cc As Int = CurrentImage.GetColor(x, y)
+            
+			' Extract RGB components
+			Dim tr As Double = Bit.And(Bit.UnsignedShiftRight(tc, 16), 0xFF)
+			Dim tg As Double = Bit.And(Bit.UnsignedShiftRight(tc, 8), 0xFF)
+			Dim tb As Double = Bit.And(tc, 0xFF)
+            
+			Dim cr As Double = Bit.And(Bit.UnsignedShiftRight(cc, 16), 0xFF)
+			Dim cg As Double = Bit.And(Bit.UnsignedShiftRight(cc, 8), 0xFF)
+			Dim cb As Double = Bit.And(cc, 0xFF)
+            
+			' Accumulate sums
+			sumR = sumR + cr
+			sumG = sumG + cg
+			sumB = sumB + cb
+            
+			sumR2 = sumR2 + cr * cr
+			sumG2 = sumG2 + cg * cg
+			sumB2 = sumB2 + cb * cb
+            
+			sumTR = sumTR + tr
+			sumTG = sumTG + tg
+			sumTB = sumTB + tb
+            
+			sumTR2 = sumTR2 + tr * tr
+			sumTG2 = sumTG2 + tg * tg
+			sumTB2 = sumTB2 + tb * tb
+            
+			sumTRR = sumTRR + tr * cr
+			sumTGG = sumTGG + tg * cg
+			sumTBB = sumTBB + tb * cb
+            
+			n = n + 1
+		Next
+	Next
+    
+	If n = 0 Then Return shape
+    
+	' Compute optimal alpha for each channel independently
+	' Formula derived from minimizing squared error:
+	' min Σ(target - (current * (1-a) + shape * a))²
+    
+	Dim alphaR As Double = ComputeChannelAlpha(n, sumR, sumR2, sumTR, sumTRR)
+	Dim alphaG As Double = ComputeChannelAlpha(n, sumG, sumG2, sumTG, sumTGG)
+	Dim alphaB As Double = ComputeChannelAlpha(n, sumB, sumB2, sumTB, sumTBB)
+    
+	' Average the three alpha values
+	Dim optimalAlpha As Double = (alphaR + alphaG + alphaB) / 3.0
+    
+	' Clamp alpha to valid range [0.02, 1.0]
+	optimalAlpha = Max(0.02, Min(1.0, optimalAlpha))
+    
+	' Now compute optimal RGB for this alpha
+	' Formula: shapeColor = (target - current * (1 - alpha)) / alpha
+    
+	Dim avgTR As Double = sumTR / n
+	Dim avgTG As Double = sumTG / n
+	Dim avgTB As Double = sumTB / n
+    
+	Dim avgCR As Double = sumR / n
+	Dim avgCG As Double = sumG / n
+	Dim avgCB As Double = sumB / n
+    
+	Dim optimalR As Double = (avgTR - avgCR * (1.0 - optimalAlpha)) / optimalAlpha
+	Dim optimalG As Double = (avgTG - avgCG * (1.0 - optimalAlpha)) / optimalAlpha
+	Dim optimalB As Double = (avgTB - avgCB * (1.0 - optimalAlpha)) / optimalAlpha
+    
+	' Clamp RGB to valid range
+	Dim finalR As Int = Max(0, Min(255, optimalR))
+	Dim finalG As Int = Max(0, Min(255, optimalG))
+	Dim finalB As Int = Max(0, Min(255, optimalB))
+	Dim finalA As Int = Max(5, Min(255, optimalAlpha * 255))
+    
+	Dim optimalColor As Int = Bit.Or(Bit.ShiftLeft(finalA, 24), _
+                              Bit.Or(Bit.ShiftLeft(finalR, 16), _
+                              Bit.Or(Bit.ShiftLeft(finalG, 8), finalB)))
+    
+	shape.Put("Color", optimalColor)
+	Return shape
+End Sub
+
+' Compute optimal alpha for a single color channel
+' This minimizes: Σ(target - (current * (1-a) + shape * a))²
+Sub ComputeChannelAlpha(n As Long, sumC As Double, sumC2 As Double, _
+                        sumT As Double, sumTC As Double) As Double
+    
+	' Derived formula for optimal alpha:
+	' alpha = (n * sumTC - sumT * sumC) / (n * sumC2 - sumC * sumC + epsilon)
+    
+	Dim numerator As Double = n * sumTC - sumT * sumC
+	Dim denominator As Double = n * sumC2 - sumC * sumC
+    
+	' Add small epsilon to avoid division by zero
+	If Abs(denominator) < 0.0001 Then
+		denominator = 0.0001
+	End If
+    
+	' The formula gives us (1 - alpha), so we need to invert
+	Dim oneMinusAlpha As Double = numerator / denominator
+	Dim alpha As Double = 1.0 - oneMinusAlpha
+    
+	' If math produces invalid result, use default
+	If alpha < 0 Or alpha > 1 Or (alpha <> alpha) Then ' NaN check
+		alpha = 0.5
+	End If
+    
+	Return alpha
+End Sub
+
+Sub CreateRandomShape(shapeType As String) As Map
+	Dim shape As Map
+	shape.Initialize
+	shape.Put("ShapeType", shapeType)
+    
+	Dim w As Int = TargetImage.mWidth
+	Dim h As Int = TargetImage.mHeight
+	Dim points() As Int
+    
+	Select shapeType
+		Case Type_Triangle
+			Dim centerX As Int = Rnd(0, w)
+			Dim centerY As Int = Rnd(0, h)
+			Dim maxSize As Int = Min(w, h) / 4
+            
+			points = Array As Int( _
+                Max(0, Min(w-1, centerX + Rnd(-maxSize, maxSize))), _
+                Max(0, Min(h-1, centerY + Rnd(-maxSize, maxSize))), _
+                Max(0, Min(w-1, centerX + Rnd(-maxSize, maxSize))), _
+                Max(0, Min(h-1, centerY + Rnd(-maxSize, maxSize))), _
+                Max(0, Min(w-1, centerX + Rnd(-maxSize, maxSize))), _
+                Max(0, Min(h-1, centerY + Rnd(-maxSize, maxSize))))
+            
+		Case Type_Rectangle
+			Dim x1 As Int = Rnd(0, w - 5)
+			Dim y1 As Int = Rnd(0, h - 5)
+			Dim x2 As Int = Rnd(x1 + 5, w)
+			Dim y2 As Int = Rnd(y1 + 5, h)
+			points = Array As Int(x1, y1, x2, y2)
+            
+		Case Type_Circle, Type_Ellipse
+			Dim rx As Int = Rnd(5, Min(w, h) / 6)
+			Dim ry As Int = rx
+			If shapeType = Type_Ellipse Then ry = Rnd(5, Min(w, h) / 6)
+			points = Array As Int(Rnd(rx, w - rx), Rnd(ry, h - ry), rx, ry)
+	End Select
+    
+	shape.Put("Points", points)
+    
+	Dim scanlines As List = RasterizeShape(shape)
+	shape.Put("scanlines", scanlines)
+    
+	' Initial color from shape area average
+	Dim avgR, avgG, avgB As Long
+	Dim sampleCount As Int = 0
+    
+	For Each scanline As Map In scanlines
+		Dim y As Int = scanline.Get("y")
+		Dim x1 As Int = scanline.Get("x1")
+		Dim x2 As Int = scanline.Get("x2")
+        
+		For x = x1 To x2 Step 4
+			Dim c As Int = TargetImage.GetColor(x, y)
+			avgR = avgR + Bit.And(Bit.UnsignedShiftRight(c, 16), 0xFF)
+			avgG = avgG + Bit.And(Bit.UnsignedShiftRight(c, 8), 0xFF)
+			avgB = avgB + Bit.And(c, 0xFF)
+			sampleCount = sampleCount + 1
+		Next
+	Next
+    
+	If sampleCount > 0 Then
+		avgR = avgR / sampleCount
+		avgG = avgG / sampleCount
+		avgB = avgB / sampleCount
+	Else
+		Dim center() As Int = GetShapeCenter(shape)
+		Dim targetColor As Int = TargetImage.GetColor(center(0), center(1))
+		avgR = Bit.And(Bit.UnsignedShiftRight(targetColor, 16), 0xFF)
+		avgG = Bit.And(Bit.UnsignedShiftRight(targetColor, 8), 0xFF)
+		avgB = Bit.And(targetColor, 0xFF)
+	End If
+    
+	shape.Put("Color", Bit.Or(Bit.ShiftLeft(128, 24), _
+              Bit.Or(Bit.ShiftLeft(avgR, 16), Bit.Or(Bit.ShiftLeft(avgG, 8), avgB))))
+    
+	Return shape
+End Sub
+
+Sub RasterizeShape(shape As Map) As List
+	Dim shapeType As String = shape.Get("ShapeType")
+	Dim points() As Int = shape.Get("Points")
+    
+	Select shapeType
+		Case Type_Triangle: Return RasterizeTriangle(points)
+		Case Type_Rectangle: Return RasterizeRectangle(points)
+		Case Type_Circle: Return RasterizeCircle(points)
+		Case Type_Ellipse: Return RasterizeEllipse(points)
+	End Select
+	
+	Dim empty As List
+	empty.Initialize
+	Return empty
+End Sub
+
+Sub RasterizeTriangle(points() As Int) As List
+	Dim scanlines As List
+	scanlines.Initialize
+    
+	Dim x1 As Int = points(0), y1 As Int = points(1)
+	Dim x2 As Int = points(2), y2 As Int = points(3)
+	Dim x3 As Int = points(4), y3 As Int = points(5)
+    
+	If y1 > y2 Then
+		Dim tx As Int = x1, ty As Int = y1
+		x1 = x2: y1 = y2: x2 = tx: y2 = ty
+	End If
+	If y2 > y3 Then
+		Dim tx As Int = x2, ty As Int = y2
+		x2 = x3: y2 = y3: x3 = tx: y3 = ty
+	End If
+	If y1 > y2 Then
+		Dim tx As Int = x1, ty As Int = y1
+		x1 = x2: y1 = y2: x2 = tx: y2 = ty
+	End If
+	
+	Dim minY As Int = Max(0, y1)
+	Dim maxY As Int = Min(TargetImage.mHeight - 1, y3)
+	
+	For y = minY To maxY
+		Dim xLeft As Int = 99999
+		Dim xRight As Int = -1
+		
+		If y >= y1 And y <= y2 Then
+			Dim x As Int = GetEdgeX(x1, y1, x2, y2, y)
+			xLeft = Min(xLeft, x)
+			xRight = Max(xRight, x)
+		End If
+		
+		If y >= y2 And y <= y3 Then
+			Dim x As Int = GetEdgeX(x2, y2, x3, y3, y)
+			xLeft = Min(xLeft, x)
+			xRight = Max(xRight, x)
+		End If
+		
+		If y >= y1 And y <= y3 Then
+			Dim x As Int = GetEdgeX(x1, y1, x3, y3, y)
+			xLeft = Min(xLeft, x)
+			xRight = Max(xRight, x)
+		End If
+		
+		If xLeft <= xRight Then
+			Dim scanline As Map
+			scanline.Initialize
+			scanline.Put("y", y)
+			scanline.Put("x1", Max(0, xLeft))
+			scanline.Put("x2", Min(TargetImage.mWidth - 1, xRight))
+			scanlines.Add(scanline)
+		End If
+	Next
+	
+	Return scanlines
+End Sub
+
+Sub GetEdgeX(x1 As Int, y1 As Int, x2 As Int, y2 As Int, y As Int) As Int
+	If y2 = y1 Then Return x1
+	Dim t As Double = (y - y1) / (y2 - y1)
+	Return x1 + (x2 - x1) * t
+End Sub
+
+Sub RasterizeRectangle(points() As Int) As List
+	Dim scanlines As List
+	scanlines.Initialize
+    
+	Dim x1 As Int = Max(0, points(0))
+	Dim y1 As Int = Max(0, points(1))
+	Dim x2 As Int = Min(TargetImage.mWidth - 1, points(2))
+	Dim y2 As Int = Min(TargetImage.mHeight - 1, points(3))
+    
+	For y = y1 To y2
+		Dim scanline As Map
+		scanline.Initialize
+		scanline.Put("y", y)
+		scanline.Put("x1", x1)
+		scanline.Put("x2", x2)
+		scanlines.Add(scanline)
+	Next
+    
+	Return scanlines
+End Sub
+
+Sub RasterizeCircle(points() As Int) As List
+	Dim scanlines As List
+	scanlines.Initialize
+    
+	Dim cx As Int = points(0)
+	Dim cy As Int = points(1)
+	Dim r As Int = points(2)
+    
+	Dim minY As Int = Max(0, cy - r)
+	Dim maxY As Int = Min(TargetImage.mHeight - 1, cy + r)
+    
+	For y = minY To maxY
+		Dim dy As Int = y - cy
+		Dim dx As Int = Sqrt(r * r - dy * dy)
+        
+		Dim x1 As Int = Max(0, cx - dx)
+		Dim x2 As Int = Min(TargetImage.mWidth - 1, cx + dx)
+        
+		Dim scanline As Map
+		scanline.Initialize
+		scanline.Put("y", y)
+		scanline.Put("x1", x1)
+		scanline.Put("x2", x2)
+		scanlines.Add(scanline)
+	Next
+    
+	Return scanlines
+End Sub
+
+Sub RasterizeEllipse(points() As Int) As List
+	Dim scanlines As List
+	scanlines.Initialize
+    
+	Dim cx As Int = points(0)
+	Dim cy As Int = points(1)
+	Dim rx As Int = points(2)
+	Dim ry As Int = points(3)
+    
+	Dim minY As Int = Max(0, cy - ry)
+	Dim maxY As Int = Min(TargetImage.mHeight - 1, cy + ry)
+    
+	For y = minY To maxY
+		Dim dy As Double = y - cy
+		Dim term As Double = 1.0 - (dy * dy) / (ry * ry)
+        
+		If term >= 0 Then
+			Dim dx As Int = rx * Sqrt(term)
+            
+			Dim x1 As Int = Max(0, cx - dx)
+			Dim x2 As Int = Min(TargetImage.mWidth - 1, cx + dx)
+            
+			Dim scanline As Map
+			scanline.Initialize
+			scanline.Put("y", y)
+			scanline.Put("x1", x1)
+			scanline.Put("x2", x2)
+			scanlines.Add(scanline)
+		End If
+	Next
+    
+	Return scanlines
+End Sub
+
+'Sub MutateShape(shape As Map) As Map
+'	Dim mutated As Map = CopyMap(shape)
+'	Dim mutationType As Int = Rnd(0, 3)
+'    
+'	Select mutationType
+'		Case 0 ' Mutate geometry
+'			Dim points() As Int = mutated.Get("Points")
+'			Dim newPoints(points.Length) As Int
+'			For i = 0 To points.Length - 1
+'				newPoints(i) = points(i)
+'			Next
+'            
+'			Dim pointIndex As Int = Rnd(0, newPoints.Length)
+'			Dim delta As Int = Rnd(-32, 33)
+'			Dim maxVal As Int = IIf(pointIndex Mod 2 = 0, TargetImage.mWidth - 1, TargetImage.mHeight - 1)
+'			newPoints(pointIndex) = Max(0, Min(newPoints(pointIndex) + delta, maxVal))
+'			mutated.Put("Points", newPoints)
+'            
+'			Dim scanlines As List = RasterizeShape(mutated)
+'			mutated.Put("scanlines", scanlines)
+'            
+'		Case 1 ' Mutate color RGB
+'			Dim oldColor As Int = mutated.Get("Color")
+'			Dim a As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 24), 0xFF)
+'			Dim r As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 16), 0xFF)
+'			Dim g As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 8), 0xFF)
+'			Dim b As Int = Bit.And(oldColor, 0xFF)
+'            
+'			Dim channel As Int = Rnd(0, 3)
+'			Select channel
+'				Case 0: r = Max(0, Min(255, r + Rnd(-20, 21)))
+'				Case 1: g = Max(0, Min(255, g + Rnd(-20, 21)))
+'				Case 2: b = Max(0, Min(255, b + Rnd(-20, 21)))
+'			End Select
+'			
+'			mutated.Put("Color", Bit.Or(Bit.ShiftLeft(a, 24), _
+'			Bit.Or(Bit.ShiftLeft(r, 16), Bit.Or(Bit.ShiftLeft(g, 8), b))))
+'			
+'		Case 2 ' Mutate alpha
+'			Dim oldColor As Int = mutated.Get("Color")
+'			Dim a As Int = Bit.And(Bit.UnsignedShiftRight(oldColor, 24), 0xFF)
+'			a = Max(30, Min(240, a + Rnd(-30, 31)))
+'			mutated.Put("Color", Bit.Or(Bit.ShiftLeft(a, 24), Bit.And(oldColor, 0xFFFFFF)))
+'	End Select
+'    
+'	Return mutated
+'End Sub
+
+Sub CopyMap(original As Map) As Map
+	Dim copy As Map
+	copy.Initialize
+    
+	For Each key As Object In original.Keys
+		Dim value As Object = original.Get(key)
+        
+		If key = "Points" Then
+			Dim arr() As Int = value
+			Dim newArr(arr.Length) As Int
+			For i = 0 To arr.Length - 1
+				newArr(i) = arr(i)
+			Next
+			copy.Put(key, newArr)
+		Else If key = "scanlines" Then
+			Dim srcList As List = value
+			Dim newList As List
+			newList.Initialize
+			For Each scanline As Map In srcList
+				Dim newScanline As Map
+				newScanline.Initialize
+				newScanline.Put("y", scanline.Get("y"))
+				newScanline.Put("x1", scanline.Get("x1"))
+				newScanline.Put("x2", scanline.Get("x2"))
+				newList.Add(newScanline)
+			Next
+			copy.Put(key, newList)
+		Else
+			copy.Put(key, value)
+		End If
+	Next
+    
+	Return copy
+End Sub
+
+Sub GetShapeCenter(shape As Map) As Int()
+	Dim points() As Int = shape.Get("Points")
+	Dim shapeType As String = shape.Get("ShapeType")
+    
+	Select shapeType
+		Case Type_Triangle
+			Return Array As Int((points(0) + points(2) + points(4)) / 3, (points(1) + points(3) + points(5)) / 3)
+		Case Type_Rectangle
+			Return Array As Int((points(0) + points(2)) / 2, (points(1) + points(3)) / 2)
+		Case Type_Circle, Type_Ellipse
+			Return Array As Int(points(0), points(1))
+	End Select
+    
+	Return Array As Int(0, 0)
+End Sub
+
+Sub DrawShapeOnBitmapCreator(bc As BitmapCreator, shape As Map)
+	Dim scanlines As List = shape.Get("scanlines")
+	Dim shapeColor As Int = shape.Get("Color")
+	Dim alpha As Int = Bit.And(Bit.UnsignedShiftRight(shapeColor, 24), 0xFF)
+    
+	For Each scanline As Map In scanlines
+		Dim y As Int = scanline.Get("y")
+		Dim x1 As Int = scanline.Get("x1")
+		Dim x2 As Int = scanline.Get("x2")
+        
+		For x = x1 To x2
+			Dim existing As Int = bc.GetColor(x, y)
+			Dim blended As Int = BlendColors(existing, shapeColor, alpha)
+			bc.SetColor(x, y, blended)
+		Next
+	Next
+End Sub
+
+Sub BlendColors(background As Int, foreground As Int, alpha As Int) As Int
+	If alpha > 250 Then Return foreground
+	If alpha < 5 Then Return background
+    
+	Dim br As Int = Bit.And(Bit.UnsignedShiftRight(background, 16), 0xFF)
+	Dim bg As Int = Bit.And(Bit.UnsignedShiftRight(background, 8), 0xFF)
+	Dim bb As Int = Bit.And(background, 0xFF)
+    
+	Dim fr As Int = Bit.And(Bit.UnsignedShiftRight(foreground, 16), 0xFF)
+	Dim fg As Int = Bit.And(Bit.UnsignedShiftRight(foreground, 8), 0xFF)
+	Dim fb As Int = Bit.And(foreground, 0xFF)
+    
+	Dim r As Int = (br * (255 - alpha) + fr * alpha) / 255
+	Dim g As Int = (bg * (255 - alpha) + fg * alpha) / 255
+	Dim b As Int = (bb * (255 - alpha) + fb * alpha) / 255
+    
+	Return Bit.Or(Bit.ShiftLeft(255, 24), Bit.Or(Bit.ShiftLeft(r, 16), Bit.Or(Bit.ShiftLeft(g, 8), b)))
+End Sub
+
+Sub GetAverageColor(bc As BitmapCreator) As Int
+	Dim totalR, totalG, totalB As Long
+	Dim count As Int = 0
+    
+	For x = 0 To bc.mWidth - 1 Step 4
+		For y = 0 To bc.mHeight - 1 Step 4
+			Dim c As Int = bc.GetColor(x, y)
+			totalR = totalR + Bit.And(Bit.UnsignedShiftRight(c, 16), 0xFF)
+			totalG = totalG + Bit.And(Bit.UnsignedShiftRight(c, 8), 0xFF)
+			totalB = totalB + Bit.And(c, 0xFF)
+			count = count + 1
+		Next
+	Next
+    
+	If count = 0 Then count = 1
+    
+	Return Bit.Or(Bit.ShiftLeft(255, 24), Bit.Or(Bit.ShiftLeft(totalR / count, 16), _
+           Bit.Or(Bit.ShiftLeft(totalG / count, 8), totalB / count)))
+End Sub

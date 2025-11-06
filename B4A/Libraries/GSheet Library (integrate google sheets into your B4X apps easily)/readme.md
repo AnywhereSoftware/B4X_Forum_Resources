@@ -1,5 +1,5 @@
 ### GSheet Library (integrate google sheets into your B4X apps easily) by fernando1987
-### 10/31/2025
+### 11/01/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/138967/)
 
 **Gsheet  
@@ -174,7 +174,7 @@ End Sub
   
 Sub Activity_Create(FirstTime As Boolean)  
     'Do not forget to load the layout file created with the visual designer. For example:  
-    s.Initialize("xxxxxxxxxxxxxxxx.apps.googleusercontent.com")'your Clientid google developers console, activate google drive api and google sheets api  
+    s.Initialize(Me, "s")'your Clientid google developers console, activate google drive api and google sheets api  
     s.Sheets_name = "Example"  
     s.SpreadsheetsId = "1FHx-a_a4afTQ3L5hXJIOttCVaJNngO3113E-qqFOjbk"  
     Activity.LoadLayout("sheets1")  
@@ -211,16 +211,15 @@ Download Gsheetsplus:**
 **Download Gsheets:**  
 <https://b4xapp.com/item/gsheets->  
   
-gsheets2json.xyz  
   
-  
-Example B4A:  
-[[MEDIA=googledrive]1s8ecKAGxmUT5J1azq-uLp5CupvtmADZL[/MEDIA]](https://drive.google.com/file/d/1s8ecKAGxmUT5J1azq-uLp5CupvtmADZL/view?usp=sharing)  
   
 Important in the verification screen of your project in google cloud activate this permission:  
 ![](https://www.b4x.com/android/forum/attachments/142542)  
-Important when generating a key for android activate this:  
-![](https://www.b4x.com/android/forum/attachments/150793)  
   
-Example google sheet:  
-[Example api](https://docs.google.com/spreadsheets/d/1FHx-a_a4afTQ3L5hXJIOttCVaJNngO3113E-qqFOjbk/edit#gid=0)
+  
+B4J Example google sheet:  
+[Sheet for example](https://docs.google.com/spreadsheets/d/1FHx-a_a4afTQ3L5hXJIOttCVaJNngO3113E-qqFOjbk/edit?gid=0#gid=0)  
+  
+  
+B4A Example google sheet:  
+[Sheet for example](https://docs.google.com/spreadsheets/d/1rSe34K-uTDmHdQObDSa9Nr0Hm6UPlf818OKC4FkioUU/edit?gid=0#gid=0)

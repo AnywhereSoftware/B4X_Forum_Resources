@@ -1,5 +1,5 @@
 ###  xGanttLite  b4xlib by klaus
-### 01/14/2025
+### 11/03/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/163211/)
 
 **Current version 1.1**  
@@ -33,7 +33,7 @@ Tested on PC, Android Samsung S10, Samsung Tab S2. Not yet tested with B4i.
   
 **Data structure:**  
   
-A xGanttLite chart is a composed of rows.  
+A xGanttLite chart is composed of rows.  
 Each row has these properties:  
 1. The ID of the objcet  
 2. One of the three object types.  
