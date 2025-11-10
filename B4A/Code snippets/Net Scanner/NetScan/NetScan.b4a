@@ -1,0 +1,175 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=okhttputils2
+Library4=xui
+Library5=b4xcollections
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~AddManifestText(~\n~<uses-permission android:name="android.permission.INTERNET" />~\n~<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />~\n~)~\n~~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#IgnoreWarnings: 19
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private edtBase As EditText
+	Private btnScan As Button
+	Private lvResults As ListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	lvResults.SingleLineLayout.Label.TextColor=xui.Color_Black	
+	lvResults.SingleLineLayout.Label.TextSize=12
+	lvResults.TwoLinesLayout.Label.TextColor=xui.Color_Black
+	lvResults.TwoLinesLayout.Label.TextSize=12
+	lvResults.TwoLinesLayout.SecondLabel.TextColor=xui.Color_Gray
+	lvResults.TwoLinesLayout.SecondLabel.TextSize=10
+	
+	' try to prefill base from DHCP ip (best-effort)
+	Dim ip As String = GetBroadcastAddress
+	If ip <> "" Then
+		edtBase.Text = ip.SubString2(0, ip.LastIndexOf(".") + 1)
+	Else
+		edtBase.Text = "192.168.1."
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub GetBroadcastAddress As String
+	Dim niIterator As JavaObject
+	niIterator = niIterator.InitializeStatic("java.net.NetworkInterface").RunMethod("getNetworkInterfaces", Null)
+	Do While niIterator.RunMethod("hasMoreElements", Null)
+		Dim ni As JavaObject = niIterator.RunMethod("nextElement", Null)
+		If ni.RunMethod("isLoopback", Null) = False Then
+			Dim addresses As List = ni.RunMethod("getInterfaceAddresses", Null)
+			For Each ia As JavaObject In addresses
+				Dim broadcast As Object = ia.RunMethod("getBroadcast", Null)
+				If broadcast <> Null Then
+					Dim b As String = broadcast
+					Return b.SubString(1)
+				End If
+			Next
+		End If
+	Loop
+	Return ""
+End Sub
+
+Sub btnScan_Click
+	btnScan.Enabled = False
+	lvResults.Clear
+
+	Wait For (PingAllAndReadARP) Complete (devices As B4XOrderedMap)
+	
+	For Each k As Object In devices.Keys
+		Dim d As Map= devices.Get(k)
+		If d.Get("flag")="0x2" Then 
+			lvResults.AddTwoLines(d.Get("ip"),d.Get("mac"))
+		End If
+	Next
+	btnScan.Enabled = True
+	ToastMessageShow($"Trovati ${lvResults.Size} dispositivi"$, False)
+End Sub
+
+'--------------------
+' Esegue ping "finto" + legge /proc/net/arp
+'--------------------
+Sub PingAllAndReadARP As ResumableSub
+	Dim base As String = edtBase.Text
+	Dim timeout As Int = 100
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.net.InetAddress")
+    
+	' PING rapido di tutti gli IP (solo per popolare ARP)
+	For i = 1 To 254
+		Dim ip As String = base & i
+		Try
+			Dim ia As JavaObject = jo.RunMethod("getByName", Array(ip))
+			ia.RunMethod("isReachable", Array(timeout))
+		Catch
+			'Log("E: " & LastException.Message)
+		End Try
+		Sleep(2)
+	Next
+    
+	' Ora leggiamo /proc/net/arp
+	Dim OM As B4XOrderedMap = B4XCollections.CreateOrderedMap
+	OM.Initialize
+	
+	Dim su As String = File.ReadString("/proc/net/", "arp")
+	Dim lines() As String = Regex.Split("\n", su)
+	For i = 1 To lines.Length - 1 ' salto intestazione
+		' IP, HW Type, Flag, mac Address, *, lan
+		Dim parts() As String = Regex.Split("\s+", lines(i).Trim)
+		If parts.Length >= 6 Then
+			OM.Put(parts(0),CreateMap("ip":parts(0),"flag":parts(2),"mac":parts(3),"iface":parts(5)))
+		End If
+	Next
+	OM.Put(GetLocalIP,CreateMap("ip":GetLocalIP,"flag":"0x2","mac":"this device","iface":""))
+	OM.Keys.Sort(True)
+	Return OM
+End Sub
+
+Sub GetLocalIP As String
+	Dim jo As JavaObject
+	jo = Me
+	Return jo.RunMethod("getIPAddress", Null)
+End Sub
+
+
+#If Java
+import java.net.*;
+import java.util.*;
+
+public static String getIPAddress() {
+    try {
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface ni = interfaces.nextElement();
+            Enumeration<InetAddress> addresses = ni.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress address = addresses.nextElement();
+                if (!address.isLoopbackAddress() && address instanceof Inet4Address) {
+                    return address.getHostAddress();
+                }
+            }
+        }
+    } catch (Exception e) {
+        return "Errore: " + e.getMessage();
+    }
+    return "IP non trovato";
+}
+#End If

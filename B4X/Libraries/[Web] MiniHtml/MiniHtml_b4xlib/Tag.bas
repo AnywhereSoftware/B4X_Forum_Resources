@@ -6,7 +6,7 @@ Version=4.5
 @EndOfDesignText@
 ' Created by: Aeric
 ' Credit to:  EnriqueGonzalez
-' Version: 0.30
+' Version: 0.40
 Sub Class_Globals
 	Private mId As String
 	Private mName As String
@@ -876,7 +876,10 @@ Public Sub hxSwapOob (value As String) As Tag
 	Return Me
 End Sub
 
-'e.g <code>hxOn(":after-request", statement)</code>
+'e.g <code>hxOn("click", "alert('You clicked me!')")</code>
+'output <code>hx-on:click="alert('You clicked me!')"</code>
+'e.g <code>hxOn(":after-request", "if(event.detail.successful) this.reset()")</code>
+'output <code>hx-on::after-request="if(event.detail.successful) this.reset()"</code>
 Public Sub hxOn (event As String, value As String) As Tag
 	mAttributes.Put("hx-on:" & event, value)
 	Return Me

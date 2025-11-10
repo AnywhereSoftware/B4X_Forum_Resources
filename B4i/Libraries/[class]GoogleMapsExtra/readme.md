@@ -1,5 +1,5 @@
 ### [class]GoogleMapsExtra by Erel
-### 05/01/2022
+### 11/05/2025
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/56871/)
 
 This class extends GoogleMaps library.  
@@ -26,7 +26,6 @@ gextra.AddGroundOverlay(bounds, LoadBitmap(File.DirAssets, "up76.png"))
 
   
   
-Note that the bundle in the special folder is not included. You need to download it from the tutorial.  
   
 Updates:  
   
@@ -50,3 +49,8 @@ Sub gmap_MarkerInfoWindow (OMarker As Object) As Object
    Return p  
 End Sub
 ```
+
+  
+  
+Project is available here: <https://www.b4x.com/b4i/files/GoogleMaps.zip>  
+Don't miss the bundle under Files\Special.

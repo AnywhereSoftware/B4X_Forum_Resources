@@ -55,3 +55,27 @@ End Sub
 Public Sub sty (value As String) As Tag
 	Return init.sty(value)
 End Sub
+
+Public Sub hxGet (url As String) As Tag
+	Return init.hxGet(url)
+End Sub
+
+Public Sub hxPost (url As String) As Tag
+	Return init.hxPost(url)
+End Sub
+
+Public Sub hxPatch (url As String) As Tag
+	Return init.hxPatch(url)
+End Sub
+
+Public Sub hxDelete (url As String) As Tag
+	Return init.hxDelete(url)
+End Sub
+
+'e.g <code>hxOn("click", "alert('You clicked me!')")</code>
+'output <code>hx-on:click="alert('You clicked me!')"</code>
+'e.g <code>hxOn(":after-request", "if(event.detail.successful) this.reset()")</code>
+'output <code>hx-on::after-request="if(event.detail.successful) this.reset()"</code>
+Public Sub hxOn (event As String, value As String) As Tag
+	Return init.hxOn(event, value)
+End Sub

@@ -1,5 +1,5 @@
 ### Tiles_JE by Jerryk
-### 08/03/2025
+### 11/05/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/167614/)
 
 I created a new custom view where the user continues to run the application based on the information displayed in the tiles. There are three types of information that can be displayed:  
@@ -15,7 +15,7 @@ The tiles are scrollable. The width of the tiles can be fixed or flexible. Each 
   
 **Tiles\_JE  
 Author: Jerryk  
-Version: 1.3  
+Version: 1.4  
   
 Methods:**  
 
@@ -98,4 +98,12 @@ Find a tile with a specific tag
 
 - **DefaultColor** (pTag As String, pCol As Int)
 
-Change default tile color for tile with a specific tag
+Change default tile color for tile with a specific tag  
+
+- **AddToParent** (Parent As B4XView, Left As Int, Top As Int, Width As Int, Height As Int)
+
+Add class programmatically  
+
+- **GetBase**
+
+Gets Base of the object

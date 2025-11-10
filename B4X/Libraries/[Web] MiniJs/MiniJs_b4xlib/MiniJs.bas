@@ -1,5 +1,5 @@
 ﻿B4J=true
-Group=Default Group
+Group=Classes
 ModulesStructureVersion=1
 Type=Class
 Version=10.3
@@ -116,13 +116,13 @@ Public Sub EndForLoop
     AddLine("}")
 End Sub
 
-Public Sub StartCondition(condition As String) As MiniJS
+Public Sub StartCondition(condition As String) As MiniJs
     AddLine($"if (${condition}) {"$)
     currentIndent = currentIndent + 1
     Return Me
 End Sub
 
-Public Sub AddMethodCall (objectName As String, methodName As String, args() As String) As MiniJS
+Public Sub AddMethodCall (objectName As String, methodName As String, args() As String) As MiniJs
 	Dim argList As String
 	If Initialized(args) Then
 		For Each arg As String In args
@@ -134,7 +134,7 @@ Public Sub AddMethodCall (objectName As String, methodName As String, args() As 
 	Return Me
 End Sub
 
-Public Sub EndCondition As MiniJS
+Public Sub EndCondition As MiniJs
     currentIndent = currentIndent - 1
     AddLine("}")
     Return Me
@@ -207,4 +207,51 @@ Public Sub CreateArray (name As String, items As List)
     itemsStr = itemsStr & "]"
     
     AddLine($"const ${name} = ${itemsStr};"$)
+End Sub
+
+' output: <code>document.dispatchEvent(new CustomEvent("eventName", { ... }))</code>
+Public Sub AddCustomEventDispatch (eventName As String, detailData As Map)
+    AddLine("")
+	AddLine("document.dispatchEvent(new CustomEvent('" & eventName & "', {")
+    currentIndent = currentIndent + 1
+    AddLine("detail: {")
+    currentIndent = currentIndent + 1
+    
+	'Dim keys As List = detailData.Keys
+	'For i = 0 To keys.Size - 1
+	'    Dim key As String = keys.Get(i)
+	'    Dim value As Object = detailData.Get(key)
+	'    Dim lineEnd As String = ","
+	'    If i = keys.Size - 1 Then lineEnd = ""
+	'    
+	'    If value Is String Then
+	'        AddLine($"{key}: '${value}'${lineEnd}"$)
+	'    Else If value Is Boolean Then
+	'        Dim boolVal As String = value
+	'        AddLine($"{key}: ${boolVal}${lineEnd}"$)
+	'    Else
+	'        AddLine($"{key}: ${value}${lineEnd}"$)
+	'    End If
+	'Next
+	'Dim keySize As Int = detailData.Size
+	Dim nextKey As Int
+	For Each key As String In detailData.Keys
+		Dim lineEnd As String
+		If nextKey < detailData.Size - 1 Then lineEnd = ","
+		Dim value As Object = detailData.Get(key)
+        If value Is String Then
+            AddLine($"${key}: '${value}'${lineEnd}"$)
+        Else If value Is Boolean Then
+            Dim boolVal As String = value
+            AddLine($"${key}: ${boolVal}${lineEnd}"$)
+        Else
+            AddLine($"${key}: ${value}${lineEnd}"$)
+        End If
+		nextKey = nextKey + 1
+	Next
+
+    currentIndent = currentIndent - 1
+    AddLine("}")
+    currentIndent = currentIndent - 1
+    AddLine("}));")
 End Sub

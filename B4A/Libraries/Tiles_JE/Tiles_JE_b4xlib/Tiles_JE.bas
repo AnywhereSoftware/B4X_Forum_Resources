@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.3
 @EndOfDesignText@
-'Version 1.3
+'Version 1.4
 'Author: Jerryk
 
 #Event: Click(Tag as String)
@@ -42,7 +42,7 @@ Sub Class_Globals
 	Private mTileWidth As Int
 	Private mCornerRadius As Int
 	Private mGap As Int
-	Private mTilePerRow As Int
+	Private mTilesPerRow As Int
 	Private mBackgroundColor As Int
 	Private mShowSelected As String
 	Private mSelectedColor As Int
@@ -103,7 +103,7 @@ End Sub
 Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
 	CheckDuplication (pTag)
 	lTags.Add(pTag)
-		
+	
 	tilesPanel.LoadLayout("_pnlLabel")
 
 	Dim pnl As Panel
@@ -125,7 +125,7 @@ Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundC
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
 	Else 'FilledWidth
-		pnl.Width = (baseSV.Width - (mGap * (mTilePerRow + 1))) / mTilePerRow
+		pnl.Width = (baseSV.Width - (mGap * (mTilesPerRow + 1))) / mTilesPerRow
 	End If
 	Dim yratio As Float = mTileHeight / 100dip
 	pnl.Height = pnl.Height * yratio
@@ -166,7 +166,7 @@ Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int)
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
 	Else 'FilledWidth
-		pnl.Width = (baseSV.Width - (mGap * (mTilePerRow + 1))) / mTilePerRow
+		pnl.Width = (baseSV.Width - (mGap * (mTilesPerRow + 1))) / mTilesPerRow
 	End If
 	Dim yratio As Float = mTileHeight / 100dip
 	pnl.Height = pnl.Height * yratio
@@ -207,7 +207,7 @@ Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor A
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
 	Else 'FilledWidth
-		pnl.Width = (baseSV.Width - (mGap * (mTilePerRow + 1))) / mTilePerRow
+		pnl.Width = (baseSV.Width - (mGap * (mTilesPerRow + 1))) / mTilesPerRow
 	End If
 	Dim yratio As Float = mTileHeight / 100dip
 	pnl.Height = pnl.Height * yratio
@@ -242,7 +242,7 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
 	Else 'FilledWidth
-		pnl.Width = (baseSV.Width - (mGap * (mTilePerRow + 1))) / mTilePerRow
+		pnl.Width = (baseSV.Width - (mGap * (mTilesPerRow + 1))) / mTilesPerRow
 	End If
 	Dim yratio As Float = mTileHeight / 100dip
 	pnl.Height = pnl.Height * yratio
@@ -258,12 +258,16 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 	Return pnl
 End Sub
 
+'get Base object
+Public Sub GetBase As Panel
+	Return mBase
+End Sub
+
 'find a tile with a specific tag
 Public Sub FindTile(search As String) As Panel
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
-
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = search Then
 					Return p
@@ -280,7 +284,6 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
-
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = pTag Then
 					p.Tag.As(xTag).Col = pCol
@@ -289,6 +292,11 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 			End If
 		End If
 	Next
+End Sub
+
+Public Sub AddToParent(Parent As B4XView, Left As Int, Top As Int, Width As Int, Height As Int)
+	mBase = xui.CreatePanel("")
+	Parent.AddView(mBase, Left, Top, Width, Height)
 End Sub
 
 Private Sub CheckDuplication (pTag As String)
@@ -392,9 +400,95 @@ Public Sub setSelectedItem(value As String)
 		Next
 	End If
 End Sub
-
 Public Sub getSelectedItem As String
 	Return mSelectedItem
+End Sub
+
+Public Sub setTilesType(value As String)
+	Select Case value
+		Case "FilledWidth", "FixedWidth"   
+			mTilesType = value
+		Case Else
+			mTilesType = "FilledWidth"
+	End Select
+End Sub
+Public Sub getTilesType As String
+	Return mTilesType
+End Sub
+
+Public Sub setTileHeight(value As Int)
+	mTileHeight = value
+End Sub
+Public Sub getTileHeight As Int
+	Return mTileHeight
+End Sub
+
+Public Sub setTileWidth(value As Int)
+	mTileWidth = value
+End Sub
+Public Sub getTileWidth As Int
+	Return mTileWidth
+End Sub
+
+Public Sub setCornerRadius(value As Int)
+	mCornerRadius = value
+End Sub
+Public Sub getCornerRadius As Int
+	Return mCornerRadius
+End Sub
+
+Public Sub setGap(value As Int)
+	mGap = value
+End Sub
+Public Sub getGap As Int
+	Return mGap
+End Sub
+
+Public Sub setTilesPerRow(value As Int)
+	mTilesPerRow = value
+End Sub
+Public Sub getTilesPerRow As Int
+	Return mTilesPerRow
+End Sub
+
+Public Sub setBackgroundColor(value As Int)
+	mBackgroundColor = value
+End Sub
+Public Sub getBackgroundColor As Int
+	Return mBackgroundColor
+End Sub
+
+Public Sub setShowSelected(value As String)
+	Select Case value
+		Case "tile", "border", "off"
+			mShowSelected = value
+		Case Else
+			mShowSelected = "tile"
+	End Select
+End Sub
+Public Sub getShowSelected As String
+	Return mShowSelected
+End Sub
+
+Public Sub setSelectedColor(value As Int)
+	mSelectedColor = value
+End Sub
+Public Sub getSelectedColor As Int
+	Return mSelectedColor
+End Sub
+
+Public Sub setSelectedWidth(value As Int)
+	mSelectedWidth = value
+End Sub
+Public Sub getSelectedWidth As Int
+	Return mSelectedWidth
+End Sub
+
+Public Sub setInnerHeight(value As Int)
+	mInnerHeight = value
+End Sub
+Public Sub getInnerHeight As Int
+	Return mInnerHeight
 End Sub
 #End Region
 
