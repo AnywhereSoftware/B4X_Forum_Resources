@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.3
 @EndOfDesignText@
-'Version 1.4
+'Version 1.41
 'Author: Jerryk
 
 #Event: Click(Tag as String)
@@ -31,79 +31,90 @@ Sub Class_Globals
 	
 	Private baseSV As ScrollView
 	Private tilesPanel As Panel
+	Private idx As Int = 0
 	Private xpoz, ypoz As Int
-	Private cvs As Canvas
 	Private lTags As List
+	Private mSelectedItem As String
 	Type xTag(Tag As Object, Col As Int)
 
-	'Designer properties
-	Private mTilesType As String
-	Private mTileHeight As Int
-	Private mTileWidth As Int
-	Private mCornerRadius As Int
-	Private mGap As Int
-	Private mTilesPerRow As Int
-	Private mBackgroundColor As Int
-	Private mShowSelected As String
-	Private mSelectedColor As Int
-	Private mSelectedWidth As Int
-	Private mSelectedWidth As Int
-	Private mInnerHeight As Int
+	'properties
+	Private mTilesType As String = "FilledWidth"
+	Private mTileHeight As Int = 100dip
+	Private mTileWidth As Int = 100dip
+	Private mCornerRadius As Int = 5dip
+	Private mGap As Int = 5dip
+	Private mTilesPerRow As Int = 3
+	Private mBackgroundColor As Int = xui.Color_Black
+	Private mShowSelected As String = "tile"
+	Private mSelectedColor As Int = xui.Color_Yellow
+	Private mSelectedWidth As Int = 4dip
+	Private mInnerHeight As Int = 500dip
 
-	Private mSelectedItem As String
-	Private idx As Int = 0
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
 	mEventName = EventName
 	mCallBack = Callback
-End Sub
+	
+	lTags.Initialize
+	tilesPanel.Initialize("")
+	mSelectedItem = "-1"
+	
+ End Sub
 
 'Base type must be Object
 Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	mBase = Base
-    Tag = mBase.Tag
+	Tag = mBase.Tag
 	mBase.Tag = Me
 
-	lTags.Initialize
-	Dim bmp As Bitmap
-	bmp.InitializeMutable(50dip, 50dip) 'ignore
-	cvs.Initialize2(bmp)
-		
-	mSelectedItem = "-1"
-	
+	'read properties	
 	mTilesType = Props.GetDefault("dTilesType", "FilledWidth")
 	mTileHeight = IntToDIP(Props.GetDefault("dTileHeight", 100))
 	mTileWidth = IntToDIP(Props.GetDefault("dTileWidth", 100))
 	mCornerRadius = IntToDIP(Props.GetDefault("dCornerRadius", 5))
 	mGap = IntToDIP(Props.GetDefault("dGap", 5))
-	mTilePerRow = Props.GetDefault("dTilesPerRow", 3)
+	mTilesPerRow = Props.GetDefault("dTilesPerRow", 3)
 	mBackgroundColor = xui.PaintOrColorToColor(Props.GetDefault("dBackgroundColor", xui.Color_Black))
 	mShowSelected = Props.GetDefault("dShowSelected", "tile")
 	mSelectedColor = xui.PaintOrColorToColor(Props.GetDefault("dSelectedColor", xui.Color_Yellow))
 	mSelectedWidth = IntToDIP(Props.GetDefault("dSelectedWidth", 4))
 	mInnerHeight = IntToDIP(Props.GetDefault("dInnerHeight", 500))
 	
+	InitClass
+
+End Sub
+
+Private Sub InitClass
 	baseSV.Initialize(mBase.Height)
-	baseSV.Color = mBackgroundColor
-	baseSV.Panel.Color = mBackgroundColor
 	baseSV.Panel.Width = mBase.Width
 	baseSV.Panel.Height = mInnerHeight
-	
-	mBase.AddView(baseSV, 0, 0, mBase.Width , mBase.Height)
+	baseSV.Panel.Color = mBackgroundColor
+	baseSV.Color = mBackgroundColor
 
+	mBase.AddView(baseSV, 0, 0, mBase.Width, mBase.Height)
 	tilesPanel = baseSV.Panel
+
 	xpoz = mGap
 	ypoz = mGap
 End Sub
 
-Private Sub Base_Resize (Width As Double, Height As Double)
+Public Sub AddToParent(oParent As Object, Left As Int, Top As Int, Width As Int, Height As Int)
+	Dim mParent As B4XView
+	mParent = oParent
+
+	mBase = xui.CreatePanel("mBase")
+	mBase.Tag = Me
+	mParent.AddView(mBase, Left, Top, Width, Height)
+	
+	InitClass
+	
 End Sub
 
 Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
 	CheckDuplication (pTag)
 	lTags.Add(pTag)
-	
+		
 	tilesPanel.LoadLayout("_pnlLabel")
 
 	Dim pnl As Panel
@@ -217,6 +228,7 @@ Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor A
 	img.Height = pnl.Height
 	img.Gravity = Gravity.CENTER
 	img.Bitmap = LoadBitmapResize(File.DirAssets, pBitmap, pWidth, pHeight, True)
+
 	NewPosition (pnl)
 
 	Return img
@@ -258,16 +270,12 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 	Return pnl
 End Sub
 
-'get Base object
-Public Sub GetBase As Panel
-	Return mBase
-End Sub
-
 'find a tile with a specific tag
 Public Sub FindTile(search As String) As Panel
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
+
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = search Then
 					Return p
@@ -284,6 +292,7 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
+
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = pTag Then
 					p.Tag.As(xTag).Col = pCol
@@ -294,16 +303,11 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 	Next
 End Sub
 
-Public Sub AddToParent(Parent As B4XView, Left As Int, Top As Int, Width As Int, Height As Int)
-	mBase = xui.CreatePanel("")
-	Parent.AddView(mBase, Left, Top, Width, Height)
-End Sub
-
 Private Sub CheckDuplication (pTag As String)
 	If lTags.IndexOf(pTag) <> -1 Then
 		Dim TH As Throwables
 		TH.Initialize
-		TH.Throw(Throwables_Static.NewIllegalArgumentException("Duplicate tag: " & pTag))
+		TH.Throw(Throwables_Static.NewIllegalArgumentException("DUPLICATE TAG: " & pTag))
 	End If
 End Sub
 
@@ -400,13 +404,14 @@ Public Sub setSelectedItem(value As String)
 		Next
 	End If
 End Sub
+
 Public Sub getSelectedItem As String
 	Return mSelectedItem
 End Sub
 
 Public Sub setTilesType(value As String)
 	Select Case value
-		Case "FilledWidth", "FixedWidth"   
+		Case "FilledWidth", "FixedWidth"
 			mTilesType = value
 		Case Else
 			mTilesType = "FilledWidth"
@@ -490,8 +495,12 @@ End Sub
 Public Sub getInnerHeight As Int
 	Return mInnerHeight
 End Sub
-#End Region
 
+'gets Base of the object
+Public Sub GetBase As Panel
+	Return mBase
+End Sub
+#End Region
 
 #Region tools
 Private Sub IntToDIP(Integer As Int) As Int

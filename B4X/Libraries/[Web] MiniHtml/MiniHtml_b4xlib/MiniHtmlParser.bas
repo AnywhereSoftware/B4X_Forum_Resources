@@ -13,9 +13,7 @@ Sub Class_Globals
 	Private WhiteSpace As String = " " & TAB & Chr(10) & Chr(13)
 	Private VoidTags As B4XSet
 	Private Const COLOR_ORANGE As Int = -29696
-	Public Const COLOR_RED 		As Int = -65536
-	Public Const COLOR_BLUE 	As Int = -16776961
-	Public Const COLOR_BLACK 	As Int = 0
+	Private Const COLOR_RED 	As Int = -65536
 	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
 	Type HtmlAttribute (Key As String, Value As String)
 End Sub
@@ -358,50 +356,4 @@ Public Sub UnescapeEntities(XmlInput As String) As String
 	Loop
 	If lastMatchEnd < XmlInput.Length Then sb.Append(XmlInput.SubString(lastMatchEnd))
 	Return sb.ToString
-End Sub
-
-Public Sub ConvertToTag (node1 As HtmlNode) As Tag
-    Dim parent As Tag
-    parent.Initialize(node1.Name)
-    
-    ' Handle class and style attributes first
-    Dim class1 As String = GetAttributeValue(node1, "class", "")
-    Dim style1 As String = GetAttributeValue(node1, "style", "")
-    If class1 <> "" Then parent.addClass(class1)
-    If style1 <> "" Then parent.addStyle(style1)
-
-    For Each att As HtmlAttribute In node1.Attributes
-        ' Skip class and style as we already handled them
-        If att.Key = "class" Or att.Key = "style" Then Continue
-        If att.Key = "value" And att.Value.Trim.Length > 0 Then
-            If node1.Name = "input" Or node1.Name = "option" Then
-                parent.attr(att.Key, att.Value.Trim)
-            Else
-                If att.Value.Trim.Length > 0 Then
-                    parent.Text(att.Value.Trim)
-                End If
-            End If
-        Else
-            ' Handle boolean attributes (where key = value)
-            If att.Key = att.Value Then
-                parent.attr3(att.Key) ' boolean attribute
-            Else
-                parent.attr(att.Key, att.Value) ' regular attribute
-            End If
-        End If
-    Next
-    
-    For Each child As HtmlNode In node1.Children
-        Dim tag2 As Tag = ConvertToTag(child)
-        If tag2.TagName = "text" Then
-            If tag2.Attributes.ContainsKey("value") Then
-                ' ignore text nodes with "value" attribute
-            Else
-                parent.add(tag2)
-            End If
-        Else
-            parent.add(tag2)
-        End If
-    Next
-    Return parent
 End Sub

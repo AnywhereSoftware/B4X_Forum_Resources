@@ -1,15 +1,15 @@
 ### [Web] MiniHtml by aeric
-### 11/05/2025
+### 11/11/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/158846/)
 
-Version: 0.40  
+Version: 0.60  
   
 Generate Html with B4X code.  
   
 Example 1:  
 
 ```B4X
-H1.Text("Hello, World!")
+H1.text("Hello, World!")
 ```
 
   
@@ -26,11 +26,9 @@ Output:
 Example 2:  
 
 ```B4X
-Paragraph.up(main1) _  
-.Text("This is a ") _  
-.add(Span.Text("red text").addClass("text-danger")) _  
-.Text(" in a ") _  
-.add(Bold.text("paragraph"))
+Dim p1 As Tag = Paragraph.text("This is a ")  
+p1.add(Span.cls("text-danger").text("red text"))  
+p1.text(" in  a ").add(Bold.text("paragraph"))
 ```
 
   
@@ -39,10 +37,7 @@ Output:
 This is a red text in a **paragraph**  
 
 ```B4X
-<p>This is a  
-    <span class="text-danger">red text</span> in a  
-    <b>paragraph</b>  
-</p>
+<p>This is a <span class="text-danger">red text</span> in  a <b>paragraph</b></p>
 ```
 
   

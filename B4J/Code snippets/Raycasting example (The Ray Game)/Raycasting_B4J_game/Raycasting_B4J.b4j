@@ -1,0 +1,882 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=All_Textures.ppm
+File2=Layout1.bjl
+File3=lost.ppm
+File4=sky.ppm
+File5=sprites.ppm
+File6=title.ppm
+File7=won.ppm
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jxui
+Library6=jreflection
+NumberOfFiles=7
+NumberOfLibraries=6
+NumberOfModules=0
+Version=10.3
+@EndOfDesignText@
+'========================================================================
+' B4J Raycasting Engine - WITH PPM FILE LOADING
+' A 3D raycasting game engine inspired by Wolfenstein 3D
+' Features: texture mapping, sprite rendering, collision detection
+' Based on a tutorial by 3DSage https://www.youtube.com/watch?v=w0Bm4IA-Ii8
+'========================================================================
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private canvas As Canvas  ' Main drawing canvas
+	Private cvs As Canvas
+	Private pane As Pane
+	
+	' Player variables - position and orientation
+	Private px As Float = 150      ' Player X position in world coordinates
+	Private py As Float = 400      ' Player Y position in world coordinates
+	Private pa As Float = 90       ' Player angle (direction facing) in degrees
+	Private pdx As Float           ' Player direction X component (cosine of angle)
+	Private pdy As Float           ' Player direction Y component (negative sine of angle)
+	
+	' Keyboard state tracking - allows smooth movement
+	Private keyW As Boolean = False  ' Forward movement
+	Private keyA As Boolean = False  ' Turn left
+	Private keyS As Boolean = False  ' Backward movement
+	Private keyD As Boolean = False  ' Turn right
+	
+	' Map constants defining the game world grid
+	Private Const mapX As Int = 8   ' Map width in tiles
+	Private Const mapY As Int = 8   ' Map height in tiles
+	Private Const mapS As Int = 64  ' Size of each map tile in pixels
+	
+	' Map arrays - define the game world layout
+	Private mapW() As Int  ' Wall map - defines solid walls (0 = empty, >0 = wall texture ID)
+	Private mapF() As Int  ' Floor map - defines floor textures
+	Private mapC() As Int  ' Ceiling map - defines ceiling textures
+	
+	' Texture arrays - RGB pixel data loaded from PPM files or generated procedurally
+	Private All_Textures() As Int  ' Wall/floor/ceiling textures (32x32 pixels, 9 textures)
+	Private sky() As Int           ' Sky texture for background (120x40 pixels)
+	Private title() As Int         ' Title screen image (120x80 pixels)
+	Private won() As Int           ' Victory screen image (120x80 pixels)
+	Private lost() As Int          ' Game over screen image (120x80 pixels)
+	Private sprites() As Int       ' Sprite textures for collectibles/enemies (32x32, 3 sprites)
+	
+	' Game state management
+	Private gameState As Int = 0   ' 0=init, 1=title screen, 2=playing, 3=won, 4=lost
+	Private timer As Int = 0       ' Timer for screen transitions
+	Private fade As Float = 0      ' Fade effect value (0.0 to 1.0)
+	
+	' Sprite system for game objects (collectibles, enemies, etc.)
+	Type SpriteData (stype As Int, state As Int, map As Int, x As Float, y As Float, z As Float)
+	Private sp(4) As SpriteData    ' Array of sprite objects in the game
+	Private depth(120) As Float    ' Depth buffer for sprite occlusion (one per vertical screen slice)
+	
+	' Game loop timer - runs at ~60 FPS (16ms per frame)
+	Private gameTimer As Timer
+	Private lastTime As Long       ' Timestamp for delta time calculation
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	' Initialize the main application window
+	MainForm = Form1
+	MainForm.Initialize("MainForm", 960, 640)  ' 960x640 = 120x80 blocks * 8 pixels each
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "B4J Raycasting Game"
+	
+	' Setup the drawing pane
+	pane.Initialize("pane")
+	MainForm.RootPane.AddNode(pane, 0, 0, 960, 640)
+	
+	' Initialize the canvas for rendering
+	cvs.Initialize("cvs")
+	canvas.Initialize("canvas")
+	pane.AddNode(cvs, 0, 0, 960, 640)
+	canvas = cvs
+	
+	' Load all game textures (PPM files or fallback procedural textures)
+	LoadTextures
+	
+	' Initialize the game world and player starting position
+	InitializeMaps
+	InitPlayer
+	
+	' Setup keyboard event handlers for player input
+	Dim CJO As JavaObject = canvas
+	Dim O As Object = CJO.CreateEventFromUI("javafx.event.EventHandler","CanvKeyPressed",Null)
+	CJO.RunMethod("setOnKeyPressed",Array(O))
+	CJO.RunMethod("setFocusTraversable",Array(True))
+	
+	Dim CJOR As JavaObject = canvas
+	Dim jOr As Object = CJOR.CreateEventFromUI("javafx.event.EventHandler","CanvKeyReleased",Null)
+	CJOR.RunMethod("setOnKeyReleased",Array(jOr))
+	CJOR.RunMethod("setFocusTraversable",Array(True))
+	
+	' Start the game loop at 60 FPS (16ms intervals)
+	gameTimer.Initialize("gameTimer", 16)
+	lastTime = DateTime.Now
+	gameTimer.Enabled = True
+	
+	MainForm.Show
+End Sub
+
+'========================================================================
+' PPM LOADING - Loads texture data from PPM image files
+' PPM (Portable Pixmap) is a simple uncompressed image format
+'========================================================================
+
+Private Sub LoadTextures
+	' Attempt to load all textures from PPM files
+	' If any file is missing, fall back to procedurally generated textures
+	Try
+		All_Textures = LoadPPM("All_Textures.ppm")  ' Wall/floor/ceiling textures
+		sky = LoadPPM("sky.ppm")                     ' Sky gradient background
+		title = LoadPPM("title.ppm")                 ' Title screen
+		won = LoadPPM("won.ppm")                     ' Victory screen
+		lost = LoadPPM("lost.ppm")                   ' Game over screen
+		sprites = LoadPPM("sprites.ppm")             ' Collectible/enemy sprites
+		Log("All textures loaded from PPM files")
+	Catch
+		' If PPM files not found, generate simple placeholder textures
+		Log("PPM files not found, using fallback textures")
+		All_Textures = GenerateFallbackTextures
+		sky = GenerateFallbackSky
+		title = GenerateFallbackScreen(1)
+		won = GenerateFallbackScreen(2)
+		lost = GenerateFallbackScreen(3)
+		sprites = GenerateFallbackSprites
+	End Try
+End Sub
+
+
+Private Sub LoadPPM(FileName As String) As Int()
+	' Load a PPM P6 format image (binary RGB data)
+	' PPM format: Header (P6, width, height, maxval) followed by raw RGB bytes
+	
+	' Open the file and read the text header
+	Dim in As InputStream = File.OpenInput(File.DirAssets, FileName)
+	Dim tr As TextReader
+	tr.Initialize(in)
+	
+	' Read magic number - must be "P6" for binary PPM
+	Dim magic As String = tr.ReadLine
+	If magic <> "P6" Then
+		tr.Close
+		Dim empty(0) As Int
+		Return empty
+	End If
+	
+	' Skip any comment lines (start with #)
+	Dim line As String = tr.ReadLine
+	Do While line.StartsWith("#")
+		line = tr.ReadLine
+	Loop
+	
+	' Parse image dimensions (width and height)
+	Dim parts() As String = Regex.Split(" +", line.Trim)
+	Dim width As Int = parts(0)
+	Dim height As Int = parts(1)
+	
+	' Read max color value (usually 255)
+	Dim maxval As String = tr.ReadLine
+	tr.Close
+	in.Close
+	
+	' Calculate the size of the text header
+	Dim headerSize As Int = magic.Length + 1
+	
+	' Recalculate header size including comment lines
+	in = File.OpenInput(File.DirAssets, FileName)
+	tr.Initialize(in)
+	tr.ReadLine ' Skip magic number
+	line = tr.ReadLine
+	Do While line.StartsWith("#")
+		headerSize = headerSize + line.Length + 1
+		line = tr.ReadLine
+	Loop
+	headerSize = headerSize + line.Length + 1 + maxval.Length + 1
+	tr.Close
+	in.Close
+	
+	' Read the binary RGB pixel data
+	in = File.OpenInput(File.DirAssets, FileName)
+	Dim skipbuf(headerSize) As Byte
+	in.ReadBytes(skipbuf, 0, headerSize)  ' Skip header
+	
+	' Read all RGB bytes (3 bytes per pixel)
+	Dim totalBytes As Int = width * height * 3
+	Dim data(totalBytes) As Int
+	Dim buffer(totalBytes) As Byte
+	Dim bytesRead As Int = in.ReadBytes(buffer, 0, totalBytes)
+	
+	' Convert signed bytes (-128 to 127) to unsigned ints (0 to 255)
+	For i = 0 To bytesRead - 1
+		If buffer(i) < 0 Then
+			data(i) = buffer(i) + 256  ' Convert negative byte to positive int
+		Else
+			data(i) = buffer(i)
+		End If
+	Next
+	
+	in.Close
+	Log("Loaded: " & FileName & " (" & width & "x" & height & ")")
+	Return data
+End Sub
+
+'========================================================================
+' FALLBACK TEXTURES - Procedurally generated textures if PPM files missing
+'========================================================================
+
+Private Sub GenerateFallbackTextures As Int()
+	' Generate 9 different 32x32 textures for walls, floors, and ceilings
+	' Each texture is 32x32 pixels with 3 color channels (RGB) = 3072 values per texture
+	Dim totalSize As Int = 32 * 32 * 9 * 3
+	Dim tex(totalSize) As Int
+	
+	For i = 0 To totalSize - 1 Step 3
+		' Calculate which texture and which pixel within that texture
+		Dim pixel As Int = i / 3
+		Dim texNum As Int = pixel / (32 * 32)      ' Which of the 9 textures
+		Dim localPixel As Int = pixel Mod (32 * 32) ' Pixel within this texture
+		Dim row As Int = localPixel / 32            ' Y coordinate in texture
+		Dim col As Int = localPixel Mod 32          ' X coordinate in texture
+		
+		Select texNum
+			Case 0  ' Checkerboard pattern (gray and dark gray)
+				If ((row / 8) Mod 2 = 0 And (col / 8) Mod 2 = 0) Or _
+				   ((row / 8) Mod 2 = 1 And (col / 8) Mod 2 = 1) Then
+					tex(i) = 200: tex(i+1) = 200: tex(i+2) = 200     ' Light gray
+				Else
+					tex(i) = 50: tex(i+1) = 50: tex(i+2) = 50        ' Dark gray
+				End If
+			Case 1  ' Brick pattern (orange with dark mortar lines)
+				If row Mod 8 = 0 Or col Mod 16 = 0 Then
+					tex(i) = 100: tex(i+1) = 100: tex(i+2) = 100     ' Mortar (gray)
+				Else
+					tex(i) = 180: tex(i+1) = 80: tex(i+2) = 40       ' Brick (orange)
+				End If
+			Case Else  ' Solid colors with varying brightness
+				Dim c As Int = 100 + (texNum * 20)
+				tex(i) = c: tex(i+1) = c: tex(i+2) = c
+		End Select
+	Next
+	Return tex
+End Sub
+
+Private Sub GenerateFallbackSky As Int()
+	' Generate a sky gradient (120x40 pixels) from darker blue at top to lighter at bottom
+	Dim tex(120 * 40 * 3) As Int
+	For y = 0 To 39
+		For x = 0 To 119
+			Dim idx As Int = (y * 120 + x) * 3
+			' Gradient from top (darker) to bottom (lighter)
+			Dim brightness As Float = 0.3 + (y / 40.0) * 0.4
+			tex(idx) = 135 * brightness      ' Red channel
+			tex(idx + 1) = 206 * brightness  ' Green channel
+			tex(idx + 2) = 235 * brightness  ' Blue channel (sky blue)
+		Next
+	Next
+	Return tex
+End Sub
+
+Private Sub GenerateFallbackScreen(screenType As Int) As Int()
+	' Generate title/win/lose screens (120x80 pixels)
+	Dim tex(120 * 80 * 3) As Int
+	For y = 0 To 79
+		For x = 0 To 119
+			Dim idx As Int = (y * 120 + x) * 3
+			Select screenType
+				Case 1  ' Title screen - yellow text area on dark blue background
+					If y > 30 And y < 50 And x > 30 And x < 90 Then
+						tex(idx) = 255: tex(idx+1) = 255: tex(idx+2) = 0  ' Yellow
+					Else
+						tex(idx) = 20: tex(idx+1) = 20: tex(idx+2) = 60   ' Dark blue
+					End If
+				Case 2  ' Victory screen - green banner on dark green background
+					If y > 30 And y < 50 Then
+						tex(idx) = 0: tex(idx+1) = 255: tex(idx+2) = 0    ' Bright green
+					Else
+						tex(idx) = 10: tex(idx+1) = 60: tex(idx+2) = 10   ' Dark green
+					End If
+				Case 3  ' Game over screen - red banner on dark red background
+					If y > 30 And y < 50 Then
+						tex(idx) = 255: tex(idx+1) = 0: tex(idx+2) = 0    ' Bright red
+					Else
+						tex(idx) = 60: tex(idx+1) = 10: tex(idx+2) = 10   ' Dark red
+					End If
+			End Select
+		Next
+	Next
+	Return tex
+End Sub
+
+Private Sub GenerateFallbackSprites As Int()
+	' Generate 3 sprite textures (32x32 pixels each)
+	' Uses magenta (255,0,255) as transparent color
+	Dim tex(32 * 32 * 3 * 3) As Int
+	For s = 0 To 2
+		For y = 0 To 31
+			For x = 0 To 31
+				Dim idx As Int = (s * 32 * 32 + y * 32 + x) * 3
+				' Calculate distance from center for circular sprite
+				Dim dx As Int = x - 16: Dim dy As Int = y - 16
+				Dim dist As Float = Sqrt(dx * dx + dy * dy)
+				If dist < 12 Then  ' Inside circle
+					Select s
+						Case 0: tex(idx) = 255: tex(idx+1) = 215: tex(idx+2) = 0    ' Gold coin
+						Case 1: tex(idx) = 255: tex(idx+1) = 255: tex(idx+2) = 200  ' Light key
+						Case 2: tex(idx) = 255: tex(idx+1) = 0: tex(idx+2) = 0      ' Red enemy
+					End Select
+				Else  ' Outside circle - use magenta for transparency
+					tex(idx) = 255: tex(idx+1) = 0: tex(idx+2) = 255
+				End If
+			Next
+		Next
+	Next
+	Return tex
+End Sub
+
+'========================================================================
+' INITIALIZATION - Setup game world and player
+'========================================================================
+
+Private Sub InitPlayer
+	' Set player starting position and direction
+	px = 150: py = 400: pa = 90  ' Start at (150, 400) facing east (90°)
+	pdx = CosD(pa): pdy = -SinD(pa)  ' Calculate direction vector
+	
+	' Open doors at map positions 19 and 26
+	mapW(19) = 4: mapW(26) = 4
+	
+	' Initialize sprite 0 - Gold coin (collectible)
+	sp(0).stype = 1          ' Type 1 = coin
+	sp(0).state = 1          ' State 1 = active
+	sp(0).map = 0            ' Uses sprite texture 0
+	sp(0).x = 1.5 * 64       ' Position in world coordinates
+	sp(0).y = 5 * 64
+	sp(0).z = 20             ' Height above ground
+	
+	' Initialize sprite 1 - Key (collectible)
+	sp(1).stype = 2          ' Type 2 = key
+	sp(1).state = 1
+	sp(1).map = 1
+	sp(1).x = 1.5 * 64
+	sp(1).y = 4.5 * 64
+	sp(1).z = 0
+	
+	' Initialize sprite 2 - Another key
+	sp(2).stype = 2
+	sp(2).state = 1
+	sp(2).map = 1
+	sp(2).x = 3.5 * 64
+	sp(2).y = 4.5 * 64
+	sp(2).z = 0
+	
+	' Initialize sprite 3 - Enemy (kills player on contact)
+	sp(3).stype = 3          ' Type 3 = enemy
+	sp(3).state = 1
+	sp(3).map = 2            ' Uses sprite texture 2 (red)
+	sp(3).x = 2.5 * 64
+	sp(3).y = 2 * 64
+	sp(3).z = 20
+End Sub
+
+Private Sub InitializeMaps
+	' Initialize the three map layers (8x8 grid)
+	' Each number represents a texture ID (0 = empty/passable)
+	
+	' Wall map - defines solid obstacles
+	mapW = Array As Int(1,1,1,1,2,2,2,2, 6,0,0,1,0,0,0,2, 1,0,0,4,0,2,0,2, _
+		1,5,4,5,0,0,0,2, 2,0,0,0,0,0,0,1, 2,0,0,0,0,1,0,1, 2,0,0,0,0,0,0,1, 1,1,1,1,1,1,1,1)
+	
+	' Floor map - defines floor textures (0 = default floor)
+	mapF = Array As Int(0,0,0,0,0,0,0,0, 0,0,0,0,2,2,2,0, 0,0,0,0,6,0,2,0, _
+		0,0,8,0,2,7,6,0, 0,0,2,0,0,0,0,0, 0,0,2,0,8,0,0,0, 0,1,1,1,1,0,8,0, 0,0,0,0,0,0,0,0)
+	
+	' Ceiling map - defines ceiling textures (0 = no ceiling texture)
+	mapC = Array As Int(0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, _
+		0,0,0,0,0,0,0,0, 0,4,2,4,0,0,0,0, 0,0,2,0,0,0,0,0, 0,0,2,0,0,0,0,0, 0,0,0,0,0,0,0,0)
+End Sub
+
+' Helper function to convert degrees to radians
+Private Sub DegToRad(degrees As Float) As Float
+	Return degrees * cPI / 180
+End Sub
+
+' Normalize angle to 0-359 degree range
+Private Sub FixAng(angle As Float) As Float
+	Do While angle > 359: angle = angle - 360: Loop
+		Do While angle < 0: angle = angle + 360: Loop
+			Return angle
+		End Sub
+
+'========================================================================
+' GAME LOOP - Main update and render cycle
+'========================================================================
+
+Private Sub gameTimer_Tick
+	' Calculate delta time for frame-independent movement
+	Dim currentTime As Long = DateTime.Now
+	Dim fps As Float = currentTime - lastTime
+	If fps = 0 Then fps = 1  ' Prevent division by zero
+	lastTime = currentTime
+	
+	' Game state machine
+	If gameState = 0 Then  ' State 0: Initialize
+		InitPlayer
+		fade = 0
+		timer = 0: gameState = 1
+	End If
+	
+	If gameState = 1 Then  ' State 1: Title screen
+		timer = timer + 1 * fps
+		If timer > 2000 Then  ' Show title for 2 seconds
+			fade = 0
+			timer = 0
+			gameState = 2  ' Transition to gameplay
+		End If
+	End If
+	
+	If gameState = 2 Then  ' State 2: Playing
+		UpdateGame(fps)  ' Handle player input and movement
+		' Check win condition - reach position (1,1) in grid coordinates
+		If Floor(px / 64) = 1 And Floor(py / 64) = 1 Then
+			fade = 0: timer = 0
+			gameState = 3  ' Player won!
+		End If
+	End If
+	
+	If gameState = 3 Then  ' State 3: Victory screen
+		timer = timer + 1 * fps
+		If timer > 2000 Then  ' Show victory screen for 2 seconds
+			fade = 0
+			timer = 0
+			gameState = 0  ' Reset game
+		End If
+	End If
+	
+	If gameState = 4 Then  ' State 4: Game over screen
+		timer = timer + 1 * fps
+		If timer > 2000 Then  ' Show game over for 2 seconds
+			fade = 0
+			timer = 0
+			gameState = 0  ' Reset game
+		End If
+	End If
+	
+	Display  ' Render the current frame
+End Sub
+
+Private Sub UpdateGame(fps As Float)
+	' Handle player rotation
+	If keyA Then: pa = pa + 0.2 * fps: pa = FixAng(pa): pdx = CosD(pa): pdy = -SinD(pa): End If
+		If keyD Then: pa = pa - 0.2 * fps: pa = FixAng(pa): pdx = CosD(pa): pdy = -SinD(pa): End If
+			
+			' Calculate collision offsets based on movement direction
+			Dim xo As Int = 20: If pdx < 0 Then xo = -20  ' Offset for X collision detection
+			Dim yo As Int = 20: If pdy < 0 Then yo = -20  ' Offset for Y collision detection
+			
+			' Convert world coordinates to grid coordinates with collision offsets
+			Dim ipx As Int = px / 64
+			Dim ipx_add_xo As Int = (px + xo) / 64
+			Dim ipx_sub_xo As Int = (px - xo) / 64
+			Dim ipy As Int = py / 64
+			Dim ipy_add_yo As Int = (py + yo) / 64
+			Dim ipy_sub_yo As Int = (py - yo) / 64
+			
+			' Handle forward movement with collision detection
+			If keyW Then
+				' Only move if the next position is not a wall (mapW = 0)
+				If mapW(ipy * mapX + ipx_add_xo) = 0 Then px = px + pdx * 0.2 * fps
+				If mapW(ipy_add_yo * mapX + ipx) = 0 Then py = py + pdy * 0.2 * fps
+			End If
+			
+			' Handle backward movement with collision detection
+			If keyS Then
+				If mapW(ipy * mapX + ipx_sub_xo) = 0 Then px = px - pdx * 0.2 * fps
+				If mapW(ipy_sub_yo * mapX + ipx) = 0 Then py = py - pdy * 0.2 * fps
+			End If
+			
+			UpdateSprites(fps)  ' Update sprite logic (collection, enemy AI)
+		End Sub
+
+Private Sub UpdateSprites(fps As Float)
+	' Check if player collects the coin (sprite 0)
+	' 30-pixel radius collision detection
+	If px < sp(0).x + 30 And px > sp(0).x - 30 And py < sp(0).y + 30 And py > sp(0).y - 30 Then
+		sp(0).state = 0  ' Deactivate coin (collected)
+	End If
+	
+	' Check if player touches the enemy (sprite 3)
+	If px < sp(3).x + 30 And px > sp(3).x - 30 And py < sp(3).y + 30 And py > sp(3).y - 30 Then
+		gameState = 4  ' Game over!
+		Return
+	End If
+	
+	' Enemy AI - chase the player
+	' Calculate enemy grid position with collision offsets
+	Dim spx As Int = Floor(sp(3).x / 64)
+	Dim spy As Int = Floor(sp(3).y / 64)
+	Dim spx_add As Int = Floor((sp(3).x + 15) / 64)  ' Position + 15 pixel offset
+	Dim spy_add As Int = Floor((sp(3).y + 15) / 64)
+	Dim spx_sub As Int = Floor((sp(3).x - 15) / 64)  ' Position - 15 pixel offset
+	Dim spy_sub As Int = Floor((sp(3).y - 15) / 64)
+	
+	' Move enemy towards player if path is not blocked by walls
+	If sp(3).x > px And mapW(spy * 8 + spx_sub) = 0 Then sp(3).x = sp(3).x - 0.04 * fps
+	If sp(3).x < px And mapW(spy * 8 + spx_add) = 0 Then sp(3).x = sp(3).x + 0.04 * fps
+	If sp(3).y > py And mapW(spy_sub * 8 + spx) = 0 Then sp(3).y = sp(3).y - 0.04 * fps
+	If sp(3).y < py And mapW(spy_add * 8 + spx) = 0 Then sp(3).y = sp(3).y + 0.04 * fps
+End Sub
+
+'========================================================================
+' RENDERING - Draw the current game state
+'========================================================================
+
+Private Sub Display
+	' Clear the entire canvas before drawing
+	canvas.ClearRect(0, 0, 960, 640)
+	
+	' Render based on current game state
+	Select gameState
+		Case 1: DrawScreen(1)  ' Title screen
+		Case 2: DrawSky        ' Sky background
+			DrawRays2D         ' 3D world rendering (walls, floors, ceilings)
+			DrawSprite         ' Render sprites on top of world
+		Case 3: DrawScreen(2)  ' Victory screen
+		Case 4: DrawScreen(3)  ' Game over screen
+	End Select
+End Sub
+
+Private Sub DrawScreen(screenType As Int)
+	' Draw full-screen images (title, won, lost screens)
+	' Screen resolution: 120x80 "pixels", scaled 8x to 960x640
+	Dim T() As Int
+	Select screenType
+		Case 1: T = title   ' Title screen texture
+		Case 2: T = won     ' Victory screen texture
+		Case 3: T = lost    ' Game over screen texture
+	End Select
+	
+	' Draw each pixel as an 8x8 block
+	For y = 0 To 79
+		For x = 0 To 119
+			Dim pixel As Int = (y * 120 + x) * 3  ' RGB pixel index
+			If pixel + 2 < T.Length Then
+				' Apply fade effect to RGB values
+				Dim red As Int = T(pixel) * fade
+				Dim green As Int = T(pixel+1) * fade
+				Dim blue As Int = T(pixel+2) * fade
+				' Draw 8x8 pixel block
+				canvas.DrawLine(x * 8, y * 8, x * 8, y * 8 + 1, fx.Colors.RGB(red, green, blue), 8)
+			End If
+		Next
+	Next
+	
+	' Gradually increase fade from 0 to 1
+	If fade < 1 Then fade = fade + 0.001 * (DateTime.Now - lastTime)
+	If fade > 1 Then fade = 1
+End Sub
+
+Private Sub DrawSky
+	' Draw scrolling sky background (top 40 rows = 320 pixels)
+	' Sky scrolls based on player's viewing angle
+	For y = 0 To 39
+		For x = 0 To 119
+			' Calculate horizontal offset based on player angle (parallax effect)
+			Dim xo As Int = Floor(pa * 2) - x
+			If xo < 0 Then xo = xo + 120  ' Wrap around
+			xo = xo Mod 120
+			
+			Dim pixel As Int = (y * 120 + xo) * 3  ' RGB pixel index
+			If pixel + 2 < sky.Length Then
+				canvas.DrawLine(x * 8, y * 8, x * 8, y * 8 + 1, _
+					fx.Colors.RGB(sky(pixel), sky(pixel+1), sky(pixel+2)), 8)
+			End If
+		Next
+	Next
+End Sub
+
+Private Sub DrawRays2D
+	' MAIN RAYCASTING ALGORITHM
+	' Cast 120 rays (one per vertical screen column) to render 3D view
+	
+	Dim ra As Float = FixAng(pa + 30)  ' Start 30° left of player's view angle (60° FOV)
+	
+	For r = 0 To 119  ' Cast 120 rays across the screen
+		' Ray casting variables
+		Dim vmt As Int = 0, hmt As Int = 0   ' Vertical/horizontal map texture IDs
+		Dim dof As Int = 0                    ' Depth of field counter
+		Dim disV As Float = 100000            ' Distance to vertical wall intersection
+		Dim disH As Float = 100000            ' Distance to horizontal wall intersection
+		Dim rx, ry, vx, vy, xo, yo As Float   ' Ray position and step offsets
+		Dim mx, my, mp As Int                 ' Map coordinates and index
+		
+		'---VERTICAL LINE CHECK (walls aligned with X axis)---
+		Dim tangent As Float = TanD(ra)
+		
+		If CosD(ra) > 0.001 Then  ' Ray pointing right
+			rx = ((Floor(px / 64)) * 64) + 64  ' Round to next grid line
+			ry = (px - rx) * tangent + py       ' Calculate Y intersection
+			xo = 64                             ' Step 64 pixels right
+			yo = -xo * tangent                  ' Y step based on angle
+		Else If CosD(ra) < -0.001 Then  ' Ray pointing left
+			rx = ((Floor(px / 64)) * 64) - 0.0001  ' Round to previous grid line
+			ry = (px - rx) * tangent + py
+			xo = -64                               ' Step 64 pixels left
+			yo = -xo * tangent
+		Else  ' Ray pointing straight up or down (no vertical intersection)
+			rx = px: ry = py: dof = 8
+		End If
+		
+		' Step along ray until hitting a wall or max depth
+		Do While dof < 8
+			mx = Floor(rx / 64): my = Floor(ry / 64): mp = my * mapX + mx
+			' Check if ray hit a wall
+			If mp >= 0 And mp < mapX * mapY And mapW(mp) > 0 Then
+				vmt = mapW(mp) - 1  ' Store texture ID (subtract 1 for array indexing)
+				dof = 8             ' Stop ray
+				' Calculate perpendicular distance to avoid fish-eye effect
+				disV = CosD(ra) * (rx - px) - SinD(ra) * (ry - py)
+			Else
+				rx = rx + xo: ry = ry + yo: dof = dof + 1  ' Step forward
+			End If
+		Loop
+		vx = rx: vy = ry  ' Save vertical intersection point
+		
+		'---HORIZONTAL LINE CHECK (walls aligned with Y axis)---
+		dof = 0: tangent = 1.0 / tangent  ' Invert tangent for horizontal checks
+		
+		If SinD(ra) > 0.001 Then  ' Ray pointing up
+			ry = ((Floor(py / 64)) * 64) - 0.0001
+			rx = (py - ry) * tangent + px
+			yo = -64
+			xo = -yo * tangent
+		Else If SinD(ra) < -0.001 Then  ' Ray pointing down
+			ry = ((Floor(py / 64)) * 64) + 64
+			rx = (py - ry) * tangent + px
+			yo = 64
+			xo = -yo * tangent
+		Else  ' Ray pointing horizontally (no horizontal intersection)
+			rx = px: ry = py: dof = 8
+		End If
+		
+		' Step along ray until hitting a wall or max depth
+		Do While dof < 8
+			mx = Floor(rx / 64): my = Floor(ry / 64): mp = my * mapX + mx
+			If mp >= 0 And mp < mapX * mapY And mapW(mp) > 0 Then
+				hmt = mapW(mp) - 1
+				dof = 8
+				disH = CosD(ra) * (rx - px) - SinD(ra) * (ry - py)
+			Else
+				rx = rx + xo: ry = ry + yo: dof = dof + 1
+			End If
+		Loop
+		
+		'---DRAW WALLS---
+		Dim shade As Float = 1  ' Lighting value (1.0 = bright, 0.5 = shaded)
+		
+		' Choose closest intersection (vertical or horizontal)
+		If disV < disH Then
+			hmt = vmt: shade = 0.5: rx = vx: ry = vy: disH = disV  ' Vertical walls are darker
+		End If
+		
+		' Fix fish-eye distortion by using perpendicular distance
+		Dim ca As Float = FixAng(pa - ra)
+		disH = disH * CosD(ca)
+		depth(r) = disH  ' Store depth for sprite occlusion
+		
+		' Calculate wall height based on distance (perspective projection)
+		Dim lineH As Int = (mapS * 640) / disH  ' Wall line height in pixels
+		Dim ty_step As Float = 32.0 / lineH     ' Texture Y coordinate step
+		Dim ty_off As Float = 0
+		
+		' Clamp wall height to screen
+		If lineH > 640 Then
+			ty_off = (lineH - 640) / 2.0  ' Start texture offset for very close walls
+			lineH = 640
+		End If
+		
+		Dim lineOff As Int = 320 - (lineH / 2)  ' Center wall vertically
+		
+		' Calculate texture X coordinate based on wall hit position
+		Dim tx As Float
+		If shade = 1 Then  ' Horizontal wall
+			tx = Floor(rx / 2) Mod 32  ' Use X position for texture coordinate
+			If ra > 180 Then tx = 31 - tx  ' Flip texture based on ray direction
+		Else  ' Vertical wall
+			tx = Floor(ry / 2) Mod 32  ' Use Y position for texture coordinate
+			If ra > 90 And ra < 270 Then tx = 31 - tx
+		End If
+		
+		' Draw textured wall column
+		Dim ty As Float = ty_off * ty_step
+		For y = 0 To lineH - 1
+			' Calculate pixel index in texture array
+			Dim pixel As Int = (Floor(ty) * 32 + Floor(tx)) * 3 + (hmt * 32 * 32 * 3)
+			If pixel >= 0 And pixel + 2 < All_Textures.Length Then
+				' Draw 8-pixel wide column with shading
+				canvas.DrawLine(r * 8, y + lineOff, r * 8, y + lineOff + 1, _
+					fx.Colors.RGB(All_Textures(pixel) * shade, _
+					All_Textures(pixel+1) * shade, _
+					All_Textures(pixel+2) * shade), 8)
+			End If
+			ty = ty + ty_step  ' Move down texture
+		Next
+		
+		'---DRAW FLOOR AND CEILING (below wall bottom)---
+		For y = lineOff + lineH To 639
+			' Calculate floor position using raycasting
+			Dim dy As Float = y - 320.0  ' Distance from horizon
+			Dim deg As Float = DegToRad(ra)
+			Dim raFix As Float = CosD(FixAng(pa - ra))  ' Fix fish-eye
+			
+			' Project ray to floor plane
+			tx = px / 2 + Cos(deg) * 158 * 2 * 32 / dy / raFix
+			ty = py / 2 - Sin(deg) * 158 * 2 * 32 / dy / raFix
+			
+			' Draw floor texture
+			Dim mp As Int = mapF(Floor(ty / 32) * mapX + Floor(tx / 32)) * 32 * 32
+			Dim pixel As Int = ((Floor(ty) Mod 32) * 32 + (Floor(tx) Mod 32)) * 3 + mp * 3
+			If pixel >= 0 And pixel + 2 < All_Textures.Length Then
+				canvas.DrawLine(r * 8, y, r * 8, y + 1, _
+					fx.Colors.RGB(All_Textures(pixel) * 0.7, _
+					All_Textures(pixel+1) * 0.7, _
+					All_Textures(pixel+2) * 0.7), 8)
+			End If
+			
+			' Draw ceiling texture (mirrored vertically)
+			mp = mapC(Floor(ty / 32) * mapX + Floor(tx / 32)) * 32 * 32
+			pixel = ((Floor(ty) Mod 32) * 32 + (Floor(tx) Mod 32)) * 3 + mp * 3
+			If mp > 0 And pixel >= 0 And pixel + 2 < All_Textures.Length Then
+				canvas.DrawLine(r * 8, 640 - y, r * 8, 640 - y + 1, _
+					fx.Colors.RGB(All_Textures(pixel), _
+					All_Textures(pixel+1), _
+					All_Textures(pixel+2)), 8)
+			End If
+		Next
+		
+		ra = FixAng(ra - 0.5)  ' Rotate to next ray (0.5° per ray = 60° total FOV)
+	Next
+End Sub
+
+Private Sub DrawSprite
+	' Render all sprites (collectibles, enemies) with depth-based occlusion
+	For s = 0 To 3
+		If sp(s).state = 0 Then Continue  ' Skip inactive sprites
+		
+		' Transform sprite position to camera space
+		Dim sx As Float = sp(s).x - px  ' Relative X position
+		Dim sy As Float = sp(s).y - py  ' Relative Y position
+		Dim sz As Float = sp(s).z       ' Height offset
+		
+		' Rotate sprite position based on player's view angle
+		Dim CS As Float = CosD(pa): Dim SN As Float = SinD(pa)
+		Dim a As Float = sy * CS + sx * SN  ' Rotated X
+		Dim b As Float = sx * CS - sy * SN  ' Rotated Y (depth)
+		sx = a: sy = b
+		
+		If sy <= 0 Then Continue  ' Sprite is behind player, don't render
+		
+		' Project sprite to screen space
+		sx = (sx * 108.0 / sy) + 60  ' Screen X position (0-120 range)
+		sy = (sz * 108.0 / sy) + 40  ' Screen Y position (adjusted for height)
+		
+		' Calculate sprite scale based on distance
+		Dim scale As Int = 32 * 80 / b
+		If scale < 0 Then scale = 0
+		If scale > 120 Then scale = 120
+		
+		' Texture coordinate stepping
+		Dim t_x As Float = 0
+		Dim t_x_step As Float = 31.5 / scale  ' Horizontal texture step
+		Dim t_y_step As Float = 32.0 / scale  ' Vertical texture step
+		
+		' Draw sprite column by column
+		For x = sx - scale / 2 To sx + scale / 2
+			Dim t_y As Float = 31  ' Start at bottom of texture
+			For y = 0 To scale - 1
+				' Only draw if sprite is on screen and in front of walls
+				If sp(s).state = 1 And x > 0 And x < 120 And b < depth(x) Then
+					' Calculate texture pixel
+					Dim pixel As Int = (Floor(t_y) * 32 + Floor(t_x)) * 3 + (sp(s).map * 32 * 32 * 3)
+					If pixel >= 0 And pixel + 2 < sprites.Length Then
+						Dim red As Int = sprites(pixel)
+						Dim green As Int = sprites(pixel+1)
+						Dim blue As Int = sprites(pixel+2)
+						
+						' Check for transparency (magenta = 255,0,255)
+						If Not (red = 255 And green = 0 And blue = 255) Then
+							canvas.DrawLine(x * 8, sy * 8 - y * 8, x * 8, sy * 8 - y * 8 + 1, _
+								fx.Colors.RGB(red, green, blue), 8)
+						End If
+					End If
+					t_y = t_y - t_y_step  ' Move up texture
+					If t_y < 0 Then t_y = 0
+				End If
+			Next
+			t_x = t_x + t_x_step  ' Move to next texture column
+		Next
+	Next
+End Sub
+
+'========================================================================
+' KEYBOARD INPUT - Handle player controls
+'========================================================================
+
+Sub CanvKeyPressed_Event (MethodName As String, Args() As Object) As Object
+	' Handle key press events
+	Dim KEvt As JavaObject = Args(0)
+	Dim s As String = KEvt.RunMethod("getCode",Null)
+	Select s
+		Case "UP", "W": keyW = True      ' Forward
+		Case "DOWN", "S": keyS = True    ' Backward
+		Case "LEFT", "A": keyA = True    ' Turn left
+		Case "RIGHT", "D": keyD = True   ' Turn right
+		Case "E": OpenDoor               ' Interact/open door
+	End Select
+	Return Null
+End Sub
+
+Sub CanvKeyReleased_Event (MethodName As String, Args() As Object) As Object
+	' Handle key release events (for smooth movement)
+	Dim KEvt As JavaObject = Args(0)
+	Dim s As String = KEvt.RunMethod("getCode",Null)
+	Select s
+		Case "UP", "W": keyW = False
+		Case "DOWN", "S": keyS = False
+		Case "LEFT", "A": keyA = False
+		Case "RIGHT", "D": keyD = False
+	End Select
+	Return Null
+End Sub
+
+Private Sub OpenDoor
+	' Try to open a door in front of the player
+	If sp(0).state = 1 Then Return  ' Can only open door after collecting coin
+	
+	' Calculate position in front of player with offset
+	Dim xo As Int = 25: If pdx < 0 Then xo = -25
+	Dim yo As Int = 25: If pdy < 0 Then yo = -25
+	Dim ipx As Int = px / 64
+	Dim ipx_add_xo As Int = (px + xo) / 64
+	Dim ipy As Int = py / 64
+	Dim ipy_add_yo As Int = (py + yo) / 64
+	
+	' Get map position in front of player
+	Dim mp As Int = ipy_add_yo * mapX + ipx_add_xo
+	
+	' If the tile is a door (value 4), remove it (set to 0)
+	If mp >= 0 And mp < mapW.Length Then
+		If mapW(mp) = 4 Then mapW(mp) = 0
+	End If
+End Sub

@@ -1,5 +1,5 @@
 ### Tiles_JE by Jerryk
-### 11/05/2025
+### 11/09/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/167614/)
 
 I created a new custom view where the user continues to run the application based on the information displayed in the tiles. There are three types of information that can be displayed:  
@@ -15,7 +15,7 @@ The tiles are scrollable. The width of the tiles can be fixed or flexible. Each 
   
 **Tiles\_JE  
 Author: Jerryk  
-Version: 1.4  
+Version: 1.41  
   
 Methods:**  
 

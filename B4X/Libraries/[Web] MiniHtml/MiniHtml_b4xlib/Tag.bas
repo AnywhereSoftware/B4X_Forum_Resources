@@ -6,7 +6,7 @@ Version=4.5
 @EndOfDesignText@
 ' Created by: Aeric
 ' Credit to:  EnriqueGonzalez
-' Version: 0.40
+' Version: 0.60
 Sub Class_Globals
 	Private mId As String
 	Private mName As String
@@ -137,6 +137,9 @@ End Sub
 Public Sub setFlat (Value As Boolean)
 	mFlat = Value
 End Sub
+Public Sub getFlat As Boolean
+	Return mFlat
+End Sub
 
 Public Sub getTagName As String
 	Return mTagName
@@ -246,8 +249,15 @@ Public Sub cdnStyle2 (href As String, integrity As String, crossorigin As String
 	Return Me
 End Sub
 
-'Add inner text
+' Add inner text
 Public Sub text (value As String) As Tag
+	mChildren.Add(value)
+	Return Me
+End Sub
+
+' Remove all children and overwrite inner text
+Public Sub text2 (value As String) As Tag
+	mChildren.Clear
 	mChildren.Add(value)
 	Return Me
 End Sub
@@ -265,7 +275,7 @@ Private Sub TextInline (value As String) 'ignore
 End Sub
 
 ' Seem unused, set to Private before remove
-Private Sub innerText As String 'ignore
+Public Sub innerText As String 'ignore
 	If mChildren.Size > 0 Then
 		If mChildren.Get(0).As(String).StartsWith("[") = False Then
 			Return mChildren.Get(0)
@@ -302,11 +312,6 @@ Public Sub script4 (value As String) As Tag
 	mChildren.Add(Html.create("script").multiline.text(value))
 	Return Me
 End Sub
-
-'Public Sub style (value As String) As Tag
-'	mChildren.Add(Html.create("style").Text(value))
-'	Return Me
-'End Sub
 
 Public Sub newline
 	TextNextLine("")
@@ -474,11 +479,6 @@ End Sub
 Public Sub setAttributes (keyvals As Map)
 	mAttributes = keyvals
 End Sub
-
-'Replace/return maps of attributes
-'Public Sub Get As Map
-'	Return getAttributes
-'End Sub
 
 'Set an attribute with a key and value
 Public Sub attr (key As String, value As String) As Tag

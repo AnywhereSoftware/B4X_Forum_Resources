@@ -1178,6 +1178,14 @@ Public Sub SetPolygonPopup(markerID As String, Popup As String)
 	
 End Sub
 
+Sub RemoveRectangle(markerID As String)
+	markerID = UI.CleanID(markerID)
+	If rectangles.ContainsKey(markerID) = False Then Return
+	Dim MarkerObject As BANanoObject = rectangles.Get(markerID)
+	MapObject.RunMethod("removeLayer", MarkerObject)
+	rectangles.Remove(markerID)
+End Sub
+
 ''add a polyline
 'Sub AddPolyLine(polyLineID As String, polyLineTitle As String, polyLinefitBounds As Boolean,polyLineColor As String, polyLineWeight As String, polyLineOpacity As String, polyLineFillColor As String, polyLineFillOpacity As String)
 '	polyLineID = polyLineID.tolowercase

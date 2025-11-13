@@ -1,10 +1,11 @@
 ### Back to edge-to-edge with B4A Ver13.4 and SDK 35 by Matt S.
-### 07/19/2025
+### 11/10/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/167838/)
 
-Dear Erel has disabled the edge-to-edge feature in the new version he released (B4A 13.4 - resources 7.25). This will be a great help for developers who don't want their page layout to be cluttered. But for me, who loves edge-to-edge, there needs to be a way back. I found it from Erel's codes and I summarized it as following:  
+Dear Erel has disabled the edge-to-edge feature in the new version he released (B4A 13.4 - resources 7.25). This will be a great help for developers who don't want their page layout to be cluttered. But for me, who loves edge-to-edge, there needs to be a way back. I found it from Erel's code and I summarized it as follows:  
   
 **Important:** It is assumed that you are using SDK 35 or 36.  
+Also, it should be pointed out that it takes effect only when the user's device is running Android 15 or higher (SDKVersion 35 or higher). Otherwise, the immersive mode is not the natural behaviour of Android and some other codes are needed.  
   
 To do this, simply remove this line from the manifest:  
   
@@ -30,6 +31,11 @@ It will be edge-to-edge, but the toolbar is still there. If you want the toolbar
 ```B4X
 Sub Activity_WindowFocusChanged(HasFocus As Boolean)  
     Log(HasFocus)  
+    Dim ph As Phone  
+    If ph.SdkVersion<35 Then  
+            Log("SdkVersion<35- No effect!")  
+        Return  
+    End If  
     If HasFocus Then  
         Try  
             Dim jo As JavaObject = Activity  
@@ -51,7 +57,7 @@ and call it at the beginning of Sub Activity\_Create like this:
 Sub Activity_Create(FirstTime As Boolean)  
   
     Activity_WindowFocusChanged(True)  
-    
+   
     Dim pm As B4XPagesManager  
     pm.Initialize(Activity)  
   

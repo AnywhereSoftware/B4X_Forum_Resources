@@ -1,5 +1,5 @@
 ###  Create B4xLib (only 1 easy click) by aeric
-### 10/14/2025
+### 11/10/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/169014/)
 
 **[SIZE=5]Creating a b4xlib is easy.[/SIZE]**  
@@ -32,8 +32,9 @@ Note: To run the "Update Version" macro, you need to use: [**Manifest Writer Too
 **Step 3: Update your code**  
 
 1. Add a new class or code module into your project
-2. *Optional:* Create a "Snippets" folder and add some code snippets txt files into the folder
-3. *Optional:* Create a manifest.txt file
+2. *Optional:* Add a manifest.txt file
+3. *Optional:* Add a class template with .b4x\_excluded extension
+4. *Optional:* Add some code snippets txt files into the "Snippets" folder
 
 **Step 4: Run the macros**  
 
@@ -41,10 +42,10 @@ Note: To run the "Update Version" macro, you need to use: [**Manifest Writer Too
 Edit the macro if you want to change or update the version number.
 If this file is not exist, it will be created.2. Click the shortcut at the title bar to run the macro for "**Create B4xLib**".
 **This is the only required click.**
-Edit the macro to include additional files or folders. e.g Snippets, manifest.txt or LICENSE
+Edit the macro to include additional files or folders. e.g Snippets, \*.b4x\_excluded, manifest.txt or LICENSE
 
 ```B4X
-#Macro: Title, Create B4xLib, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&args=-cMf&args=..\release\%PROJECT_NAME%.b4xlib&args=*.bas&args=Snippets&args=manifest.txt&args=LICENSE
+#Macro: Title, Create B4xLib, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&args=-cMf&args=..\release\%PROJECT_NAME%.b4xlib&args=*.bas&args=*.b4x_excluded&args=Snippets&args=manifest.txt&args=LICENSE
 ```
 
 The library will be saved inside the "release" folder.

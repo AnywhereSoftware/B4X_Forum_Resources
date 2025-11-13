@@ -1,5 +1,5 @@
 ###  B4XCollections - More collections by Erel
-### 03/08/2022
+### 11/10/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/101071/)
 
 B4XCollections is a b4x lib. It adds several cross platform collections.  
@@ -95,6 +95,7 @@ A: <https://www.b4x.com/android/forum/threads/new-feature-b4x-lib-a-new-type-of-
   
 **Updates**  
   
+V1.15 - New new helper methods: EmptyList, EmptyMap, MergeMaps, MergeLists, CreateList, CopyOnWriteMap and CopyOnWriteList. Explained here: <https://www.b4x.com/android/forum/threads/new-b4xcollections-helper-methods.168126/post-1030423>  
 V1.13 - New B4XSortComparator class: <https://www.b4x.com/android/forum/threads/b4x-sophisticated-sorting-with-b4xcomparatorsort.139006/>  
 V1.12 - B4XBytesBuilder.InternalBuffer was removed by mistake. It is added back in this version. It should only be used in special cases where access to the full array is needed.  
 V1.11 - B4XBytesBuilder.Append2 - Similar to Append, with StartIndex and Length parameters.  
