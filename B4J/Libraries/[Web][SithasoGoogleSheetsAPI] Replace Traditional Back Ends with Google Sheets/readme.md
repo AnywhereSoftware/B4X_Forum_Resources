@@ -1,8 +1,10 @@
-### [Web][SithasoGoogleSheetsAPI] Javascript based GoogleSheetsAPI (usable with BANAno) for your Back-End [Loading...] by Mashiane
-### 11/11/2025
+### [Web][SithasoGoogleSheetsAPI] Replace Traditional Back Ends with Google Sheets by Mashiane
+### 11/13/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/169283/)
 
 Hi Fam  
+  
+[Documentation](https://sithaso-google-sheets-api-documenta.vercel.app/)  
   
 I have always been curious about this and wanted a version I could use with BANano. Finally its here, well, kinda loading…  
   
@@ -79,4 +81,9 @@ Example Sheet:
   
 ![](https://www.b4x.com/android/forum/attachments/168238)  
   
-***NB: This b4xlib will not be free due to the great amount of work and time taken to create it, you can send your $25 certificate of appreciation to, <https://paypal.me/anelembanga>***
+***NB: This b4xlib will not be free due to the great amount of work and time taken to create it, you can send your $25 certificate of appreciation to, <https://paypal.me/anelembanga>  
+  
+  
+Related Content: Share My Creations  
+  
+<https://www.b4x.com/android/forum/threads/web-sithasogooglesheetsapi-replace-traditional-back-ends-with-google-sheets.169301/>***
