@@ -1,4 +1,4 @@
-### How you can check enter data is IP or not valid by modiranghaneipour
+### How you can check enter data is IP or not valid by modiran_ghaneipour
 ### 05/06/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/166891/)
 

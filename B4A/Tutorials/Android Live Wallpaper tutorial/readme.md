@@ -1,5 +1,5 @@
 ### Android Live Wallpaper tutorial by Erel
-### 10/14/2024
+### 11/18/2025
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/12605/)
 
 The user can set live wallpapers by long pressing on the home screen and choosing Wallpapers - Live Wallpapers.  
@@ -92,6 +92,4 @@ CreateResource(xml, wallpaper.xml,
 - v1.10 - fixes issues related to targetSdkVersion=34. Previous versions will not work.  
 - Example was updated. It is based on B4XPages. The XML resource is created in the manifest editor directly.  
   
-![](https://www.b4x.com/android/forum/attachments/157541)  
-  
-**Copy the updated library to the internal libraries folder.**
+![](https://www.b4x.com/android/forum/attachments/157541)

@@ -1,4 +1,4 @@
-###  DateUtils - Simplifies Date and Time Calcuations by Erel
+###  DateUtils - Simplifies Date and Time Calculations by Erel
 ### 02/07/2021
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/26290/)
 

@@ -11,7 +11,7 @@ Version=1.95
 Sub Process_Globals
 	Dim lwm As LWManager
 	Dim x, y, vx, vy As Int
-	Dim initialized As Boolean: initialized = False
+	Dim IsInitialized As Boolean = False
 	Dim boxSize As Int
 	Dim smileyBitmap As Bitmap
 	Dim backgroundColor As Int
@@ -37,8 +37,8 @@ End Sub
 
 Sub lwm_SizeChanged (Engine As LWEngine)
 	'Wallpaper size changed.
-	If initialized = False Then
-		initialized = True
+	If IsInitialized = False Then
+		IsInitialized = True
 		x = Engine.ScreenWidth / 2
 		y = Engine.ScreenHeight / 2
 	End If

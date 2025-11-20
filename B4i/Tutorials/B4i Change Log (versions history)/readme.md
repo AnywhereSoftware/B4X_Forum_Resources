@@ -1,6 +1,20 @@
 ### B4i Change Log (versions history) by Erel
-### 05/15/2025
+### 11/18/2025
 [B4X Forum - B4i - Tutorials](https://www.b4x.com/android/forum/threads/47187/)
+
+**v10.0** - November 18, 2025  
+  
+B4i compilation process has been rewritten from scratch based on Apple's latest methodology. All native libraries were rebuilt and most external dependencies were updated with latest versions.  
+B4i libraries are now compiled as xcframeworks and are compatible with iOS arm64, x86 simulator and arm64 simulator. The new build-chain works properly with Swift frameworks, assuming that the needed Objective C headers are available. Technical details: <https://www.b4x.com/android/forum/threads/frameworks-imports-additionallib-and-dependson.169223/#post-1037060>  
+Other improvements:  
+
+- Support for Xcode 26 and iOS 26.
+- Support for ARM based Macs.
+- #Macro attribute. Defined in B4XMainPage or Main modules. Format: <type>, <name>, <link>. Type can be *Title* or *After Save*. More to come in the future. Link is based on the comment link feature: <https://www.b4x.com/android/forum/threads/119897/#content>
+- Other improvements to the builder, including a fix to codesign requiring password.
+- New command line options for the IDE:
+-INI=<ini file path> - allows running the IDE with an alternative INI file. Note that that standard INI file is stored under: C:\Users\<user name>\AppData\Roaming\Anywhere Software\b4i\b4xV5.ini
+-INI\_<property key here>=<property value>- Bug fixes and other minor improvements
 
 **v8.90** - May 15, 2025 - <https://www.b4x.com/android/forum/threads/b4i-v8-90-is-available-for-download.167009/>  
 

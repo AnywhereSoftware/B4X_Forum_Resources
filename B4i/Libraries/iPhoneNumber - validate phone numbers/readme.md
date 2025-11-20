@@ -1,14 +1,14 @@
 ### iPhoneNumber - validate phone numbers by Erel
-### 12/01/2024
+### 11/18/2025
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/164417/)
 
-This is just a compilation of this open source project: <https://github.com/iziz/libPhoneNumber-iOS>  
+This is a compilation of this open source project: <https://github.com/iziz/libPhoneNumber-iOS>  
   
 Usage:  
 Add to main module  
 
 ```B4X
-#AdditionalLib: iPhoneNumber
+#AdditionalLib: iPhoneNumber.xcframework.b4i
 ```
 
   
@@ -31,7 +31,3 @@ Private Sub IsNumberValid(Number As String, DefaultRegion As String) As Boolean
     Return util.RunMethod("isValidNumber:", Array(PhoneNumber)).AsBoolean  
 End Sub
 ```
-
-  
-  
-If using a local Mac then you need to download the static library: <https://www.b4x.com/b4i/files/iPhoneNumber.zip>
