@@ -1,5 +1,5 @@
 ###  B4XGifView - Cross platform animated gif view by Erel
-### 07/20/2025
+### 11/19/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/118550/)
 
 ![](https://www.b4x.com/android/forum/attachments/95135)  
@@ -11,12 +11,12 @@ Add with the visual designer and call SetGif to set the gif file.
   
   
 The B4i implementation depends on FLAnimatedImage open source project: <https://github.com/Flipboard/FLAnimatedImage>  
-The FLAnimatedImage library was uploaded to the hosted builders. If you are using a local Mac then download FLAnimatedImage-Mac and copy the files to the Libs folder.  
 The B4A implementation is based on this open source project: <https://github.com/koral--/android-gif-drawable>  
 The two dependent aars are attached. Copy them to B4A additional libraries folder.  
   
 Updates:  
   
+1.20 - Change dependency declaration to be compatible with B4i v10+  
 1.15 - Updated the B4A dependencies to fix a compatibility issue with targetSdkVersion 35.  
 1.12 - SetGif2 - Allows loading an animated gif from an array of bytes.  
 1.11 - GIF image ratio is preserved.  

@@ -1,0 +1,1864 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+  <b4x_version>13.40</b4x_version>
+  <dependsOn>byteconverter</dependsOn>
+  <dependsOn>javaobject</dependsOn>
+  <dependsOn>json</dependsOn>
+  <dependsOn>network</dependsOn>
+  <dependsOn>okhttp</dependsOn>
+  <dependsOn>randomaccessfile</dependsOn>
+  <dependsOn>xui</dependsOn>
+  <dependsOn>okhttp-4.9.0</dependsOn>
+  <dependsOn>okio-2.8.0</dependsOn>
+  <dependsOn>okhttp-urlconnection-4.9.3</dependsOn>
+  <dependsOn>kotlin-stdlib-1.6.10</dependsOn>
+  <dependsOn>phone</dependsOn>
+  <dependsOn>runtimepermissions</dependsOn>
+  <dependsOn>androidx.core:core</dependsOn>
+  <class>
+    <name>it.tecnomedia.omap.openmaps</name>
+    <shortname>OpenMaps</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <permission>android.permission.ACCESS_WIFI_STATE</permission>
+    <permission>android.permission.ACCESS_NETWORK_STATE</permission>
+    <event>Ready</event>
+    <event>CameraChange (CamPosition As CameraPosition)</event>
+    <event>TouchMove(Point As LatLng)</event>
+    <event>Click (Point As LatLng)</event>
+    <event>DblClick (Point As LatLng)</event>
+    <event>CircleClick (SelectedCircle As MapCircle)</event>
+    <event>MarkerClick (SelectedMarker As Marker)</event>
+    <event>PolygonClick (SelectedPolygon As MapPolygon)</event>
+    <event>PolylineClick (SelectedPolyline As MapPolyline)</event>
+    <designerProperty>Key: BooleanExample, DisplayName: Show Seconds, FieldType: Boolean, DefaultValue: True</designerProperty>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddCircle">_addcircle</name>
+      <comment>Adds a circle To the map.
+Center - Position of the circle center.
+Radius - Circle radius.
+StrokeWidth - Stroke width.
+StrokeColor - Stroke color.
+FillColor - Inner color.
+Opacity - Inner color opacity. Value between 0 To 1.
+</comment>
+      <returntype>it.tecnomedia.omap.mapcircle</returntype>
+      <parameter>
+        <name>ll</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>Radius</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>StrokeWidth</name>
+        <type>float</type>
+      </parameter>
+      <parameter>
+        <name>StrokeColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FillColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Opacity</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddInfoWindow">_addinfowindow</name>
+      <comment>Opens an info window with the given HTML content at the specified position.
+</comment>
+      <returntype>it.tecnomedia.omap.mapinfowindow</returntype>
+      <parameter>
+        <name>Content</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Position</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddInfoWindow2">_addinfowindow2</name>
+      <comment>Opens an info window with the given HTML content at the specified position. It cannot be larger than MaxWidth (in pixels).
+</comment>
+      <returntype>it.tecnomedia.omap.mapinfowindow</returntype>
+      <parameter>
+        <name>Content</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Position</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>MaxWidth</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMarker">_addmarker</name>
+      <comment> Adds a marker to the map.
+</comment>
+      <returntype>it.tecnomedia.omap.marker</returntype>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Title</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMarker2">_addmarker2</name>
+      <comment>Adds a marker To the map with a custom icon.
+The IconUri must point To an online image Or an image from the assets folder.
+In the later Case the custom icon will only appear in Release mode.
+Example: &lt;code&gt;WAIT FOR (gmap.AddMarker2(10, 10, "This is a test", IconUrl)) COMPLETE (MK as Marker)&lt;/code&gt;
+ see https://kml4earth.appspot.com/icons.html for icons
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Title</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>IconUri</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMarker2Label">_addmarker2label</name>
+      <comment>Adds a marker To the map with a custom icon and label
+The IconUri must point To an online image Or an image from the assets folder.
+In the later Case the custom icon will only appear in Release mode.
+Example: &lt;code&gt;WAIT FOR (gmap.AddMarker2(10, 10, "This is a test", "http:address.ico")) COMPLETE (Mk As Marker)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Title</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Label</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>IconUri</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMarker3">_addmarker3</name>
+      <comment>Adds a marker To the map with a custom icon.
+The IconUri must point To an online image Or an image from the assets folder.
+In the later Case the custom icon will only appear in Release mode.
+Example: &lt;code&gt;gmap.AddMarker2(10, 10, "This is a test", File.GetUri(File.DirAssets, "SomeIcon.png",32,32))&lt;/code&gt;
+ see https://kml4earth.appspot.com/icons.html for icons
+</comment>
+      <returntype>it.tecnomedia.omap.marker</returntype>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Title</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>IconUri</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddMarker3Label">_addmarker3label</name>
+      <comment>Adds a marker To the map with a custom icon and label.
+The IconUri must point To an online image Or an image from the assets folder.
+In the later Case the custom icon will only appear in Release mode.
+Example: &lt;code&gt;gmap.AddMarker2(10, 10, "This is a test", File.GetUri(File.DirAssets, "SomeIcon.png",32,32))&lt;/code&gt;
+</comment>
+      <returntype>it.tecnomedia.omap.marker</returntype>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Title</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Label</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>IconUri</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Height</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddPolygon">_addpolygon</name>
+      <comment>Adds a polygon To the map.
+Points - A list Or Array of LatLng points.
+ es.  array(array(41.90, 12.49),array(41.80, 12.50),array(41.85, 12.60))
+StrokeWidth - Stroke width.
+StrokeColor - Stroke color.
+FillColor - Inner color.
+Opacity - Inner color opacity. Value between 0 To 1.
+</comment>
+      <returntype>it.tecnomedia.omap.mappolygon</returntype>
+      <parameter>
+        <name>Points</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>StrokeWidth</name>
+        <type>float</type>
+      </parameter>
+      <parameter>
+        <name>StrokeColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FillColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Opacity</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AddPolyline">_addpolyline</name>
+      <comment>Adds a polyline To the map.
+Points - A list Or Array of LatLng points.
+Width - Line width.
+Color - Line color.
+CloseInfoWindow (InfoWindow As InfoWindow)
+Closes the specified info window.
+</comment>
+      <returntype>it.tecnomedia.omap.mappolyline</returntype>
+      <parameter>
+        <name>Points</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>StrokeWidth</name>
+        <type>float</type>
+      </parameter>
+      <parameter>
+        <name>StrokeColor</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="AllVisibleMapObjects">_allvisiblemapobjects</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="AlternativeMap">_alternativemap</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>url</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>maxZoom</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>attribution</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="CameraPosition">_cameraposition</name>
+      <comment>Returns the current camera position.
+&lt;code&gt;wait for (OM.GetTitle) CameraPosition (cp As CameraPosition)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ClearMap">_clearmap</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="DesignerCreateView">_designercreateview</name>
+      <comment>Base type must be Object
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Base</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>Lbl</name>
+        <type>anywheresoftware.b4a.objects.LabelWrapper</type>
+      </parameter>
+      <parameter>
+        <name>Props</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditConfigure">_editconfigure</name>
+      <comment> Offset -&gt; Map difference;  Tollerance -&gt; Editing Poly point
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Offset</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Tollerance</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditingActive">_editingactive</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="EditingCircle">_editingcircle</name>
+      <comment>&lt;code&gt;wait for (OM.EditingCircle(Circle,True)) COMPLETE (Success As Boolean)&lt;/code&gt;
+ OR
+&lt;code&gt;OM.EditingCircle(Circle,True)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Circle</name>
+        <type>it.tecnomedia.omap.mapcircle</type>
+      </parameter>
+      <parameter>
+        <name>Active</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditingPolygon">_editingpolygon</name>
+      <comment> If an element is already in editing, it is not possible to edit another at the same time.
+ Dim Success As Boolean = OpenMap.EditingPolygon(Polygon,True)
+&lt;code&gt;Wai For (OpenMaps.EditingPolygon(Polygon, True)) COMPLETE (Success As Boolean)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Polygon</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>Active</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="EditingPolyline">_editingpolyline</name>
+      <comment>&lt;code&gt;Wait For (OM.EditingPolyline(PolyLine,True)) COMPLETE (Success As Boolean)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Polyline</name>
+        <type>it.tecnomedia.omap.mappolyline</type>
+      </parameter>
+      <parameter>
+        <name>Active</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="filterVisibleMapObjects">_filtervisiblemapobjects</name>
+      <comment> Makes only the objects visible inside the visible map (Bounds)
+</comment>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getMapBound" HideFromIDE="true">_getmapbound</name>
+      <comment>&lt;code&gt;wait for (OM.getMapBound) COMPLETE (Bound As Map)&lt;/code&gt;
+ Return bound in map format: {"northEast":{"lat":45.123,"lon":12.456},"southWest":{"lat":40.987,"lon":10.321}}
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getNumberOfElements" HideFromIDE="true">_getnumberofelements</name>
+      <comment> Number Of Elements added
+&lt;code&gt;wait for (OM.getNumberOfElements) COMPLETE (N As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getZoom">_getzoom</name>
+      <comment>&lt;code&gt;wait for (OM.getZoom) COMPLETE (Zoom As int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Callback</name>
+        <type>Object</type>
+      </parameter>
+      <parameter>
+        <name>EventName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="IsReady">_isready</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="LatLonToXY">_latlontoxy</name>
+      <comment>&lt;code&gt;wait for (OM.LatLonToXY(ll)) COMPLETE (XY() As Double)&lt;/code&gt;
+ {XY(0) = x  (XY(1) = y}
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>ll</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="LoadImageFromUrl">_loadimagefromurl</name>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Url</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="LoadMKL">_loadmkl</name>
+      <comment> Return Map as Object
+ Key is ID , Value is Object (Marker,MapPolygon,MapPolyline)
+ &lt;code&gt;WAIT FOR (OpenMap.LoadMKL(Path, FileName)) COMPLETE (ObjectMap As Map)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>Path</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="MapLoaded">_maploaded</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="MessageToPanel">_messagetopanel</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="MoveCamera">_movecamera</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>cp</name>
+        <type>it.tecnomedia.omap.cameraposition</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="MoveCamera2">_movecamera2</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ll</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ObjectIsEditing">_objectisediting</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>IDobject</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="PanelOff">_paneloff</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="PanelOn">_panelon</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RedrawAllObj">_redrawallobj</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="RemoveCircle">_removecircle</name>
+      <comment>Removes the specified circle from the map.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>vCircle</name>
+        <type>it.tecnomedia.omap.mapcircle</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveInfoWindow">_removeinfowindow</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>InfoWindow</name>
+        <type>it.tecnomedia.omap.mapinfowindow</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveMarker">_removemarker</name>
+      <comment>Removes the specified marker from the map.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>vMarker</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemovePolygon">_removepolygon</name>
+      <comment>Removes the specified polygon from the map.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>vPolygon</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemovePolyline">_removepolyline</name>
+      <comment>Removes the specified polyline from the map.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>vPolyline</name>
+        <type>it.tecnomedia.omap.mappolyline</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SaveKML">_savekml</name>
+      <returntype>void</returntype>
+      <parameter>
+        <name>MapObj</name>
+        <type>anywheresoftware.b4a.objects.collections.Map</type>
+      </parameter>
+      <parameter>
+        <name>Path</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>FileName</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setMapType" HideFromIDE="true">_setmaptype</name>
+      <comment>get or set the zoom level.
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>mt</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetZoom">_setzoom</name>
+      <comment>Sets the zoom level.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>z</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdateCircleCenter">_updatecirclecenter</name>
+      <comment> Update position Radius
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>id</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdateCircleRadius">_updatecircleradius</name>
+      <comment> New Radius
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>id</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Radius</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdateMarkerPosition">_updatemarkerposition</name>
+      <comment>update marker posizion
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>id</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolygon">_updatepolygon</name>
+      <comment> NewPoint as List of LatLng
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Plg</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>NewPoints</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolygonColor">_updatepolygoncolor</name>
+      <comment> Change color
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Plg</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>Color</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolygonFillColor">_updatepolygonfillcolor</name>
+      <comment> 1.12
+Update FillColor - Opacity 0-1
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Plg</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>Color</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Opacity</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolygonStroke">_updatepolygonstroke</name>
+      <comment> Change StrokeWidth
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Plg</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolyline">_updatepolyline</name>
+      <comment> NewPoint as List of LatLng
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Pll</name>
+        <type>it.tecnomedia.omap.mappolyline</type>
+      </parameter>
+      <parameter>
+        <name>NewPoints</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolylineColor">_updatepolylinecolor</name>
+      <comment> Change color
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Pll</name>
+        <type>it.tecnomedia.omap.mappolyline</type>
+      </parameter>
+      <parameter>
+        <name>Color</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdatePolylineStroke">_updatepolylinestroke</name>
+      <comment> Change StrokeWidth
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Pll</name>
+        <type>it.tecnomedia.omap.mappolyline</type>
+      </parameter>
+      <parameter>
+        <name>Width</name>
+        <type>int</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="visibleObject">_visibleobject</name>
+      <comment> es. OpenMap.visibleObject(Polygon.ID)
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ID</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Visible</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ww">_ww</name>
+      <returntype>anywheresoftware.b4a.objects.WebViewWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="XYToLatLng">_xytolatlng</name>
+      <comment>&lt;code&gt;wait for (OM.XYToLatLng(x,y)) COMPLETE (Position As LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>x</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>y</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="MapBound">_mapbound</name>
+      <comment>&lt;code&gt;wait for (OM.getMapBound) COMPLETE (Bound As Map)&lt;/code&gt;
+ Return bound in map format: {"northEast":{"lat":45.123,"lon":12.456},"southWest":{"lat":40.987,"lon":10.321}}
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </property>
+    <property>
+      <name DesignerName="NumberOfElements">_numberofelements</name>
+      <comment> Number Of Elements added
+&lt;code&gt;wait for (OM.getNumberOfElements) COMPLETE (N As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </property>
+    <property>
+      <name DesignerName="MapType">_maptype</name>
+      <comment>get or set the zoom level.
+</comment>
+      <returntype>void</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>int</type>
+      </parameter>
+    </property>
+    <field>
+      <name DesignerName="mBase">_mbase</name>
+      <returntype>anywheresoftware.b4a.objects.B4XViewWrapper</returntype>
+    </field>
+    <field>
+      <name DesignerName="Tag">_tag</name>
+      <returntype>Object</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_HYBRID">_map_type_hybrid</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_NORMAL">_map_type_normal</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_SATELLITE">_map_type_satellite</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_TERRAIN">_map_type_terrain</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_ESI">_map_type_esi</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_CARTO">_map_type_carto</name>
+      <returntype>int</returntype>
+    </field>
+    <field>
+      <name DesignerName="MAP_TYPE_ESI_SATELLITE">_map_type_esi_satellite</name>
+      <returntype>int</returntype>
+    </field>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.openmapsext</name>
+    <shortname>OpenMapsExt</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="AddressToLatLon">_addresstolatlon</name>
+      <comment>&lt;code&gt;wait for (GMapExt.AddressToLatLon("Address number, City")) COMPLETE (ll as LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>address</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="bestRouteTSP">_bestroutetsp</name>
+      <comment> Algoritm Nearest Neighbor
+ points array as LatLng
+</comment>
+      <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+      <parameter>
+        <name>points</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetBearing">_getbearing</name>
+      <comment>Returns the bearing between two points, from point1 to point2
+</comment>
+      <returntype>double</returntype>
+      <parameter>
+        <name>Point1</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>Point2</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetDistance">_getdistance</name>
+      <comment>Returns the distance between two points in meters
+</comment>
+      <returntype>double</returntype>
+      <parameter>
+        <name>Point1</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>Point2</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetMarkerLabel">_getmarkerlabel</name>
+      <comment> not available
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetMarkerPosition">_getmarkerposition</name>
+      <comment>&lt;code&gt;wait for (OME.GetMarkerPosition) COMPLETE (Position As LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="GetMarkerTitle">_getmarkertitle</name>
+      <comment>&lt;code&gt;wait for (OME.GetMarkerTitle) COMPLETE (Title As String)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>OpenMap</name>
+        <type>it.tecnomedia.omap.openmaps</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="InsidePath">_insidepath</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>point</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>LatLngList</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="LatLonToAddress">_latlontoaddress</name>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>lon</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="LatLonToXY">_latlontoxy</name>
+      <comment>&lt;code&gt;wait for (OME.LatLonToXY(ll)) COMPLETE (XY As Double)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>ll</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="ObjectIsEditing">_objectisediting</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>IDobject</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RemoveMarkerLabel">_removemarkerlabel</name>
+      <comment> not available
+Removes the Marker Label for the given Marker
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="RouteDistance">_routedistance</name>
+      <comment> Calcola la distanza totale di un percorso
+</comment>
+      <returntype>double</returntype>
+      <parameter>
+        <name>route</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMarkerClickable">_setmarkerclickable</name>
+      <comment> Always clickable - not necessary
+Sets the marker clickable property
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+      <parameter>
+        <name>Clickable</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMarkerIcon">_setmarkericon</name>
+      <comment> not available
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+      <parameter>
+        <name>URL</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMarkerLabel">_setmarkerlabel</name>
+      <comment> not available
+Sets a MarkerLabel with the given values.
+Posible color values.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Color</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>TextSize</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMarkerLabel2">_setmarkerlabel2</name>
+      <comment> not available
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Color</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>BackgroundColor</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>TextSize</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetMarkerOrigin">_setmarkerorigin</name>
+      <comment> not available
+Sets the marker origin 'doesn't work!!!
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>m</name>
+        <type>it.tecnomedia.omap.marker</type>
+      </parameter>
+      <parameter>
+        <name>X</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>y</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="SetPolygonClickable">_setpolygonclickable</name>
+      <comment> Always clickable - not necessary
+Sets the polygon clickable property 'doesn't work!!!
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>pg</name>
+        <type>it.tecnomedia.omap.mappolygon</type>
+      </parameter>
+      <parameter>
+        <name>Clickable</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="XYToLatLng">_xytolatlng</name>
+      <comment>Returns the Lat/Lng coordinates for the given screen coordinates  'doesn't work!!!
+&lt;code&gt;wait for (OME.XYToLatLng(x,y)) COMPLETE (ll As LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+      <parameter>
+        <name>x</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>y</name>
+        <type>double</type>
+      </parameter>
+    </method>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.maplabel</name>
+    <shortname>MapLabel</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getPermanent" HideFromIDE="true">_getpermanent</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="getPosition" HideFromIDE="true">_getposition</name>
+      <returntype>it.tecnomedia.omap.latlng</returntype>
+    </method>
+    <method>
+      <name DesignerName="getText" HideFromIDE="true">_gettext</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>vPosition</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>vText</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>vPermanent</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>vID</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>WebView</name>
+        <type>anywheresoftware.b4a.objects.WebViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setText" HideFromIDE="true">_settext</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>T</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Permanent">_permanent</name>
+      <returntype>boolean</returntype>
+    </property>
+    <property>
+      <name DesignerName="Position">_position</name>
+      <returntype>it.tecnomedia.omap.latlng</returntype>
+    </property>
+    <property>
+      <name DesignerName="Text">_text</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>String</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.marker</name>
+    <shortname>Marker</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="CreateLabel">_createlabel</name>
+      <comment> Create Label on Marker
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="getIconUri" HideFromIDE="true">_geticonuri</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetIconUrl">_geticonurl</name>
+      <comment>&lt;code&gt;wait for (MK.GetIconUrl) COMPLETE (URL As String)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetPosition">_getposition</name>
+      <comment>&lt;code&gt;wait for (MK.GetPosition) COMPLETE (Position As LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetTitle">_gettitle</name>
+      <comment>&lt;code&gt;wait for (Mk.GetTitle) COMPLETE (Title As String)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getVisible" HideFromIDE="true">_getvisible</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>vPosition</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>vTitle</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>vIconUri</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>vVisible</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>vID</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>WebView</name>
+        <type>anywheresoftware.b4a.objects.WebViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVisible" HideFromIDE="true">_setvisible</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="UpdateLabel">_updatelabel</name>
+      <comment> Set Text empty for remove
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>Text</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="IconUri">_iconuri</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Visible">_visible</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.latlng</name>
+    <shortname>LatLng</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+    </method>
+    <field>
+      <name DesignerName="Latitude">_latitude</name>
+      <returntype>double</returntype>
+    </field>
+    <field>
+      <name DesignerName="Longitude">_longitude</name>
+      <returntype>double</returntype>
+    </field>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.mappolyline</name>
+    <shortname>MapPolyline</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetLineColor">_getlinecolor</name>
+      <comment> &lt;code&gt;Wait For (MapPoly.GetLineColor) COMPLETE (Color As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetLineWidth">_getlinewidth</name>
+      <comment> &lt;code&gt;Wait For (MapPoly.GetLineWidth) COMPLETE (LineWidth As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetPoints">_getpoints</name>
+      <comment> List of LatLng
+ &lt;code&gt;Wait For (MapPoly.GetPoints) COMPLETE (ListPoints As List)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getVisible" HideFromIDE="true">_getvisible</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Visble</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>ID</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Point</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>StrokeWidth</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>StrokeColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>WebView</name>
+        <type>anywheresoftware.b4a.objects.WebViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVisible" HideFromIDE="true">_setvisible</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Visible">_visible</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.mappolygon</name>
+    <shortname>MapPolygon</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetFillColor">_getfillcolor</name>
+      <comment>&lt;code&gt;wait for (MapPolygon.GetFillColor) COMPLETE(FillColor As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetLineColor">_getlinecolor</name>
+      <comment>&lt;code&gt;wait for (MapPolygon.GetLineColor) COMPLETE(LineColor As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetLineWidth">_getlinewidth</name>
+      <comment>&lt;code&gt;wait for (MapPolygon.GetLineWidth) COMPLETE(LineWidth As Int)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getOpacity" HideFromIDE="true">_getopacity</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetPoints">_getpoints</name>
+      <comment> List of LatLng
+&lt;code&gt;wait for (MapPolygon.GetPoints) COMPLETE(Points As List)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getVisible" HideFromIDE="true">_getvisible</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Visble</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>ID</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>Point</name>
+        <type>anywheresoftware.b4a.objects.collections.List</type>
+      </parameter>
+      <parameter>
+        <name>StrokeWidth</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>StrokeColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>FillColor</name>
+        <type>int</type>
+      </parameter>
+      <parameter>
+        <name>Opacity</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>WebView</name>
+        <type>anywheresoftware.b4a.objects.WebViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVisible" HideFromIDE="true">_setvisible</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Opacity">_opacity</name>
+      <returntype>float</returntype>
+    </property>
+    <property>
+      <name DesignerName="Visible">_visible</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.mapcircle</name>
+    <shortname>MapCircle</shortname>
+    <owner>activity</owner>
+    <permission>android.permission.INTERNET</permission>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetCenter">_getcenter</name>
+      <comment>&lt;code&gt;wait for (Circle.GetCenter) COMPLETE (Position As LatLng)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="GetRadius">_getradius</name>
+      <comment>&lt;code&gt;wait for (Circle.GetRadius) COMPLETE (Radius As Double)&lt;/code&gt;
+</comment>
+      <returntype>anywheresoftware.b4a.keywords.Common.ResumableSubWrapper</returntype>
+    </method>
+    <method>
+      <name DesignerName="getVisible" HideFromIDE="true">_getvisible</name>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>vCenter</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>vRadius</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Visble</name>
+        <type>boolean</type>
+      </parameter>
+      <parameter>
+        <name>id</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>WebView</name>
+        <type>anywheresoftware.b4a.objects.WebViewWrapper</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="setVisible" HideFromIDE="true">_setvisible</name>
+      <returntype>String</returntype>
+      <parameter>
+        <name>B</name>
+        <type>boolean</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Visible">_visible</name>
+      <returntype>boolean</returntype>
+      <parameter>
+        <name>Value</name>
+        <type>boolean</type>
+      </parameter>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.cameraposition</name>
+    <shortname>CameraPosition</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLat" HideFromIDE="true">_getlat</name>
+      <returntype>double</returntype>
+    </method>
+    <method>
+      <name DesignerName="getLng" HideFromIDE="true">_getlng</name>
+      <returntype>double</returntype>
+    </method>
+    <method>
+      <name DesignerName="getZoom" HideFromIDE="true">_getzoom</name>
+      <returntype>float</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>Lat</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Lng</name>
+        <type>double</type>
+      </parameter>
+      <parameter>
+        <name>Zoom</name>
+        <type>float</type>
+      </parameter>
+    </method>
+    <method>
+      <name DesignerName="Target">_target</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="ToString">_tostring</name>
+      <returntype>String</returntype>
+    </method>
+    <property>
+      <name DesignerName="Lat">_lat</name>
+      <returntype>double</returntype>
+    </property>
+    <property>
+      <name DesignerName="Lng">_lng</name>
+      <returntype>double</returntype>
+    </property>
+    <property>
+      <name DesignerName="Zoom">_zoom</name>
+      <returntype>float</returntype>
+    </property>
+  </class>
+  <class>
+    <name>it.tecnomedia.omap.mapinfowindow</name>
+    <shortname>MapInfoWindow</shortname>
+    <owner>process</owner>
+    <method>
+      <name>IsInitialized</name>
+      <comment>Verifica se l'oggetto sia stato inizializzato.</comment>
+      <returntype>boolean</returntype>
+    </method>
+    <method>
+      <name DesignerName="Class_Globals">_class_globals</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getContent" HideFromIDE="true">_getcontent</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getID" HideFromIDE="true">_getid</name>
+      <returntype>String</returntype>
+    </method>
+    <method>
+      <name DesignerName="getPosition" HideFromIDE="true">_getposition</name>
+      <returntype>it.tecnomedia.omap.latlng</returntype>
+    </method>
+    <method>
+      <name DesignerName="Initialize">_initialize</name>
+      <comment>Initializes the object. You can add parameters to this method if needed.
+</comment>
+      <returntype>String</returntype>
+      <parameter>
+        <name>ba</name>
+        <type>anywheresoftware.b4a.BA</type>
+      </parameter>
+      <parameter>
+        <name>vContent</name>
+        <type>String</type>
+      </parameter>
+      <parameter>
+        <name>vPosition</name>
+        <type>it.tecnomedia.omap.latlng</type>
+      </parameter>
+      <parameter>
+        <name>ID</name>
+        <type>String</type>
+      </parameter>
+    </method>
+    <property>
+      <name DesignerName="Content">_content</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="ID">_id</name>
+      <returntype>String</returntype>
+    </property>
+    <property>
+      <name DesignerName="Position">_position</name>
+      <returntype>it.tecnomedia.omap.latlng</returntype>
+    </property>
+  </class>
+  <version>1</version>
+  <author>Star-Dust</author>
+</root>

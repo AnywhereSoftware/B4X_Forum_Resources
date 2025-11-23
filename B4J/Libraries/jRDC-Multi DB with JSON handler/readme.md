@@ -1,8 +1,10 @@
 ### jRDC-Multi DB with JSON handler by cheveguerra
-### 09/09/2025
+### 11/22/2025
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/168578/)
 
 [HEADING=2]jRDC2-Multi Mod (B4J Server)[/HEADING]  
+  
+[SIZE=5][FONT=trebuchet ms]For the last version, check [here](https://www.b4x.com/android/forum/threads/jrdc2-multidb-server-json-hikaricp.169171/).[/FONT][/SIZE]  
   
 [HEADING=2]1. Overview[/HEADING]  
   

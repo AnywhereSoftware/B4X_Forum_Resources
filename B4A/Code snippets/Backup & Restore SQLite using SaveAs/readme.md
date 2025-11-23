@@ -1,10 +1,10 @@
 ### Backup & Restore SQLite using SaveAs by aeric
-### 11/03/2025
+### 11/20/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/169127/)
 
 This code snippet is based on tutorial [[B4X] TextEditor - Save and load external files](https://www.b4x.com/android/forum/threads/b4x-texteditor-save-and-load-external-files.132731/) here. This is my answer to [this question](https://www.b4x.com/android/forum/threads/saveas-and-database.169121/).  
 Instead of writing a text file, we can make use of the same idea to backup and restore our SQLite database.  
-Check post #4 for restore database.  
+Check [post #4](https://www.b4x.com/android/forum/threads/backup-restore-sqlite-using-saveas.169127/#post-1036593) for **restore database**.  
   
 
 ```B4X
