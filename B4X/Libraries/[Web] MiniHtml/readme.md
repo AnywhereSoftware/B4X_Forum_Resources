@@ -1,10 +1,11 @@
 ### [Web] MiniHtml by aeric
-### 11/11/2025
+### 11/24/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/158846/)
 
-Version: 0.60  
+Version: 0.70  
   
 Generate Html with B4X code.  
+Added HTMX attributes such as hx-get and hx-trigger.  
   
 Example 1:  
 

@@ -1,5 +1,5 @@
 ###  TextRecognition based on MLKit by Erel
-### 07/06/2025
+### 11/23/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/161210/)
 
 This is a B4A + B4i solution. It recognizes text in images based on Google ML Kit.  
@@ -10,7 +10,6 @@ This is a B4A + B4i solution. It recognizes text in images based on Google ML Ki
 Dependencies:  
   
 - B4i (local Mac only): <https://www.b4x.com/b4i/files/MLKit.zip>  
-- B4A: open B4A Sdk Manager - search for *mlkit* and install all items. Also search and install *odml*.  
   
 Don't miss:  
   
@@ -24,6 +23,7 @@ Usage itself is very simple. See the example:
   
 **Updates:**  
   
+-v1.11: Dependencies in B4i updated to v10+ built-chain. Note that the local Mac dependencies were updated.  
 - v1.10:  
 Support for non-Latin languages added. There are 5 language models: Latin, Chinese, Devanagari, Japanese, Korean  
 Recognizing non-Latin languages requires some configuration:  

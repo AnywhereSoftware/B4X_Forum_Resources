@@ -6,7 +6,7 @@ Version=4.5
 @EndOfDesignText@
 ' Created by: Aeric
 ' Credit to:  EnriqueGonzalez
-' Version: 0.60
+' Version: 0.70
 Sub Class_Globals
 	Private mId As String
 	Private mName As String
@@ -29,7 +29,7 @@ End Sub
 
 ' Initialize tag with tagName
 Public Sub Initialize (tagName As String) As Tag
-	mParent = Null
+	'mParent = Null
 	mChildren.Initialize
 	mSiblings.Initialize
 	mAttributes.Initialize
@@ -108,12 +108,12 @@ Public Sub Build3 (indent As Int, Line1CRLF As Boolean) As String
 			Dim mCurrent As Tag = tagOrString
 			Select mCurrent.TagName
 				Case "span", "strong", "small", "em", "b", "u", "textarea"
-					SB.Append(mCurrent.build) ' stay on same line
+					SB.Append(mCurrent.Build) ' stay on same line
 				Case Else
 					If mTagName = "textarea" Then
-						SB.Append(mCurrent.build)
+						SB.Append(mCurrent.Build)
 					Else
-						SB.Append(mCurrent.build3(indent + 1, True))
+						SB.Append(mCurrent.Build3(indent + 1, True))
 					End If
 			End Select
 		Else
@@ -122,6 +122,12 @@ Public Sub Build3 (indent As Int, Line1CRLF As Boolean) As String
 	Next
 	Select mMode
 		Case mUniline
+			If mChildren.Size > 1 Then
+				SB.Append(CRLF)
+				For n = 0 To indent
+					SB.Append(mIndentString)
+				Next
+			End If
 			SB.Append("</" & mTagName & ">")
 		Case mMultiline
 			SB.Append(CRLF)
@@ -131,6 +137,30 @@ Public Sub Build3 (indent As Int, Line1CRLF As Boolean) As String
 			SB.Append("</" & mTagName & ">")
 	End Select
 	Return SB.ToString
+End Sub
+
+Public Sub Clone As Tag
+	Dim twin As Tag
+	twin.Initialize(mTagName)
+	'twin.Parent = mParent
+	
+	Dim childrentwins As CopyOnWriteList
+	childrentwins.Initialize(mChildren)
+	twin.Children = childrentwins.GetList
+
+	Dim attributestwins As CopyOnWriteMap
+	attributestwins.Initialize(mAttributes)
+	twin.Attributes = attributestwins.GetMap
+		
+	'twin.Siblings = mSiblings
+	'twin.Attributes = mAttributes
+	
+	twin.Flat = mFlat
+	twin.mId = mId
+	twin.mName = mName
+	twin.Mode = mMode
+	twin.mIndentString = mIndentString
+	Return twin
 End Sub
 
 ' set to true for no indents and CRLF
@@ -180,13 +210,8 @@ Public Sub PrintMe
 End Sub
 
 Public Sub PrintChildren
-	Dim indent As String
 	For Each item As Tag In mChildren
-		indent = indent & "  "
-		If item.IsInitialized Then
-			Log($"${indent}${item.TagName}"$)
-		End If
-		item.PrintChildren
+		Log(item.build)
 	Next
 End Sub
 
@@ -791,6 +816,21 @@ Public Sub required As Tag
 	Return Me
 End Sub
 
+Public Sub disabled As Tag
+	mAttributes.Put("disabled", "")
+	Return Me
+End Sub
+
+Public Sub checked As Tag
+	mAttributes.Put("checked", "")
+	Return Me
+End Sub
+
+Public Sub selected As Tag
+	mAttributes.Put("selected", "")
+	Return Me
+End Sub
+
 Public Sub hxGet (url As String) As Tag
 	mAttributes.Put("hx-get", url)
 	Return Me
@@ -883,4 +923,49 @@ End Sub
 Public Sub hxOn (event As String, value As String) As Tag
 	mAttributes.Put("hx-on:" & event, value)
 	Return Me
+End Sub
+
+
+Public Sub DeepCloneTag(originalTag As Tag) As Tag
+	Dim newTag As Tag
+	newTag.Initialize(originalTag.TagName)
+	
+	' copy attributes
+	Dim originalAttributes As Map = originalTag.Attributes
+	For Each key As String In originalAttributes.Keys
+		Dim value As String = originalAttributes.Get(key)
+		newTag.Attributes.Put(key, value)
+	Next
+	
+	' copy styles
+	Dim styleString As String = originalTag.StylesAsString
+	If styleString.Length > 0 Then
+		newTag.addStyle(styleString)
+	End If
+	
+	' copy classes
+	Dim classString As String = originalTag.ClassesAsString
+	If classString.Length > 0 Then
+		newTag.addClass(classString)
+	End If
+	
+	' copy mode, flat, indentString
+	newTag.Mode = originalTag.Mode
+	newTag.Flat = originalTag.Flat
+	
+	' Deep clone all children ?
+	Dim originalChildren As List = originalTag.Children
+	For i = 0 To originalChildren.Size - 1
+		Dim Child1 As Object = originalChildren.Get(i)
+		If Child1 Is Tag Then
+			' if tag: recursive deep clone
+			Dim clonedChild As Tag = DeepCloneTag(Child1)
+			newTag.add(clonedChild)
+		Else
+			' if string just add..
+			newTag.Children.Add(Child1)
+		End If
+	Next
+	
+	Return newTag
 End Sub

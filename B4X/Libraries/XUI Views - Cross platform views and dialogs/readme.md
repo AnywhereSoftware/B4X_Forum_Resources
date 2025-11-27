@@ -1,5 +1,5 @@
 ###  XUI Views - Cross platform views and dialogs by Erel
-### 03/19/2025
+### 11/26/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/100836/)
 
 [MEDIA=vimeo]311915599[/MEDIA]  
@@ -271,9 +271,8 @@ V1.20 - New AnimatedCounter custom view:
 V1.10 - New B4XInputTemplate - See post #2.  
 [/SPOILER]  
   
-Executable jar is available for download: [https://www.b4x.com/b4j/files/XUI Views Example.jar](https://www.b4x.com/b4j/files/XUI%20Views%20Example.jar) - Download and double click to run.  
   
-**XUI Views is an internal library. Make sure to copy it to the internal libraries folder (C:\Program Files (x86)\Anywhere Software\<tool>\libraries).**  
+**XUI Views is an internal library.**   
   
 Notes:  
 

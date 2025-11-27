@@ -67,7 +67,7 @@ Public Sub ConvertToTag (node1 As HtmlNode) As Tag
             End If
         Else
             ' Handle boolean attributes (where key = value)
-            If att.Key = att.Value Then
+            If att.Key = att.Value And att.Key <> "name" Then
                 parent.attr3(att.Key) ' boolean attribute
             Else
                 parent.attr(att.Key, att.Value) ' regular attribute

@@ -1,5 +1,5 @@
 ###  SelfieSegmentation with ML Kit by Erel
-### 07/18/2024
+### 11/23/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/161499/)
 
 ![](https://www.b4x.com/android/forum/attachments/154326)  
@@ -9,7 +9,6 @@ A B4A + B4i selfie segmentation feature based on Google ML Kit: <https://develop
 The result is a mask image. In the example it is overlayed over the original image using a semitransparent B4XImageView.  
   
 Usage itself is quite straightforward. See the example.  
-The configuration is a bit cumbersome.  
 Please go over the *dependencies* sections in the text recognition tutorial: <https://www.b4x.com/android/forum/threads/b4x-textrecognition-based-on-mlkit.161210/#content>  
   
 Don't miss:  

@@ -20,6 +20,7 @@ Sub Class_Globals
 	Private ivOrigSmall As B4XImageView
 	Private ivMaskSmall As B4XImageView
 	Private chooser As MediaChooser
+	Private effects As BitmapCreatorEffects
 End Sub
 
 Public Sub Initialize
@@ -33,6 +34,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	Root.LoadLayout("MainPage")
 	SelfieSegmenter.Initialize
 	chooser.Initialize(Me, "chooser")
+	effects.Initialize
 End Sub
 
 Private Sub btnChooseImage_Click
@@ -54,20 +56,47 @@ Private Sub HandeChooserResult (ChooserResult As MediaChooserResult)
 	
 	'not mandatory but for better performance we will limit the image size.
 	If bmp.Width > 2000 Or bmp.Height > 2000 Then bmp = bmp.Resize(2000, 2000, True)
+	Log(bmp)
 	#if B4A
 	If ChooserResult.Mime = "image/jpeg" Then
 		bmp = RotateJpegs(ChooserResult, bmp)
 	End If
 	#end if
 	
-	ivOriginal.Bitmap = bmp
+	'ivOriginal.Bitmap = bmp
 	ivOrigSmall.Bitmap = bmp
 	ivMask.mBase.Alpha = 0.5
+	ivOriginal.mBackgroundColor = xui.Color_Transparent
 	Wait For (SelfieSegmenter.Process(bmp)) Complete (res As SelfieSegmentationResult)
 	If res.Success Then
-		ivMask.Bitmap = res.ForegroundBitmap
+		Dim AfterMask As B4XBitmap = RemoveMask(bmp, res.ForegroundBitmap)
+		ivOriginal.Bitmap = AfterMask
 		ivMaskSmall.Bitmap = res.ForegroundBitmap
 	End If
+End Sub
+
+Private Sub RemoveMask(Selfie As B4XBitmap, Mask As B4XBitmap) As B4XBitmap
+	Dim SelfieBC As BitmapCreator = CreateBC(Selfie)
+	Dim MaskBC As BitmapCreator = CreateBC(Mask)
+	Dim oldargb, newargb, a As ARGBColor
+	SelfieBC.ColorToARGB(xui.Color_Black, oldargb)
+	SelfieBC.ColorToARGB(xui.Color_Transparent, newargb)
+	For x = 0 To SelfieBC.mWidth - 1
+		For y = 0 To SelfieBC.mHeight - 1
+			MaskBC.GetARGB(x, y, a)
+			If a.r = oldargb.r And a.g = oldargb.g And a.b = oldargb.b Then
+				SelfieBC.SetARGB(x, y, newargb)
+			End If
+		Next
+	Next
+	Return SelfieBC.Bitmap
+End Sub
+
+Private Sub CreateBC(bmp As B4XBitmap) As BitmapCreator
+	Dim bc As BitmapCreator
+	bc.Initialize(bmp.Width / bmp.Scale, bmp.Height / bmp.Scale)
+	bc.CopyPixelsFromBitmap(bmp)
+	Return bc
 End Sub
 
 #if B4A
