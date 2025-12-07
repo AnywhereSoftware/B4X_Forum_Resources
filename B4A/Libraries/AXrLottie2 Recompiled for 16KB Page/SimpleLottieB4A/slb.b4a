@@ -1,0 +1,89 @@
+﻿Build1=Default,b4a.example.intellvold.simple
+File1=23138-finger-clicking.json
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=appcompat
+Library2=axrlottie2
+Library3=core
+Library4=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Simple B4A lootie
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#MultiDex : true
+#End Region
+
+	
+	#AdditionalJar: AXrLottie-release.aar
+	#AdditionalJar : relinker-1.4.5.aar
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim loo As AXrLottieImageView
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Dim AXrLottie As AXrLottie
+	AXrLottie.Initialize
+	
+	File.WriteString(File.DirInternal ,"23138-finger-clicking.json" ,File.ReadString(File.DirAssets ,"23138-finger-clicking.json"))
+
+	
+	Dim Size As Int = 40%x
+	loo.Initialize("loo")
+	Dim ap As AppCompat
+	ap.SetElevation(loo, 15dip)
+	loo.Visible = True
+	Activity.AddView(loo,30%x ,50%y,Size,Size)
+	Dim Drawable As AXrLottieDrawableBuilder
+	Drawable.InitializeFromFile(File.DirInternal ,"23138-finger-clicking.json")
+	Drawable.SetAutoStart(False)
+	loo.SetLottieDrawable(Drawable.Build)
+'	loo.GetLottieDrawable.AutoRepeat = 1
+	loo.GetLottieDrawable.Speed = 1.5
+	loo.PlayAnimation
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+#If java
+ static {
+     // load native rlottie library
+    System.loadLibrary("jlottie");
+ }
+#End If

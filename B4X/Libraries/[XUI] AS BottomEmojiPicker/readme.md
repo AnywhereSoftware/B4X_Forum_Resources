@@ -1,5 +1,5 @@
 ###  [XUI] AS BottomEmojiPicker by Alexander Stolte
-### 08/11/2024
+### 12/02/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/157648/)
 
 A bottom emoji picker.  
@@ -117,6 +117,15 @@ Version: 1.00**
 - **1.01**
 
 - Add HidePicker
+
+- **1.02**
+
+- New Event: EmojiSelected (Emoji As String)
+- New Event: Opened
+- New Event: Closed
+- New Event: Open
+- New Event: Close
+- New Event: VisibleBodyHeightChanged (height as double)
 
 Have Fun :)  
 [![](https://www.b4x.com/android/forum/attachments/paypal-donate-button-png-clipart-png.79848/)](https://www.paypal.com/donate/?hosted_button_id=PBJGJWDDSM6ZG)

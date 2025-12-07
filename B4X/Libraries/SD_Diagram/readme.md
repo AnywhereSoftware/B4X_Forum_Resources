@@ -1,11 +1,11 @@
 ###  SD_Diagram by Star-Dust
-### 11/26/2025
+### 12/04/2025
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/169468/)
 
 **SD\_Diagram  
   
 Author:** Star-Dust  
-**Version:** 1.00  
+**Version:** 1.01  
 
 - **AnimateDiagram**
 
@@ -44,6 +44,15 @@ Author:** Star-Dust
 - **AnimateLine** As Boolean
 - **AnimationDuration** As Int
 
+- **IstoDiagram**
+
+- **Functions:**
+
+- **DesignerCreateView** (Base As Object, Lbl As Label, Props As Map)
+- **GetBase** As B4XView
+- **Initialize** (Callback As Object, EventName As String)
+- **SetData** (Values As List)
+
 - **LineDiagram**
 
 - **Fields:**
@@ -80,4 +89,10 @@ Author:** Star-Dust
 - **Animate** As Boolean [write only]
 - **Duration** As Int [write only]
 
-![](https://www.b4x.com/android/forum/attachments/168602)
+  
+  
+![](https://www.b4x.com/android/forum/attachments/168602)  
+  
+**Relaase**  
+
+- 1.01 - Added Istogram

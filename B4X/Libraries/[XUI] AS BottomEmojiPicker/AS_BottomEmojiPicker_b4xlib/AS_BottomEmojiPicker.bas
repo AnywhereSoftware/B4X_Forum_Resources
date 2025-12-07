@@ -10,9 +10,21 @@ V1.00
 	-Release
 V1.01
 	-Add HidePicker
+V1.02
+	-Add Event: EmojiSelected (Emoji As String)
+	-Add Event: Opened
+	-Add Event: Closed
+	-Add Event: Open
+	-Add Event: Close
+	-Add Event: VisibleBodyHeightChanged (height as double)
 #End If
 
 #Event: EmojiSelected (Emoji As String)
+#Event: Opened
+#Event: Closed
+#Event: Open
+#Event: Close
+#Event: VisibleBodyHeightChanged (height as double)
 
 Sub Class_Globals
 	
@@ -296,6 +308,36 @@ Private Sub xlbl_Category_Click
 		Next
 	End If
 	
+End Sub
+
+Private Sub BottomCard_Close
+	If xui.SubExists(mCallBack,mEventName & "_Close",0) Then
+		CallSub(mCallBack,mEventName & "_Close")
+	End If
+End Sub
+
+Private Sub BottomCard_Closed
+	If xui.SubExists(mCallBack,mEventName & "_Closed",0) Then
+		CallSub(mCallBack,mEventName & "_Closed")
+	End If
+End Sub
+
+Private Sub BottomCard_Open
+	If xui.SubExists(mCallBack,mEventName & "_Open",0) Then
+		CallSub(mCallBack,mEventName & "_Open")
+	End If
+End Sub
+
+Private Sub BottomCard_Opened
+	If xui.SubExists(mCallBack,mEventName & "_Opened",0) Then
+		CallSub(mCallBack,mEventName & "_Opened")
+	End If
+End Sub
+
+Private Sub BottomCard_VisibleBodyHeightChanged (height As Double)
+	If xui.SubExists(mCallBack,mEventName & "_VisibleBodyHeightChanged",1) Then
+		CallSub2(mCallBack,mEventName & "_VisibleBodyHeightChanged",height)
+	End If
 End Sub
 
 #Region Properties
