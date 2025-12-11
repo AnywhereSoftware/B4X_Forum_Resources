@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 07/13/2025
+### 12/07/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -77,6 +77,7 @@ B4A***
 ***[SIZE=4]Tutorials[/SIZE]  
   
 B4R***  
+[All ESP32 modules in 2025](https://www.b4x.com/android/forum/threads/all-esp32-modules-in-2025.169654/)  
 [On line Ethics DB for robots and 4 laws of robotics](https://www.b4x.com/android/forum/threads/robots.165844/post-1017531)  
 [How to change libraries folder in arduino-cli](https://www.b4x.com/android/forum/threads/solved-liquidcrystal-h-not-found-how-to-change-libraries-folder-in-arduino-cli.161202/post-989181)  
 [32 Hours Tutorial Video of C++](https://www.b4x.com/android/forum/threads/how-return-bool-from-inline-c.149911/post-950256)  
@@ -99,6 +100,7 @@ B4R***
 [Circuit analysis to the maximum](https://www.b4x.com/android/forum/threads/circuit-analysis-to-the-maximum.107818/)  
   
 ***B4i***  
+[How to use an MCP server in your AI B4X projects](https://www.b4x.com/android/forum/threads/building-an-mcp-server-in-b4j.169512/post-1038839)  
 [Restore factory settings on a locked iPhone device](https://www.b4x.com/android/forum/threads/restore-factory-settings-on-a-locked-iphone-device.163573/)  
 [[B4X] JSON crack - Visualize your JSON as a diagram](https://www.b4x.com/android/forum/threads/b4x-json-crack.142973/)  
 [Upload to appstoreconnect - icon cannot have a transparent nor alpha channel- solution](https://www.b4x.com/android/forum/threads/problem-trying-to-upload-to-itunes.115407/post-904321)  
@@ -110,6 +112,7 @@ B4R***
 [Aes128 rijndael cipher implementation animation](https://www.b4x.com/android/forum/threads/aes128-rijndael-cipher-implementation-animation.94667/)  
   
 ***B4A***  
+[How to use an MCP server in your AI B4X projects](https://www.b4x.com/android/forum/threads/building-an-mcp-server-in-b4j.169512/post-1038839)  
 [Why Google does not allow to display in your Android TV app YouTube videos (read this article and the following until Gemini 4/4)](https://www.b4x.com/android/forum/threads/play-youtube-video-in-android-tv-app.159024/post-978296)  
 [Program from everywhere even while being away in the road... It can be done already.](https://www.b4x.com/android/forum/threads/program-from-everywhere-even-while-being-on-the-road-it-can-be-done-already.157215/)  
 [Link to rules of the goods that have to be charged inside the Google play billing system and the goods that have not](https://www.b4x.com/android/forum/threads/i-would-like-to-convert-an-existing-website-into-a-webapp.145387/post-921752)  
@@ -124,6 +127,7 @@ B4R***
 [Android messages cool new feature for smsing from everywhere](https://www.b4x.com/android/forum/threads/android-messages-cool-new-feature-for-smsing-from-everywhere.94564/)  
   
 ***B4J***  
+[How to use an MCP server in your AI B4X projects](https://www.b4x.com/android/forum/threads/building-an-mcp-server-in-b4j.169512/post-1038839)  
 [Jetty Server - NOTE - Create and handle dynamic controls in a websocket app.](https://www.b4x.com/android/forum/threads/b4j-server-jetty-how-to-handle-dynamically-created-controls.161699/post-991829)  
 [HAProxy (load balancer for B4J webapps) - Mitigate backend problem of sending a request to a remote server behind Cloudflare (Cloudflared enabled QUIC enryption)](https://www.b4x.com/android/forum/threads/haproxy-for-webapps-with-ssl-not-a-total-success-until-now.150371/post-952411)  
 [Code Signing - Jar File, Exe File, Inno Setup File](https://www.b4x.com/android/forum/threads/b4j-windows-app-new-code-signing-regulations.149616/post-948267)  

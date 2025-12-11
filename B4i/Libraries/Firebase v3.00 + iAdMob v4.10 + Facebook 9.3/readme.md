@@ -1,12 +1,10 @@
 ### Firebase v3.00 + iAdMob v4.10 + Facebook 9.3 by Erel
-### 04/24/2025
+### 12/08/2025
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/144798/)
 
+**Edit: Latest version of Firebase + iAdMob is included with the builder.**  
+  
 A new package with an updated Firebase and AdMob sdks is available.  
-  
-  
-The new version requires Xcode 14+  
-Mac: <https://www.b4x.com/b4i/files/Firebase301.zip>  
   
   
 **Updates:**  
