@@ -2,8 +2,8 @@
 <root>
     <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
     <class>
-        <name>com.simplysoftware.ModbusMaster.ModbusMaster</name>
-        <shortname>ModbusMaster</shortname>
+        <name>com.simplysoftware.ModbusMasterTCP.ModbusMasterTCP</name>
+        <shortname>ModbusMasterTCP</shortname>
         <owner>process</owner>
         <event>InitResult(Success As Boolean, Message As String)</event>
         <event>ConnectionCheckDone(IsLive As Boolean, Message As String)</event>
@@ -12,19 +12,17 @@
         <event>HoldingRegisterRead(Success As Boolean, Data() As Short, Message As String)</event>
         <event>InputRegisterRead(Success As Boolean, Data() As Short, Message As String)</event>
         <event>WriteResult(Success As Boolean, Message As String)</event>
+        <event>TestCompleted(Success As Boolean, Message As String)</event>
+        <event>DiagnosticRequest(SubFunction As Int, Data As Int)</event>
         <permission>android.permission.INTERNET</permission>
         <method>
             <name>ReadHoldingRegisters</name>
             <comment>Reads a contiguous block of Holding Registers (Function Code 3).
- The result is returned asynchronously in the HoldingRegisterRead event. The data is returned as an array of Short (16-bit signed integers).
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
+ The result is returned asynchronously in the HoldingRegisterRead event.
+ Data is returned as an array of Short (16-bit signed integers).
 Start: The starting address of the first register to read (0-based).
 Len: The number of registers to read.</comment>
             <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
             <parameter>
                 <name>Start</name>
                 <type>int</type>
@@ -35,135 +33,46 @@ Len: The number of registers to read.</comment>
             </parameter>
         </method>
         <method>
-            <name>Disconnect</name>
-            <comment>Disconnects and closes the underlying Modbus TCP connection.
- This should be called when the application exits or the Modbus communication is no longer required.
- After calling this, the connection must be re-initialized using Initialize() before further requests can be made.</comment>
+            <name>TestFunction</name>
+            <comment>Executes a full self-test sequence based on the underlying Modbus connection state.
+ The result is returned asynchronously in the TestCompleted event.
+ Should be called after a successful Initialize().</comment>
             <returntype>void</returntype>
         </method>
         <method>
             <name>ReadDiscreteInput</name>
             <comment>Reads a contiguous block of Discrete Inputs (Function Code 2).
  The result is returned asynchronously in the DiscreteInputRead event.
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
 Start: The starting address of the first discrete input to read (0-based).
 Len: The number of discrete inputs to read.</comment>
             <returntype>void</returntype>
             <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
                 <name>Start</name>
                 <type>int</type>
             </parameter>
             <parameter>
                 <name>Len</name>
                 <type>int</type>
-            </parameter>
-        </method>
-        <method>
-            <name>ReadCoil</name>
-            <comment>Reads a contiguous block of Coil Statuses (Function Code 1).
- The result is returned asynchronously in the CoilRead event.
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
-Start: The starting address of the first coil to read (0-based).
-Len: The number of coils to read.</comment>
-            <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Start</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Len</name>
-                <type>int</type>
-            </parameter>
-        </method>
-        <method>
-            <name>ReadInputRegisters</name>
-            <comment>Reads a contiguous block of Input Registers (Function Code 4).
- The result is returned asynchronously in the InputRegisterRead event. The data is returned as an array of Short (16-bit signed integers).
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
-Start: The starting address of the first register to read (0-based).
-Len: The number of registers to read.</comment>
-            <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Start</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Len</name>
-                <type>int</type>
-            </parameter>
-        </method>
-        <method>
-            <name>WriteCoil</name>
-            <comment>Writes a single Coil value (Function Code 5).
- The result is returned asynchronously in the WriteResult event.
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
-Offset: The address of the coil to write to (0-based).
-Value: The boolean value (True/False) to write to the coil.</comment>
-            <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Offset</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Value</name>
-                <type>boolean</type>
-            </parameter>
-        </method>
-        <method>
-            <name>WriteRegisters</name>
-            <comment>Writes multiple Holding Register values (Function Code 16).
- The result is returned asynchronously in the WriteResult event.
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
-Start: The starting address of the first register to write (0-based).
-Values: An array of 16-bit integer values (Shorts in B4A) to write sequentially starting from the Start address.</comment>
-            <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Start</name>
-                <type>int</type>
-            </parameter>
-            <parameter>
-                <name>Values</name>
-                <type>short[]</type>
             </parameter>
         </method>
         <method>
             <name>IsInitialized</name>
-            <comment>Checks if the Modbus connection has been successfully initialized and is currently ready to process requests.
- This returns true only after the initial connection heartbeat is successful.
-Return type: @return:True if the connection is ready; otherwise, False.</comment>
+            <comment>Returns whether the Modbus connection is currently ready to process requests.</comment>
             <returntype>boolean</returntype>
         </method>
         <method>
             <name>Initialize</name>
-            <comment>Initializes the Modbus TCP connection parameters and attempts to connect to the PLC/slave device.
+            <comment>Initializes the Modbus TCP connection parameters and attempts to configure the library.
  This function is asynchronous and raises the InitResult event upon completion.
 EventName: The prefix used for the callback events (e.g., "MB" will raise MB_InitResult).
-Host: The IP address or hostname of the Modbus TCP slave device.
-Port: The TCP port of the Modbus slave (usually 502).
-Encapsulated: If true, uses Modbus RTU over TCP (Encapsulated) format. Set false for standard Modbus TCP.
+Host: The IP address or hostname of the Modbus TCP slave device (or TCP/RTU gateway).
+Port: The TCP port of the Modbus device (usually 502).
+Encapsulated: If true, uses Modbus RTU over TCP (Encapsulated). False for standard Modbus TCP.
 KeepAlive: If true, the TCP socket connection is kept alive between requests.
 Timeout: The connection and request timeout in milliseconds.
-Retries: The number of times the library will retry a failed connection or request.</comment>
+Retries: The number of retries the library will perform for failed requests.
+TestFunction: The memory area to use for the connection heartbeat test. Use one of TEST_* constants (0–4).
+TestAddress: The address to read during the heartbeat test (ignored if TestFunction is TEST_NONE).</comment>
             <returntype>void</returntype>
             <parameter>
                 <name>ba</name>
@@ -197,19 +106,22 @@ Retries: The number of times the library will retry a failed connection or reque
                 <name>Retries</name>
                 <type>int</type>
             </parameter>
+            <parameter>
+                <name>TestFunction</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>TestAddress</name>
+                <type>int</type>
+            </parameter>
         </method>
         <method>
             <name>WriteRegister</name>
             <comment>Writes a single Holding Register value (Function Code 6).
  The result is returned asynchronously in the WriteResult event.
-SlaveId: The unique slave address (unit identifier) of the Modbus device.
 Offset: The address of the register to write to (0-based).
-Value: The 16-bit integer value (Short in B4A) to write to the register.</comment>
+Value: The 16-bit integer value (Short-compatible) to write to the register.</comment>
             <returntype>void</returntype>
-            <parameter>
-                <name>SlaveId</name>
-                <type>int</type>
-            </parameter>
             <parameter>
                 <name>Offset</name>
                 <type>int</type>
@@ -219,14 +131,179 @@ Value: The 16-bit integer value (Short in B4A) to write to the register.</commen
                 <type>int</type>
             </parameter>
         </method>
+        <method>
+            <name>Disconnect</name>
+            <comment>Disconnects and closes the underlying Modbus TCP connection.
+ After calling this, the connection must be re-initialised with Initialize() before further requests.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ReadCoil</name>
+            <comment>Reads a contiguous block of Coil Statuses (Function Code 1).
+ The result is returned asynchronously in the CoilRead event.
+Start: The starting address of the first coil to read (0-based).
+Len: The number of coils to read.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Start</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Len</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadInputRegisters</name>
+            <comment>Reads a contiguous block of Input Registers (Function Code 4).
+ The result is returned asynchronously in the InputRegisterRead event.
+ Data is returned as an array of Short (16-bit signed integers).
+Start: The starting address of the first register to read (0-based).
+Len: The number of registers to read.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Start</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Len</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteCoil</name>
+            <comment>Writes a single Coil value (Function Code 5).
+ The result is returned asynchronously in the WriteResult event.
+Offset: The address of the coil to write to (0-based).
+Value: The boolean value (True/False) to write to the coil.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Offset</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadWriteMultipleRegisters</name>
+            <comment>Function Code 23: Read/Write Multiple Registers (implemented as FC16 followed by FC3).
+ Reads a block of holding registers while writing another block in a chained two-step sequence.
+ On success, results are raised via HoldingRegisterRead; write results and errors via WriteResult.
+ReadStart: The starting address of the registers to read (0-based).
+ReadLen: The number of registers to read.
+WriteStart: The starting address of the registers to write (0-based).
+WriteValues: The array of values to write starting at WriteStart.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ReadStart</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>ReadLen</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>WriteStart</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>WriteValues</name>
+                <type>short[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteRegisters</name>
+            <comment>Writes multiple Holding Register values (Function Code 16).
+ The result is returned asynchronously in the WriteResult event.
+Start: The starting address of the first register to write (0-based).
+Values: An array of 16-bit integer values written sequentially starting from Start.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Start</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Values</name>
+                <type>short[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DiagnosticRequest</name>
+            <comment>Performs Modbus Function Code 8 (Diagnostics).
+ Supports Subfunction 0 (Return Query Data / Loopback) — echoes the integer data.
+ Raises the DiagnosticRequest event so B4A/B4J can receive the response.
+SubFunction: The diagnostics subfunction code (only 0 supported).
+Data: The integer data to echo back.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>SubFunction</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteCoils</name>
+            <comment>Writes multiple Coil values (Function Code 15).
+ The result is returned asynchronously in the WriteResult event.
+Start: The starting address of the first coil to write (0-based).
+Values: An array of boolean values written sequentially starting from Start.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Start</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Values</name>
+                <type>boolean[]</type>
+            </parameter>
+        </method>
+        <property>
+            <name>SlaveID</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>id</name>
+                <type>int</type>
+            </parameter>
+            <comment>Property: Gets and Sets the Modbus Slave Unit ID (1–247).
+ This value is used for all subsequent requests while the connection is active.</comment>
+        </property>
         <property>
             <name>HostAddress</name>
             <returntype>java.lang.String</returntype>
-            <comment>Returns the IP address or hostname of the Modbus TCP slave device 
- that was set during the last call to Initialize().</comment>
+            <comment>Returns the host address configured during Initialize().</comment>
         </property>
+        <field>
+            <name>TEST_COIL</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_INPUT</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_NONE</name>
+            <comment>Constants to control the initial connection test behavior.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_DISCRETE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_HOLDING</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
     </class>
-    <version>1.0</version>
+    <version>1.01</version>
     <author>Peter Simpson</author>
     <dependsOn>modbus4Android-1.2.jar</dependsOn>
     <dependsOn>commons-logging-1.2.jar</dependsOn>

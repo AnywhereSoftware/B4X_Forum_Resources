@@ -1,5 +1,5 @@
 ### Tiles_JE by Jerryk
-### 11/09/2025
+### 12/12/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/167614/)
 
 I created a new custom view where the user continues to run the application based on the information displayed in the tiles. There are three types of information that can be displayed:  
@@ -15,21 +15,21 @@ The tiles are scrollable. The width of the tiles can be fixed or flexible. Each 
   
 **Tiles\_JE  
 Author: Jerryk  
-Version: 1.41  
+Version: 1.5  
   
-Methods:**  
+[SIZE=5]Methods:[/SIZE]**  
 
 - **Selected Item** As String
 
 Sets or gets the selected tile. The tag name is used.  
   
-**Events:**  
+**[SIZE=5]Events:[/SIZE]**  
 
 - **Click (tag** As String)
 
 Raised when tile is cliked.  
   
-**Properties:**  
+**[SIZE=5]Properties:[/SIZE]**  
 
 - **Tiles Type** As String
 
@@ -73,8 +73,21 @@ Borded Color
 - **Selected Border Width** As Int
 
 Borded width  
+
+- **Show Default Border** As Boolean
+
+Draw default border for tiles  
+
+- **Border Color** As Int
+
+Color for default border for tiles  
+
+- **Border Width** As Int
+
+Width of default border  
   
-**Functions:**  
+  
+**[SIZE=5]Functions:[/SIZE]**  
 
 - **AddLabel** (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
 

@@ -1,13 +1,13 @@
 ### ✅ Modbus CRC-16 / CRC16 checksum function by Peter Simpson
-### 12/08/2025
+### 12/11/2025
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/169463/)
 
 **SubName:** Modbus CRC-16 is used to ensure data integrity in Modbus RTU (**R**emote **T**erminal **U**nit) communications.  
-**Description:** This function takes a command message Bytes and performs the necessary bitwise operations to generate a **16-bit CRC checksum**, and outputs the current checksum as a hexadecimal string.  
+**Description:** This function takes a command message Bytes and performs the necessary bitwise operations to generate a **16-bit CRC checksum**, and outputs the checksum value as a hexadecimal string.  
   
 The following code calculates the Modbus RTU CRC-16 (LSB-first / little-endian), the standard CRC (**C**yclic **R**edundancy **C**heck) used for Modbus frames.  
   
-Let's use **010107DE000A** as an example to calculated it's Modbus CRC-16 checksum value, which is **43DD**.  
+Let's use **010107DE000A** as an example to calculated it's Modbus CRC-16 checksum value, which is **43 DD**.  
 
 ```B4X
     Dim BC As ByteConverter  
@@ -72,11 +72,7 @@ The full Modbus RTU frame that would be transmitted is 01 01 07 DE 00 0A **43 DD
 [TR]  
 [TD]**DD**[/TD]  
   
-[TD][TABLE]  
-[TR]  
 [TD]**CRC** High Byte: The Most Significant Byte of the CRC.[/TD]  
-[/TR]  
-[/TABLE][/TD]  
 [/TR]  
 [/TABLE]  
   

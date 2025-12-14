@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.3
 @EndOfDesignText@
-'Version 1.41
+'Version 1.5
 'Author: Jerryk
 
 #Event: Click(Tag as String)
@@ -20,7 +20,11 @@ Version=13.3
 #DesignerProperty: Key: dShowSelected, DisplayName: Show Selected, FieldType: String, DefaultValue: tile, List: tile|border|off
 #DesignerProperty: Key: dSelectedColor, DisplayName: Selected Color, FieldType: Color, DefaultValue: 0xFFFFFF00
 #DesignerProperty: Key: dSelectedWidth, DisplayName: Selected Border Width, FieldType: Int, DefaultValue: 4
-#DesignerProperty: Key: dInnerHeight, DisplayName: Inner Height, FieldType: Int, DefaultValue: 500 
+#DesignerProperty: Key: dSetMaxHeight, DisplayName: Sets Max Height, FieldType: Boolean, DefaultValue: False
+#DesignerProperty: Key: dShowDefaultBorder, DisplayName: Show Dflt Border, FieldType: Boolean, DefaultValue: False
+#DesignerProperty: Key: dBorderColor, DisplayName: Border Color, FieldType: Color, DefaultValue: 0xFFD3D3D3
+#DesignerProperty: Key: dBorderWidth, DisplayName: Border Width, FieldType: Int, DefaultValue: 2
+
 
 Sub Class_Globals
 	Private mEventName As String 'ignore
@@ -28,10 +32,11 @@ Sub Class_Globals
 	Public mBase As B4XView
 	Private xui As XUI 'ignore
 	Public Tag As Object
+	Private dd As DDD
 	
 	Private baseSV As ScrollView
 	Private tilesPanel As Panel
-	Private idx As Int = 0
+'	Private idx As Int = 0
 	Private xpoz, ypoz As Int
 	Private lTags As List
 	Private mSelectedItem As String
@@ -48,7 +53,10 @@ Sub Class_Globals
 	Private mShowSelected As String = "tile"
 	Private mSelectedColor As Int = xui.Color_Yellow
 	Private mSelectedWidth As Int = 4dip
-	Private mInnerHeight As Int = 500dip
+	Private mSetMaxHeight As Boolean = False
+	Private mShowDefaultBorder As Boolean = False
+	Private mBorderColor As Int = xui.Color_LightGray
+	Private mBorderWidth As Int = 2dip
 
 End Sub
 
@@ -56,6 +64,8 @@ Public Sub Initialize (Callback As Object, EventName As String)
 	mEventName = EventName
 	mCallBack = Callback
 	
+	dd = B4XPages.MainPage.dd
+
 	lTags.Initialize
 	tilesPanel.Initialize("")
 	mSelectedItem = "-1"
@@ -79,7 +89,10 @@ Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	mShowSelected = Props.GetDefault("dShowSelected", "tile")
 	mSelectedColor = xui.PaintOrColorToColor(Props.GetDefault("dSelectedColor", xui.Color_Yellow))
 	mSelectedWidth = IntToDIP(Props.GetDefault("dSelectedWidth", 4))
-	mInnerHeight = IntToDIP(Props.GetDefault("dInnerHeight", 500))
+	mSetMaxHeight =  Props.GetDefault("dSetMaxHeight", False)
+	mShowDefaultBorder = Props.GetDefault("dShowDefaultBorder", False)
+	mBorderColor = xui.PaintOrColorToColor(Props.GetDefault("dBorderColor", xui.Color_LightGray))
+	mBorderWidth =IntToDIP(Props.GetDefault("dBorderWidth", 2))
 	
 	InitClass
 
@@ -88,7 +101,7 @@ End Sub
 Private Sub InitClass
 	baseSV.Initialize(mBase.Height)
 	baseSV.Panel.Width = mBase.Width
-	baseSV.Panel.Height = mInnerHeight
+	baseSV.Panel.Height = mBase.Height
 	baseSV.Panel.Color = mBackgroundColor
 	baseSV.Color = mBackgroundColor
 
@@ -108,7 +121,6 @@ Public Sub AddToParent(oParent As Object, Left As Int, Top As Int, Width As Int,
 	mParent.AddView(mBase, Left, Top, Width, Height)
 	
 	InitClass
-	
 End Sub
 
 Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
@@ -118,16 +130,25 @@ Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundC
 	tilesPanel.LoadLayout("_pnlLabel")
 
 	Dim pnl As Panel
-	pnl = tilesPanel.GetView(idx)
-	idx = idx + 1
+	pnl = dd.GetViewByName(tilesPanel, "PanelLabel")
+'	pnl = tilesPanel.GetView(idx)
+'	idx = idx + 1
 
 	Dim tTag As xTag
 	tTag.Tag = pTag
 	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
+	Dim borderColor, borderWidth As Int
+	If mShowDefaultBorder Then
+		borderColor = mBorderColor
+		borderWidth = mBorderWidth
+	Else
+		borderColor = pBackgroundColor
+		borderWidth = 0dip
+	End If
 	Dim cd As ColorDrawable
-	cd.Initialize2(pBackgroundColor, mCornerRadius, 0dip, pBackgroundColor)
+	cd.Initialize2(pBackgroundColor, mCornerRadius, borderWidth, borderColor)
 	pnl.Background = cd
 	
 	pnl.Left = xpoz
@@ -159,16 +180,25 @@ Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int)
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
-	pnl = tilesPanel.GetView(idx)
-	idx = idx + 1
+	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+'	pnl = tilesPanel.GetView(idx)
+'	idx = idx + 1
 
 	Dim tTag As xTag
 	tTag.Tag = pTag
 	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
+	Dim borderColor, borderWidth As Int
+	If mShowDefaultBorder Then
+		borderColor = mBorderColor
+		borderWidth = mBorderWidth
+	Else
+		borderColor = pBackgroundColor
+		borderWidth = 0dip
+	End If
 	Dim cd As ColorDrawable
-	cd.Initialize2(pBackgroundColor, mCornerRadius, 0dip, pBackgroundColor)
+	cd.Initialize2(pBackgroundColor, mCornerRadius, borderWidth, borderColor)
 	pnl.Background = cd
 
 	pnl.Left = xpoz
@@ -193,23 +223,31 @@ Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int)
 	Return img
 End Sub
 
-
 Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor As Int, pWidth As Int, pHeight As Int) As ImageView
 	CheckDuplication (pTag)
 	lTags.Add(pTag)
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
-	pnl = tilesPanel.GetView(idx)
-	idx = idx + 1
+	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+'	pnl = tilesPanel.GetView(idx)
+'	idx = idx + 1
 
 	Dim tTag As xTag
 	tTag.Tag = pTag
 	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
+	Dim borderColor, borderWidth As Int
+	If mShowDefaultBorder Then
+		borderColor = mBorderColor
+		borderWidth = mBorderWidth
+	Else
+		borderColor = pBackgroundColor
+		borderWidth = 0dip
+	End If
 	Dim cd As ColorDrawable
-	cd.Initialize2(pBackgroundColor, mCornerRadius, 0dip, pBackgroundColor)
+	cd.Initialize2(pBackgroundColor, mCornerRadius, borderWidth, borderColor)
 	pnl.Background = cd
 
 	pnl.Left = xpoz
@@ -240,8 +278,9 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 
 	tilesPanel.LoadLayout("_pnlLayout")
 	Private pnl As Panel
-	pnl = tilesPanel.GetView(idx)
-	idx = idx + 1
+	pnl = dd.GetViewByName(tilesPanel, "PanelLayout")
+'	pnl = tilesPanel.GetView(idx)
+'	idx = idx + 1
 
 	Dim tTag As xTag
 	tTag.Tag = pTag
@@ -261,8 +300,16 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 		
 	pnl.LoadLayout(pLayout)
 	
+	Dim borderColor, borderWidth As Int
+	If mShowDefaultBorder Then
+		borderColor = mBorderColor
+		borderWidth = mBorderWidth
+	Else
+		borderColor = pBackgroundColor
+		borderWidth = 0dip
+	End If
 	Dim cd As ColorDrawable
-	cd.Initialize2(pBackgroundColor, mCornerRadius, 0dip, pBackgroundColor)
+	cd.Initialize2(pBackgroundColor, mCornerRadius, borderWidth, borderColor)
 	pnl.Background = cd
 
 	NewPosition (pnl)
@@ -275,7 +322,6 @@ Public Sub FindTile(search As String) As Panel
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
-
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = search Then
 					Return p
@@ -292,7 +338,6 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
-
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).Tag = pTag Then
 					p.Tag.As(xTag).Col = pCol
@@ -301,6 +346,12 @@ Public Sub DefaultColor(pTag As String, pCol As Int)
 			End If
 		End If
 	Next
+End Sub
+
+'sets the view height according to the total height of the tiles 
+Public Sub SetMaxHeight
+	baseSV.Height = tilesPanel.Height
+	mBase.Height = tilesPanel.Height
 End Sub
 
 Private Sub CheckDuplication (pTag As String)
@@ -314,12 +365,16 @@ End Sub
 Private Sub NewPosition (pnl As Panel)
 	tilesPanel.Height = ypoz + pnl.Height + mGap
 	Dim jo As JavaObject = tilesPanel
-	jo.RunMethod("requestLayout", Null)
+	jo.RunMethod("requestLayout", Null)  'redraw panel
 	
 	xpoz = xpoz + pnl.Width + mGap
 	If xpoz > baseSV.Width  - pnl.Width Then
 		xpoz = mGap
 		ypoz = ypoz + pnl.Height + mGap
+	End If
+	
+	If mSetMaxHeight Then
+		SetMaxHeight
 	End If
 End Sub
 
@@ -366,8 +421,16 @@ Private Sub RemoveBorder
 			If p.Parent = tilesPanel And mSelectedItem <> "-1" Then
 				If p.Tag.As(xTag).Tag = mSelectedItem Then
 					Dim col As Int = p.Tag.As(xTag).Col
+					Dim borderColor, borderWidth As Int
+					If mShowDefaultBorder Then
+						borderColor = mBorderColor
+						borderWidth = mBorderWidth
+					Else
+						borderColor = col
+						borderWidth = 0dip
+					End If
 					Dim cd As ColorDrawable
-					cd.Initialize2(col, mCornerRadius, 0dip, col)
+					cd.Initialize2(col, mCornerRadius, borderWidth, borderColor)
 					p.Background = cd
 					Exit
 				End If				
@@ -458,6 +521,7 @@ End Sub
 
 Public Sub setBackgroundColor(value As Int)
 	mBackgroundColor = value
+	baseSV.Color = mBackgroundColor
 End Sub
 Public Sub getBackgroundColor As Int
 	Return mBackgroundColor
@@ -489,11 +553,32 @@ Public Sub getSelectedWidth As Int
 	Return mSelectedWidth
 End Sub
 
-Public Sub setInnerHeight(value As Int)
-	mInnerHeight = value
+Public Sub setSetMaxHeight(value As Boolean)
+	mSetMaxHeight = value
 End Sub
-Public Sub getInnerHeight As Int
-	Return mInnerHeight
+Public Sub getSetMaxHeight As Boolean
+	Return mSetMaxHeight
+End Sub
+
+Public Sub setShowDefaultBorder(value As Boolean)
+	mShowDefaultBorder = value
+End Sub
+Public Sub getShowDefaultBorder As Boolean
+	Return mShowDefaultBorder
+End Sub
+
+Public Sub setBorderColor(value As Int)
+	mBorderColor = value
+End Sub
+Public Sub getBorderColor As Int
+	Return mBorderColor
+End Sub
+
+Public Sub setBorderWidth(value As Int)
+	mBorderWidth = value
+End Sub
+Public Sub getBorderWidth As Int
+	Return mBorderWidth
 End Sub
 
 'gets Base of the object
