@@ -1,5 +1,5 @@
 ### MacSigner - Building notarized Mac packages by Erel
-### 06/15/2023
+### 12/16/2025
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/130890/)
 
 ![](https://www.b4x.com/android/forum/attachments/113694)  
@@ -15,11 +15,11 @@ MacSigner tool will help you with the various steps required to convert the app 
 **Java**  
   
 The java SDK is made of three components: Java JDK, JavaFX libs and JavaFX jmods.  
-Java JDK 14.0.2: <https://download.java.net/java/GA/jdk14.0.2/205943a0976c4ed48cb16f1043c5c647/12/GPL/openjdk-14.0.2_osx-x64_bin.tar.gz>  
-JavaFX libs: <https://gluonhq.com/download/javafx-16-sdk-mac/>  
-JavaFX jmods: <https://gluonhq.com/download/javafx-16-jmods-mac/>  
+Java JDK 19.0.1 for Mac ARM: <https://download.java.net/java/GA/jdk19.0.1/afdd2e245b014143b62ccb916125e3ce/10/GPL/openjdk-19.0.1_macos-aarch64_bin.tar.gz>  
+JavaFX libs: <https://download2.gluonhq.com/openjfx/17.0.17/openjfx-17.0.17_osx-aarch64_bin-sdk.zip>  
+JavaFX jmods: <https://download2.gluonhq.com/openjfx/17.0.17/openjfx-17.0.17_osx-aarch64_bin-jmods.zip>  
   
-You need to download the three components to a folder:  
+You need to download the three components to a folder (versions differ):  
   
 ![](https://www.b4x.com/android/forum/attachments/113739)  
 And unpack the files:  
@@ -36,13 +36,15 @@ Download and unzip MacSigner to your Mac: [www.b4x.com/b4j/MacSigner.zip](https:
   
 In most cases you should use a single signing key for all your app. Steps to create the signing key:  
 
-1. Run MacSigner. Set the path to Java 14 bin folder: [jdk-14.02.jdk/Contents/Home/bin](http://jdk-14.02.jdk/Contents/Home/bin)
+1. Run MacSigner. Set the path to Java bin folder: [jdk-19.01.jdk/Contents/Home/bin](http://jdk-19.01.jdk/Contents/Home/bin)
 2. Set the path to the keys folder.
 3. Click on Create Key. You can leave the default values.
 4. It will create various files in the keys folder, including a file named certSigningRequest.csr.
 5. It is a good time to save the MacSigner settings (File - Save).
 6. Go to: <https://developer.apple.com/account/resources/certificates/list>
 Create a new certificate. Set its type to **Developer ID Application**. Don't confuse it with other similar types.
+Set its signature compatibility to "Previous Sub-CA":
+![](https://www.b4x.com/android/forum/attachments/168873)
 Upload certSigningRequest.csr when requested to upload a certificate signing request file.7. Download developerID\_application.cer and put it in the keys folder:
 ![](https://www.b4x.com/android/forum/attachments/113695)
 All these files go together. A certificate created with a different csr file will not work.
@@ -52,6 +54,7 @@ Link** - the good old B4JPackager11 which is embedded inside MacSigner. Links th
 **Package** - Uses Java jPackage tool to convert the standalone package to a Mac app package with a native launcher. The files in the package are signed during this step. It also creates a zip file of the package.  
 **Notarize** - Uploads the zip file to Apple server for automatic tests. This step can take several minutes to complete. This step ends when the file was uploaded to Apple. It can take another several minutes for Apple to process the file. An email will be sent after the file was processed.  
 **Request Info** (optional) - Checks the status of a submitted app.  
+**Log Info** (optional) - Provides more information on failed uploads.  
 **Staple** - After the app was notarized successfully, the staple step marks the app package as notarized.  
   
 **More details  
@@ -99,6 +102,8 @@ You can now distribute it ?
 **Updates**  
   
 
+- 2.01 - Adds support for PyBridge with embedded Python: <https://www.b4x.com/android/forum/threads/pybridge-mac-notarized-standalone-package-with-embedded-python.169760/#post-1039652>
+- 2.00 - Updated for compatibility with macOS 26, arm64 and newer versions of Java. Instructions regarding the key and java downloads were updated.
 - 1.02 - Switched from altool to notarytool as required by Apple. Note that you must fill the provider field.
 - 1.01 - Adds an option to set the provider. It is relevant when there are several teams related to the Apple account.
 There is a new List Providers button. Click on it. Find the provider short name and put it in the field. If there is a single provider then you can leave it empty.- 0.95 - fixes issue with Java.
