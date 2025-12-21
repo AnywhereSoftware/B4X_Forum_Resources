@@ -1,9 +1,9 @@
-### Modbus Master TCP/IP Library by Peter Simpson
-### 12/14/2025
+### Modbus Master TCP Library by Peter Simpson
+### 12/18/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169453/)
 
 Hello everyone,  
-Here is a Modbus library that I just wrapped to test some industrial Modbus TCP/IP valves, so I thought that I would share it with the community. Using this library, you can connect your B4A apps directly to industrial devices (PLCs) over TCP/IP to read and write Modbus data. Your app should (in theory) connect to any Modbud Server (Slave) devices running over Ethernet or WiFi.  
+Here is a Modbus library that I just wrapped to test some industrial Modbus TCP valves, so I thought that I would share it with the community. Using this library, you can connect your B4A apps directly to industrial devices (PLCs) over TCP to read and write Modbus data. Your app should (in theory) connect to any Modbud Server (Slave) devices running over Ethernet or WiFi.  
   
 **B4A library tab (Network, not really needed)**  
 ![](https://www.b4x.com/android/forum/attachments/168795)  
