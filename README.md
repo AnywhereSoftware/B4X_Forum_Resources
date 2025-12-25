@@ -13,6 +13,8 @@ There are 4 development tools based on the B4X programming language:
 
 The repo is organized into 4 folders and another *B4X folder* for cross platform resources - resources relevant to B4A, B4i and B4J.
 
+libraries_mapping.json is an index of b4xlib libraries. It lists all libraries (only b4xlibs for now), with links and descriptions.
+
 [B4X website](https://www.b4x.com)
 
 [B4X forum](https://www.b4x.com/android/forum/)
