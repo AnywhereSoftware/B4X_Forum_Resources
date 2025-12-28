@@ -1,5 +1,5 @@
 ###  B4XPages - Cross platform and simple framework for managing multiple pages by Erel
-### 07/12/2023
+### 12/25/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/118901/)
 
 [MEDIA=vimeo]440642051[/MEDIA]  
@@ -96,5 +96,5 @@ B4XPages.SetTitle(Me, "Draw Something")
 13. There is a field named B4XPages.GlobalContext. The use case behind it is with a class instance that is initialized in Service\_Create of the starter service. This can be a good place to implement tasks that can also run in the background.  
   
   
-B4XPages is an internal library.   
+B4XPages is an internal library.  
 B4XPages related discussions: <https://www.b4x.com/android/forum/pages/results/?query=b4xpages>

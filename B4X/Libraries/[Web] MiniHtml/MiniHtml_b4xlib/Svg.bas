@@ -38,21 +38,43 @@ Public Sub src (value As String) As Tag
 End Sub
 
 Public Sub width (value As String) As Tag
-	Return init.attr("width", value)
+	Return init.width(value)
 End Sub
 
 Public Sub height (value As String) As Tag
-	Return init.attr("height", value)
+	Return init.height(value)
+End Sub
+
+'Public Sub viewBox (value As String) As Tag
+'	Return init.viewBox(value)
+'End Sub
+
+Public Sub fill (value As String) As Tag
+	Return init.fill(value)
+End Sub
+
+'Public Sub xmlns (value As String) As Tag
+'	Return init.xmlns(value)
+'End Sub
+
+Public Sub viewBox2 (value1 As String, value2 As String, value3 As String) As Tag
+	Return init.viewBox2(value1, value2, value3)
+End Sub
+
+'Set viewBox value 
+'Add attributes for fill="none" and xmlns="http://www.w3.org/2000/svg"
+Public Sub viewBox (value As String) As Tag
+	Return init.viewBox(value)
 End Sub
 
 'Set aria- attribute
 Public Sub aria (key As String, value As Object) As Tag
-	Return init.attr("aria-" & key, value)
+	Return init.aria(key, value)
 End Sub
 
 'Set id attribute
 Public Sub id (value As String) As Tag
-	Return init.attr("id", value)
+	Return init.id(value)
 End Sub
 
 'Add a class

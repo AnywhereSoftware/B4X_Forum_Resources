@@ -12,8 +12,8 @@ Sub Class_Globals
 	Private mShowParserLogs As Boolean
 	Private WhiteSpace As String = " " & TAB & Chr(10) & Chr(13)
 	Private VoidTags As B4XSet
-	Private Const COLOR_ORANGE As Int = -29696
-	Private Const COLOR_RED 	As Int = -65536
+	Private Const COLOR_RED     As Int = -65536
+	Private Const COLOR_ORANGE  As Int = -29696
 	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
 	Type HtmlAttribute (Key As String, Value As String)
 End Sub

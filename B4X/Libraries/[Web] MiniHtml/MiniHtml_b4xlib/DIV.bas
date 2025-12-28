@@ -50,3 +50,43 @@ End Sub
 Public Sub sty (value As String) As Tag
 	Return init.sty(value)
 End Sub
+
+'Set data-key attribute
+Public Sub data (key As String, value As Object) As Tag
+	Return init.attr("data-" & key, value)
+End Sub
+
+'Set data-bs-key attribute
+Public Sub databs (key As String, value As Object) As Tag
+	Return data("bs-" & key, value)
+End Sub
+
+'Set x-key attribute
+Public Sub x (key As String, value As Object) As Tag
+	Return init.attr("x-" & key, value)
+End Sub
+
+'Set x-init attribute
+Public Sub xinit (value As Object) As Tag
+	Return x("init", value)
+End Sub
+
+'Set x-data attribute
+Public Sub xdata (value As Object) As Tag
+	Return x("data", value)
+End Sub
+
+'Set x-model attribute
+Public Sub xmodel (value As Object) As Tag
+	Return x("model", value)
+End Sub
+
+'Set x-show attribute
+Public Sub xshow (value As Object) As Tag
+	Return x("show", value)
+End Sub
+
+'Set x-text attribute
+Public Sub xtext (value As Object) As Tag
+	Return x("text", value)
+End Sub

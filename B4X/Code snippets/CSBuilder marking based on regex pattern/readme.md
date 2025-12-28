@@ -1,5 +1,5 @@
 ###  CSBuilder marking based on regex pattern by Erel
-### 10/06/2024
+### 12/25/2025
 [B4X Forum - B4X - Code snippets](https://www.b4x.com/android/forum/threads/83002/)
 
 CSBuilder is supported by B4A and B4J. There are some differences in the supported properties.  
@@ -35,7 +35,8 @@ Private Sub MarkPattern(Input As String, Pattern As String, GroupNumber As Int) 
     Loop  
     If lastMatchEnd < Input.Length Then cs.Append(Input.SubString(lastMatchEnd))  
     cs.PopAll  
-    Return
+    Return cs  
+End Sub
 ```
 
   
@@ -46,7 +47,7 @@ Usage example:
 Private Sub B4XPage_Created (Root1 As B4XView)  
     Root = Root1  
     Root.LoadLayout("MainPage")  
-     
+    
     Dim s As String = $"#Hello, this is a #Nice Day!  
 #nice test#test  
 #day"$  

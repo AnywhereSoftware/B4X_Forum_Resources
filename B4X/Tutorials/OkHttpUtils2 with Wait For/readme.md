@@ -1,5 +1,5 @@
 ###  OkHttpUtils2 with Wait For by Erel
-### 04/11/2021
+### 12/25/2025
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/79345/)
 
 [MEDIA=vimeo]256583317[/MEDIA]  
@@ -154,4 +154,6 @@ End Sub
   
 The images will be downloaded concurrently.  
   
-Tip about the code flow: *Sleep* and *Wait For* are equivalent to calling Return from the calling sub perspective.
+Tip about the code flow: *Sleep* and *Wait For* are equivalent to calling Return from the calling sub perspective.  
+  
+The three libraries are identical and are internal libraries.

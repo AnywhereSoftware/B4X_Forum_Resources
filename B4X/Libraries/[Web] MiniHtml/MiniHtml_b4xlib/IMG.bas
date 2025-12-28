@@ -37,6 +37,11 @@ Public Sub src (value As String) As Tag
 	Return init.srcOf(value)
 End Sub
 
+'Set alt attribute
+Public Sub alt (value As String) As Tag
+	Return init.altOf(value)
+End Sub
+
 Public Sub width (value As String) As Tag
 	Return init.attr("width", value)
 End Sub

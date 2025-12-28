@@ -1,0 +1,106 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+' ================================================================
+' File:			ArduinoLED
+' Brief:		Control the state of an LED connected to an Arduino UNO via the serial line.
+' Date:			2025-12-26
+' Author:		Robert W.B. Linn (c) 2025 MIT
+' Description:	The MCU gets connected via the serial line.
+'				The state of the Arduino onboard LED (pin 0x0D) is set via command byte:
+'				0x00 (OFF), 0x01 (ON) or Blink (0x02).
+'				The Arduino sends back to the sender, the command byte 0xNN (OK) or 0xFF (Error).
+' Notes:		Ensure the B4R IDE is disconnected else the COM port is locked.
+' Hardware:		Arduino UNO.
+' ================================================================
+#End Region
+
+#Region Wiring
+' LED = MCU
+' + = D13 (0x0D) - Onboard LED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private CMD_LED_OFF As Byte 	= 0x00
+	Private CMD_LED_ON As Byte		= 0x01
+	Private CMD_LED_BLINK As Byte 	= 0x02
+	Private STATE_OK As Byte 		= 0x00		'ignore
+	Private STATE_ERROR As Byte 	= 0xFF
+
+	Public Serial1 As Serial					' Serial line 1 connection with the Arduino
+	Private AStream As AsyncStreams				' ASyncstream between client & device
+	Private DATA_LENGTH As Byte = 1				' Received data buffer length
+	Private LED1Pin As Pin						' Output pin which has a LED connected that will blink
+	Private LED1PinNumber As Byte = 0x0D		' Pin number used. pin 13 (byte 0x0D) is Arduino onboard LED, other examples like pin 6 (byte 0x06)
+
+   	Private BlinkTimer As Timer					' Timer for the blink sequence
+   	Private BlinkTimerInterval As ULong	= 1		' Timerinterval in seconds
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	AStream.Initialize(Serial1.Stream, "AStream_NewData", "AStream_Error")
+	LED1Pin.Initialize(LED1PinNumber, LED1Pin.MODE_OUTPUT)
+	BlinkTimer.Initialize("BlinkTimer_Tick", BlinkTimerInterval * 1000)
+	BlinkTimer.Enabled = False
+End Sub
+
+' Handle the timer ticks
+Private Sub BlinkTimer_Tick
+	' Set the new state of the pin
+	LED1Pin.DigitalWrite(Not(LED1Pin.DigitalRead))
+	' Write state via async
+	Dim state As Byte
+	If LED1Pin.DigitalRead Then
+		state = CMD_LED_ON
+	Else
+		state = CMD_LED_OFF
+	End If
+	AStream.Write(Array As Byte(state))
+End Sub
+
+' Event handling data received via the serial line to set the state of the LED.
+' Data received contains 1 byte.
+' Parameters:
+'	Buffer Byte Array - First byte used
+Private Sub AStream_NewData(Buffer() As Byte)
+	' Log("[B4R][AStream_NewData] buffer=", bc.HexFromBytes(Buffer), ", length=", Buffer.Length, " bytes")
+	Dim cmd As Byte
+	
+	If Buffer.Length == DATA_LENGTH Then
+		cmd = Buffer(0)
+		Select cmd
+			Case CMD_LED_OFF
+				BlinkTimer.Enabled = False
+				LED1Pin.DigitalWrite(False)
+			Case CMD_LED_ON
+				BlinkTimer.Enabled = False
+				LED1Pin.DigitalWrite(True)
+			Case CMD_LED_BLINK
+				BlinkTimer.Enabled = True
+				LED1Pin.DigitalWrite(False)
+		End Select
+		AStream.Write(Array As Byte(cmd))
+	Else
+		' Buffer length
+		AStream.Write(Array As Byte(STATE_ERROR))
+	End If
+End Sub
+
+' Event handling async error.
+' Send state error byte 
+Private Sub AStream_Error
+	AStream.Write(Array As Byte(STATE_ERROR))
+End Sub

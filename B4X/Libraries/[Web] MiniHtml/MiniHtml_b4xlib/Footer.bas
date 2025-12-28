@@ -50,3 +50,8 @@ End Sub
 Public Sub sty (value As String) As Tag
 	Return init.sty(value)
 End Sub
+
+'Set x-key attribute
+Public Sub x (key As String, value As Object) As Tag
+	Return init.x(key, value)
+End Sub

@@ -1,0 +1,119 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jnetwork
+Library4=jxui
+Library5=jrandomaccessfile
+Module1=ClientHandler
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10.3
+@EndOfDesignText@
+' TCP Server - Supports Multiple Clients
+' Version 1.0 - 12/26/2025
+
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private TextField1 As TextField
+	Private TextField2 As TextField
+	
+	Public Server As ServerSocket		'Requires jNetwork Library
+	Public ListenPort As Int = 5000   ' change as needed
+	Public Clients As Map             ' holds all connected clients
+	Private NextClientId As Int
+	
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Clients.Initialize
+	NextClientId = 1
+	RndSeed(DateTime.Now)
+
+	Server.Initialize(ListenPort, "Server")
+	Server.Listen
+
+	Log("TCP Server listening on port " & ListenPort)
+End Sub
+
+Sub Server_NewConnection (Successful As Boolean, NewSocket As Socket)
+	If Successful = False Then
+		Log("Connection failed")
+		Return
+	End If
+
+	Dim id As String = "Client-" & NextClientId
+	NextClientId = NextClientId + 1
+
+	Log("New connection from " & NewSocket.RemoteAddress & " as " & id)
+
+	Dim ch As ClientHandler
+	ch.Initialize(NewSocket, id)
+	Clients.Put(id, ch)
+
+	' Welcome message
+	ch.Send("Welcome " & id & CRLF)
+	
+	Server.Listen			'Listen for next connection
+End Sub
+
+'==================================================
+' Send to a specific client
+'==================================================
+Public Sub SendToClient(ClientId As String, Message As String)
+	If Clients.ContainsKey(ClientId) Then
+		Dim ch As ClientHandler = Clients.Get(ClientId)
+		ch.Send(Message & CRLF)
+	Else
+		Log("SendToClient: Client not found -> " & ClientId)
+	End If
+End Sub
+
+'==================================================
+' Broadcast to all connected clients
+'==================================================
+Public Sub Broadcast(Message As String)
+	For Each ch As ClientHandler In Clients.Values
+		ch.Send("[Broadcast] " & Message & CRLF)
+	Next
+End Sub
+
+'==================================================
+' Called by ClientHandler on disconnect
+'==================================================
+Public Sub RemoveClient(ClientId As String)
+	If Clients.ContainsKey(ClientId) Then
+		Clients.Remove(ClientId)
+		Log("Client removed: " & ClientId)
+		Broadcast(ClientId & " disconnected")
+	End If
+End Sub
+
+
+' Send a string to a specified client (Client-1, -2, -3, etc) or if "Client-x" then broadcast to all
+Sub Button1_Click
+	'xui.MsgboxAsync("Hello World!", "B4X")
+	If TextField2.Text = "Client-x" Then 
+		Broadcast(TextField1.Text)	
+	Else
+		SendToClient(TextField2.Text,TextField1.Text)
+	End If
+	
+End Sub

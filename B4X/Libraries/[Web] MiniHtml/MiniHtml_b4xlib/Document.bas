@@ -59,18 +59,16 @@ Public Sub IndentLess
 	mIndents = mIndents - 1
 End Sub
 
-' Add raw text
+' Add raw text (No CRLF or Indent)
 Public Sub Append (mText As String) As Document
-	If Not(mFlat) Then mBuilder.Append(CRLF)
-	AddIndent
 	mBuilder.Append(mText)
-	'If Not(mFlat) Then mBuilder.Append(CRLF)
 	Return Me
 End Sub
 
-' Add raw text (No Indent or append CRLF)
+' Add raw text (Add CRLF and Indent)
 Public Sub Append2 (mText As String) As Document
-	'If Not(mFlat) Then mBuilder.Append(CRLF)
+	If Not(mFlat) Then mBuilder.Append(CRLF)
+	AddIndent
 	mBuilder.Append(mText)
 	Return Me
 End Sub
