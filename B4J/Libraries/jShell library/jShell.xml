@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>anywheresoftware.b4j.objects.Shell</name>
+        <shortname>Shell</shortname>
+        <comment>Shell provides methods to start new processes and run other applications.
+The execution is asynchronous. The ProcessCompleted event is raised after the process has exited.</comment>
+        <owner>process</owner>
+        <event>ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)</event>
+        <event>StdOut (Buffer() As Byte, Length As Int)</event>
+        <event>StdErr (Buffer() As Byte, Length As Int)</event>
+        <method>
+            <name>GetTempErr</name>
+            <comment>Returns the current error output. Should only be used when the process was started with Run (not RunWithOutputEvents).</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>RunSynchronous</name>
+            <comment>Starts the process and waits for it to complete.</comment>
+            <returntype>anywheresoftware.b4j.objects.Shell.ShellSyncResult</returntype>
+            <parameter>
+                <name>TimeoutMs</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Run</name>
+            <comment>Starts the process.
+TimeoutMs - Timeout in milliseconds. Pass -1 to disable the timeout.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>TimeoutMs</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>RunWithOutputEvents</name>
+            <comment>Starts the process. The StdOut and StdErr events will be raised when new data is available.
+&lt;b&gt;Note that these events are raised on a background thread.&lt;/b&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>TimeoutMs</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the object.
+EventName - Determines the sub that will handle the events.
+Executable - Executable file to run.
+Args - List of command line arguments. Pass Null if not needed.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Executable</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>KillProcess</name>
+            <comment>Kills the process if it is currently running.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>WriteToInputStream</name>
+            <comment>Writes data to the process input stream.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetTempErr2</name>
+            <comment>Same as GetTempErr.
+DiscardReadData - If true then the buffer is emptied after this call.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>DiscardReadData</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializeDoNotHandleQuotes</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Executable</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Args</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetEnvironmentVariables</name>
+            <comment>Set the system environment variables that will be passed to the child process.
+Example:&lt;code&gt;
+shl.SetEnvironmentVariables(CreateMap("ZZZ": "abc", "YYYY": "213"))&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Vars</name>
+                <type>anywheresoftware.b4a.objects.collections.Map</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetTempOut</name>
+            <comment>Returns the current output. Should only be used when the process was started with Run (not RunWithOutputEvents).</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetTempOut2</name>
+            <comment>Same as GetTempOut.
+DiscardReadData - If true then the buffer is emptied after this call.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>DiscardReadData</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <property>
+            <name>WorkingDirectory</name>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>s</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <comment>Gets or sets the process working directory.</comment>
+        </property>
+        <property>
+            <name>InputStreamEnabled</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>b</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether the process input stream will be open for communication.
+You can use WriteToInputStream to write data while the process is running.</comment>
+        </property>
+        <property>
+            <name>Arguments</name>
+            <returntype>java.lang.String[]</returntype>
+            <comment>Gets the command line arguments.</comment>
+        </property>
+        <property>
+            <name>Encoding</name>
+            <parameter>
+                <name>s</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <comment>Sets the encoding used. This encoding should match the process output encoding.
+The default value is UTF8.</comment>
+        </property>
+        <property>
+            <name>Executable</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Gets the executable file name.</comment>
+        </property>
+    </class>
+    <class>
+        <name>anywheresoftware.b4j.objects.Shell.ShellSyncResult</name>
+        <shortname>ShellSyncResult</shortname>
+        <owner>process</owner>
+        <field>
+            <name>StdErr</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>ExitCode</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>StdOut</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>Success</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+    </class>
+    <version>1.56</version>
+</root>

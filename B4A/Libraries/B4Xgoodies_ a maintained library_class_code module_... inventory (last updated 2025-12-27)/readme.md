@@ -1,4 +1,4 @@
-### B4Xgoodies: a maintained library/class/code module/... inventory (last updated 2025-12-20) by walt61
+### B4Xgoodies: a maintained library/class/code module/... inventory (last updated 2025-12-27) by walt61
 ### 05/24/2024
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/56175/)
 

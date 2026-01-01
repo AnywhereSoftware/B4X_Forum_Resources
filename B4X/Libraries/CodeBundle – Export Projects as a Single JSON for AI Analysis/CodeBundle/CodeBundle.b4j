@@ -20,10 +20,10 @@ Version=10.3
 	#CommandLineArgs:
 	#MergeLibraries: True 
 #End Region
-#Macro: Title, Code bundle, ide://run?File=%ADDITIONAL%\..\B4X\CodeBundle.jar&Args=%PROJECT_NAME%&vmargs=-DDontShowExplorer%3DTrue
+#Macro: Title, Code bundle, ide://run?File=%ADDITIONAL%\..\B4X\CodeBundle.jar&Args=%PROJECT_NAME%&vmargs=-DDontShowExplorer%3DFalse
 #CustomBuildAction: 2, %COMSPEC%, /c copy /Y "%PROJECT%\Objects\%PROJECT_NAME%.jar" %ADDITIONAL%\..\B4X\CodeBundle.jar"
 Sub Process_Globals
-	Private Version As Float = 0.2
+	Private Version As Float = 0.31
 	Private ProjectFile As String
 	Private ProjectDir As String
 	Private Platform As String
@@ -241,7 +241,7 @@ Private Sub ReadFile(Path As String) As CodeModule
 		cm.Headers.Put(key, value)
 	Loop
 	i = text.IndexOf2(CRLF, i + 1)
-	cm.Code = text.SubString(i + 2)
+	cm.Code = text.SubString(i + 1)
 	If RemoveApiKeys Then
 		cm.Code = SanitizeCode(cm.Code)
 	End If
@@ -252,16 +252,21 @@ Private Sub ReadFile(Path As String) As CodeModule
 End Sub
 
 Private Sub SanitizeCode (Code As String) As String
+	Code = SanitizeRegex(Code, $"(\"|<string>)([A-Za-z0-9_\-:~/]{24,})(\"|</string>)"$, True)
+	Code = SanitizeRegex(Code, "(#SignKeyPassword:)(.*)()", False)
+	Return Code
+End Sub
+Private Sub SanitizeRegex(Code As String, Pattern As String, CheckApiKey As Boolean) As String
 	Dim sb As StringBuilder
 	sb.Initialize
 	Dim lastMatchEnd As Int = 0
-	Dim m As Matcher = Regex.Matcher($"(\"|<string>)([A-Za-z0-9_\-:~/]{24,})(\"|</string>)"$, Code)
+	Dim m As Matcher = Regex.Matcher2(Pattern, Bit.Or(Regex.MULTILINE, Regex.CASE_INSENSITIVE), Code)
 	Do While m.Find
 		Dim currentStart As Int = m.GetStart(0)
 		sb.Append(Code.SubString2(lastMatchEnd, currentStart))
 		lastMatchEnd = m.GetEnd(0)
 		Dim key As String = m.Group(0)
-		If IsApiKey(key) Then
+		If Not(CheckApiKey) Or IsApiKey(key) Then
 			Log("Key removed: " & key)
 			sb.Append(m.Group(1)).Append($"0000-0000"$).Append(m.Group(3))
 		Else
