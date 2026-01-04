@@ -4,10 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.3
 @EndOfDesignText@
-'Version 1.5
+'Version 1.6
 'Author: Jerryk
 
-#Event: Click(Tag as String)
+#Event: Click(pId As String, pTag As Object)
 #RaisesSynchronousEvents: Click
 
 #DesignerProperty: Key: dTilesType, DisplayName: Tiles Type, FieldType: String, DefaultValue: FilledWidth, List: FilledWidth|FixedWidth 
@@ -36,11 +36,11 @@ Sub Class_Globals
 	
 	Private baseSV As ScrollView
 	Private tilesPanel As Panel
-'	Private idx As Int = 0
+	Private cnt As Int = 0
 	Private xpoz, ypoz As Int
 	Private lTags As List
 	Private mSelectedItem As String
-	Type xTag(Tag As Object, Col As Int)
+	Type xTag(Type As String, Id As Object, Color As Int, Tag As Object)
 
 	'properties
 	Private mTilesType As String = "FilledWidth"
@@ -57,7 +57,6 @@ Sub Class_Globals
 	Private mShowDefaultBorder As Boolean = False
 	Private mBorderColor As Int = xui.Color_LightGray
 	Private mBorderWidth As Int = 2dip
-
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -69,7 +68,6 @@ Public Sub Initialize (Callback As Object, EventName As String)
 	lTags.Initialize
 	tilesPanel.Initialize("")
 	mSelectedItem = "-1"
-	
  End Sub
 
 'Base type must be Object
@@ -95,7 +93,6 @@ Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	mBorderWidth =IntToDIP(Props.GetDefault("dBorderWidth", 2))
 	
 	InitClass
-
 End Sub
 
 Private Sub InitClass
@@ -112,6 +109,7 @@ Private Sub InitClass
 	ypoz = mGap
 End Sub
 
+#Region funtions
 Public Sub AddToParent(oParent As Object, Left As Int, Top As Int, Width As Int, Height As Int)
 	Dim mParent As B4XView
 	mParent = oParent
@@ -123,20 +121,21 @@ Public Sub AddToParent(oParent As Object, Left As Int, Top As Int, Width As Int,
 	InitClass
 End Sub
 
-Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
-	CheckDuplication (pTag)
-	lTags.Add(pTag)
+Public Sub AddLabel (pId As String, pText As String, pSize As Int, pBackgroundColor As Int, pTag As Object) As Label
+	CheckDuplication(pId)
+	lTags.Add(pId)
 		
 	tilesPanel.LoadLayout("_pnlLabel")
 
 	Dim pnl As Panel
 	pnl = dd.GetViewByName(tilesPanel, "PanelLabel")
-'	pnl = tilesPanel.GetView(idx)
-'	idx = idx + 1
+	cnt = cnt + 1
 
 	Dim tTag As xTag
+	tTag.Type = "label"
+	tTag.Id = pId
+	tTag.Color = pBackgroundColor
 	tTag.Tag = pTag
-	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
 	Dim borderColor, borderWidth As Int
@@ -174,19 +173,20 @@ Public Sub AddLabel (pTag As String, pText As String, pSize As Int, pBackgroundC
 	Return lbl
 End Sub
 
-Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int) As ImageView
-	CheckDuplication (pTag)
-	lTags.Add(pTag)
+Public Sub AddImage (pId As String, pBitmap As String, pBackgroundColor As Int, pTag As Object) As ImageView
+	CheckDuplication(pId)
+	lTags.Add(pId)
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
 	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
-'	pnl = tilesPanel.GetView(idx)
-'	idx = idx + 1
+	cnt = cnt + 1
 
 	Dim tTag As xTag
+	tTag.Type = "image"
+	tTag.Id = pId
+	tTag.Color = pBackgroundColor
 	tTag.Tag = pTag
-	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
 	Dim borderColor, borderWidth As Int
@@ -202,7 +202,7 @@ Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int)
 	pnl.Background = cd
 
 	pnl.Left = xpoz
-	pnl.Top= ypoz
+	pnl.Top = ypoz
 	If mTilesType = "FixedWidth" Then
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
@@ -223,19 +223,20 @@ Public Sub AddImage (pTag As String, pBitmap As String, pBackgroundColor As Int)
 	Return img
 End Sub
 
-Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor As Int, pWidth As Int, pHeight As Int) As ImageView
-	CheckDuplication (pTag)
-	lTags.Add(pTag)
+Public Sub AddImageResize (pId As String, pBitmap As String, pBackgroundColor As Int, pWidth As Int, pHeight As Int, pTag As Object) As ImageView
+	CheckDuplication(pId)
+	lTags.Add(pId)
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
 	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
-'	pnl = tilesPanel.GetView(idx)
-'	idx = idx + 1
+	cnt = cnt + 1
 
 	Dim tTag As xTag
+	tTag.Type = "image"
+	tTag.Id = pId
+	tTag.Color = pBackgroundColor
 	tTag.Tag = pTag
-	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
 	Dim borderColor, borderWidth As Int
@@ -251,7 +252,7 @@ Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor A
 	pnl.Background = cd
 
 	pnl.Left = xpoz
-	pnl.Top= ypoz
+	pnl.Top = ypoz
 	If mTilesType = "FixedWidth" Then
 		Dim xratio As Float = mTileWidth / 100dip
 		pnl.Width = pnl.Width * xratio
@@ -267,24 +268,25 @@ Public Sub AddImageResize (pTag As String, pBitmap As String, pBackgroundColor A
 	img.Gravity = Gravity.CENTER
 	img.Bitmap = LoadBitmapResize(File.DirAssets, pBitmap, pWidth, pHeight, True)
 
-	NewPosition (pnl)
+	NewPosition(pnl)
 
 	Return img
 End Sub
 
-Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int) As Panel
-	CheckDuplication (pTag)
-	lTags.Add(pTag)
+Public Sub AddLayout(pId As String, pLayout As String, pBackgroundColor As Int, pTag As Object) As Panel
+	CheckDuplication(pId)
+	lTags.Add(pId)
 
 	tilesPanel.LoadLayout("_pnlLayout")
 	Private pnl As Panel
 	pnl = dd.GetViewByName(tilesPanel, "PanelLayout")
-'	pnl = tilesPanel.GetView(idx)
-'	idx = idx + 1
+	cnt = cnt + 1
 
 	Dim tTag As xTag
+	tTag.Type = "layout"
+	tTag.Id = pId
+	tTag.Color = pBackgroundColor
 	tTag.Tag = pTag
-	tTag.Col = pBackgroundColor
 	pnl.Tag = tTag
 
 	pnl.Left = xpoz
@@ -312,7 +314,7 @@ Public Sub AddLayout(pTag As String, pLayout As String, pBackgroundColor As Int)
 	cd.Initialize2(pBackgroundColor, mCornerRadius, borderWidth, borderColor)
 	pnl.Background = cd
 
-	NewPosition (pnl)
+	NewPosition(pnl)
 
 	Return pnl
 End Sub
@@ -323,7 +325,7 @@ Public Sub FindTile(search As String) As Panel
 		If v Is Panel Then
 			Dim p As Panel = v
 			If p.Parent = tilesPanel  Then
-				If p.Tag.As(xTag).Tag = search Then
+				If p.Tag.As(xTag).Id = search Then
 					Return p
 					Exit
 				End If
@@ -334,18 +336,99 @@ Public Sub FindTile(search As String) As Panel
 End Sub
 
 'change default tile color
-Public Sub DefaultColor(pTag As String, pCol As Int)
+Public Sub DefaultColor(pId As String, pCol As Int)
 	For Each v As View In tilesPanel.GetAllViewsRecursive
 		If v Is Panel Then
 			Dim p As Panel = v
 			If p.Parent = tilesPanel  Then
-				If p.Tag.As(xTag).Tag = pTag Then
-					p.Tag.As(xTag).Col = pCol
+				If p.Tag.As(xTag).Id = pId Then
+					p.Tag.As(xTag).Color = pCol
 					Exit
 				End If
 			End If
 		End If
 	Next
+End Sub
+
+Public Sub RedrawTiles 
+	xpoz = mGap
+	ypoz = mGap
+	For Each v As View In tilesPanel.GetAllViewsRecursive
+		If v Is Panel Then
+			Dim p As Panel = v
+			p.Left = xpoz
+			p.Top = ypoz
+			If mTilesType = "FixedWidth" Then
+				Dim xratio As Float = mTileWidth / 100dip
+				p.Width = p.Width * xratio
+			Else 'FilledWidth
+				p.Width = (baseSV.Width - (mGap * (mTilesPerRow + 1))) / mTilesPerRow
+			End If
+			Dim yratio As Float = mTileHeight / 100dip
+			p.Height = p.Height * yratio
+
+			Select p.Tag.As(xTag).Type
+				Case "label"
+					Dim lbl As Label = p.GetView(0)
+					lbl.Width = p.Width
+				Case "image"
+					Dim img As ImageView = p.GetView(0)
+					img.Width = p.Width
+				Case "layout"
+			End Select
+			
+			NewPosition(p)
+		End If
+	Next
+End Sub
+
+Public Sub setSelectedItem(value As String)
+	RemoveBorder
+	mSelectedItem = value
+	If mShowSelected <> "off" Then
+		For Each v As View In tilesPanel.GetAllViewsRecursive
+			If v Is Panel Then
+				Dim p As Panel = v
+
+				If p.Parent = tilesPanel And mSelectedItem <> "-1" Then
+					If p.Tag.As(xTag).id = mSelectedItem Then
+						Dim col As Int = p.Tag.As(xTag).Color
+						Dim cd As ColorDrawable
+						If mShowSelected = "border" Then
+							cd.Initialize2(col, mCornerRadius, mSelectedWidth, mSelectedColor)
+						Else 'tile
+							cd.Initialize2(mSelectedColor, mCornerRadius, mSelectedWidth, mSelectedColor)
+						End If
+						p.Background = cd
+						Sleep(10)
+						baseSV.ScrollToNow(p.Top - mGap)
+						Exit
+					End If
+				End If
+			End If
+		Next
+	End If
+End Sub
+
+Public Sub getSelectedItem As String
+	Return mSelectedItem
+End Sub
+Public Sub DeleteTile(value As String)
+	For Each v As View In tilesPanel.GetAllViewsRecursive
+		If v Is Panel Then
+			Dim p As Panel = v
+			If p.Parent = tilesPanel  Then
+				If p.Tag.As(xTag).id = value Then
+					p.RemoveView
+					If value = mSelectedItem Then
+						mSelectedItem = "-1"
+					End If
+					Exit
+				End If
+			End If
+		End If
+	Next
+	RedrawTiles
 End Sub
 
 'sets the view height according to the total height of the tiles 
@@ -354,11 +437,17 @@ Public Sub SetMaxHeight
 	mBase.Height = tilesPanel.Height
 End Sub
 
-Private Sub CheckDuplication (pTag As String)
-	If lTags.IndexOf(pTag) <> -1 Then
+Public Sub CenterHorizontally
+	mBase.Left = 50%x - mBase.Width / 2
+End Sub
+#End Region
+
+
+Private Sub CheckDuplication (pId As String)
+	If lTags.IndexOf(pId) <> -1 Then
 		Dim TH As Throwables
 		TH.Initialize
-		TH.Throw(Throwables_Static.NewIllegalArgumentException("DUPLICATE TAG: " & pTag))
+		TH.Throw(Throwables_Static.NewIllegalArgumentException("DUPLICATE TAG: " & pId))
 	End If
 End Sub
 
@@ -380,7 +469,7 @@ End Sub
 
 Private Sub tile_Click
 	Dim pnl As Panel = Sender
-	Dim col As Int = pnl.Tag.As(xTag).Col
+	Dim col As Int = pnl.Tag.As(xTag).Color
 	Dim cd As ColorDrawable
 	
 	RemoveBorder
@@ -394,10 +483,10 @@ Private Sub tile_Click
 		Case "off"
 	End Select
 	
-	mSelectedItem = pnl.Tag.As(xTag).Tag
+	mSelectedItem = pnl.Tag.As(xTag).id
 
 	If SubExists(mCallBack, mEventName & "_Click") Then
-		CallSub2(mCallBack, mEventName & "_Click", pnl.Tag.As(xTag).Tag)
+		CallSub3(mCallBack, mEventName & "_Click", pnl.Tag.As(xTag).id, pnl.Tag.As(xTag).Tag)
 	End If
 End Sub
 
@@ -419,8 +508,8 @@ Private Sub RemoveBorder
 			Dim p As Panel = v
 
 			If p.Parent = tilesPanel And mSelectedItem <> "-1" Then
-				If p.Tag.As(xTag).Tag = mSelectedItem Then
-					Dim col As Int = p.Tag.As(xTag).Col
+				If p.Tag.As(xTag).Id = mSelectedItem Then
+					Dim col As Int = p.Tag.As(xTag).Color
 					Dim borderColor, borderWidth As Int
 					If mShowDefaultBorder Then
 						borderColor = mBorderColor
@@ -440,36 +529,14 @@ Private Sub RemoveBorder
 End Sub
 
 #Region properties
-Public Sub setSelectedItem(value As String)
-	RemoveBorder
-	mSelectedItem = value
-	If mShowSelected <> "off" Then
-		For Each v As View In tilesPanel.GetAllViewsRecursive
-			If v Is Panel Then
-				Dim p As Panel = v
-
-				If p.Parent = tilesPanel And mSelectedItem <> "-1" Then
-					If p.Tag.As(xTag).Tag = mSelectedItem Then
-						Dim col As Int = p.Tag.As(xTag).Col
-						Dim cd As ColorDrawable
-						If mShowSelected = "border" Then
-							cd.Initialize2(col, mCornerRadius, mSelectedWidth, mSelectedColor)
-						Else 'tile
-							cd.Initialize2(mSelectedColor, mCornerRadius, mSelectedWidth, mSelectedColor)
-						End If
-						p.Background = cd
-						Sleep(10)
-						baseSV.ScrollToNow(p.Top - mGap)
-						Exit
-					End If
-				End If
-			End If
-		Next
-	End If
+Public Sub setWidth(value As Int)
+	mBase.Width = value
+	baseSV.Width = value
+	tilesPanel.Width = value
+	baseSV.Panel.Width = value
 End Sub
-
-Public Sub getSelectedItem As String
-	Return mSelectedItem
+Public Sub getWidth As Int
+	Return mBase.Width
 End Sub
 
 Public Sub setTilesType(value As String)
@@ -585,6 +652,12 @@ End Sub
 Public Sub GetBase As Panel
 	Return mBase
 End Sub
+
+'gets count of tiles
+Public Sub getCount As Int
+	Return cnt
+End Sub
+
 #End Region
 
 #Region tools

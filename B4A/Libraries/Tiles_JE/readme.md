@@ -1,5 +1,5 @@
 ### Tiles_JE by Jerryk
-### 12/14/2025
+### 12/31/2025
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/167614/)
 
 I created a new custom view where the user continues to run the application based on the information displayed in the tiles. There are three types of information that can be displayed:  
@@ -15,7 +15,7 @@ The tiles are scrollable. The width of the tiles can be fixed or flexible. Each 
   
 **Tiles\_JE  
 Author: Jerryk  
-Version: 1.5  
+Version: 1.6  
   
 Important! it is necessary to declare and initialize a DDD variable in B4XMainPage!**  
 
@@ -38,32 +38,32 @@ Private Sub B4XPage_Created (Root1 As B4XView)
   
 **[SIZE=5]Methods:[/SIZE]**  
 
-- **Selected Item** As String
+- **SelectedItem** As String
 
 Sets or gets the selected tile. The tag name is used.  
   
 **[SIZE=5]Events:[/SIZE]**  
 
-- **Click (tag** As String)
+- **Click** (pId As String, pTag As Object)
 
 Raised when tile is cliked.  
   
 **[SIZE=5]Properties:[/SIZE]**  
 
-- **Tiles Type** As String
+- **TilesType** As String
 
 **FilledWidth** - **TileWidth** is ignored, width is calculated based on **Tiles Per Row  
 FixedWidth** -**Tiles per row** is ignored, actual width is used  
 
-- **Tile Height** As Int
+- **TileHeight** As Int
 
 Tile height  
 
-- **Tile Width** As Int
+- **TileWidth** As Int
 
 Tile width  
 
-- **Corner Radius** As Int
+- **CornerRadius** As Int
 
 Tile radius  
 
@@ -71,56 +71,56 @@ Tile radius
 
 Gap distance  
 
-- **Tiles Per Row** As Int
+- **TilesPerRow** As Int
 
 Number of tiles per row  
 
-- **Background Color** As Int
+- **BackgroundColor** As Int
 
 Background Color for tiles  
 
-- **Show Selected** As String
+- **ShowSelected** As String
 
 "border" - if the tile is selected, border is drawn in color SelectedColor  
 "tile" - if the tile is selected, background is drawn in color SelectedColor  
 "off" - the tile is not redrawn  
 
-- **Selected Color** As Int
+- **SelectedColor** As Int
 
 Borded Color  
 
-- **Selected Border Width** As Int
+- **SelectedBorderWidth** As Int
 
 Borded width  
 
-- **Show Default Border** As Boolean
+- **ShowDefaultBorder** As Boolean
 
 Draw default border for tiles  
 
-- **Border Color** As Int
+- **BorderColor** As Int
 
 Color for default border for tiles  
 
-- **Border Width** As Int
+- **BorderWidth** As Int
 
 Width of default border  
   
   
 **[SIZE=5]Functions:[/SIZE]**  
 
-- **AddLabel** (pTag As String, pText As String, pSize As Int, pBackgroundColor As Int) As Label
+- **AddLabel** (pId As String, pText As String, pSize As Int, pBackgroundColor As Int, pTag As Object) As Label
 
 Add tile with label  
 
-- **AddImage** (pTag As String, pBitmap As String, pBackgroundColor As Int) As ImageView
+- **AddImage** (pId As String, pBitmap As String, pBackgroundColor As Int, pTag As Object) As ImageView
 
 Add tile with image as-is  
 
-- **AddImageResize** (pTag As String, pBitmap As String, pBackgroundColor As Int, pWidth As Int, pHeight As Int) As ImageView
+- **AddImageResize** (pId As String, pBitmap As String, pBackgroundColor As Int, pWidth As Int, pHeight As Int, pTag As Object) As ImageView
 
 Add tile with image nad resize  
 
-- **AddLayout** (pTag As String, pLayout As String, pBackgroundColor As Int) As Panel
+- **AddLayout** (pId As String, pLayout As String, pBackgroundColor As Int, pTag As Object) As Panel
 
 Add tile with layout  
 
@@ -138,4 +138,20 @@ Add class programmatically
 
 - **GetBase**
 
-Gets Base of the object
+Gets Base of the object  
+
+- **RedrawTiles**
+
+redraws tiles after changing a property  
+
+- **DeleteTile** (pTag As String)
+
+delete tile  
+
+- **SetMaxHeight**
+
+sets the view height according to the total height of the tiles  
+
+- **CenterHorizontally**
+
+center view horrizontally

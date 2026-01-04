@@ -1,0 +1,76 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rbleserver
+Library2=rconvert
+Library3=rcore
+Module1=CommBLE
+Module2=DevLED
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=4
+@EndOfDesignText@
+#Region Module Header
+' ================================================================
+' File:        	ESP32BLELED.b4r
+' Project:     	HMITiles
+' Brief:       	Example program controlling an LED connected to an ESP32 via BLE.
+' Date:        	2025-12-31
+' Author:      	Robert W.B. Linn (c) 2025 MIT
+'
+' Description:	Control the LED by sending byte array (3 bytes) via BLE. 
+'				See Code Module DevLED.
+'				Example: Set ON = 010101	(send 3 bytes)
+'				Example Get State = 0102	(send 2 bytes)
+'
+' Hardware:		ESP32, Board selected ESP32 Wrover Kit (all versions), partition scheme: Huge App.
+' Software:		B4R 4.00 (64 bit), arduino-cli 1.3.1, ESP32 board manager 3.3.4.
+'
+' BLE:			Payload format are byte arrays using format:
+'				[DeviceID][Command][Payload...]
+'
+' Comms:		Messages are dispatched to the appropriate device handlers. 
+'				Each device has its own handler.
+'
+' Dependencies:
+'				CommBLE				- Handles BLE communication.
+'   			DeviceMgr           - Provides access to hardware components.
+'   			DeviceHandlers      - Executes device-specific actions.
+'									- DevYellowLed etc.
+'
+' Libraries:	Communication:
+'				rBLEServer - BLE communication.
+'				Helper:
+'				rConvert - General purpose conversion functions.
+' ================================================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private APP_VERSION As String	= "v20251231"
+	Private APP_NAME As String		= "ESP32BLELED"
+
+	' Communication
+	Private SerialLine As Serial
+	
+	' Devices
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[Main.AppStart][I]", APP_NAME, "][I] Starting ", APP_VERSION)
+
+	Log(CRLF, "[Main.AppStart][I] Initialize LED")
+	DevLED.Initialize(0x05)
+	DevLED.Set(False)
+
+	Log(CRLF, "[Main.AppStart][I] Communication backend: BLE")
+	CommBLE.Initialize
+
+	Log(CRLF, "[Main.AppStart][I] Done")
+End Sub
