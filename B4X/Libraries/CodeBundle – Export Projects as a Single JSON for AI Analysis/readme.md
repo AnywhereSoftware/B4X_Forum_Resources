@@ -1,5 +1,5 @@
 ###  CodeBundle – Export Projects as a Single JSON for AI Analysis by Erel
-### 12/29/2025
+### 01/06/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/169835/)
 
 The purpose of this tool is to easily export the complete project as a single json file which can be then fed to ChatGPT or any other capable AI bot for further analysis. It exports the modules code, layouts and some additional meta information.  
@@ -41,4 +41,4 @@ Most regular libraries are now also added to the output.
 v0.2 - API keys are replaced with all-zeros key. This is done heuristically based on several regex patterns. Replaced keys are logged. If you encounter a key that isn't replaced then please post an example.  
 Information about referenced b4xlibs is added to the output.  
   
-**Download link:** [**[www.b4x.com/android/files/CodeBundle.jar](http://www.b4x.com/android/files/CodeBundle.jar)**](http://www.b4x.com/android/files/CodeBundle.jar)
+**Download link: <https://www.b4x.com/android/files/CodeBundle.jar>**

@@ -6,12 +6,12 @@ Library1=core
 Library2=gpbilling_je
 Library3=xui
 Library4=googleplaybilling
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~CreateResourceFromFile(Macro, GooglePlayBilling.GooglePlayBilling)~\n~
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~CreateResourceFromFile(Macro, GooglePlayBilling.GooglePlayBilling)~\n~
 Module1=Starter
 NumberOfFiles=1
 NumberOfLibraries=4
 NumberOfModules=1
-Version=12.8
+Version=13.4
 @EndOfDesignText@
 #Region  Project Attributes 
 	#ApplicationLabel: GPBilling Example
@@ -33,7 +33,7 @@ Sub Process_Globals
 	'These variables can be accessed from all modules.
 	Private xui As XUI
 	Private br As BillingResult
-	Private gpb As GPBilling
+	Private gpb As GPBilling_JE
 	
 	Public LICENSE_KEY As String
 	Private lSKU_INAPP As List
@@ -49,9 +49,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	lSKU_INAPP.Initialize
 	lSKU_SUBS.Initialize
 	
-	LICENSE_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqt9Is4LyBX0dIXPEerR6fvbFGy0e/oyrXbcDDQ+Xfq2O+r+dv6F5AINrTesFDZ4csW1q16TXTptHQ1WoyS/1g9VOPwlJ+ZrVpuGQ2ezanSFrrNSa71smJWKi6D3sXnaMiYfopsxP0bwge37YoeeI18cYN/eeW+uzYRTvh6MpyEmjalHUGCsH6GY6D5D2tqaWJSE14rgAkzwulVhpwWjwNb0RYdCmoAKJPTRSQLPoUlnrvx9TSq5CnMM09IIUR9xbkkHrPBv72+Xzp546ytE1rFT/f/T9+cVpfrxCHJ8zi1FEG86+7TQeOpb527vn2pbVFv/xOVq9M9W2cpdSa+SY/wIDAQAB"
-
-'	LICENSE_KEY = "MIIBIjAN......................"    
+'	LICENSE_KEY = "MIIBIjAN......................"
 	lSKU_INAPP.Add("pro.gpbtest2")
 	lSKU_INAPP.Add("pro.gpbtest3")
 	lSKU_SUBS.Add("silver.gpbtest")
@@ -81,6 +79,7 @@ Private Sub btnGetInAppProducts_Click
 			
 			Wait For(gpb.IsPurchased("inapp",iap.ProductId)) Complete (pResult As PurchasedResult)
 			Log (pResult.ItemPurchased)
+			Log(iap.ProductId)
 			Log(iap.Name)
 			Log(iap.Description)
 			Log(iap.FormattedPrice)
@@ -141,7 +140,9 @@ End Sub
 Private Sub btnPurchaseInAppProducts_Click
 	Dim lSKUs As List
 	lSKUs.Initialize
-	lSKUs.Add("pro.gpbtest3")
+	lSKUs.Add("pro.gpbtest2")
+'lSKUs.Add("gold.gpbtest")
+
 	Wait For(gpb.PurchaseInAppProducts(lSKUs)) Complete (Result2 As BillingResult)
 '	event will be raised
 		
@@ -158,7 +159,7 @@ End Sub
 
 
 Private Sub btnConsumeProducts_Click
-	Dim sku As String = "pro.gpbtest3"
+	Dim sku As String = "pro.gpbtest2"
 	Wait For(gpb.ConsumeProducts("inapp", sku)) Complete (Result1 As BillingResult)
 	If Result1.IsSuccess Then
 		Log("consumed")
