@@ -1,5 +1,5 @@
 ###  SD Zebra (printer) by Star-Dust
-### 04/09/2025
+### 01/08/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/142094/)
 
 This library is the result of my first approach with Zebra printers. I started by connecting via LAN (or Wi-Fi) ZPL language.  
@@ -162,7 +162,7 @@ x
 **aSD\_Zebra  
   
 Author:** Star-Dust  
-**Version:** 1.12  
+**Version:** 1.13  
 
 - **BLEZebraPrinter**
 
@@ -194,11 +194,13 @@ Author:** Star-Dust
 *CODE 128  
  Zebra.AddBarCode(50,50,"1234567890",5)*- **AddBarCodeEAN13** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
 *EAN13  
- Zebra.AddBarCodeEAN13(50,50,"1234567890",5)*- **AddCircle** (X As Int, Y As Int, radius As Int, StrokeWidth As Int, Filled As Boolean) As String
+ Zebra.AddBarCodeEAN13(50,50,"1234567890",5)*- **AddBarCodeEAN8** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
+*EAN8  
+ Zebra.AddBarCodeEAN8(50,50,"1234567890",5)*- **AddCircle** (X As Int, Y As Int, radius As Int, StrokeWidth As Int, Filled As Boolean) As String
  *Zebra.AddCircle(50,50,25,3,false)*- **AddHorizLine** (X As Int, Y As Int, Width As Int, StrokeWidth As Int) As String
  *Zebra.AddHorizLine(50,50,700,3)*- **AddImage** (X As Int, Y As Int, bmp As B4XBitmap) As String
- *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int)
-Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
+ *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int) As String
+- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
  *Zebra.AddQRcode(50,50,"1234567890",5)*- **AddRaw** (Text As String) As String
 - **AddRectangle** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, InvertBrush As Boolean) As String
  *Zebra.AddRectangle(50,50,100,100,3,false,false)*- **AddRectangleRounded** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, Rounded As Int) As String
@@ -218,13 +220,15 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
 
 - **Properties:**
 
-- **isConnect** As Boolean [read only]
+- **BlackRange** As Int
+ *Printer.BlackRange=125*- **isConnect** As Boolean [read only]
 - **isScanning** As Boolean [read only]
 - **LabelWidth**
 - **Raw** As String [read only]
-- **BlackRange**
 
 - **LanZebraPrinter**
+*Ctrl + click to build b4xlib: ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=%PROJECT%\..&Args=-cMf&Args=%PROJECT\_NAME%.b4xlib&&Args=..&Args=\*.bas&Args=manifest.txt  
+preview <http://labelary.com/viewer.html>*
 
 - **Events:**
 
@@ -253,8 +257,8 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
  Zebra.AddBarCodeEAN8(50,50,"1234567890",5)*- **AddCircle** (X As Int, Y As Int, radius As Int, StrokeWidth As Int, Filled As Boolean) As String
  *Zebra.AddCircle(50,50,25,3,false)*- **AddHorizLine** (X As Int, Y As Int, Width As Int, StrokeWidth As Int) As String
  *Zebra.AddHorizLine(50,50,700,3)*- **AddImage** (X As Int, Y As Int, bmp As B4XBitmap) As String
- *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int)
-Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
+ *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int) As String
+- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
  *Zebra.AddQRcode(50,50,"1234567890",5)*- **AddRaw** (Text As String) As String
 - **AddRectangle** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, InvertBrush As Boolean) As String
  *Zebra.AddRectangle(50,50,100,100,3,false,false)*- **AddRectangleRounded** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, Rounded As Int) As String
@@ -271,12 +275,13 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
  *Zebra.Open("192.168.1.202",Zebra.desktop)*- **Preview** As String
  *Evito di usare okHttpUtils*- **Print** As String
 - **PrintAndClose**
-
+- **ZebraVerify** As ResumableSub
+*WAIT FOR (uzp.ZebraVerify) COMPLETE (isZebra As Boolean)*
 - **Properties:**
 
-- **LabelWidth**
+- **BlackRange** As Int
+ *Printer.BlackRange=125*- **LabelWidth**
 - **Raw** As String [read only]
-- **BlackRange**
 
 - **UsbZebraPrinter**
 
@@ -287,9 +292,7 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
 
 - **Fields:**
 
-- **desktop** As Int
 - **Encoding** As String
-- **Mobile** As Int
 - **Rotate180** As String
 - **Rotate270** As String
 - **Rotate90** As String
@@ -307,8 +310,8 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
  Zebra.AddBarCodeEAN8(50,50,"1234567890",5)*- **AddCircle** (X As Int, Y As Int, radius As Int, StrokeWidth As Int, Filled As Boolean) As String
  *Zebra.AddCircle(50,50,25,3,false)*- **AddHorizLine** (X As Int, Y As Int, Width As Int, StrokeWidth As Int) As String
  *Zebra.AddHorizLine(50,50,700,3)*- **AddImage** (X As Int, Y As Int, bmp As B4XBitmap) As String
- *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int)
-Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
+ *Zebra.AddImage() ' not active*- **AddLogoSD** (X As Int, Y As Int) As String
+- **AddQRcode** (X As Int, Y As Int, Height As Int, Code As String, Size As Int) As String
  *Zebra.AddQRcode(50,50,"1234567890",5)*- **AddRaw** (Text As String) As String
 - **AddRectangle** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, InvertBrush As Boolean) As String
  *Zebra.AddRectangle(50,50,100,100,3,false,false)*- **AddRectangleRounded** (X As Int, Y As Int, Width As Int, Height As Int, StrokeWidth As Int, Filled As Boolean, Rounded As Int) As String
@@ -318,19 +321,22 @@ Add logo SD to coordinate- **AddQRcode** (X As Int, Y As Int, Height As Int, Cod
  Zebra.AddTextRotate(50,50,"Text",50, false,Zebra.Rotate90)*- **AddVertLine** (X As Int, Y As Int, Height As Int, StrokeWidth As Int) As String
  *Zebra.AddVertLine(400,100,300,3)*- **Class\_Globals** As String
 - **Clear** As String
-- **getRaw** As String
-- **Initialize** (Callback As Object, Event As String) As String
+- **CloseConnection** As String
+- **FindAdbDevice** As Boolean
+- **HasPermission** As Boolean
+- **Initialize** (CallBack As Object, EventName As String) As String
 *Initializes the object. You can add parameters to this method if needed.*- **IsInitialized** As Boolean
-*Verifica se l'oggetto sia stato inizializzato.*- **Preview** As String
- *Evito di usare okHttpUtils*- **Print** (printer As String) As String
-- **PrintAndClose** (printer As String) As String
-- **setLabelWidth** (Width As Int) As String
-
+*Verifica se l'oggetto sia stato inizializzato.*- **OpenConnection** As String
+- **Preview** As String
+ *Evito di usare okHttpUtils*- **Print** As String
+- **RequestPermission** As String
+- **ZebraVerify** As ResumableSub
+*WAIT FOR (uzp.ZebraVerify) COMPLETE (isZebra As Boolean)*
 - **Properties:**
 
-- **LabelWidth**
+- **BlackRange** As Int
+ *Printer.BlackRange=125*- **LabelWidth**
 - **Raw** As String [read only]
-- **BlackRange**
 
   
   
@@ -355,3 +361,4 @@ Update log
 - **1.10** Added USB communication in **B4J** version, Fix bugs QR code
 - **1.11** Added **AddLogoSD** and **BlackRange** (Limit for the transformation between color and black and white images))
 - **1.12** Added **UsbZebraPrinter** for Android
+- **1.13** Andorid & iOs: Added **ZebraVerify** (Verify that it is a Zebra printer)

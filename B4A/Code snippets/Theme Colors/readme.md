@@ -1,9 +1,9 @@
 ### Theme Colors by Erel
-### 01/29/2023
+### 01/08/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/87716/)
 
 Changing the action bar, status bar and navigation bar colors is done with resources set in the manifest editor.  
-The following code is fully supported by Android 5+ devices but it will also work properly on Android 4 devices.  
+  
   
 ![](https://www.b4x.com/basic4android/images/SS-2017-12-28_11.21.22.png)  
   

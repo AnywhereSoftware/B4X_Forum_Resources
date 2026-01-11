@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 12/14/2025
+### 01/07/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -64,6 +64,7 @@ B4A***
 [rESP8266OTA - Update to the original library by @Siam](https://www.b4x.com/android/forum/threads/esp8266-ota-updater.101387/post-1028251) (new update at 2025-07-10)  
   
 ***B4J***  
+[NHTreeViewHandler.b4xlib - Handle easily treeviewitems with metadata in a treeview](https://www.b4x.com/android/forum/threads/nhtreeviewhandler-b4xlib-handle-easily-treeviewitems-with-metadata-in-a-treeview.169968/)  
 [NHEnvirnomentVariables - Get all environment variables of a linux distribution](https://www.b4x.com/android/forum/threads/nhenvironentvariables-get-a-map-with-all-environment-variables-of-a-linux-distribution-does-not-break-in-windows-and-macos.158264/)  
 [B4X Shake Button Library](https://www.b4x.com/android/forum/threads/b4x-nhshakebutton-b4xlib-works-in-b4a-b4i-b4j.157060/)  
 [NHCalculateHash - Calculate Hash for Everything](https://www.b4x.com/android/forum/threads/nhcalculatehash-calculate-hash-for-everything-it-cannot-be-used-in-b4a.149630/)  
