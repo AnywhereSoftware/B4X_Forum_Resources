@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.USBSerialEnhanced.USBSerialEnhanced</name>
+        <shortname>USBSerialEnhanced</shortname>
+        <comment>Enhanced USB Serial library with support for 32-bit data types,
+ advanced flow control, hotplugging, and synchronous I/O.
+ Based on usb-serial-for-android-v3.10.0.aar</comment>
+        <owner>process</owner>
+        <event>NewData (Data() As Byte)</event>
+        <event>SentData (Data() As Byte)</event>
+        <event>Error (Message As String)</event>
+        <event>PermissionGranted</event>
+        <event>PermissionDenied</event>
+        <event>Open (Vid As Int, Pid As Int, Serial As String, PortName As String)</event>
+        <event>Closed (Vid As Int, Pid As Int, Serial As String, PortName As String)</event>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>Write</name>
+            <comment>Writes a byte array to the serial port.
+ Data The bytes to send to the device.
+ Raises the SentData event after a successful write.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BytesToFloat</name>
+            <comment>Converts a 4-byte array into a single 32-bit Float.
+ Data is the 4-byte array containing the float value in Big-Endian order.
+ Return a reconstructed floating point value, or 0.0f if the array length is not 4.</comment>
+            <returntype>float</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Int32ToBytes</name>
+            <comment>Converts a 32-bit Signed Integer to a 4-byte array.
+ Value The integer value to convert.</comment>
+            <returntype>byte[]</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDeviceManufacturer</name>
+            <comment>Returns the manufacturer name of the last successfully opened USB device if available.
+ May return Null if the device does not expose a manufacturer string or no device has been opened.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetLastEvent</name>
+            <comment>Returns the last USB-related event that occurred.
+ Useful for dashboards that display live USB activity.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>BytesToInt32</name>
+            <comment>Converts a 4-byte array back into a 32-bit Signed Integer.
+ Data is the 4-byte array in Big-Endian order.
+ Return a reconstructed integer value, or 0 if the array length is not 4.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>StopIoManager</name>
+            <comment>Stops the SerialInputOutputManager and disables asynchronous reads.
+ Required before using ReadBlocking().</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Swap32BitEndianness</name>
+            <comment>Reverses the byte order of a 32-bit integer.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>value</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DecodeBase64ToString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>base64</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the USBSerialEnhanced object and prepares it for use.
+ EventName The prefix used for all raised events.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddCustomDevice</name>
+            <comment>Adds a custom VID and PID mapping for devices not recognised automatically.
+ VendorID The USB vendor identifier.
+ ProductID The USB product identifier.
+ DriverType The driver class name such as "CdcAcmSerialDriver".</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>VendorID</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>ProductID</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>DriverType</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>EncodeBase64FromString</name>
+            <comment>Encodes a standard Java String into a Base64 text representation.
+ text is the plain text String to encode. Must not be null.
+ Return a Base64‑encoded String representing the original text.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Open</name>
+            <comment>Opens the selected USB serial device and starts asynchronous I/O.
+ Returns true if the port is opened successfully, otherwise false.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetPortCount</name>
+            <comment>Returns the number of serial ports available on the selected device.
+ Returns zero if no driver is available.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetDeviceInfo</name>
+            <comment>Returns information about the currently opened USB device.
+ If no device is open, this method returns Null.
+
+ The returned Map contains:
+ - VID
+ - PID
+ - Serial
+ - Manufacturer
+ - Product
+ - PortName (if available)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>SplitFrom32Bit</name>
+            <comment>Splits a 32-bit integer into an array of two 16-bit integers.</comment>
+            <returntype>int[]</returntype>
+            <parameter>
+                <name>value</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetHotplugStatus</name>
+            <comment>Returns whether the hotplug receiver is currently registered.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetFloat32</name>
+            <comment>Converts two 16-bit registers into a 32-bit Float (IEEE 754).</comment>
+            <returntype>float</returntype>
+            <parameter>
+                <name>highOrder</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>lowOrder</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDeviceProductId</name>
+            <comment>Returns the Product ID of the last successfully opened USB device.
+ Returns 0 if no device has been opened yet.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>SetParameters</name>
+            <comment>Sets the serial communication parameters for the active port.
+ BaudRate The baud rate such as 9600 or 115200.
+ DataBits The number of data bits.
+ StopBits The number of stop bits.
+ Parity The parity mode (0=None, 1=Odd, 2=Even, 3=Mark, 4=Space).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>BaudRate</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>DataBits</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>StopBits</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Parity</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RequestPermission</name>
+            <comment>Requests temporary access permission for the specified USB hardware.
+ This method handles the Android 14 requirement for explicit intents and
+ raises PermissionGranted/PermissionDenied events based on the user's decision.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>vendorId</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>productId</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RefreshDevices</name>
+            <comment>Refreshes and returns the current list of connected USB devices.
+ Convenience wrapper around GetConnectedUsbDevices().</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>PurgeHwBuffers</name>
+            <comment>Clears the hardware input and output buffers.
+ ReadBuffer True to clear the input buffer.
+ WriteBuffer True to clear the output buffer.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ReadBuffer</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>WriteBuffer</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDeviceSerial</name>
+            <comment>Returns the serial number of the last successfully opened USB device if available.
+ May return Null if the device does not expose a serial number or no device has been opened.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>BytesToHex</name>
+            <comment>Converts a byte array to a space‑separated hexadecimal string.
+ data is the byte array to convert.
+ Return a formatted hexadecimal string, or an empty string if the array is null or empty.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>data</name>
+                <type>byte[]</type>
+            </parameter>
+            <parameter>
+                <name>offset</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>length</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetConnectedUsbDevices</name>
+            <comment>Returns a list of all connected USB devices, not limited to serial devices.
+ Each item includes VID, PID, Class, SubClass, Protocol, Manufacturer, Product, and Serial.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>Dispose</name>
+            <comment>Releases all resources held by this instance.
+ Call this when the object is no longer needed.
+ If the app is closing, you may want to unregister the hotplug receiver.
+ Return no value; further use after disposal is not supported.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetDeviceVendorId</name>
+            <comment>Returns the Vendor ID of the last successfully opened USB device.
+ Returns 0 if no device has been opened yet.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>ReadBlocking</name>
+            <comment>Performs a synchronous blocking read into the supplied buffer.
+ Buffer The byte array to store received data.
+ Timeout The read timeout in milliseconds.
+ Returns the number of bytes read.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Buffer</name>
+                <type>byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetDeviceProduct</name>
+            <comment>Returns the product name of the last successfully opened USB device if available.
+ May return Null if the device does not expose a product string or no device has been opened.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetConnectionState</name>
+            <comment>Returns the current connection state of the USB serial interface.
+
+ Possible values:
+ - Disconnected
+ - Connected
+ - Opening</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>InspectDevice</name>
+            <comment>Returns detailed capability information for a USB device matching the given VID and PID.
+ Includes interfaces, endpoints, and descriptive fields.
+ vid The vendor identifier.
+ pid The product identifier.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>vid</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>pid</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CombineTo32Bit</name>
+            <comment>Combines two 16-bit integers into a single 32-bit integer.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>highOrder</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>lowOrder</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HexToBytes</name>
+            <comment>Converts a hexadecimal string to a byte array.
+ Non‑hex characters are ignored. The string must contain an even number of hex digits.
+ hex is the hexadecimal string to convert.
+ Return a byte array containing the converted values.</comment>
+            <returntype>byte[]</returntype>
+            <parameter>
+                <name>hex</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>EnumerateDevices</name>
+            <comment>Returns a list of all connected USB serial devices.
+ Each list item contains Index, VID, PID, Manufacturer, Product, and Serial.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>HasPermission</name>
+            <comment>Checks if the application has permission to access the specified USB device.
+ This updates the public PermissionGranted field.
+ vendorId The Vendor ID of the hardware.
+ productId The Product ID of the hardware.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>vendorId</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>productId</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>FloatToBytes</name>
+            <comment>Converts a 32-bit Float to a 4-byte array.</comment>
+            <returntype>byte[]</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Closes the serial port connection and stops the internal IO manager.</comment>
+            <returntype>void</returntype>
+        </method>
+        <property>
+            <name>SetDebugLogging</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Returns whether debug logging is enabled for USB communication.
+ When true, detailed diagnostic messages are written to the log.</comment>
+        </property>
+        <property>
+            <name>SetDTR</name>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sets the Data Terminal Ready (DTR) line.
+ Value True to assert DTR, False to release it.</comment>
+        </property>
+        <property>
+            <name>SetFlowControl</name>
+            <parameter>
+                <name>Mode</name>
+                <type>int</type>
+            </parameter>
+            <comment>Sets the hardware flow control mode for the serial port.
+ Mode 0=None, 1=RTS/CTS, 2=DTR/DSR, 3=XON/XOFF.</comment>
+        </property>
+        <property>
+            <name>SetRTS</name>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sets the Request To Send (RTS) line.
+ Value True to assert RTS, False to release it.</comment>
+        </property>
+        <property>
+            <name>GetPortName</name>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+            <comment>Property setter used to support syntax USBSerial.GetPortName = Index.
+ This acts as a no-op but keeps API compatibility.</comment>
+        </property>
+        <property>
+            <name>SelectDeviceByIndex</name>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
+            <comment>Selects a USB device by its index from the EnumerateDevices list.
+ Index The index of the device to select.</comment>
+        </property>
+        <property>
+            <name>SetBreak</name>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sends or clears a break condition on the serial line.
+ Value True to start break, False to stop it.</comment>
+        </property>
+        <property>
+            <name>IsConnected</name>
+            <returntype>boolean</returntype>
+            <comment>Returns true if the serial port is currently open.
+ Indicates whether communication is active.</comment>
+        </property>
+        <field>
+            <name>UseAsyncMode</name>
+            <comment>When true, the IO manager is started automatically on Open().
+ Set to false if you intend to use ReadBlocking() only.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>DevicePort</name>
+            <comment>Selects the port index to open on the USB device.
+ Defaults to 0 for single‑port devices.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PermissionGranted</name>
+            <comment>Indicates whether the user has granted permission for the current USB device.
+ Updated automatically during permission handling.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>SetPortByName</name>
+            <comment>Allows selecting a port by its internal driver name.
+ Set a substring such as "CDC" or "FTDI" to match a specific port.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>AutoReconnect</name>
+            <comment>Enables automatic reconnection when a previously used device is reattached.
+ Matches devices using VID, PID, and optional serial number.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>ReadBlock</name>
+            <comment>When true, incoming data is ignored and the NewData event is not raised.
+ Useful for temporarily suspending asynchronous reads.</comment>
+            <returntype>boolean</returntype>
+        </field>
+    </class>
+    <version>1.01</version>
+    <author>Peter Simpson</author>
+</root>

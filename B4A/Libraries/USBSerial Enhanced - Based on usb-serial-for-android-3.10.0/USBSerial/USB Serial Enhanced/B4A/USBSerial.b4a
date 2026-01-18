@@ -1,0 +1,87 @@
+﻿Build1=Default,com.simplysoftware.usbserial
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=core
+Library3=ss_usbserialenhanced
+Library4=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~' ============================================================~\n~'   USB SERIAL REQUIRED ENTRIES~\n~' ============================================================~\n~~\n~' 1. Enable USB Host Mode (essential for USB-to-Serial hardware)~\n~' Setting required="true" ensures the app is only visible on compatible devices:~\n~~\n~AddManifestText(~\n~    <uses-feature ~\n~		android:name="android.hardware.usb.host" ~\n~		android:required="true" />~\n~)~\n~~\n~' 2. Optional: Includes support for USB accessory mode~\n~' Setting required="false" ensures compatibility with standard serial adapters remains:~\n~AddManifestText(~\n~    <uses-feature ~\n~		android:name="android.hardware.usb.accessory" ~\n~		android:required="false" />~\n~)~\n~~\n~' 3. Required because your Java wrapper declares @Permissions(INTERNET)~\n~' Added here manually to ensure it is properly merged by the compiler:~\n~AddPermission(android.permission.INTERNET)~\n~~\n~' NEED TO ADD AN XML FILE TO THE RESOURCES FOLDER~\n~' 4. Optional: Link hardware events to the Main Activity~\n~' This allows the OS to prompt the user to open the app when the device is plugged in,~\n~' and enables the Hotplugging/AutoReconnect features in your library:~\n~AddActivityText(main, ~\n~<intent-filter>~\n~    <action ~\n~	android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~</intent-filter>~\n~~\n~<meta-data~\n~    android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"~\n~    android:resource="@xml/device_filter" />~\n~)~\n~~\n~' 5. Optional: Register a broadcast receiver so the library can detect USB attach/detach~\n~' events at system level, enabling hotplugging and clean disconnection handling.~\n~AddReceiverText(detectusb, ~\n~<intent-filter>~\n~    <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />~\n~    <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />~\n~</intent-filter>~\n~)~\n~~\n~' ============================================================~\n~'   END OF SERIAL ENTRIES~\n~' ============================================================~\n~
+Module1=|relative|..\B4XMainPage
+Module2=DetectUSB
+Module3=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=3
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: USB Serial
+	#VersionCode: 1
+	#VersionName:
+ 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: True
+#Macro: Title, Code bundle, ide://run?File=%ADDITIONAL%\..\B4X\CodeBundle.jar&Args=%PROJECT_NAME%
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim PM As B4XPagesManager
+		PM.Initialize(Activity)
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

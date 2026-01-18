@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 11/21/2025
+### 01/12/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -15,7 +15,7 @@ CreateResourceFromFile(Macro, Core.NetworkClearText)
 **xSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.00  
+**Version:** 1.01  
 
 - **CameraPosition**
 
@@ -315,4 +315,8 @@ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (
 *Returns the Lat/Lng coordinates for the given screen coordinates 'doesn't work!!!  
  <code>wait for (OME.XYToLatLng(x,y)) COMPLETE (ll As LatLng)</code>*
   
-**![](https://www.b4x.com/android/forum/attachments/168491)**
+**![](https://www.b4x.com/android/forum/attachments/168491)  
+  
+Update**   
+
+- 1.01 - Fix Bugs

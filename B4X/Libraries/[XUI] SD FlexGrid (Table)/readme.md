@@ -1,5 +1,5 @@
 ###  [XUI] SD FlexGrid (Table) by Star-Dust
-### 10/25/2023
+### 01/13/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/100897/)
 
 I created a new library to show a table (or grid) similar to the one in EXCEL.  
@@ -21,7 +21,7 @@ I created a new library to show a table (or grid) similar to the one in EXCEL.
 **SD\_FlexGrid  
   
 Author:** Star-Dust  
-**Version:** 0.45  
+**Version:** 0.46  
 
 - **Eval**
 *version 2.00  
@@ -274,3 +274,7 @@ For more details: <https://www.b4x.com/android/forum/threads/xui-flexgrid.98686/
 - **0.45**
 
 - Added SetPadding
+
+- **0.46**
+
+- Fix bugs

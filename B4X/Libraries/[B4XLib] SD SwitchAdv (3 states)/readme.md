@@ -1,5 +1,5 @@
 ###  [B4XLib] SD SwitchAdv (3 states) by Star-Dust
-### 05/10/2021
+### 01/16/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/130457/)
 
 Switch with **2 or 3** states. Horizontal or vertical. You can choose the style. All selectable from Design  
@@ -9,7 +9,7 @@ Switch with **2 or 3** states. Horizontal or vertical. You can choose the style.
 SD\_SwitchAdv  
   
 Author:** Star-Dust  
-**Version:** 0.02  
+**Version:** 0.03  
 
 - **SD\_SwitchAdv**
 

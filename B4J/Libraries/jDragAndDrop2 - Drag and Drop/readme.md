@@ -1,5 +1,5 @@
 ### jDragAndDrop2 - Drag and Drop by stevel05
-### 02/19/2025
+### 01/11/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/76168/)
 
 This library is an update to Andrews jDragandDrop to take advantage of the DragBorad.DragView available in JavaFX8. This allows displaying a graphic next to or behind the mouse cursor while dragging items.  
@@ -22,8 +22,6 @@ Issues:
   
 It's written as 4 code modules, you can compile it to a library if you prefer.  
 Please let me know if you find any problems with it.  
-  
-**For a b4xlib, see Erel's implementation in post #3**  
   
 Enjoy.  
   

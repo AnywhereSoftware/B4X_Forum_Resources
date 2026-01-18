@@ -1,5 +1,5 @@
 ### Tiles_JE by Jerryk
-### 12/31/2025
+### 01/12/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/167614/)
 
 I created a new custom view where the user continues to run the application based on the information displayed in the tiles. There are three types of information that can be displayed:  
@@ -15,28 +15,9 @@ The tiles are scrollable. The width of the tiles can be fixed or flexible. Each 
   
 **Tiles\_JE  
 Author: Jerryk  
-Version: 1.6  
+Version: 1.62  
   
-Important! it is necessary to declare and initialize a DDD variable in B4XMainPage!**  
-
-```B4X
-Sub Class_Globals  
-    Private Root As B4XView  
-    Private xui As XUI  
-  
-    Public dd As DDD  
-End sub  
-  
-Private Sub B4XPage_Created (Root1 As B4XView)  
-    dd.Initialize  
-    xui.RegisterDesignerClass(dd)  
-   …
-```
-
-  
-  
-  
-**[SIZE=5]Methods:[/SIZE]**  
+[SIZE=5]Methods:[/SIZE]**  
 
 - **SelectedItem** As String
 

@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.3
 @EndOfDesignText@
-'Version 1.6
+'Version 1.62
 'Author: Jerryk
 
 #Event: Click(pId As String, pTag As Object)
@@ -32,7 +32,7 @@ Sub Class_Globals
 	Public mBase As B4XView
 	Private xui As XUI 'ignore
 	Public Tag As Object
-	Private dd As DDD
+'	Private dd As DDD
 	
 	Private baseSV As ScrollView
 	Private tilesPanel As Panel
@@ -63,13 +63,13 @@ Public Sub Initialize (Callback As Object, EventName As String)
 	mEventName = EventName
 	mCallBack = Callback
 	
-	dd = B4XPages.MainPage.dd
-
 	lTags.Initialize
 	tilesPanel.Initialize("")
 	mSelectedItem = "-1"
+	
+'	dd = B4XPages.MainPage.dd
  End Sub
-
+ 
 'Base type must be Object
 Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	mBase = Base
@@ -128,7 +128,8 @@ Public Sub AddLabel (pId As String, pText As String, pSize As Int, pBackgroundCo
 	tilesPanel.LoadLayout("_pnlLabel")
 
 	Dim pnl As Panel
-	pnl = dd.GetViewByName(tilesPanel, "PanelLabel")
+'	pnl = dd.GetViewByName(tilesPanel, "PanelLabel")
+	pnl = tilesPanel.GetView(cnt)
 	cnt = cnt + 1
 
 	Dim tTag As xTag
@@ -179,7 +180,8 @@ Public Sub AddImage (pId As String, pBitmap As String, pBackgroundColor As Int, 
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
-	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+'	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+	pnl = tilesPanel.GetView(cnt)
 	cnt = cnt + 1
 
 	Dim tTag As xTag
@@ -229,7 +231,8 @@ Public Sub AddImageResize (pId As String, pBitmap As String, pBackgroundColor As
 
 	tilesPanel.LoadLayout("_pnlImage")
 	Private pnl As Panel
-	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+'	pnl = dd.GetViewByName(tilesPanel, "PanelImage")
+	pnl = tilesPanel.GetView(cnt)
 	cnt = cnt + 1
 
 	Dim tTag As xTag
@@ -279,7 +282,8 @@ Public Sub AddLayout(pId As String, pLayout As String, pBackgroundColor As Int, 
 
 	tilesPanel.LoadLayout("_pnlLayout")
 	Private pnl As Panel
-	pnl = dd.GetViewByName(tilesPanel, "PanelLayout")
+'	pnl = dd.GetViewByName(tilesPanel, "PanelLayout")
+	pnl = tilesPanel.GetView(cnt)
 	cnt = cnt + 1
 
 	Dim tTag As xTag
@@ -420,6 +424,7 @@ Public Sub DeleteTile(value As String)
 			If p.Parent = tilesPanel  Then
 				If p.Tag.As(xTag).id = value Then
 					p.RemoveView
+					cnt = cnt - 1
 					If value = mSelectedItem Then
 						mSelectedItem = "-1"
 					End If
