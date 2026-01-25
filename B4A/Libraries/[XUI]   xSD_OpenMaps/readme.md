@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 01/12/2026
+### 01/21/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -11,6 +11,7 @@ CreateResourceFromFile(Macro, Core.NetworkClearText)
 
   
    
+B4J Version [**here**](https://www.b4x.com/android/forum/threads/jsd_openmaps.166066/)  
   
 **xSD\_OpenMaps  
   

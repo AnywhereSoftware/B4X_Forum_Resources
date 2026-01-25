@@ -1,0 +1,217 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rarduinoble
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private BLE As BLEMaster
+
+	Private TargetService As String = "9c6f8a4e-1e0f-4b3d-8a2e-5c4d6f7e8b9a"
+
+	Private CharUUIDs(8) As String = Array As String( _
+        "f177fa2a-2c95-7495-0340-abcd84b721c1", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c2", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c3", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c4", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c5", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c6", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c7", _
+        "f177fa2a-2c95-7495-0340-abcd84b721c8" _
+    )
+
+	Private CharNames(8) As String = Array As String( _
+        "Main Command: ", _
+        "Config A: ", _
+        "Config B: ", _
+        "Config C: ", _
+        "Status: ", _
+        "Message: ", _
+        "Debug: ", _
+        "Control: " _
+    )
+	
+	'Standard Battery Service and Characteristic
+	Private BatteryService As String = "180f"
+	Private BatteryChar As String = "2a19"
+    
+	'Standard Device Information Service (DIS) UUIDs ---
+	Private DIS_Service As String = "180a"
+	Private DIS_ManufacturerChar As String = "2a29"
+	Private DIS_ModelChar As String = "2a24"
+	Private DIS_SerialChar As String = "2a25"
+
+	'Standard User Description Descriptor
+	Private DescUUID As String = "2901"
+
+	Private LastValues(8) As Int
+
+	Private ScanTimer As Timer
+	Private MainPoll As Timer
+	Private BatteryPoll As Timer 'For 10s intervals
+	Private ActiveDev(1) As BLEDevice
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("BLE Central Starting...")
+
+	If BLE.Begin Then
+		Log("Scanning...")
+		BLE.Scan
+		ScanTimer.Initialize("ScanTimer_Tick", 500)
+		ScanTimer.Enabled = True
+	Else
+		Log("Hardware failure.")
+	End If
+End Sub
+
+Sub ScanTimer_Tick
+	BLE.Poll
+
+	Dim Dev As BLEDevice = BLE.Available
+	If Dev <> Null Then
+		Log("Found device: ", Dev.LocalName, " @ ", Dev.Address, " RSSI=", Dev.RSSI)
+
+		If Dev.LocalName = "B4R_Device" Then
+			Log("Target found: ", Dev.Address)
+			BLE.StopScan
+			ScanTimer.Enabled = False
+			ConnectToPeripheral(Dev)
+		End If
+	End If
+End Sub
+
+Sub ConnectToPeripheral(Dev As BLEDevice)
+	Log("Connecting to: ", Dev.Address)
+
+	If Dev.Connect Then
+		Log("Connected.")
+
+		If Dev.DiscoverAttributes Then
+			Log("Attributes discovered.")
+
+			ActiveDev(0) = Dev
+
+			'Subscribe specifically to Index 2 and 5 at startup
+			Dev.Subscribe(TargetService, CharUUIDs(2))
+			Dev.Subscribe(TargetService, CharUUIDs(5))
+
+			Log("------------ TEST WRITES ------------")
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(2), "HELLO".GetBytes)
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(3), "TVR".GetBytes)
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(4), "Mclaren".GetBytes)
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(5), "Mercedes".GetBytes)
+
+			Log("------------ TEST WRITES/READ ------------")
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(4), "Watt".GetBytes)
+			Log(BLE.StringFromBytes(Dev.ReadCharacteristic(TargetService, CharUUIDs(4))))
+            
+			Dev.WriteCharacteristic(TargetService, CharUUIDs(5), "Volts".GetBytes)
+			Log(BLE.StringFromBytes(Dev.ReadCharacteristic(TargetService, CharUUIDs(5))))
+
+			'Main poll for notifications/updates
+			MainPoll.Initialize("MainPoll_Tick", 250)
+			MainPoll.Enabled = True
+            
+			'Initialize 10s poll for Battery and Descriptors
+			BatteryPoll.Initialize("BatteryPoll_Tick", 10000)
+			BatteryPoll.Enabled = True
+            
+			'Run it once immediately
+			BatteryPoll_Tick
+			
+			'Read Device Information Service
+			DeviceInformationService
+			
+			'Read Manufacturer Information
+			ManufacturerInformation(Dev)
+		Else
+			Log("Discovery failed.")
+			Dev.Disconnect
+			BLE.Scan
+			ScanTimer.Enabled = True
+		End If
+	Else
+		Log("Connection failed.")
+		BLE.Scan
+		ScanTimer.Enabled = True
+	End If
+End Sub
+
+Sub MainPoll_Tick
+	BLE.Poll
+	CheckForUpdates
+End Sub
+
+'NEW: Timer tick for periodic reads
+Sub BatteryPoll_Tick
+	If ActiveDev(0) = Null Or ActiveDev(0).Connected = False Then Return
+    
+	'--- READ BATTERY ---
+	Log("Checking Battery...")
+	Dim BatData() As Byte = ActiveDev(0).ReadCharacteristic(BatteryService, BatteryChar)
+	If BatData <> Null And BatData.Length > 0 Then
+		Log("Battery Level: ", BatData(0), "%")
+	End If
+
+	'--- READ DESCRIPTORS ---
+	Log("Checking Descriptors...")
+	For i = 0 To CharUUIDs.Length - 1
+		Dim DescData() As Byte = ActiveDev(0).ReadDescriptor(TargetService, CharUUIDs(i), DescUUID)
+		If DescData <> Null Then
+			Log("Reading Descriptor - ", CharNames(i), ", Message: ", BLE.StringFromBytes(DescData))
+		End If
+	Next
+End Sub
+
+Sub DeviceInformationService
+	Log("Reading Device Info...")
+	Dim ManData() As Byte = ActiveDev(0).ReadCharacteristic(DIS_Service, DIS_ManufacturerChar)
+	If ManData <> Null Then Log("Manufacturer: ", BLE.StringFromBytes(ManData))
+
+	Dim ModData() As Byte = ActiveDev(0).ReadCharacteristic(DIS_Service, DIS_ModelChar)
+	If ModData <> Null Then Log("Model: ", BLE.StringFromBytes(ModData))
+
+	Dim SerData() As Byte = ActiveDev(0).ReadCharacteristic(DIS_Service, DIS_SerialChar)
+	If SerData <> Null Then Log("Serial: ", BLE.StringFromBytes(SerData))
+End Sub
+
+Sub ManufacturerInformation(Dev As BLEDevice)
+	Log("Reading Manufacturer Info...")
+	Dim MData() As Byte = Dev.ManufacturerData
+	If MData <> Null And MData.Length > 7 Then
+		' Extract and Log "PETER" directly
+		Log("Name: ", BLE.SubStringText(MData, 2, 5))
+    
+		' Extract and Log the Hex Data directly
+		Log("Hex Data: ", BLE.SubStringHex(MData, 7, 4))
+	End If
+End Sub
+
+Sub CheckForUpdates
+	If ActiveDev(0) = Null Or ActiveDev(0).Connected = False Then Return
+
+	For i = 0 To CharUUIDs.Length - 1
+		Dim Data() As Byte = ActiveDev(0).ReadCharacteristic(TargetService, CharUUIDs(i))
+
+		If Data <> Null And Data.Length > 0 Then
+			Dim FB As Int = Data(0)
+
+			If LastValues(i) <> FB Then
+				LastValues(i) = FB
+				Log("Update from ", CharNames(i), BLE.StringFromBytes(Data))
+			End If
+		End If
+	Next
+End Sub

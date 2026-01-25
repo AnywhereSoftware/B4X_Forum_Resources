@@ -19,8 +19,7 @@
         <method>
             <name>Write</name>
             <comment>Writes a byte array to the serial port.
- Data The bytes to send to the device.
- Raises the SentData event after a successful write.</comment>
+ When PrefixFraming is enabled, a 4‑byte length prefix is added.</comment>
             <returntype>void</returntype>
             <parameter>
                 <name>Data</name>
@@ -167,6 +166,11 @@
             <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
         </method>
         <method>
+            <name>GetSerialDeviceCount</name>
+            <comment>Returns the number of connected USB serial devices recognised by the</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
             <name>SplitFrom32Bit</name>
             <comment>Splits a 32-bit integer into an array of two 16-bit integers.</comment>
             <returntype>int[]</returntype>
@@ -298,6 +302,15 @@
  If the app is closing, you may want to unregister the hotplug receiver.
  Return no value; further use after disposal is not supported.</comment>
             <returntype>void</returntype>
+        </method>
+        <method>
+            <name>getPortName</name>
+            <comment>Returns the simple class name of the specified port on the current device.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Index</name>
+                <type>int</type>
+            </parameter>
         </method>
         <method>
             <name>GetDeviceVendorId</name>
@@ -452,15 +465,6 @@
  Value True to assert RTS, False to release it.</comment>
         </property>
         <property>
-            <name>GetPortName</name>
-            <parameter>
-                <name>Index</name>
-                <type>int</type>
-            </parameter>
-            <comment>Property setter used to support syntax USBSerial.GetPortName = Index.
- This acts as a no-op but keeps API compatibility.</comment>
-        </property>
-        <property>
             <name>SelectDeviceByIndex</name>
             <parameter>
                 <name>Index</name>
@@ -497,6 +501,14 @@
             <returntype>int</returntype>
         </field>
         <field>
+            <name>PrefixFraming</name>
+            <comment>Writes a byte array to the serial port.
+ If PrefixFraming is enabled, a 4‑byte length header is added.
+ The following names all refer to the same feature:
+ PrefixMode, FramingEnabled, PacketMode, LengthPrefixed, StructuredPackets.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
             <name>PermissionGranted</name>
             <comment>Indicates whether the user has granted permission for the current USB device.
  Updated automatically during permission handling.</comment>
@@ -521,6 +533,6 @@
             <returntype>boolean</returntype>
         </field>
     </class>
-    <version>1.01</version>
+    <version>1.1</version>
     <author>Peter Simpson</author>
 </root>

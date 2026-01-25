@@ -1,0 +1,258 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rarduinoble
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+
+	'BLE Master
+	Private BLE As BLEMaster
+
+	'Service
+	Private ServiceUUID As LocalService
+
+	'Service UUID
+	Private SerUUID As String = "9c6f8a4e-1e0f-4b3d-8a2e-5c4d6f7e8b9a"
+
+	'Characteristic UUID's
+	Private ChaUUID1 As String = "f177fa2a-2c95-7495-0340-abcd84b721c1"
+	Private ChaUUID2 As String = "f177fa2a-2c95-7495-0340-abcd84b721c2"
+	Private ChaUUID3 As String = "f177fa2a-2c95-7495-0340-abcd84b721c3"
+	Private ChaUUID4 As String = "f177fa2a-2c95-7495-0340-abcd84b721c4"
+	Private ChaUUID5 As String = "f177fa2a-2c95-7495-0340-abcd84b721c5"
+	Private ChaUUID6 As String = "f177fa2a-2c95-7495-0340-abcd84b721c6"
+	Private ChaUUID7 As String = "f177fa2a-2c95-7495-0340-abcd84b721c7"
+	Private ChaUUID8 As String = "f177fa2a-2c95-7495-0340-abcd84b721c8"
+
+	'Characteristics
+	Private CharacteristicUUID1 As LocalCharacteristic
+	Private CharacteristicUUID2 As LocalCharacteristic
+	Private CharacteristicUUID3 As LocalCharacteristic
+	Private CharacteristicUUID4 As LocalCharacteristic
+	Private CharacteristicUUID5 As LocalCharacteristic
+	Private CharacteristicUUID6 As LocalCharacteristic
+	Private CharacteristicUUID7 As LocalCharacteristic
+	Private CharacteristicUUID8 As LocalCharacteristic
+
+	'Descriptors
+	Private Desc1 As BLEDescriptor
+	Private Desc2 As BLEDescriptor
+	Private Desc3 As BLEDescriptor
+	Private Desc4 As BLEDescriptor
+	Private Desc5 As BLEDescriptor
+	Private Desc6 As BLEDescriptor
+	Private Desc7 As BLEDescriptor
+	Private Desc8 As BLEDescriptor
+
+	'Human readable names
+	Private Name1 As String = "Main Command: "
+	Private Name2 As String = "Config A: "
+	Private Name3 As String = "Config B: "
+	Private Name4 As String = "Config C: "
+	Private Name5 As String = "Status: "
+	Private Name6 As String = "Message: "
+	Private Name7 As String = "Debug: "
+	Private Name8 As String = "Control: "
+
+	'Battery Logic Variables
+	Private BatteryLevel As Int = 100
+	Private BatteryCounter As Int = 0
+
+	'Poll Timer
+	Private PollTimer As Timer
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("BLE Peripheral Starting...")
+
+	If BLE.Begin Then
+		BLE.Appearance = 0x0040
+		BLE.DeviceName = "Peter_GATT_Device"
+
+		'--- Device Information Service ---
+		'Standard Service (0x180A) providing basic hardware info
+		BLE.AddDeviceInformationService("Peter Simpson", "ESP32-V1", "SN-987654321")
+
+		'--- Manufacturer Information / NOT RELLY NEEDED ---
+		' Custom data sent in the advertisement packet (Max ~26 bytes usually available)
+		' Format: [Company ID LSB] [Company ID MSB] [Manufacturer Specific Data...]
+		' Using 0xFFFF (Test Company ID) - LSB: 0xFF, MSB: 0xFF
+		' -------------------------------------------------------------------------
+		' BYTE 0 & 1: 0xFF, 0xFF (Company ID for Testing)
+		' BYTE 2 - 6: 0x50, 0x45, 0x54, 0x45, 0x52 (ASCII "PETER")
+		' BYTE 7 - 10: 0x01, 0x02, 0x03, 0x04 (Raw sensor/status data)
+		Dim MData() As Byte = Array As Byte(0xFF, 0xFF, 0x50, 0x45, 0x54, 0x45, 0x52, 0x01, 0x02, 0x03, 0x04)
+		BLE.SetManufacturerData(MData)
+
+		'the main service UUID
+		ServiceUUID.Initialize(SerUUID)
+		
+		'Standard User Description Descriptor UUID is 2901
+		Dim DescUUID As String = "2901"
+
+		'Characteristic definitions (Notify enabled where required)
+		'Properties: Read=True, Write=True, WriteNoResp=True, Notify=True, Indicate=False
+		
+		'Characteristic 1
+		CharacteristicUUID1.Initialize(ChaUUID1, BuildProps(True, True, True, True, True), 32)
+		Desc1.Initialize(DescUUID, Name1)
+		CharacteristicUUID1.AddDescriptor(Desc1)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID1)
+		CharacteristicUUID1.SetValue("init".GetBytes)
+
+		'Characteristic 2
+		CharacteristicUUID2.Initialize(ChaUUID2, BuildProps(True, False, False, False, True), 32)
+		Desc2.Initialize(DescUUID, Name2)
+		CharacteristicUUID2.AddDescriptor(Desc2)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID2)
+		CharacteristicUUID2.SetValue("init".GetBytes)
+
+		'Characteristic 3
+		CharacteristicUUID3.Initialize(ChaUUID3, BuildProps(True, True, False, True, False), 32)
+		Desc3.Initialize(DescUUID, Name3)
+		CharacteristicUUID3.AddDescriptor(Desc3)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID3)
+		CharacteristicUUID3.SetValue("init".GetBytes)
+
+		'Characteristic 4
+		CharacteristicUUID4.Initialize(ChaUUID4, BuildProps(True, True, False, True, False), 32)
+		Desc4.Initialize(DescUUID, Name4)
+		CharacteristicUUID4.AddDescriptor(Desc4)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID4)
+		CharacteristicUUID4.SetValue("init".GetBytes)
+
+		'Characteristic 5
+		CharacteristicUUID5.Initialize(ChaUUID5, BuildProps(True, True, False, True, False), 32)
+		Desc5.Initialize(DescUUID, Name5)
+		CharacteristicUUID5.AddDescriptor(Desc5)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID5)
+		CharacteristicUUID5.SetValue("init".GetBytes)
+		
+		'Characteristic 6
+		CharacteristicUUID6.Initialize(ChaUUID6, BuildProps(True, True, False, False, True), 32)
+		Desc6.Initialize(DescUUID, Name6)
+		CharacteristicUUID6.AddDescriptor(Desc6)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID6)
+		CharacteristicUUID6.SetValue("init".GetBytes)
+
+		'Characteristic 7
+		CharacteristicUUID7.Initialize(ChaUUID7, BuildProps(True, False, False, False, False), 32)
+		Desc7.Initialize(DescUUID, Name7)
+		CharacteristicUUID7.AddDescriptor(Desc7)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID7)
+		CharacteristicUUID7.SetValue("init".GetBytes)
+
+		'Characteristic 8
+		CharacteristicUUID8.Initialize(ChaUUID8, BuildProps(True, True, True, True, False), 32)
+		Desc8.Initialize(DescUUID, Name8)
+		CharacteristicUUID8.AddDescriptor(Desc8)
+		ServiceUUID.AddCharacteristic(CharacteristicUUID8)
+		CharacteristicUUID8.SetValue("init".GetBytes)
+		
+		BLE.AddService(ServiceUUID)
+		BLE.AddBatteryService(BatteryLevel)
+
+		BLE.SetAdvertisedService(ServiceUUID)
+		BLE.LocalName = "B4R_Device"
+		BLE.Advertise
+
+		Log("Advertising active. Waiting for connection...")
+
+		PollTimer.Initialize("PollTimer_Tick", 50)
+		PollTimer.Enabled = True
+	Else
+		Log("BLE hardware failed to initialise!")
+	End If
+End Sub
+
+Sub PollTimer_Tick
+	BLE.Poll
+	BLE_Looper
+
+	'COMMENT OUT TO STOP DUMMY BATTERY LEVEL POWER DRAWER
+	'10 Second Battery Drain Logic ---
+	'50ms * 200 = 10,000ms (10 seconds)
+	BatteryCounter = BatteryCounter + 1
+	If BatteryCounter >= 200 Then
+		BatteryCounter = 0
+		If BatteryLevel > 0 Then
+			BatteryLevel = BatteryLevel - 1
+			
+			'Set battery level. This is the only line you really need
+			BLE.SetBatteryLevel(BatteryLevel)
+			Log("Battery Level dropped to: ", BatteryLevel, "%")
+		Else
+			BatteryLevel = 100
+			Log("Battery Level is back up to: ", 100, "%")
+		End If
+	End If
+End Sub
+
+'PROPERTY BUILDER
+Sub BLE_Looper
+	CheckAndReply(CharacteristicUUID1, Name1)
+	CheckAndReply(CharacteristicUUID2, Name2)
+	CheckAndReply(CharacteristicUUID3, Name3)
+	CheckAndReply(CharacteristicUUID4, Name4)
+	CheckAndReply(CharacteristicUUID5, Name5)
+	CheckAndReply(CharacteristicUUID6, Name6)
+	CheckAndReply(CharacteristicUUID7, Name7)
+	CheckAndReply(CharacteristicUUID8, Name8)
+End Sub
+
+'SET THE READ, WRITE AND NOTIFICATIONS PROPERTIES
+Sub BuildProps(Read As Boolean, Write As Boolean, WriteNoResp As Boolean, Notify As Boolean, Indicate As Boolean) As Int
+	Dim p As Int = 0
+	If Read Then p = p + 1
+	If Write Then p = p + 2
+	If WriteNoResp Then p = p + 4
+	If Notify Then p = p + 8
+	If Indicate Then p = p + 16
+	Return p
+End Sub
+
+'UNIVERSAL WRITE HANDLER + AUTOMATIC NOTIFICATION SENDER
+Sub CheckAndReply(Char As LocalCharacteristic, Name As String)
+	If Char.Written Then
+		'1. Read the data into a local array ONCE
+		'We MUST only call GetValue once per trigger to avoid buffer overwrites
+		Dim Received() As Byte = Char.GetValue
+		
+		'2. Determine the length of what was actually received
+		Dim L As Int = Received.Length
+		
+		'Log the reception
+		Log(Name, "WRITE received. Length: ", L)
+  
+		If L > 0 Then
+			'Content using ByteConverter
+			Log(Name, " Content: ", BLE.StringFromBytes(Received))
+			
+			'3. AUTOMATIC NOTIFICATION LOGIC
+			'We check if the Central has actually "turned on" notifications
+			If Char.Subscribed Then
+				Dim Response() As Byte = "ACK"
+				Char.SetValue(Response)
+				Log(Name, " Notification sent: ACK")
+			Else
+				'The hardware properties might allow Notify, but the Central app hasn't enabled it
+				Log(Name, " Notification skipped: Central is not subscribed.")
+			End If
+		Else
+			' This handles the case where the write flag was triggered but no data was found
+			Log(Name, " Write flag was set, but buffer was empty.")
+		End If
+	End If
+End Sub

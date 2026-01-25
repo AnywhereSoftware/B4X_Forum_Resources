@@ -1,5 +1,5 @@
 ### USBSerial Enhanced - Based on usb-serial-for-android-3.10.0 by Peter Simpson
-### 01/11/2026
+### 01/23/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169981/)
 
 Hello everyone,  
@@ -28,15 +28,15 @@ This library handles the low-level USB communication protocols and baud rate con
 In the context of the usb-serial-for-android library and Android USB communication, hotplugging refers to the ability of the system to detect and handle USB devices being plugged in or removed while the application is running, without requiring a restart. When plugging in a compatible USB device, the app will launch automatically and a popup dialog will appear displaying “Open USB Serial to handle XXX…” (see the attached screenshot below). Adding the correct XML code in the manifest in conjunction with the XML file, allows your app to launch automatically when inserting compatible USB devices.  
   
 **Screenshot in action:**  
-![](https://www.b4x.com/android/forum/attachments/169262)  
+![](https://www.b4x.com/android/forum/attachments/169262)![](https://www.b4x.com/android/forum/attachments/169539)  
   
 **Take note:**  
 In the folder called objects/res/xml, there is a read-only file called device\_filter.xml. The primary purpose of this file is to tell the Android operating system which specific USB devices your application is interested in. It acts as a whitelist based on hardware identifiers. This XML file works in conjunction with optional XML code in the manifest which in turn works with the B4A receiver module. If you are not interested in hotplug support, you can comment out the optional manifest code, but that is **NOT** recommended.  
   
-**SS\_USBSerialEnhanced  
+**SS\_USBSerialEnhanced**  
   
-Author:** Peter Simpson  
-**Version:** 1.01  
+**Author:** Peter Simpson  
+**Version:** 1.1  
 
 - **USBSerialEnhanced**
 *Enhanced USB Serial library with support for 32-bit data types,  
@@ -61,7 +61,11 @@ Author:** Peter Simpson
 *Selects the port index to open on the USB device.  
  Defaults to 0 for single‑port devices.*- **PermissionGranted** As Boolean
 *Indicates whether the user has granted permission for the current USB device.  
- Updated automatically during permission handling.*- **ReadBlock** As Boolean
+ Updated automatically during permission handling.*- **PrefixFraming** As Boolean
+*Writes a byte array to the serial port.  
+ If PrefixFraming is enabled, a 4‑byte length header is added.  
+ The following names all refer to the same feature:  
+ PrefixMode, FramingEnabled, PacketMode, LengthPrefixed, StructuredPackets.*- **ReadBlock** As Boolean
 *When true, incoming data is ignored and the NewData event is not raised.  
  Useful for temporarily suspending asynchronous reads.*- **SetPortByName** As String
 *Allows selecting a port by its internal driver name.  
@@ -128,7 +132,9 @@ Author:** Peter Simpson
 *Returns the last USB-related event that occurred.  
  Useful for dashboards that display live USB activity.*- **GetPortCount** As Int
 *Returns the number of serial ports available on the selected device.  
- Returns zero if no driver is available.*- **HasPermission** (vendorId As Int, productId As Int) As Boolean
+ Returns zero if no driver is available.*- **getPortName** (Index As Int) As String
+*Returns the simple class name of the specified port on the current device.*- **GetSerialDeviceCount** As Int
+*Returns the number of connected USB serial devices recognised by the*- **HasPermission** (vendorId As Int, productId As Int) As Boolean
 *Checks if the application has permission to access the specified USB device.  
  This updates the public PermissionGranted field.  
  vendorId The Vendor ID of the hardware.  
@@ -169,13 +175,10 @@ Author:** Peter Simpson
  Required before using ReadBlocking().*- **Swap32BitEndianness** (value As Int) As Int
 *Reverses the byte order of a 32-bit integer.*- **Write** (Data As Byte())
 *Writes a byte array to the serial port.  
- Data The bytes to send to the device.  
- Raises the SentData event after a successful write.*
+ When PrefixFraming is enabled, a 4‑byte length prefix is added.*
 - **Properties:**
 
-- **GetPortName** As Int [write only]
-*Property setter used to support syntax USBSerial.GetPortName = Index.  
- This acts as a no-op but keeps API compatibility.*- **IsConnected** As Boolean [read only]
+- **IsConnected** As Boolean [read only]
 *Returns true if the serial port is currently open.  
  Indicates whether communication is active.*- **SelectDeviceByIndex** As Int [write only]
 *Selects a USB device by its index from the EnumerateDevices list.  
@@ -191,11 +194,13 @@ Author:** Peter Simpson
 *Sets the Request To Send (RTS) line.  
  Value True to assert RTS, False to release it.*
   
-**Update: V1.01**  
+**Update: V1.10**  
 
-- Merged the aar file into the jar file (Thank you [USER=31245]@drgottjr[/USER] for the idea)
-- Cleaned up the JavaDoc comments
+- Added GetPortCount
+- Added PrefixFraming (The following names all refer to the basic same feature in this wrapper: PrefixMode, FramingEnabled, PacketMode, LengthPrefixed, StructuredPackets)
+- Updated the app
 
-D = 18 + 3  
+  
+D = 18 + 3, 56 + 69  
   
 **Enjoy…**

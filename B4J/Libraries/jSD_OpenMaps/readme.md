@@ -1,10 +1,12 @@
 ### jSD_OpenMaps by Star-Dust
-### 08/25/2025
+### 01/21/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166066/)
 
 As many currently know Googlemaps' Webapi do not work correctly on the webview because the latest versions use webgl  
    
 I decided to do a new library that uses OpenMap and Leaflet with the same methods and events of the Googlemaps bookshop. I also created a second OpenMapext class that adds some Googlemapsext commands to maintain compatibility and minimize changes to the existing code. The code we used with GMAPS with Javaobject to obtain extra functions is no longer usable. Tested with Java 19,  
+  
+B4i and B4i version [**here**](https://www.b4x.com/android/forum/threads/xui-b4a-b4i-xsd_openmaps.169391/)  
   
 **jSD\_OpenMaps  
   

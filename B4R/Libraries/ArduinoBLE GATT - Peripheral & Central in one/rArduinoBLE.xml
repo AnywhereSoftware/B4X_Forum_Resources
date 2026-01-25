@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    
+    <class>
+        <name>B4R::B4RBLEMaster</name>
+        <shortname>BLEMaster</shortname>
+        <comment>The main controller for Bluetooth Low Energy. 
+Supports both Peripheral mode (broadcasting services) and Central mode (scanning for remote devices).</comment>
+        <owner>process</owner>
+        
+        <field>
+            <name>LocalName</name>
+            <comment>Sets or gets the local name that the device will broadcast.</comment>
+            <returntype>String</returntype>
+        </field>
+
+        <field>
+            <name>DeviceName</name>
+            <comment>Sets or gets the device name (GATT service name) seen after connection.</comment>
+            <returntype>String</returntype>
+        </field>
+
+        <field>
+            <name>Appearance</name>
+            <comment>Sets the 16-bit appearance value for the device.
+--- SOME OF THESE CODES BELOW, MAY NOT BE RECOGNISED ON YOUR DEVICE. ---.
+Unknown (0x0000), Phone (0x0040), Computer (0x0080), Watch (Generic) (0x00C0), Watch: Sports Watch (0x00C1), 
+Clock (0x0100), Display (0x0140), Remote Control (0x0180), Eye-glasses (0x01C0), Tag (0x0200), Keyring (0x0240), 
+Media Player (0x0280), Barcode Scanner (0x02C0), Thermometer (Generic) (0x0300), Thermometer: Ear (0x0301), 
+Heart Rate Sensor (Generic) (0x0340), Heart Rate Sensor: Belt (0x0341), Blood Pressure (Generic) (0x0380), 
+Blood Pressure: Arm (0x0381), Blood Pressure: Wrist (0x0382), Human Interface Device (HID) (0x03C0), 
+HID: Keyboard (0x03C1), HID: Mouse (0x03C2), HID: Joystick (0x03C3), HID: Gamepad (0x03C4), 
+HID: Digitizer Tablet (0x03C5), HID: Card Reader (0x03C6), HID: Digital Pen (0x03C7), HID: Barcode Scanner (0x03C8).</comment>
+            <returntype>int</returntype>
+        </field>
+
+        <method>
+            <name>Begin</name>
+            <comment>Initialises the BLE radio hardware. 
+Returns True if the radio was successfully started. 
+Ensure your board supports BLE (e.g., ESP32, Arduino Nano 33 BLE).</comment>
+            <returntype>bool</returntype>
+        </method>
+        
+        <method>
+            <name>SetAppearance</name>
+            <comment>Alternative method to set the appearance value via a function call.</comment>
+            <parameter>
+                <name>Value</name>
+                <type>int</type>
+            </parameter>
+        </method>
+
+        <method>
+            <name>AddService</name>
+            <comment>Adds a local service to the peripheral. 
+Service: The LocalService object which must contain at least one characteristic.</comment>
+            <parameter>
+                <name>Service</name>
+                <type>B4R::B4RLocalService*</type>
+            </parameter>
+        </method>
+        
+        <method>
+            <name>SetAdvertisedService</name>
+            <comment>Sets the primary service UUID to be broadcast in the advertisement packet. 
+Service: The service that scanning central devices will see before connecting.</comment>
+            <parameter>
+                <name>Service</name>
+                <type>B4R::B4RLocalService*</type>
+            </parameter>
+        </method>
+        
+        <method>
+            <name>Advertise</name>
+            <comment>Starts broadcasting BLE advertisement packets. 
+This makes the device visible to other BLE centrals (like smartphones).</comment>
+        </method>
+        
+        <method>
+            <name>Poll</name>
+            <comment>Handles underlying BLE stack events. 
+In Peripheral mode, this should be called frequently within a loop to maintain connections.</comment>
+        </method>
+        
+        <method>
+            <name>Scan</name>
+            <comment>Starts scanning for nearby BLE peripheral devices. 
+Use the Available method to retrieve discovered devices.</comment>
+        </method>
+        
+        <method>
+            <name>StopScan</name>
+            <comment>Stops the current scanning operation to save power or prepare for connection.</comment>
+        </method>
+        
+        <method>
+            <name>Available</name>
+            <comment>Checks for discovered devices during an active scan. 
+Returns a BLEDevice object if a device was found, or Null if no new devices are available.</comment>
+            <returntype>B4R::B4RBLEDevice*</returntype>
+        </method>
+
+        <method>
+            <name>AddBatteryService</name>
+            <comment>Adds the standard Bluetooth Battery Service (0x180F) with a single level characteristic (0x2A19).
+InitialLevel: The starting battery percentage (0-100).</comment>
+            <parameter>
+                <name>InitialLevel</name>
+                <type>int</type>
+            </parameter>
+        </method>
+
+        <method>
+            <name>SetBatteryLevel</name>
+            <comment>Updates the battery level characteristic. 
+Level: The current battery percentage (0-100).</comment>
+            <parameter>
+                <name>Level</name>
+                <type>int</type>
+            </parameter>
+        </method>
+
+        <method>
+            <name>SetManufacturerData</name>
+            <comment>Sets custom manufacturer data in the advertising packet. 
+Data: Array of bytes containing your custom manufacturer information.</comment>
+            <parameter>
+                <name>Data</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+
+        <method>
+            <name>AddDeviceInformationService</name>
+            <comment>Adds the standard Device Information Service (0x180A).
+ManufacturerName: String identifying the manufacturer.
+ModelNumber: String identifying the model.
+SerialNumber: String identifying the serial number.</comment>
+            <parameter><name>ManufacturerName</name><type>String</type></parameter>
+            <parameter><name>ModelNumber</name><type>String</type></parameter>
+            <parameter><name>SerialNumber</name><type>String</type></parameter>
+        </method>
+
+        <method>
+            <name>StringFromBytes</name>
+            <comment>Converts a byte array directly into a String within the library.
+Useful for reading characteristic values.</comment>
+            <parameter>
+                <name>Data</name>
+                <type>Byte[]</type>
+            </parameter>
+            <returntype>String</returntype>
+        </method>
+
+        <method>
+            <name>HexFromBytes</name>
+            <comment>Converts a byte array into a Hexadecimal string.
+Ideal for viewing raw Manufacturer Data or UUIDs.</comment>
+            <parameter>
+                <name>Data</name>
+                <type>Byte[]</type>
+            </parameter>
+            <returntype>String</returntype>
+        </method>
+
+        <method>
+            <name>SubStringText</name>
+            <comment>Extracts a portion of a byte array as a String.</comment>
+            <parameter><name>Data</name><type>Byte[]</type></parameter>
+            <parameter><name>Start</name><type>int</type></parameter>
+            <parameter><name>Length</name><type>int</type></parameter>
+            <returntype>String</returntype>
+        </method>
+
+        <method>
+            <name>SubStringHex</name>
+            <comment>Extracts a portion of a byte array as a Hex String.</comment>
+            <parameter><name>Data</name><type>Byte[]</type></parameter>
+            <parameter><name>Start</name><type>int</type></parameter>
+            <parameter><name>Length</name><type>int</type></parameter>
+            <returntype>String</returntype>
+        </method>
+    </class>
+    
+    <class>
+        <name>B4R::B4RBLEDevice</name>
+        <shortname>BLEDevice</shortname>
+        <comment>Represents a remote BLE device discovered during a scan.</comment>
+        
+        <method>
+            <name>LocalName</name>
+            <comment>Returns the advertised name of the remote device. 
+May return an empty string if the device does not broadcast a name.</comment>
+            <returntype>String</returntype>
+        </method>
+        
+        <method>
+            <name>Address</name>
+            <comment>Returns the MAC address of the remote device (e.g., "AA:BB:CC:DD:EE:FF").</comment>
+            <returntype>String</returntype>
+        </method>
+        
+        <method>
+            <name>RSSI</name>
+            <comment>Returns the Received Signal Strength Indicator. 
+Typically ranges from -100 (weak) to -30 (strong).</comment>
+            <returntype>int</returntype>
+        </method>
+        
+        <method>
+            <name>Connect</name>
+            <comment>Attempts to connect to the remote device. 
+Returns True if the connection was successful.</comment>
+            <returntype>bool</returntype>
+        </method>
+        
+        <method>
+            <name>Disconnect</name>
+            <comment>Terminates the active connection with the remote device.</comment>
+        </method>
+        
+        <method>
+            <name>Connected</name>
+            <comment>Checks the connection status. Returns True if currently connected.</comment>
+            <returntype>bool</returntype>
+        </method>
+        
+        <method>
+            <name>DiscoverAttributes</name>
+            <comment>Queries the remote device for its services and characteristics. 
+This must be called and return True before attempting to Read or Write.</comment>
+            <returntype>bool</returntype>
+        </method>
+        
+        <method>
+            <name>WriteCharacteristic</name>
+            <comment>Writes data to a characteristic on the remote device. 
+ServiceUUID: The 128-bit or 16-bit Service UUID. 
+CharUUID: The Characteristic UUID to target. 
+Data: The ArrayByte containing the payload.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <parameter><name>Data</name><type>Byte[]</type></parameter>
+        </method>
+        
+        <method>
+            <name>ReadCharacteristic</name>
+            <comment>Reads data from a remote characteristic. 
+ServiceUUID: The Service UUID. 
+CharUUID: The Characteristic UUID. 
+Returns an ArrayByte containing the data, or Null if the read failed.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <returntype>Byte[]</returntype>
+        </method>
+
+        <method>
+            <name>ReadDescriptor</name>
+            <comment>Reads a specific descriptor from a characteristic (e.g., "2901" for User Description).
+Returns an ArrayByte containing the descriptor data.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <parameter><name>DescriptorUUID</name><type>String</type></parameter>
+            <returntype>Byte[]</returntype>
+        </method>
+
+        <method>
+            <name>CanSubscribe</name>
+            <comment>Checks if the remote characteristic supports notifications or indications.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <returntype>bool</returntype>
+        </method>
+
+        <method>
+            <name>Subscribe</name>
+            <comment>Subscribes to notifications/indications for a remote characteristic.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <returntype>bool</returntype>
+        </method>
+
+        <method>
+            <name>Unsubscribe</name>
+            <comment>Stops notifications/indications for a remote characteristic.</comment>
+            <parameter><name>ServiceUUID</name><type>String</type></parameter>
+            <parameter><name>CharUUID</name><type>String</type></parameter>
+            <returntype>bool</returntype>
+        </method>        
+        
+        <method>
+            <name>ManufacturerData</name>
+            <comment>Returns the raw manufacturer data bytes from the advertisement packet.</comment>
+            <returntype>Byte[]</returntype>
+        </method>
+    </class>
+    
+    <class>
+        <name>B4R::B4RLocalService</name>
+        <shortname>LocalService</shortname>
+        <comment>Represents a BLE service hosted by your ESP32/Arduino.</comment>
+        
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the service. 
+UUID: The unique identifier for this service (e.g., "180F" for Battery Service).</comment>
+            <parameter><name>UUID</name><type>String</type></parameter>
+        </method>
+        
+        <method>
+            <name>AddCharacteristic</name>
+            <comment>Adds a characteristic to this service. 
+Call this before adding the service to the BLEMaster.</comment>
+            <parameter><name>Characteristic</name><type>B4R::B4RLocalCharacteristic*</type></parameter>
+        </method>
+    </class>
+
+    <class>
+        <name>B4R::B4RBLEDescriptor</name>
+        <shortname>BLEDescriptor</shortname>
+        <comment>Represents a BLE Descriptor, used to provide extra metadata like human-readable names.</comment>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises a descriptor.
+UUID: Typically "2901" for Characteristic User Description.
+Data: The text value (e.g., "Pressure Sensor").</comment>
+            <parameter><name>UUID</name><type>String</type></parameter>
+            <parameter><name>Data</name><type>String</type></parameter>
+        </method>
+    </class>
+    
+    <class>
+        <name>B4R::B4RLocalCharacteristic</name>
+        <shortname>LocalCharacteristic</shortname>
+        <comment>Represents a data point hosted on your device that centrals can interact with.</comment>
+        
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the characteristic. 
+UUID: The unique identifier for this data point. 
+Properties: Supported bits.
+1  = Read
+2  = Write
+4  = Write Without Response
+8  = Notify
+16 = Indicate
+Combined Properties: Common examples.
+3   = Read + Write (1 + 2)
+6   = Write + Write Without Response (2 + 4)
+7   = Read + Write + Write Without Response (1 + 2 + 4)
+15  = Read + Write + Write Without Response + Notify (1 + 2 + 4 + 8)
+Size: The maximum data size in bytes for the value buffer.</comment>
+            <parameter><name>UUID</name><type>String</type></parameter>
+            <parameter><name>Properties</name><type>byte</type></parameter>
+            <parameter><name>Size</name><type>int</type></parameter>
+        </method>
+        
+        <method>
+            <name>SetValue</name>
+            <comment>Updates the value stored in this characteristic. 
+Centrals will see this updated value on their next read or notification.</comment>
+            <parameter><name>Data</name><type>Byte[]</type></parameter>
+        </method>
+        
+        <method>
+            <name>Written</name>
+            <comment>Checks if a remote central device has written a new value to this characteristic since this method was last checked.</comment>
+            <returntype>bool</returntype>
+        </method>
+
+        <method>
+            <name>Subscribed</name>
+            <comment>Returns True if the remote central device has subscribed to notifications or indications for this characteristic.</comment>
+            <returntype>bool</returntype>
+        </method>
+        
+        <method>
+            <name>GetValue</name>
+            <comment>Returns the most recent value written to this characteristic by a connected central device.</comment>
+            <returntype>Byte[]</returntype>
+        </method>
+
+        <method>
+            <name>AddDescriptor</name>
+            <comment>Adds a descriptor to this characteristic. Call this before adding the characteristic to a service.</comment>
+            <parameter><name>Descriptor</name><type>B4R::B4RBLEDescriptor*</type></parameter>
+        </method>
+
+        <method>
+            <name>UUID</name>
+            <comment>Returns the UUID string assigned to this characteristic during initialisation.</comment>
+            <returntype>String</returntype>
+        </method>
+    </class>
+    
+    <version>1.10</version>
+    <author>Peter Simpson</author>
+</root>

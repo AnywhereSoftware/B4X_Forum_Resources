@@ -1,10 +1,10 @@
 ### [server] Run a Server on a VPS by Erel
-### 11/11/2020
+### 01/22/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/60378/)
 
 The steps required to run a B4J server on a hosted server (such as a VPS) are:  
   
-1. Download Java: <https://www.b4x.com/android/forum/threads/b4jpackager11-the-simplest-way-to-distribute-ui-apps.99835/#content>  
+1. Download OpenJDK 19: <https://www.oracle.com/java/technologies/javase/jdk19-archive-downloads.html>  
   
 If you are not familiar with Linux then download it to your development computer, unzip it and upload the files with FTP. You do not need to install anything.  
   
