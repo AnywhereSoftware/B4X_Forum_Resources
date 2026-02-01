@@ -1,5 +1,5 @@
 ###  [XUI] [B4XLib] SD TextView by Star-Dust
-### 06/19/2023
+### 01/30/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/121178/)
 
 I needed to develop a modern editText (or TextField), but different from the B4XFloatTextField, different in terms of graphics and style. So I created the SD\_TextView  
@@ -10,7 +10,7 @@ I needed to develop a modern editText (or TextField), but different from the B4X
 **SD\_TextView  
   
 Author:** Star-Dust  
-**Version:** 0.24  
+**Version:** 0.25  
 
 - **SD\_IconTextView**
 

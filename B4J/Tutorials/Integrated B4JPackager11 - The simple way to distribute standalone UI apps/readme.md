@@ -1,5 +1,5 @@
 ### Integrated B4JPackager11 - The simple way to distribute standalone UI apps by Erel
-### 09/16/2025
+### 01/29/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/117880/)
 
 B4JPackager11 is a utility written in B4J that uses the underlying Java tools to create a standalone package that doesn't depend on any other software being installed.  
@@ -7,9 +7,7 @@ It works with OpenJDK 11 and OpenJDK 14.
 Starting from B4J v8.30 it is integrated in the IDE and available under Project - Build Standalone Package.  
 External tool: <https://www.b4x.com/android/forum/threads/b4jpackager11-the-simplest-way-to-distribute-ui-apps.99835/#content>  
   
-Example:  
   
-![](https://www.b4x.com/basic4android/images/Shw8yVDjRi.gif)  
   
 The output of this tool looks like this:  
   
