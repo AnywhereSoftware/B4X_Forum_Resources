@@ -1,5 +1,5 @@
 ###  [XUI] SD XUIScrollView2D by Star-Dust
-### 04/30/2024
+### 02/05/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/106476/)
 
 I develop the cross-platform version of the ScrollView2D library.  
@@ -12,7 +12,7 @@ Everyone can choose which one is best suited to their purpose
 **SD\_XUIScrollView2D  
   
 Author:** Star-Dust  
-**Version:** 0.14  
+**Version:** 0.15  
 
 - **XUIScrollView**
 
@@ -163,4 +163,6 @@ Updated examples (B4XPages)
 **0.13**  
 fix bugs  
 **0.14**  
-Added ScrollingY and ScrollingY to enable or disable scrolling
+Added ScrollingY and ScrollingY to enable or disable scrolling  
+**0.15**  
+FIX BUG: method **FullScroll**

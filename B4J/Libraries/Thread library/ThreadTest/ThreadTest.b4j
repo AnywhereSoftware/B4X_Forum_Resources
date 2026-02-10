@@ -1,0 +1,59 @@
+﻿AppType=JavaFX
+Build1=Default,com.tummosoft
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=thread
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Dim thread1 As Thread
+	Dim thread2 As Thread
+	Private Label1 As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	thread1.Initialise("thread1")
+	thread2.Initialise("thread2")
+	thread1.newThread("com.tummosoft.main", "test1")
+	thread2.newThread("com.tummosoft.main", "test2")
+End Sub
+
+Sub Button1_Click
+	thread1.start
+	
+	thread2.Daemon = True
+	thread2.Name = "thread2"
+	thread2.start
+End Sub
+
+Sub Test1()
+	For i=0 To 2000000
+		Log("thread 1 = " & i)
+		
+	Next
+End Sub
+
+Sub Test2()
+	For i=0 To 2000000
+		Log("thread 2 = " & i)
+	Next
+End Sub

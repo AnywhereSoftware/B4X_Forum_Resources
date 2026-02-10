@@ -1,0 +1,181 @@
+﻿Build1=B4X,B4RDev,B4X
+Build2=Line,B4RDev,Line
+Build3=Steps,B4RDev,Steps
+Group=Default Group
+Library1=rada_neopixel
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+
+	Private Matrix As Ada_NeoPixel
+	Private Timer1 As Timer
+	Private DisplayStep As Int = 0 'ignore
+	Private StepIndex As Int 'ignore
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	' Using the accessors defined in the wrapper
+	Dim PixelType As ULong = Matrix.Neo_RGB + Matrix.Neo_KHZ800
+
+	' Initialise on Pin 14 for the 8x8 Matrix
+	Matrix.Initialize(64, 14, PixelType)
+	Matrix.Begin
+	Matrix.SetBrightness(10)
+	
+	StepIndex = 3
+
+	Timer1.Initialize("Timer1_Tick", 1000)
+	Timer1.Enabled = True
+End Sub
+
+#If Line
+
+	Sub Timer1_Tick
+		Matrix.Clear
+		' Light up the first 8 pixels in Red
+		For i = 0 To 7
+			Matrix.SetPixelColor(i, 5, 0, 255)
+		Next
+		Matrix.Show
+	End Sub
+	
+#Else If B4X
+
+
+Sub Timer1_Tick
+	Matrix.Clear
+	    
+	Select DisplayStep
+		Case 0
+			' Full 8x8 "B" in Red
+			DrawLargeB(255, 0, 0)
+			DisplayStep = 1
+		Case 1
+			' Full 8x8 "4" in Green
+			DrawLarge4(0, 255, 0)
+			DisplayStep = 2
+		Case 2
+			' Full 8x8 "X" in Blue
+			DrawLargeX(0, 0, 255)
+			DisplayStep = 0
+	End Select
+	    
+	Matrix.Show
+End Sub
+
+	' --- Large Character Drawing Subs (8x8 Grid) ---
+Sub DrawLargeB(Red As Byte, Green As Byte, Blue As Byte)
+	' Pixel indices based on the 8x8 grid provided
+	' Row 0: 0,1,2,3,4,5,6,7
+	' Row 1: 8, 15
+	' Row 2: 16, 23 (Correction: Row 2 is indices 16-23)
+	' Row 3: 24,25,26,27,28,29,30
+	' Row 4: 32, 39 (Row 4 starts at 32)
+	' Row 5: 40, 47
+	' Row 6: 48, 55
+	' Row 7: 56,57,58,59,60,61,62,63
+	    
+	' Top bar
+	For i = 0 To 7
+		Matrix.SetPixelColor(i, Red, Green, Blue)
+	Next
+	    
+	' Middle bar
+	For i = 24 To 30
+		Matrix.SetPixelColor(i, Red, Green, Blue)
+	Next
+	    
+	' Bottom bar
+	For i = 56 To 63
+		Matrix.SetPixelColor(i, Red, Green, Blue)
+	Next
+	    
+	' Left vertical spine
+	For i = 0 To 7
+		Matrix.SetPixelColor(i * 8, Red, Green, Blue)
+	Next
+
+	' Right side connectors/tails
+	Matrix.SetPixelColor(15, Red, Green, Blue) ' End of top loop
+	Matrix.SetPixelColor(23, Red, Green, Blue) ' Row 2 right side
+	Matrix.SetPixelColor(30, Red, Green, Blue) ' Middle connection edge
+	Matrix.SetPixelColor(39, Red, Green, Blue) ' Row 4 right side
+	Matrix.SetPixelColor(47, Red, Green, Blue) ' Row 5 right side
+	Matrix.SetPixelColor(55, Red, Green, Blue) ' Row 6 right side
+	    
+	' Specific LED for the lower loop spine
+	Matrix.SetPixelColor(32, Red, Green, Blue)
+End Sub
+
+Sub DrawLarge4(Red As Byte, Green As Byte, Blue As Byte)
+	' Full size 8x8 number 4
+	' Vertical bar at column 5
+	For i = 0 To 7
+		Matrix.SetPixelColor((i * 8) + 4, Red, Green, Blue)
+	Next
+	' Horizontal bar at row 4
+	For i = 0 To 7
+		Matrix.SetPixelColor(32 + i, Red, Green, Blue)
+	Next
+	' Diagonal/Left side
+	Dim pts() As UInt = Array As UInt(0, 8, 16, 24)
+	For Each p As UInt In pts
+		Matrix.SetPixelColor(p, Red, Green, Blue)
+	Next
+End Sub
+
+Sub DrawLargeX(Red As Byte, Green As Byte, Blue As Byte)
+	' Full 8x8 X from corner to corner
+	For i = 0 To 7
+		' Left-to-right diagonal
+		Matrix.SetPixelColor(i * 9, Red, Green, Blue)
+		' Right-to-left diagonal
+		Matrix.SetPixelColor((i + 1) * 7, Red, Green, Blue)
+	Next
+End Sub
+
+#Else If Steps
+
+Sub Timer1_Tick
+	Select StepIndex
+		Case 0
+			Matrix.Clear
+			Matrix.AnimatePixelColor(0, 7, Matrix.SetRGB(0, 0, 255), 100)
+			Matrix.Show
+
+			StepIndex = 1
+		Case 1
+			Matrix.Clear
+			Matrix.MovePixel(3, 63)
+			Matrix.Show
+
+			StepIndex = 0
+		Case 3
+			Matrix.Clear
+			Matrix.AnimatePixelColor(0, 7, Matrix.SetRGB(255, 0, 0), 100)
+			Matrix.Show
+
+			Matrix.Clear
+			Matrix.AnimatePixelColor(7, 0, Matrix.SetRGB(255, 0, 0), 100)
+			Matrix.Show
+	End Select
+End Sub
+
+#End If

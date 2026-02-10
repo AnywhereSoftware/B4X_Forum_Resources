@@ -1,7 +1,13 @@
 ### [Web][MiniHtml] Quick Scaffolding with Code Snippets by aeric
-### 10/17/2025
+### 02/03/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/169064/)
 
+[TABLE]  
+[TR]  
+[TD]This tutorial is obsolete for latest version of MiniHtml[/TD]  
+[/TR]  
+[/TABLE]  
+  
 **MiniHtml** v0.20 has a big update!  
   
 With embedded **Code Snippets**, this is a new beginning of using reusable templates to **create webpage**.  

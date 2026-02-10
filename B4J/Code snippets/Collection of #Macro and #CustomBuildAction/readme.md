@@ -1,5 +1,5 @@
 ### Collection of #Macro and #CustomBuildAction by aeric
-### 09/24/2025
+### 02/03/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168732/)
 
 With new version of B4X, #Macro is a useful addition.  
@@ -7,7 +7,7 @@ It is a shortcut to automate some tasks and provide a very convenient way of usi
 It is an alternative to Comment links where you only need a mouse click instead of pressing the Control key and mouse click.  
 However, for those who prefer to use keyboard shortcuts, e.g Ctrl + 1, Ctrl + 2 it is still supported.  
   
-Tutorial :   
+Tutorial :  
 <https://www.b4x.com/android/forum/threads/b4x-comment-links-and-macros.119897/>  
 <https://www.b4x.com/android/forum/threads/b4x-custombuildaction.168654/>  
   
@@ -34,7 +34,7 @@ This macro is used to be a comment link to export B4XPages project as zip file
   
   
 **Sync json and binary layouts (B4XPages)**  
-Please check: [Tool [B4X] JsonLayouts - synchronize json and binary layouts](https://www.b4x.com/android/forum/threads/b4x-jsonlayouts-synchronize-json-and-binary-layouts.167398/)  
+[Tool [B4X] JsonLayouts - synchronize json and binary layouts](https://www.b4x.com/android/forum/threads/b4x-jsonlayouts-synchronize-json-and-binary-layouts.167398/)  
 
 ```B4X
 #Macro: After Save, Sync Layouts, ide://run?File=%ADDITIONAL%\JsonLayouts.jar&Args=%PROJECT%&Args=%PROJECT_NAME%  
@@ -81,7 +81,7 @@ This macro is used to be a comment link to open GitHub Desktop app.
   
 **Download required Additional Libraries**  
 This is a convenient way to download all required libraries instead of searching for them one by one on the forum.  
-<https://www.b4x.com/android/forum/threads/tool-additional-libraries-downloader.166880/>  
+[[Tool] Additional Libraries Downloader](https://www.b4x.com/android/forum/threads/tool-additional-libraries-downloader.166880/)  
 
 ```B4X
 #Macro: Title, GetLibs, ide://run?file=%JAVABIN%\java.exe&args=-jar&args=%ADDITIONAL%\..\B4X\libget-non-ui.jar&args=%PROJECT%&args=False
@@ -108,8 +108,7 @@ I use this macro to copy certain files that need to be updated in release folder
   
   
 **Rename result.jar**  
-You can also check other methods here:  
-<https://www.b4x.com/android/forum/threads/rename-result-jar-using-macro-or-custombuildaction.168616/>  
+[(B4J Code Snippet) Rename result.jar using #Macro or #CustomBuildAction](https://www.b4x.com/android/forum/threads/rename-result-jar-using-macro-or-custombuildaction.168616/)  
 
 ```B4X
 #Macro: Title, Rename, ide://run?file=%COMSPEC%&Args=/c&Args=IF+EXIST+result.jar&Args=ren&Args=result.jar&Args=libget-non-ui.jar
@@ -126,12 +125,12 @@ I use release folder for preparation to create b4xlib or project template, exclu
 
   
   
-**Update version in manifest.txt using Manifest Writer**  
+**Update manifest.txt using Manifest Writer**  
 I use this tool to update new version value in manifest.txt before distributing the new b4xlib or project template. Other values can also be updated. This is more convenient than opening the release folder from file system and edit the file manually.  
-<https://www.b4x.com/android/forum/threads/tool-manifest-txt-writer-for-b4xlib.168723/>  
+[[Tool] Manifest.txt Writer for B4XLib](https://www.b4x.com/android/forum/threads/tool-manifest-txt-writer-for-b4xlib.168723/)  
 
 ```B4X
-#Macro: Title, Version, ide://run?file=%JAVABIN%\java.exe&Args=-jar&Args=%ADDITIONAL%\..\B4X\manifest-writer-non-ui.jar&Args=%PROJECT%\..\release&Args=%PROJECT%\..\release&Args=Version&Args=2.10
+#Macro: Title, Version, ide://run?file=%JAVABIN%\java.exe&Args=-jar&Args=%ADDITIONAL%\..\B4X\manifest-writer.jar&Args=%PROJECT%\..\release&Args=%PROJECT%\..\release&Args=Version&Args=2.10
 ```
 
   
@@ -151,7 +150,7 @@ B4XLib: (B4X cross platform library)
 Project Template: (or platform specific b4xlib)  
 
 ```B4X
-#Macro: Title, Publish, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..\..\release&args=-cMf&args=%ADDITIONAL%\Pakai Server%20(5.40).b4xtemplate&args=*
+#Macro: Title, Publish, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..\..\release&args=-cMf&args=%ADDITIONAL%\Pakai+Server+(6.00).b4xtemplate&args=*
 ```
 
   
@@ -176,7 +175,7 @@ After compiling the server app in release mode, compress the required files as a
   
 **Copy jSerial library (jssc.dll) when building Standalone Package**  
 This CustomBuildAction is provided by Erel to solve my question here:  
-<https://www.b4x.com/android/forum/threads/solved-error-building-standalone-package-with-jserial-library-v1-40.165988/#post-1017771>  
+[(Solved) Error building Standalone Package with jSerial library v1.40](https://www.b4x.com/android/forum/threads/solved-error-building-standalone-package-with-jserial-library-v1-40.165988/#post-1017771)  
 
 ```B4X
 #CustomBuildAction: After Packager, %WINDIR%\System32\robocopy.exe, ..\ temp\build\bin\ jssc.dll
@@ -193,6 +192,16 @@ This CustomBuildAction is useful for copying the compiled result.jar as a new na
 #End If
 ```
 
+  
+  
+**Code Bundle – Export Projects as a Single JSON for AI Analysis**  
+[[B4X] CodeBundle – Export Projects as a Single JSON for AI Analysis](https://www.b4x.com/android/forum/threads/b4x-codebundle-%E2%80%93-export-projects-as-a-single-json-for-ai-analysis.169835/)  
+
+```B4X
+#Macro: Title, Code bundle, ide://run?File=%ADDITIONAL%\..\B4X\CodeBundle.jar&Args=%PROJECT_NAME%
+```
+
+  
   
   
 This post will be updated if I found a new one. If you have some useful macros, please share with us.
