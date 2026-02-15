@@ -1,5 +1,5 @@
 ### [Web] MiniHtml quick tutorial by aeric
-### 11/25/2025
+### 02/10/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/169429/)
 
 [HEADING=1]A New Paradigm Shift[/HEADING]  
@@ -22,7 +22,7 @@ Below is what ChatGPT understandings of this library:
 - Prototyping simple web UIs via B4X code.
 - Using when you already use B4X for your project and want to stay within its ecosystem.
 
-It means, you can:  
+For me, it means you can:  
 
 1. Use B4J as a single IDE for both backend and frontend logic
 2. Use B4J server as live development server

@@ -1,5 +1,5 @@
 ### [Web] Break and Rebuild Strategy by aeric
-### 02/03/2026
+### 02/10/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/170190/)
 
 Designing a web front end from scratch usually requires years of experience.  
@@ -52,7 +52,7 @@ Usually the one folder we are interested on is the "dist" folder. If you are unl
   
 You will find a lot of html files. Basically all the files have the same structure which has top panel and sidebar. Except for some full screen page like login or error page.  
   
-So the strategy is to take the index.html or dashboard.html and work from it.  
+[SIZE=5]**So the strategy is to take the index.html or dashboard.html and work from it.**[/SIZE]  
   
 Ignore other files at this moment. They will be only useful in the future or some you may not even use them.  
   

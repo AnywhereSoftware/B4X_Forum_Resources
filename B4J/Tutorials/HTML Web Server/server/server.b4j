@@ -1,0 +1,41 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.server
+File1=products.html
+FileGroup1=Default Group
+Group=App
+Library1=jcore
+Library2=jserver
+Module1=DynamicHandler
+Module2=HelloWorldHandler
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=2
+Version=10.3
+@EndOfDesignText@
+'Non-UI application (console application)
+#Region  Project Attributes
+	#CommandLineArgs:
+	#MergeLibraries: true
+#End Region
+#Macro: Title, Backup, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&Args=-cMf&Args=..\%PROJECT_NAME%.zip&args=Files&args=Objects\www&args=*.bas&args=*.b4j
+'#Macro: Title, Distribute, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=.&args=-cMf&args=dist.zip&args=www&args=*.jar
+#If Release
+#CustomBuildAction: 2, %JAVABIN%\jar.exe, -cMf dist.zip www %PROJECT_NAME%.jar
+#End If
+Sub Process_Globals
+	Public srvr As Server
+End Sub
+
+' <link>Click to browse|http://127.0.0.1</link>
+Sub AppStart (Args() As String)
+	srvr.Initialize("")
+	srvr.Port = 80
+	'srvr.LogsFileFolder = File.Combine(File.DirApp, "logs")
+	'srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddHandler("/hello/world", "HelloWorldHandler", False)
+	srvr.AddHandler("/dynamic", "DynamicHandler", False)
+	srvr.SetStaticFilesOptions(CreateMap("dirAllowed": True)) ' Warning! dirAllowed: True => visitor can browse www folder
+	srvr.Start
+	Log("Server started")
+	StartMessageLoop
+End Sub

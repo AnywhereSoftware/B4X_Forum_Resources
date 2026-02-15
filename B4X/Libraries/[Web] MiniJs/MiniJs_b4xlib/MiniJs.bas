@@ -25,6 +25,15 @@ Public Sub Generate As String
 	Return scriptBuilder.ToString
 End Sub
 
+' Generate the complete JavaScript code without script tag
+Public Sub Generate2 As String
+    'Return jsCode.ToString
+    Dim scriptBuilder As StringBuilder
+	scriptBuilder.Initialize
+	scriptBuilder.Append(GetIndent).Append(jsCode)
+	Return scriptBuilder.ToString
+End Sub
+
 ' Add a line of JavaScript code
 Public Sub AddLine (code As String)
     Dim indentStr As String = GetIndent
@@ -64,6 +73,14 @@ Private Sub GetIndent As String
     Return sb.ToString
 End Sub
 
+Public Sub IncreaseIndent
+	currentIndent = currentIndent + 1
+End Sub
+
+Public Sub DecreaseIndent
+	currentIndent = currentIndent - 1
+End Sub
+
 ' Start a function
 Public Sub StartFunction (name As String, parameters() As String)
 	Dim paramList As String
@@ -94,7 +111,7 @@ Public Sub ElseIf (condition As String)
     currentIndent = currentIndent + 1
 End Sub
 
-Public Sub Else
+Public Sub AddElse
     currentIndent = currentIndent - 1
     AddLine("} else {")
     currentIndent = currentIndent + 1
@@ -216,24 +233,7 @@ Public Sub AddCustomEventDispatch (eventName As String, detailData As Map)
     currentIndent = currentIndent + 1
     AddLine("detail: {")
     currentIndent = currentIndent + 1
-    
-	'Dim keys As List = detailData.Keys
-	'For i = 0 To keys.Size - 1
-	'    Dim key As String = keys.Get(i)
-	'    Dim value As Object = detailData.Get(key)
-	'    Dim lineEnd As String = ","
-	'    If i = keys.Size - 1 Then lineEnd = ""
-	'    
-	'    If value Is String Then
-	'        AddLine($"{key}: '${value}'${lineEnd}"$)
-	'    Else If value Is Boolean Then
-	'        Dim boolVal As String = value
-	'        AddLine($"{key}: ${boolVal}${lineEnd}"$)
-	'    Else
-	'        AddLine($"{key}: ${value}${lineEnd}"$)
-	'    End If
-	'Next
-	'Dim keySize As Int = detailData.Size
+
 	Dim nextKey As Int
 	For Each key As String In detailData.Keys
 		Dim lineEnd As String

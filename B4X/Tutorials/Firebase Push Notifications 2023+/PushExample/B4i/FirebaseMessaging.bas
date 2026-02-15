@@ -19,10 +19,10 @@ Public Sub SubscribeToTopics (Topics() As Object)
 		Wait For fm_FCMConnected
 		Log("FCMConnected")
 	End If
+	Log("Token: " & GetToken)
 	For Each topic As String In Topics
 		fm.SubscribeToTopic("ios_" & topic)
 	Next
-	Log("Token: " & GetToken)
 End Sub
 
 

@@ -1,10 +1,11 @@
 ### xSocket -  The socket library is fully functional for event and semantic message streams by tummosoft
-### 07/31/2024
+### 02/10/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/160029/)
 
 xSocket is a library wrapped around Socket.d.  
 Socket.d has a collection of many connection protocols: TCP, UDP and WS. It can be used for MSG, RPC, IM, MQ and other scenarios, and can replace Http, Websocket, gRpc and other protocols. Such as the connection between the mobile device and the server, such as some microservice scenarios, etc.  
-[HEADING=2][/HEADING]  
+[HEADING=2]Source code:[/HEADING]  
+<https://github.com/tummosoft/xSocket>  
 [HEADING=2]Main Features[/HEADING]  
 
 - Event-based, each message can be event-routed
@@ -18,7 +19,7 @@ Socket.d has a collection of many connection protocols: TCP, UDP and WS. It can 
 - Simple interface, reactive but with callback interface
 
   
-**\* Extends Java:** [https://drive.google.com/file/d/1AASIjlcINkuU5u607hXxR3c8Y4d7MD7u/view?usp=sharing](https://drive.google.com/file/d/1LfFh1KWbz3lGbPMLGDRZqxjPE65_SdM5/view?usp=sharing)  
+**\* Extends Java:**<https://www.mediafire.com/file/kdr7i78m84ko1eg/dSocket.zip/file>  
   
 **\* Language supported:** B4X, .NET, Javascript, PHP;  
   
@@ -63,6 +64,4 @@ Socket.d has a collection of many connection protocols: TCP, UDP and WS. It can 
 - MQOnRequest(session as xSession)  
 - MQOnMessage(session as xSession, messagex as xMessage)  
 - MQOnClose(session as xSession)  
-- MQOnError(session as xSession, error as String)  
-  
-**[SIZE=6]If you want to compile the application into a .jar file, you need to use SocketD 2.5.10[/SIZE]**
+- MQOnError(session as xSession, error as String)

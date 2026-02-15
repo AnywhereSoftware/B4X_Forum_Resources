@@ -1,8 +1,8 @@
 ###  [XUI] xChartLite b4xlib by klaus
-### 01/01/2025
+### 02/12/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/140197/)
 
-**Current version : 1.8**  
+**Current version : 1.9**  
   
 xChartLite is a b4xlib library, it is a lite version of the [xChart library](https://www.b4x.com/android/forum/threads/b4x-xui-xchart-class-and-b4xlib.91830/#content).  
 A mini version is also available:[xChartMini](https://www.b4x.com/android/forum/threads/b4x-xui-xchartmini-b4xlib.146592/).  
@@ -29,6 +29,10 @@ Tested on PC, Android Samsung S10, Samsung Tab S2, iPhone 8 and iPad.
   
 ![](https://www.b4x.com/android/forum/attachments/128620)  
   
+EDIT: 2026.02.12 Version 1.9  
+Amended scale display problem.  
+Only the xChartLite.b4xlib file has been changed.  
+  
 EDIT: 2025.01.01 Version 1.8  
 Improved check of chart incompatibilities  
 Changed the 0 axis highligt property, it is now behind the data lines  
@@ -53,7 +57,7 @@ Only the xChartLite.b4xlib the xChartLite.xml files have been updated.
 **xChartLite**  
   
  **Author:** Klaus CHRISTL (klaus)  
-**Version: 1.8**  
+**Version: 1.9**  
   
 
 - **xChartLite**

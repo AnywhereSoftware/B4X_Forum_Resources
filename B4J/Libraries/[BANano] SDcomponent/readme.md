@@ -1,5 +1,5 @@
 ### [BANano] SDcomponent by Star-Dust
-### 04/09/2025
+### 02/12/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/164329/)
 
 I created some custom components for BANano so that I can have better graphics without having to import heavy framework components that slow down the compilation. The result is acceptable at the moment and can be improved in the future. (Further information can be found [**here**](https://www.b4x.com/android/forum/threads/banano-one-step-ahead.164173/))  
@@ -18,9 +18,10 @@ I created some custom components for BANano so that I can have better graphics w
 07 SDdatepicker  
 08 SDfunc  
 09 SDgoogleMap  
-10 SDgrid[/TD]  
-[TD]11 SDicon  
-12 SDimage  
+10 SDgrid  
+11 SDicon[/TD]  
+  
+[TD]12 SDimage  
 13 SDinput  
 14 SDlabel  
 15 SDlist  
@@ -28,10 +29,11 @@ I created some custom components for BANano so that I can have better graphics w
 17 SDpanel  
 18 SDplanning  
 19 SDplate  
-20 SDrangebar[/TD]  
-[TD]21 SDrow  
-22 SDscrollHoriz  
-23 SDseekbar  
+20 SDrangebar  
+21 SDrow  
+22 SDscrollHoriz[/TD]  
+  
+[TD]23 SDseekbar  
 24 SDselect  
 25 SDsidebar  
 26 SDstat  
@@ -42,6 +44,9 @@ I created some custom components for BANano so that I can have better graphics w
 31 SDwordeditor  
 32 SDcarousel  
 33 SDClock[/TD]  
+  
+[TD]34 SDvideo  
+35 SDlink[/TD]  
 [/TR]  
 [/TABLE]  
   
@@ -53,7 +58,7 @@ I created some custom components for BANano so that I can have better graphics w
 **BANanoSDcomponent  
   
 Author:** Star-Dust  
-**Version:** 1.02  
+**Version:** 2.01  
   
 [SPOILER="CLASS AND METHOD"]  
   
@@ -1202,6 +1207,8 @@ gm.AddMarker("Home", Lar, Lng,"<http://maps.google.com/mapfiles/ms/icons/blue-do
 - Rel. 1.0
 - Rel, 1.01
 - Rel. 1.02 - Added **SDClock**
+- Rel. 2.00 - Added SDfunc.Display
+- Rel. 2.01 - Added **SDVideo**, **SDlink**
 
 ---
 

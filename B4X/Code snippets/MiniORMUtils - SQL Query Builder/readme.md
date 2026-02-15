@@ -1,5 +1,5 @@
 ###  MiniORMUtils - SQL Query Builder by aeric
-### 03/09/2025
+### 02/10/2026
 [B4X Forum - B4X - Code snippets](https://www.b4x.com/android/forum/threads/141446/)
 
 [TABLE]  
@@ -7,7 +7,7 @@
 [TH]Updates[/TH]  
 [/TR]  
 [TR]  
-[TD]Version 2.00 is available  
+[TD]Version 4.03 is available  
 <https://www.b4x.com/android/forum/threads/b4x-miniormutils.166030/>[/TD]  
 [/TR]  
 [/TABLE]  

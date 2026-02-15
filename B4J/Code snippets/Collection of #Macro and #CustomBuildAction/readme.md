@@ -1,7 +1,9 @@
 ### Collection of #Macro and #CustomBuildAction by aeric
-### 02/03/2026
+### 02/13/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168732/)
 
+GitHub: <https://github.com/pyhoon/Collection-of-Macro-and-CustomBuildAction>  
+  
 With new version of B4X, #Macro is a useful addition.  
 It is a shortcut to automate some tasks and provide a very convenient way of using the IDEs.  
 It is an alternative to Comment links where you only need a mouse click instead of pressing the Control key and mouse click.  
@@ -164,11 +166,22 @@ To backup my B4J server projects, I use the following macro.
 
   
   
-**Publish server app**  
-After compiling the server app in release mode, compress the required files as a single zip file for uploading to VPS server.  
+**Publish server app (Macro)**  
+After compiling the server app in release mode, we can create a single zip file for uploading to VPS server.  
 
 ```B4X
 #Macro: Title, Deploy, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=../Objects&args=-cMf&args=Publish.zip&args=www&args=*.jar&args=*.ini
+```
+
+  
+  
+**Publish server app (CustomBuildAction)**  
+Auto create dist.zip upon release compilation  
+
+```B4X
+#If Release  
+#CustomBuildAction: 2, %JAVABIN%\jar.exe, -cMf dist.zip www %PROJECT_NAME%.jar  
+#End If
 ```
 
   

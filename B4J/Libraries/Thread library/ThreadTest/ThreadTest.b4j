@@ -7,9 +7,10 @@ Library1=jcore
 Library2=jfx
 Library3=jxui
 Library4=thread
+Module1=Helper
 NumberOfFiles=1
 NumberOfLibraries=4
-NumberOfModules=0
+NumberOfModules=1
 Version=10.3
 @EndOfDesignText@
 #Region Project Attributes 
@@ -24,7 +25,11 @@ Sub Process_Globals
 	Private Button1 As B4XView
 	Dim thread1 As Thread
 	Dim thread2 As Thread
+	Dim thread3 As Thread
+	Dim helpMe As Helper
 	Private Label1 As Label
+	Private time As Long = 999
+	Private Button2 As Button
 End Sub
 
 Sub AppStart (Form1 As Form, Args() As String)
@@ -33,16 +38,18 @@ Sub AppStart (Form1 As Form, Args() As String)
 	MainForm.Show
 	thread1.Initialise("thread1")
 	thread2.Initialise("thread2")
-	thread1.newThread("com.tummosoft.main", "test1")
-	thread2.newThread("com.tummosoft.main", "test2")
+	
+	thread3.Initialise("thread2")
+			
+	helpMe.Initialize
+	
 End Sub
 
 Sub Button1_Click
-	thread1.start
+	thread1.start("test1")
+		
+	thread2.start("test2")	
 	
-	thread2.Daemon = True
-	thread2.Name = "thread2"
-	thread2.start
 End Sub
 
 Sub Test1()
@@ -56,4 +63,17 @@ Sub Test2()
 	For i=0 To 2000000
 		Log("thread 2 = " & i)
 	Next
+End Sub
+
+Sub add(a As Int) As Int
+	Log("add----------------------")
+	Dim rs As Int = a + 10
+	Return rs
+End Sub
+
+Private Sub Button2_Click
+	'helpMe.startThread
+	Dim obj As Object = thread3.Start2("add", "int", 15)
+	
+	Log(obj)
 End Sub

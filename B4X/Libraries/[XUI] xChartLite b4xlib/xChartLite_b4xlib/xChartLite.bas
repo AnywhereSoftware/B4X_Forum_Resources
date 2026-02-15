@@ -6,7 +6,10 @@ Version=6.01
 @EndOfDesignText@
 'xChartLite Custom View class
 'This class is a lite version of the xChart class
-
+'
+'Version 1.9
+'Amended scale display problem
+'
 'Version 1.8
 'Changed the 0 axis highligt property, it is now behind the data lines
 'Added the DrawGridFrame, DrawHorizontalGridLines, DrawVerticalGridLines, SetBarMeanValueFormat, BarMarginMode properties
@@ -97,7 +100,7 @@ Version=6.01
 
 Sub Class_Globals
 	Type GraphDataL (Title As String, SubTitle As String, XAxisName As String, YAxisName As String, Left As Int, Right As Int, Top As Int, Bottom As Int, Width As Int, Height As Int, Radius As Float, CenterX As Int, CenterY As Int, Rect As B4XRect, YInterval As Int, XInterval As Double, XOffset As Int, BarWidth As Int, ChartType As String, BarSubWidth As Int, IncludeBarMeanLine As Boolean, IncludeValues As Boolean, ChartBackgroundColor As Int, GridFrameColor As Int, GridColor As Int, DrawGridFrame As Boolean, DrawHorizontalGridLines As Boolean, DrawVerticalGridLines As Boolean, XScaleTextOrientation As String, PieStartAngle As Int, PieGapDegrees As Int, PieAddPercentage As Boolean, GradientColors As Boolean, GradientColorsAlpha As Int, BarValueOrientation As String, BarMarginMode As Int)
-	Type PointDataL (X As String, XArray() As Double, YArray() As Double, ShowTick As Boolean)
+	Type PointDataL (X As String, YArray() As Double, ShowTick As Boolean)
 	Type ItemDataL (Name As String, Color As Int, Value As Float, StrokeWidth As Int, DrawLine As Boolean, PointType As String, PointFilled As Boolean, PointColor As Int, YXArray As List)
 	Type ScaleDataL (Scale As Double, MinVal As Double, MaxVal As Double, MinManu As Double, MaxManu As Double,	IntervalManu As Double, MinAuto As Double, MaxAuto As Double, IntervalAuto As Double, Interval As Double, NbIntervals As Int, Automatic As Boolean, Different As Boolean, Exp As Double, YZeroAxis As Boolean, ScaleValues As String, DrawXScale As Boolean, DrawYScale As Boolean)
 	Type ScaleDataLogL(Scale As Double, MantMin As Int, MantMax As Int, LogMin As Double, LogMinIndex As Int, LogMax As Double, Logs() As Double, Vals() As Double, NbDecades As Int, ScaleValues As String, RadarScaleType As String)
@@ -262,7 +265,7 @@ Public Sub DesignerCreateView (Base As Object, Lbl As Label, Props As Map)
 	BMVNF.MinimumFractions = 2
 	BMVNF.GroupingUsed = False
 	
-	mMaxDigits = 6
+	Values.MaxDigits = 6
 End Sub
 
 Public Sub Base_Resize (Width As Double, Height As Double)
@@ -605,7 +608,7 @@ Public Sub AddLineMultiplePoints(X As String, YArray() As Double, ShowTick As Bo
 	PD.X = X
 	PD.YArray = YArray
 	PD.ShowTick = ShowTick
-	Points.Add(PD)
+	 Points.Add(PD)
 	If xpnlValues.Visible = True Then
 		xpnlValues.Visible = False
 		xcvsCursor.ClearRect(Values.rectCursor)
@@ -1265,11 +1268,7 @@ Private Sub GetLinePointsMinMaxMeanValues(Axis As Int) As Double()
 					Private YVals() As Double
 					Private PD As PointDataL
 					PD = Points.Get(i)
-					If Axis = sX Then
-						YVals = PD.XArray
-					Else
-						YVals = PD.YArray
-					End If
+					YVals = PD.YArray
 					For j = 0 To PD.YArray.Length - 1
 						MMMValues(1) = Max(MMMValues(1), YVals(j))
 						MMMValues(0) = Min(MMMValues(0), YVals(j))

@@ -1,5 +1,5 @@
 ### [Web] PHP-CRUD-API Plug-Ins (Queries, Forms, Authentication, Email, SSE and more) by Mashiane
-### 02/04/2026
+### 02/09/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/169739/)
 
 Hi Fam  
@@ -7,6 +7,9 @@ Hi Fam
 This thread is about middleware and controllers added and useful with the PHP-API-CRUD.  
   
 ![](https://www.b4x.com/android/forum/attachments/169682)  
+  
+  
+<https://www.b4x.com/android/forum/threads/the-giant-api-engine-ebook-source-code-is-out.170209/>  
   
 **Available Plug-Ins  
   

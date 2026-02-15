@@ -26,9 +26,6 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	analytics.Initialize
 	Root = Root1
 	Root.LoadLayout("MainPage")
-	'you can add more topics here. Note that in B4i the topics will be prefixed with ios_.
-	CallSubDelayed2(FirebaseMessaging, "SubscribeToTopics", Array("general")) 
-	
 	'request notification permission
 	#if B4A
 	Wait For (CheckAndRequestNotificationPermission) Complete (HasPermission As Boolean)
@@ -36,10 +33,16 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 		Log("no permission")
 		ToastMessageShow("no permission", True)
 	End If
+	APNPushTokenAvailable 'no need to wait in B4A.
 	#Else If B4i
 	Main.App.RegisterUserNotifications(True, True, True)
 	Main.App.RegisterForRemoteNotifications
 	#End If
+End Sub
+
+Public Sub APNPushTokenAvailable
+	'you can add more topics here. Note that in B4i the topics will be prefixed with ios_.
+	CallSubDelayed2(FirebaseMessaging, "SubscribeToTopics", Array("general"))
 End Sub
 
 #if B4A
@@ -60,3 +63,4 @@ Private Sub CheckAndRequestNotificationPermission As ResumableSub
 	Return Result
 End Sub
 #End If
+

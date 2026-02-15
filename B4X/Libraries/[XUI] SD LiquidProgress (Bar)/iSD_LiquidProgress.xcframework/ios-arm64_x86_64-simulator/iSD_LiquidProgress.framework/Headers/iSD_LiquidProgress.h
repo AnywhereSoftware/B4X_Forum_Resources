@@ -1,0 +1,89 @@
+#import <iCore/iCore.h>
+#import <iXUI/iXUI.h>
+#import <AVFoundation/AVFoundation.h>
+@interface b4i_liquidprogress : B4IClass
+{
+@public NSString* __meventname;
+@public NSObject* __mcallback;
+@public B4XViewWrapper* __mbasegeneral;
+@public B4XViewWrapper* __mbase;
+@public B4IXUI* __xui;
+@public B4XCanvas* __can;
+@public BOOL __circlelighteffect;
+@public int __textcolor;
+@public int __bubbleintens;
+@public B4IList* __bubblelist;
+@public BOOL __bubbleeffect;
+@public int __clr;
+@public int __waveclr;
+@public int __bwaveclr;
+@public int __vl;
+@public int __lr;
+@public int __more;
+@public BOOL __progresstextvisible;
+@public int __progresstextsize;
+@public B4IArray* __point;
+@public NSString* __style;
+@public float __divdot;
+
+}- (NSString*)  _addbubble;
+- (NSString*)  _base_resize:(double) _width :(double) _height;
+- (B4IList*)  _calculatebatman;
+- (NSString*)  _class_globals;
+@property (nonatomic)NSString* _meventname;
+@property (nonatomic)NSObject* _mcallback;
+@property (nonatomic)B4XViewWrapper* _mbasegeneral;
+@property (nonatomic)B4XViewWrapper* _mbase;
+@property (nonatomic)B4IXUI* _xui;
+@property (nonatomic)B4XCanvas* _can;
+@property (nonatomic)BOOL _circlelighteffect;
+@property (nonatomic)int _textcolor;
+@property (nonatomic)int _bubbleintens;
+@property (nonatomic)B4IList* _bubblelist;
+@property (nonatomic)BOOL _bubbleeffect;
+@property (nonatomic)int _clr;
+@property (nonatomic)int _waveclr;
+@property (nonatomic)int _bwaveclr;
+@property (nonatomic)int _vl;
+@property (nonatomic)int _lr;
+@property (nonatomic)int _more;
+@property (nonatomic)BOOL _progresstextvisible;
+@property (nonatomic)int _progresstextsize;
+@property (nonatomic)B4IArray* _point;
+@property (nonatomic)NSString* _style;
+@property (nonatomic)float _divdot;
+- (NSString*)  _designercreateview:(NSObject*) _base :(B4ILabelWrapper*) _lbl :(B4IMap*) _props;
+- (B4IArray*)  _downwave:(int) _lr2 :(int) _level :(int) _wave;
+- (NSString*)  _drawcspline:(int) _colore;
+- (float)  _f:(float) _x;
+- (double)  _f_:(double) _x;
+- (double)  _g_:(double) _x;
+- (int)  _getbackgroundcolor;
+- (int)  _getbackgroundwavecolor;
+- (BOOL)  _getbubbleeffectenable;
+- (int)  _getbubbleintensity;
+- (float)  _getcurvepoint:(int) _i :(float) _v;
+- (int)  _gettextsize;
+- (BOOL)  _gettextvisible;
+- (int)  _getvalue;
+- (int)  _getwavecolor;
+- (NSString*)  _initialize:(B4I*) _ba :(NSObject*) _callback :(NSString*) _eventname;
+- (NSString*)  _invalidate;
+- (double)  _p_:(double) _x;
+- (double)  _q_:(double) _x;
+- (double)  _r_:(double) _x;
+- (NSString*)  _resizembase;
+- (double)  _s_:(double) _x;
+- (NSString*)  _setbackgroundcolor:(int) _c;
+- (NSString*)  _setbackgroundwavecolor:(int) _c;
+- (NSString*)  _setbubbleeffectenable:(BOOL) _b;
+- (NSString*)  _setbubbleintensity:(int) _i;
+- (NSString*)  _setpandu;
+- (NSString*)  _settextsize:(int) _i;
+- (NSString*)  _settextvisible:(BOOL) _b;
+- (NSString*)  _setvalue:(int) _v;
+- (NSString*)  _setwavecolor:(int) _c;
+- (B4IArray*)  _upwave:(int) _level :(int) _wave;
+- (void)  _wait:(long long) _milliseconds;
+@end
+

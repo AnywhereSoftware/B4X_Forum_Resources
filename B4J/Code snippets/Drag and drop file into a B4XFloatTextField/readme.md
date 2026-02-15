@@ -1,5 +1,5 @@
 ### Drag and drop file into a B4XFloatTextField by Erel
-### 02/05/2026
+### 02/08/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/170224/)
 
 ![](https://www.b4x.com/basic4android/images/java_jjD3H9Zne9.gif)  
@@ -54,5 +54,16 @@ Sub IsValidDropEvent(e As DragEvent) As Boolean
         End Try  
     End If  
     Return False  
+End Sub  
+  
+Sub DropTarget_DragDropped(e As DragEvent)  
+    Log("drag dropped")  
+    Dim filename As String = e.GetDragboard.GetFiles.Get(0)  
+    Try  
+        txtFile.Text = filename  
+    Catch  
+        Log(LastException)  
+    End Try  
+    e.SetDropCompleted(True)  
 End Sub
 ```

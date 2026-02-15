@@ -1,5 +1,5 @@
 ###  Firebase Push Notifications 2023+ by Erel
-### 02/09/2025
+### 02/11/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/148715/)
 
 Google has deprecated the previous method of sending push notifications. It will stop working on June 2024.  
@@ -34,4 +34,8 @@ Download google-services.json and put it in the project folder.
   
 1. In iOS the notification popup only appears while the app is not in the foreground. You can UserNotificationCenter to change this behavior (search and you will find).  
 2. FirebaseMessaging module isn't shared between the two projects. It is different in B4A and B4i.  
-3. The message payload can be customized in many ways. API reference: <https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages>
+3. The message payload can be customized in many ways. API reference: <https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages>  
+  
+**Updates**  
+  
+- (PushClients) Topics subscription in B4i is done after the APN token is available. Note the updated code in Main.Application\_PushToken. It looks like a new requirement in the updated Firebase SDK.

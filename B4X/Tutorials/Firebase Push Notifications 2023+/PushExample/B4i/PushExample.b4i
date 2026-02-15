@@ -11,7 +11,7 @@ Module2=FirebaseMessaging
 NumberOfFiles=1
 NumberOfLibraries=4
 NumberOfModules=2
-Version=8.3
+Version=10
 @EndOfDesignText@
 'Code module
 #Region  Project Attributes 
@@ -27,7 +27,7 @@ Version=8.3
 #Entitlement: <key>aps-environment</key><string>production</string>
 'use the provision profile that goes with the explicit App Id
 #ProvisionFile: Firebase.mobileprovision
-
+#MinVersion: 16
 Sub Process_Globals
 	Public App As Application
 	Public NavControl As NavigationController
@@ -48,6 +48,8 @@ Private Sub Application_PushToken (Success As Boolean, Token() As Byte)
 	Log($"PushToken: ${Success}"$)
 	If Success = False Then
 		Log(LastException)
+	Else
+		if B4XPages.IsInitialized Then B4XPages.MainPage.APNPushTokenAvailable
 	End If
 End Sub
 
