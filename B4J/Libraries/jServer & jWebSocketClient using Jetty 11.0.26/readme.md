@@ -1,5 +1,5 @@
 ### jServer & jWebSocketClient using Jetty 11.0.26 by Chris2
-### 02/06/2026
+### 02/16/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170233/)
 
 I did this more as a learning exercise than anything else and also because I noted a later version of [jetty 11](https://jetty.org/download.html) had been released that addressed a CVE ([CVE-2025-5115](https://github.com/advisories/GHSA-mmxm-8w33-wc4h)) .  
@@ -10,13 +10,13 @@ Credits & helpful info:
 [USER=1]@Erel[/USER] - <https://www.b4x.com/android/forum/threads/jwebsocketclientv2.156357/post-963635>, <https://www.b4x.com/android/forum/threads/jserver-v4-0-based-on-jetty-11.140437/>  
 [USER=125673]@teddybear[/USER] - <https://www.b4x.com/android/forum/threads/jserver-11-0-20-jserver-11-0-21-packaging-error.162092/post-994492>,  
   
-A version of jServer based on [Jetty 11.0.26](https://jetty.org/download.html) is available to download from [here](https://drive.google.com/file/d/1e0ZnQAAM9wCTgaoWy0kfBxMX71UAvSCi/view?usp=sharing) (too big for forum attachment), and attached is a version of the jWebSocketClient library that uses that jServer-11.0.26.   
+A version of jServer based on [Jetty 11.0.26](https://jetty.org/download.html) is available to download from [here](https://drive.google.com/file/d/1e0ZnQAAM9wCTgaoWy0kfBxMX71UAvSCi/view?usp=sharing) (too big for forum attachment), and attached is a version of the jWebSocketClient library that uses that jServer-11.0.26.  
 jServer-11.0.26 is based on [jServer 4.03](https://www.b4x.com/android/forum/threads/jserver-v4-0-based-on-jetty-11.140437/page-2#post-889892)  
 jWebSocketClient-11.0.26 is based on [jWebSocketClient V2](https://www.b4x.com/android/forum/threads/jwebsocketclientv2.156357/post-963635)  
   
 To install:  
 **jServer-11.0.26**  
-Download the zip file from [here](https://drive.google.com/file/d/1e0ZnQAAM9wCTgaoWy0kfBxMX71UAvSCi/view?usp=sharing), and extract the contents into the internal libraries folder. You should then have *jServer-11.0.26.jar*, *jServer-11.0.26.xml*, and the folder *jserver-11.0.26* which contains 37 jar files.   
+Download the zip file from [here](https://drive.google.com/file/d/1e0ZnQAAM9wCTgaoWy0kfBxMX71UAvSCi/view?usp=sharing), and extract the contents into the internal libraries folder. You should then have *jServer-11.0.26.jar*, *jServer-11.0.26.xml*, and the folder *jserver-11.0.26* which contains 37 jar files.  
 Refresh your libraries in B4J. The new version should appear as jServer-11.0.26.  
   
 As per [USER=1]@Erel[/USER]'s original jServer v4.0 post, the following declarations are needed for the standalone packager:  
@@ -34,7 +34,7 @@ As per [USER=1]@Erel[/USER]'s original jServer v4.0 post, the following declarat
 [note the extra IncludedModules based on [USER=125673]@teddybear[/USER]'s & [USER=12970]@tchart[/USER]'s [help](https://www.b4x.com/android/forum/threads/jserver-11-0-20-jserver-11-0-21-packaging-error.162092/post-994492)]  
   
 **jWebSocketClient-11.0.26:**   
-Copy the contents of the attached zip (jWebScocketClient-11.0.26.zip containing *jWebSocketClient-11.0.26.jar* & *jWebSocketClient-11.0.26.xml*) to the internal libraries folder.   
+Copy the contents of the attached zip (jWebScocketClient-11.0.26.zip containing *jWebSocketClient-11.0.26.jar* & *jWebSocketClient-11.0.26.xml*) to the internal libraries folder.  
 Refresh your libraries in B4J. The new version should appear as jWebScocketClient-11.0.26.  
   
 As per [USER=1]@Erel[/USER]'s post above in order to build a standalone package you need:  
@@ -48,9 +48,11 @@ As per [USER=1]@Erel[/USER]'s post above in order to build a standalone package 
   
 [note the addition of java.desktop in the IncludedModules]  
   
+[EDIT: I have found that some apps using the jWebScocketClient-11.0.26 library need extra IncludedModules. I suggest that anyone encountering java.lang.ClassNotFoundException errors when using these libraries follow [@Daestrum's instructions here](https://www.b4x.com/android/forum/threads/solved-missing-java-class-in-a-packaged-exe.118705/post-742706) to determine which modules need to be added]  
+  
 [SPOILER="What I did:"]  
 **jServer-11.0.26**  
-1. Copied the jar/xml from jServer 4.03, and renamed to jServer-11.0.26.jar & jServer-11.0.26.xml.   
+1. Copied the jar/xml from jServer 4.03, and renamed to jServer-11.0.26.jar & jServer-11.0.26.xml.  
   
 2. Downloaded Jetty 11.0.26, created a folder called jserver-11.0.26 in the B4J internal libraries folder and copied the required files from jetty 11.0.26 into the jserver-11.0.26 folder.  
 [NOTE: the downloaded Jetty 11.0.26 file contained many more jar files than in the existing jserver folders; I copied across only the new equivalents of the jar files that existed in the original jserver folder - I presume the others are not needed (perhaps someone can confirm this?)]  
@@ -58,10 +60,10 @@ As per [USER=1]@Erel[/USER]'s post above in order to build a standalone package 
 3. Amended the jServer-11.0.26.xml file sections <version> to 11.26, & each <dependsOn> to use the jServer 11.0.26 files in a folder named *jserver-11.0.26*.  
   
 4. Removed the module info (module-info.class) from these jars:  
-jetty-io-11.0.26.jar,   
-jetty-alpn-java-server-11.0.26.jar,   
-http2-server-11.0.26.jar,   
-http2-hpack-11.0.26.jar,   
+jetty-io-11.0.26.jar,  
+jetty-alpn-java-server-11.0.26.jar,  
+http2-server-11.0.26.jar,  
+http2-hpack-11.0.26.jar,  
 http2-common-11.0.26.jar,  
 jetty-alpn-server-11.0.26.jar.  
   
@@ -75,14 +77,14 @@ After this, my server app runs OK through the IDE and building a standalone pack
   
 2. Ammended the jWebSocketClient-11.0.26.xml file sections <version> to 11.26, & each <dependsOn> to use the jServer 11.0.26 files in a folder named *jserver-11.0.26*.  
   
-3. In app main module changed the existing dependency to   
+3. In app main module changed the existing dependency to  
 
 ```B4X
 #AdditionalJar: jserver-11.0.26/jetty-webapp-11.0.26.jar
 ```
 
   
-and added the IncludedModules declaration described in [USER=1]@Erel[/USER]'s post linked above.   
+and added the IncludedModules declaration described in [USER=1]@Erel[/USER]'s post linked above.  
   
 At this point the app ran OK but building a stand-alone package generated an error:  
 > Exception in thread "main" java.lang.module.FindException: Module org.slf4j not found, required by org.eclipse.jetty.util

@@ -1,9 +1,9 @@
 ###  MiniORMUtils by aeric
-### 02/12/2026
+### 02/17/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 4.03  
+Version: 4.20  
 
 ---
 
@@ -24,11 +24,12 @@ Initialize MiniORM
 Private DB As MiniORM  
 Private MS As ORMSettings  
   
-DB.Initialize  
 MS.Initialize  
 MS.DBType = "SQLite"  
 MS.DBFile = "data.db"  
 MS.DBDir = File.DirApp  
+  
+DB.Initialize  
 DB.Settings = MS
 ```
 

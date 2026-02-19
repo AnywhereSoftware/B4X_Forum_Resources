@@ -1,12 +1,12 @@
 ### Quartz Scheduler (Cron) - For enterprise grade task scheduling software by Peter Simpson
-### 02/12/2026
+### 02/16/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170295/)
 
 Hello everyone,  
 I wrapped this last year whilst trying to learn Java, I then had to learn about cron expressions o\_O.  
 Yesterday I cleaned up the code (a lot) and added the IDE tooltip for the community, I also created an extensive B4J example for developers to learn from, so read it carefully.  
   
-Quartz is a **lightweight, embeddable job scheduler**. Its purpose is simple, it lets your program run tasks automatically at specific times or intervals, without relying on the operating system’s scheduler.  
+Quartz is a **lightweight, embeddable job scheduler solution**. Its purpose is simple, it lets your program run tasks automatically at specific times or intervals, without relying on the operating system’s scheduler.  
   
 [SIZE=4]Here is the essence of Quartz in plain terms.[/SIZE]  
 [HEADING=2][SIZE=4]**What Quartz does**[/SIZE][/HEADING]  
@@ -15,21 +15,21 @@ Quartz is a **lightweight, embeddable job scheduler**. Its purpose is simple, it
 - [SIZE=4]Manages recurring tasks reliably inside your application[/SIZE]
 - [SIZE=4]Supports multiple jobs, triggers, calendars, and priorities[/SIZE]
 - [SIZE=4]Can persist schedules in a database so they survive restarts (You have to add the database code of your choice)[/SIZE]
-- [SIZE=4]Works in desktop apps, servers, and background services[/SIZE]
+- [SIZE=4]Works in desktop applications, servers applications, and background worker services[/SIZE]
 
 [HEADING=2][SIZE=4]**Why developers around the world use Quartz**[/SIZE][/HEADING]  
 
-- [SIZE=4]It's the industry standard[/SIZE]
-- [SIZE=4]It is far more flexible than OS‑level schedulers[/SIZE]
-- [SIZE=4]It handles complex timing rules (cron, exclusions, holidays)[/SIZE]
-- [SIZE=4]It is stable and battle tested[/SIZE]
+- [SIZE=4]Quarts is an industry standard scheduler solution[/SIZE]
+- [SIZE=4]It's far more flexible than OS‑level schedulers[/SIZE]
+- [SIZE=4]It handles complex timing rules (cron, exclusions, holidays) etc[/SIZE]
+- [SIZE=4]It's stable and battle tested[/SIZE]
 
 [HEADING=2][SIZE=4]**In one short paragraph**[/SIZE][/HEADING]  
-[SIZE=4]Quartz is a powerful, programmable timer system that lets your application run tasks automatically and reliably according to any schedule you define. It can handle everything from writing to and reading from databases and files, to launching external applications using the Shell command, and much more. What Quartz actually does is simple. It fires your code at the exact times or intervals you specify, without you needing to manage timers, threads, or OS‑level schedulers.  
+[SIZE=4]Quartz is a powerful, programmable timer system that lets your application run tasks automatically and reliably according to any schedule you define. It can handle everything from writing to and reading from databases and files, to launching external applications using the Shell command, sending commands, processing data and much more. What Quartz actually does is simple. It fires your code at the exact times or intervals you specify, without you needing to manage timers, threads, or OS‑level schedulers.  
   
-How you use that power is entirely up to you. As a B4J developer, you can combine Quartz with your existing knowledge of file I/O, networking, SQL, APIs, and system automation to build anything from simple reminders to full industrial grade task automation. With a bit of imagination and the help of the B4X search box when you need specific techniques, you can easily manipulate this library to its full potential.  
+How you use that sort of power is entirely up to you. As a B4J developer, you can combine Quartz with your existing knowledge of file I/O, networking, SQL, APIs, or system automation to build anything from simple reminders to full industrial grade task automation solutions. With a bit of imagination and the help of the B4X search box when you need help, you can easily manipulate this library to its full potential.  
   
-**Quartz Scheduler is for industry grade software.**   
+**Quartz Scheduler is used in industry grade solutions.**   
 Quartz has been used for more than 20 years in production systems across finance, telecoms, logistics, healthcare, and enterprise Java platforms.  
   
 **Hint:** Personally, I would create an SQLite or MySQL database to store all jobs and schedules, and then connect the database to the Quartz Scheduler.[/SIZE]  

@@ -1,9 +1,9 @@
 ### B4J - Oshi Monitor (CPU & RAM Usage) by Peter Simpson
-### 02/10/2026
+### 02/16/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170272/)
 
 Hello everyone,  
-This is a library I use all the time. My own personal monitoring app is built on it, and it lets me keep an eye on individual running processes and their resources with ease. I personally use the app to monitor CPU and RAM resource usage for selected processes. I used to rely on another excellent B4J library, but unlike that one, this library does not require administrator privileges.  
+This is a library I use all the time. My own personal monitoring app is built on it, and it lets me keep an eye on individual running processes and their resources with ease. I personally use this application to monitor CPU and RAM resources for the processes of large bespoke applications that I've developed for clients. I used to rely on another excellent B4J library, but unlike that one, this library does not require administrator privileges.  
   
 Oshi Monitor is a lightweight B4J library built on top of the OSHI hardware‑inspection framework. It gives your B4J apps real‑time access to system metrics such as CPU load, RAM usage, CPU temperature (where applicable), and per‑process resource consumption. The library runs its own background thread, raises regular update events, and includes optional smoothing, maximum value tracking, and multi-process aggregation (useful for apps like Chrome).  
   
