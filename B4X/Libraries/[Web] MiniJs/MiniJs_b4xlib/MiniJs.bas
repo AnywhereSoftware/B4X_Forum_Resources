@@ -60,6 +60,16 @@ Public Sub AddMultiLineComment (comment As String)
     AddLine(" */")
 End Sub
 
+' Add console.error
+Public Sub ConsoleError (message As String, event As String)
+    AddLine($"console.error(${message}, ${event});"$)
+End Sub
+
+' Add console.log
+Public Sub ConsoleLog (message As String)
+    AddLine($"console.log(${message});"$)
+End Sub
+
 Public Sub AddConditionalCall(condition As String, call As String)
     AddLine($"if (${condition}) ${call}"$)
 End Sub
@@ -133,13 +143,24 @@ Public Sub EndForLoop
     AddLine("}")
 End Sub
 
-Public Sub StartCondition(condition As String) As MiniJs
-    AddLine($"if (${condition}) {"$)
+' Try-Catch statement
+Public Sub StartTry
+    AddLine($"try {"$)
     currentIndent = currentIndent + 1
-    Return Me
 End Sub
 
-Public Sub AddMethodCall (objectName As String, methodName As String, args() As String) As MiniJs
+Public Sub AddCatch (event As String)
+	currentIndent = currentIndent - 1
+    AddLine("} catch (" & event & ") {")
+    currentIndent = currentIndent + 1
+End Sub
+
+Public Sub EndTry
+    currentIndent = currentIndent - 1
+    AddLine("}")
+End Sub
+
+Public Sub AddMethodCall (objectName As String, methodName As String, args() As String)
 	Dim argList As String
 	If Initialized(args) Then
 		For Each arg As String In args
@@ -148,13 +169,6 @@ Public Sub AddMethodCall (objectName As String, methodName As String, args() As 
 		Next
 	End If
 	AddLine($"${objectName}.${methodName}(${argList});"$)
-	Return Me
-End Sub
-
-Public Sub EndCondition As MiniJs
-    currentIndent = currentIndent - 1
-    AddLine("}")
-    Return Me
 End Sub
 
 Public Sub AddFunctionCall (functionName As String, args() As String)

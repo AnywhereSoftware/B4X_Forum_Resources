@@ -1,28 +1,26 @@
-### [Web] MiniHtml quick tutorial by aeric
-### 02/10/2026
+### [Web] MiniHtml Quick Tutorial by aeric
+### 02/20/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/169429/)
 
 [HEADING=1]A New Paradigm Shift[/HEADING]  
-[MiniHtml](https://www.b4x.com/android/forum/threads/b4x-web-minihtml.158846/) is a B4X library to create html markup. Instead of writing html using opening and closing tags, we declare tag object and chaining it's methods to generate the attributes and finally output the object as String.  
+[MiniHtml](https://www.b4x.com/android/forum/threads/b4x-web-minihtml-v2.170180/) is a B4X library to create html markup. Instead of writing html using opening and closing tags, we declare MiniHtml object and chain it's methods to generate the attributes and finally output the object as String.  
   
-Below is what ChatGPT understandings of this library:  
-[HEADING=1]Pros and When to Use It[/HEADING]  
+**Advantages**  
 
-- **Advantages**:
+- Type-safe or more structured way to build HTML compared to raw strings
+- Easier to maintain and refactor web-generation code in B4X
+- Integrates well with any CSS frameworks
+- Integrates well with any JavaScript frameworks
+- Works well with HTMX and AlpineJS to build interactive front-ends without a heavy front-end framework
 
-- Type-safe or more structured way to build HTML compared to raw strings.
-- Easier to maintain and refactor web-generation code in B4X.
-- Integrates well with Bootstrap / CSS frameworks since you can set classes, styles, etc.
-- HTMX support means you can build interactive front-ends without a heavy front-end framework.
+**Ideal Scenarios when**  
 
-- **Ideal Scenarios**:
+- we want to stay within B4X ecosystem
+- building server-side web apps using B4J
+- generating email HTML templates
+- prototyping simple web UIs via B4X code
 
-- Building server-side web apps using **B4J**.
-- Generating email HTML templates.
-- Prototyping simple web UIs via B4X code.
-- Using when you already use B4X for your project and want to stay within its ecosystem.
-
-For me, it means you can:  
+In other words, we can:  
 
 1. Use B4J as a single IDE for both backend and frontend logic
 2. Use B4J server as live development server
@@ -31,182 +29,78 @@ For me, it means you can:
 5. Focus on writing in B4X mindset
 6. Direct access and mix the tag objects with B4X code
 
-[HEADING=1]How to Use[/HEADING]  
+**Create MiniHtml object**  
 
-1. Reference the library in Libraries Manager.
-2. Declare a variable as Tag object.
-3. Call the methods such as Div.text("This is an inner text")
-
-[HEADING=1]Create a new Tag[/HEADING]  
-There are 2 ways to create a html tag  
-Method 1: Html module and create method  
+1. Add this sub to our project.
 
 ```B4X
-Html.create("main") ' create <main></main>
+Sub CreateTag (Name As String) As MiniHtml  
+    Dim tag1 As MiniHtml  
+    tag1.Initialize(Name)  
+    Return tag1  
+End Sub
 ```
 
-  
-Method 2: Use named module  
+2. Now we can use it to create new tags.
+3. To create a div tag, create a new sub as follow:
 
 ```B4X
-Form.init ' create <form></form>
+Sub Div As MiniHtml  
+    Return CreateTag("div")  
+End Sub
 ```
 
-  
-If the module to create a tag is not available, then use Method 1.  
-[HEADING=1]Add a Child tag to a Parent tag[/HEADING]  
-There are 2 ways to add a child tag  
-Let say we have a parent tag div1 and we want to add div2 as it's child.  
+4. Now we can create a div tag using Div sub.
 
 ```B4X
-<div class="p-1">  
-  <div class="mb-2">  
-  </div>  
-</div>
+Dim div1 As MiniHtml = Div.up(body1)  
+div1.cls("d-flex align-items-center")  
+div1.sty("height: 100vh")
 ```
 
-  
-Method 1: add() method  
+5. It is recommend to call .up() once we have created a new MiniHtml object.
+6. Exceptional case for not calling .up() is when we are creating a reusable sub that return the object.
+7. We can chain more methods but it is more cleaner to make new method calls on new line of code.
+
+**Add to another MiniHtml object**  
+
+1. We can call .up() method to add the current object to an existing MiniHtml object as it's child.
 
 ```B4X
-Div.cls("p-1").add(Div.cls("mb-2"))
+Dim div1 As MiniHtml = Div.up(body1)
 ```
 
-  
-Method 2: addTo() or up()  
+2. In this code, div1 will be added to the body1 children list.
+3. The parent's tag will close itself.
+
+**Return the object as String**  
+
+1. Calling .build will generate and return the object as HTML text.
 
 ```B4X
-Dim div1 As Tag = Div.cls("p-1")  
-Div.cls("mb-2").up(div1)  
-Div.cls("mb-2 text-primary").up(div1)
+body1.build
 ```
 
-  
-If we are not going to add more attributes or children tags, we can write as one-liner using Method 1. If the line becomes longer, it can be confusing sometimes.  
-If we are going to use a tag multiple times, it is better to declare the parent as a tag then it's children can use the up() method to add to it. This is the recommended way.  
-[HEADING=1]Chaining multiple methods[/HEADING]  
-
-1. You can chained or nested multiple methods.
-2. However, I suggest to avoid writing a long nested line by declaring a new tag.
-3. Example:
+2. The output will look like this:
 
 ```B4X
-Div.up(col1).hxGet("/hx/pages/list").hxTrigger("load").text("Loading…")
-```
-
-It is better to write as:
-
-```B4X
-Dim container1 As Tag = Div.up(col1)  
-container1.hxGet("/hx/pages/list")  
-container1.hxTrigger("load")  
-container1.text("Loading…")
+<body>  
+    <div class="d-flex align-items-center" style="height: 100vh">  
+    </div>  
+</body>
 ```
 
 
-[HEADING=1]Debugging[/HEADING]  
+**Use in ServletResponse**  
 
-1. We can use the following methods:
-- PrintMe
-- PrintChildren
-to print the output to the Logs.2. We can also use Log
+1. We can also use .Write to add raw String to the object like using StringBuilder.
 
 ```B4X
-Log(div1.Build)
+Private Sub ShowIndexPage  
+    Dim doc As MiniHtml  
+    doc.Initialize("")  
+    doc.Write("<!DOCTYPE html>")  
+    doc.Write(body1.build)  
+    Response.Write(doc.ToString)  
+End Sub
 ```
-
-
-[HEADING=1]Return the Document[/HEADING]  
-
-1. We can use the Document class to generate a valid html document.
-
-```B4X
-Dim doc As Document  
-doc.Initialize  
-doc.AppendDocType  
-doc.Append(page1.Build)  
-App.WriteHtml(Response, doc.ToString)
-```
-
-2. We use Append() to add raw text into the document.
-3. EndsMeet can write the text as server reponse using WriteHtml() method.
-
-[HEADING=1]Raw html to tag[/HEADING]  
-
-1. We can use Parse() method to convert html string into tag object.
-
-```B4X
-Dim s As String = $"<form action="forgot-password" method="post">  
-    <label for="email">Email:</label>  
-    <input type="email" id="email" required>  
-    <input type="submit" value="Submit">  
-</form>"$  
-Dim form1 As Tag = Html.Parse(s)  
-form1.up(body1)
-```
-
-
-[HEADING=1]Commonly Used Methods[/HEADING]  
-
-1. up()
-Add a tag to a parent tag
-
-```B4X
-Div.up(body1)
-```
-
-2. cls() - short for addClass
-Add inline css class to the tag
-
-```B4X
-Div.cls("row mt-3")
-```
-
-3. sty() - short for addStyle
-Add inline style to the tag
-
-```B4X
-Td.sty("text-align: right")
-```
-
-4. script()
-Add a source of Javascript file
-
-```B4X
-body1.script("$SERVER_URL$/assets/js/app.js")
-```
-
-5. attr(key, value)
-Add an attribute to the list of attributes of a tag. Use this when a method is not available.
-
-```B4X
-toast1.attr("role", "alert")
-```
-
-6. id()
-Add an unique id to a tag usually useful as a css selector.7. name()
-Add a name to a tag usually for a form input.8. text()
-Add inner text to a tag9. hxGet()
-Add a hx-get attribute to make a Get request using HTMX.10. Build
-Convert the tag object to String.
-  
-Current version of MiniHtml integrated well with Bootstrap 5 and HTMX so you need to concern less on the responsive CSS styling and JavaScript ajax calls.  
-[HEADING=2]Bootstrap[/HEADING]  
-
-```B4X
-Button.cls("btn btn-primary w-100 py-2")
-```
-
-  
-The code generates a html markup that gives a styled blue color button with full width and 2 units of vertical padding.  
-[HEADING=2]HTMX[/HEADING]  
-
-```B4X
-Dim form1 As Tag = Form.init  
-form1.hxPut($"/hx/topics"$)  
-form1.hxTarget("#modal-messages")  
-form1.hxSwap("innerHTML")
-```
-
-  
-The code generates a html markup for a form that sends a PUT request to the server using hx-put, targetting an html with id "modal-messages" using hx-target attribute and swap the form child tags when the response returned from the backend server.

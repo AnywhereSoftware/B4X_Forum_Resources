@@ -1,8 +1,8 @@
 ### [Web] MiniJS by aeric
-### 02/11/2026
+### 02/19/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/169204/)
 
-Version 0.30  
+Version 0.40  
   
 Generate Js with B4X code.  
   

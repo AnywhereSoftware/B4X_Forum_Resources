@@ -1,9 +1,9 @@
 ###  MiniORMUtils by aeric
-### 02/17/2026
+### 02/19/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 4.20  
+Version: 4.30  
 
 ---
 
@@ -54,6 +54,14 @@ Dim Success As Boolean = DB.InitializeSQLite
 
   
   
+Connect to Database  
+
+```B4X
+DB.SQL = DB.Open
+```
+
+  
+  
 Create Table  
 
 ```B4X
@@ -93,7 +101,11 @@ Select All Rows
 ```B4X
 DB.Table = "tbl_category"  
 DB.Query  
-Dim Items As List = DB.Results
+If DB.Error.IsInitialized Then  
+    Log(DB.Error.Message)  
+Else  
+    Dim Items As List = DB.Results  
+End If
 ```
 
   

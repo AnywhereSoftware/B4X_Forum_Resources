@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 4.20
+' Version 4.30
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -1196,6 +1196,16 @@ End Sub
 ' Execute Query
 Public Sub Query
 	Try
+		mError = Null
+		ORMResult.Initialize
+		ORMResult.Columns.Initialize
+		ORMResult.Rows.Initialize
+		ORMResult.Tag = Null 'without this the Tag properly will not be serializable.
+		ORMTable.Initialize
+		ORMTable.Columns.Initialize
+		ORMTable.Rows.Initialize
+		ORMTable.Results.Initialize
+		ORMTable.Results2.Initialize		
 		If getCondition.Length > 0 Then mStatement = mStatement & mCondition
 		If mGroupBy.Length > 0 Then mStatement = mStatement & mGroupBy
 		If mHaving.Length > 0 Then mStatement = mStatement & mHaving
@@ -1206,18 +1216,7 @@ Public Sub Query
 			If Initialized(RS) Then RS.Close
 			Return
 		End If
-		
-		ORMResult.Initialize
-		ORMResult.Columns.Initialize
-		ORMResult.Rows.Initialize
-		ORMResult.Tag = Null 'without this the Tag properly will not be serializable.
-		
-		ORMTable.Initialize
 		ORMTable.ResultSet = RS
-		ORMTable.Columns.Initialize
-		ORMTable.Rows.Initialize
-		ORMTable.Results.Initialize
-		ORMTable.Results2.Initialize
 		
 		Dim cols As Int = RS.ColumnCount
 		#If B4J

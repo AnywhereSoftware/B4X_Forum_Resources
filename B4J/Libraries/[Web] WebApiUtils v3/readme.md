@@ -1,5 +1,5 @@
 ### [Web] WebApiUtils v3 by aeric
-### 05/19/2025
+### 02/19/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/165120/)
 
 [TABLE]  
@@ -13,7 +13,7 @@ Updates
 [TR]  
 [TD]
 
-[**WebApiUtils v4**](https://www.b4x.com/android/forum/threads/web-webapiutils-v4.167012/) is available, supports XML format!
+[**WebApiUtils v4+**](https://www.b4x.com/android/forum/threads/web-webapiutils.167012/) is available, supports XML format!
 
 [/TD]  
 [/TR]  

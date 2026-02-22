@@ -1,7 +1,24 @@
 ### [Web] MiniHtml by aeric
-### 12/25/2025
+### 02/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/158846/)
 
+[TABLE]  
+[TR]  
+[TH]
+
+Updates
+
+[/TH]  
+[/TR]  
+[TR]  
+[TD]
+
+Version [2.00](https://www.b4x.com/android/forum/threads/b4x-web-minihtml-v2.170180/) is now available
+
+[/TD]  
+[/TR]  
+[/TABLE]  
+  
 Version: 0.90  
   
 Generate Html with B4X code.  
