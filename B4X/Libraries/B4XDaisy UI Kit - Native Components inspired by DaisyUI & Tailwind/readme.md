@@ -1,10 +1,12 @@
 ###   B4XDaisy UI Kit - Native Components inspired by DaisyUI & Tailwind by Mashiane
-### 02/17/2026
+### 02/21/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170352/)
 
 Hi Fam  
   
 [Download from GitHub](https://github.com/Mashiane/Sithaso-B4XDaisy-UIKit---Native-Android-Components-inspired-by-DaisyUI)  
+  
+[Track the Project](https://github.com/users/Mashiane/projects/1)  
   
 I am proud to present the **B4X Daisy UI Kit**, a suite of native custom views designed to bring the modern aesthetic and utility of the **DaisyUI (Tailwind CSS)** framework to B4X development.  
 Unlike libraries that wrap WebViews to achieve modern UI looks, **these components are 100% native**. They use B4XCanvas and standard Panels to render vector shapes, shadows, and layouts, ensuring high performance and a native feel on Android (and B4X cross-platform implementations).  

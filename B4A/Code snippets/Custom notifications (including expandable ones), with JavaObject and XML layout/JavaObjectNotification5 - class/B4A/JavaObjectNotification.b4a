@@ -1,0 +1,89 @@
+﻿Build1=Default,b4a.javaobjectnotification
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=core
+Library3=phone
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.POST_NOTIFICATIONS)~\n~~\n~' Permisos para el servicio en primer plano (Android 9 a 14+)~\n~' Permisos de Servicio (Android 14+)~\n~AddPermission(android.permission.FOREGROUND_SERVICE)	'Obligatorio ?~\n~AddPermission(android.permission.FOREGROUND_SERVICE_DATA_SYNC)~\n~~\n~~\n~AddPermission(android.permission.FOREGROUND_SERVICE_TYPE_DATA_SYNC)~\n~'AddPermission(android.permission.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE)~\n~~\n~' VINCULACIÓN DEL TIPO AL SERVICIO (CRÍTICO)~\n~SetServiceAttribute(MyService, "android:foregroundServiceType", "dataSync")~\n~'SetServiceAttribute(MyService, "android:foregroundServiceType", "shortService")~\n~~\n~SetReceiverAttribute(MyReceiver, "android:exported", "false")~\n~SetReceiverAttribute(MyReceiver, "android:enabled", "true")~\n~~\n~'Opcional~\n~' Esto asegura que si el sistema mata el servicio por falta de RAM, ~\n~' lo intente reiniciar en cuanto haya memoria disponible.~\n~SetServiceAttribute(MyService, "android:stopWithTask", "false")~\n~
+Module1=|relative|..\B4XMainPage
+Module2=CustomNotification
+Module3=MyReceiver
+Module4=MyService
+Module5=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=5
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: JavaObjectNotification
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalRes: ..\..\AddResources
+
+'#BridgeLogger: True
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

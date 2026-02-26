@@ -1,5 +1,5 @@
 ### jSD_OpenMaps by Star-Dust
-### 02/17/2026
+### 02/22/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166066/)
 
 As many currently know GoogleMaps' Webapi do not work correctly on the webview because the latest versions use webgl  
@@ -11,7 +11,7 @@ B4i and B4i version [**here**](https://www.b4x.com/android/forum/threads/xui-b4a
 **jSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.16  
+**Version:** 1.17  
 
 - **CameraPosition**
 
@@ -227,7 +227,7 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 - **IsInitialized** As Boolean
 *Verifica se l'oggetto sia stato inizializzato.*- **IsReady** As Boolean
 - **LatLonToXY** (ll As LatLng) As Double()
-- **LoadMKL** (Path As String, FileName As String) As Map
+- **LoadKML** (Path As String, FileName As String) As Map
  *Return Map as Object  
  Key is ID , Value is Object (Marker,MapPolygon,MapPolyline)  
  <code>ObjectMap = OpenMap.LoadMKL(Path, FileName)</code>*- **MapLoaded** As Boolean
@@ -289,7 +289,8 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 *Initializes the object. You can add parameters to this method if needed.*- **InsidePath** (point As LatLng, LatLngList As List) As Boolean
 - **IsInitialized** As Boolean
 *Verifica se l'oggetto sia stato inizializzato.*- **LatLonToAddress** (lat As Double, lon As Double) As ResumableSub
-- **LatLonToXY** (ll As LatLng) As Double()
+*Returns the address from coordiantes  
+WAIT FOR (GMapExt.LatLonToAddress(Latitude,Longitude)) COMPLETE (Address As String)*- **LatLonToXY** (ll As LatLng) As Double()
 *Returns the screen coordiantes for the given LatLng coordinates*- **LatLonToXY2** (ll As LatLng) As Double()
 - **ObjectIsEditing** (IDobject As String) As Boolean
 - **RemoveMarkerLabel** (m As Marker) As String
@@ -407,3 +408,7 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 - 1.16
 
 - Fixed the bug that prevented having more openmaps classes started at the same time
+
+- 1.17
+
+- **LatLonToAddress** *Returns the address from coordiantes*

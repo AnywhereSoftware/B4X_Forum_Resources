@@ -1,5 +1,5 @@
 ### Custom notifications (including expandable ones), with JavaObject and XML layout by GeoT
-### 02/09/2026
+### 02/23/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/170261/)
 
 Since the NotificationBuilder library is deprecated and NB6 doesn't support custom or extended notifications, I developed this example using AI, the JavaObject library, and native Android/AndroidX components.  
@@ -86,3 +86,8 @@ builder.RunMethod("setCustomBigContentView", Array(rvCustomBig)) 'Max height = ~
 - This is a basic, functional example that can be extended or modified according to specific needs
 - I added the FOREGROUND\_SERVICE\_DATA\_SYNC permission in the Manifest Editor to test it, but you can also add the FOREGROUND\_SERVICE\_SPECIAL\_USE permission with its respective complementary lines.
 - I had to remove the Objects folder to upload the project zip file. Compile once to recreate the Objects folder and replace the "res" folder inside with the contents of res.zip
+
+**Edited at 23/02/2026:**  
+
+- Fixed the deletion of the custom contents of the 'res' folder during recompile
+- Uploaded a second version with the notification creation code inside a class

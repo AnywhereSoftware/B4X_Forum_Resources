@@ -1,0 +1,592 @@
+Public Sub Initialize
+	DB = Main.DB
+	App = Main.App
+End Sub
+$end$
+Sub Handle (req As ServletRequest, resp As ServletResponse)
+	Request = req
+	Response = resp
+	Method = Request.Method
+	Log($"${Request.Method}: ${Request.RequestURI}"$)
+	Dim path As String = req.RequestURI
+	If path = "/$endpoints$" Then
+		RenderPage
+	Else If path = "/hx/$endpoints$/table" Then
+		HandleTable
+	Else If path = "/hx/$endpoints$/add" Then
+		HandleAddModal
+	Else If path.StartsWith("/hx/$endpoints$/edit/") Then
+		HandleEditModal
+	Else If path.StartsWith("/hx/$endpoints$/delete/") Then
+		HandleDeleteModal
+	Else
+		Handle$Endpoints$
+	End If
+End Sub
+
+Sub CreateTag (Name As String) As MiniHtml
+	Dim tag1 As MiniHtml
+	tag1.Initialize(Name)
+	Return tag1
+End Sub
+
+Sub Anchor As MiniHtml
+	Return CreateTag("a")
+End Sub
+
+Sub Button As MiniHtml
+	Return CreateTag("button")
+End Sub
+
+Sub Div As MiniHtml
+	Return CreateTag("div")
+End Sub
+
+Sub Form As MiniHtml
+	Return CreateTag("form")
+End Sub
+
+Sub H3 As MiniHtml
+	Return CreateTag("h3")
+End Sub
+
+Sub H5 As MiniHtml
+	Return CreateTag("h5")
+End Sub
+
+Sub Icon As MiniHtml
+	Return CreateTag("icon")
+End Sub
+
+Sub Input As MiniHtml
+	Return CreateTag("input")
+End Sub
+
+Sub Label As MiniHtml
+	Return CreateTag("label")
+End Sub
+
+Sub Li As MiniHtml
+	Return CreateTag("li")
+End Sub
+
+Sub Span As MiniHtml
+	Return CreateTag("span")
+End Sub
+
+Sub Table As MiniHtml
+	Return CreateTag("table")
+End Sub
+
+Sub Tbody As MiniHtml
+	Return CreateTag("tbody")
+End Sub
+
+Sub Td As MiniHtml
+	Return CreateTag("td")
+End Sub
+
+Sub Th As MiniHtml
+	Return CreateTag("th")
+End Sub
+
+Sub Thead As MiniHtml
+	Return CreateTag("thead")
+End Sub
+
+Sub Tr As MiniHtml
+	Return CreateTag("tr")
+End Sub
+
+Private Sub RenderPage
+	If App.ctx.ContainsKey("/$endpoints$") = False Then
+		Dim main1 As MainView
+		main1.Initialize
+		main1.LoadContent(ContentContainer)
+		main1.LoadModal(ModalContainer)
+		main1.LoadToast(ToastContainer)
+
+		Dim page1 As MiniHtml = main1.Render
+		Dim ulist1 As MiniHtml = FindUListTag(page1)
+		Dim list1 As MiniHtml = Li.up(ulist1)
+		list1.cls("nav-item d-block d-lg-block")
+		Dim a1 As MiniHtml = Anchor.up(list1)
+		a1.attr("href", "/")
+		a1.cls("nav-link float-end")
+		a1.text("Home")
+		Dim i1 As MiniHtml = Icon.up(a1)
+		i1.cls("bi bi-house me-2")
+		i1.attr("title", "Home")
+
+		Dim list2 As MiniHtml = Li.up(ulist1).cls("nav-item d-block d-lg-block")
+		Dim a2 As MiniHtml = Anchor.up(list2)
+		a2.attr("href", "/help")
+		a2.cls("nav-link float-end")
+		a2.text("API")
+		Dim i2 As MiniHtml = Icon.up(a2)
+		i2.cls("bi bi-gear me-2")
+		i2.attr("title", "API")
+
+		' Sample for adding additional menu link
+		'Dim list2 As MiniHtml = Li.up(ulist1).cls("nav-item d-block d-lg-block")
+		'Dim a2 As MiniHtml = Anchor.up(list2).attr("href", "/users")
+		'a2.cls("nav-link")
+		'a2.text("Users")
+	
+		Dim doc As MiniHtml
+		doc.Initialize("")
+		doc.Write("<!DOCTYPE html>")
+		doc.Write(page1.build)
+		App.ctx.Put("/$endpoints$", doc.ToString)
+	End If
+	App.WriteHtml2(Response, App.ctx.Get("/$endpoints$"), App.ctx)
+End Sub
+
+' Retrieve ulist tag from DOM
+Private Sub FindUListTag (dom As MiniHtml) As MiniHtml
+	Dim body1 As MiniHtml = dom.Child(1)
+	Dim nav1 As MiniHtml = body1.Child(1)
+	Dim container1 As MiniHtml = nav1.Child(0)
+	Dim navbar1 As MiniHtml = container1.Child(3)
+	Dim ulist1 As MiniHtml = navbar1.Child(0)
+	Return ulist1
+End Sub
+
+Private Sub ContentContainer As MiniHtml
+	Dim row1 As MiniHtml = Div
+	row1.cls("row mt-3 text-center align-items-center justify-content-center")
+	Dim col1 As MiniHtml = Div.up(row1)
+	col1.cls("col-md-12 col-lg-6")
+	Dim form1 As MiniHtml = Form.up(col1)
+	form1.cls("form mb-3")
+	form1.attr("action", "")
+	Dim row2 As MiniHtml = Div.up(form1)
+	row2.cls("row")
+	Dim col2 As MiniHtml = Div.up(row2)
+	col2.cls("col-md-6 col-lg-6 text-start")
+	Dim h31 As MiniHtml = H3.up(col2)
+	h31.text("$ENDPOINT$ LIST")
+	Dim div1 As MiniHtml = Div.up(row2)
+	div1.cls("col-md-6 col-lg-6")
+	Dim div2 As MiniHtml = Div.up(div1)
+	div2.cls("text-end mt-2")
+
+	Dim button2 As MiniHtml = Button.up(div2)
+	button2.cls("btn btn-success ml-2")
+	button2.attr("hx-get", "/hx/$endpoints$/add")
+	button2.attr("hx-target", "#modal-content")
+	button2.attr("hx-trigger", "click")
+	button2.attr("data-bs-toggle", "modal")
+	button2.attr("data-bs-target", "#modal-container")
+	Icon.up(button2).cls("bi bi-plus-lg me-2")
+	button2.text("Add $Endpoint$")
+
+	Dim container1 As MiniHtml = Div.up(col1)
+	container1.attr("id", "$endpoints$-container")
+	container1.attr("hx-get", "/hx/$endpoints$/table")
+	container1.attr("hx-trigger", "load")
+	container1.text("Loading...")
+
+	Return row1
+End Sub
+
+Private Sub ModalContainer As MiniHtml
+	Dim container1 As MiniHtml = Div
+	container1.attr("id", "modal-container")
+	container1.cls("modal fade")
+	container1.attr("tabindex", "-1")
+	container1.attr("aria-hidden", "true")
+	Dim dialog1 As MiniHtml = Div.up(container1)
+	dialog1.cls("modal-dialog modal-dialog-centered")
+	Dim content1 As MiniHtml = Div.up(dialog1)
+	content1.cls("modal-content")
+	content1.attr("id", "modal-content")
+	Return container1
+End Sub
+
+Private Sub ToastContainer As MiniHtml
+	Dim div1 As MiniHtml = Div.cls("position-fixed end-0 p-3")
+	div1.sty("z-index: 2000")
+	div1.sty("bottom: 0%")
+	Dim toast1 As MiniHtml = Div.up(div1)
+	toast1.attr("id", "toast-container")
+	toast1.cls("toast align-items-center text-bg-success border-0")
+	toast1.attr("role", "alert")
+	Dim div2 As MiniHtml = Div.up(toast1)
+	div2.cls("d-flex")
+	Dim div3 As MiniHtml = Div.up(div2)
+	div3.cls("toast-body")
+	div3.attr("id", "toast-body")
+	div3.text("Operation successful!")
+	Dim button1 As MiniHtml = Button.up(div2)
+	button1.attr("type", "button")
+	button1.cls("btn-close btn-close-white me-2 m-auto")
+	button1.attr("data-bs-dismiss", "toast")
+	Return div1
+End Sub
+
+' Return table HTML
+Private Sub HandleTable
+	App.WriteHtml(Response, Create$Endpoints$Table.build)
+End Sub
+
+' Add modal
+Private Sub HandleAddModal
+	Dim form1 As MiniHtml = Form
+	form1.attr("hx-post", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	
+	Dim modalHeader As MiniHtml = Div.up(form1).cls("modal-header")
+	Dim h51 As MiniHtml = H5.up(modalHeader)
+	h51.cls("modal-title").text("Add $Endpoint$")
+	Dim close1 As MiniHtml = Button.up(modalHeader) 
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+
+	Dim modalBody As MiniHtml = Div.up(form1)
+	modalBody.cls("modal-body")
+	Div.up(modalBody).attr("id", "modal-messages")
+	
+	Dim group1 As MiniHtml = Div.up(modalBody).cls("form-group")
+	Dim label1 As MiniHtml = Label.up(group1)
+	label1.attr("for", "name").text("Name ")
+	Dim span1 As MiniHtml = Span.up(label1)
+	span1.cls("text-danger").text("*")
+	Input.attr("type", "text").up(group1).attr("id", "name").attr("name", "name").cls("form-control").required
+
+	Dim modalFooter As MiniHtml = Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Button.up(modalFooter)
+	button1.attr("type", "submit")
+	button1.cls("btn btn-success px-3")
+	button1.text("Create")
+	Dim button2 As MiniHtml = Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+	
+	App.WriteHtml(Response, form1.build)
+End Sub
+
+' Edit modal
+Private Sub HandleEditModal
+	Try
+		Dim id As String = Request.RequestURI.SubString("/hx/$endpoints$/edit/".Length)
+		DB.SQL = DB.Open
+		DB.Table = "$TableName$"
+		DB.Columns = Array("id", "$endpoint$_name")
+		DB.WhereParam("id = ?", id)
+		DB.Query
+		If DB.Found Then
+			Dim name As String = DB.First.Get("$endpoint$_name")
+		End If
+	Catch
+		Log(LastException)
+	End Try
+	DB.Close
+	
+	Dim form1 As MiniHtml = Form
+	form1.attr("hx-put", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+
+	Dim modalHeader As MiniHtml = Div.up(form1)
+	modalHeader.cls("modal-header")
+	Dim h51 As MiniHtml = H5.up(modalHeader)
+	h51.cls("modal-title").text("Edit $Endpoint$")
+	Dim close1 As MiniHtml = Button.up(modalHeader)
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+		
+	Dim modalBody As MiniHtml = Div.up(form1)
+	modalBody.cls("modal-body")
+	Dim div1 As MiniHtml = Div.up(modalBody)
+	div1.attr("id", "modal-messages")
+	Dim id1 As MiniHtml = Input.up(modalBody)
+	id1.attr("type", "hidden")
+	id1.attr("name", "id")
+	id1.attr("value", id)
+	Dim group1 As MiniHtml = Div.up(modalBody)
+	group1.cls("form-group")
+	Dim label1 As MiniHtml = Label.up(group1)
+	label1.attr("for", "name")
+	label1.text("Name ")
+	Dim span1 As MiniHtml = Span.up(label1)
+	span1.cls("text-danger").text("*")
+	Dim input1 As MiniHtml = Input.up(group1)
+	input1.attr("type", "text")
+	input1.cls("form-control")
+	input1.attr("id", "name")
+	input1.attr("name", "name")
+	input1.attr("value", name)
+	input1.required
+
+	Dim modalFooter As MiniHtml = Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Button.up(modalFooter)
+	button1.attr("type", "submit")
+	button1.cls("btn btn-primary px-3")
+	button1.text("Update")
+	Dim button2 As MiniHtml = Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+
+	App.WriteHtml(Response, form1.build)
+End Sub
+
+' Delete modal
+Private Sub HandleDeleteModal
+	Try
+		Dim id As String = Request.RequestURI.SubString("/hx/$endpoints$/delete/".Length)
+		DB.SQL = DB.Open
+		DB.Table = "$TableName$"
+		DB.Columns = Array("id", "$endpoint$_name")
+		DB.WhereParam("id = ?", id)
+		DB.Query
+		If DB.Found Then
+			Dim name As String = DB.First.Get("$endpoint$_name")
+		End If
+	Catch
+		Log(LastException)
+	End Try
+	DB.Close
+	
+	Dim form1 As MiniHtml = Form
+	form1.attr("hx-delete", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	
+	Dim modalHeader As MiniHtml = Div.up(form1).cls("modal-header")
+	Dim h51 As MiniHtml = H5.up(modalHeader)
+	h51.cls("modal-title").text("Delete $Endpoint$")
+	Dim close1 As MiniHtml = Button.up(modalHeader)
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+		
+	Dim modalBody As MiniHtml = Div.up(form1).cls("modal-body")
+	Dim div1 As MiniHtml = Div.up(modalBody)
+	div1.attr("id", "modal-messages")
+	Dim input1 As MiniHtml = Input.attr("type", "hidden")
+	input1.attr("name", "id")
+	input1.attr("value", id)
+	input1.up(modalBody)
+	CreateTag("p").up(modalBody).text($"Delete ${name}?"$)
+
+	Dim modalFooter As MiniHtml = Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Button.up(modalFooter)
+	button1.attr("type", "submit")
+	button1.cls("btn btn-danger px-3")
+	button1.text("Delete")
+	Dim button2 As MiniHtml = Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+
+	App.WriteHtml(Response, form1.build)
+End Sub
+
+' Handle CRUD operations
+Private Sub Handle$Endpoints$
+	Select Method
+		Case "POST"
+			' Create
+			Dim name As String = Request.GetParameter("name")
+			If name = "" Or name.Trim.Length < 2 Then
+				ShowAlert("$Endpoint$ name must be at least 2 characters long.", "warning")
+				Return
+			End If
+			Try
+				DB.SQL = DB.Open
+				DB.Table = "$TableName$"
+				DB.Conditions = Array("$endpoint$_name = ?")
+				DB.Parameters = Array(name)
+				DB.Query
+				If DB.Found Then
+					ShowAlert("$Endpoint$ already exists!", "warning")
+					DB.Close
+					Return
+				End If
+			Catch
+				Log(LastException)
+				ShowAlert($"Database error: ${LastException.Message}"$, "danger")
+			End Try
+
+			' Insert new row
+			Try
+				DB.Reset
+				DB.Columns = Array("$endpoint$_name", "created_date")
+				DB.Parameters = Array(name, Main.CurrentDateTime)
+				DB.Save
+				ShowToast("$Endpoint$", "created", "$Endpoint$ created successfully!", "success")
+			Catch
+				ShowAlert($"Database error: ${LastException.Message}"$, "danger")
+			End Try
+			DB.Close
+		Case "PUT"
+			' Update
+			Dim id As Int = Request.GetParameter("id")
+			Dim name As String = Request.GetParameter("name")
+			DB.SQL = DB.Open
+			DB.Table = "$TableName$"
+			
+			DB.Find(id)
+			If DB.Found = False Then
+				ShowAlert("$Endpoint$ not found!", "warning")
+				DB.Close
+				Return
+			End If
+
+			DB.Reset
+			DB.Conditions = Array("$endpoint$_name = ?", "id <> ?")
+			DB.Parameters = Array(name, id)
+			DB.Query
+			If DB.Found Then
+				ShowAlert("$Endpoint$ already exists!", "warning")
+				DB.Close
+				Return
+			End If
+			
+			' Update row
+			Try
+				DB.Reset
+				DB.Columns = Array("$endpoint$_name", "modified_date")
+				DB.Parameters = Array(name, Main.CurrentDateTime)
+				DB.Id = id
+				DB.Save
+				ShowToast("$Endpoint$", "updated", "$Endpoint$ updated successfully!", "info")
+			Catch
+				ShowAlert($"Database error: ${LastException.Message}"$, "danger")
+			End Try
+			DB.Close
+		Case "DELETE"
+			' Delete
+			Dim id As Int = Request.GetParameter("id")
+			DB.SQL = DB.Open
+			DB.Table = "$TableName$"
+			
+			DB.Find(id)
+			If DB.Found = False Then
+				ShowAlert("$Endpoint$ not found!", "warning")
+				DB.Close
+				Return
+			End If
+			
+			DB.Table = "tbl_products"
+			DB.WhereParam("$endpoint$_id = ?", id)
+			DB.Query
+			If DB.Found Then
+				ShowAlert("Cannot delete $endpoint$ with associated products!", "warning")
+				DB.Close
+				Return
+			End If
+
+			' Delete row
+			Try
+				DB.Table = "$TableName$"
+				DB.Id = id
+				DB.Delete
+				ShowToast("$Endpoint$", "deleted", "$Endpoint$ deleted successfully!", "danger")
+			Catch
+				ShowAlert($"Database error: ${LastException.Message}"$, "danger")
+			End Try
+			DB.Close
+	End Select
+End Sub
+
+Private Sub Create$Endpoints$Table As MiniHtml
+	If App.ctx.ContainsKey("/hx/$endpoints$/table") = False Then
+		Dim table1 As MiniHtml = Table.cls("table table-bordered table-hover rounded small")
+		Dim thead1 As MiniHtml = Thead.up(table1).cls("table-light")
+		Th.up(thead1).text("#").sty("text-align: right; width: 50px")
+		Th.up(thead1).text("Name")
+		Th.up(thead1).text("Actions").sty("text-align: center; width: 120px")
+		Tbody.up(table1)
+		App.ctx.Put("/hx/$endpoints$/table", table1)
+	End If
+	
+	DB.SQL = DB.Open
+	DB.Table = "$TableName$"
+	DB.Columns = Array("id", "$endpoint$_name")
+	DB.OrderBy = CreateMap("id": "")
+	DB.Query
+
+	Dim table1 As MiniHtml = App.ctx.Get("/hx/$endpoints$/table")
+	Dim tbody1 As MiniHtml = table1.Child(1)
+	tbody1.Children.Clear ' remove all children
+	For Each row As Map In DB.Results
+		Dim tr1 As MiniHtml = Create$Endpoints$Row		
+		tr1.Child(0).text2(row.Get("id"))
+		tr1.Child(1).text2(row.Get("$endpoint$_name"))
+		tr1.Child(2).Child(0).attr("hx-get", "/hx/$endpoints$/edit/" & row.Get("id"))
+		tr1.Child(2).Child(1).attr("hx-get", "/hx/$endpoints$/delete/" & row.Get("id"))
+		tr1.up(tbody1)
+	Next
+	DB.Close
+	Return table1
+End Sub
+
+Private Sub Create$Endpoints$Row As MiniHtml
+	If App.ctx.ContainsKey("/$endpoints$/table/row") = False Then
+		Dim tr1 As MiniHtml = Tr
+		Dim td1 As MiniHtml = Td.up(tr1)
+		td1.cls("align-middle").sty("text-align: right").text("%id%")
+		Dim td2 As MiniHtml = Td.up(tr1)
+		td2.cls("align-middle").text("%name%$)
+		Dim td3 As MiniHtml = Td.up(tr1)
+		td3.cls("align-middle text-center px-1 py-1")
+		
+		Dim a1 As MiniHtml = Anchor.up(td3)
+		a1.cls("edit text-primary mx-2")
+		a1.attr("hx-get", "/hx/$endpoints$/edit/%id%")
+		a1.attr("hx-target", "#modal-content")
+		a1.attr("hx-trigger", "click")
+		a1.attr("data-bs-toggle", "modal")
+		a1.attr("data-bs-target", "#modal-container")
+		Icon.up(a1).cls("bi bi-pencil")
+		a1.attr("title", "Edit")
+		
+		Dim a2 As MiniHtml = Anchor.up(td3)
+		a2.cls("delete text-danger mx-2")
+		a2.attr("hx-get", "/hx/$endpoints$/delete/%id%")
+		a2.attr("hx-target", "#modal-content")
+		a2.attr("hx-trigger", "click")
+		a2.attr("data-bs-toggle", "modal")
+		a2.attr("data-bs-target", "#modal-container")
+		Icon.up(a2).cls("bi bi-trash3")
+		a2.attr("title", "Delete")
+
+		App.ctx.Put("/$endpoints$/table/row", tr1.ConvertToBytes)
+	End If
+	Return Tr.ConvertFromBytes(App.ctx.Get("/$endpoints$/table/row"))
+End Sub
+
+Private Sub ShowAlert (message As String, status As String)
+	Dim div1 As MiniHtml = Div
+	div1.cls("alert alert-" & status)
+	div1.text(message)
+	App.WriteHtml(Response, div1.build)
+End Sub
+
+Private Sub ShowToast (entity As String, action As String, message As String, status As String)
+	Dim div1 As MiniHtml = Div
+	div1.attr("id", "$endpoints$-container")
+	div1.attr("hx-swap-oob", "true")
+	Create$Endpoints$Table.up(div1)
+
+	Dim script1 As MiniJs
+	script1.Initialize
+	script1.AddCustomEventDispatch("entity:changed", _
+	CreateMap( _
+	"entity": entity, _
+	"action": action, _
+	"message": message, _
+	"status": status))
+
+	App.WriteHtml(Response, div1.build & CRLF & script1.Generate)
+End Sub

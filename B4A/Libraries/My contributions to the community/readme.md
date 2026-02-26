@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 01/07/2026
+### 02/22/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -32,6 +32,7 @@ B4J***
 ***[SIZE=4]Libraries/Classes/B4X Templates[/SIZE]  
   
 B4A***  
+[B4X JSON Path Library](https://www.b4x.com/android/forum/threads/b4x-b4x-library-json-path.170315/)  
 [B4X Shake Button Library](https://www.b4x.com/android/forum/threads/b4x-nhshakebutton-b4xlib-works-in-b4a-b4i-b4j.157060/)  
 [B4X Coordination with What3Words (donationware)](https://www.b4x.com/android/forum/threads/b4x-what3words-b4xlib.144491/)  
 [B4X Social share library](https://www.b4x.com/android/forum/threads/social-share-library.99714/)  
@@ -45,6 +46,7 @@ B4A***
   
   
 ***B4i***   
+[B4X JSON Path Library](https://www.b4x.com/android/forum/threads/b4x-b4x-library-json-path.170315/)  
 [B4X Shake Button Library](https://www.b4x.com/android/forum/threads/b4x-nhshakebutton-b4xlib-works-in-b4a-b4i-b4j.157060/)  
 [B4X Coordination with What3Words (donationware)](https://www.b4x.com/android/forum/threads/b4x-what3words-b4xlib.144491/)  
 [B4X Social share library](https://www.b4x.com/android/forum/threads/social-share-library.99714/)  
@@ -64,6 +66,7 @@ B4A***
 [rESP8266OTA - Update to the original library by @Siam](https://www.b4x.com/android/forum/threads/esp8266-ota-updater.101387/post-1028251) (new update at 2025-07-10)  
   
 ***B4J***  
+[B4X JSON Path Library](https://www.b4x.com/android/forum/threads/b4x-b4x-library-json-path.170315/)  
 [NHTreeViewHandler.b4xlib - Handle easily treeviewitems with metadata in a treeview](https://www.b4x.com/android/forum/threads/nhtreeviewhandler-b4xlib-handle-easily-treeviewitems-with-metadata-in-a-treeview.169968/)  
 [NHEnvirnomentVariables - Get all environment variables of a linux distribution](https://www.b4x.com/android/forum/threads/nhenvironentvariables-get-a-map-with-all-environment-variables-of-a-linux-distribution-does-not-break-in-windows-and-macos.158264/)  
 [B4X Shake Button Library](https://www.b4x.com/android/forum/threads/b4x-nhshakebutton-b4xlib-works-in-b4a-b4i-b4j.157060/)  
@@ -71,6 +74,7 @@ B4A***
 [NHRegistry - Library that allows you to add a B4J app in Windows StartUp for the current user or for all users](https://www.b4x.com/android/forum/threads/windows-registry-access-add-a-compiled-with-built-in-b4jpackager-b4j-executable-to-windows-startup.138251/)  
   
 ***B4X***  
+[B4X JSON Path Library](https://www.b4x.com/android/forum/threads/b4x-b4x-library-json-path.170315/)  
 [B4X Shake Button Library](https://www.b4x.com/android/forum/threads/b4x-nhshakebutton-b4xlib-works-in-b4a-b4i-b4j.157060/)  
 [[B4X] B4XLib Template and Necessary Files](https://www.b4x.com/android/forum/threads/b4x-b4xlib-template-and-necessary-files.149293/)  
   

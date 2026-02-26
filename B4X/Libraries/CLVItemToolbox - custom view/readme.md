@@ -1,7 +1,10 @@
 ###  CLVItemToolbox - custom view. by LucaMs
-### 03/30/2022
+### 02/23/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/139304/)
 
+**Updated to v. 1.40** 02/23/2026  
+' Fixed: icons layout was incorrect when ShowCheck / ShowEdit / ShowRemove were disabled in the Designer.  
+  
 **Updated to v. 1.31** 03/30/2022  
 Fixed: ItemRemoved declaration correct.  
   

@@ -45,12 +45,12 @@ Public Sub AddCode (code As String)
     jsCode.Append(code)
 End Sub
 
-' Add a comment
+' // comment
 Public Sub AddComment (comment As String)
     AddLine("// " & comment)
 End Sub
 
-' Add multi-line comment
+' /* multi-line comment */
 Public Sub AddMultiLineComment (comment As String)
     AddLine("/*")
     Dim lines() As String = Regex.Split(CRLF, comment)
@@ -60,18 +60,24 @@ Public Sub AddMultiLineComment (comment As String)
     AddLine(" */")
 End Sub
 
-' Add console.error
+' console.error(message, event)
 Public Sub ConsoleError (message As String, event As String)
     AddLine($"console.error(${message}, ${event});"$)
 End Sub
 
-' Add console.log
+' console.log(message)
 Public Sub ConsoleLog (message As String)
     AddLine($"console.log(${message});"$)
 End Sub
 
-Public Sub AddConditionalCall(condition As String, call As String)
+' if (condition) statement
+Public Sub AddConditionalCall (condition As String, call As String)
     AddLine($"if (${condition}) ${call}"$)
+End Sub
+
+' condition ? expressionIfTrue : expressionIfFalse
+Public Sub AddTernary (condition As String, expressionIfTrue As String, expressionIfFalse As String)
+    AddLine($"${condition} ? ${expressionIfTrue} : ${expressionIfFalse}"$)
 End Sub
 
 Private Sub GetIndent As String
@@ -109,57 +115,66 @@ Public Sub EndFunction
     AddLine("}")
 End Sub
 
-' If statement
+' if (condition) {
 Public Sub StartIf (condition As String)
     AddLine($"if (${condition}) {"$)
     currentIndent = currentIndent + 1
 End Sub
 
+' } else if (condition) {
 Public Sub ElseIf (condition As String)
     currentIndent = currentIndent - 1
     AddLine($"} else if (${condition}) {"$)
     currentIndent = currentIndent + 1
 End Sub
 
+' } else {
 Public Sub AddElse
     currentIndent = currentIndent - 1
     AddLine("} else {")
     currentIndent = currentIndent + 1
 End Sub
 
+' }
 Public Sub EndIf
     currentIndent = currentIndent - 1
     AddLine("}")
 End Sub
 
-' For loop
+' for (initializer; condition; increment) {
+' <code>script1.StartForLoop("let i = 0", "i < items.length", "i++")</code>
 Public Sub StartForLoop (initializer As String, condition As String, increment As String)
     AddLine($"for (${initializer}; ${condition}; ${increment}) {"$)
     currentIndent = currentIndent + 1
 End Sub
 
+' }
 Public Sub EndForLoop
     currentIndent = currentIndent - 1
     AddLine("}")
 End Sub
 
-' Try-Catch statement
+' try {
 Public Sub StartTry
     AddLine($"try {"$)
     currentIndent = currentIndent + 1
 End Sub
 
+' } catch (e) {
+' <code>script1.AddCatch("e")</code>
 Public Sub AddCatch (event As String)
 	currentIndent = currentIndent - 1
     AddLine("} catch (" & event & ") {")
     currentIndent = currentIndent + 1
 End Sub
 
+' }
 Public Sub EndTry
     currentIndent = currentIndent - 1
     AddLine("}")
 End Sub
 
+' objectName.methodName(args);
 Public Sub AddMethodCall (objectName As String, methodName As String, args() As String)
 	Dim argList As String
 	If Initialized(args) Then
@@ -171,6 +186,7 @@ Public Sub AddMethodCall (objectName As String, methodName As String, args() As 
 	AddLine($"${objectName}.${methodName}(${argList});"$)
 End Sub
 
+' functionName(args);
 Public Sub AddFunctionCall (functionName As String, args() As String)
 	Dim argList As String
 	If Initialized(args) Then
@@ -186,6 +202,12 @@ Public Sub AddFunctionCall (functionName As String, args() As String)
 	AddLine($"${functionName}(${argList});"$)
 End Sub
 
+' document.addEventListener('htmx:configRequest'), (evt) => {
+' <code>script1.AddEventListener("htmx:configRequest", "evt")</code>
+Public Sub AddEventListener (functionName As String, eventName As String)
+	AddLine($"document.addEventListener('${functionName}', (${eventName}) => {"$)
+End Sub
+
 Private Sub ShouldQuote (arg As String) As Boolean
 	' Check if argument should be quoted (simple string detection)
 	Return arg.StartsWith("'") = False And arg.StartsWith(QUOTE) = False And _
@@ -193,7 +215,8 @@ Private Sub ShouldQuote (arg As String) As Boolean
            arg <> "null" And arg <> "undefined"
 End Sub
 
-' Declare a variable
+' const name = value; (isConst = True)
+' let name = value;      (isConst = False)
 Public Sub DeclareVariable (name As String, value As String, isConst As Boolean)
     Dim decl As String
     If isConst Then
@@ -210,6 +233,7 @@ Public Sub DeclareVariable (name As String, value As String, isConst As Boolean)
 End Sub
 
 ' Create an object
+' const name = { key1: value1, key2: value2 };
 Public Sub CreateObject (name As String, properties As Map)
     AddLine($"const ${name} = {"$)
     currentIndent = currentIndent + 1
@@ -229,6 +253,7 @@ Public Sub CreateObject (name As String, properties As Map)
 End Sub
 
 ' Create an array
+' const name = [ item1, item2 ];
 Public Sub CreateArray (name As String, items As List)
     Dim itemsStr As String = "["
     For i = 0 To items.Size - 1
@@ -240,7 +265,7 @@ Public Sub CreateArray (name As String, items As List)
     AddLine($"const ${name} = ${itemsStr};"$)
 End Sub
 
-' output: <code>document.dispatchEvent(new CustomEvent("eventName", { ... }))</code>
+' document.dispatchEvent(new CustomEvent("eventName", { ... }))
 Public Sub AddCustomEventDispatch (eventName As String, detailData As Map)
     AddLine("")
 	AddLine("document.dispatchEvent(new CustomEvent('" & eventName & "', {")
