@@ -1,5 +1,5 @@
 ### Adafruit_Neopixel - Based on V1.15.2 (Release date 15/10/2025) by Peter Simpson
-### 02/01/2026
+### 02/28/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/170173/)
 
 Hello Everyone,  
@@ -21,7 +21,7 @@ Anyway, I added some extra functions that might come in handy for B4R developers
 **rAda\_NeoPixel  
   
 Author:** Peter Simpson  
-**Version:** 1.15  
+**Version:** 1.20  
 
 - **Ada\_NeoPixel**
 *Wrapper for Adafruit NeoPixel (WS2812 / WS2812B) LED strips and matrices.  
@@ -38,7 +38,15 @@ Author:** Peter Simpson
 *Prepares the NeoPixel driver for operation.  
  Must be called after Initialize before any pixel updates.*- **Clear**
 *Clears the internal pixel buffer (sets all LEDs to off).  
- Call Show afterwards to apply the change to the LEDs.*- **Fill** (Colour As ULong, First As UInt, Count As UInt)
+ Call Show afterwards to apply the change to the LEDs.*- **DimPixel** (Colour As ULong, Percent As Byte) As ULong
+*Scales a packed colour by Percent (0‑100) and returns the new packed colour.  
+ Colour The packed colour value.  
+ Percent The brightness percentage (0‑100).*- **FadePixel** (Index As UInt, Colour As ULong, Steps As UInt, DelayMs As UInt)
+*Fades a pixel from its current colour to Colour.  
+ Index The pixel index.  
+ Colour The target packed colour.  
+ Steps Number of interpolation steps.  
+ DelayMs Delay between steps in milliseconds.*- **Fill** (Colour As ULong, First As UInt, Count As UInt)
 *Fills a range of pixels with a single packed colour.  
  Colour The packed colour value.  
  First The starting pixel index.  
@@ -63,7 +71,12 @@ Author:** Peter Simpson
 *Returns the 800 KHz timing flag.  
  Required for WS2812 / WS2812B LEDs.*- **Neo\_RGB** As ULong
 *Returns the RGB colour order flag.  
- Used by some older or non‑standard LED strips.*- **SetBrightness** (Brightness As Byte)
+ Used by some older or non‑standard LED strips.*- **ScrollText** (Text As String, Colour As ULong, SpeedMs As UInt)
+*Scrolls text across an 8‑row matrix  
+ Basic (a-z, A‑Z, 0‑9, space, ASCII 32–47, 58–64 and 91–96).  
+ Text The null‑terminated string to scroll.  
+ Colour The packed colour to use.  
+ SpeedMs Delay between column shifts in milliseconds.*- **SetBrightness** (Brightness As Byte)
 *Sets the global brightness level.  
  Brightness A value from 0 (off) to 255 (maximum brightness).  
  Note: This does not modify stored pixel colours.*- **SetPixelColor** (Index As UInt, Red As Byte, Green As Byte, Blue As Byte)
@@ -84,8 +97,23 @@ Author:** Peter Simpson
 *Creates a packed RGB colour value.  
  Red The red component (0‑255).  
  Green The green component (0‑255).  
- Blue The blue component (0‑255).*- **Show**
+ Blue The blue component (0‑255).*- **SetRGBW** (Red As Byte, Green As Byte, Blue As Byte, White As Byte) As ULong
+*Creates a packed RGBW colour value.  
+ Red The red component (0‑255).  
+ Green The green component (0‑255).  
+ Blue The blue component (0‑255).  
+ White The white component (0‑255).*- **Show**
 *Sends the internal pixel buffer to the LEDs.  
  Call this after modifying pixel colours to update the display.*
+  
+**Update: V1.20**  
+
+- ScrollText
+- SetPixelColorPacked
+- DimPixel
+- FadePixel
+- SetRGBW
+
+D = 51, 56  
   
 **Enjoy…**

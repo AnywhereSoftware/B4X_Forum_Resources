@@ -1,5 +1,5 @@
 ### Integrated B4JPackager11 - The simple way to distribute standalone UI apps by Erel
-### 01/29/2026
+### 02/26/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/117880/)
 
 B4JPackager11 is a utility written in B4J that uses the underlying Java tools to create a standalone package that doesn't depend on any other software being installed.  
@@ -74,7 +74,8 @@ Starting from B4J 9.00, the same property can appear multiple times and the valu
 8. If using jWebSocketClient then you need to add:
 
 ```B4X
-#PackagerProperty: AdditionalModuleInfoString = uses org.eclipse.jetty.websocket.common.RemoteEndpointFactory;
+#PackagerProperty: AdditionalModuleInfoString = provides org.slf4j.spi.SLF4JServiceProvider with org.eclipse.jetty.logging.JettyLoggingServiceProvider;  
+#PackagerProperty: IncludedModules = jdk.charsets, jdk.crypto.ec
 ```
 
 9. If you want to copy the generated build to a different folder (C:\Users\H\Downloads\test for example):

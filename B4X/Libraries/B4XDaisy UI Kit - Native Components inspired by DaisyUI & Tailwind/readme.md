@@ -1,10 +1,12 @@
 ###   B4XDaisy UI Kit - Native Components inspired by DaisyUI & Tailwind by Mashiane
-### 02/21/2026
+### 02/27/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170352/)
 
 Hi Fam  
   
 [Download from GitHub](https://github.com/Mashiane/Sithaso-B4XDaisy-UIKit---Native-Android-Components-inspired-by-DaisyUI)  
+  
+[Download from Google Drive](https://drive.google.com/drive/folders/1Ccr4SiPYugPCsN0juwwwqAZGewMW-xZj?usp=sharing)  
   
 [Track the Project](https://github.com/users/Mashiane/projects/1)  
   

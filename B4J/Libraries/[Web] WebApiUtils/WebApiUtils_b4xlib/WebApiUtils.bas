@@ -5,7 +5,7 @@ Type=StaticCode
 Version=10.3
 @EndOfDesignText@
 ' Web API Utility
-' Version 5.80
+' Version 6.00
 Sub Process_Globals
 	Public Const MIME_TYPE_HTML As String = "text/html"
 	Public Const MIME_TYPE_JSON As String = "application/json"
@@ -722,25 +722,25 @@ Public Sub ReturnHttpResponse (Message As HttpResponseMessage, Response As Servl
 			Message.ResponseKeys.Initialize
 		End If
 		If Message.ResponseKeys.Size = 0 Then
+			'Message.ResponseKeys.Add("t")
 			Message.ResponseKeys.Add("a")
 			Message.ResponseKeys.Add("s")
 			Message.ResponseKeys.Add("m")
 			Message.ResponseKeys.Add("e")
 			Message.ResponseKeys.Add("r")
-			'Message.ResponseKeys.Add("t")
 		End If
 		Dim ResponseElements As Map
 		ResponseElements.Initialize
 		For Each Key As String In Message.ResponseKeys
 			Select Key
-				Case RESPONSE_ELEMENT_MESSAGE
-					ResponseElements.Put(RESPONSE_ELEMENT_MESSAGE, Message.ResponseMessage)
+				Case RESPONSE_ELEMENT_TYPE
+					ResponseElements.Put(RESPONSE_ELEMENT_TYPE, Message.ResponseType)
 				Case RESPONSE_ELEMENT_CODE
 					ResponseElements.Put(RESPONSE_ELEMENT_CODE, Message.ResponseCode)
 				Case RESPONSE_ELEMENT_STATUS
 					ResponseElements.Put(RESPONSE_ELEMENT_STATUS, Message.ResponseStatus)
-				Case RESPONSE_ELEMENT_TYPE
-					ResponseElements.Put(RESPONSE_ELEMENT_TYPE, Message.ResponseType)
+				Case RESPONSE_ELEMENT_MESSAGE
+					ResponseElements.Put(RESPONSE_ELEMENT_MESSAGE, Message.ResponseMessage)
 				Case RESPONSE_ELEMENT_ERROR
 					ResponseElements.Put(RESPONSE_ELEMENT_ERROR, Message.ResponseError)
 				Case RESPONSE_ELEMENT_RESULT
