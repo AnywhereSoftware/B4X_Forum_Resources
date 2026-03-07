@@ -1,0 +1,84 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+Library1=core
+Library2=firebaseauth
+Library3=firebasenotifications
+Library4=javaobject
+Library5=xui
+Library6=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddReceiverText(smsstatusreceiver,<intent-filter></intent-filter>)~\n~AddPermission(android.permission.SEND_SMS)
+Module1=FirebaseMessaging
+Module2=smsstatusreceiver
+Module3=Starter
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=3
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	' These global variables are declared once when the application starts.
+	' They can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	' These variables are re-declared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	' =========================================================
+	' IMPORTANT - Manifest configuration required:
+	'
+	' In addition to requesting SEND_SMS at runtime,
+	' you MUST also declare the permission and the receiver
+	' in the Manifest:
+	'
+	' AddPermission(android.permission.SEND_SMS)
+	'
+	' AddReceiverText(smsstatusreceiver,<intent-filter></intent-filter>)
+	'
+	' Without these entries:
+	' - SMS sending will fail (missing permission)
+	' - SENT / DELIVERED callbacks will never arrive
+	'
+	' Runtime permission alone is NOT enough.
+	' =========================================================
+	
+	
+	' IMPORTANT:
+	' From Android 6 (API 23) and above, SEND_SMS is a dangerous permission.
+	' It MUST be requested at runtime, not only declared in the manifest.
+
+	Dim rp As RuntimePermissions
+	rp.CheckAndRequest(rp.PERMISSION_SEND_SMS)
+
+	' Wait for the permission result callback
+	Wait For Activity_PermissionResult (Permission2 As String, Result2 As Boolean)
+
+	If Result2 = False Then
+		Log("SEND_SMS permission denied - SMS sending will not work.")
+	Else
+		Log("SEND_SMS permission granted.")
+	End If
+
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub

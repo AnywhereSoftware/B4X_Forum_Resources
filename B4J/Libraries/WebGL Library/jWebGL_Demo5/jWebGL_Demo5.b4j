@@ -1,0 +1,272 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jwebgl
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 200 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	
+	Private Button1 As B4XView
+	Private gl As WebGL
+	Private Port As Int = 8888
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "WebGL Demo 5"
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Button1.Enabled = False
+	
+	' Set here the path where THREEJS distribution was unzipped.
+	' More concurrent projects can run at same time, just use different port for each if you need this.
+	gl.Initialize(Me, "WebGL", "WebGL_Demo5", "GMT+2", File.DirData("B4XWebGL"), Port)
+	
+	If gl.GetEngine Then
+'		gl.SetLocalServer
+		gl.StartEngine3(DrawScene)
+		gl.Update
+	Else
+		LogError("Unable to initialize WebGL Library")
+	End If
+End Sub
+
+'///////////// WebGL Library Events ////////////
+
+' Called if error occours
+Sub WebGL_Error(Error As String)
+	LogColor(Error, xui.Color_Red)
+End Sub
+
+ ' IMPORTANT NOTE: _ReadyToCode event is never fired when we use GetEngine3 and pass a full html string.
+ '                 When we load a full HTML + JS code, we cannot use Inject command or other similar commands
+ '                 that inject code. Your final code will be contained in the passed full HTML string.
+
+' Called just one time when the scene is updated
+Private Sub WebGL_Updated(Url As String)
+	Log(" ") : Log("Server static folder: " & gl.MainFolder)
+	Log(" ") : Log("To access the scene:")
+	LogColor(Url, xui.Color_Magenta)
+	Log("To access the library main page:")
+	LogColor(gl.ServerMainPage, xui.Color_Magenta) : Log(" ")
+	
+'	' To avoid log truncation we can print it line by line
+'	Dim lines() As String = Regex.Split(CRLF, gl.HtmlStringDebug)
+'	For Each line As String In lines
+'		LogColor(line, xui.Color_Cyan)
+'	Next
+	
+'	LogColor(gl.HtmlString, xui.Color_Green) : Log(" ")  ' Show the final html string
+'	LogColor(gl.HtmlStringDebug, xui.Color_Green) : Log(" ")  ' Show the final html string in debug mode with line numbers. With this we can track JavaScript console errors.
+End Sub
+
+' Called when there are library server logs
+Private Sub WebGL_ServerLog(Text As String)
+	If Text.Contains(".html") Or Text.ToLowerCase.Contains("mainpage") Then
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Magenta)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	Else
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Blue)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	End If
+End Sub
+
+'/////////////////////////// SCENE ///////////////////////////////
+
+Sub DrawScene As String
+	Dim html As String = $"<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry hierarchy</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				padding: 0;
+				margin: 0;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.min.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
+
+		<script type="module">
+
+			import * as THREE from 'three';
+			import Stats from 'three/addons/libs/stats.module.js';
+import { TeapotGeometry } from 'three/addons/geometries/TeapotGeometry.js';
+			var camera, scene, renderer, stats, geometry, root, mouseX = 0, mouseY = 0;
+			var windowHalfX = window.innerWidth / 2, windowHalfY = window.innerHeight / 2;
+
+			init();
+			animate();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 15000 );
+				camera.position.z = 500;
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x000000 );
+
+            // UNCOMMENT JUST ONE ...
+				//geometry = new THREE.BoxGeometry( 100, 100, 100 );
+				//geometry = new THREE.SphereGeometry( 50, 32, 16 );
+				//geometry = new THREE.TorusGeometry( 35, 15, 16, 100 );
+				//geometry = new THREE.TorusKnotGeometry( 35, 15, 80, 10 );
+				//geometry = new THREE.IcosahedronGeometry( 55, 0 );
+				geometry = new TeapotGeometry( 42, 8 );
+				
+				var material = new THREE.MeshNormalMaterial();
+            //var material = new THREE.MeshNormalMaterial( {wireframe: true} );
+
+				root = new THREE.Mesh( geometry, material );
+				root.position.x = 1000;
+				scene.add( root );
+
+				var amount = 1000, object, parent = root;
+
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.x = 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				parent = root;
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.x = - 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				parent = root;
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.y = - 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				parent = root;
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.y = 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				parent = root;
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.z = - 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				parent = root;
+				for ( var i = 0; i < amount; i ++ ) {
+					object = new THREE.Mesh( geometry, material );
+					object.position.z = 100;
+					parent.add( object );
+					parent = object;
+				}
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				document.body.appendChild( stats.dom );
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function onWindowResize() {
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function onDocumentMouseMove( event ) {
+				mouseX = ( event.clientX - windowHalfX ) * 10;
+				mouseY = ( event.clientY - windowHalfY ) * 10;
+			}
+
+			// Animation loop
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+			}
+
+			function render() {
+				var time = Date.now() * 0.001;
+				
+				var rx = Math.sin( time * 0.7 ) * 0.2;
+				var ry = Math.sin( time * 0.3 ) * 0.1;
+				var rz = Math.sin( time * 0.2 ) * 0.1;
+
+				camera.position.x += ( mouseX - camera.position.x ) * 0.05;
+				camera.position.y += ( - mouseY - camera.position.y ) * 0.05;
+				camera.lookAt( scene.position );
+
+				root.traverse( ( object ) => {
+					object.rotation.x = rx;
+					object.rotation.y = ry;
+					object.rotation.z = rz;
+				})
+				
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>"$
+
+	Return html
+End Sub
+

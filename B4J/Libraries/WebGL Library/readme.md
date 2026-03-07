@@ -1,5 +1,5 @@
 ###  WebGL Library by max123
-### 10/21/2025
+### 03/01/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/164553/)
 
 Hi all,  
@@ -71,7 +71,7 @@ With this library you can:
 **How to setup WebGL library** **(Step by step)**  
 
 1. Download the attached jWebGL.zip file
-2. Extract jWebGL.jar and jWebGL.xml files to your Additional Libraries folder
+2. Extract jWebGL.jar and jWebGL.xml and 3 b4xtemplate files to your B4J Additional Libraries folder
 3. You will have to put the THREEJS library in a place where the system have permissions to read and write, the best place on any system is DirData. To know where DirData points on your system you can use:
 
    ```B4X
@@ -126,25 +126,7 @@ You can even remove all html files examples that consume more space and even rem
 After this you will have a clean development tool. You can put manually your personal textures, models and sounds you plain to use on one or more projects.  
 It is best practice to create sub folders where place all files divided by type, eg. in /textures create a folder /grass with all grass textures, /patterns with all patterns textures, /woods with all wood textures and so on … This will help you when you use these files and open them in your projects.  
   
-You can even put files in your assets and copy them to the right position by code, to do this you can refer to ProjectFolder, it refer to the library folder (/examples), here an example code:  
-
-```B4X
-   Dim Separator As String = GetSystemProperty("file.separator","")  
-   Dim FilePath As String = $"textures${Separator}crate.gif"$  
-    If File.Exists(gl.ProjectFolder, FilePath) = False Then  
-        Wait For (File.CopyAsync(File.DirAssets, "crate.gif", gl.ProjectFolder, FilePath)) Complete (Success As Boolean)  
-        Log("crate.gif copy from assets. Success: " & Success & "   " & File.Combine(gl.ProjectFolder, FilePath))  
-        If Not (Success) Then  
-            LogError("You should place crate.gif in DirAsset")  
-            ExitApplication  
-        End If  
-    Else  
-        Log("crate.gif texture already exist: " & File.Combine(gl.ProjectFolder, FilePath))  
-    End If
-```
-
-  
-This is an old thing…… don't more use this code… now just use this from v1.24 of library, it do the same exact thing, you can even decide to overwrite or not an existing file:  
+You can even put files in your assets and copy them to the right position by code, to do this you can refer to ProjectFolder, it refer to the library folder (/examples), here an example code, you can even decide to overwrite or not existing files:  
 
 ```B4X
     Dim Separator As String = GetSystemProperty("file.separator","")  
@@ -166,13 +148,15 @@ That's all …
 If you create something (not commercial), don't forget to put here some feedback and share the code on this forum, so other users can get your scene and study your code.  
 If you create something functional (commercial or not) please put in the About of your app the link to this thread and don't forget to credit threejs.  
   
-Enjoy with real 3D world !!!  
+Enjoy with real 3D !!!  
   
-**Updated to 1.24**  
+**———- UPDATES ———-  
+  
+Updated to 1.24**  
 - Changed some small things in library initialization. This was necessary to make it compatible with B4A WebGL library I will release next.  
- Now the code (apart inizializialization line necessary to adapt to Android) it is fully compatible between B4J and B4A WebGL library as I wanted.  
+ Now the code (apart initialization line necessary to adapt to Android) it is fully compatible between B4J and B4A WebGL library as I wanted.  
  Now full projects can be copy/pasted from B4J to B4A IDE and viceversa and will work the same without adaptions and write more code.  
-- Removed some redundants commands, this will avoid confusion, simplifies the code and improve the library flexibility  
+- Removed some redundant commands, this will avoid confusion, simplifies the code and improve the library flexibility  
 - Added new useful commands to simplify the copy of project resources (Remember you can just do it manually but it is good practice do it in the code expecially if you distribuite the code. This is not true on B4A WebGL library where you can only copy resources by code)  
 
 ```B4X
@@ -185,4 +169,25 @@ CopyResourcesFromZipFileToSingleFolder (DestFolder As String, ZipFileName As Str
 - Updated accordly all demo projects. To avoid confusion about small code changes in the library initialization, you will just remove old demo projects and use the new zip file.  
   
 **Updated to 1.25**  
-- added an option to overwrite resources using CopyResourceFile, CopyResourcesFromZipFile and CopyResourcesFromZipFileToSingleFolder. If Overwrite is True, always resources will be overwritten, if False, the library just check for first file existence, if this exists do nothing, if this do not exists will copy relative resources. If you still develop and change files from time to time you can set it always True, put it False otherwise or in final production.
+- Added an option to overwrite resources using CopyResourceFile, CopyResourcesFromZipFile and CopyResourcesFromZipFileToSingleFolder. If Overwrite is True, always resources will be overwritten, if False, the library just check for first file existence, if this exists do nothing, if this do not exists will copy relative resources. If you still develop and change files from time to time you can set it always True, put it False otherwise or in final production.  
+  
+**Updated to 1.26**  
+- Implemented project templates. This is useful to create new WebGL projects avoiding to write redundant code.  
+ Many thanks to our friend [USER=51832]@LucaMs[/USER] for help about this.  
+ To use them, unzip the templates (3 b4xtemplate files you find in the library zip file) inside the B4J AdditionalLibraries folder and restart the IDE.  
+![](https://www.b4x.com/android/forum/attachments/170340)  
+- Simplified the way to get the 3D engine, no more require a WaitFor, just use something like this:  
+
+```B4X
+    GL.Initialize(Me, "WebGL", "ProjectName", "GMT+2", File.DirData("B4XWebGL"), Port)  
+   
+    If GL.GetEngine Then  
+        GL.StartEngine3(FullHtmlString) ' Or use StartEngine, StartEngine2  
+        GL.Update       
+    Else  
+        LogError("Unable to initialize WebGL library")  
+    End If
+```
+
+  
+- Now the library even works in Console applications

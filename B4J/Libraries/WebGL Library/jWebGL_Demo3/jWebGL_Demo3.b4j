@@ -1,0 +1,218 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jwebgl
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 200 
+#End Region
+
+' This demo code will introduce you to an integrated GUI and show how to add some parameters you can change
+' at runtime when the scene is rendered. The GUI is a really useful tool, it is already included on the threejs distribution
+' but as library addon, so you have to import it before you can use in your projects. Take a look to the follow code and refer
+' to the main repo for usage: https://github.com/georgealways/lil-gui . 
+
+' All threejs examples do large use of this library so that is the best way to know how it works.
+' The GUI library implements more controls, like sliders, buttons, color pickers and more.
+
+' On this demo project we just add a scale factor for XYZ axes of a custom geometry
+' To change the scale, just slide the relative slider with mouse
+' You can position on a slider and just use mouse wheel to fine tune it
+' You can set the limits and step size by code
+' You can assign a custom name different that parameters you change
+' You can double click (or select) the label with number and insert a value with keyboard
+' You can do more...
+
+' NOTE: Here we just create some planes, then just scale the custom geometry we created.
+'       You cannot only change the scale factor, but any parameter you want referred to any object.
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	
+	Private Button1 As B4XView	
+	Private gl As WebGL
+	Private Port As Int = 8888
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "WebGL Demo 3"
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Button1.Enabled = False
+	
+	' Set here the path where THREEJS distribution was unzipped.
+	' More concurrent projects can run at same time, just use different port for each if you need this.
+	gl.Initialize(Me, "WebGL", "WebGL_Demo3", "GMT+1", File.DirData("B4XWebGL"), Port)
+	
+	Wait For (gl.GetEngine) Complete (Success As Boolean)
+	If Success Then
+'		gl.SetLocalServer
+		gl.StartEngine
+	Else
+		LogError("Unable to initialize WebGL Library")
+	End If
+End Sub
+
+'///////////// WebGL Library Events ////////////
+
+' Called if error occours
+Sub WebGL_Error(Error As String)
+	LogColor(Error, xui.Color_Red)
+End Sub
+
+' Called when the library is fully initialized and user is ready to code the scene
+Sub WebGL_ReadyToCode(Url As String)
+	LogColor("WebGL ReadyToCode. Your WebGL code start here. URL: " & Url, 0xFF9A4EC0)
+					
+	gl.Alert("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")
+	gl.Console("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")	
+	gl.Console("'THREEJS REVISION: ' + THREE.REVISION")
+	gl.Console($"'Point to ${gl.ServerProjectPath} to see library examples\n'"$)
+	gl.Console($"'Point to ${gl.ServerMainPage} to see library main page\n'"$)
+	
+	DrawScene
+End Sub
+
+' Called just one time when the scene is updated
+Private Sub WebGL_Updated(Url As String)
+	Log(" ") : LogColor("Server static folder: " & gl.MainFolder, xui.Color_Magenta)
+	Log(" ") : Log("To access the scene:")
+	LogColor(Url, xui.Color_Magenta)
+	Log("To access the library main page:")
+	LogColor(gl.ServerMainPage, xui.Color_Magenta) : Log(" ")
+	
+'	LogColor(gl.HtmlString, xui.Color_Green) : Log(" ")  ' Show the final html string
+'	LogColor(gl.HtmlStringDebug, xui.Color_Green) : Log(" ")  ' Show the final html string in debug mode with line numbers. With this we can track JavaScript console errors.
+End Sub
+
+' Called when there are library server logs
+Private Sub WebGL_ServerLog(Text As String)
+	If Text.Contains(".html") Or Text.ToLowerCase.Contains("mainpage") Then
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Magenta)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	Else
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Blue)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	End If
+End Sub
+
+'/////////////////////////// SCENE ///////////////////////////////
+
+Sub DrawScene
+	
+	gl.Import("* as THREE from 'three'")
+	gl.Import("{ OrbitControls } from 'three/addons/controls/OrbitControls.js'")
+	gl.Import("{ GUI } from 'three/addons/libs/lil-gui.module.min.js'")
+	
+	Dim html As String = $"
+/////////////////////////////////////////////
+//                                         //
+// Don't forget to post comments and your  //
+// 3D creations on B4X Forum.              //
+//                                         //
+// Author: Massimo Meli (ITALY)            //                                   
+// matrix20001@tin.it                      //
+// max123 on B4X Forum                     //
+//                                         //
+//   Enjoy with ThreeJS and full 3D !!!    //                                         
+//                                         //
+/////////////////////////////////////////////
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 300);
+camera.position.set(2, 5, 3);
+
+var renderer = new THREE.WebGLRenderer( {antialias: true} );
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio( window.devicePixelRatio );
+document.body.appendChild(renderer.domElement);
+
+var controls = new OrbitControls(camera, renderer.domElement);
+	
+// Optionals controls adjustments
+controls.rotateSpeed = 1.4;  // By default 1.0
+controls.zoomSpeed = 0.8;    // By default 1.0
+controls.panSpeed = 2.4;     // By default 1.0
+controls.enableDamping = true;  // By default false
+controls.dampingFactor = .05;   // By default 0.05
+
+var group = new THREE.Group();
+group.scale.set(3, 1, 2);
+scene.add(group)
+
+setPlane("y",  Math.PI * 0.5, 0xff0000); //px
+setPlane("y", -Math.PI * 0.5, 0xff0000); //nx
+setPlane("x",  Math.PI * 0.5, 0x00ff00); //ny
+setPlane("y",  0, 0x0000ff); //pz
+setPlane("y",  Math.PI, 0x0000ff);// nz
+
+function setPlane(axis, angle, color) {
+  let planeGeom = new THREE.PlaneGeometry(1, 1, 1, 1);
+  planeGeom.translate(0, 0, 0.5);
+  switch (axis) {
+    case 'y':
+      planeGeom.rotateY(angle);
+      break;
+    default:
+      planeGeom.rotateX(angle);
+  }
+  let plane = new THREE.Mesh(planeGeom, new THREE.MeshBasicMaterial({color: color, side: THREE.DoubleSide}));
+  group.add(plane);
+}
+
+var stepSize = 0.1;
+
+var gui = new GUI(); // Our GUI interface
+gui.add(group.scale, "x", 0.1, 5, stepSize); // Use optional step size
+gui.add(group.scale, "y", 0.1, 5, stepSize);
+gui.add(group.scale, "z", 0.1, 5, stepSize);
+
+//gui.add(group.scale, "z", 0.1, 5, stepSize).name('Axes Z'); // This is an example to set a custom name (label in the GUI)
+
+window.addEventListener('resize', onWindowResize, false); // Handle resize
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	render();
+}
+
+function render() {
+  requestAnimationFrame(render);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+render(); // Start animation render
+"$
+	
+	gl.Inject(html)
+	gl.Update ' Always remember to update. This will create your html file.
+End Sub
