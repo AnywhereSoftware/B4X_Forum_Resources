@@ -1,5 +1,5 @@
 ###  Create B4xLib (only 1 easy click) by aeric
-### 11/10/2025
+### 03/05/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/169014/)
 
 **[SIZE=5]Creating a b4xlib is easy.[/SIZE]**  
@@ -77,3 +77,8 @@ e.g Single class library
 ```B4X
 #Macro: Title, Create B4xLib, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&args=-cMf&args=..\release\%PROJECT_NAME%.b4xlib&args=EndsMeet.bas&args=manifest.txt&args=LICENSE
 ```
+
+  
+  
+Also check:  
+<https://www.b4x.com/android/forum/threads/b4x-project-template-b4x-library.170285/>

@@ -1,14 +1,19 @@
 ###   B4XDaisy UI Kit - Native Components inspired by DaisyUI & Tailwind by Mashiane
-### 02/27/2026
+### 03/04/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170352/)
 
 Hi Fam  
+  
+[SIZE=5][FONT=tahoma]Disclaimer: The [B4A] in the title? This b4xlib has only been tested with B4A, thus the title. I have not checked the cross-platform functionality as its on the roadmap when I finish the complete library. The b4xlib is still in ALPHA stage, things might change, apis might break and nothing as yet has been done using abstract designer layouts.[/FONT][/SIZE]  
   
 [Download from GitHub](https://github.com/Mashiane/Sithaso-B4XDaisy-UIKit---Native-Android-Components-inspired-by-DaisyUI)  
   
 [Download from Google Drive](https://drive.google.com/drive/folders/1Ccr4SiPYugPCsN0juwwwqAZGewMW-xZj?usp=sharing)  
   
 [Track the Project](https://github.com/users/Mashiane/projects/1)  
+  
+[Ask NotebookLLM about B4XDaisyUI](https://notebooklm.google.com/notebook/ce02d655-1912-402b-94ad-058f64d5ea82)  
+  
   
 I am proud to present the **B4X Daisy UI Kit**, a suite of native custom views designed to bring the modern aesthetic and utility of the **DaisyUI (Tailwind CSS)** framework to B4X development.  
 Unlike libraries that wrap WebViews to achieve modern UI looks, **these components are 100% native**. They use B4XCanvas and standard Panels to render vector shapes, shadows, and layouts, ensuring high performance and a native feel on Android (and B4X cross-platform implementations).  
@@ -47,14 +52,15 @@ We have used these libraries in b4a so long
   
 ![](https://www.b4x.com/android/forum/attachments/169988)  
   
-***This is a continuing project***  
-  
-**What's new in Version 0.2**  
-  
-…..Loading….  
   
   
-**Related Content**  
+**What's new in Version 0.30 (March 03 - 2026)  
+  
+[MEDIA=youtube]CgioA9WPfls[/MEDIA]  
+  
+  
+  
+Related Content**  
   
 Chat  
 <https://www.b4x.com/android/forum/threads/b4x-b4xdaisychat-full-featured-native-chat-engine.170350/>  

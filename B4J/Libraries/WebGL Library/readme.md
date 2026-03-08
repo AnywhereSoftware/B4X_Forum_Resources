@@ -1,5 +1,5 @@
 ###  WebGL Library by max123
-### 03/01/2026
+### 03/04/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/164553/)
 
 Hi all,  
@@ -24,9 +24,8 @@ renderers, fully rendered by hardware of your graphic card. WebGPU even permits 
   
 If you need something that involves 3D and is not a problem that it show on external browser (even on remote devices) this is probably the library for you, because of it's incredible powerful you can develop with it any sort of 3D, from simples to very complex scenes, from realistic scenes to realistic or unrealistic effects with even an addon of advanced post-processing and more physic engines.  
   
-**B4J WebGL Library is completely FREE, and come out of the box with all you need to develop professional 3D that even works on the web.   
-If you plain to use it in your projects, please consider to make a donation … Because the develop required a lot of work, time and knowledge,**   
-**I would be grateful if you do it.**  
+**B4J WebGL library is completely FREE for personal use, and come out of the box with all you need to develop professional 3D that even works on the web.   
+If you plain to use it in commercial projects, please consider to make a donation …**   
   
 Any modern browser should support WebGL renderers, but to be sure your browsers support it, you can visit: [https://webglreport.com](https://webglreport.com/)  
 To get more on THREEJS library you can visit: <https://threejs.org/>  
@@ -95,7 +94,7 @@ With this library you can:
 
 A **big** **thank you** to [USER=1]@Erel[/USER] that sent me the latest version of B4J Server (4.02), that offers the possibility to get server logs without ciclically open every 10 seconds the server log file and get here if there are modifications…. it works really well. It even permits to set the correct log timestamp you can pass as GMT string.  
   
-The five demo projects I've provided are just simple demos, but disposed as small tutorial to start manage this, largely commented to explain a bit how you can start with WebGL library.  
+**The five demo projects I've provided are just simple demos, but disposed as small tutorial to start manage this, largely commented to explain a bit how you can start with WebGL library**.  
   
 So now you can test all demos one by one, all works the same manner as previousely explained (from step 10). Just remember to terminate the current project before you start others  
 (because in these demo projects I used the same HTTP port for all projects) or the server will be unable to bind and serve the new scene because the port is already open and used by another process. Note that you can use more concurrent projects open in the browser at same time, just use a different HTTP port for any project.  
@@ -183,7 +182,7 @@ CopyResourcesFromZipFileToSingleFolder (DestFolder As String, ZipFileName As Str
    
     If GL.GetEngine Then  
         GL.StartEngine3(FullHtmlString) ' Or use StartEngine, StartEngine2  
-        GL.Update       
+        GL.Update    
     Else  
         LogError("Unable to initialize WebGL library")  
     End If

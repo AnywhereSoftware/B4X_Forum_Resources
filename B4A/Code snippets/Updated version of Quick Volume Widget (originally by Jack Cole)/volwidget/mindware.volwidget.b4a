@@ -1,0 +1,197 @@
+﻿Build1=Default,mindware.volwidget
+File1=layout1.bal
+File2=mute.png
+File3=speaker.png
+File4=vibrate.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=phone
+Library3=randomaccessfile
+Library4=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.ACCESS_NOTIFICATION_POLICY)	'El permiso de "No Molestar"~\n~
+Module1=PermissionManager
+Module2=StateManager
+Module3=WidgetReceiver
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=3
+Version=13.4
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: Volume Widget
+	#VersionCode: 1
+	#VersionName: 0.7.0
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'Activity module
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	Dim ystart As Int
+	Dim normal_ring, normal_music, normal_notification, normal_system As Int
+	Dim Label1 As Label
+	Dim Panel1 As Panel
+	Dim ImageView1 As ImageView
+	Dim Panel2 As Panel
+	Dim phonevolume As Phone
+	Dim exitb As Button
+	
+	Dim lblMediaVolume, lblringervolume, lblnotificationvolume, lblsystemvolume, lblnormal As Label
+	Dim barmediavolume, barringervolume, barnotificationvolume, barsystemvolume As SeekBar
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Msgbox("Go to the home screen and add the Volume Widget.", "")
+	
+	Activity.Color = Colors.Gray
+	
+	get_settings
+	ystart=40dip
+	
+	lblnormal.Initialize("")
+	lblnormal.TextSize=16
+	lblnormal.Text="Normal Level Volume Settings"
+	lblnormal.TextColor=Colors.White
+	lblnormal.Gravity=Gravity.CENTER_HORIZONTAL
+	Activity.AddView(lblnormal,5dip,5dip,100%x-10dip,30dip)
+	
+	lblMediaVolume.Initialize("")
+	lblMediaVolume.TextSize =16
+	lblMediaVolume.TextColor=Colors.White
+	lblMediaVolume.Text="Media Volume"
+	barmediavolume.Initialize("barMediaVolume")
+	barmediavolume.Max= phonevolume.GetMaxVolume(phonevolume.VOLUME_MUSIC)
+	barmediavolume.value=StateManager.GetSetting2("volume_music",normal_music)	
+	'set media volume
+    Activity.AddView(lblMediaVolume, 20dip, 20dip+ystart, 100%x - 40dip, 25dip)
+	lblMediaVolume.Gravity=Gravity.CENTER
+	Activity.AddView(barmediavolume, 20dip, 50dip+ystart, 100%x - 40dip, 20dip)
+	
+	lblringervolume.Initialize("")
+	lblringervolume.TextSize =16
+	lblringervolume.TextColor=Colors.White
+	lblringervolume.Text="Ring Volume"
+	barringervolume.Initialize("barringerVolume")
+	barringervolume.Max= phonevolume.GetMaxVolume(phonevolume.VOLUME_RING)
+	barringervolume.value=StateManager.GetSetting2("volume_ring",normal_ring)	
+	'set ringer volume 
+    Activity.AddView(lblringervolume, 20dip, 75dip+ystart, 100%x - 40dip, 25dip)
+	lblringervolume.Gravity=Gravity.CENTER
+	Activity.AddView(barringervolume, 20dip, 100dip+ystart, 100%x - 40dip, 20dip)
+	
+	lblnotificationvolume.Initialize("")
+	lblnotificationvolume.TextSize =16
+	lblnotificationvolume.TextColor=Colors.White
+	lblnotificationvolume.Text="Notification Volume"
+	barnotificationvolume.Initialize("barnotificationVolume")
+	barnotificationvolume.Max= phonevolume.GetMaxVolume(phonevolume.VOLUME_NOTIFICATION)
+	barnotificationvolume.value=StateManager.GetSetting2("volume_notification",normal_notification)	
+	'set notification volume 
+    Activity.AddView(lblnotificationvolume, 20dip, 125dip+ystart, 100%x - 40dip, 25dip)
+	lblnotificationvolume.Gravity=Gravity.CENTER
+	Activity.AddView(barnotificationvolume, 20dip, 150dip+ystart, 100%x - 40dip, 20dip)
+
+	lblsystemvolume.Initialize("")
+	lblsystemvolume.TextSize =16
+	lblsystemvolume.TextColor=Colors.White
+	lblsystemvolume.Text="System Volume"
+	barsystemvolume.Initialize("barsystemVolume")
+	barsystemvolume.Max= phonevolume.GetMaxVolume(phonevolume.VOLUME_SYSTEM)
+	barsystemvolume.value=StateManager.GetSetting2("volume_system",normal_system)	
+	'set system volume 
+    Activity.AddView(lblsystemvolume, 20dip, 175dip+ystart, 100%x - 40dip, 25dip)
+	lblsystemvolume.Gravity=Gravity.CENTER
+	Activity.AddView(barsystemvolume, 20dip, 200dip+ystart, 100%x - 40dip, 20dip)
+	
+	exitb.Initialize("exitb")
+	exitb.Text="Exit"
+	Activity.AddView(exitb,100%x/2-75dip,230dip+ystart,150dip,60dip)
+
+End Sub
+
+Sub save_settings
+	StateManager.SetSetting("volume_ring", normal_ring)
+	StateManager.SetSetting("volume_music",normal_music)
+	StateManager.SetSetting("volume_notification",normal_notification)
+	StateManager.SetSetting("volume_system",normal_system)
+	phonevolume.SetVolume(phonevolume.VOLUME_RING,normal_ring,False)
+	phonevolume.SetVolume(phonevolume.VOLUME_MUSIC,normal_music,False)
+	phonevolume.SetVolume(phonevolume.VOLUME_NOTIFICATION,normal_notification,False)
+	phonevolume.SetVolume(phonevolume.VOLUME_SYSTEM,normal_system,False)
+	StateManager.SaveSettings
+End Sub
+
+Sub get_settings
+	StateManager.settingsFileName="settings.txt"
+	StateManager.loadStateFile
+	normal_ring=StateManager.getSetting2("volume_ring",phonevolume.GetVolume(phonevolume.VOLUME_RING))
+	normal_music=StateManager.getSetting2("volume_music",phonevolume.GetVolume(phonevolume.VOLUME_MUSIC))
+	normal_notification=StateManager.getSetting2("volume_notification",phonevolume.GetVolume(phonevolume.VOLUME_NOTIFICATION))
+	normal_system=StateManager.getSetting2("volume_system",phonevolume.GetVolume(phonevolume.VOLUME_SYSTEM))
+End Sub
+
+Sub exitb_Click
+	Msgbox2Async("Exit and save normal volume settings?", "Notice", "Confirm", "", "No", Null, False)
+	Wait For Msgbox_Result (Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+		save_settings
+		MsgboxAsync("Don't forget to add the widget to your home screen if you have not already done so.","Message")
+		Activity.Finish
+	End If
+End Sub
+
+Sub barmediaVolume_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged=True Then
+		phonevolume.SetVolume(phonevolume.VOLUME_MUSIC,Value,False)
+		normal_music=Value
+	End If	
+End Sub
+
+Sub barringerVolume_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged=True Then
+		phonevolume.SetVolume(phonevolume.VOLUME_RING,Value,False)
+		normal_ring=Value
+	End If	
+End Sub
+
+Sub barnotificationVolume_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged=True Then
+		phonevolume.SetVolume(phonevolume.VOLUME_NOTIFICATION,Value,False)
+		normal_notification=Value
+	End If	
+End Sub
+
+Sub barsystemVolume_ValueChanged (Value As Int, UserChanged As Boolean)
+	If UserChanged=True Then
+		phonevolume.SetVolume(phonevolume.VOLUME_SYSTEM,Value,False)
+		normal_system=Value
+	End If	
+End Sub
+
+Sub Activity_Resume
+	Dim granted As Boolean
+	granted = PermissionManager.IsNotificationPolicyGranted
+	If granted = False Then
+		'MsgboxAsync doesn't work well here
+		Msgbox("This app, Volume Widget, needs permission to control Do Not Disturb mode. Enable it and return.", "Permission required")
+		Dim i As Intent
+		i.Initialize("android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS", "")
+		StartActivity(i)
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
