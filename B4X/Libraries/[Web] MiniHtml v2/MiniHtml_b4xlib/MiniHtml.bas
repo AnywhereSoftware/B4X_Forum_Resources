@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' MiniHtml
-' Version: 2.00
+' Version: 2.01
 Sub Class_Globals
 	Private mIndents As Int
 	Private mIndentString As String
@@ -304,7 +304,7 @@ Public Sub cdn (format As String, url As String) As MiniHtml
 	Return cdn2(format, url, "", "")
 End Sub
 
-'<code>body1.cdn2("script", "/assets/js/cdn.min.js", "", "")</code>
+'<code>body1.cdn2("script", "/assets/js/cdn.min.js", "sha384-hashes", "anonymous")</code>
 Public Sub cdn2 (format As String, url As String, integrity As String, crossorigin As String) As MiniHtml
 	Select format.ToLowerCase
 		Case "script", "js"
@@ -325,11 +325,9 @@ End Sub
 Public Sub cdn3 (format As String, url As String, keyvals As Map) As MiniHtml
 	Select format.ToLowerCase
 		Case "script", "js"
-			keyvals.Put("src", url)
-			mChildren.Add(Create("script").attr2(keyvals))
+			mChildren.Add(Create("script").attr("src", url).attr2(keyvals))
 		Case "style", "css"
-			keyvals.Put("href", url)
-			mChildren.Add(Create("link").attr2(keyvals))
+			mChildren.Add(Create("link").attr2(CreateMap("rel": "stylesheet", "href": url)).attr2(keyvals))
 	End Select
 	Return Me
 End Sub

@@ -2,16 +2,18 @@
 Group=Classes
 ModulesStructureVersion=1
 Type=Class
-Version=10.3
+Version=10.45
 @EndOfDesignText@
+' MiniJS library
+' Version 0.60
 Sub Class_Globals
+    Private Indent As Int
     Private jsCode As StringBuilder
-    Private currentIndent As Int
 End Sub
 
 Public Sub Initialize
+    Indent = 0
     jsCode.Initialize
-    currentIndent = 0
 End Sub
 
 ' Generate the complete JavaScript code
@@ -34,10 +36,10 @@ Public Sub Generate2 As String
 	Return scriptBuilder.ToString
 End Sub
 
-' Add a line of JavaScript code
+' Add a line of JavaScript code on new line
 Public Sub AddLine (code As String)
-    Dim indentStr As String = GetIndent
-    jsCode.Append(indentStr).Append(code).Append(CRLF)
+	jsCode.Append(CRLF)
+    jsCode.Append(GetIndent).Append(code)
 End Sub
 
 ' Add raw code without formatting
@@ -50,6 +52,11 @@ Public Sub AddComment (comment As String)
     AddLine("// " & comment)
 End Sub
 
+' // comment on same line
+Public Sub AppendComment (comment As String)
+    AddCode("// " & comment)
+End Sub
+
 ' /* multi-line comment */
 Public Sub AddMultiLineComment (comment As String)
     AddLine("/*")
@@ -60,6 +67,11 @@ Public Sub AddMultiLineComment (comment As String)
     AddLine(" */")
 End Sub
 
+' Add a new blank line
+Public Sub AddNewLine
+	jsCode.Append(CRLF)
+    jsCode.Append(GetIndent)
+End Sub
 ' console.error(message, event)
 Public Sub ConsoleError (message As String, event As String)
     AddLine($"console.error(${message}, ${event});"$)
@@ -83,18 +95,18 @@ End Sub
 Private Sub GetIndent As String
     Dim sb As StringBuilder
     sb.Initialize
-    For i = 0 To currentIndent - 1
+    For i = 0 To Indent - 1
         sb.Append("    ") ' 4 spaces per indent
     Next
     Return sb.ToString
 End Sub
 
 Public Sub IncreaseIndent
-	currentIndent = currentIndent + 1
+	Indent = Indent + 1
 End Sub
 
 Public Sub DecreaseIndent
-	currentIndent = currentIndent - 1
+	Indent = Indent - 1
 End Sub
 
 ' Start a function
@@ -106,38 +118,38 @@ Public Sub StartFunction (name As String, parameters() As String)
 		paramList = paramList & prm
 	Next
 	AddLine($"function ${name} (${paramList}) {"$)
-	currentIndent = currentIndent + 1
+	Indent = Indent + 1
 End Sub
 
 ' End a function
 Public Sub EndFunction
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}")
 End Sub
 
 ' if (condition) {
 Public Sub StartIf (condition As String)
     AddLine($"if (${condition}) {"$)
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' } else if (condition) {
 Public Sub ElseIf (condition As String)
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine($"} else if (${condition}) {"$)
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' } else {
 Public Sub AddElse
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("} else {")
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' }
 Public Sub EndIf
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}")
 End Sub
 
@@ -145,32 +157,32 @@ End Sub
 ' <code>script1.StartForLoop("let i = 0", "i < items.length", "i++")</code>
 Public Sub StartForLoop (initializer As String, condition As String, increment As String)
     AddLine($"for (${initializer}; ${condition}; ${increment}) {"$)
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' }
 Public Sub EndForLoop
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}")
 End Sub
 
 ' try {
 Public Sub StartTry
     AddLine($"try {"$)
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' } catch (e) {
 ' <code>script1.AddCatch("e")</code>
 Public Sub AddCatch (event As String)
-	currentIndent = currentIndent - 1
+	Indent = Indent - 1
     AddLine("} catch (" & event & ") {")
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 End Sub
 
 ' }
 Public Sub EndTry
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}")
 End Sub
 
@@ -236,7 +248,7 @@ End Sub
 ' const name = { key1: value1, key2: value2 };
 Public Sub CreateObject (name As String, properties As Map)
     AddLine($"const ${name} = {"$)
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
     
     Dim keys As List = properties.Keys
     For i = 0 To keys.Size - 1
@@ -248,7 +260,7 @@ Public Sub CreateObject (name As String, properties As Map)
         AddLine($"${key}: ${value}${lineEnd}"$)
     Next
     
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("};")
 End Sub
 
@@ -269,9 +281,9 @@ End Sub
 Public Sub AddCustomEventDispatch (eventName As String, detailData As Map)
     AddLine("")
 	AddLine("document.dispatchEvent(new CustomEvent('" & eventName & "', {")
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
     AddLine("detail: {")
-    currentIndent = currentIndent + 1
+    Indent = Indent + 1
 
 	Dim nextKey As Int
 	For Each key As String In detailData.Keys
@@ -289,8 +301,8 @@ Public Sub AddCustomEventDispatch (eventName As String, detailData As Map)
 		nextKey = nextKey + 1
 	Next
 
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}")
-    currentIndent = currentIndent - 1
+    Indent = Indent - 1
     AddLine("}));")
 End Sub

@@ -1,8 +1,8 @@
 ### [Web] MiniHtml v2 by aeric
-### 02/20/2026
+### 03/09/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170180/)
 
-Version: 2.00  
+Version: 2.01  
   
 Generate type safe HTML tags using B4X.  
   

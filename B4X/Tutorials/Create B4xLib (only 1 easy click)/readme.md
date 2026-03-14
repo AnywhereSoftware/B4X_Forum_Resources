@@ -1,5 +1,5 @@
 ###  Create B4xLib (only 1 easy click) by aeric
-### 03/05/2026
+### 03/08/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/169014/)
 
 **[SIZE=5]Creating a b4xlib is easy.[/SIZE]**  
@@ -21,7 +21,7 @@ The project files include .b4j or .b4a file and .meta3. Create a new "release" f
 ```B4X
 #Region Macros  
 '#Macro: Title, Export as zip, ide://run?file=%B4X%\Zipper.jar&Args=%PROJECT_NAME%.zip  
-#Macro: Title, Update Version, ide://run?file=%JAVABIN%\java.exe&Args=-jar&Args=%ADDITIONAL%\..\B4X\manifest-writer.jar&Args=%PROJECT%&Args=%PROJECT%&Args=Version&Args=1.00  
+#Macro: Title, Update Version, ide://run?file=%ADDITIONAL%\..\B4X\manifest-writer.jar&Args=%PROJECT%&Args=%PROJECT%&Args=Version&Args=1.00  
 #Macro: Title, Create B4xLib, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&args=-cMf&args=..\release\%PROJECT_NAME%.b4xlib&args=*.bas  
 #Macro: Title, Release folder, ide://run?file=%WINDIR%\SysWOW64\explorer.exe&Args=%PROJECT%\..\release  
 #Macro: Title, Copy to AddLibs, ide://run?file=%COMSPEC%&args=/c&args=copy&args=%PROJECT%\..\release\*.b4xlib&args=%ADDITIONAL%\..\B4X  
