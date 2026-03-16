@@ -144,11 +144,12 @@ Public Sub GetValue(RowIndex As Int, ColumnIndex As Object) As Object
 	Return row(ColumnIndexToOrdinal(ColumnIndex))
 End Sub
 
-'Returns the value stored in the specified row and column. Returns DefaultValue if RowIndex is out of bounds.
+'Returns the value stored in the specified row and column. Returns DefaultValue if RowIndex is out of bounds or the value is Null.
 'Useful together with GetRowIndexByValue.
 Public Sub GetValueDefault(RowIndex As Int, ColumnIndex As Object, DefaultValue As Object) As Object
 	If RowIndex < 0 Or RowIndex >= getSize Then Return DefaultValue
-	Return GetValue(RowIndex, ColumnIndex)
+	Dim o As Object = GetValue(RowIndex, ColumnIndex)
+	Return IIf(o = Null, DefaultValue, o)
 End Sub
 
 'Sets the value stored in the specified row and column.
@@ -277,15 +278,18 @@ Public Sub AddRows(LOA As ListOfArrays)
 	If LOA.IsEmpty Then Return
 	CheckColumnsMatch("AddRows", LOA.NumberOfColumns)
 	If LOA.FirstRowIsHeader Then
-		For i = LOA.mFirstDataRowIndex To LOA.mInternalArray.Size - 1
-			mInternalArray.Add(LOA.mInternalArray.Get(i))
-		Next
+		mInternalArray.AddAll(B4XCollections.SubList(LOA.mInternalArray, LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
 	Else
 		mInternalArray.AddAll(LOA.mInternalArray)
 	End If
 End Sub
 
-
+'Removes all rows. Keeps the header if there is one.
+Public Sub Clear
+	Dim header() As Object = getHeader
+	mInternalArray.Clear
+	If header.Length > 0 Then mInternalArray.Add(header)
+End Sub
 
 'Adds all columns from LOA to this table. Number of rows must match.
 Public Sub Merge(LOA As ListOfArrays)
@@ -464,11 +468,24 @@ End Sub
 'Returns -1 if not found.
 Public Sub GetRowIndexByValue(ColumnIndex As Object, Value As Object) As Int
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
-	For i = 0 To getSize - 1
-		Dim row() As Object = GetRow(i)
-		If row(ColumnIndex) = Value Then Return i
-	Next
+	If Value = Null Then
+		For i = 0 To getSize - 1
+			Dim row() As Object = GetRow(i)
+			If row(ColumnIndex) = Null Then Return i
+		Next
+	Else
+		For i = 0 To getSize - 1
+			Dim row() As Object = GetRow(i)
+			If Value = row(ColumnIndex) Then Return i
+		Next
+	End If
 	Return -1
+End Sub
+
+'Returns a list with the indices of the rows where the specified column are not null.
+'Same as calling loa.NegateRowsSelection(loa.GetRowIndicesByValue(ColumnIndex, Null))
+Public Sub GetRowIndicesNonNull(ColumnIndex As Object) As List
+	Return NegateRowsSelection(GetRowIndicesByValue(ColumnIndex, Null))
 End Sub
 
 'Returns a list with the indices of rows where the specified column matches the given value. Note that the value type must be exact. Use As to cast if needed.
@@ -476,12 +493,21 @@ End Sub
 Public Sub GetRowIndicesByValue(ColumnIndex As Object, Value As Object) As List
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
 	Dim res As List = B4XCollections.CreateList(Null)
-	For i = 0 To getSize - 1
-		Dim row() As Object = GetRow(i)
-		If row(ColumnIndex) = Value Then
-			res.Add(i)
-		End If
-	Next
+	If Value = Null Then
+		For i = 0 To getSize - 1
+			Dim row() As Object = GetRow(i)
+			If row(ColumnIndex) = Null Then
+				res.Add(i)
+			End If
+		Next
+	Else
+		For i = 0 To getSize - 1
+			Dim row() As Object = GetRow(i)
+			If Value = row(ColumnIndex) Then
+				res.Add(i)
+			End If
+		Next
+	End If
 	Return res
 End Sub
 

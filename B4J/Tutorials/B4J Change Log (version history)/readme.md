@@ -1,6 +1,26 @@
 ### B4J Change Log (version history) by Erel
-### 06/26/2025
+### 03/11/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/37448/)
+
+**v10.5** - March 11, 2026 - <https://www.b4x.com/android/forum/threads/b4j-v10-5-with-integrated-code-bundle-tool-has-been-released.170564/>  
+
+- CodeBundle AI tool.
+- Autocomplete in #If lines:
+[View attachment 170251](https://www.b4x.com/android/forum/attachments/170251/)- List.Sublist - Very fast method that returns a read-only sub-list.
+- Fix for String.ToLower not explicitly setting the locale. Mainly fixes the Turkish I: [https://www.b4x.com/android/forum/t...ctly-for-the-turkish-language.163961/#content](https://www.b4x.com/android/forum/threads/tolowercase-does-not-work-correctly-for-the-turkish-language.163961/#content)
+- PyBridge template updated.
+- New #Macro / comment link options:
+
+- librariesrefresh - set to True to automatically refresh the libraries after the task runs.
+- codesync - set to True to force the IDE to synchronize the code modules with the files.
+- autosave - set to True to automatically save the project BEFORE running the task. Note that Tools - IDE Options - Auto Save should be enabled for this to have effect.
+- filessync (not new) - set to True to synchronize the Files tab after the task.
+- cleanproject (not new) - set to True to "clean project" after the task
+- %STATE1% - new variable that causes the IDE to create a temporary file with the IDE state based on the new options under Tools - IDE Options. The file path will be passed to the process. This is used by Code Bundle and can be used by other similar tools. **Note that the format is not final and can be modified.**
+
+- Objects\Temp folder is deleted when cleaning project.
+- Json library updated and maps now preserve order when writing or reading.
+- Other bug fixes and minor improvements.
 
 **v10.3** - June 26, 2025 - <https://www.b4x.com/android/forum/threads/b4j-v10-3-is-available-for-download.167548/>  
   

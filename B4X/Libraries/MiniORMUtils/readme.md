@@ -1,5 +1,5 @@
 ###  MiniORMUtils by aeric
-### 02/19/2026
+### 03/11/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
@@ -10,6 +10,7 @@ Version: 4.30
   
 This library can be use for creating database tables and performing CRUD operations.  
 It is suitable for B4X apps, non-UI web app or REST API servers.  
+It is useful to return the query results as JSON since the rows are list of maps.  
 Currently it supports **SQLite** (for B4A, B4i, B4J), **MariaDB** and **MySQL** (for B4J only).  
   
 ![](https://www.b4x.com/android/forum/attachments/164272)  

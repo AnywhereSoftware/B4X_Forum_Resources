@@ -41,6 +41,12 @@ Public Sub GetValue(ColumnIndex As Object) As Object
 	Return mROW(mLOA.ColumnIndexToOrdinal(ColumnIndex))
 End Sub
 
+'Returns the value stored in the specified column of the current row. Returns the DefaultValue is the stored value is Null.
+Public Sub GetValueDefault(ColumnIndex As Object, DefaultValue As Object) As Object
+	Dim o As Object = GetValue(ColumnIndex)
+	Return IIf(o = Null, DefaultValue, o)
+End Sub
+
 'Sets the value of the specified column.
 Public Sub SetValue(ColumnIndex As Object, Value As Object)
 	mROW(mLOA.ColumnIndexToOrdinal(ColumnIndex)) = Value
