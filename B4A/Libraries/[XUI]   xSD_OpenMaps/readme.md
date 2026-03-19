@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 01/21/2026
+### 03/17/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -97,11 +97,13 @@ Author:** Star-Dust
 
 - **Class\_Globals** As String
 - **GetFillColor** As ResumableSub
-*<code>wait for (MapPolygon.GetFillColor) COMPLETE(FillColor As Int)</code>*- **GetLineColor** As ResumableSub
+*<code>wait for (MapPolygon.GetFillColor) COMPLETE(FillColor As Int)</code>*- ****GetHole**** As List
+- **GetLineColor** As ResumableSub
 *<code>wait for (MapPolygon.GetLineColor) COMPLETE(LineColor As Int)</code>*- **GetLineWidth** As ResumableSub
 *<code>wait for (MapPolygon.GetLineWidth) COMPLETE(LineWidth As Int)</code>*- **GetPoints** As ResumableSub
  *List of LatLng  
- <code>wait for (MapPolygon.GetPoints) COMPLETE(Points As List)</code>*- **Initialize** (Visble As Boolean, ID As String, Point As List, StrokeWidth As Int, StrokeColor As Int, FillColor As Int, Opacity As Double, WebView As WebView) As String
+ <code>wait for (MapPolygon.GetPoints) COMPLETE(Points As List)</code>*- **SetHole** (HolePoints As List) As Boolean
+- **Initialize** (Visble As Boolean, ID As String, Point As List, StrokeWidth As Int, StrokeColor As Int, FillColor As Int, Opacity As Double, WebView As WebView) As String
 *Initializes the object. You can add parameters to this method if needed.*- **IsInitialized** As Boolean
 *Verifica se l'oggetto sia stato inizializzato.*
 - **Properties:**
@@ -209,7 +211,9 @@ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (
  StrokeWidth - Stroke width.  
  StrokeColor - Stroke color.  
  FillColor - Inner color.  
- Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Int) As MapPolyline
+ Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolygonHole** (OuterPoints As List, HolePoints As List, StrokeWidth As Float, StrokeColor As Paint, FillColor As Paint, Opacity As Double) As MapPolygon
+*Adds a polygon To the map. with hole*- **AddInfoWindow2** (Content As String, Position As LatLng, MaxWidth As Int) As MapInfoWindow
+*Opens an info window with the given HTML content at the specified position. It cannot be larger than MaxWidth (in pixels).*- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Int) As MapPolyline
 *Adds a polyline To the map.  
  Points - A list Or Array of LatLng points.  
  Width - Line width.  

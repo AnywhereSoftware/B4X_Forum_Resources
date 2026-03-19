@@ -1,5 +1,5 @@
 ### jSD_OpenMaps by Star-Dust
-### 02/22/2026
+### 03/17/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166066/)
 
 As many currently know GoogleMaps' Webapi do not work correctly on the webview because the latest versions use webgl  
@@ -11,7 +11,7 @@ B4i and B4i version [**here**](https://www.b4x.com/android/forum/threads/xui-b4a
 **jSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.17  
+**Version:** 1.18  
 
 - **CameraPosition**
 
@@ -93,7 +93,9 @@ Author:** Star-Dust
 - **Class\_Globals** As String
 - **Initialize** (Visble As Boolean, ID As String, Point As List, StrokeWidth As Int, StrokeColor As Paint, FillColor As Paint, Opacity As Double, WebView As JavaObject) As String
 *Initializes the object. You can add parameters to this method if needed.*- **IsInitialized** As Boolean
-*Verifica se l'oggetto sia stato inizializzato.*
+*Verifica se l'oggetto sia stato inizializzato.*- **GetHole** As List
+- **SetHole** (HolePoints As List) As Boolean
+
 - **Properties:**
 
 - **FillColor** As Paint [read only]
@@ -204,7 +206,8 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
  StrokeWidth - Stroke width.  
  StrokeColor - Stroke color.  
  FillColor - Inner color.  
- Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Paint) As MapPolyline
+ Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolygonHole** (OuterPoints As List, HolePoints As List, StrokeWidth As Float, StrokeColor As Paint, FillColor As Paint, Opacity As Double) As MapPolygon
+*Adds a polygon To the map. with hole*- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Paint) As MapPolyline
 *Adds a polyline To the map.  
  Points - A list Or Array of LatLng points.  
  Width - Line width.  
@@ -290,7 +293,7 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 - **IsInitialized** As Boolean
 *Verifica se l'oggetto sia stato inizializzato.*- **LatLonToAddress** (lat As Double, lon As Double) As ResumableSub
 *Returns the address from coordiantes  
-WAIT FOR (GMapExt.LatLonToAddress(Latitude,Longitude)) COMPLETE (Address As String)*- **LatLonToXY** (ll As LatLng) As Double()
+ WAIT FOR (GMapExt.LatLonToAddress(Latitude,Longitude)) COMPLETE (Address As String)*- **LatLonToXY** (ll As LatLng) As Double()
 *Returns the screen coordiantes for the given LatLng coordinates*- **LatLonToXY2** (ll As LatLng) As Double()
 - **ObjectIsEditing** (IDobject As String) As Boolean
 - **RemoveMarkerLabel** (m As Marker) As String
@@ -412,3 +415,7 @@ WAIT FOR (GMapExt.LatLonToAddress(Latitude,Longitude)) COMPLETE (Address As Stri
 - 1.17
 
 - **LatLonToAddress** *Returns the address from coordiantes*
+
+- 1.18
+
+- added OpenMpas.**AddPolygonHole**, MapPolygon.**SetHole**, **GetHole**
