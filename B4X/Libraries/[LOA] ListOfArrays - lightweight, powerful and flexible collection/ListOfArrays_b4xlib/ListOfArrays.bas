@@ -35,6 +35,7 @@ Public Sub InternalUpdateIndicesMap
 	Dim headers() As Object = getHeader
 	For i = 0 To headers.Length - 1
 		mIndicesMap.Put(headers(i), i)
+		mIndicesMap.Put(headers(i).As(String).ToLowerCase, i)
 	Next
 End Sub
 
@@ -179,6 +180,7 @@ End Sub
 Public Sub ColumnIndexToOrdinal (Index As Object) As Int
 	If getFirstRowIsHeader = False Then Return Index
 	Dim ix As Int = mIndicesMap.GetDefault(Index, -1)
+	If ix = -1 Then ix = mIndicesMap.GetDefault(Index.As(String).ToLowerCase, -1)
 	If ix = -1 Then ThrowError("Column index not found: " & Index)
 	Return ix
 End Sub
@@ -278,7 +280,11 @@ Public Sub AddRows(LOA As ListOfArrays)
 	If LOA.IsEmpty Then Return
 	CheckColumnsMatch("AddRows", LOA.NumberOfColumns)
 	If LOA.FirstRowIsHeader Then
+		#if B4J
+		mInternalArray.AddAll(LOA.mInternalArray.SubList(LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
+		#else
 		mInternalArray.AddAll(B4XCollections.SubList(LOA.mInternalArray, LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
+		#end if
 	Else
 		mInternalArray.AddAll(LOA.mInternalArray)
 	End If
@@ -354,8 +360,12 @@ Public Sub IterateRows As List
 		Return B4XCollections.GetEmptyList
 	End If
 	If getFirstRowIsHeader Then
-		'Will be changed once List.SubList is available in the next version of B4X.
+		#if B4J
+		Return mInternalArray.SubList(1, mInternalArray.Size)
+		#else
 		Return B4XCollections.SubList(mInternalArray, 1, mInternalArray.Size)
+		#End If
+		'Will be changed once List.SubList is available in the next version of B4X.
 	Else
 		Return mInternalArray
 	End If
@@ -544,6 +554,7 @@ Private Sub ObjectIndicesToIntIndices(Indices As List) As List
 	Dim NumericValueIndices As List = B4XCollections.CreateList(Null)
 	For Each ox As Object In Indices
 		Dim ix As Int = mIndicesMap.GetDefault(ox, -1)
+		If ix = -1 Then ix = mIndicesMap.GetDefault(ox.As(String).ToLowerCase, -1)
 		If ix = -1 Then ThrowError("Index not found: " & ox)
 		NumericValueIndices.Add(ix)
 	Next
@@ -562,6 +573,23 @@ Public Sub ToListOfArrays(ColumnIndices As List) As ListOfArrays
 	n.Initialize(New)
 	n.FirstRowIsHeader = getFirstRowIsHeader
 	Return n
+End Sub
+
+'Returns a list of maps, one map per data row.
+'Each map uses the column headers as keys and the row values as values.
+Public Sub ToListOfMaps As List
+	If getFirstRowIsHeader = False Then ThrowError("Headers must be set")
+	Dim h() As Object = getHeader
+	Dim res As List = B4XCollections.CreateList(Null)
+	For i = mFirstDataRowIndex To mInternalArray.Size - 1
+		Dim row() As Object = mInternalArray.Get(i)
+		Dim m As Map = CreateMap()
+		For c = 0 To row.Length - 1
+			m.Put(h(c), row(c))
+		Next
+		res.Add(m)
+	Next
+	Return res
 End Sub
 
 'Returns a string representation of the table.
@@ -593,7 +621,11 @@ Public Sub Sort (ColumnIndex As Object, Ascending As Boolean)
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
 	Dim ListToSort As List
 	If getFirstRowIsHeader Then
+		#if B4J
+		ListToSort = B4XCollections.CreateList(IterateRows)
+		#else
 		ListToSort = IterateRows
+		#End If
 	Else
 		ListToSort = mInternalArray
 	End If

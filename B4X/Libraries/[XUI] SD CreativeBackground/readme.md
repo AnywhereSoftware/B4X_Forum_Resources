@@ -1,5 +1,5 @@
 ###  [XUI] SD CreativeBackground by Star-Dust
-### 03/08/2023
+### 03/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/125011/)
 
 ![](https://www.b4x.com/android/forum/attachments/103731)![](https://www.b4x.com/android/forum/attachments/103845)  
@@ -9,8 +9,40 @@ This new library is based on my latest work ([**here**](https://www.b4x.com/andr
 **SD\_CreativeBackground  
   
 Author:** Star-Dust  
-**Version:** 0.06  
+**Version:** 0.07  
 
+- **CornerEffectBackground**
+
+- **Fields:**
+
+- **DarkFactor** As Float
+- **LightFactor** As Float
+- **softness** As Int
+- **TypeComics** As String
+- **TypeDaisy4** As String
+- **TypeDaisy5** As String
+- **TypeDaisy8** As String
+- **TypeHeart** As String
+- **TypeHexagonShadow** As String
+- **TypeRect** As String
+
+- **Functions:**
+
+- **Class\_Globals** As String
+- **EffectCornerToView** (Vw As B4XView, Effect As String, CornerColor As Int, BackgroundColor As Int, DepthEdge As Int, cornerRadius As Int) As String
+ *Parameter  
+ GenerateBackgound(View,Effect, InvertShadow, Color, DepthEdge, CornerRadius, Recursive, AlternateShadow, Rotate) As B4XBitmap  
+ Vw as view,  
+ Effect = Type of Effect,  
+ InvertShadow (Light Down, Dark Up)  
+ Color = Color of base  
+ DepthEdge = Depth of shadow  
+ CornerRadius = 0 for rectangle  
+ Recursive = Shadows one inside the other (For single shadowd set=1)  
+ AlternateShadow = If the recursive value is greater than 1 the invert shadows alternate*- **GenerateCornerEffect** (Vw As B4XView, Effect As String, CornerColor As Int, BackgroundColor As Int, DepthEdge As Int, cornerRadius As Int) As B4XBitmap
+- **Initialize** As String
+*Initializes the object. You can add parameters to this method if needed.*- **IsInitialized** As Boolean
+*Verifica se l'oggetto sia stato inizializzato.*
 - **GradientBackground**
 
 - **Fields:**
@@ -39,7 +71,7 @@ Author:** Star-Dust
  *PatternNumber (0..20)  
  0 = lilla; 1 = rosa; 2 = red; 3 = blue; 4 = blue2; 5 = cyan; 6 = yellow  
  7 = Green; 8 = Green2; 9 = Brown; 10 = Orange; 11 = none; 12 = Gold; 13 = Silver; 14 = Silver2  
- 15 = Elettro; 16 = none; 17 = bronze; 18 = Rainbow; 19 = Rainbow; 20 = diamond*
+ 15 = Elettro; 16 = none; 17 = bronze; 18 = yellow; 19 = Rainbow2; 20 = diamond*
 - **NativeShadow**
 
 - **Functions:**
