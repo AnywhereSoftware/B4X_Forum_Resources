@@ -1,5 +1,5 @@
 ###  [XUI] SD XUIView2 by Star-Dust
-### 10/21/2024
+### 03/22/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/96519/)
 
 Dependence: [**SD CreativeBackground**](https://www.b4x.com/android/forum/threads/b4x-xui-sd-creativebackground.125011/)  
@@ -8,7 +8,7 @@ Dependence: [**SD CreativeBackground**](https://www.b4x.com/android/forum/thread
 **SD\_XUIView2  
   
 Author:** Star-Dust  
-**Version:** 0.16  
+**Version:** 0.18  
 
 - **B4XRangeSeekBar**
 

@@ -1,5 +1,5 @@
 ###  BCTextEngine / BBCodeView - Text engine + BBCode parser + Rich Text View by Erel
-### 12/31/2024
+### 03/22/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/106207/)
 
 Be open minded.  
@@ -87,6 +87,7 @@ It is recommended to use Java 9+ on B4J. You will get better results on high DPI
 
 <strong>Updates</strong>
 
+- v1.97 - Fixes an issue with ordered lists where the font style wasn't set properly.
 - v1.96 - Fixes an issue caused by rounding errors related to the device scale calculations. Mainly relevant to B4i.
 - v1.95 - New anchors feature: <a rel=%22nofollow%22 href=%22https://www.b4x.com/android/forum/threads/b4x-bctextengine-bbcodeview-text-engine-bbcode-parser-rich-text-view.106207/post-938548%22>https://www.b4x.com/android/forum/threads/b4x-bctextengine-bbcodeview-text-engine-bbcode-parser-rich-text-view.106207/post-938548</a>
 - v1.93 - Fix issues with Arabic scripts.

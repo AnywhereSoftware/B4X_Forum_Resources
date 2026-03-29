@@ -1,5 +1,5 @@
 ### GSheet Library (integrate google sheets into your B4X apps easily) by fernando1987
-### 11/01/2025
+### 03/25/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/138967/)
 
 **Gsheet  
@@ -206,7 +206,7 @@ End Sub
 **Download page:  
   
 Download Gsheetsplus:**  
-<https://b4xapp.com/item/gsheetplus->  
+<https://b4xapp.com/en/producto/390>  
   
 **Download Gsheets:**  
 <https://b4xapp.com/item/gsheets->  

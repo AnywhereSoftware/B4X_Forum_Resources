@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rnimbleserver
+Library3=rrandomaccessfile
+Library4=rconvert
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+'==============================================
+' Project:		rNimBLEServer
+' Brief:		Basic BLE server example.
+' Date: 		2026-03-25
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	Start the BLE server, await client connection, listen to new data and log.
+' BLE:			-Device name: B4RCustomBLEServer
+'				-MAC address server = "80:F3:DA:4C:36:7A"
+'        		-Service UUID = 12345678-1234-1234-1234-1234567890ab
+'				-Char UUID = abcd1234-5678-1234-5678-1234567890ab
+' DependsOn:	rNimBLEServer, rConvert
+' Hardware:		ESP32
+' Wiring:		None
+' Log:
+'[AppStart][I] rNimBLEServer Basic v20260325
+'[NimBLEServer.Initialize][I] OK
+'[NimBLEServer.Start][I] Advertising started
+'[AppStart][I] BLE Server started
+'[OnConnected][I] Client connected
+'[NimBLEServer.HandleWrite] RX: 19 12 05 00 58 
+'[OnWrite][I] RX:5 1912050058
+'[NimBLEServer.HandleWrite] RX: 19 12 05 01 58 
+'[OnWrite][I] RX:5 1912050158
+'==============================================
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rNimBLEServer Basic v20260325"
+    Public Serial1 As Serial
+	Private BleServer As NimBLEServer
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart][I] ", VERSION)
+	' Init the BLE server
+    BleServer.Initialize( _
+        "B4RCustomBLEServer", _
+        "12345678-1234-1234-1234-1234567890ab", _
+        "abcd1234-5678-1234-5678-1234567890ab", _
+        "OnConnected", _
+        "OnDisconnected", _
+        "OnWrite", _
+        True)
+	BleServer.Start
+	Log("[AppStart][I] BLE Server started")
+End Sub
+
+Sub OnConnected
+	Log("[OnConnected][I] Client connected")
+End Sub
+
+Sub OnDisconnected
+	Log("[OnDisconnected][W] Client disconnected")
+End Sub
+
+' Handle data received from connected client
+' Example: [OnWrite][I] RX:5 1912050058
+Sub OnWrite (Buffer() As Byte)
+	Log("[OnWrite][I] RX:", Buffer.Length, " ", Convert.BytesToHex(Buffer))
+	' Take any action
+	' ...
+End Sub
+

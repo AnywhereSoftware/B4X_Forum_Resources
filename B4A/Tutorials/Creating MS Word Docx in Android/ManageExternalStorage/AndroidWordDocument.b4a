@@ -1,0 +1,328 @@
+﻿Build1=Default,jhs.externalstorage
+File1=android48.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=phone
+Library4=runtimepermissions
+Library5=xui
+Library6=dialogs
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.MANAGE_EXTERNAL_STORAGE)~\n~SetApplicationAttribute(android:requestLegacyExternalStorage, true)
+Module1=ManageExternalStorage
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=2
+Version=13
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AndriodWordDocument
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: true
+#End Region
+
+'#AdditionalJar: poi-ooxml-5.0.0.jar
+'#AdditionalJar: poi-5.0.0.jar
+'#AdditionalJar: commons-collections4-4.4.jar
+'#AdditionalJar: xmlbeans-4.0.0.jar
+#AdditionalJar: poishadow-all
+#MultiDex : True
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim Bmp As Bitmap
+	Dim device As Phone
+	Dim MES As ManageExternalStorage
+	Dim nativeMe As JavaObject
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	nativeMe.InitializeContext
+	
+	If FirstTime Then
+		Bmp.Initialize(File.DirAssets, "android48.png")
+		MES.Initialize(Me, "MES")	
+	End If
+	
+	' get the device SDK version
+	Dim SdkVersion As Int = device.SdkVersion
+	
+	' Choose which permission to request in order to access external storgage
+	If SdkVersion < 30 Then
+		Log("SDK = " & SdkVersion & " : Requesting WRITE_EXTERNAL_STORAGE permission")
+		Dim rp As RuntimePermissions
+		rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE) ' Implicit read capability if granted
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		Log($"PERMISSION_WRITE_EXTERNAL_STORAGE = ${Result}"$)
+	Else
+		Log("SDK = " & SdkVersion & " : Requesting MANAGE_EXTERNAL_STORAGE permission")
+		Log("On Entry MANAGE_EXTERNAL_STORAGE = " & MES.HasPermission)
+		If Not(MES.HasPermission) Then
+			MsgboxAsync("This app requires access to all files, please enable the option", "Manage All Files")
+			Wait For Msgbox_Result(Res As Int)
+			Log("Getting permission")
+			MES.GetPermission
+			Wait For MES_StorageAvailable
+			Log("RES = " & Res)
+		End If
+	End If
+	 
+	nativeMe.RunMethod("createDoc1", Array("johan1.docx"))
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+' As analternative to getting permission in Activity_Create you can do it when needed like ExternalStorage
+'	If device.SdkVersion >= 30 Then
+'		MES.GetPermission
+'		Wait For MES_StorageAvailable
+'	End If
+	Dim fd As FileDialog
+	fd.FileFilter = ""
+	fd.TextColor = Colors.black
+	'fd.FileFilter = ".txt" ' for example or ".jpg,.png" for multiple file types
+	fd.FastScroll = True
+	fd.FilePath = File.DirRootExternal ' also sets ChosenName to an emtpy string
+	Dim fda As Object = fd.ShowAsync("B4A File Dialog", "OK", "Cancel", "", Bmp, False)
+	Wait For (fda) Dialog_Result(ret As Int)
+	ToastMessageShow(ret & " : Path : " & fd.FilePath & CRLF & "File : " & fd.ChosenName, False)
+End Sub
+
+
+#if Java
+
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import java.io.File;
+import java.io.FileOutputStream;
+import android.os.Environment;
+
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import java.io.FileOutputStream;
+import java.io.File;
+import org.apache.poi.xwpf.model.*;
+
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+
+import org.apache.poi.xwpf.usermodel.*;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTHMerge;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTVMerge;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
+
+import org.apache.poi.xwpf.usermodel.*;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+
+
+import java.io.FileOutputStream;
+import java.math.BigInteger;
+
+
+static {
+    System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl");
+    System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
+    System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
+}
+
+
+
+    public static void createDoc1(String filename) throws Exception {
+	
+    try {	
+       XWPFDocument document = new XWPFDocument();
+
+        // Create header
+        XWPFHeaderFooterPolicy policy = document.createHeaderFooterPolicy();
+        XWPFHeader header = policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT);
+
+        // Create table with 6 rows and 10 columns
+        XWPFTable table = header.createTable(6, 10);
+
+        // Set table width to 100% of page
+        CTTblPr tblPr = table.getCTTbl().getTblPr();
+        CTTblWidth tblWidth = tblPr.isSetTblW() ? tblPr.getTblW() : tblPr.addNewTblW();
+        tblWidth.setType(STTblWidth.PCT);
+        tblWidth.setW(BigInteger.valueOf(5000)); // 5000 = 100% in WordprocessingML
+
+        // Merge cells (0,0) to (5,7)
+        for (int row = 0; row <= 5; row++) {
+            for (int col = 0; col <= 9; col++) {
+                XWPFTableCell cell = table.getRow(row).getCell(col);
+                CTTcPr tcPr = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
+
+                // Horizontal merge: only on first row
+                //if (row == 0) {
+                    CTHMerge hMerge = tcPr.isSetHMerge() ? tcPr.getHMerge() : tcPr.addNewHMerge();
+                    if (col == 0) {
+                        hMerge.setVal(STMerge.RESTART);
+                    } else {
+                        hMerge.setVal(STMerge.CONTINUE);
+                    }
+                //}
+
+                // Vertical merge: only on first column
+                //if (col == 0) {
+                //    CTVMerge vMerge = tcPr.isSetVMerge() ? tcPr.getVMerge() : tcPr.addNewVMerge();
+                //    if (row == 0) {
+                //        vMerge.setVal(STMerge.RESTART);
+                //    } else {
+                //        vMerge.setVal(STMerge.CONTINUE);
+                //    }
+                //}
+            }
+        }
+
+
+        // Style the merged cell (row 0, col 0)
+        XWPFTableCell mergedCell = table.getRow(0).getCell(0);
+        mergedCell.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para = mergedCell.getParagraphs().get(0);
+        para.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run = para.createRun();
+        run.setText("Barrier Film Converters (Pty) Ltd");
+        run.setBold(true);          // bold text
+        run.setColor("000000");     // Red text
+		
+		
+		
+        // Style the merged cell (row 1, col 0)
+        XWPFTableCell mergedCell1 = table.getRow(1).getCell(0);
+        mergedCell1.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para1 = mergedCell1.getParagraphs().get(0);
+        para1.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para1.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run1 = para1.createRun();
+        run1.setText("Quality and Food Safety Management System");
+        run1.setBold(true);          // bold text
+        run1.setColor("000000");     // Red text		
+		
+	
+
+        // Style the merged cell (row 2, col 0)
+        XWPFTableCell mergedCell2 = table.getRow(2).getCell(0);
+        mergedCell2.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para2 = mergedCell2.getParagraphs().get(0);
+        para2.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para2.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run2 = para2.createRun();
+        run2.setText("(FSSC 22000 V6)");
+        run2.setBold(true);          // bold text
+        run2.setColor("000000");     // Red text		
+		
+
+
+
+
+
+        // Style the merged cell (row 3, col 0)
+        XWPFTableCell mergedCell3 = table.getRow(3).getCell(0);
+        mergedCell3.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para3 = mergedCell3.getParagraphs().get(0);
+        para3.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para3.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run3 = para3.createRun();
+        run3.setText("Audit Start Date: 2026/03/22");
+        run3.setBold(true);          // bold text
+        run3.setColor("000000");     // Red text				
+		
+		
+		
+		
+        // Style the merged cell (row 4, col 0)
+        XWPFTableCell mergedCell4 = table.getRow(4).getCell(0);
+        mergedCell4.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para4 = mergedCell4.getParagraphs().get(0);
+        para4.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para4.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run4 = para4.createRun();
+        run4.setText("Audit Start Time: 10:28:34");
+        run4.setBold(true);          // bold text
+        run4.setColor("000000");     // Red text					
+		
+				
+
+        // Style the merged cell (row 5, col 0)
+        XWPFTableCell mergedCell5 = table.getRow(5).getCell(0);
+        mergedCell5.setColor("5dc9a5"); // Green background
+
+        // Create a paragraph inside the cell
+        XWPFParagraph para5 = mergedCell5.getParagraphs().get(0);
+        para5.setAlignment(ParagraphAlignment.CENTER); // center horizontally
+        para5.setVerticalAlignment(TextAlignment.CENTER); // center vertically
+
+        // Create a run for the text
+        XWPFRun run5 = para5.createRun();
+        run5.setText("App by Johan Schoeman");
+        run5.setBold(true);          // bold text
+        run5.setColor("000000");     // Red text			
+
+
+		
+		
+        // Save document
+        File file = new File(Environment.getExternalStorageDirectory(), filename);
+        FileOutputStream out = new FileOutputStream(file);
+        document.write(out);
+        out.close();
+        document.close();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+}
+#End If
+
+
+
+
+

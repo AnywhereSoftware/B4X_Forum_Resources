@@ -1,5 +1,5 @@
 ### jdashboardUI Improve the graphic interface of your desktop applications by fernando1987
-### 01/18/2024
+### 03/25/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/143114/)
 
 ? **Introducing JDashboard UI Library – Your Ultimate Desktop Customization Solution!**  
@@ -14,7 +14,7 @@ Hello everyone! I'm excited to share a feature-packed library that simplifies de
   
 [MEDIA=youtube]enKH4pM3\_a0[/MEDIA]**  
   
-? **Get Started:** Ready to elevate your desktop applications? Download the JDashboard UI Library now: [Download Here](https://b4xapp.com/item/jdashboard-ui-library-)  
+? **Get Started:** Ready to elevate your desktop applications? Download the JDashboard UI Library now: [Download Here](https://b4xapp.com/en/producto/388)  
   
 Dive into the forum discussion to share your experiences and get more details about these exciting updates! [Example link](https://drive.google.com/file/d/1V_HWDyk_F52Krx_HsinltUjCUZej0xh6/view?usp=sharing)  
   

@@ -1,0 +1,225 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+Library4=jxui
+Library5=json
+Module1=CompInfo
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1200
+	#MainFormHeight: 900 
+	
+	#LibraryName:CompInfo
+	#LibraryAuthor:jmon
+	#LibraryVersion:1.0
+	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private TextArea1 As TextArea
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	
+	TextArea1.Text = ""
+	
+	Dim ci As CompInfo
+	ci.Initialize("")
+	
+	Dim i As Int = 0
+	For Each App As CompInfo_InstalledSoftware In ci.ComputerGetInstalledSoftwares
+		Log("DisplayName: " & App.DisplayName)
+		Log("DisplayVersion: " & App.DisplayVersion)
+		Log("Publisher: " & App.Publisher)
+		Log("UninstallString: " & App.UninstallString)
+		
+		AddTextToTextArea($"---Software ${i} ---"$)
+		AddMapToTextArea(App.AsMap)
+		i = i + 1
+	Next
+	
+	AddTextToTextArea(CRLF)
+	
+	For Each GPU As CompInfo_VideoController In ci.ComputerGetVideoControllers
+		Log("----------------")
+		Log("Name: " & GPU.Name)
+		Log("AcceleratorCapabilities: " & GPU.AcceleratorCapabilities)
+		Log("AdapterCompatibility: " & GPU.AdapterCompatibility)
+		Log("AdapterDACType: " & GPU.AdapterDACType)
+		Log("Description: " & GPU.Description)
+		Log("AdapterRAM: " & GPU.AdapterRAM)
+		Log("Availability: " & GPU.Availability)
+		Log("CapabilityDescriptions: " & GPU.CapabilityDescriptions)
+		Log("ColorTableEntries: " & GPU.ColorTableEntries)
+		Log("ConfigManagerErrorCode: " & GPU.ConfigManagerErrorCode)
+		Log("ConfigManagerUserConfig: " & GPU.ConfigManagerUserConfig)
+		Log("CreationClassName: " & GPU.CreationClassName)
+		Log("CurrentBitsPerPixel: " & GPU.CurrentBitsPerPixel)
+		Log("CurrentHorizontalResolution: " & GPU.CurrentHorizontalResolution)
+		Log("CurrentNumberOfColors: " & GPU.CurrentNumberOfColors)
+		Log("CurrentNumberOfColumns: " & GPU.CurrentNumberOfColumns)
+		Log("CurrentNumberOfRows: " & GPU.CurrentNumberOfRows)
+		Log("CurrentRefreshRate: " & GPU.CurrentRefreshRate)
+		Log("CurrentScanMode: " & GPU.CurrentScanMode)
+		Log("CurrentVerticalResolution: " & GPU.CurrentVerticalResolution)
+		Log("DeviceID: " & GPU.DeviceID)
+		Log("DeviceSpecificPens: " & GPU.DeviceSpecificPens)
+		Log("DitherType: " & GPU.DitherType)
+		Log("DriverDate: " & GPU.DriverDate)
+		Log("DriverVersion: " & GPU.DriverVersion)
+		Log("ErrorCleared: " & GPU.ErrorCleared)
+		Log("ErrorDescription: " & GPU.ErrorDescription)
+		Log("ICMIntent: " & GPU.ICMIntent)
+		Log("ICMMethod: " & GPU.ICMMethod)
+		Log("InfFilename: " & GPU.InfFilename)
+		Log("InfSection: " & GPU.InfSection)
+		Log("InstalledDisplayDrivers: " & GPU.InstalledDisplayDrivers)
+		Log("LastErrorCode: " & GPU.LastErrorCode)
+		Log("MaxMemorySupported: " & GPU.MaxMemorySupported)
+		Log("MaxNumberControlled: " & GPU.MaxNumberControlled)
+		Log("MaxRefreshRate: " & GPU.MaxRefreshRate)
+		Log("MinRefreshRate: " & GPU.MinRefreshRate)
+		Log("Monochrome: " & GPU.Monochrome)
+		Log("NumberOfColorPlanes: " & GPU.NumberOfColorPlanes)
+		Log("NumberOfVideoPages: " & GPU.NumberOfVideoPages)
+		Log("PNPDeviceID: " & GPU.PNPDeviceID)
+		Log("PowerManagementCapabilities: " & GPU.PowerManagementCapabilities)
+		Log("PowerManagementSupported: " & GPU.PowerManagementSupported)
+		Log("ProtocolSupported: " & GPU.ProtocolSupported)
+		Log("ReservedSystemPaletteEntries: " & GPU.ReservedSystemPaletteEntries)
+		Log("SpecificationVersion: " & GPU.SpecificationVersion)
+		Log("Status: " & GPU.Status)
+		Log("StatusInfo: " & GPU.StatusInfo)
+		Log("SystemCreationClassName: " & GPU.SystemCreationClassName)
+		Log("SystemName: " & GPU.SystemName)
+		Log("SystemPaletteEntries: " & GPU.SystemPaletteEntries)
+		Log("TimeOfLastReset: " & GPU.TimeOfLastReset)
+		Log("VideoArchitecture: " & GPU.VideoArchitecture)
+		Log("VideoMemoryType: " & GPU.VideoMemoryType)
+		Log("VideoMode: " & GPU.VideoMode)
+		Log("VideoModeDescription: " & GPU.VideoModeDescription)
+		Log("VideoProcessor: " & GPU.VideoProcessor)
+		
+		AddTextToTextArea("---ComputerGetVideoControllers ---")
+		AddMapToTextArea(GPU.AsMap)
+	Next
+	
+	AddTextToTextArea(CRLF)
+	
+	For Each GPU2 As GPUInfo In ci.ComputerGetGPUInfo
+		Log("----------------")
+		Log("GPU Name: " & GPU2.Name)
+		Log("Provider: " & GPU2.ProviderName)
+		Log("Driver Version: " & GPU2.DriverVersion)
+		Log("VRAM (Bytes): " & GPU2.VRAMBytes)
+		Log("VRAM (Formatted): " & GPU2.VRAMBytes)
+		
+		AddTextToTextArea("---ComputerGetGPUInfo ---")
+		AddMapToTextArea(GPU2.AsMap)
+	Next
+	
+	AddTextToTextArea(CRLF)
+	
+	For Each RamStick As CompInfo_PhysicalMemory In ci.ComputerGetPhysicalMemory
+		Log("Name: " & RamStick.Name)
+		Log("BankLabel: " & RamStick.BankLabel)
+		Log("Capacity: " & RamStick.Capacity)
+		Log("DataWidth: " & RamStick.DataWidth)
+		Log("DeviceLocator: " & RamStick.DeviceLocator)
+		Log("FormFactor: " & RamStick.FormFactor)
+		Log("Manufacturer: " & RamStick.Manufacturer)
+		Log("MemoryType: " & RamStick.MemoryType)
+		Log("PartNumber: " & RamStick.PartNumber)
+		Log("SerialNumber: " & RamStick.SerialNumber)
+		Log("Speed: " & RamStick.Speed)
+		
+		AddTextToTextArea("---ComputerGetPhysicalMemory ---")
+		AddMapToTextArea(RamStick.AsMap)
+	Next
+	
+	AddTextToTextArea(CRLF)
+
+	
+	For Each CPU As CompInfo_Processor In ci.ComputerGetProcessors
+		Log("Name: " & CPU.Name)
+		Log("AddressWidth: " & CPU.AddressWidth)
+		Log("Architecture: " & CPU.Architecture)
+		Log("Availability: " & CPU.Availability)
+		Log("Description: " & CPU.Description)
+		Log("ConfigManagerErrorCode: " & CPU.ConfigManagerErrorCode)
+		Log("ConfigManagerUserConfig: " & CPU.ConfigManagerUserConfig)
+		Log("CpuStatus: " & CPU.CpuStatus)
+		Log("CreationClassName: " & CPU.CreationClassName)
+		Log("CurrentClockSpeed: " & CPU.CurrentClockSpeed)
+		Log("CurrentVoltage: " & CPU.CurrentVoltage)
+		Log("DataWidth: " & CPU.DataWidth)
+		Log("DeviceID: " & CPU.DeviceID)
+		Log("ErrorCleared: " & CPU.ErrorCleared)
+		Log("ErrorDescription: " & CPU.ErrorDescription)
+		Log("ExtClock: " & CPU.ExtClock)
+		Log("Family: " & CPU.Family)
+		Log("L2CacheSize: " & CPU.L2CacheSize)
+		Log("L2CacheSpeed: " & CPU.L2CacheSpeed)
+		Log("LastErrorCode: " & CPU.LastErrorCode)
+		Log("Level: " & CPU.Level)
+		Log("LoadPercentage: " & CPU.LoadPercentage)
+		Log("Manufacturer: " & CPU.Manufacturer)
+		Log("MaxClockSpeed: " & CPU.MaxClockSpeed)
+		Log("OtherFamilyDescription: " & CPU.OtherFamilyDescription)
+		Log("PNPDeviceID: " & CPU.PNPDeviceID)
+		Log("PowerManagementCapabilities: " & CPU.PowerManagementCapabilities)
+		Log("PowerManagementSupported: " & CPU.PowerManagementSupported)
+		Log("ProcessorId: " & CPU.ProcessorId)
+		Log("ProcessorType: " & CPU.ProcessorType)
+		Log("Revision: " & CPU.Revision)
+		Log("Role: " & CPU.Role)
+		Log("SocketDesignation: " & CPU.SocketDesignation)
+		Log("Status: " & CPU.Status)
+		Log("StatusInfo: " & CPU.StatusInfo)
+		Log("Stepping: " & CPU.Stepping)
+		Log("SystemCreationClassName: " & CPU.SystemCreationClassName)
+		Log("SystemName: " & CPU.SystemName)
+		Log("UniqueId: " & CPU.UniqueId)
+		Log("UpgradeMethod: " & CPU.UpgradeMethod)
+		Log("Version: " & CPU.Version)
+		Log("VoltageCaps: " & CPU.VoltageCaps)
+		Log("NumberOfCores: " & CPU.NumberOfCores)
+		Log("NumberOfLogicalProcessors: " & CPU.NumberOfLogicalProcessors)
+		
+		AddTextToTextArea("---ComputerGetProcessors ---")
+		AddMapToTextArea(CPU.AsMap)
+
+	Next
+End Sub
+
+' ------------------------------------------------------------------------------
+' HELPER FUNCTIONS 
+' ------------------------------------------------------------------------------
+Sub AddTextToTextArea(s As String)
+	TextArea1.Text = TextArea1.Text & CRLF & s	
+End Sub
+
+Sub AddMapToTextArea(m As Map)
+	Dim json As JSONGenerator
+	json.Initialize(m)
+	AddTextToTextArea(json.ToPrettyString(4))
+End Sub

@@ -1,0 +1,158 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimbleclient
+Module1=|relative|..\LEGOHUBNo4Controller
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+'==============================================
+' File:        	LEGOHUBNo4.bas
+' Project:     	rNimBLEClient
+' Brief:		Example connecting to the LEGOHUBNo4 brick and run the motor connected to port B (index 1).
+' Date:        	2026-03-25
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Deascription:	LEGO Battery Box Powered Up Bluetooth HUB NO. 4 (Hub 88009).
+'				Handle notifications with the event NewData.
+' MCU:			ESP-WROOM-32
+' 				IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+' Depends on:	B4R 4.00 (64 Bit), Arduino Board Manager ESP32 3.3.7, NimBLE library 2.3.9, rConvert 1.51
+' Wiring:		No additional wiring
+' Log Debug:
+'[AppStart] rNimBLEClient LEGOHUBNo4 v20260325
+'[NimBLEClient.Initialize][I] ServiceUUID=00001623-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] TxUUID=00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] RxUUID=00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] OK
+'[AppStart] Connecting To LEGOHUBNo4
+'[NimBLEClient.Connect][I] Start
+'[OnConnected] OK
+'[NimBLEClient][I] Discover attributes
+'[NimBLEClient][I] Service: 0x1801
+'[NimBLEClient][I]  -> Char: 0x2a05
+'[NimBLEClient][I] Service: 0x1800
+'[NimBLEClient][I]  -> Char: 0x2a00
+'[NimBLEClient][I]  -> Char: 0x2a01
+'[NimBLEClient][I]  -> Char: 0x2a04
+'[NimBLEClient][I] Service: 00001623-1212-efde-1623-785feabcd123
+'[NimBLEClient][I]  -> Char: 00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Connect][I] Notify subscribed
+'[NimBLEClient.Connect][I] OK
+'[AppStart] Connected To LEGOHUBNo4
+'[HubAttachedIO] event=01 iotypeid=2 Unknown hwrev=00.00
+'[AppStart] Sending test data To LEGOHUBNo4
+'[AppStart] Port=[HubAttachedIO] event=01 iotypeid=23 Medium Linear Motor (External) hwrev=00.001,speed=50
+'[SetPowerLevel] port=1 level=50
+'[HubAttachedIO] event=01 iotypeid=21 Train Motor hwrev=02.00
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[HubAttachedIO] event=01 iotypeid=20 Internal Motor (Boost Hub motor) hwrev=02.00
+'[CommandFeedback] hubid=00 portid=01 feedback=0A status=OK
+'[AppStart] Port=1,speed=0
+'[SetPowerLevel] port=1 level=0
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[CommandFeedback] hubid=00 portid=01 feedback=0A status=OK
+'[AppStart] Port=1,speed=-50
+'[SetPowerLevel] port=1 level=-50
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[CommandFeedback] hubid=00 portid=01 feedback=0A status=OK
+'[AppStart] Port=1,speed=0
+'[SetPowerLevel] port=1 level=0
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[CommandFeedback] hubid=00 portid=01 feedback=0A status=OK
+'[AppStart] Disconnected from LEGOHUBNo4
+'[OnDisconnected] OK
+'==============================================
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION	As String = "rNimBLEClient LEGOHUBNo4 v20260325"
+	Public Serial1	As Serial
+
+	' BLE -  Peripheral LEGOHUBNo4
+	Private NAME 	As String = "LEGOHUBNo4"
+	Private MAC() 	As Byte = Array As Byte(0x90 ,0x84 ,0x2b ,0xc1 ,0x94 ,0x79)	' MAC address - use BLE scanner to determine
+    Public Client 	As NimBLEClient
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[AppStart] ", VERSION)
+
+    ' Initialize the BLE client with MAC, Service UUID, Characteristic UUID
+	Client.Initialize(MAC, _
+        		   	  LEGOHUBNo4Controller.UUID_SERVICE, _ 
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+        		   	  "OnNewData", "OnError", _
+        		   	  "OnConnect", "OnDisconnect", _
+					  True)
+
+	Log("[AppStart] Connecting to ", NAME)
+	If Client.Connect Then
+		Log("[AppStart] Connected to ", NAME)
+
+		Log("[AppStart] Sending test data to ", NAME)
+		
+		' Set port B & speed
+		Dim portid As Byte = LEGOHUBNo4Controller.PORT_B
+		Dim speed As Int 
+		
+		speed = 50
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+
+		speed = 0
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(1000)
+
+		speed = -50
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+
+		speed = 0
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+				
+		Log("[AppStart] Disconnected from ", NAME)
+		Client.Disconnect
+    Else
+		Log("[AppStart] Connection failed to ", NAME)
+    End If
+End Sub
+
+' Callback when data is received from BLE
+Sub OnNewData(data() As Byte)
+	LEGOHUBNo4Controller.MessageLogger(data)
+End Sub
+
+' Callback when BLE error occurs
+Sub OnError(code As Byte)
+	Log("[OnError] code=", code)
+End Sub
+
+' Callback when BLE connection occurs
+Sub OnConnect
+	Log("[OnConnected] OK")
+End Sub
+
+' Callback when BLE disconnection occurs
+Sub OnDisconnect
+	Log("[OnDisconnected] OK")
+End Sub

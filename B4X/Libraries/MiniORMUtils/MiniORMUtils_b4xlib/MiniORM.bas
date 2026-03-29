@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 4.30
+' Version 5.00
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -19,44 +19,43 @@ Sub Class_Globals
 	Private mView					As String
 	Private mStatement 				As String
 	Private mDatabaseName 			As String
-	Private mUniqueKey 				As String
-	Private mForeignKey 			As String
-	Private mConstraint 			As String
+	Private mUniqueKeys 			As String
+	Private mForeignKeys 			As String
+	Private mConstraints 			As String
 	Private mGroupBy 				As String
 	Private mOrderBy 				As String
 	Private mLimit 					As String
+	Private mHaving 				As String
 	Private mCondition				As String
 	Private mParameter				As String
-	Private mHaving 				As String
 	Private mParameters() 			As Object
 	Private mSettings				As ORMSettings
 	Private mError 					As Exception
-	Private mType 					As String
-	Private mJournalMode 			As String = "DELETE"
-	Private mDefaultUserId 			As String = "1"
+	Private mDbType 				As String
+	Private mJournalMode 			As String
+	Private mDefaultUserId 			As String
+	Private mAutoIncrement 			As Boolean
 	Private mShowExtraLogs 			As Boolean
+	Private mOptionalNull			As Boolean
 	Private mUseTimestamps 			As Boolean ' may need to disable when working on view
-	Private mAutoIncrement 			As Boolean = True
-	Private mOptionalNull			As Boolean = True ' NULL is not added to column in CREATE
 	Private mUseDataAuditUserId 	As Boolean
 	Private mUpdateModifiedDate 	As Boolean
 	Private mQueryAddToBatch 		As Boolean
-	Private mQueryExecute 			As Boolean = True
-	Private mQueryClearParameters 	As Boolean = True
+	Private mQueryExecute 			As Boolean
+	Private mQueryClearParameters 	As Boolean
 	#If B4J
-	Private mUseTimestampsAsTicks 	As Boolean
-	Private mDateTimeMethods 		As Map = CreateMap(91: "getDate", 92: "getTime", 93: "getTimestamp")
+	Private mCharSet 				As String
+	Private mCollate 				As String
 	Private mPool 					As ConnectionPool
-	Private mCharSet 				As String = "utf8mb4"
-	Private mCollate 				As String = "utf8mb4_unicode_ci"
+	Private mDateTimeMethods 		As Map
+	Private mUseTimestampsAsTicks 	As Boolean
 	#End If
-	Private mJournalMode 			As String = "DELETE"
 	Public BLOB 					As String
 	Public INTEGER 					As String
 	Public BIG_INT 					As String
 	Public DECIMAL 					As String
 	Public VARCHAR 					As String
-	Public DATE_TIME 				As String ' datetime
+	Public DATE_TIME 				As String
 	Public TIMESTAMP 				As String
 	Public TEXT 					As String
 	Public ORMTable 				As ORMTable
@@ -64,10 +63,10 @@ Sub Class_Globals
 	Public Const MYSQL 				As String = "MySQL"
 	Public Const SQLITE 			As String = "SQLite"
 	Public Const MARIADB 			As String = "MariaDB"
-	Public Const COLOR_RED 			As Int = -65536
-	Public Const COLOR_BLUE 		As Int = -16776961
+	Public Const COLOR_RED 			As Int = 0xffff0000 '-65536
+	Public Const COLOR_BLUE 		As Int = 0xff0000ff '-16776961
 	Type ORMTable (ResultSet As ResultSet, Columns As List, Rows As List, Results As List, Results2 As List, First As Map, First2 As Map, Last As Map, Last2 As Map, RowCount As Int) ' Columns = list of keys, Rows = list of values, Results = list of maps, Results2 = Results + map ("__order": ["column1", "column2", "column3"])
-	Type ORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, UseFunction As Boolean, AllowNull As Boolean, Unique As Boolean, AutoIncrement As Boolean) ' B4i dislike word Nullable
+	Type ORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, Constraint As String, UseFunction As Boolean, AllowNull As Boolean, Unique As Boolean, AutoIncrement As Boolean) ' B4i dislike word Nullable
 	Type ORMResult (Tag As Object, Columns As Map, Rows As List)
 	Type ORMSettings (DBDir As String, _
 	DBFile As String, _
@@ -85,22 +84,46 @@ End Sub
 
 '<code>DB.Initialize</code>
 Public Sub Initialize
-	Clear
+	mBatch.Initialize
+	mColumns.Initialize
+	mSettings.Initialize
+	mConditions.Initialize
+	mPrimaryKeys.Initialize
 	mView = ""
 	mTable = ""
 	mObject = ""
 	mStatement = ""
 	mDatabaseName = ""
-	mBatch.Initialize
-	mColumns.Initialize
-	mConditions.Initialize
-	mPrimaryKeys.Initialize
-	mSettings.Initialize
+	mJournalMode = "DELETE"
+	mDefaultUserId = "1"
+	mAutoIncrement = True
+	mOptionalNull = True ' NULL is not added to column in CREATE
+	mQueryExecute = True
+	mQueryClearParameters = True
+	#If B4J
+	mCharSet = "utf8mb4"
+	mCollate = "utf8mb4_unicode_ci"
+	mDateTimeMethods = CreateMap(91: "getDate", 92: "getTime", 93: "getTimestamp")
+	#End If
+	Clear
+	setDbType(SQLITE) ' Default
 End Sub
 
-' Create SQLite database
-Public Sub InitializeSQLite As Boolean
+' Create SQLite database. formerly InitializeSQLite
+Public Sub CreateSQLite As Boolean
 	Try
+		If mSettings.DBDir = "" Then
+			#If B4J
+			mSettings.DBDir = File.DirApp
+			#Else If B4A
+			mSettings.DBDir = File.DirInternal
+			#Else If B4i
+			mSettings.DBDir = File.DirDocuments
+			#End If
+		End If
+		If mSettings.DBFile = "" Then
+			mSettings.DBFile = "data.db"
+		End If
 		#If B4J
 		mSQL.InitializeSQLite(mSettings.DBDir, mSettings.DBFile, True)
 		#Else
@@ -182,6 +205,18 @@ End Sub
 ' Check database file exists (SQLite)
 Public Sub Exist As Boolean
 	Dim DBFound As Boolean
+	If mSettings.DBDir = "" Then
+		#If B4J
+		mSettings.DBDir = File.DirApp
+		#Else If B4A
+		mSettings.DBDir = File.DirInternal
+		#Else If B4i
+		mSettings.DBDir = File.DirDocuments
+		#End If
+	End If
+	If mSettings.DBFile = "" Then
+		mSettings.DBFile = "data.db"
+	End If
 	If File.Exists(mSettings.DBDir, mSettings.DBFile) Then
 		DBFound = True
 	End If
@@ -214,11 +249,10 @@ Public Sub ExistAsync As ResumableSub
 End Sub
 #End If
 
-' Connect to database server
-' Note: SQLite uses DBDir and DBFile
+' Open database connection
 Public Sub Open As SQL
 	#If B4J
-	Select mSettings.DBType
+	Select mDbType
 		Case SQLITE
 			If mSQL.IsInitialized Then Return mSQL
 			mSQL.InitializeSQLite(mSettings.DBDir, mSettings.DBFile, False)
@@ -233,10 +267,9 @@ End Sub
 
 #If B4J
 ' Connect to database server (asynchronously connection)
-' Note: SQLite uses JdbcUrl
 Public Sub OpenAsync As ResumableSub
 	Try
-		Select mSettings.DBType
+		Select mDbType
 			Case MYSQL, MARIADB
 				mPool.GetConnectionAsync("Pool")
 				Wait For Pool_ConnectionReady (DB1 As SQL)
@@ -279,7 +312,7 @@ End Sub
 ' Return server date
 Public Sub GetDate As String
 	Try
-		Select mSettings.DBType
+		Select mDbType
 			#If B4J
 			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT CURDATE()"$
@@ -308,7 +341,7 @@ End Sub
 ' Return server date (ascynchronous connection)
 Public Sub GetDate2 As ResumableSub
 	Try
-		Select mSettings.DBType
+		Select mDbType
 			#If B4J
 			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT CURDATE()"$
@@ -334,7 +367,7 @@ End Sub
 ' Return server timestamp
 Public Sub GetDateTime As String
 	Try
-		Select mSettings.DBType
+		Select mDbType
 			#If B4J
 			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT now()"$
@@ -363,7 +396,7 @@ End Sub
 ' Return server timestamp (ascynchronous connection)
 Public Sub GetDateTime2 As ResumableSub
 	Try
-		Select mSettings.DBType
+		Select mDbType
 			#If B4J
 			Case MYSQL, MARIADB
 				Dim qry As String = $"SELECT now()"$
@@ -410,7 +443,7 @@ End Sub
 
 ' Return SQL query for Last Insert ID based on DBType
 Public Sub getLastInsertIDQuery As String
-	Select mSettings.DBType
+	Select mDbType
 		#If B4J
 		Case MYSQL, MARIADB
 			Dim qry As String = "SELECT LAST_INSERT_ID()"
@@ -435,7 +468,7 @@ Public Sub setDbType (Name As String)
 			TEXT = "TEXT"
 			DATE_TIME = "TEXT"
 			TIMESTAMP = "TEXT"
-			mType = SQLITE
+			mDbType = SQLITE
 		Case "MYSQL", "MARIADB"
 			BLOB = "mediumblob"
 			INTEGER = "int"
@@ -445,12 +478,12 @@ Public Sub setDbType (Name As String)
 			TEXT = "text"
 			DATE_TIME = "datetime"
 			TIMESTAMP = "timestamp"
-			If Name.EqualsIgnoreCase(MYSQL) Then mType = MYSQL Else mType = MARIADB
+			If Name.EqualsIgnoreCase(MYSQL) Then mDbType = MYSQL Else mDbType = MARIADB
 	End Select
 End Sub
 
 Public Sub getDbType As String
-	Return mType
+	Return mDbType
 End Sub
 
 Public Sub setSettings (Settings As ORMSettings)
@@ -507,6 +540,7 @@ Public Sub getColumns As List
 	Return mColumns
 End Sub
 
+' May deprecate
 Public Sub setColumnsType (ColumnsType As Map)
 	mColumnsType = ColumnsType
 End Sub
@@ -547,12 +581,12 @@ End Sub
 
 Public Sub setQueryAddToBatch (Value As Boolean)
 	mQueryAddToBatch = Value
-	If mQueryAddToBatch Then mQueryExecute = False ' Disallow both set to True
+	If mQueryAddToBatch Then mQueryExecute = False ' Only either one is True
 End Sub
 
 Public Sub setQueryExecute (Value As Boolean)
 	mQueryExecute = Value
-	If mQueryExecute Then mQueryAddToBatch = False ' Disallow both set to True
+	If mQueryExecute Then mQueryAddToBatch = False ' Only either one is True
 End Sub
 
 ' Clear Parameters after Query
@@ -582,9 +616,9 @@ Private Sub Clear
 	mHaving = ""
 	mGroupBy = ""
 	mOrderBy = ""
-	mUniqueKey = ""
-	mForeignKey = ""
-	mConstraint = ""
+	mUniqueKeys = ""
+	mForeignKeys = ""
+	mConstraints = ""
 End Sub
 
 ' Clear Conditions
@@ -602,15 +636,14 @@ Public Sub Results As List
 	Return ORMTable.Results
 End Sub
 
+'Deprecated
 Public Sub Results2 As List
 	Return ORMTable.Results2
 End Sub
 
 ' Query column id
 Public Sub Find (ID As Int)
-	Reset
-	WhereParam("id = ?", ID)
-	Query
+	Find2("id = ?", ID)
 End Sub
 
 ' Query by single condition
@@ -636,13 +669,12 @@ Public Sub First As Map
 	Return ORMTable.First
 End Sub
 
-' Returns first row in results with ordered keys
+'Deprecated. Returns first row in results with ordered keys
 Public Sub First2 As Map
 	Return ORMTable.First2
 End Sub
 
 ' Returns first row in results with specified columns
-' (formerly known as SelectOnly then FirstPick)
 Public Sub First3 (Columns As List) As Map
 	Dim NewMap As Map
 	NewMap.Initialize
@@ -659,7 +691,7 @@ Public Sub Last As Map
 	Return ORMTable.Last
 End Sub
 
-' Returns last row in results with ordered keys
+'Deprecated. Returns last row in results with ordered keys
 Public Sub Last2 As Map
 	Return ORMTable.Last2
 End Sub
@@ -773,85 +805,171 @@ Public Sub SortByLastId
 	mOrderBy = " ORDER BY id DESC"
 End Sub
 
+' <code>DB.Columns.Add(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0))</code>
+' Name - Column Name (String)
+' Type - Column Type (String) e.g INTEGER/DECIMAL/VARCHAR/TIMESTAMP
+' Size - Column Length (String) e.g 255/10,2
+' Collation - Collation for char (String) e.g COLLATE utf8mb4_unicode_ci
+' Default - Default Value (String) e.g "Unknown", 0, utc_timestamp(), datetime('now')
+' Function - Use function (Boolean)
+' Unique - Is Unique (Boolean)
+' Null - Allow Null (Boolean)
+' AutoIncrement - Auto increment (Boolean)
+Public Sub Map2Column (Props As Map) As ORMColumn
+	Dim t1 As ORMColumn
+	t1.Initialize
+	t1.ColumnName = ""
+	t1.ColumnType = ""
+	t1.ColumnLength = ""
+	t1.Collation = ""
+	t1.DefaultValue = ""
+	t1.Constraint = ""
+	t1.UseFunction = False
+	t1.AllowNull = True
+	t1.Unique = False
+	t1.AutoIncrement = False
+	For Each Key As String In Props.Keys
+		Select Key.ToLowerCase
+			Case "n", "ColumnName".ToLowerCase, "Name".ToLowerCase
+				t1.ColumnName = Props.Get(Key)
+			Case "t", "ColumnType".ToLowerCase, "Type".ToLowerCase
+				t1.ColumnType = Props.Get(Key)
+			Case "s", "ColumnLength".ToLowerCase, "ColumnSize".ToLowerCase, "Length".ToLowerCase, "Size".ToLowerCase
+				t1.ColumnLength = Props.Get(Key)
+			Case "c", "Collation".ToLowerCase
+				t1.Collation = Props.Get(Key)
+			Case "d", "DefaultValue".ToLowerCase, "Default".ToLowerCase
+				t1.DefaultValue = Props.Get(Key)
+			Case "k", "Constraint".ToLowerCase
+				t1.Constraint = Props.Get(Key)
+			Case "f", "UseFunction".ToLowerCase, "Function".ToLowerCase
+				t1.UseFunction = Props.Get(Key)
+			Case "u", "Unique".ToLowerCase
+				t1.Unique = Props.Get(Key)
+			Case "an", "Nullable".ToLowerCase, "Null".ToLowerCase, "AllowNull".ToLowerCase
+				t1.AllowNull = Props.Get(Key)
+			Case "ai", "AutoIncrement".ToLowerCase
+				t1.AutoIncrement = Props.Get(Key)
+			Case Else
+				t1.ColumnName = Key
+		End Select
+	Next
+	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
+	If t1.ColumnType = VARCHAR And t1.ColumnLength = "" Then t1.ColumnLength = "255"
+	If t1.ColumnType = BIG_INT And t1.ColumnLength = "" Then t1.ColumnLength = "20"
+	'If t1.ColumnType = INTEGER Or t1.ColumnType = TIMESTAMP Or t1.ColumnLength = "0" Then t1.ColumnLength = ""
+	If t1.ColumnType = INTEGER Then t1.ColumnLength = "11"
+	If t1.ColumnType = TIMESTAMP Then t1.ColumnLength = ""
+	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
+	Return t1
+End Sub
+
+' Create table or view
+' <code>
+'DB.Table = "data"
+'DB.Columns.Add(CreateMap("name": "col1"))
+'DB.Columns = Array("col1", "col2") ' TEXT columns
+'DB.Create</code>
 Public Sub Create
 	Dim SB As StringBuilder
 	SB.Initialize
 	Dim FirstColumn As Boolean = True
-	For Each col As ORMColumn In mColumns
+	Dim IsListOfString As Boolean
+	Dim Columns As List
+	Columns.Initialize
+	If mColumns.Size > 0 Then ' Test first item only
+		If GetType(mColumns.Get(0)) = "java.lang.String" Then 'Check mColumns is a String array
+			IsListOfString = True
+		Else
+			'Log(mObject & " > " & GetType(mColumns.Get(0)))' expects anywheresoftware.b4a.objects.collections.Map$MyMap
+			IsListOfString = False
+		End If
+		If IsListOfString Then
+			For Each colName As String In mColumns
+				Dim Col As ORMColumn = CreateColumn(colName, VARCHAR, "", "", "", "", False, True, False, False)
+				Columns.Add(Col)
+			Next
+		Else
+			For Each props As Map In mColumns
+				Dim Col As ORMColumn = Map2Column(props)
+				Columns.Add(Col)
+			Next
+		End If
+	End If
+	For Each Col As ORMColumn In Columns
 		If FirstColumn = False Then
 			SB.Append(",").Append(CRLF)
 		End If
-		SB.Append(col.ColumnName)
+		SB.Append(Col.ColumnName)
 		SB.Append(" ")
-		Select mType
+		Select mDbType
 			Case SQLITE
-				SB.Append(col.ColumnType)
+				SB.Append(Col.ColumnType)
 			Case MYSQL, MARIADB
-				Select col.ColumnType
+				Select Col.ColumnType
 					Case INTEGER, BIG_INT, DECIMAL, TIMESTAMP, DATE_TIME, TEXT, BLOB
-						SB.Append(col.ColumnType)
+						SB.Append(Col.ColumnType)
 					Case Else
 						SB.Append(VARCHAR)
 				End Select
-				If col.ColumnLength.Length > 0 Then
-					SB.Append("(").Append(col.ColumnLength).Append(")")
+				If Col.ColumnLength.Length > 0 Then
+					SB.Append("(").Append(Col.ColumnLength).Append(")")
 				End If
-				If col.Collation.Length > 0 Then
-					SB.Append(" ").Append(col.Collation)
+				If Col.Collation.Length > 0 Then
+					SB.Append(" ").Append(Col.Collation)
 				End If
 		End Select
 		
-		If col.DefaultValue.Length > 0 Then
-			Select col.ColumnType
+		If Col.DefaultValue.Length > 0 Then
+			Select Col.ColumnType
 				Case INTEGER, BIG_INT, TIMESTAMP, DATE_TIME
-					Select mType
+					Select mDbType
 						Case SQLITE
-							If col.DefaultValue.StartsWith("(") And col.DefaultValue.EndsWith(")") Then
-								SB.Append(" DEFAULT ").Append(col.DefaultValue)
+							If Col.DefaultValue.StartsWith("(") And Col.DefaultValue.EndsWith(")") Then
+								SB.Append(" DEFAULT ").Append(Col.DefaultValue)
 							Else
-								SB.Append(" DEFAULT ").Append("(").Append(col.DefaultValue).Append(")")
+								SB.Append(" DEFAULT ").Append("(").Append(Col.DefaultValue).Append(")")
 							End If
 						Case MYSQL, MARIADB
-							SB.Append(" DEFAULT ").Append(col.DefaultValue)
+							SB.Append(" DEFAULT ").Append(Col.DefaultValue)
 					End Select
 				Case Else
-					If col.UseFunction Then
-						If col.DefaultValue.StartsWith("(") And col.DefaultValue.EndsWith(")") Then
-							SB.Append(" DEFAULT ").Append(col.DefaultValue)
+					If Col.UseFunction Then
+						If Col.DefaultValue.StartsWith("(") And Col.DefaultValue.EndsWith(")") Then
+							SB.Append(" DEFAULT ").Append(Col.DefaultValue)
 						Else
-							Select mType
+							Select mDbType
 								Case SQLITE
-									SB.Append(" DEFAULT ").Append("(").Append(col.DefaultValue).Append(")")
+									SB.Append(" DEFAULT ").Append("(").Append(Col.DefaultValue).Append(")")
 								Case MYSQL, MARIADB
-									SB.Append(" DEFAULT ").Append(col.DefaultValue)
+									SB.Append(" DEFAULT ").Append(Col.DefaultValue)
 							End Select
 						End If
 					Else
-						SB.Append(" DEFAULT ").Append("'").Append(col.DefaultValue).Append("'")
+						SB.Append(" DEFAULT ").Append("'").Append(Col.DefaultValue).Append("'")
 					End If
 			End Select
 		End If
 		
-		If col.AllowNull Then
+		If Col.AllowNull Then
 			If mOptionalNull = False Then SB.Append(" NULL")
 		Else
 			SB.Append(" NOT NULL")
 		End If
 		
-		If col.Unique Then SB.Append(" UNIQUE")
-		If col.AutoIncrement Then
-			Select mType
+		If Col.Unique Then SB.Append(" UNIQUE")
+		If Col.AutoIncrement Then
+			Select mDbType
 				Case SQLITE
 					SB.Append(" AUTOINCREMENT")
 				Case MYSQL, MARIADB
 					SB.Append(" AUTO_INCREMENT")
 			End Select
 		End If
-		'sb.Append(",").Append(CRLF)
 		FirstColumn = False
 	Next
 	
-	Select mType
+	Select mDbType
 		Case SQLITE
 			If mUseDataAuditUserId Then
 				SB.Append(",").Append(CRLF)
@@ -899,7 +1017,7 @@ Public Sub Create
 		If mPrimaryKeys.Size = 1 Then
 			id = mPrimaryKeys.Get(0)
 		End If
-		Select mType
+		Select mDbType
 			Case MYSQL, MARIADB
 				stmt.Append($"${id} ${INTEGER}(11) NOT NULL AUTO_INCREMENT,"$).Append(CRLF)
 			Case SQLITE
@@ -911,7 +1029,7 @@ Public Sub Create
 	stmt.Append(SB.ToString)
 
 	If mAutoIncrement Then
-		Select mType
+		Select mDbType
 			Case SQLITE
 				stmt.Append(",").Append(CRLF)
 				stmt.Append($"PRIMARY KEY(${id} AUTOINCREMENT)"$)
@@ -940,22 +1058,22 @@ Public Sub Create
 		End If
 	End If
 	
-	If mUniqueKey.Length > 0 Then
+	If mUniqueKeys.Length > 0 Then
 		stmt.Append(",")
 		stmt.Append(CRLF)
-		stmt.Append(mUniqueKey)
+		stmt.Append(mUniqueKeys)
 	End If
 	
-	If mForeignKey.Length > 0 Then
+	If mForeignKeys.Length > 0 Then
 		stmt.Append(",")
 		stmt.Append(CRLF)
-		stmt.Append(mForeignKey)
+		stmt.Append(mForeignKeys)
 	End If
 	
-	If mConstraint.Length > 0 Then
+	If mConstraints.Length > 0 Then
 		stmt.Append(",")
 		stmt.Append(CRLF)
-		stmt.Append(mConstraint)
+		stmt.Append(mConstraints)
 	End If
 	
 	If mObject = mTable Then stmt.Append(")")
@@ -965,79 +1083,72 @@ Public Sub Create
 	mPrimaryKeys.Initialize
 End Sub
 
-'Create using raw SQL statement
-Public Sub Create2 (Statement As String)
-	ClearParameters
-	mStatement = Statement
-	If mQueryAddToBatch Then AddNonQueryToBatch
-	If mQueryExecute Then ExecNonQuery
+Public Sub setPrimary (Columns As List)
+	If Columns.Size = 0 Then Return
+	mPrimaryKeys = Columns
 End Sub
 
-' Set Primary Key
+' Get/Set Primary Key
 ' Example: PRIMARY KEY (order_id, product_id)
 ' <code>DB.Primary = Array("order_id", "product_id")</code>
-Public Sub setPrimary (Keys As List)
-	If Keys.Size = 0 Then Return
-	mPrimaryKeys = Keys
-End Sub
-
-' Returns Primary Key
 Public Sub getPrimary As List
 	Return mPrimaryKeys
 End Sub
 
 ' Example: FOREIGN KEY (category_id)
 ' <code>DB.Foreign = "category_id"</code>
-Public Sub setForeign (Key As String) '(ReferenceTable As String, Key As String, ReferenceKey As String, OnDelete As String, OnUpdate As String)
-	mForeignKey = $"FOREIGN KEY (${Key})"$
+Public Sub setForeign (Column As String) '(ReferenceTable As String, Key As String, ReferenceKey As String, OnDelete As String, OnUpdate As String)
+	mForeignKeys = $"FOREIGN KEY (${Column})"$
 End Sub
+
 Public Sub getForeign As String
-	Return mForeignKey
+	Return mForeignKeys
 End Sub
 
 ' Add a references to the statement or append to the Foreign Key
 ' Example: REFERENCES tbl_categories (id)
 ' <code>DB.References("tbl_categories", "id")</code>
-Public Sub References (Table As String, Key As String)
+Public Sub References (Table As String, Column As String)
 	Dim SB As StringBuilder
 	SB.Initialize
 	SB.Append(" ").Append("REFERENCES").Append(" ").Append(Table)
-	If Key <> "" Then SB.Append(" ").Append("(").Append(Key).Append(")")
-	If mForeignKey.Contains("FOREIGN KEY") Then
-		If mForeignKey.Contains("REFERENCES") Then
+	If Column <> "" Then SB.Append(" ").Append("(").Append(Column).Append(")")
+	If mForeignKeys.Contains("FOREIGN KEY") Then
+		If mForeignKeys.Contains("REFERENCES") Then
 			mStatement = mStatement & SB.ToString
 		Else
-			mForeignKey = mForeignKey & SB.ToString
+			mForeignKeys = mForeignKeys & SB.ToString
 		End If
 	Else
 		mStatement = mStatement & SB.ToString
 	End If
 End Sub
 
-' Add unique key
-' Key: Column name
-' Optional: Alias
-Public Sub Unique (Key As String, Alias As String)
-	Dim SB As StringBuilder
-	SB.Initialize
-	SB.Append("UNIQUE KEY")
-	If Alias.Length > 0 Then SB.Append(" " & Alias)
-	SB.Append($" (${Key})"$)
-	mUniqueKey = SB.ToString
+' Add table-level unique keys or indexes
+' Example: UNIQUE (email, username)
+'<code>DB.Unique = Array("email, username")</code>
+Public Sub setUnique (Params As List)
+	Dim Columns As String = IIf(Params.Size > 0, Params.Get(0), "")
+	Dim ConstraintType As String = IIf(Params.Size > 1, "UNIQUE " & Params.Get(1), "UNIQUE")
+	mUniqueKeys = $"${ConstraintType} (${Columns})"$
 End Sub
 
-' Add constraint
-' KeyType: UNIQUE or PRIMARY KEY
-' Keys: Column names separated by comma
-' Optional: Alias
-Public Sub Constraint (KeyType As String, Keys As String, Alias As String)
+' Add table-level constraints
+' ConstraintType: UNIQUE KEY, FOREIGN KEY or PRIMARY KEY
+' Columns: Column names separated by comma
+' Example: CONSTRAINT UC_User UNIQUE (email, username)
+'<code>DB.Constraint = Array("email, username", "UNIQUE KEY", "UC_User")</code>
+Public Sub setConstraint (Params As List) ' (Columns As String, ConstraintType As String, AliasName As String)
+	Dim Columns As String = IIf(Params.Size > 0, Params.Get(0), "")
+	Dim ConstraintType As String = IIf(Params.Size > 1, " " & Params.Get(1), "")
+	Dim Alias As String = IIf(Params.Size > 2, " " & Params.Get(2), "")
 	Dim SB As StringBuilder
 	SB.Initialize
 	SB.Append("CONSTRAINT")
-	If Alias.Length > 0 Then SB.Append(" " & Alias)
-	SB.Append(" " & KeyType)
-	SB.Append($"(${Keys})"$)
-	mConstraint = SB.ToString
+	SB.Append(Alias)
+	SB.Append(ConstraintType)
+	SB.Append($" (${Columns})"$)
+	mConstraints = SB.ToString
 End Sub
 
 ' Execute Non Query
@@ -1054,9 +1165,13 @@ End Sub
 
 Private Sub ExecQuery As ResultSet
 	Try
+		Dim RS As ResultSet
+		If Opened = False Then
+			Return RS
+		End If
 		If ParametersCount = 0 Then
 			If mShowExtraLogs Then LogQuery
-			Dim RS As ResultSet = mSQL.ExecQuery(mStatement)
+			RS = mSQL.ExecQuery(mStatement)
 		Else
 			If mShowExtraLogs Then LogQuery2
 			' B4A requires String Array
@@ -1064,7 +1179,7 @@ Private Sub ExecQuery As ResultSet
 			For i = 0 To mParameters.Length - 1
 				StringParams(i) = mParameters(i)
 			Next
-			Dim RS As ResultSet = mSQL.ExecQuery2(mStatement, StringParams)
+			RS = mSQL.ExecQuery2(mStatement, StringParams)
 		End If
 	Catch
 		Log(LastException.Message)
@@ -1089,13 +1204,31 @@ Private Sub ExecNonQuery
 End Sub
 
 ' Execute Non Query batch
-'<code>Wait For (DB.ExecuteBatch) Complete (Success As Boolean)</code>
+'<code>Wait For (DB.ExecuteBatchAsync) Complete (Success As Boolean)</code>
 Public Sub ExecuteBatchAsync As ResumableSub
 	If mShowExtraLogs Then LogQuery3
 	Dim SenderFilter As Object = mSQL.ExecNonQueryBatch("SQL")
 	Wait For (SenderFilter) SQL_NonQueryComplete (Success As Boolean)
 	mQueryExecute = True ' set back to Execute mode
 	Return Success
+End Sub
+
+' Example: SQL1.ExecQuerySingleResult(mStatement)
+'<code>Dim res As Int = DB.ExecuteScalar</code>
+Public Sub ExecuteScalar As Object
+	If mCondition.Length = 0 Then
+		If getCondition.Length > 0 Then mStatement = mStatement & mCondition
+	End If	
+	Return mSQL.ExecQuerySingleResult(mStatement)
+End Sub
+
+' Example: SQL1.ExecQuerySingleResult2(mStatement, mParameters)
+'<code>Dim res As Int = DB.ExecuteScalar2</code>
+Public Sub ExecuteScalar2 As Object
+	If mCondition.Length = 0 Then
+		If getCondition.Length > 0 Then mStatement = mStatement & mCondition
+	End If	
+	Return mSQL.ExecQuerySingleResult2(mStatement, mParameters)
 End Sub
 
 ' Example: SQL.AddNonQueryToBatch(Statement, Parameters)
@@ -1105,10 +1238,18 @@ Public Sub AddNonQueryToBatch
 	mSQL.AddNonQueryToBatch(mStatement, mParameters)
 End Sub
 
+'Example: LEFT JOIN tbl_categories c ON p.category_id = c.id
+'<code>DB.Join = Array("tbl_categories c", "p.category_id = c.id", "LEFT")</code>
+Public Sub setJoin (Params As List)
+	Dim Target As String = IIf(Params.Size > 0, Params.Get(0), "")
+	Dim Statements As String = IIf(Params.Size > 1, Params.Get(1), "")
+	Dim Modifier As String = IIf(Params.Size > 2, Params.Get(2), "")
+	mStatement = mStatement & " " & Modifier.Replace("JOIN", "").Trim & " JOIN " & Target & " ON " & Statements
+End Sub
+
 ' Add new Condition (disregard there are already some)
 Public Sub setCondition (Statement As String)
 	mConditions.Add(Statement)
-	mCondition = getCondition
 End Sub
 
 Public Sub getCondition As String
@@ -1126,7 +1267,6 @@ End Sub
 ' Formerly known as setWhere
 Public Sub setConditions (Statements As List)
 	mConditions.AddAll(Statements)
-	mCondition = getCondition
 End Sub
 
 Public Sub getConditions As List
@@ -1142,6 +1282,7 @@ Public Sub setParameter (Param As Object)
 	NewArray(mParameters.Length) = Param
 	mParameters = NewArray
 End Sub
+
 ' Last Parameter
 Public Sub getParameter As Object
 	Return mParameter
@@ -1186,13 +1327,6 @@ Public Sub WhereParams (Statements As List, Params() As Object)
 	AppendParameters(Params)
 End Sub
 
-'Example: JOIN tbl_categories c ON p.category_id = c.id
-'<code>DB.Join("tbl_categories c", "p.category_id = c.id", "")</code>
-Public Sub Join (Target As String, Statements As String, Modifier As String)
-	If Modifier <> "" Then Modifier = " " & Modifier
-	mStatement = mStatement & Modifier & " JOIN " & Target & " ON " & Statements
-End Sub
-
 ' Execute Query
 Public Sub Query
 	Try
@@ -1205,7 +1339,7 @@ Public Sub Query
 		ORMTable.Columns.Initialize
 		ORMTable.Rows.Initialize
 		ORMTable.Results.Initialize
-		ORMTable.Results2.Initialize		
+		ORMTable.Results2.Initialize
 		If getCondition.Length > 0 Then mStatement = mStatement & mCondition
 		If mGroupBy.Length > 0 Then mStatement = mStatement & mGroupBy
 		If mHaving.Length > 0 Then mStatement = mStatement & mHaving
@@ -1217,113 +1351,113 @@ Public Sub Query
 			Return
 		End If
 		ORMTable.ResultSet = RS
-		
-		Dim cols As Int = RS.ColumnCount
-		#If B4J
-		For i = 0 To cols - 1
-			ORMResult.Columns.Put(RS.GetColumnName(i), i)
-			ORMTable.Columns.Add(RS.GetColumnName(i))
-		Next
-		Dim jrs As JavaObject = RS
-		Dim rsmd As JavaObject = jrs.RunMethod("getMetaData", Null)
-		Do While RS.NextRow
-			Dim Row(cols) As Object ' ORMResult (array of object)
-			Dim Row2 As List 		' ORMTable (list of object)
-			Row2.Initialize
+		If RS.IsInitialized Then
+			Dim cols As Int = RS.ColumnCount
+			#If B4J			
 			For i = 0 To cols - 1
-				Dim ct As Int = rsmd.RunMethod("getColumnType", Array(i + 1))
-				'check whether it is a blob field
-				If ct = -2 Or ct = 2004 Or ct = -3 Or ct = -4 Then
-					Row(i) = RS.GetBlob2(i)
-				Else if ct = 2 Or ct = 3 Then
-					Row(i) = RS.GetDouble2(i)
-				Else If mDateTimeMethods.ContainsKey(ct) Then
-					If mUseTimestampsAsTicks Then
-						Dim SQLTime As JavaObject = jrs.RunMethodJO(mDateTimeMethods.Get(ct), Array(i + 1))
-						If SQLTime.IsInitialized Then
-							Row(i) = SQLTime.RunMethod("getTime", Null)
-						Else
-							Row(i) = Null
-						End If
-					Else
-						Row(i) = RS.GetString2(i) ' Do not use getObject, otherwise return different date formats for datetime and timestamps
-					End If
-				Else
-					Row(i) = jrs.RunMethod("getObject", Array(i + 1))
-				End If
-				Row2.Add(Row(i))
+				ORMResult.Columns.Put(RS.GetColumnName(i), i)
+				ORMTable.Columns.Add(RS.GetColumnName(i))
 			Next
-			ORMResult.Rows.Add(Row)
-			ORMTable.Rows.Add(Row2)
-		Loop
-		#Else
-		' Experimental
-		Dim Columns As Map
-		Dim Filled As Boolean
-		Do While RS.NextRow
-			Dim Row(cols) As Object ' ORMResult (array of object)
-			Dim Row2 As List 		' ORMTable (list of object)
-			Row2.Initialize
-			If Not(Filled) Then Columns.Initialize
-			For i = 0 To cols - 1
-				' Experimental
-				Dim ColumnName As String = RS.GetColumnName(i)
-				If mColumnsType.IsInitialized And mColumnsType.ContainsKey(ColumnName) Then
-					Select mColumnsType.Get(ColumnName)
-						Case BLOB
-							Row(i) = RS.GetBlob2(i)
-						Case DECIMAL
-							Row(i) = RS.GetDouble2(i)
-						Case INTEGER, BIG_INT
-							Row(i) = RS.GetInt2(i)
-						Case Else
-							Row(i) = RS.GetString2(i)
-					End Select
-				Else
-					' Let's take a risk and make a guess
-					Try
-						Dim s As String = RS.GetString2(i)
-						If s <> Null And IsNumber(s) Then
-							If s.Contains(".") Then ' assume a decimal value
-								Row(i) = RS.GetDouble2(i)
+			Dim jrs As JavaObject = RS
+			Dim rsmd As JavaObject = jrs.RunMethod("getMetaData", Null)
+			Do While RS.NextRow
+				Dim Row(cols) As Object ' ORMResult (array of object)
+				Dim Row2 As List 		' ORMTable (list of object)
+				Row2.Initialize
+				For i = 0 To cols - 1
+					Dim ct As Int = rsmd.RunMethod("getColumnType", Array(i + 1))
+					'check whether it is a blob field
+					If ct = -2 Or ct = 2004 Or ct = -3 Or ct = -4 Then
+						Row(i) = RS.GetBlob2(i)
+					Else if ct = 2 Or ct = 3 Then
+						Row(i) = RS.GetDouble2(i)
+					Else If mDateTimeMethods.ContainsKey(ct) Then
+						If mUseTimestampsAsTicks Then
+							Dim SQLTime As JavaObject = jrs.RunMethodJO(mDateTimeMethods.Get(ct), Array(i + 1))
+							If SQLTime.IsInitialized Then
+								Row(i) = SQLTime.RunMethod("getTime", Null)
 							Else
-								Dim num As Long = s
-								If num < -2147483648 Or num > 2147483647 Then
-									Row(i) = RS.GetLong2(i)
-								Else
-									Row(i) = RS.GetInt2(i)
-								End If
+								Row(i) = Null
 							End If
 						Else
-							Row(i) = s
+							Row(i) = RS.GetString2(i) ' Do not use getObject, otherwise return different date formats for datetime and timestamps
 						End If
-					Catch
-						' Conversion from BLOB to String in Android will fail
-						Log(LastException.Message)
-						Row(i) = RS.GetBlob2(i)
-						LogColor("Converted to BLOB", COLOR_RED)
-					End Try
-				End If
-				Row2.Add(Row(i))
-				If Not(Filled) Then
-					Columns.Put(ColumnName, Row(i))
-					ORMTable.Columns.Add(ColumnName)
-				End If
-			Next
-			ORMResult.Rows.Add(Row)
-			ORMTable.Rows.Add(Row2)
-			Filled = True
-		Loop
-		ORMResult.Columns = Columns
+					Else
+						Row(i) = jrs.RunMethod("getObject", Array(i + 1))
+					End If
+					Row2.Add(Row(i))
+				Next
+				ORMResult.Rows.Add(Row)
+				ORMTable.Rows.Add(Row2)
+			Loop
+			#Else
+			' Experimental
+			Dim Columns As Map
+			Dim Filled As Boolean
+			Do While RS.NextRow
+				Dim Row(cols) As Object ' ORMResult (array of object)
+				Dim Row2 As List 		' ORMTable (list of object)
+				Row2.Initialize
+				If Not(Filled) Then Columns.Initialize
+				For i = 0 To cols - 1
+					' Experimental
+					Dim ColumnName As String = RS.GetColumnName(i)
+					If mColumnsType.IsInitialized And mColumnsType.ContainsKey(ColumnName) Then
+						Select mColumnsType.Get(ColumnName)
+							Case BLOB
+								Row(i) = RS.GetBlob2(i)
+							Case DECIMAL
+								Row(i) = RS.GetDouble2(i)
+							Case INTEGER, BIG_INT
+								Row(i) = RS.GetInt2(i)
+							Case Else
+								Row(i) = RS.GetString2(i)
+						End Select
+					Else
+						' Let's take a risk and make a guess
+						Try
+							Dim s As String = RS.GetString2(i)
+							If s <> Null And IsNumber(s) Then
+								If s.Contains(".") Then ' assume a decimal value
+									Row(i) = RS.GetDouble2(i)
+								Else
+									Dim num As Long = s
+									If num < -2147483648 Or num > 2147483647 Then
+										Row(i) = RS.GetLong2(i)
+									Else
+										Row(i) = RS.GetInt2(i)
+									End If
+								End If
+							Else
+								Row(i) = s
+							End If
+						Catch
+							' Conversion from BLOB to String in Android will fail
+							Log(LastException.Message)
+							Row(i) = RS.GetBlob2(i)
+							LogColor("Converted to BLOB", COLOR_RED)
+						End Try
+					End If
+					Row2.Add(Row(i))
+					If Not(Filled) Then
+						Columns.Put(ColumnName, Row(i))
+						ORMTable.Columns.Add(ColumnName)
+					End If
+				Next
+				ORMResult.Rows.Add(Row)
+				ORMTable.Rows.Add(Row2)
+				Filled = True
+			Loop
+			ORMResult.Columns = Columns
 		#End If
-		RS.Close ' test 2025-09-18
-		
+		End If
+		If Initialized(RS) Then RS.Close ' test 2025-09-18, 2026-03-25
 		For Each Rows As List In ORMTable.Rows
 			Dim Result As Map
 			Dim Result2 As Map
 			Result.Initialize
 			Result2.Initialize
-			Result2.Put("__order", ORMTable.Columns) ' secret is here! LOL
+			Result2.Put("__order", ORMTable.Columns)
 			For i = 0 To Rows.Size - 1
 				Result.Put(ORMTable.Columns.Get(i), Rows.Get(i))
 				Result2.Put(ORMTable.Columns.Get(i), Rows.Get(i))
@@ -1348,7 +1482,8 @@ Public Sub Query
 	If mQueryClearParameters Then ClearParameters
 End Sub
 
-Public Sub Query2 (Params() As Object)
+'<code>DB.Query2 = Array("param1", "param2")</code>
+Public Sub setQuery2 (Params() As Object)
 	setParameters(Params)
 	Query
 End Sub
@@ -1356,16 +1491,15 @@ End Sub
 ' Return an object without calling Query
 ' Note: ORMTable and ORMResults are not affected
 Public Sub Scalar As Object
-	If getCondition.Length > 0 Then mStatement = mStatement & mCondition
 	If ParametersCount = 0 Then
-		Return mSQL.ExecQuerySingleResult(mStatement)
-	Else	
-		Return mSQL.ExecQuerySingleResult2(mStatement, mParameters)
+		Return ExecuteScalar
+	Else
+		Return ExecuteScalar2
 	End If
 End Sub
 
 ' Similar to Scalar but passing Params
-Public Sub Scalar2 (Params() As Object) As Object
+Public Sub setScalars (Params() As Object) As Object
 	setParameters(Params)
 	Return Scalar
 End Sub
@@ -1385,6 +1519,7 @@ Public Sub Insert
 		vb.Append("?")
 		If col.EqualsIgnoreCase("created_date") Then cd = True
 	Next
+	
 	' To handle varchar timestamps
 	If mUseTimestamps And Not(cd) Then
 		If SB.Length > 0 Then
@@ -1392,19 +1527,21 @@ Public Sub Insert
 			vb.Append(", ")
 		End If
 		SB.Append("created_date")
-		Select mType
+		Select mDbType
 			Case SQLITE
 				vb.Append("(datetime('now'))")			
 			Case MYSQL, MARIADB
 				vb.Append("now()")
 		End Select
 	End If
+	
 	mStatement = $"INSERT INTO ${mObject} (${SB.ToString}) VALUES (${vb.ToString})"$
 	If mQueryAddToBatch Then AddNonQueryToBatch
 	If mQueryExecute Then ExecNonQuery
 End Sub
 
-Public Sub Insert2 (Params() As Object)
+'<code>DB.Inserts = Array("param1", "param2")</code>
+Public Sub setInserts (Params() As Object)
 	setParameters(Params)
 	Insert
 End Sub
@@ -1432,7 +1569,7 @@ Public Sub Save
 		mStatement = mStatement & SB.ToString
 		' To handle varchar timestamps
 		If mUpdateModifiedDate And Not(md) Then
-			Select mType
+			Select mDbType
 				Case MYSQL, MARIADB
 					mStatement = mStatement & ", modified_date = now()"
 				Case SQLITE
@@ -1461,7 +1598,7 @@ Public Sub Save
 				vb.Append(", ")
 			End If
 			SB.Append("created_date")
-			Select mType
+			Select mDbType
 				Case SQLITE
 					vb.Append("(datetime('now'))")
 				Case MYSQL, MARIADB
@@ -1496,13 +1633,15 @@ Public Sub Save
 	End If
 End Sub
 
-Public Sub Save2 (Params() As Object)
+'<code>DB.Save = Array("param1", "param2")</code>
+Public Sub setSave2 (Params() As Object)
 	setParameters(Params)
 	Save
 End Sub
 
-' Same as Save but return row with custom id column
-Public Sub Save3 (mColumn As String)
+' Same as Save but returned row has custom primary key
+'<code>DB.Save3 = "UserID"</code>
+Public Sub setSave3 (IdColumn As String)
 	Dim BlnNew As Boolean
 	If getCondition.Length > 0 Then
 		Dim md As Boolean ' contains modified_date
@@ -1524,7 +1663,7 @@ Public Sub Save3 (mColumn As String)
 		mStatement = mStatement & SB.ToString
 		' To handle varchar timestamps
 		If mUpdateModifiedDate And Not(md) Then
-			Select mType
+			Select mDbType
 				Case MYSQL, MARIADB
 					mStatement = mStatement & ", modified_date = now()"
 				Case SQLITE
@@ -1553,7 +1692,7 @@ Public Sub Save3 (mColumn As String)
 				vb.Append(", ")
 			End If
 			SB.Append("created_date")
-			Select mType
+			Select mDbType
 				Case MYSQL, MARIADB
 					vb.Append("now()")
 				Case SQLITE
@@ -1572,7 +1711,7 @@ Public Sub Save3 (mColumn As String)
 			If mObject = mView Or mAutoIncrement = False Then Return
 			Dim NewID As Int = getLastInsertID
 			' Return new row
-			Find2(mColumn & " = ?", NewID)
+			Find2(IdColumn & " = ?", NewID)
 		Else
 			' Count numbers of ?
 			Dim ParamChars As Int = CountChar("?", mCondition)
@@ -1590,7 +1729,7 @@ Public Sub Save3 (mColumn As String)
 End Sub
 
 Public Sub getLastInsertID As Object
-	Select mType
+	Select mDbType
 		Case MYSQL, MARIADB
 			mStatement = "SELECT LAST_INSERT_ID()"
 		Case SQLITE
@@ -1626,7 +1765,6 @@ Public Sub Destroy (ids() As Int) As ResumableSub
 	If ids.Length < 1 Then Return False
 	For Each id As Int In ids
 		mID = id
-		'mStatement = $"DELETE FROM ${mObject} WHERE id = ?"$
 		mStatement = $"DELETE FROM ${mObject}"$
 		mConditions = Array("id = ?")
 		mCondition = " WHERE id = ?"
@@ -1642,7 +1780,7 @@ Public Sub Destroy (ids() As Int) As ResumableSub
 End Sub
 
 Public Sub SoftDelete
-	Select mType
+	Select mDbType
 		Case MYSQL, MARIADB
 			mStatement = $"UPDATE ${mObject} SET deleted_date = now()"$
 		Case SQLITE
@@ -1659,12 +1797,11 @@ Public Sub SoftDelete
 	If mShowExtraLogs Then LogQuery
 	If mQueryAddToBatch Then AddNonQueryToBatch
 	If mQueryExecute Then ExecNonQuery
-	'ClearConditions
 End Sub
 
 ' Tests whether the table exists
 Public Sub TableExists (TableName As String) As Boolean
-	Select mType
+	Select mDbType
 		Case SQLITE
 			' SQLite code extracted from DBUtils
 			mStatement = $"SELECT count(name) FROM sqlite_master WHERE type = 'table' AND name = ? COLLATE NOCASE"$
@@ -1689,7 +1826,7 @@ End Sub
 ' Tests whether the view exists
 Public Sub ViewExists (ViewName As String) As Boolean
 	Try
-		Select mType
+		Select mDbType
 			Case SQLITE
 				mStatement = $"SELECT COUNT(name) FROM main.sqlite_master WHERE type = 'view' AND name = ? COLLATE NOCASE"$
 				If mShowExtraLogs Then LogQuery4(ViewName)
@@ -1720,7 +1857,7 @@ Public Sub ListTables As List
 	Try
 		Dim lst As List
 		lst.Initialize
-		Select mType
+		Select mDbType
 			Case SQLITE
 				mStatement = "SELECT name FROM sqlite_master WHERE type = 'table'"
 				Dim RS As ResultSet = mSQL.ExecQuery(mStatement)
@@ -1748,7 +1885,7 @@ End Sub
 ' Show Create Table query
 Public Sub ShowCreateTable (TableName As String) As String
 	Try
-		Select mType
+		Select mDbType
 			Case SQLITE
 				mStatement = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?"
 				Dim RS As ResultSet = mSQL.ExecQuery2(mStatement, Array As String(TableName))
@@ -1786,6 +1923,9 @@ End Sub
 
 ' Return SQL statement
 Public Sub getStatement As String
+	If mCondition.Length = 0 Then
+		If getCondition.Length > 0 Then mStatement = mStatement & mCondition
+	End If
 	Return mStatement
 End Sub
 
@@ -1867,9 +2007,7 @@ Private Sub CountChar (c As String, Word As String) As Int
 	Return count
 End Sub
 
-'Example: logins INTEGER DEFAULT (0)
-'<code>DB.Columns.Add(DB.CreateColumn("logins", DB.INTEGER, "", "", "0", False, True, False, False))</code>
-Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, UseFunction As Boolean, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
+Private Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, Constraint As String, UseFunction As Boolean, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
 	Dim t1 As ORMColumn
 	t1.Initialize
 	t1.ColumnName = ColumnName
@@ -1877,6 +2015,7 @@ Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLengt
 	t1.ColumnLength = ColumnLength
 	t1.Collation = Collation
 	t1.DefaultValue = DefaultValue
+	t1.Constraint = Constraint
 	t1.UseFunction = UseFunction
 	t1.AllowNull = AllowNull
 	t1.Unique = IsUnique
@@ -1889,81 +2028,3 @@ Public Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLengt
 	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
 	Return t1
 End Sub
-
-' <code>DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0)))</code>
-' Name - Column Name (String)
-' Type - Column Type (String) e.g INTEGER/DECIMAL/VARCHAR/TIMESTAMP
-' Size - Column Length (String) e.g 255/10,2
-' Collation - Collation for char (String) e.g COLLATE utf8mb4_unicode_ci
-' Default - Default Value (String) e.g "Unknown", 0
-' DefaultUseFunction - Not String Value e.g utc_timestamp(), datetime('now')
-' Null - Allow Null (Boolean)
-' Unique - Is Unique (Boolean)
-' AutoIncrement - Auto increment (Boolean)
-Public Sub CreateColumn2 (Props As Map) As ORMColumn
-	Dim t1 As ORMColumn
-	t1.Initialize
-	t1.ColumnName = ""
-	t1.ColumnType = ""
-	t1.ColumnLength = ""
-	t1.Collation = ""
-	t1.DefaultValue = ""
-	t1.UseFunction = False
-	t1.AllowNull = True
-	t1.Unique = False
-	t1.AutoIncrement = False
-	For Each Key As String In Props.Keys
-		Select Key.ToLowerCase
-			Case "ColumnName".ToLowerCase, "Name".ToLowerCase
-				t1.ColumnName = Props.Get(Key)
-			Case "ColumnType".ToLowerCase, "Type".ToLowerCase
-				t1.ColumnType = Props.Get(Key)
-			Case "ColumnLength".ToLowerCase, "ColumnSize".ToLowerCase, "Length".ToLowerCase, "Size".ToLowerCase
-				t1.ColumnLength = Props.Get(Key)
-			Case "Collation".ToLowerCase
-				t1.Collation = Props.Get(Key)
-			Case "DefaultValue".ToLowerCase, "Default".ToLowerCase
-				t1.DefaultValue = Props.Get(Key)
-			Case "UseFunction".ToLowerCase, "Function".ToLowerCase
-				t1.UseFunction = Props.Get(Key)
-			Case "Nullable".ToLowerCase, "Null".ToLowerCase, "AllowNull".ToLowerCase
-				t1.AllowNull = Props.Get(Key)
-			Case "Unique".ToLowerCase
-				t1.Unique = Props.Get(Key)
-			Case "AutoIncrement".ToLowerCase
-				t1.AutoIncrement = Props.Get(Key)
-			Case Else
-				t1.ColumnName = Key
-		End Select
-	Next
-	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
-	If t1.ColumnType = VARCHAR And t1.ColumnLength = "" Then t1.ColumnLength = "255"
-	If t1.ColumnType = BIG_INT And t1.ColumnLength = "" Then t1.ColumnLength = "20"
-	'If t1.ColumnType = INTEGER Or t1.ColumnType = TIMESTAMP Or t1.ColumnLength = "0" Then t1.ColumnLength = ""
-	If t1.ColumnType = INTEGER Then t1.ColumnLength = "11"
-	If t1.ColumnType = TIMESTAMP Then t1.ColumnLength = ""
-	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
-	Return t1
-End Sub
-
-' Deprecated: Will be removed in future version
-' Superseded by setConditions
-Public Sub setWhere (Statements As List)
-	setConditions(Statements)
-End Sub
-
-' Deprecated: Use LogQuery4
-Public Sub LogQueryWithArg (Arg As Object)
-	LogQuery4(Arg)
-End Sub
-
-' Replaced by Join
-'Public Sub setJoin (OJoin As ORMJoin)
-'	If OJoin.Operation = "" Then OJoin.Operation = "JOIN"
-'	Append(" " & OJoin.Operation & " " & OJoin.Target & " ON " & OJoin.Conditions)
-'End Sub
-
-' Deprecated: Will be removed in future version
-'Public Sub SelectOnly (Columns As List) As Map
-'	Return First3(Columns)
-'End Sub

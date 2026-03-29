@@ -1,0 +1,82 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimblescanner
+Module1=BleAdvParser
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+'==============================================
+' Project:		rNimBLEScanner
+' File:			Parser.bas
+' Brief:		Example parsing selective advertised data.
+' Date: 		2026-03-26
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	Optional scanning filters can be set for MAC and/or Company ID
+'				This example scans for the device GoveeLife GV5108, listens to new data > log > parse.
+' DependsOn:	rConvert
+' Hardware:		ESP32
+' Wiring:		None
+' Log:			Example with company filter using a GoveeLife GC5108 with negativ temperature as used in the fridge.
+'				The advertised data is received via OnNewdata, then parsed using the BleParser and the result is again handled by OnNewData.
+'[AppStart][I] rNimBLEScanner Parser v20260327
+'[AppStart][I] BLE Scanner started. duration=15000
+'[OnNewData][I] mac=DB48C146601F data=010001018202105F0000
+'[OnNewData][I] company id=0100
+'[BleAdvParser.ParseGV5108][I] data=010001018202105F0000
+'[BleAdvParser.ParseGV5108][I] t=-13.1600, h=20.8000, b=95
+'[OnNewData][I] GV5108 t=-13.1600
+'==============================================
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rNimBLEScanner Parser v20260327"
+    Public Serial1 As Serial
+	Private BleScanner As NimBLEScanner
+	Private SCAN_DURATION As ULong = 15000	' 15 seconds
+
+	' Filters with example Govee GVH5075
+	Private COMPANY_FILTER As UInt = 0x0001 
+	Private MAC_FILTER() As Byte = Array As Byte(0xa4,0xc1,0x38,0x4c,0x30,0x22)	'ignore
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart][I] ", VERSION)
+
+	BleScanner.Initialize("OnNewData")
+	
+	' Set Filters
+	BleScanner.SetCompanyFilter(COMPANY_FILTER)
+	' BleScanner.SetMacFilter(MAC_FILTER)
+    
+	' Start scanning for NN MS and do not allow duplicates
+	BleScanner.Start(SCAN_DURATION, True)
+	Log("[AppStart][I] BLE Scanner started. duration=", SCAN_DURATION)
+End Sub
+
+' Handle data received from scanned peripheral.
+' Example:
+' [OnNewData][I] mac=000FC0BC38C1 mdata=88EC0002441F5900
+Sub OnNewData (mac() As Byte, data() As Byte)
+	Log("[OnNewData][I] mac=", Convert.BytesToHex(mac), " data=", Convert.BytesToHex(data))
+	Log("[OnNewData][I] company id=", Convert.TwoBytesToHex(data(0), data(1)))
+
+	' Parse the manufacturer or servicedata
+	If BleAdvParser.Parse(mac, data) Then
+		' Do something like
+		Log("[OnNewData][I] GV5108 t=", BleAdvParser.GoveeData.Temperature)
+	End If
+
+'	BleScanner.Stop
+'	Log("[OnNewData][I] scanner stopped")
+End Sub

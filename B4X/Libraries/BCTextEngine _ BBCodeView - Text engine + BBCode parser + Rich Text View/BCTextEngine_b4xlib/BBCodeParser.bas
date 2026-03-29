@@ -309,9 +309,6 @@ Private Sub TextToRun (Text As BBCodeTextNode, RunsList As List, Data As BBCodeP
 				Run.Extra.Put("a", tag.Extra.Get("a"))
 		End Select
 	Next
-	If IsListElement Then
-		Run = HandleListElement(Text, Run)
-	End If
 	If customfont Or FontSize <> Data.DefaultFont.Size Then
 		#if B4i
 		Dim NativeFont As Font = CurrentFont
@@ -327,6 +324,9 @@ Private Sub TextToRun (Text As BBCodeTextNode, RunsList As List, Data As BBCodeP
 		#else		
 		Run.TextFont = xui.CreateFont2(CurrentFont, FontSize)
 		#End If
+	End If
+	If IsListElement Then
+		Run = HandleListElement(Text, Run)
 	End If
 	list.Add(Run)
 End Sub

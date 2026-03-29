@@ -1,0 +1,141 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimbleclient
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+'==============================================
+' Project:		rNimBLEClient
+' Brief:		Example to set the angle of a geekservo via BLE.
+' Date: 		2026-03-25
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	The angle of the geekservo is open (90) or close (135).
+'				The BLE server processes a 5-byte command received from the connected client via BLE.
+'				This is the 5-byte protocol from the author's HubController project.
+'				Byte 1 = Header 	- fix 0x19
+'				Byte 2 = Address	- example 0x12
+'				Byte 3 = Command	- example 0x05
+'				Byte 4 = Value		- example 0x00 or 0x01 or a value between 0x5A (DEC 90) and 0x87 (DEC 135)
+'				Byte 5 = Footer 	- fix 0x58
+'				Servo Pos Close: [OnWrite][I] RX:5 1912058758
+'				Servo Pos Open: [OnWrite][I] RX:5 1912055A58
+' Gimmick:		If the servo angle is at close pos then the onboard blue LED is ON.
+' BLE:			-MAC address server = "80:F3:DA:4C:36:7A"
+'        		-Service UUID = 12345678-1234-1234-1234-1234567890ab
+'				-Char UUID = abcd1234-5678-1234-5678-1234567890ab
+' DependsOn:	rESP32Servo, rNimBLEServer, rConvert
+' Hardware:		ESP32
+' Wiring:		GPIO 2 - Onboard LED
+'				GPIO 4 - GeekServo Signal, GND = GeekServo GND, 3V3 = GeekServo VCC
+'==============================================
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Private Sub Process_Globals
+	Private VERSION 			As String = "rNimBLEClient Client v20260325"
+	Public Serial1 				As Serial
+
+	' BLE Client Settings
+	Private MAC() 				As Byte = Array As Byte(0x80,0xF3,0xDA,0x4C,0x36,0x7A)	' Address of the server
+	Private UUID_SERVICE 		As String = "12345678-1234-1234-1234-1234567890ab"		
+	Private UUID_TX_CHAR  		As String = "abcd1234-5678-1234-5678-1234567890ab" 		
+	Private UUID_RX_CHAR		As String = "abcd1234-5678-1234-5678-1234567890ab" 		
+    Private Client As NimBLEClient
+
+	' GPIO
+	Private ButtonPin 			As Pin
+	Private BUTTON_PIN_NUMBER 	As Byte = 5
+	
+	' Server Commands
+	' BLE HubBin Frame 5-Bytes HDR ADR CMD VAL FTR
+	' Header and footer
+	Private FRAME_LENGTH 		As Byte	= 5		'ignore
+	Private FRAME_HEADER 		As Byte = 0x19
+	Private FRAME_FOOTER 		As Byte = 0x58
+	' Addresses
+	Private DEVICE_ADDRESS		As Byte = 0x12
+	' Commands
+	Private Const CMD_SET_ANGLE	As Byte = 0x05
+	' Values
+	Private Const VAL_OPEN		As Byte = 0x00
+	Private Const VAL_CLOSE  	As Byte = 0x01
+	' Command as HubBin frame
+	Public FRAME_CMD_OPEN() 	As Byte = Array As Byte(FRAME_HEADER, DEVICE_ADDRESS, CMD_SET_ANGLE, VAL_OPEN, FRAME_FOOTER)
+	Public FRAME_CMD_CLOSE() 	As Byte = Array As Byte(FRAME_HEADER, DEVICE_ADDRESS, CMD_SET_ANGLE, VAL_CLOSE, FRAME_FOOTER)
+	
+	' Barrier state
+	Private BARRIER_OPEN 		As Boolean = True
+	Private BARRIER_CLOSED 		As Boolean = False	'ignore
+	Private BarrierState 		As Boolean = BARRIER_OPEN
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[AppStart] ", VERSION)
+	Log("[AppStart] MAC=", MAC)
+
+	' Init GPIO
+	ButtonPin.Initialize(BUTTON_PIN_NUMBER, ButtonPin.MODE_INPUT_PULLUP)
+	ButtonPin.AddListener("OnStateChanged")
+	BarrierState = False
+
+    ' Init BLE client with debug
+	Client.Initialize(MAC, _
+        		   	  UUID_SERVICE, _ 
+					  UUID_TX_CHAR, _
+					  UUID_RX_CHAR, _
+        		   	  "OnNewData", "OnError", _
+					  "OnConnected", "OnDisconnected", _
+					  True)
+
+	' BLE connect to server
+	Log("[AppStart] Connecting to ", Convert.BytesToHex(MAC))
+	Client.Connect
+	
+	Log("[AppStart] Done")
+End Sub
+
+#Region Events
+' Callback when data is received from BLE device.
+Private Sub OnNewData(data() As Byte)
+	Log("[OnNewData] data=", Convert.BytesToHex(data))
+End Sub
+
+' Callback when BLE error occurs
+Private Sub OnError(code As Byte)
+	Log("[OnError] code=", code)
+End Sub
+
+Private Sub OnConnected
+	Log("[OnConnected][I] OK")
+End Sub
+
+Private Sub OnDisconnected
+	Log("[OnDisconnected][W] OK")
+End Sub
+
+' OnStateChanged
+' Handle button state change.
+' Pressed: state true = 1, Released: state false = 0
+' Only the button pressed state is handled.
+Private Sub OnStateChanged(state As Boolean)
+	If Not(state) Then Return
+	BarrierState = Not(BarrierState)
+	If BarrierState == BARRIER_OPEN Then
+		Client.Write(FRAME_CMD_OPEN)
+	Else
+		Client.Write(FRAME_CMD_CLOSE)
+	End If
+	Log("[OnStateChanged] BarrierState=", BarrierState)
+	Delay(100)
+End Sub
+#End Region

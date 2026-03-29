@@ -1,0 +1,155 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimbleclient
+Module1=|relative|..\LEGOHUBNo4Controller
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+' File:        	LEGOHUBNo4.bas
+' Project:     	rNimBLEClient
+' Brief:		Example connecting to the LEGOHUBNo4 brick and measure distance from distance sensor connected to port A (index 0).
+' Date:        	2026-03-25
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	LEGO Battery Box Powered Up Bluetooth HUB NO.4 (Hub 88009). 
+'				Color & Distance Sensor (88007 / 45605).
+'				BLE adertised name is HUB NO.4.
+'				Handle notifications with the event OnNewData.
+' MCU:			ESP-WROOM-32
+' 				IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+' Depends on:	B4R 4.00 (64 Bit), Arduino Board Manager ESP32 3.3.7, NimBLE library 2.3.9, rConvert 1.51
+' Wiring:		No additional wiring
+' Log Debug:
+'[AppStart] rNimBLEClient LEGOHUBNo4 Distance v20260325
+'[NimBLEClient.Initialize][I] ServiceUUID=00001623-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] TxUUID=00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] RxUUID=00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Initialize][I] OK
+'[AppStart] Connecting To LEGOHUBNo4
+'[NimBLEClient.Connect][I] Start
+'[OnConnected] OK
+'[NimBLEClient][I] Discover attributes
+'[NimBLEClient][I] Service: 0x1801
+'[NimBLEClient][I]  -> Char: 0x2a05
+'[NimBLEClient][I] Service: 0x1800
+'[NimBLEClient][I]  -> Char: 0x2a00
+'[NimBLEClient][I]  -> Char: 0x2a01
+'[NimBLEClient][I]  -> Char: 0x2a04
+'[NimBLEClient][I] Service: 00001623-1212-efde-1623-785feabcd123
+'[NimBLEClient][I]  -> Char: 00001624-1212-efde-1623-785feabcd123
+'[NimBLEClient.Connect][I] Notify subscribed
+'[NimBLEClient.Connect][I] OK
+'[AppStart] Connected To LEGOHUBNo4
+'[AppStart] Notify distance on port A
+'[HubAttachedIO] event=01 iotypeid=37 Color & Distance Sensor (88007) hwrev=00.00
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[HubAttachedIO] event=01 iotypeid=2 Unknown hwrev=00.00
+'[HubAttachedIO] event=01 iotypeid=23 Medium Linear Motor (External) hwrev=00.00
+'[HubAttachedIO] event=01 iotypeid=21 Train Motor hwrev=02.00
+'[HubAttachedIO] event=01 iotypeid=20 Internal Motor (Boost Hub motor) hwrev=02.00
+'[Sensor] raw=0A004700086400010000, length=10
+'[Distance] dist=100 units
+'[NimBLEClient.Write][I] WriteNoResponse
+'[NimBLEClient.Write][I] OK
+'[Sensor] raw=080045000003FF04, length=8
+'[Distance] dist=768 units
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String 		= "rNimBLEClient LEGOHUBNo4 Distance v20260325"
+	Public Serial1 As Serial
+
+	' BLE -  Peripheral LEGOHUBNo4
+	Private NAME 	As String = "LEGOHUBNo4"
+	Private MAC() 	As Byte = Array As Byte(0x90 ,0x84 ,0x2b ,0xc1 ,0x94 ,0x79)	' MAC address - use BLE scanner to determine
+	Public Client 	As NimBLEClient
+	Private PortId As Byte
+
+	' Timer for polling the distance
+	Private TimerPollDistance As Timer
+	Private TimerPollDistanceInterval As ULong = 250
+	Private TimerPollDistanceCounter As ULong = 0
+	Private TimerPollDistanceCounterMax As ULong = 80
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+	Log("[AppStart] ", VERSION)
+
+	' Set distance sensor port id
+	PortId = LEGOHUBNo4Controller.PORT_A
+
+	' Poll every NNN ms
+	TimerPollDistance.Initialize("TimerPollDistance_Tick", TimerPollDistanceInterval)
+	TimerPollDistance.Enabled = False
+
+    ' Initialize the BLE client with MAC, Service UUID, Characteristic UUID
+	Client.Initialize(MAC, _
+        		   	  LEGOHUBNo4Controller.UUID_SERVICE, _ 
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+        		   	  "OnNewData", "OnError", _
+        		   	  "OnConnect", "OnDisconnect", _
+					  True)
+
+	Log("[AppStart] Connecting to ", NAME)
+	If Client.Connect Then
+		Log("[AppStart] Connected to ", NAME)
+
+		' Subscribe
+		Log("[AppStart] Notify distance on port A")
+		LEGOHUBNo4Controller.NotifyDistance(Client, PortId)
+
+		' Enable the distance poller
+		TimerPollDistance.Enabled = True
+    Else
+		Log("[AppStart] Connection failed to ", NAME)
+    End If
+End Sub
+
+Sub TimerPollDistance_Tick
+	TimerPollDistanceCounter = TimerPollDistanceCounter + 1
+
+	LEGOHUBNo4Controller.PortValueRequest(Client, PortId)
+
+	If TimerPollDistanceCounter > TimerPollDistanceCounterMax Then
+		Log("[TimerPollDistance_Tick] Distance polling stopped.")
+		TimerPollDistance.Enabled = False
+		Log("[TimerPollDistance_Tick] Disconnected from ", NAME)
+		Client.Disconnect
+	End If
+End Sub
+
+' Callback when data is received from BLE
+Sub OnNewData(data() As Byte)
+	'Log("[OnNewData] data=", LEGOHUBNo4Controller.BytesToHex(data))
+	LEGOHUBNo4Controller.MessageLogger(data)
+End Sub
+
+' Callback when BLE error occurs
+Sub OnError(code As Byte)
+	Log("[OnError] code=", code) 
+End Sub
+
+' Callback when BLE connection occurs
+Sub OnConnect
+	Log("[OnConnected] OK")
+End Sub
+
+' Callback when BLE disconnection occurs
+Sub OnDisconnect
+	Log("[OnDisconnected] OK")
+End Sub

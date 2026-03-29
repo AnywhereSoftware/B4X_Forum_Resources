@@ -1,9 +1,9 @@
 ###  MiniORMUtils by aeric
-### 03/11/2026
+### 03/25/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 4.30  
+Version: 5.00  
 
 ---
 
@@ -18,29 +18,48 @@ Currently it supports **SQLite** (for B4A, B4i, B4J), **MariaDB** and **MySQL** 
 Project Template:  
 [[B4X] [Project Template] MiniORM](https://www.b4x.com/android/forum/threads/b4x-project-template-miniorm.165499/)  
   
-**Examples:**  
+[HEADING=2]**Examples:**[/HEADING]  
+  
 Initialize MiniORM  
 
 ```B4X
 Private DB As MiniORM  
-Private MS As ORMSettings  
+DB.Initialize
+```
+
   
-MS.Initialize  
-MS.DBType = "SQLite"  
-MS.DBFile = "data.db"  
-MS.DBDir = File.DirApp  
   
+Set file name for SQLite  
+
+```B4X
+DB.Settings.DBFile = "blog.db"
+```
+
+  
+  
+Set ORMSettings for MySQL  
+
+```B4X
 DB.Initialize  
+Dim MS As ORMSettings  
+MS.Initialize  
+MS.DBType = DB.MYSQL  
+MS.JdbcUrl = "jdbc:mysql://{DbHost}:{DbPort}/{DbName}?characterEncoding=utf8&useSSL=False"  
+MS.DriverClass = "com.mysql.cj.jdbc.Driver"  
+MS.DBName = "blog"  
+MS.DbHost = "localhost"  
+MS.User = "root"  
+MS.Password = "password"  
 DB.Settings = MS
 ```
 
   
   
-Check if database exist  
+Check if database exist (SQLite)  
 
 ```B4X
 If Not(DB.Exist) Then  
-    LogColor($"${MS.DBType} database not found!"$, COLOR_RED)  
+    LogColor($"${DB.DBType} database not found!"$, COLOR_RED)  
     CreateDatabase  
 End If
 ```
@@ -50,7 +69,7 @@ End If
 Create Database  
 
 ```B4X
-Dim Success As Boolean = DB.InitializeSQLite
+Dim Success As Boolean = DB.CreateSQLite
 ```
 
   
@@ -58,7 +77,7 @@ Dim Success As Boolean = DB.InitializeSQLite
 Connect to Database  
 
 ```B4X
-DB.SQL = DB.Open
+DB.Open
 ```
 
   
@@ -66,8 +85,24 @@ DB.SQL = DB.Open
 Create Table  
 
 ```B4X
-DB.Table = "tbl_category"  
-DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "category_name")))  
+DB.Table = "categories"  
+DB.Columns = Array("category_code", "category_name")  
+DB.Create
+```
+
+  
+  
+Create Table (with column definitions)  
+
+```B4X
+DB.Table = "products"  
+DB.Columns.Add(CreateMap("N": "category_id", "T": DB.INTEGER))  
+DB.Columns.Add(CreateMap("N": "product_code", "S": 12))  
+DB.Columns.Add(CreateMap("N": "product_name"))  
+DB.Columns.Add(CreateMap("N": "product_price", "T": DB.DECIMAL, "S": "10,2", "D": 0.0))  
+DB.Columns.Add(CreateMap("N": "product_image", "T": DB.BLOB))  
+DB.Foreign = "category_id"  
+DB.References("categories", "id")  
 DB.Create
 ```
 
@@ -76,9 +111,10 @@ DB.Create
 Insert Rows  
 
 ```B4X
-DB.Columns = Array("category_name")  
-DB.Insert2(Array("Hardwares"))  
-DB.Insert2(Array("Toys"))
+DB.Columns = Array("category_id", "product_code", "product_name", "product_price")  
+DB.Inserts = Array(2, "T001", "Teddy Bear", 99.9)  
+DB.Inserts = Array(1, "H001", "Hammer", 15.75)  
+DB.Inserts = Array(2, "T002", "Optimus Prime", 1000)
 ```
 
   
@@ -91,8 +127,7 @@ If Success Then
     Log("Database is created successfully!")  
 Else  
     Log("Database creation failed!")  
-End If  
-DB.Close
+End If
 ```
 
   
@@ -100,7 +135,7 @@ DB.Close
 Select All Rows  
 
 ```B4X
-DB.Table = "tbl_category"  
+DB.Table = "categories"  
 DB.Query  
 If DB.Error.IsInitialized Then  
     Log(DB.Error.Message)  
@@ -111,13 +146,24 @@ End If
 
   
   
+Return single row  
+
+```B4X
+DB.Find(3)  
+If DB.Found Then  
+    Log(DB.First)  
+End If
+```
+
+  
+  
 Update Row  
 
 ```B4X
-DB.Table = "tbl_products"  
+DB.Table = "products"  
 DB.Columns = Array("category_id", "product_code", "product_name", "product_price")  
 DB.Id = 2  
-DB.Save2(Array(Category_Id, Product_Code, Product_Name, Product_Price))
+DB.Save2 = Array(Category_Id, Product_Code, Product_Name, Product_Price)
 ```
 
   

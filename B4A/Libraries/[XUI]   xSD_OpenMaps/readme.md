@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 03/17/2026
+### 03/22/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -16,7 +16,7 @@ B4J Version [**here**](https://www.b4x.com/android/forum/threads/jsd_openmaps.16
 **xSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.01  
+**Version:** 1.02  
 
 - **CameraPosition**
 
@@ -97,15 +97,15 @@ Author:** Star-Dust
 
 - **Class\_Globals** As String
 - **GetFillColor** As ResumableSub
-*<code>wait for (MapPolygon.GetFillColor) COMPLETE(FillColor As Int)</code>*- ****GetHole**** As List
+*<code>wait for (MapPolygon.GetFillColor) COMPLETE(FillColor As Int)</code>*- **GetHole** As List
 - **GetLineColor** As ResumableSub
 *<code>wait for (MapPolygon.GetLineColor) COMPLETE(LineColor As Int)</code>*- **GetLineWidth** As ResumableSub
 *<code>wait for (MapPolygon.GetLineWidth) COMPLETE(LineWidth As Int)</code>*- **GetPoints** As ResumableSub
  *List of LatLng  
- <code>wait for (MapPolygon.GetPoints) COMPLETE(Points As List)</code>*- **SetHole** (HolePoints As List) As Boolean
-- **Initialize** (Visble As Boolean, ID As String, Point As List, StrokeWidth As Int, StrokeColor As Int, FillColor As Int, Opacity As Double, WebView As WebView) As String
+ <code>wait for (MapPolygon.GetPoints) COMPLETE(Points As List)</code>*- **Initialize** (Visble As Boolean, ID As String, Point As List, StrokeWidth As Int, StrokeColor As Int, FillColor As Int, Opacity As Double, WebView As WebView) As String
 *Initializes the object. You can add parameters to this method if needed.*- **IsInitialized** As Boolean
-*Verifica se l'oggetto sia stato inizializzato.*
+*Verifica se l'oggetto sia stato inizializzato.*- **SetHole** (Point As List) As String
+
 - **Properties:**
 
 - **ID** As String [read only]
@@ -191,7 +191,7 @@ Author:** Star-Dust
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
  Example: <code>WAIT FOR (gmap.AddMarker2(10, 10, "This is a test", IconUrl)) COMPLETE (MK as Marker)</code>  
-see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker2Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String) As ResumableSub
+ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker2Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String) As ResumableSub
 *Adds a marker To the map with a custom icon and label  
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
@@ -200,7 +200,7 @@ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker2Label** (
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
  Example: <code>gmap.AddMarker2(10, 10, "This is a test", File.GetUri(File.DirAssets, "SomeIcon.png",32,32))</code>  
-see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String, Width As Int, Height As Int) As Marker
+ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String, Width As Int, Height As Int) As Marker
 *Adds a marker To the map with a custom icon and label.  
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
@@ -211,9 +211,8 @@ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (
  StrokeWidth - Stroke width.  
  StrokeColor - Stroke color.  
  FillColor - Inner color.  
- Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolygonHole** (OuterPoints As List, HolePoints As List, StrokeWidth As Float, StrokeColor As Paint, FillColor As Paint, Opacity As Double) As MapPolygon
-*Adds a polygon To the map. with hole*- **AddInfoWindow2** (Content As String, Position As LatLng, MaxWidth As Int) As MapInfoWindow
-*Opens an info window with the given HTML content at the specified position. It cannot be larger than MaxWidth (in pixels).*- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Int) As MapPolyline
+ Opacity - Inner color opacity. Value between 0 To 1.*- **AddPolygonHole** (OuterPoints As List, HolePoints As List, StrokeWidth As Float, StrokeColor As Int, FillColor As Int, Opacity As Double) As MapPolygon
+- **AddPolyline** (Points As List, StrokeWidth As Float, StrokeColor As Int) As MapPolyline
 *Adds a polyline To the map.  
  Points - A list Or Array of LatLng points.  
  Width - Line width.  
@@ -320,8 +319,12 @@ see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (
 *Returns the Lat/Lng coordinates for the given screen coordinates 'doesn't work!!!  
  <code>wait for (OME.XYToLatLng(x,y)) COMPLETE (ll As LatLng)</code>*
   
+  
 **![](https://www.b4x.com/android/forum/attachments/168491)  
   
 Update**   
 
 - 1.01 - Fix Bugs
+- 1.02
+
+- added OpenMpas.**AddPolygonHole**, MapPolygon.**SetHole**, **GetHole**

@@ -1,5 +1,5 @@
 ###  SD CustomKeyboard (new version) by Star-Dust
-### 01/01/2025
+### 03/22/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/160116/)
 
 The **CustomKeyboard** library has made a **leap** in quality to be able to replace the native Android/iOs keyboard and also for the Desktop version.  
@@ -13,7 +13,7 @@ This required a more radical change, which is why I preferred to abandon the old
   
 **[SIZE=5]IMPORTANT[/SIZE]**  
 
-- depends on [**SD CreativeBackGround**](https://www.b4x.com/android/forum/threads/b4x-xui-sd-creativebackground.125011/) (0.06+) library which must be downloaded
+- depends on [**SD CreativeBackGround**](https://www.b4x.com/android/forum/threads/b4x-xui-sd-creativebackground.125011/) (0.07+) library which must be downloaded
 - MaterialIcon font for special characters must be loaded. Use: **SD\_Keyboard1**.SpecialKeyFont = **xui**.CreateMaterialIcons (16)
 
 ---
@@ -23,7 +23,7 @@ This required a more radical change, which is why I preferred to abandon the old
 **SD\_CustomKeyboard  
   
 Author:** Star-Dust  
-**Version:** 2.03  
+**Version:** 2.04  
 
 - **CustomKey**
 
@@ -149,3 +149,7 @@ Author:** Star-Dust
 - **Rel.** 2.03
 
 - Fix tag bug
+
+- **Rel.** 2.04
+
+- Fix bug

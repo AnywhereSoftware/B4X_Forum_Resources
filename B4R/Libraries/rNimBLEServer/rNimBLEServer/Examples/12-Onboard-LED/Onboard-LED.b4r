@@ -1,0 +1,127 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimbleserver
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rNimBLEServer
+' Brief:		Example switching onboard-led on and off.
+' Date: 		2026-03-19
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	The server processes a 5-byte command received from the connected client.
+'				This is an example from the author's HubController project.
+'				The 5-byte protocol:
+'				Byte 1 = Header 	- fix 0x19
+'				Byte 2 = Address	- example 0x60
+'				Byte 3 = Command	- example 0x1
+'				Byte 4 = Value		- example 0x0 or 0x1
+'				Byte 5 = Footer 	- fix 0x58
+'				Example toggle the onboard ESP32 led:
+' 				On:	1960010158
+' 				Off: 1960010058
+' DependsOn:	rConvert
+' Hardware:		ESP32
+' Wiring:		GPIO 2 - Onboard LED
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "Onboard LED v20260319"
+    Public Serial1 As Serial
+	Private BleServer As NimBLEServer
+	
+	Private OnboardLED As Pin
+	Private ONBOARDLED_PINNR As Byte = 2
+
+	' Header and footer
+	Public FRAME_LENGTH 			As Byte	= 5
+	Public FRAME_HEADER 			As Byte = 0x19
+	Public FRAME_FOOTER 			As Byte = 0x58
+	' Addresses
+	Public SYSTEM1_ADDRESS			As Byte = 0x60
+	' Commands
+	Public SYSTEM_CMD_ONBOARD_LED	As Byte = 0x01
+	' States
+	Public STATE_OFF 				As Byte = 0x00
+	Public STATE_ON					As Byte = 0x01
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart] ", VERSION)
+	Log("[AppStart] Start BLE Server")
+
+	' Init GPIO
+	OnboardLED.Initialize(ONBOARDLED_PINNR, OnboardLED.MODE_OUTPUT)
+
+	' Init the BLE server
+    BleServer.Initialize( _
+        "B4RCustomBLEServer", _
+        "12345678-1234-1234-1234-1234567890ab", _
+        "abcd1234-5678-1234-5678-1234567890ab", _
+        "ble_connected", _
+        "ble_disconnected", _
+        "ble_write", _
+        True)
+
+    BleServer.Start
+End Sub
+
+Sub Ble_Connected
+	Log("[Ble_Connected] Client connected")
+End Sub
+
+Sub Ble_Disconnected
+	Log("[Ble_Disconnected] Client disconnected")
+End Sub
+
+' Handle data received from connected client
+Sub Ble_Write (Buffer() As Byte)
+    Log("[Ble_Write] RX:", Buffer.Length, " ", Convert.BytesToHex(Buffer))
+	ProcessCommand(Buffer)
+End Sub
+
+' Process the 5-byte command 
+Private Sub ProcessCommand(command() As Byte)
+	' Commands received
+	Private addr, cmd, val As Byte
+
+	If command.Length < FRAME_LENGTH Then
+		Log("[ProcessCommand] Invalid frame length. Expect 5 bytes.")
+	End If
+	
+	If command(0) == FRAME_HEADER And command(command.Length - 1) == FRAME_FOOTER Then
+		addr = command(1)
+		cmd = command(2)
+		val = command(3)
+		' [ProcessCommand] addr=96 cmd=1 val=0
+		Log("[ProcessCommand] addr=", addr, " cmd=", cmd, " val=", val)
+		' [ProcessCommand] addr=60 cmd=01 val=00
+		Log("[ProcessCommand] addr=", Convert.ByteToHex(addr), " cmd=", Convert.ByteToHex(cmd), " val=", Convert.ByteToHex(val))
+		
+		' Check address
+		If addr == SYSTEM1_ADDRESS Then
+			' Check command
+			If cmd == SYSTEM_CMD_ONBOARD_LED Then
+				' Check value
+				If val == 0 Then OnboardLED.DigitalWrite(False)
+				If val == 1 Then OnboardLED.DigitalWrite(True)
+			End If
+		Else
+			Log("[ProcessCommand] Address not found ", Convert.ByteToHex(addr), " expect ", SYSTEM1_ADDRESS)
+		End If
+	End If
+End Sub
