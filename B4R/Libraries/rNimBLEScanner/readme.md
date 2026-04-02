@@ -1,5 +1,5 @@
 ### rNimBLEScanner by rwblinn
-### 03/27/2026
+### 03/29/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/170698/)
 
 **B4R Library rNimBLEScanner**  
@@ -116,11 +116,11 @@ Sub AppStart
   
     ' Debug  
     BleScanner.SetDebug(True)  
-    
+   
     ' Scan for NN seconds and do not allow duplicates  
     BleScanner.Start(SCAN_DURATION, True)  
     ' See OnNewData for advertised data  
-    
+   
     Log("[AppStart] BLE Scanner started, duration=", SCAN_DURATION, " (0=forever)")  
 End Sub  
   

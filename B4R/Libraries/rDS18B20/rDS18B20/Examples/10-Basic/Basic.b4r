@@ -1,0 +1,79 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rds18b20
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	Basic.bas
+' Project:     	rDS18B20
+' Brief:       	Read temperature from sensor DS18B20.
+' Date:        	2026-03-29
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Dependencies: n/a
+' Description:	The temperature is handled via callback which os triggered on every temperature change.
+'				In case of an error, the error call back is called.
+' Hardware:		Arduino UNO
+'				PTC High Temperature Sensor DS18B20
+' Wiring:		Sensor		= MCU
+'				VCC(+)      = 5V
+'				DAT(out) 	= GPIO 4 > 4k7 Ω pull-up resistor between the 1-Wire data line and 5V power
+'				GND(-)      = GND
+' Log Example:	Debug true
+'[AppStart][I] rDS18B20 Basic v20260329
+'[B4RDS18B20.Initialize][I] OK
+'[AppStart][I] OK
+'[B4RDS18B20.GetTemperature][I] 18.94
+'[B4RDS18B20.looper][I] Calling B4R event
+'[OnStateChanged][I] t=18.9375
+'[B4RDS18B20.GetTemperature][I] 19.87
+'[B4RDS18B20.looper][I] Calling B4R event
+'[OnStateChanged][I] t=19.8750
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rDS18B20 Basic v20260329"
+	
+	'Serial
+	Public serialLine As Serial
+	Private SERIALLINE_BAUDRATE As ULong = 115200
+
+	'Sensor
+	Private Sensor As DS18B20					
+	Private PIN_NUMBER As Byte = 4
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(SERIALLINE_BAUDRATE)
+	Log("[AppStart][I] ", VERSION)
+
+	Sensor.SetDebug(True)
+
+	Sensor.Initialize(PIN_NUMBER, _
+					  Sensor.ADC_RESOLUTION_12, _ 
+					  "OnStateChanged", _
+					  "OnError")
+
+	If Not(Sensor.IsInitialized) Then 
+		Return
+	End If
+
+	Log("[AppStart][I] OK")
+End Sub
+
+Private Sub OnStateChanged(t As Float)
+	Log("[OnStateChanged][I] t=", t)
+End Sub
+
+Private Sub OnError(code As Byte)
+	Log("[OnError][E] code=", code)
+End Sub

@@ -35,10 +35,6 @@
 
 // Use like macArr.data = ARR(mac);
 #define ARR(x) ((uint8_t*)(x))
-
-// Debugging
-#define DBG if (instance && instance->debug)
-#define DBGLN(x) if (instance && instance->debug) ::Serial.println(x)
 	
 //~Library: rNimBLEScanner
 //~Version: 1.0
@@ -75,7 +71,7 @@ namespace B4R {
 			static const int numKnownUUIDs = 4;          // store length to avoid sizeof hacks
 	
 			// Debug flag for extensive logging serial line
-            bool debug = false;
+            bool debugMode = false;
 
             // B4R Callbacks
             ScannerCallbacks* pCallbacks;

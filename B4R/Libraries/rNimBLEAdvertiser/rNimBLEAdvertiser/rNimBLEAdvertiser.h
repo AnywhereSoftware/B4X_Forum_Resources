@@ -34,10 +34,6 @@
 
 // Use like macArr.data = ARR(mac);
 #define ARR(x) ((uint8_t*)(x))
-
-// Debugging
-#define DBG if (instance && instance->debug)
-#define DBGLN(x) if (instance && instance->debug) ::Serial.println(x)
 	
 //~Library: rNimBLEAdvertiser
 //~Version: 1.0
@@ -53,9 +49,11 @@ namespace B4R {
     class B4RNimBLEAdvertiser {
         private:
             static B4RNimBLEAdvertiser* instance;
-            bool initialized = false;
+            
+			bool initialized = false;
+			
 			// Debug flag for extensive logging serial line
-            bool debug = false;
+            bool debugMode = false;
             
         public:
             /**

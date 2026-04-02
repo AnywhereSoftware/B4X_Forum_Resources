@@ -70,15 +70,15 @@ namespace B4R {
 		uint32_t durationSec = (DurationMS == 0) ? 0 : (DurationMS / 1000);
 		pAdv->start(durationSec);
 		
-		if (debug) ::Serial.println(F("[B4RNimBLEAdvertiser] Started"));
+		if (debugMode) ::Serial.println(F("[B4RNimBLEAdvertiser] Started"));
 	}
 
     void B4RNimBLEAdvertiser::Stop() {
         NimBLEDevice::getAdvertising()->stop();
-        if (debug) ::Serial.println(F("[B4RNimBLEAdvertiser] Stopped"));
+        if (debugMode) ::Serial.println(F("[B4RNimBLEAdvertiser] Stopped"));
     }
 
     void B4RNimBLEAdvertiser::SetDebug(bool Enabled) {
-        debug = Enabled;
+        debugMode = Enabled;
     }
 }

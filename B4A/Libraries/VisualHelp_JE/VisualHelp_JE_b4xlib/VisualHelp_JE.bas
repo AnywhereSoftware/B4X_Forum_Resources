@@ -5,7 +5,7 @@ Type=Class
 Version=13.4
 @EndOfDesignText@
 'Author Jerryk
-'Version 1.13
+'Version 1.14
 
 Sub Class_Globals
 	Private root1 As B4XView
@@ -171,8 +171,6 @@ Private Sub DisplayHelp(pHelp As tHelp)
 	Dim AbsPos As tAbsPos
 	AbsPos.Top = leftTop(1)
 	AbsPos.Left = leftTop(0)
-	Log(AbsPos.Top)
-	Log(AbsPos.Left)
 
 '	define center of view
 	Dim xCenter As Float = AbsPos.Left + xTarget.Width/2
@@ -358,13 +356,35 @@ End Sub
 #End Region
 
 #Region tools
-Private Sub GetAbsolutePosition (view As B4XView) As Int()
-	Dim LeftTop(2) As Int
-	Dim JO As JavaObject = view
-	JO.RunMethod("getLocationOnScreen", Array As Object(LeftTop))
-	LeftTop(1) = LeftTop(1) - GetTitleBarHeight - GetStatusBarHeight
+Private Sub GetAbsolutePosition (xview As B4XView) As Int()
+'	Dim LeftTop(2) As Int
+'	Dim JO As JavaObject = view
+'	JO.RunMethod("getLocationOnScreen", Array As Object(LeftTop))
+'	LeftTop(1) = LeftTop(1) - GetTitleBarHeight - GetStatusBarHeight
+'
+'	Return Array As Int(LeftTop(0), LeftTop(1))
+	Dim xTop As Int = xview.top
+	Dim xLeft As Int = xview.Left
+	Dim Parent As B4XView = xview.Parent
+	Do While Parent.IsInitialized = True
+		If GetType(Parent).EndsWith("b4a.BALayout") Then
+			Try
+				xTop = xTop + Parent.Top
+				xLeft = xLeft + Parent.left
+				If Parent.Top = 0 And Parent.left = 0 Then
+					Exit
+				End If
+				Parent = Parent.Parent
+			Catch
+				Exit
+				Log(LastException)
+			End Try
+		Else
+			Exit
+		End If
+	Loop
+	Return Array As Int(xLeft, xTop)
 
-	Return Array As Int(LeftTop(0), LeftTop(1))
 End Sub
 	
 Private Sub GetStatusBarHeight As Int
@@ -401,7 +421,11 @@ public int TitleBarHeight(BA ba) {
     }
 #End If
 
-Private Sub getCornerRadius(Target As B4XView) As Int	
+Private Sub getCornerRadius(Target As B4XView) As Int
+	If Target.As(View).Background = Null Then
+		Return 0
+	End If
+	Log(GetType(Target.As(View).Background))
 	If GetType(Target.As(View).Background) = "anywheresoftware.b4a.objects.drawable.ColorDrawable$GradientDrawableWithCorners" Then
 		Private cd2 As ColorDrawable
 		cd2 = Target.As(View).Background

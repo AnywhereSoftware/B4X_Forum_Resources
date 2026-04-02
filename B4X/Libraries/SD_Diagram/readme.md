@@ -1,11 +1,11 @@
 ###  SD_Diagram by Star-Dust
-### 12/04/2025
+### 03/31/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/169468/)
 
 **SD\_Diagram  
   
 Author:** Star-Dust  
-**Version:** 1.01  
+**Version:** 1.02  
 
 - **AnimateDiagram**
 
@@ -96,3 +96,4 @@ Author:** Star-Dust
 **Relaase**  
 
 - 1.01 - Added Istogram
+- 1.02 Added Gradiant and Shadow in PieDiagram

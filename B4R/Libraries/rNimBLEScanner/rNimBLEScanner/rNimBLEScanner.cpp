@@ -33,7 +33,9 @@ namespace B4R {
         pCallbacks = new ScannerCallbacks();
         initialized = true;
 		
-		DBG ::Serial.printf("[B4RNimBLEScanner.Initialize][I] OK\n");
+		if (debugMode) {
+			::Serial.printf("[B4RNimBLEScanner.Initialize][I] OK\n");
+		}
     }
 
 	void B4RNimBLEScanner::Start(ULong DurationMS, bool DoNotAllowDuplicates) {
@@ -58,13 +60,17 @@ namespace B4R {
 		
 		// parameters: duration(s), is_continious(bool), scan_type(active/passive)
 		pScan->start(durationSeconds, false); 
-		
-		DBG ::Serial.printf("[B4RNimBLEScanner.Start][I] Duration: %d s\n", durationSeconds);
+
+		if (debugMode) {
+			::Serial.printf("[B4RNimBLEScanner.Start][I] Duration: %d s\n", durationSeconds);
+		}
 	}
 
     void B4RNimBLEScanner::Stop() {
         NimBLEDevice::getScan()->stop();
-		DBG ::Serial.printf("[B4RNimBLEScanner.Stop][I]\n");
+		if (debugMode) { 
+			::Serial.printf("[B4RNimBLEScanner.Stop][I]\n");
+		}
     }
 
 	void B4RNimBLEScanner::HandleResult(const NimBLEAdvertisedDevice* device) {
@@ -128,13 +134,15 @@ namespace B4R {
 	void B4RNimBLEScanner::SetMacFilter(ArrayByte* TargetMAC) {
 		if (TargetMAC == NULL || TargetMAC->length < 6) {
 			filterMac = false;
-			DBG ::Serial.printf("[B4RNimBLEScanner.SetTargetMac][E] MAC incorrect\n");
+			if (debugMode) {
+				::Serial.printf("[B4RNimBLEScanner.SetTargetMac][E] MAC incorrect\n");
+			}
 		} else {
 			// Copy the bytes from the B4R array into our class buffer
 			// Note: TargetMAC->data is the byte pointer
 			memcpy(targetMac, TargetMAC->data, 6);
 			filterMac = true;
-			DBG {
+			if (debugMode) {
 				::Serial.printf(
 					"[B4RNimBLEScanner.SetTargetMac][I] mac=%02X:%02X:%02X:%02X:%02X:%02X\n",
 					targetMac[0], targetMac[1], targetMac[2], targetMac[3], targetMac[4], targetMac[5]);
@@ -143,7 +151,7 @@ namespace B4R {
 	}
 
 	void B4RNimBLEScanner::SetDebug(bool Enabled) {
-		debug = Enabled;
+		debugMode = Enabled;
 	}
 
 }

@@ -1,5 +1,5 @@
 ### VisualHelp_JE by Jerryk
-### 03/19/2026
+### 03/30/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/170617/)
 
 The library displays local help above layout elements  
@@ -8,7 +8,7 @@ The library displays local help above layout elements
   
 **VisualHelp\_JE  
 Author: Jerryk  
-Version: 1.13**  
+Version: 1.14**  
   
 Properties  
 [TABLE]  

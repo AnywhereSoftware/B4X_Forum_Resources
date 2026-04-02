@@ -1,5 +1,5 @@
 ### CompInfo (detailed computer information) by jmon
-### 03/27/2026
+### 03/30/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170692/)
 
 Hi,  
@@ -12,6 +12,45 @@ The class contains about 30 methods that give very detailed information about yo
   
 **Libraries used:**  
 Json, jShell  
+  
+**List of methods:**  
+
+```B4X
+ComputerGetBatteries  
+ComputerGetBIOS  
+ComputerGetBootConfiguration  
+ComputerGetComputerSystem  
+ComputerGetDependentServices  
+ComputerGetDesktopMonitors  
+ComputerGetDesktops  
+ComputerGetGPUInfo  
+ComputerGetGroups  
+ComputerGetInstalledSoftwares  
+ComputerGetKeyboards  
+ComputerGetLoggedOnUsers  
+ComputerGetLogicalDisks  
+ComputerGetMotherboardDevices  
+ComputerGetNetworkAdapters  
+ComputerGetNTEventLogs  
+ComputerGetOperatingSytems  
+ComputerGetPhysicalMemory  
+ComputerGetPointingDevices  
+ComputerGetPrinters  
+ComputerGetPrintJobs  
+ComputerGetProcesses  
+ComputerGetProcessors  
+ComputerGetServices  
+ComputerGetShares  
+ComputerGetSoundDevices  
+ComputerGetStartupCommands  
+ComputerGetSystemProduct  
+ComputerGetThreads  
+ComputerGetUserAccounts  
+ComputerGetVideoControllers  
+FormatBytes
+```
+
+  
   
 **Note about remote execution:**  
 For the remote execution to work across a network, the following conditions must be met:  
