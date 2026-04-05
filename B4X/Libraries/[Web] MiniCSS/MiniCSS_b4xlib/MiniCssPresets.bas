@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' CSS Presets class (Common Styles)
-' Version 0.20
+' Version 0.30
 Sub Class_Globals
 	Private css As MiniCss
 End Sub

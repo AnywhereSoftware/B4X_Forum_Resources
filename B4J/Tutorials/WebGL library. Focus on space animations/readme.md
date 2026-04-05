@@ -1,5 +1,5 @@
 ### WebGL library. Focus on space animations. by max123
-### 03/05/2026
+### 04/03/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/170485/)
 
 Hi everyone,  
@@ -57,8 +57,8 @@ Spatial Audio: I intend to replace the background music with real engine sounds 
   
 **How I made a spaceship scene ?**  
 
-- I used a simple, free, and powerful program that allows to create things like space, stars, and nebulae by overlapping various layers. It then lets export the high-resolution result as six images that form the faces of a cube (skybox) for the scene's background. This program is called Spacescape, created by Alex Peterson. Here the link if you want to try it: [Spacescape](http://alexcpeterson.com/spacescape)
-I then imported these images and used them as background with this code:
+- I used a simple, free, and powerful program that allows to create things like space, stars, and nebulae by overlapping various layers. It then lets export the high-resolution result as six images that form the faces of a cube (skybox) for the scene's background. This program is by Alex Peterson. If you want to try it: [Spacescape](http://alexcpeterson.com/spacescape)
+I then imported these images and used as background with this code:
 
 ```B4X
 envMap = new THREE.CubeTextureLoader()  

@@ -5,16 +5,19 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini CSS Generator class
-' Version 0.20
+' Version 0.30
 Sub Class_Globals
 	Private rules As Map
 	Private mediaQueries As Map
 	Private variables As Map
+	Private keyframes As Map
 	Private currentSelector As String
+	Private currentKeyframe As String 			' track current keyframe name
+    Private currentKeyframeSelector As String
 	Private prefix As String
-	Private mIndent As String          ' Indentation string (default: "  ")
-	Private mUseTabs As Boolean        ' Optional: use tabs instead of spaces
-	Private mIndentSize As Int         ' Number of spaces (if not using tabs)
+	Private mIndent As String					' Indentation string (default: "  ")
+	Private mUseTabs As Boolean					' Optional: use tabs instead of spaces
+	Private mIndentSize As Int					' Number of spaces (if not using tabs)
 	Private mStartIndent As String
 End Sub
 
@@ -22,9 +25,12 @@ Public Sub Initialize (Name As String)
 	rules.Initialize
 	mediaQueries.Initialize
 	variables.Initialize
+	keyframes.Initialize
 	currentSelector = ""
+	currentKeyframe = ""
+	currentKeyframeSelector = ""
 	prefix = ""
-	mIndent = "  " ' Default 2 spaces
+	mIndent = "  " 			' Default 2 spaces
 	mUseTabs = False
 	mIndentSize = 2
 	mStartIndent = ""
@@ -43,10 +49,10 @@ Public Sub AddRule (selector As String) As MiniCss
 End Sub
 
 ' Add a property to current rule
-Public Sub AddProperty (propertyName As String, value As Object) As MiniCss
+Public Sub AddProperty (propertyName As String, propertyValue As Object) As MiniCss
 	If currentSelector <> "" Then
 		Dim ruleMap As Map = rules.Get(currentSelector)
-		ruleMap.Put(propertyName, value)
+		ruleMap.Put(propertyName, propertyValue)
 	End If
 	
 	Return Me
@@ -91,6 +97,78 @@ Public Sub AddRuleToMedia (selector As String, properties As Map) As MiniCss
 	Return Me
 End Sub
 
+' Start a new keyframes rule
+Public Sub AddKeyframe(name As String) As MiniCss
+    currentKeyframe = name
+    currentKeyframeSelector = ""
+    
+    ' Create a new map for this keyframe if it doesn't exist
+    If keyframes.ContainsKey(name) = False Then
+        Dim frameMap As Map
+        frameMap.Initialize
+        keyframes.Put(name, frameMap)
+    End If
+    
+    Return Me
+End Sub
+
+' Add a keyframe selector (e.g., "from", "to", "0%", "50%", "100%")
+Public Sub AddKeyframeSelector(selector As String) As MiniCss
+    If currentKeyframe = "" Then
+        Log("Warning: No keyframe selected. Call AddKeyframe first.")
+        Return Me
+    End If
+    
+    currentKeyframeSelector = selector
+    Dim frameMap As Map = keyframes.Get(currentKeyframe)
+    
+    ' Create properties map for this selector if not exists
+    If frameMap.ContainsKey(selector) = False Then
+        Dim props As Map
+        props.Initialize
+        frameMap.Put(selector, props)
+    End If
+    
+    Return Me
+End Sub
+
+' Add a property to the current keyframe selector
+Public Sub AddKeyframeProperty(prop As String, value As String) As MiniCss
+    If currentKeyframe = "" Or currentKeyframeSelector = "" Then
+        Log("Warning: No keyframe selector selected. Call AddKeyframe and AddKeyframeSelector first.")
+        Return Me
+    End If
+    
+    Dim frameMap As Map = keyframes.Get(currentKeyframe)
+    Dim props As Map = frameMap.Get(currentKeyframeSelector)
+    props.Put(prop, value)
+    
+    Return Me
+End Sub
+
+' Add multiple properties at once to current keyframe selector
+Public Sub AddKeyframeProperties(properties As Map) As MiniCss
+    If currentKeyframe = "" Or currentKeyframeSelector = "" Then
+        Log("Warning: No keyframe selector selected.")
+        Return Me
+    End If
+    
+    Dim frameMap As Map = keyframes.Get(currentKeyframe)
+    Dim props As Map = frameMap.Get(currentKeyframeSelector)
+    
+    For Each prop As String In properties.Keys
+        props.Put(prop, properties.Get(prop))
+    Next
+    
+    Return Me
+End Sub
+
+' Reset keyframe context (optional)
+Public Sub ResetKeyframeContext
+    currentKeyframe = ""
+    currentKeyframeSelector = ""
+End Sub
+
 ' Set vendor prefixes
 Public Sub SetPrefix (vPrefix As String)
 	prefix = vPrefix
@@ -117,7 +195,7 @@ Public Sub GenerateCSS As String
 		sb.Append("}")
 		plural = True
 	End If
-    
+	
 	' Add regular rules
 	plural = False
 	For Each selector As String In rules.Keys
@@ -126,19 +204,46 @@ Public Sub GenerateCSS As String
 		sb.Append(selector).Append(" {").Append(CRLF)
 		Dim ruleMap As Map = rules.Get(selector)
 		For Each prop As String In ruleMap.Keys
-			Dim value As Object = ruleMap.Get(prop)
+			Dim val As Object = ruleMap.Get(prop)
 			If prefix <> "" Then
 				sb.Append(mStartIndent)
-				sb.Append("  -").Append(prefix).Append("-").Append(prop).Append(": ").Append(value).Append(";").Append(CRLF)
+				sb.Append("  -").Append(prefix).Append("-").Append(prop).Append(": ").Append(val).Append(";").Append(CRLF)
 			End If
 			sb.Append(mStartIndent)
-			sb.Append(mIndent).Append(prop).Append(": ").Append(value).Append(";").Append(CRLF)
+			sb.Append(mIndent).Append(prop).Append(": ").Append(val).Append(";").Append(CRLF)
 		Next
 		sb.Append(mStartIndent)
 		sb.Append("}")
 		plural = True
 	Next
     
+	' Keyframes
+    For Each keyframeName As String In keyframes.Keys
+		If plural Then sb.Append(CRLF).Append(CRLF)
+		sb.Append(mStartIndent)
+        sb.Append("@keyframes ").Append(keyframeName).Append(" {").Append(CRLF)
+        Dim frameMap As Map = keyframes.Get(keyframeName)
+        For Each selector As String In frameMap.Keys
+            sb.Append(mStartIndent)
+			sb.Append(mIndent).Append(selector).Append(" {").Append(CRLF)
+            
+            Dim props As Map = frameMap.Get(selector)
+            For Each prop As String In props.Keys
+                Dim value As String = props.Get(prop)
+                ' Double indent for properties inside keyframe selector
+				sb.Append(mStartIndent)
+                sb.Append(mIndent).Append(mIndent).Append(prop).Append(": ").Append(value).Append(";").Append(CRLF)
+            Next
+			
+            sb.Append(mStartIndent)
+            sb.Append(mIndent).Append("}").Append(CRLF)
+        Next
+        
+		sb.Append(mStartIndent)
+		sb.Append("}")		
+		plural = True
+    Next
+		
 	' Add media queries
 	For Each condition As String In mediaQueries.Keys
 		sb.Append(CRLF).Append(CRLF)
@@ -150,10 +255,10 @@ Public Sub GenerateCSS As String
 			sb.Append(mIndent).Append(selector).Append(" {").Append(CRLF)
 			Dim props As Map = queryMap.Get(selector)
 			For Each prop As String In props.Keys
-				Dim value As Object = props.Get(prop)
+				Dim val As Object = props.Get(prop)
 				sb.Append(mStartIndent)
 				' Double indent for properties inside media query
-				sb.Append(mIndent).Append(mIndent).Append(prop).Append(": ").Append(value).Append(";").Append(CRLF)
+				sb.Append(mIndent).Append(mIndent).Append(prop).Append(": ").Append(val).Append(";").Append(CRLF)
 			Next
 			sb.Append(mStartIndent)
 			sb.Append("  }").Append(CRLF)
@@ -203,7 +308,10 @@ Public Sub Clear
 	rules.Clear
 	mediaQueries.Clear
 	variables.Clear
+	keyframes.Clear
 	currentSelector = ""
+	currentKeyframe = ""
+    currentKeyframeSelector = ""
 End Sub
 
 ' Set custom indentation string (e.g., "    " or vbTab)

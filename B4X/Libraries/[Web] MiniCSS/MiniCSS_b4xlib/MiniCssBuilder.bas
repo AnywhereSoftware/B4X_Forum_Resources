@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' CSS Builder Helper class (for fluent syntax)
-' Version 0.20
+' Version 0.30
 Sub Class_Globals
 	Private css As MiniCss
 End Sub
@@ -119,7 +119,6 @@ Public Sub Properties (props As Map) As MiniCssBuilder
 	Return Me
 End Sub
 
-
 ' Parse a raw CSS string and add properties
 Public Sub ParseRaw (cssString As String) As MiniCssBuilder
 	'If currentSelector = "" Then Return Me
@@ -231,4 +230,27 @@ Private Sub RemoveCSSComments (cssString As String) As String
 	Loop
     
 	Return result
+End Sub
+
+' KeyFrames
+' =========
+Public Sub Keyframe (name As String) As MiniCssBuilder
+    css.AddKeyframe(name)
+    Return Me
+End Sub
+
+Public Sub At (selector As String) As MiniCssBuilder
+    css.AddKeyframeSelector(selector)
+    Return Me
+End Sub
+
+Public Sub Set (prop As String, value As String) As MiniCssBuilder
+    css.AddKeyframeProperty(prop, value)
+    Return Me
+End Sub
+
+' Bulk properties for keyframes
+Public Sub SetAll (props As Map) As MiniCssBuilder
+    css.AddKeyframeProperties(props)
+    Return Me
 End Sub

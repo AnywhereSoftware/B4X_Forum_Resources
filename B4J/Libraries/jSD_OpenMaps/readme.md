@@ -1,5 +1,5 @@
 ### jSD_OpenMaps by Star-Dust
-### 03/17/2026
+### 04/02/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/166066/)
 
 As many currently know GoogleMaps' Webapi do not work correctly on the webview because the latest versions use webgl  
@@ -11,7 +11,7 @@ B4i and B4i version [**here**](https://www.b4x.com/android/forum/threads/xui-b4a
 **jSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.18  
+**Version:** 1.19  
 
 - **CameraPosition**
 
@@ -419,3 +419,7 @@ Adds the marker, hitting it in height in the coordinate indicated- **AddMarker3L
 - 1.18
 
 - added OpenMpas.**AddPolygonHole**, MapPolygon.**SetHole**, **GetHole**
+
+- 1.19
+
+- Fix bugs
