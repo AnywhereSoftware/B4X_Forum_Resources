@@ -1,10 +1,8 @@
 ###   B4XDaisy UI Kit - Native Components inspired by DaisyUI & Tailwind by Mashiane
-### 03/04/2026
+### 04/05/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170352/)
 
 Hi Fam  
-  
-[SIZE=5][FONT=tahoma]Disclaimer: The [B4A] in the title? This b4xlib has only been tested with B4A, thus the title. I have not checked the cross-platform functionality as its on the roadmap when I finish the complete library. The b4xlib is still in ALPHA stage, things might change, apis might break and nothing as yet has been done using abstract designer layouts.[/FONT][/SIZE]  
   
 [Download from GitHub](https://github.com/Mashiane/Sithaso-B4XDaisy-UIKit---Native-Android-Components-inspired-by-DaisyUI)  
   
@@ -72,4 +70,12 @@ Stack
 <https://www.b4x.com/android/forum/threads/b4x-b4xdaisystack-native-card-stacking-container.170346/>  
   
 Dashboard  
-<https://www.b4x.com/android/forum/threads/b4x-b4xdashboard-native-responsive-launcher-grid-menu.170344/>
+<https://www.b4x.com/android/forum/threads/b4x-b4xdashboard-native-responsive-launcher-grid-menu.170344/>  
+  
+***Using an Emulator with Device Skins***  
+  
+1. Launch B4X and start the AVD Manager and install an emulator.  
+  
+<https://www.b4x.com/android/forum/threads/how-to-change-default-android-emulator-skins-avd-with-device-skins.157701/>  
+  
+![](https://www.b4x.com/android/forum/attachments/171023)

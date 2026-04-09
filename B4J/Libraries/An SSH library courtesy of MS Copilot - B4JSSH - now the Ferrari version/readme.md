@@ -1,5 +1,5 @@
 ### An SSH library courtesy of MS Copilot - B4JSSH - now the Ferrari version by JackKirk
-### 03/30/2026
+### 04/07/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170667/)
 
 **PREAMBLE**  
@@ -39,4 +39,6 @@ This was a two-fold exercise - see what I could really do with Copilot and (if l
   
 **[SIZE=5]I FOUND IT!!!!!  
   
-EDIT - Check out the [/SIZE]**[**[SIZE=5]Ferrari **Version 1.1**[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1044877)
+EDIT - Check out the [/SIZE]**[**[SIZE=5]Ferrari **Version 1.1**[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1044877)  
+  
+**[SIZE=5]**EDIT 2 - Check out the** [/SIZE]**[**[SIZE=5]**enhanced error trapping Version 1.2**[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1045109)
