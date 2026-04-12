@@ -1,5 +1,5 @@
 ### AString for B4R : arduino String for B4R by candide
-### 04/07/2026
+### 04/09/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/170767/)
 
 it is a wrapper for wString from Arduino.  
@@ -8,6 +8,8 @@ with this library, String are managed like in arduino, in memory and without con
 =>AString are available and modifiable from all parts of your script, from all sub, and after a callsubplus.  
   
 function ".setxxx" are used to store something in a string, ".addxxx" are used to join something at a string and ".getxxx' are used to load a string from B4R  
+  
+AString are available / modifiable in inline C : it can be used to move String between B4R script and inline C (see example of script)   
   
 list of features from String in arduino and available from B4R :  
  void setStr(B4RString\* str);  
@@ -61,4 +63,6 @@ list of features from String in arduino and available from B4R :
  void toUpperCase();  
  void trim();  
  int32\_t toInt();  
- float toFloat();
+ float toFloat();  
+  
+new delivery 1.1 after an issue with esp8266. Now tested with esp32 and esp8266

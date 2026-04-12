@@ -1,4 +1,4 @@
-#import "iCore.h"
+#import <iCore/iCore.h>
 
 #import <Foundation/Foundation.h>
 

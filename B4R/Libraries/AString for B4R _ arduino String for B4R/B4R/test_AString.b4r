@@ -1,0 +1,79 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rastring
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private bc As ByteConverter
+'	Private wifi As ESP8266WiFi 
+    Private st As AString
+	Private su As AString
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+    st.setStr("azerty")
+	su.setStr("un test")
+	Log("1 st=",st.get)
+	Dim Arr() As Byte = bc.StringToBytes("aazeertty")
+	st.setArr(Arr)
+	Dim Arr2() As Byte = bc.StringToBytes("aazzeerrttyy")
+	Log("2 st=",st.get)
+	st.addArr(Arr2)
+	Log("st=",st.get)
+	st.addStr("-H ")
+	st.addUInt(65000, 16)
+	Log("3 st=",st.get)
+	Log("lengh=",st.length)
+	st.setstr("")
+	Log("is empty?",st.isEmpty)
+	st.setStr("azerty_plus")
+	Log("compare Str:",st.compareToStr("azerty")," ",st.compareToStr("azertyt"))
+	Log("equal Str:",st.equalsStr("azerty")," ",st.equalsStr("azert"))
+	CallSubPlus("sub_plus", 1000,1)
+	CallSubPlus("check_Astring", 2000, 1)
+End Sub
+
+Sub sub_plus(tag As Byte)
+	Log("log st in callsubplus : ", st.get)
+	Log("log su in callsubplus : ", su.get)
+End Sub
+
+Sub check_Astring(tag As Byte)
+	RunNative("Astring",Null)
+	Log("st String after inLine C : ",st.get)
+End Sub
+
+#if C
+//***********************
+// random
+//***********************  
+
+
+ void Astring(B4R::Object* o) { 
+	  Serial.print("read in inlin C : ") ;Serial.println(b4r_main::_st->get()->data);
+	  B4R::B4RString tmp;
+	  b4r_main::_st->setStr(tmp.wrap("String changed in inline C"));
+	  Serial.print("Read after modification : ") ; Serial.println(b4r_main::_st->get()->data);	  
+	  b4r_main::_st->addStr(tmp.wrap(" +more String again"));	  
+	  
+	  Serial.print("Read after second modification : ") ; Serial.println(b4r_main::_st->get()->data);
+ };
+  
+#End If

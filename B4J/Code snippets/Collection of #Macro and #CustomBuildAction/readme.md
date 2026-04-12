@@ -1,5 +1,5 @@
 ### Collection of #Macro and #CustomBuildAction by aeric
-### 02/13/2026
+### 04/09/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/168732/)
 
 GitHub: <https://github.com/pyhoon/Collection-of-Macro-and-CustomBuildAction>  
@@ -86,7 +86,7 @@ This is a convenient way to download all required libraries instead of searching
 [[Tool] Additional Libraries Downloader](https://www.b4x.com/android/forum/threads/tool-additional-libraries-downloader.166880/)  
 
 ```B4X
-#Macro: Title, GetLibs, ide://run?file=%JAVABIN%\java.exe&args=-jar&args=%ADDITIONAL%\..\B4X\libget-non-ui.jar&args=%PROJECT%&args=False
+#Macro: Title, GetLibs, ide://run?file=%ADDITIONAL%\..\B4X\libget.jar&args=%PROJECT%&args=False
 ```
 
   
@@ -132,7 +132,7 @@ I use this tool to update new version value in manifest.txt before distributing 
 [[Tool] Manifest.txt Writer for B4XLib](https://www.b4x.com/android/forum/threads/tool-manifest-txt-writer-for-b4xlib.168723/)  
 
 ```B4X
-#Macro: Title, Version, ide://run?file=%JAVABIN%\java.exe&Args=-jar&Args=%ADDITIONAL%\..\B4X\manifest-writer.jar&Args=%PROJECT%\..\release&Args=%PROJECT%\..\release&Args=Version&Args=2.10
+#Macro: Title, Version, ide://run?file=%ADDITIONAL%\..\B4X\manifest-writer.jar&Args=%PROJECT%\..\release&Args=%PROJECT%\..\release&Args=Version&Args=2.10
 ```
 
   
