@@ -1,26 +1,26 @@
 /**
  * File:		rESP32Servo.h
  * Brief:		B4R library to control servo motors attached to ESP32 (only).
- * Dependson:	Arduino library ESP32Servo - must be installed in the Arduino IDE.
+ *				Wrapped from the library ESP32Servo.
  * Author:		Robert W.B. Linn.
- * Date:		2025-08-21
- * License:		MIT
- * Copyright © 2025 Robert W.B. Linn. All rights reserved.
- *
+ * Date:		2025-11-06
+ * License:		MIT - Copyright © 2025 Robert W.B. Linn. All rights reserved.
  * Notes:		Functions not wrapped:
  *				void setPeriodHertz(int Hertz);
  */
 
 #pragma once
 #include "B4RDefines.h"
-#include <ESP32Servo.h>
+#include "ESP32Servo.h"
 
 namespace B4R {
-	//~Version: 1.0
+	//~Version: 1.1
 	//~shortname: ESP32Servo
 	class B4RESP32Servo {
 		private:
 			Servo servo;
+			
+			int PERIOD_HERZ = 50;
 
 		public:
 			/**
@@ -41,6 +41,16 @@ namespace B4R {
 			 */
 			Byte Attach2(int pin, int minValue, int maxValue);
 			
+			/**
+			 * Attaches the servo to the specified pin with timer allocation.
+			 * pin - Servo pin number.
+			 * timerslot - Timer allocation slot 0-3.
+			 * Returns 0 if there was a failure.
+			 *
+			 * MinValue and MaxValue set the minimum and maximum pulse width that will be sent to the servo.
+			 */
+			Byte AttachToTimer(int pin, int timerslot);
+		
 			/**
 			 * Detaches the servo pin.
 			 */
@@ -65,6 +75,7 @@ namespace B4R {
 			
 			/**
 			 * Returns current pulse width as an angle between 0 to 180 degrees.
+			 * Example: 9083 for 90 degrees.
 			 */
 			int Read();
 			
@@ -90,7 +101,6 @@ namespace B4R {
 			 */
 			void setTimerWidth(int value);
 			int getTimerWidth();
-
 	};
 	
 }

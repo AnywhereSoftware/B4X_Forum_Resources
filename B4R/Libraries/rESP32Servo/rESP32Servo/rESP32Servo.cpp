@@ -7,11 +7,21 @@
 namespace B4R {
 	
 	Byte B4RESP32Servo::Attach(int pin) {
+		servo.setPeriodHertz(PERIOD_HERZ);
 		return servo.attach(pin);
 	}
 
 	Byte B4RESP32Servo::Attach2(int pin, int minValue, int maxValue) {
+		servo.setPeriodHertz(PERIOD_HERZ);
 		return servo.attach(pin, minValue, maxValue);
+	}
+
+	Byte B4RESP32Servo::AttachToTimer(int pin, int timerslot) {
+		// Allocate timer with timer slot 0-3
+		if (timerslot > 3) { timerslot = 3; }
+		ESP32PWM::allocateTimer(timerslot);
+		return Attach(pin);
+		// return Attach2(pin, 1000, 2000);
 	}
 
 	void B4RESP32Servo::Detach(){
@@ -52,5 +62,4 @@ namespace B4R {
 	int B4RESP32Servo::getTimerWidth() {
 		return servo.readTimerWidth();
 	}
-
 }

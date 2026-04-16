@@ -1,5 +1,5 @@
 ### rESP32Servo by rwblinn
-### 08/21/2025
+### 04/13/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/168330/)
 
 **B4R Library rESP32Servo**  
@@ -18,24 +18,24 @@ It has been built up-on the B4R internal library rServo (AVR-based boards) and e
   
 **Development Info**  
 
-- Written in C++ (Arduino IDE 2.3.4 and the B4Rh2xml tool).
+- Written in C++ (Arduino IDE 2.3.8 and the B4Rh2xml tool).
 - Depends on the library ESP32Servo.
 - Tested with hardware ESP-WROOM-32 and servos Power HD 1160A, Tower Pro Micro Servo 99.
-- Tested with software B4R 4.00 (64-bit), ESP32 board library 3.3.0, ESP32Servo library v3.0.8.
+- Tested with software B4R 4.00 (64-bit), ESP32 board library 3.3.8, ESP32Servo library v3.1.8.
 
 ---
 
   
   
 **Files**  
-The *rESP32Servo.zip* archive contains the library and sample projects.  
+The *rESP32Servo-NNN.zip* archive contains the library and sample projects.  
 
 ---
 
   
   
 **Install**  
-Copy the *rESP32Servo* library folder from the archive into your B4R **Additional Libraries** folder, keeping the folder structure intact.  
+Unzip the *rESP32Servo-NNN* library folder from the archive into your B4R **Additional Libraries** folder, keeping the folder structure intact.  
 *Ensure* the library ESP32Servo is installed using the Arduino IDE libraries manager.  
 
 ---
@@ -56,6 +56,14 @@ GND = GND
 ---
 
   
+  
+**Examples**  
+
+- Basic - Switching the servo between 60 - 100 degrees.
+- SmoothMove - Moving the servo in steps between 60 and 120 degrees.
+- TrixBrixSwitch - Moving the servo between straight & diverging using a TrixBrix switch with servo HD1160A.
+- BLEGeekServo - Example to set the angle, to open/close, of a GeekServo via BLE.
+
   
 **Basic Example**  
 
@@ -123,6 +131,13 @@ Attaches the servo to the specified pin.
 Returns 0 if there was a failure.  
 MinValue and MaxValue set the minimum and maximum pulse width that will be sent to the servo.  
    
+Byte AttachToTimer(pin As Int, timerslot As Int)  
+Attaches the servo to the specified pin with timer allocation.  
+pin - Servo pin number.  
+timerslot - Timer allocation slot 0-3.  
+Returns 0 if there was a failure.  
+MinValue and MaxValue set the minimum and maximum pulse width that will be sent to the servo.  
+  
 Detach()  
 Detaches the servo pin.  
   

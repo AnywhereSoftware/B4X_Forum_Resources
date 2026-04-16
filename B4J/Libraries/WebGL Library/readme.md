@@ -1,5 +1,5 @@
 ###  WebGL Library by max123
-### 03/04/2026
+### 04/14/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/164553/)
 
 Hi all,  
@@ -52,13 +52,14 @@ With this library you can:
 
 **WHAT'S UNDER THE HOOD**  
   
-- It's **cross platform**. Because it uses external browser, the 3D scene is rendered on any device with any operating system, Windows, Mac, iOS, Android, probably Android TV and Android Auto, Linux, including all Single Board Computers such the Jetson Nano, ODROID, Raspberry PI and more… here may you have to enable the 3D driver. You only need to know if your browser support WebGL extension. All created scenes will works local and even over the web by pointing the public ip address.  
-- The library do not only manage 3D renderings, but is even able to manage **3D spatial audio**.  
+- It's **cross platform**. Because it uses external browser, the 3D scene is rendered on any device with any operating system, Windows, Mac, iOS, Android, probably Android TV and Android Auto, Linux, including all Single Board Computers such the Jetson Nano, ODROID, Raspberry PI and more… here may you have to enable the 3D driver. You only need to know if your browser support WebGL extension.  
+- All created scenes will works local and even over the web by pointing the public ip address.  
+- The library do not only manage 3D renderings, but is even able to managesimple or**3D spatial audio, play mp3 and mp4 as video textures, even can use the webcam as source for video testures applied to 3D objects in realtime**.  
 - The library offers **more than one physical 3D engine**, support **collisions**, **cloth simulator** and more.  
 - The library has more controls and camera views, orbit mouse control, first person, fly control and more, and with my addon class I wrote (a bit experimental, I will release next), it **support up 4 gamepads** fully recognized by the browser using the Gamepad Web API. For advanced users who use microcontrollers such ESP32, if interested I will explain in another detailed post how to use ESP32 as a BLE Gamepad and/or Mouse and/or Keyboard, regularly known by every operating system and browser and thus being able to create custom (and wireless) controls capable of controlling anything inside threejs and in general inside JS code.  
-- The threejs library already have a lots of classes to help you to do anything, but even **can be expanded** by creating more custom classes and/or integrate any JS code or JS external libraries and ES6 exported modules.  
+- The threejs library already have a lots of classes to help you to do things, but even **can be expanded** by creating more custom classes and/or integrate any JS code or JS external libraries and ES6 exported modules.  
 - The library have some useful methods to transform **JS arrays to B4X List** **and viceversa** and to transform **JS objects to B4X maps and viceversa**.  
-- The library have a **Console** command to output on JS console and **Alert** command to show JS alert boxes.  
+- The library have a **Console** command to output on JS console and **Alert** command to show JS alert boxes. JS console is printed out to B4J log, do not matter if the scene works remotely on another local device or over internet. The same is for the server logs, any requested file will be printed out to the log specify the exact timestamp in milliseconds, the IP Address local or remote device that request a file, the HTTP code return, the full path for requested file, the file size, the user agent.  
 - The official threejs site offer a very good, clear and detailed documentation on methods of most classes, sometime with code and sometime even with iteractive inline 3D views. Refer to the official [Documentation](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Scroll down the long list on the left or search on top what you need. You will noticed that docs even support more languages, I'm happy to see it even support italian.  
 - If you encounter some issues during development you can ask to [Mentor ChatGPT](https://chatgpt.com/g/g-jGjqAMvED-three-js-mentor) that is expert on THREEJS, or just join to **Discord** or **StackOverflow** officials threejs forums. You can find more infos on threejs site.  
 - The web is full of threejs tutorials, even there are online developer tools where you can write threejs code and see the final results. One of most popular is [codepen](https://codepen.io/collection/AKNpyq). All these codes will work on B4J WebGL library.  
@@ -182,7 +183,7 @@ CopyResourcesFromZipFileToSingleFolder (DestFolder As String, ZipFileName As Str
    
     If GL.GetEngine Then  
         GL.StartEngine3(FullHtmlString) ' Or use StartEngine, StartEngine2  
-        GL.Update    
+        GL.Update   
     Else  
         LogError("Unable to initialize WebGL library")  
     End If

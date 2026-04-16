@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 03/22/2026
+### 04/13/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -16,7 +16,7 @@ B4J Version [**here**](https://www.b4x.com/android/forum/threads/jsd_openmaps.16
 **xSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.02  
+**Version:** 1.03  
 
 - **CameraPosition**
 
@@ -191,7 +191,7 @@ Author:** Star-Dust
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
  Example: <code>WAIT FOR (gmap.AddMarker2(10, 10, "This is a test", IconUrl)) COMPLETE (MK as Marker)</code>  
- see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker2Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String) As ResumableSub
+see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker2Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String) As ResumableSub
 *Adds a marker To the map with a custom icon and label  
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
@@ -200,7 +200,7 @@ Author:** Star-Dust
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
  Example: <code>gmap.AddMarker2(10, 10, "This is a test", File.GetUri(File.DirAssets, "SomeIcon.png",32,32))</code>  
- see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String, Width As Int, Height As Int) As Marker
+see <https://kml4earth.appspot.com/icons.html> for icons*- **AddMarker3Label** (Lat As Double, Lng As Double, Title As String, Label As String, IconUri As String, Width As Int, Height As Int) As Marker
 *Adds a marker To the map with a custom icon and label.  
  The IconUri must point To an online image Or an image from the assets folder.  
  In the later Case the custom icon will only appear in Release mode.  
@@ -328,3 +328,5 @@ Update**
 - 1.02
 
 - added OpenMpas.**AddPolygonHole**, MapPolygon.**SetHole**, **GetHole**
+
+- 1.03 - Fix bug

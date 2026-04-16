@@ -1,7 +1,12 @@
 ###  Native B4X Implementation of Two Pandas-like Classes: DataFrame and Series by William Lancee
-### 02/21/2026
+### 04/13/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/170385/)
 
+**Edit: These classes are largely superseded by ListOfArrays in combination with wLOAExtras.**  
+<https://www.b4x.com/android/forum/threads/b4x-loa-listofarrays-lightweight-powerful-and-flexible-collection.170543/>  
+<https://www.b4x.com/android/forum/threads/b4x-listofarrays-wloaextras-b4xlib-for-evaluating-expressions-of-columns-in-listofarrays-and-more.170728/>  
+  
+  
 Pandas is a Python libary heavily used in Machine Learning (ML) applications.  
 While investigating ML, when using Pandas with Python, I kept thinking: "I could do this in B4X".  
 This tutorial is the result of my experimentation. The tutorial comes in 5 parts.  
@@ -51,7 +56,7 @@ The above code, using B4X and the Series class:
 ```B4X
     Private pd As WiLPandas  
     pd.Initialize(Me)  
-    
+   
     Dim x As Series = pd.items(Array(1, 2, 3, 4, 5))  
     x.addIndex(Array("a", "b", "c", "d", "e"))  
     x.op("+", 100).print  

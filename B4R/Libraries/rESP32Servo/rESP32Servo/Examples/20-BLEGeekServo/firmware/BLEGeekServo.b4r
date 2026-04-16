@@ -1,0 +1,180 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32servo
+Library3=rnimbleserver
+Library4=rconvert
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rESP32Servo
+' Brief:		Example to set the angle of a geekservo via BLE.
+' Date: 		2026-04-13
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	The angle of the geekservo is open (90) or close (135).
+'				The BLE server processes a 5-byte command received from the connected client via BLE.
+'				This is the 5-byte protocol from the author's HubController project.
+'				Byte 1 = Header 	- fix 0x19
+'				Byte 2 = Address	- example 0x12
+'				Byte 3 = Command	- example 0x05
+'				Byte 4 = Value		- example 0x00 or 0x01 or a value between 0x5A (DEC 90) and 0x87 (DEC 135)
+'				Byte 5 = Footer 	- fix 0x58
+'				Servo Pos Close: [OnWrite][I] RX:5 1912058758
+'				Servo Pos Open: [OnWrite][I] RX:5 1912055A58
+' BLE:			Device name = BLEGeekServo
+'				MAC address = "80:F3:DA:4C:36:7A"
+'        		Service UUID = 12345678-1234-1234-1234-1234567890ab
+'				Char UUID = abcd1234-5678-1234-5678-1234567890ab
+' Gimmick:		If servo angle at close pos, the onboard blue LED is turned ON.
+' DependsOn:	rESP32Servo, rNimBLEServer, rConvert
+'				Arduino Installed: ESP32@3.3.8, ESP32Servo@3.1.3, NimBLE-Arduino@2.5.0
+' Hardware:		ESP32
+' Wiring:		GPIO 2 - Onboard LED
+'				GPIO 4 - Servo Signal Pin, Servo VCC 5V
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION 						As String = "BLE GeekServo v2026-04-13"
+	
+	' Communication
+    Public Serial1 							As Serial
+	Private BleServer 						As NimBLEServer
+	
+	' Servo
+	Private GeekServo 						As ESP32Servo
+	Private GeekServoPin 					As Pin
+	Private GeekServoPinNr 					As Byte = 4
+	Private ServoAngle 						As UInt
+	Private ANGLE_BASE_POS					As UInt = 90
+	Private ANGLE_OPEN						As UInt = 90
+	Private ANGLE_CLOSE						As UInt = 135
+	
+	' Onboard LED
+	Private OnboardLED 						As Pin
+	Private ONBOARDLED_PINNR 				As Byte = 2
+
+	' BLE HubBin Frame 5-Bytes HDR ADR CMD VAL FTR
+	' Header and footer
+	Public FRAME_LENGTH 					As Byte	= 5
+	Public FRAME_HEADER 					As Byte = 0x19
+	Public FRAME_FOOTER 					As Byte = 0x58
+	' Addresses
+	Public DEVICE_ADDRESS					As Byte = 0x12
+	' Commands
+	Public Const CMD_SET_ANGLE				As Byte = 0x05
+	' Values
+	Public Const VAL_OPEN       			As Byte = 0x00
+	Public Const VAL_CLOSE  				As Byte = 0x01
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart][I ", VERSION)
+
+	' Init GPIO
+	OnboardLED.Initialize(ONBOARDLED_PINNR, OnboardLED.MODE_OUTPUT)
+
+	' Init Servo
+	' Connect servo to pin 4 of the ESP32
+	GeekServoPin.Initialize (GeekServoPinNr, GeekServoPin.MODE_OUTPUT)
+	' Attach servo to device on pin servo
+	GeekServo.Attach(GeekServoPin.PinNumber)
+	Delay(50)
+	' Set servo base position
+	SetServoPosition(ANGLE_BASE_POS)
+	' Read initial position
+	ServoAngle = GeekServo.Read / 100
+	Log("[Main.AppStart][I] Init servo angle=", ServoAngle)
+
+	' Init the BLE server
+    BleServer.Initialize( _
+        "BLEGeekServo", _
+        "12345678-1234-1234-1234-1234567890ab", _
+        "abcd1234-5678-1234-5678-1234567890ab", _
+        "OnConnected", _
+        "OnDisconnected", _
+        "OnWrite", _
+        True)
+	' Starte BLE server waiting for clients
+	BleServer.Start
+	Log("[AppStart][I] Start BLE Server, waiting clients...")
+	Log("[AppStart][I] Done")
+End Sub
+
+Sub OnConnected
+	Log("[OnConnected][I] Client connected")
+End Sub
+
+Sub OnDisconnected
+	Log("[OnDisconnected][W] Client disconnected")
+End Sub
+
+' Handle data received from connected client
+Sub OnWrite (Buffer() As Byte)
+    Log("[OnWrite][I] RX:", Buffer.Length, " ", Convert.BytesToHex(Buffer))
+	ProcessCommand(Buffer)
+End Sub
+
+' Process the 5-byte command 
+Private Sub ProcessCommand(command() As Byte)
+	' Commands received
+	Private addr, cmd, val As Byte
+
+	' Check HubBin frame length (5)
+	If command.Length < FRAME_LENGTH Then
+		Log("[ProcessCommand][E] Invalid frame length. Expect 5 bytes.")
+	End If
+	
+	' Check HubBin header and footer
+	If command(0) == FRAME_HEADER And command(command.Length - 1) == FRAME_FOOTER Then
+		' Get the address, command and value
+		addr = command(1)
+		cmd = command(2)
+		val = command(3)
+		
+		Log("[ProcessCommand][I] addr=", Convert.ByteToHex(addr), " cmd=", Convert.ByteToHex(cmd), " val=", Convert.ByteToHex(val))
+		
+		' Check address
+		If addr == DEVICE_ADDRESS Then
+			' Check command
+			If cmd == CMD_SET_ANGLE Then
+				' Set value
+				Select val
+					Case VAL_OPEN
+						SetServoPosition(ANGLE_OPEN)
+					Case VAL_CLOSE
+						SetServoPosition(ANGLE_CLOSE)
+					Case Else
+						If val >= ANGLE_OPEN And val <= ANGLE_CLOSE Then
+							SetServoPosition(val)
+						End If
+				End Select
+			End If
+		Else
+			Log("[ProcessCommand][E] Address not found ", Convert.ByteToHex(addr), " expect ", DEVICE_ADDRESS)
+		End If
+	End If
+End Sub
+
+#Region Servo
+' Set servo angle position.
+' If the servo angle is at close pos then the onboard blue LED is ON.
+Public Sub SetServoPosition(angle As Byte)
+	Log("[SetServoPosition][I] angle=", angle)
+	GeekServo.Write(angle.As(UInt))
+	OnboardLED.DigitalWrite(IIf(angle <= ANGLE_OPEN, False, True))
+	Delay(50)
+End Sub
+#End Region
