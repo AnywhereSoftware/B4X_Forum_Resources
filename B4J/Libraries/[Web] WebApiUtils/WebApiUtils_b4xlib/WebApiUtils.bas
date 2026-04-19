@@ -5,7 +5,7 @@ Type=StaticCode
 Version=10.3
 @EndOfDesignText@
 ' Web API Utility
-' Version 6.00
+' Version 6.30
 Sub Process_Globals
 	Public Const MIME_TYPE_HTML As String = "text/html"
 	Public Const MIME_TYPE_JSON As String = "application/json"
@@ -30,7 +30,7 @@ Public Sub CheckMaxElements (Elements() As String, Max_Elements As Int) As Boole
 End Sub
 
 Public Sub CheckAllowedVerb (SupportedMethods As List, Method As String) As Boolean
-	'Methods: POST, GET, PUT, PATCH, DELETE
+	'Methods: POST, GET, PUT, DELETE
 	If SupportedMethods.IndexOf(Method) = -1 Then
 		Return False
 	End If
@@ -131,22 +131,27 @@ Public Sub ReadMapFile (FileDir As String, FileName As String) As Map
 	Return File.ReadMap(FileDir, FileName)
 End Sub
 
+'Read text file from File.DirAssets
 Public Sub ReadTextFile (FileName As String) As String
 	Return File.ReadString(File.DirAssets, FileName)
 End Sub
 
+'Write file to File.DirApp
 Public Sub WriteTextFile (FileName As String, Contents As String)
 	File.WriteString(File.DirApp, FileName, Contents)
 End Sub
 
+'Write file to www directory
 Public Sub WriteAssetFile (FileName As String, Contents As String)
 	File.WriteString(File.Combine(File.DirApp, "www"), FileName, Contents)
 End Sub
 
+'Delete file inside www directory
 Public Sub DeleteAssetFile (FileName As String)
 	File.Delete(File.Combine(File.DirApp, "www"), FileName)
 End Sub
 
+'Check file exists inside www directory
 Public Sub AssetFileExist (FileName As String) As Boolean
 	Return File.Exists(File.Combine(File.DirApp, "www"), FileName)
 End Sub

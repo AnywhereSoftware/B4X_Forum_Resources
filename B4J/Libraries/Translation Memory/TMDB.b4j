@@ -1,0 +1,95 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=apachestringutilsb4j
+Library2=b4xcollections
+Library3=jcore
+Library4=jfx
+Library5=jrandomaccessfile
+Library6=jsql
+Library7=jxui
+Library8=jxmlsax
+Module1=CSVParser
+Module2=editDistance
+Module3=TM
+Module4=TMDB
+Module5=TMXImporter
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=5
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+#AdditionalJar: sqlite-jdbc-3.43.0.0
+#AdditionalJar: bcprov-jdk15on-154
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	'wait for (CreateDB) complete (done As Object)
+	Dim externalTM As TM
+	externalTM.Initialize(File.DirApp,"test.db","ja","zh")
+	Dim files As List
+	files.Initialize
+	files.Add(File.Combine(File.DirApp,"data.csv"))
+	files.Add(File.Combine(File.DirApp,"data.txt"))
+	files.Add(File.Combine(File.DirApp,"data.tmx"))
+	externalTM.Clear
+	externalTM.Import(files)
+	wait for (externalTM.getMatchList("一匹の子犬",0.7,False,100)) complete (result As List)
+	Log(result)
+	
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello World!", "B4X")
+End Sub
+
+Private Sub CreateDB As ResumableSub
+	Dim db As TMDB
+	db.Initialize(File.DirApp,"test.db","ja","zh")
+	Dim targetList As List
+	targetList.Initialize
+	targetList.Add(CreateMap("text":"能看到王都了","note":"翻译1"))
+	targetList.Add(CreateMap("text":"快到王都了","note":"翻译2"))
+	
+	Dim targetList2 As List
+	targetList2.Initialize
+	targetList2.Add(CreateMap("text":"一头小狗。","note":"翻译1"))
+	targetList2.Add(CreateMap("text":"一条小狗。","note":"翻译2"))
+	
+	Dim targetList3 As List
+	targetList3.Initialize
+	targetList3.Add(CreateMap("text":"能看到王都了！！！","note":"翻译1"))
+	targetList3.Add(CreateMap("text":"快到王都了!!!","note":"翻译2"))
+	
+	Dim map1 As Map
+	map1.Initialize
+
+	map1.Put("王都が見えてきた。",targetList)
+	map1.Put("一匹の子犬。",targetList2)
+	
+	db.PutWithTransaction(map1)
+	db.Put("王都が見えてきた！！！",targetList3)
+	wait for (db.GetMatchedMapAsync("王都が見えてきた",True,False,100)) complete (done As Map)
+	Log(done)
+	Dim m As Map = done
+	For Each key As String In m.Keys
+		Log(key)
+		Log(m.Get(key))
+	Next
+	db.Close
+End Sub

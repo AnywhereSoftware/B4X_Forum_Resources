@@ -1,0 +1,41 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=pybridge
+Module1=ConvertHandler
+Module2=PyBridgeWorker
+Module3=searchws
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=3
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+    #CommandLineArgs:
+    #MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	Public PyWorker As PyBridgeWorker ' Worker checking Python
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 8080
+    
+	' Handler for client searches
+	srvr.StaticFilesFolder="www"
+	srvr.AddWebSocket("/ws_search", "searchws")
+	srvr.AddHandler("/convert", "ConvertHandler", False)
+    
+	' enable PyBridge at backround
+	srvr.AddBackgroundWorker("PyBridgeWorker")
+    
+	srvr.Start
+	Log("The Text-Embedding running on http://127.0.0.1:8080")
+    
+	StartMessageLoop
+End Sub

@@ -1,5 +1,5 @@
 ###  [Chargeable] AI Embeddings - Turn SQLite and EVERY DB into a vector database by hatzisn
-### 02/02/2026
+### 04/17/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170156/)
 
 We are all familiar with AI Embeddings. They are the base in **RAG (Retrieval Augmented Generation) for AI**. This library converts **SQLite** **and every database** into a **vector database**. The embeddings of the chunked text must be saved as text (the json list toCompactString) in SQLite and the other non vector DBs. This means that **you can do RAG without accessing external databases** (or using **in B4J also other non vector databases**) directly in your iOS, Android, Window/Linux/Mac app. It contains all four ways of calculation of embeddings distance because different AI models use different embeddings approach.  
@@ -16,6 +16,7 @@ aiemb.Instructions
   
 and you get a code suggestion that you can copy to start directly.  
   
-You will notice that you have to define in the AIQuery method an acceptable distance (MinimumOrMaximumDistance). For two of the distance calculations this is the minimum acceptable similarity and for the other two distance calculations it is the maximum acceptable distance. You will notice that **it is extremely fast** as **it uses approaches used in arithmetical methods** to return the result. The **price is 49.99EUR** and you can **send me a private message** if you want to acquire this b4xlib.  
+You will notice that you have to define in the AIQuery method an acceptable distance (MinimumOrMaximumDistance). For two of the distance calculations this is the minimum acceptable similarity and for the other two distance calculations it is the maximum acceptable distance. You will notice that **it is extremely fast** as **it uses approaches used in arithmetical methods** to return the result. The **advantage of using the library** instead of Python is that you can **run the embeddings relevance in B4i, B4A also** (just get the embeddings vector for a query **from OpenAI or Ollama** and run the relevance check **with the data you have on your device** - no need to be stored in a Python accessible location - and that you can use **any database for vector search** and not just vector databases). The **price is 49.99EUR** and you can **send me a private message** if you want to acquire this b4xlib.  
   
-In post#4 there is **a video** showcasing everything.
+In [post#4](https://www.b4x.com/android/forum/threads/b4x-chargeable-ai-embeddings-turn-sqlite-and-every-db-into-a-vector-database.170156/post-1041908) there is **a video** showcasing everything.  
+In [post#20](https://www.b4x.com/android/forum/threads/b4x-chargeable-ai-embeddings-turn-sqlite-and-every-db-into-a-vector-database.170156/post-1045600) there is **a video** showcasing library compatibility with Ollama.

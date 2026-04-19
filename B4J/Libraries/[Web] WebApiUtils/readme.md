@@ -1,8 +1,8 @@
 ### [Web] WebApiUtils by aeric
-### 02/26/2026
+### 04/17/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/167012/)
 
-Version : 6.00  
+Version : 6.30  
 A utility class to simplify the development for server app using project template [**Pakai Server v4.00**](https://www.b4x.com/android/forum/threads/project-template-pakai-server-v4.167080/)+ (f.k.a. Web API Server).  
   
 **HelpHandler**, the API Documentation class is now included as a class template.  

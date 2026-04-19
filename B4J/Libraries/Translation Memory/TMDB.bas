@@ -1,0 +1,367 @@
+﻿B4J=true
+Group=Default Group
+ModulesStructureVersion=1
+Type=Class
+Version=7.8
+@EndOfDesignText@
+Sub Class_Globals
+	Private sql1 As SQL
+	'Private ser As B4XSerializator
+	Private mSourceLang As String
+	Private mTargetLang As String
+	Private dir As String
+	Private fileName As String
+End Sub
+
+'Initializes the store and sets the store file.
+Public Sub Initialize (pDir As String, pFileName As String,pSourceLang As String,pTargetLang As String)
+	mSourceLang=pSourceLang
+	mTargetLang=pTargetLang
+	dir=pDir
+	fileName=pFileName
+	If sql1.IsInitialized Then sql1.Close
+#if B4J
+	sql1.InitializeSQLite(dir, fileName, True)
+#else
+	sql1.Initialize(Dir, FileName, True)
+#end if
+	sql1.ExecNonQuery("PRAGMA journal_mode = wal")
+
+	If checkIsFTSEnabled=False Then
+		CreateTable
+		createIdx
+	Else
+		CreateTable
+	End If
+End Sub
+
+Public Sub Put(source As String, targetList As List)
+	Dim ser As B4XSerializator
+	Dim bytes() As Byte=ser.ConvertObjectToBytes(targetList)
+	sql1.ExecNonQuery2("INSERT OR REPLACE INTO main VALUES(?, ?)", Array (source,bytes))
+	For Each targetMap As Map In targetList
+		sql1.ExecNonQuery2("INSERT OR REPLACE INTO idx VALUES(?, ?, ?)", Array (source,getStringForIndex(source,mSourceLang),getStringForIndex(targetMap.Get("text"),mTargetLang)))
+	Next
+End Sub
+
+
+Public Sub PutWithTransaction(map1 As Map)
+	sql1.BeginTransaction
+	For Each source As String In map1.Keys
+		Dim targetList As List=map1.Get(source)
+		Dim ser As B4XSerializator
+		Dim bytes() As Byte=ser.ConvertObjectToBytes(targetList)
+		sql1.ExecNonQuery2("INSERT OR REPLACE INTO main VALUES(?, ?)", Array (source,bytes))
+		For Each targetMap As Map In targetList
+			sql1.ExecNonQuery2("INSERT OR REPLACE INTO idx VALUES(?, ?, ?)", Array (source,getStringForIndex(source,mSourceLang),getStringForIndex(targetMap.Get("text"),mTargetLang)))
+		Next
+	Next
+	sql1.TransactionSuccessful
+End Sub
+
+'Asynchronously inserts the keys and values from the map.
+'Note that each pair is inserted as a separate item.
+'Call it with Wait For if you want to wait for the insert to complete.
+Public Sub PutMapAsync (Map As Map) As ResumableSub
+	For Each key As String In Map.Keys
+		Dim myser As B4XSerializator
+		myser.ConvertObjectToBytesAsync(Map.Get(key), "myser")
+		Wait For (myser) myser_ObjectToBytes (Success As Boolean, Bytes() As Byte)
+		If Success Then
+			sql1.AddNonQueryToBatch("INSERT OR REPLACE INTO main VALUES(?, ?)", Array(key, Bytes))
+			Dim targetList As List=Map.Get(key)
+			For Each targetMap As Map In targetList
+				sql1.AddNonQueryToBatch("INSERT OR REPLACE INTO idx VALUES(?, ?, ?)", Array (key,getStringForIndex(key,mSourceLang),getStringForIndex(targetMap.Get("text"),mTargetLang)))
+			Next
+		Else
+			Log("Failed to serialize object: " & Map.Get(key))
+		End If
+	Next
+	Dim SenderFilter As Object = sql1.ExecNonQueryBatch("SQL")
+	Wait For (SenderFilter) SQL_NonQueryComplete (Success As Boolean)
+	Return Success
+End Sub
+
+Public Sub Get(Key As String) As Object
+	'Log(Key)
+	Dim rs As ResultSet = sql1.ExecQuery2("SELECT value FROM main WHERE key = ?", Array As String(Key))
+	Dim result As Object = Null
+	If rs.NextRow Then
+		Dim ser As B4XSerializator
+		result = ser.ConvertBytesToObject(rs.GetBlob2(0))
+	End If
+	rs.Close
+	Return result
+End Sub
+
+Public Sub GetDefault(Key As String, DefaultValue As Object) As Object
+	Dim res As Object = Get(Key)
+	If res = Null Then Return DefaultValue
+	Return res
+End Sub
+
+'Removes the key and value mapped to this key.
+Public Sub Remove(Key As String)
+	sql1.ExecNonQuery2("DELETE FROM main WHERE key = ?", Array As Object(Key))
+End Sub
+
+'Returns a list with all the keys.
+Public Sub ListKeys As List
+	Dim c As ResultSet = sql1.ExecQuery("SELECT key FROM main")
+	Dim res As List
+	res.Initialize
+	Do While c.NextRow
+		res.Add(c.GetString2(0))
+	Loop
+	c.Close
+	Return res
+End Sub
+
+'Tests whether a key is available in the store.
+Public Sub ContainsKey(Key As String) As Boolean
+	Return sql1.ExecQuerySingleResult2("SELECT count(key) FROM main WHERE key = ?", _
+		Array As String(Key)) > 0
+End Sub
+
+'Deletes all data from the store.
+Public Sub DeleteAll
+	sql1.Close
+	sql1.InitializeSQLite(dir, fileName, False)
+	sql1.ExecNonQuery("DROP TABLE main")
+	sql1.ExecNonQuery("DROP TABLE idx")
+	CreateTable
+End Sub
+
+'Closes the store.
+Public Sub Close
+	sql1.Close
+End Sub
+
+
+'creates the main table (if it does not exist)
+Private Sub CreateTable
+	sql1.ExecNonQuery("CREATE TABLE IF NOT EXISTS main(key TEXT PRIMARY KEY, value NONE)")
+	sql1.ExecNonQuery("CREATE VIRTUAL TABLE IF NOT EXISTS idx USING fts4(key, source, target, notindexed=key)")
+End Sub
+
+
+Sub createIdx
+	Dim resultMap As Map = asMap
+	sql1.BeginTransaction
+	For Each key As String In resultMap.Keys
+		Dim targetMap As Map=resultMap.Get(key)
+		sql1.ExecNonQuery2("INSERT OR REPLACE INTO idx VALUES(?, ?, ?)", Array (key, getStringForIndex(key,mSourceLang),getStringForIndex(targetMap.Get("text"),mTargetLang)))
+	Next
+	sql1.TransactionSuccessful
+End Sub
+
+'Returns the database as a map.
+Public Sub asMap As Map
+	Dim map1 As Map
+	map1.Initialize
+	Dim c As ResultSet = sql1.ExecQuery("SELECT * FROM main")
+	Do While c.NextRow
+		Dim result As Object
+		Dim ser As B4XSerializator
+		result = ser.ConvertBytesToObject(c.GetBlob2(1))
+		map1.Put(c.GetString2(0),result)
+	Loop
+	c.Close
+	Return map1
+End Sub
+
+Sub checkIsFTSEnabled As Boolean
+	Try
+		sql1.ExecQuery("SELECT * FROM idx")
+		Return True
+	Catch
+		Log(LastException)
+		Return False
+	End Try
+End Sub
+
+Public Sub GetMatchedMapAsync(text As String,isSource As Boolean,matchAll As Boolean, limit As Int) As ResumableSub
+	'Dim maxLength As Int=text.Length*2
+	Dim sqlStr As String
+	Dim matchTarget As String
+	Dim operator As String
+	Dim lang As String
+	Dim words As List
+	words.Initialize
+	If isSource Then
+		lang=mSourceLang
+		matchTarget="source"
+	Else
+		lang=mTargetLang
+		matchTarget="target"
+	End If
+	If matchAll Then
+		matchTarget="idx"
+		operator="AND"
+		If text.StartsWith($"""$) And text.EndsWith($"""$) Then
+			words.Add(text)
+		Else
+			words=getWordsForAll(text)
+		End If
+	Else
+		operator="OR"
+		words=TokenizedList(text,lang)
+	End If
+	text=getQuery(words,operator)
+	
+	sqlStr=$"SELECT key, rowid, quote(matchinfo(idx)) as rank FROM idx WHERE ${matchTarget} MATCH ${text} ORDER BY rank DESC LIMIT ${limit} OFFSET 0"$
+	'Log(sqlStr)
+	Dim SenderFilter As Object = sql1.ExecQueryAsync("SQL", sqlStr,Null)
+	Wait For (SenderFilter) SQL_QueryComplete (Success As Boolean, rs As ResultSet)
+	Dim resultMap As Map
+	resultMap.Initialize
+	Dim result As Object = Null
+	If Success Then
+		Do While rs.NextRow
+			result=GetDefault(rs.GetString2(0),Null)
+			If result<>Null Then
+				resultMap.Put(rs.GetString2(0),result)
+			Else
+				Log("not exist")
+				DeleteIdxRow(rs.GetInt2(1))
+			End If
+		Loop
+		rs.Close
+	Else
+		Log(LastException)
+	End If
+	Return resultMap
+End Sub
+
+Sub DeleteIdxRow(rowid As Int)
+	Log(rowid)
+	sql1.ExecNonQuery("DELETE FROM idx WHERE rowid = "&rowid)
+End Sub
+
+Sub getWordsForAll(text As String) As List
+	Dim words As List
+	words.Initialize
+	words.AddAll(TokenizedList(text,mSourceLang))
+	words.AddAll(TokenizedList(text,mTargetLang))
+	removeCharacters(words)
+	removeMultiBytesWords(words)
+	Return words
+End Sub
+
+Sub getBytesLength(singleString As String) As Int
+	Dim bytes() As Byte
+	bytes=singleString.GetBytes("UTF-8")
+	Return bytes.Length
+End Sub
+
+Sub removeMultiBytesWords(words As List)
+	Dim newList As List
+	newList.Initialize
+	For Each word As String In words
+		If word.Length>1 Then
+			If getBytesLength(word.CharAt(0))>1 Then
+				Continue
+			End If
+		End If
+		newList.Add(word)
+	Next
+	words.Clear
+	words.AddAll(newList)
+End Sub
+
+Sub removeCharacters(source As List)
+	Dim newList As List
+	newList.Initialize
+	For Each text As String In source
+		If text.Length=1 Then
+			If Regex.IsMatch("[a-z]",text.ToLowerCase)=True Then
+				Continue
+			End If
+		End If
+		newList.Add(text)
+	Next
+	source.Clear
+	source.AddAll(newList)
+End Sub
+
+
+Sub removeDuplicated(source As List)
+	Dim newList As List
+	newList.Initialize
+	For Each item As Object In source
+		If newList.IndexOf(item)=-1 Then
+			newList.Add(item)
+		End If
+	Next
+	source.Clear
+	source.AddAll(newList)
+End Sub
+
+Sub getQuery(words As List,operator As String) As String
+	removeDuplicated(words)
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("'")
+	For index =0 To words.Size-1
+		Dim word As String=words.Get(index)
+		If word.Trim<>"" Then
+			sb.Append(word)
+			If index<>words.Size-1 Then
+				sb.Append(" "&operator&" ") ' AND OR NOT
+			End If
+		End If
+	Next
+	sb.Append("'")
+	Return sb.ToString
+End Sub
+
+Sub getStringForIndex(source As String,lang As String) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim words As List=TokenizedList(source,lang)
+	For index =0 To words.Size-1
+		sb.Append(words.Get(index)).Append(" ")
+	Next
+	Return sb.ToString.Trim
+End Sub
+
+
+Sub TokenizedList(text As String,sourceLang As String) As List
+	text=Regex.Replace2("<.*?>",32,text," ") 'replace tags to space
+	text=text.ToLowerCase
+	Dim words As List
+	words.Initialize
+	If LanguageHasSpace(sourceLang) Then
+		text=removePunctuation(text," ")
+		words.AddAll(Regex.Split(" ",text))
+	Else
+		text=removePunctuation(text,"")
+		words.AddAll(Regex.Split("",text))
+	End If
+	'Utils.removeDuplicated(words)
+	Dim newList As List
+	newList.Initialize
+	For Each word As String In words
+		If word.Trim="" Then
+			Continue
+		End If
+		newList.Add(word)
+	Next
+	Return newList
+End Sub
+
+Sub LanguageHasSpace(lang As String) As Boolean
+	Dim languagesWithoutSpaceList As List
+	languagesWithoutSpaceList=Array("ja","zh")
+	For Each code As String In languagesWithoutSpaceList
+		If lang.ToLowerCase.StartsWith(code) Then
+			Return False
+		End If
+	Next
+	Return True
+End Sub
+
+Sub removePunctuation(source As String,replacement As String) As String
+	source=Regex.Replace($"[%&_。！？，“”'",/\[\]\(\)\.\!\?\*\^\-:;\\|]"$,source,replacement)
+	Return source
+End Sub

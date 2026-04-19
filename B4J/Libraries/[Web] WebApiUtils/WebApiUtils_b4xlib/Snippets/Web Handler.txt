@@ -1,22 +1,24 @@
+    Private App As EndsMeet
+    Private Path As String 
+    Private Method As String
+    Private Request As ServletRequest
+    Private Response As ServletResponse$end$
+End Sub
+
 Public Sub Initialize
 	App = Main.App
 End Sub
-$end$
+
 Sub Handle (req As ServletRequest, resp As ServletResponse)
 	Request = req
 	Response = resp
+	Path = Request.RequestURI
 	Method = Request.Method.ToUpperCase
-	Dim FullElements() As String = WebApiUtils.GetUriElements(Request.RequestURI)
-	Elements = WebApiUtils.CropElements(FullElements, 2) ' 2 For Web handler
-	If App.MethodAvailable2(Method, "/$endpoints$", Me) = False Then
-		WebApiUtils.ReturnHtmlMethodNotAllowed(Response)
-		Return
+	If Path = "/$endpoints$" And Method = "GET" Then
+		ReturnPage	
+	Else
+		WebApiUtils.ReturnHtmlPageNotFound(Response)
 	End If
-	If Elements.Length = 0 Then
-		ReturnPage
-		Return
-	End If
-	WebApiUtils.ReturnHtmlPageNotFound(Response)
 End Sub
 
 Private Sub ReturnPage
@@ -36,7 +38,6 @@ Private Sub ReturnHelpElement As String
 	If Api.EnableHelp = False Then
 		Return ""
 	End If
-	Return $"${CRLF & TAB & TAB}<li class="nav-item">
-${TAB & TAB & TAB}<a class="nav-link mr-3 font-weight-bold text-white" href="${App.ServerUrl}/help"><i class="fas fa-cog" title="API"></i> API</a>
-${TAB & TAB}</li>"$
-End Sub
+	Return $"${CRLF}${TAB}${TAB}<li class="nav-item">
+${TAB}${TAB}${TAB}<a class="nav-link mr-3 font-weight-bold text-white" href="${App.ServerUrl}/help"><i class="fas fa-cog" title="API"></i> API</a>
+${TAB}${TAB}</li>"$
