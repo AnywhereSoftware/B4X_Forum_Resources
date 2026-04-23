@@ -1,9 +1,9 @@
 ###  MiniORMUtils by aeric
-### 04/17/2026
+### 04/18/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 5.30  
+Version: 5.40  
 
 ---
 

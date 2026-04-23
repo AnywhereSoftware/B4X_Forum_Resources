@@ -1,8 +1,8 @@
 ### [PyBridge] Text-Embedding using Local LLM with the help of Python (Get ready for AI) by Magma
-### 04/17/2026
+### 04/18/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/170842/)
 
-We are living in a wold with a lot of changes/developments…  
+We are living in a world with a lot of changes/developments…  
   
   
 The following sentence is for any developer here:  

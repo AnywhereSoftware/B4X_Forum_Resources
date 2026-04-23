@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>nz.ope.rsconv.ResultSetConverter</name>
+        <shortname>ResultSetConverter</shortname>
+        <owner>process</owner>
+        <method>
+            <name>ToJSONObject</name>
+            <comment>Converts the first row of a JDBC ResultSet to a single JSON object,
+ with the column names used as the keys.
+
+ If the ResultSet is empty, an empty object is returned.
+ If more than one row is returned, only the first row is used.
+
+ Example output:
+ {"Name":"John","Age":30}
+rs: The ResultSet to convert.
+Return type: @return:A JSON string representing the first row.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToMapOfLists</name>
+            <comment>Converts a JDBC ResultSet to a Map of Lists, with each key
+ being a column label from the ResultSet, and each value being an
+ ArrayList containing all the values from that column in the
+ ResultSet.
+ 
+ Example output:
+ {
+ "Name": ["John", "Jane"],
+ "Age": [30, 25]
+ }
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToMapOfRowNumberValuePair</name>
+            <comment>Converts a JDBC ResultSet to a Map, with the row number as the key
+ and the value of the first column as the value.
+ 
+ The column type of the first column is used to determine the type of the
+ value to be added to the Map (e.g. Integer for Types.INTEGER, etc.).
+ If the column type is not recognized, the value is added as a String.
+ 
+ Expects a ResultSet with a single column.
+ 
+ Example output:
+ {1: "John", 2: "Jane"}
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToJSONArray</name>
+            <comment>Converts the first column of a JDBC ResultSet to a flat JSON array.
+
+ Expects a ResultSet with a single column.
+
+ Example output:
+ ["John","Jane","Bob"]
+rs: The ResultSet to convert.
+Return type: @return:A JSON string representing the column values as an array.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToHTMLTable</name>
+            <comment>Converts a JDBC ResultSet to an HTML table string.
+
+ Column names are used as header cells. If cssClass is non-null and
+ non-empty, it is applied to the table element. Null values are rendered
+ as empty cells. All text content is HTML-escaped.
+
+ Example output:
+ &amp;lt;table class="my-table"&amp;gt;&amp;lt;thead&amp;gt;&amp;lt;tr&amp;gt;&amp;lt;th&amp;gt;Name&amp;lt;/th&amp;gt;...
+rs: The ResultSet to convert.
+cssClass: Optional CSS class for the table element. Pass null or ""
+                 for no class.
+Return type: @return:An HTML string representing the ResultSet as a table.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>cssClass</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToList</name>
+            <comment>Converts a JDBC ResultSet to a List, using the values from the first column.
+
+ The column type of the first column is used to determine the type of each
+ value (e.g. Integer for Types.INTEGER, etc.).
+ If the column type is not recognized, the value is added as a String.
+
+ Expects a ResultSet with a single column.
+
+ Example output:
+ ["John", "Jane"]
+rs: The ResultSet to convert.
+Return type: @return:A List containing the values from the first column.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToListOfLists</name>
+            <comment>Converts a JDBC ResultSet to a List of Lists, with the first inner List
+ containing the column names (if includeHeader is true), and each subsequent
+ List containing the values from one row.
+
+ The column type is used to determine the type of each value
+ (e.g. Integer for Types.INTEGER, etc.).
+ If the column type is not recognized, the value is added as a String.
+
+ Example output:
+ [["Name", "Age"], ["John", 30], ["Jane", 25]]
+rs: The ResultSet to convert.
+includeHeader: If true, the first List contains the column names.
+Return type: @return:A List of Lists containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>includeHeader</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToTimeSeriesJSON</name>
+            <comment>Converts a JDBC ResultSet to an ECharts-compatible time-series JSON object.
+
+ The time column must contain millisecond epoch values (Long). Each entry in
+ valueColumns produces one series. Column lookup is case-insensitive.
+
+ Output:
+ {"series":[{"name":"cpu","data":[[1711450000000,23.4],...]},...]}
+rs: The ResultSet to convert.
+timeColumn: Column name containing epoch-ms timestamps.
+valueColumns: Column names to expose as series.
+Return type: @return:A JSON string in ECharts time-series format.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>timeColumn</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>valueColumns</name>
+                <type>java.lang.String[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToScalarInt</name>
+            <comment>Returns the first column of the first row as an int.
+ Returns 0 if the ResultSet is empty, the value is SQL NULL, the column
+ is not an integer type, or an error occurs.
+
+ Accepted column types: INTEGER, SMALLINT, TINYINT.
+rs: The ResultSet to read.
+Return type: @return:The value as an int, or 0.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToMap</name>
+            <comment>Converts a JDBC ResultSet to a Map, with the column names used as the
+ keys, and the values of the columns used as the values.
+ 
+ The column types of the columns are used to determine the types of the
+ keys and values to be added to the Map (e.g. Integer for Types.INTEGER,
+ etc.). If the column type is not recognized, the value is added as a String.
+ 
+ Expects a ResultSet with a single row. If more than one row is returned,
+ only the first row is used.
+ 
+ Example output:
+ {"Name": "John", "Age": 30}
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToPagedJSON</name>
+            <comment>Converts a JDBC ResultSet to a paginated JSON object.
+
+ Reads all rows into memory then returns the requested page. Pages are 1-based.
+
+ Output:
+ {"page":1,"pageSize":100,"totalRows":4820,"data":[...]}
+rs: The ResultSet to convert.
+page: 1-based page number.
+pageSize: Rows per page.
+Return type: @return:A JSON string representing the paginated result.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>page</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>pageSize</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToJSON</name>
+            <comment>Converts a JDBC ResultSet to a JSON array of objects, with the column
+ names used as the keys in each object.
+
+ If includeRowNumber is true, each object will include a "Row" key with
+ a 1-based row number as the first field.
+
+ Example output:
+ [{"Name":"John","Age":30},{"Name":"Jane","Age":25}]
+rs: The ResultSet to convert.
+includeRowNumber: If true, each object includes a "Row" field.
+Return type: @return:A JSON string representing the ResultSet.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>includeRowNumber</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToMapOfKeyValuePair</name>
+            <comment>Converts a JDBC ResultSet to a Map, with the first column's values used
+ as the keys, and the second column's values used as the values.
+ 
+ The column types of the columns are used to determine the types of the
+ keys and values to be added to the Map (e.g. Integer for Types.INTEGER,
+ etc.).
+ If the column types are not recognized, the values are added as Strings.
+ 
+ Expects a ResultSet with two columns.
+ 
+ Example output:
+ {"John": 30, "Jane": 25}
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToCSV</name>
+            <comment>Converts a JDBC ResultSet to a CSV string.
+
+ If includeHeader is true, the first line will contain the column names.
+ Values containing commas, double-quotes, or newlines are quoted and
+ internal double-quotes are escaped by doubling them.
+ Lines are separated by CRLF as per the CSV standard (RFC 4180).
+
+ Example output:
+ Name,Age,Salary
+ John,30,55000.5
+ Jane,25,48000.0
+rs: The ResultSet to convert.
+includeHeader: If true, the first line contains column names.
+Return type: @return:A CSV string representing the ResultSet.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>includeHeader</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToListOfMaps</name>
+            <comment>Converts a JDBC ResultSet to a List of Maps, with the column names used
+ as the keys in each Map.
+
+ The column type is used to determine the type of the value to be added to the
+ Map (e.g. Integer for Types.INTEGER, etc.).
+
+ If the column type is not recognized, the value is added as a String.
+
+ If includeRowNumber is true, each Map will include a 1-based row number as
+ the first entry. The key for this field is set by rowNumberColumnName.
+ If rowNumberColumnName is null, "Row" is used as the default.
+
+ Example output (includeRowNumber = false):
+ [{"Name": "John", "Age": 30}, {"Name": "Jane", "Age": 25}]
+
+ Example output (includeRowNumber = true, rowNumberColumnName = null):
+ [{"Row": 1, "Name": "John", "Age": 30}, {"Row": 2, "Name": "Jane", "Age": 25}]
+
+ Example output (includeRowNumber = true, rowNumberColumnName = "#"):
+ [{"#": 1, "Name": "John", "Age": 30}, {"#": 2, "Name": "Jane", "Age": 25}]
+rs: The ResultSet to convert.
+includeRowNumber: If true, each Map includes a row number field.
+rowNumberColumnName: The key name for the row number field. Defaults to "Row" if null.
+Return type: @return:A List containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+            <parameter>
+                <name>includeRowNumber</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>rowNumberColumnName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToMapOfMaps</name>
+            <comment>Converts a JDBC ResultSet to a Map, with the value of the first column
+ used as the key, and a Map of the columns used as the value.
+ 
+ The column types of the columns are used to determine the types of the
+ keys and values to be added to the Map (e.g. Integer for Types.INTEGER,
+ etc.).
+ 
+ If the column types are not recognized, the values are added as Strings.
+ 
+ Column one should be unique in the ResultSet.
+ 
+ Example output:
+ {"John": {"Name": "John", "Age": 30}, "Jane": {"Name": "Jane", "Age": 25}}
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the values from the ResultSet.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetFieldTypes</name>
+            <comment>Returns a Map containing the column names from the ResultSet as the keys, and
+ the corresponding JDBC type name as the value.
+ 
+ Note, this does not close the ResultSet.
+ 
+ Example output:
+ {"Name": "VARCHAR", "Age": "INTEGER"}
+rs: The ResultSet to convert.
+Return type: @return:A Map containing the column names and their corresponding JDBC type
+         names.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetFieldList</name>
+            <comment>Returns a List containing the column names from the ResultSet.
+ 
+ Note, this does not close the ResultSet.
+ 
+ Example output:
+ ["Name", "Age"]
+rs: The ResultSet to convert.
+Return type: @return:A List containing the column names.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToScalarString</name>
+            <comment>Returns the first column of the first row as a String.
+ Any column type is accepted: numeric, boolean, date, and string types are
+ all converted via their toString representation. Dates are formatted as
+ "yyyy-MM-dd", times as "HH:mm:ss", and timestamps as "yyyy-MM-dd'T'HH:mm:ss.SSSXXX".
+ Returns null if the ResultSet is empty, the value is SQL NULL, or an error occurs.
+rs: The ResultSet to read.
+Return type: @return:The value as a String, or null.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToScalarLong</name>
+            <comment>Returns the first column of the first row as a long.
+ Returns 0 if the ResultSet is empty, the value is SQL NULL, the column
+ is not a bigint type, or an error occurs.
+
+ Accepted column types: BIGINT.
+rs: The ResultSet to read.
+Return type: @return:The value as a long, or 0.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToScalar</name>
+            <comment>Returns a single value from the first column of the first row of the
+ ResultSet.
+
+ Useful for aggregate queries such as COUNT(*), MAX(), SUM(), etc.
+ The column type is used to determine the type of the returned value.
+ If the ResultSet is empty, null is returned.
+
+ Example output:
+ 3
+rs: The ResultSet to read.
+Return type: @return:The value of the first column of the first row, or null if empty.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ToScalarDouble</name>
+            <comment>Returns the first column of the first row as a double.
+ Returns 0.0 if the ResultSet is empty, the value is SQL NULL, the column
+ is not a floating-point or decimal type, or an error occurs.
+
+ Accepted column types: DOUBLE, FLOAT, REAL, DECIMAL, NUMERIC.
+rs: The ResultSet to read.
+Return type: @return:The value as a double, or 0.0.</comment>
+            <returntype>double</returntype>
+            <parameter>
+                <name>rs</name>
+                <type>java.sql.ResultSet</type>
+            </parameter>
+        </method>
+        <property>
+            <name>LowerCaseFieldNames</name>
+            <parameter>
+                <name>value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Sets whether field names returned by all methods are converted to lowercase.
+ Applies globally to all subsequent calls. Default is false.</comment>
+        </property>
+    </class>
+    <version>1.1</version>
+    <author>Ope Ltd</author>
+</root>

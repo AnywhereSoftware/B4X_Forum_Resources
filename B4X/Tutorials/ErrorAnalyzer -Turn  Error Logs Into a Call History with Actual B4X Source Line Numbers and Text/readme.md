@@ -1,5 +1,5 @@
 ###  ErrorAnalyzer -Turn  Error Logs Into a Call History with Actual B4X Source Line Numbers and Text by William Lancee
-### 04/17/2026
+### 04/18/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/170836/)
 
 Recently I have been looking at #Macros, and then a few days ago there was a post about error reports.  
@@ -27,7 +27,7 @@ Introducing "errorAnalyzer"…
   
 ![](https://www.b4x.com/android/forum/attachments/171175)![](https://www.b4x.com/android/forum/attachments/171176)![](https://www.b4x.com/android/forum/attachments/171179)![](https://www.b4x.com/android/forum/attachments/171178)![](https://www.b4x.com/android/forum/attachments/171177)  
   
-The .jar is too large to upload. So here is a Drop Box link - Version 1.02  
-<https://www.dropbox.com/scl/fi/nygg34v88pan8i7gaoix1/EAnalyzerV1.02.zip?rlkey=gnydzlzudquuna2qas75nqxab&st=6jrab69p&dl=0>  
+The .jar is too large to upload. So here is a Drop Box link - Version 1.03  
+<https://www.dropbox.com/scl/fi/sefrpf0g3g2z4vk2ef86j/EAnalyzerV1_03.zip?rlkey=e14l4a0mmcvi7h8dof1lov6sb&st=mi2cs72o&dl=0>  
   
-The jar file is inside the zipped folder EAnalyzer.zip
+The jar file is inside the zipped folder EAnalyzerV1\_03.zip

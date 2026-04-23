@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 5.30
+' Version 5.40
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -1268,6 +1268,9 @@ Public Sub ExecuteBatchAsync As ResumableSub
 	Dim SenderFilter As Object = mSQL.ExecNonQueryBatch("SQL")
 	Wait For (SenderFilter) SQL_NonQueryComplete (Success As Boolean)
 	'mQueryExecute = True ' set back to Execute mode
+	mQueryAddToBatch = False ' set Add to batch as False
+	' Clear batch statement and parameters
+	mBatch.Clear
 	Return Success
 End Sub
 
