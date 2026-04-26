@@ -1,5 +1,5 @@
 ### An SSH library courtesy of MS Copilot - B4JSSH - now the Ferrari version by JackKirk
-### 04/14/2026
+### 04/25/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170667/)
 
 **PREAMBLE**  
@@ -43,4 +43,6 @@ EDIT - Check out the [/SIZE]**[**[SIZE=5]Ferrari **Version 1.1**[/SIZE]**](https
   
 **[SIZE=5]**EDIT 2 - Check out the** [/SIZE]**[**[SIZE=5]**enhanced error trapping Version 1.2**[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1045109)  
   
-**[SIZE=5]**EDIT 3 - Check out the** [/SIZE]**[**[SIZE=5]**m**assively improved Version 3.0****[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1045428)**[SIZE=5] ****by pitting Copilot against Claude****[/SIZE]**
+**[SIZE=5]**EDIT 3 - Check out the** [/SIZE]**[**[SIZE=5]**m**assively improved Version 3.0****[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1045428)**[SIZE=5] ****by pitting Copilot against Claude  
+  
+****EDIT 4 - Check out the******** [/SIZE]**[**[SIZE=5]********f**ully self contained Version 3.1******[/SIZE]**](https://www.b4x.com/android/forum/threads/an-ssh-library-courtesy-of-ms-copilot-b4jssh-now-the-ferrari-version.170667/post-1045846)**[SIZE=5] ******(no external jsch-0.1.55.jar required) courtesy of Claude******[/SIZE]**
