@@ -1,0 +1,240 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rarraylist
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private Alb As ArrayListByte
+	Private Alc As ArrayListByte
+
+
+	Private alStr As ArrayListString
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	Alb.Initialize(Alb.LIST_FIXED, 13)       
+	' to be used like a list Fixe size. no ITEM init. size=0 
+	' ".add" ".remove" ".insert" ".remove" can be used
+	' ".set" and ".get" can be used only on item created before by ".add"
+	Alc.Initialize(Alc.LIST_DYNAMIC, 18)
+	' to be used like a list Dynamic size. no ITEM init. size=0
+	' ".add" ".remove" ".insert" ".remove"  can be used
+	' ".set" and ".get" can be used only on item created before by ".add" 
+    alStr.Initialize(alStr.LIST_FIXED,2)   
+	For i = 0 To alStr.capacity-1 :alStr.add(""):Next     'Array init
+		' init of all items to have .size == .capacity
+		' after cas we can use  .set And .get like in a standard Array fixe
+	    ' => we cannot use ".add" ".remove" ".insert" 
+ 
+	test_byte
+ 	Delay(5000)
+	test_byte2
+ 	Delay(5000)
+	test_byte3
+ 	Delay(5000)
+	test_byte4
+End Sub
+
+Sub test_byte
+	Log(" ")
+ Log("<test_byte1> alb size FIXED")
+	Log("byte - check alb")
+	Log("alb.capacity=",Alb.capacity)
+	Log("alb.size=",Alb.size)
+	Log("alb vide:",Alb.isEmpty)
+	For i = 0 To 15
+		Alb.add(i)
+	Next
+	Log("check new capacity + size after 15 add")
+	Log("alb.capacity=",Alb.capacity)
+	Log("alb.size=",Alb.size)
+	Log("(1) list alb with getstring + join")	
+	listAlb
+	Log("=> alb size Fixed 13 enrs")
+	
+	Log("modification to Dynamic")
+	Alb.setSizeType(Alb.LIST_DYNAMIC)
+	Alb.add(100)
+	Alb.insert(1,101)
+	Alb.insertAll(3,Array As Byte(21,22,23,24,25))
+	Log("Alb listing after modif to Dynamic +'.add' And '.insert'")
+	Log("alb.capacity=",Alb.capacity)
+	Log("alb.size=",Alb.size)
+	listAlb	
+	Alb.remove(0)
+	Alb.removeRange(5,9)
+	Log("Alb list after '.remove(0)' and '.removerange(5,9)'") 
+	listAlb
+	Alb.removeRange(12,13)
+	Log("Alb list after '.removerange(12,13)'")
+	listAlb
+End Sub	
+
+Sub test_byte2
+	Log(" ")
+    Log("<test_byte2> alc size DYNAMIC")
+	Dim flag As Byte = 0
+	Log("alc.capacity start =",Alc.capacity)
+	Log("alc.size start =",Alc.size)
+	For i = 0 To 15
+		Alc.add(flag)
+		flag = (flag+3)
+	Next
+	Log("(2) list alc after 16 add")	
+	listAlc
+	
+	Log("3 set to change value")
+    Alc.set(8,20)
+	Alc.set(9,25)
+	Alc.set(10,30)
+	
+	Log("alc.capacity with 16 items =",Alc.capacity)
+	Log("alc.size =",Alc.size)	
+	Log("alc(8)=",Alc.get(8))
+	Log("alc(9)=",Alc.get(9))	
+	Log("alc(10)=",Alc.get(10))
+	Log("(3) list alc 16 items")
+	listAlc
+	
+	Log("add 4 items more ")
+	Alc.add(80)
+	Alc.add(81)
+	Alc.add(82)
+	Alc.add(83)
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	Log("check capacity /size after 16 enr +4 add")
+    Log(" ")	
+	Log("(4) list alc with getstring + join")
+	listAlc
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+End Sub	
+
+Sub test_byte3
+	Log(" ")
+	Log("<test_byte3> alc clear => size=0")
+	Alc.clear
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=0",Alc.size)
+	Alc.add(40)  '+1
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=1",Alc.size)
+	Log("alc trimtosize")
+	Log("array Sizetype(1=Dynamic)=",Alc.getSizeType)
+	Alc.trimToSize
+	Log("Array Type(1=Dynamic)=",Alc.getSizeType)
+	Log("alc.capacity after trimsize=",Alc.capacity)
+	Log("alc.size after trimsize=",Alc.size)
+	Log("alc vide:",Alc.isEmpty)
+    Log("check capacity =1 size = 1")
+	Log("")
+	
+	Alc.add(99) '+1=2
+	Log("Alc.0=",Alc.get(0))
+	Alc.add(98) '+1=3
+	Log("Alc.1=",Alc.get(1))
+	For i = 0 To 15 
+		Alc.add(i+50)
+	Next
+	Log("check 3 + 16 added")	
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	
+	Log("indexOf 55 :",Alc.indexOf(55))
+
+	Dim tmn1() As Byte
+	tmn1= Array As Byte(1,1,1,1,0,0,0,0,1,1,1,1)
+	Log("alc.addAll(array)")
+	Alc.addall(tmn1)	
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	
+	alStr.set(0,"alc=")
+	Log("(5) list after addall()")
+	listAlc
+End Sub
+
+Sub test_byte4	
+	Log(" ")
+	Log("<test_byte4> alc.clear + trimtosize+ add(byte)")
+	Alc.clear
+	Alc.trimToSize
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	Log("one add")
+	Alc.add(50)
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	Dim tmn2(16) As Byte
+	For i = 0 To 15
+		tmn2(i)=i*4 +1
+	Next
+	
+	Alc.clear
+	Log("clear + insertarray")
+	Alc.ensureCapacity(20)
+	Alc.addall(tmn2)  'insertall(0,tmn2)
+	Log("alc.capacity=",Alc.capacity)
+	Log("alc.size=",Alc.size)
+	Log("(6) list Alc after addall")
+	listAlc	
+	
+	Log("test toarray : ArrayList -> array")
+	Dim tmp(Alc.size) As Byte :
+	Alc.toArray(tmp)	
+	Log("log tmp array after readall")
+	listArr(tmp,Alc.size,"tmp")
+	
+	Log("test subtoarray : ArrayList -> array")
+	Dim tmp2(7) As Byte :
+	Alc.subtoArray(tmp2, 4,10)
+	
+	Log("log tmp2 array after subreadall")
+	listArr(tmp2,tmp2.Length,"tmp2")
+End Sub
+
+Sub listAlb
+	alStr.set(0,"Alb=")
+	For i=0 To Alb.size-1
+		alStr.join(0,Alb.getAsString(i))
+		If i<Alb.size-1 Then alStr.join(0, " - ")
+	Next
+	Log(alStr.get(0))
+End Sub
+
+Sub listAlc
+	alStr.set(0,"Alc=")
+	For i=0 To Alc.size-1
+		alStr.join(0,Alc.getAsString(i))
+		If i<Alc.size-1 Then alStr.join(0, " - ")
+	Next
+	Log(alStr.get(0))
+End Sub
+
+Sub listArr(tmp() As Byte,nb As Byte, name As String)
+	alStr.set(0,name)
+	For i=0 To nb-1
+		alStr.join(0,NumberFormat(tmp(i),1,0))
+		If i<nb-1 Then alStr.join(0, " - ")
+	Next
+	Log(alStr.get(0))
+End Sub
+
+

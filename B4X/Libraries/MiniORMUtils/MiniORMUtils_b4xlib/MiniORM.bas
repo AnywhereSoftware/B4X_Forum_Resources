@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 5.40
+' Version 5.50
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -14,7 +14,7 @@ Sub Class_Globals
 	Private mColumns				As List
 	Private mConditions				As List
 	Private mPrimaryKeys 			As List
-	Private mColumnsType			As Map
+	Private mColumnsType			As Map 		' B4A, B4i
 	Private mObject 				As String
 	Private mTable 					As String
 	Private mView					As String
@@ -29,7 +29,8 @@ Sub Class_Globals
 	Private mLimit 					As String
 	Private mHaving 				As String
 	Private mCondition				As String
-	Private mParameter				As String
+	Private mJoin					As String
+	'Private mParameter				As Object
 	Private mParameters() 			As Object
 	Private mDbType 				As String
 	Private mJournalMode 			As String
@@ -38,11 +39,13 @@ Sub Class_Globals
 	Private mShowExtraLogs 			As Boolean
 	Private mIfNotExist				As Boolean
 	Private mOptionalNull			As Boolean
+	Private mReturnNewRow			As Boolean
 	Private mUseTimestamps 			As Boolean ' may need to disable when working on view
-	Private mUseTimestampsAsTicks 	As Boolean 'ignore ' B4J only
+	Private mUseTimestampsAsTicks 	As Boolean ' B4J only 'ignore
 	Private mUseDataAuditUserId 	As Boolean
 	Private mUpdateModifiedDate 	As Boolean
 	Private mQueryAddToBatch 		As Boolean
+	Private mQueryAutoClose			As Boolean
 	Private mQueryExecute 			As Boolean
 	Private mQueryRaw				As Boolean ' No Table
 	Private mQueryClearParameters 	As Boolean
@@ -64,7 +67,9 @@ Sub Class_Globals
 	Public TIMESTAMP 				As String
 	Public TEXT 					As String
 	Public ORMTable 				As ORMTable
+	'Public ORMRules 				As ORMRules
 	Public ORMResult 				As ORMResult
+	Public Defaults 				As ORMDefaults
 	Public Const MYSQL 				As String = "MySQL"
 	Public Const SQLITE 			As String = "SQLite"
 	Public Const MARIADB 			As String = "MariaDB"
@@ -72,6 +77,8 @@ Sub Class_Globals
 	Public Const COLOR_BLUE 		As Int = 0xff0000ff '-16776961
 	Type ORMTable (ResultSet As ResultSet, Columns As List, Rows As List, Results As List, Results2 As List, First As Map, First2 As Map, Last As Map, Last2 As Map, RowCount As Int) ' Columns = list of keys, Rows = list of values, Results = list of maps, Results2 = Results + map ("__order": ["column1", "column2", "column3"])
 	Type ORMJoin (Modifier As String, Target As String, Criteria As List)
+	'Type ORMRules (ORMDefaults As ORMDefaults)
+	Type ORMDefaults (NotNull As List)
 	Type ORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, Constraint As String, UseFunction As Boolean, AllowNull As Boolean, Unique As Boolean, AutoIncrement As Boolean) ' B4i dislike word Nullable
 	Type ORMResult (Tag As Object, Columns As Map, Rows As List)
 	Type MiniORMSettings (DBDir As String, _
@@ -93,9 +100,12 @@ Public Sub Initialize
 	mBatch.Initialize
 	mJoins.Initialize
 	mColumns.Initialize
+	Defaults.Initialize
+	Defaults.NotNull.Initialize
 	mSettings.Initialize
 	mConditions.Initialize
 	mPrimaryKeys.Initialize
+	mColumnsType = Null
 	mView = ""
 	mTable = ""
 	mUnion = ""
@@ -105,7 +115,11 @@ Public Sub Initialize
 	mJournalMode = "DELETE"
 	mDefaultUserId = "1"
 	mAutoIncrement = True
+	mShowExtraLogs = False
+	mIfNotExist = False
 	mOptionalNull = True ' NULL is not added to column in CREATE
+	mQueryAutoClose = True
+	mReturnNewRow = True ' set to False?
 	mQueryAddToBatch = False
 	mQueryExecute = True
 	mQueryRaw = False
@@ -116,11 +130,11 @@ Public Sub Initialize
 	mDateTimeMethods = CreateMap(91: "getDate", 92: "getTime", 93: "getTimestamp")
 	#End If
 	Clear
-	SetDefaults
+	SetDefaultDir
 	setDbType(SQLITE) ' Default
 End Sub
 
-Private Sub SetDefaults
+Private Sub SetDefaultDir
 	If mSettings.DBDir = "" Then
 		#If B4J
 		mSettings.DBDir = File.DirApp
@@ -138,7 +152,7 @@ End Sub
 ' Create SQLite database. formerly InitializeSQLite
 Public Sub CreateSQLite As Boolean
 	Try
-		SetDefaults
+		SetDefaultDir
 		#If B4J
 		mSQL.InitializeSQLite(mSettings.DBDir, mSettings.DBFile, True)
 		#Else
@@ -219,7 +233,7 @@ End Sub
 
 ' Check database file exists (SQLite)
 Public Sub Exist As Boolean
-	SetDefaults
+	SetDefaultDir
 	Dim DBFound As Boolean
 	If File.Exists(mSettings.DBDir, mSettings.DBFile) Then
 		DBFound = True
@@ -305,6 +319,7 @@ End Sub
 
 ' Close SQL object
 Public Sub Close
+	'LogColor("Closing DB...", COLOR_RED)
 	If mJournalMode.EqualsIgnoreCase("WAL") Then Return
 	If Opened Then mSQL.Close
 End Sub
@@ -545,6 +560,8 @@ Public Sub getBatch As List
 	Return mBatch
 End Sub
 
+' <code>DB.Columns = Array("category_id", "product_code", "product_name", "product_price")</code>
+' <code>DB.Columns.Add(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0))</code>
 Public Sub setColumns (Columns As List)
 	mColumns = Columns
 End Sub
@@ -553,13 +570,17 @@ Public Sub getColumns As List
 	Return mColumns
 End Sub
 
-' May deprecate
+' Specify column type for B4A and B4i
 Public Sub setColumnsType (ColumnsType As Map)
 	mColumnsType = ColumnsType
 End Sub
 
 Public Sub getColumnsType As Map
 	Return mColumnsType
+End Sub
+
+Public Sub setJoins (Joins As List)
+	mJoins = Joins
 End Sub
 
 Public Sub setShowExtraLogs (Value As Boolean)
@@ -621,6 +642,14 @@ Public Sub setIfNotExist (Value As Boolean)
 	mIfNotExist = Value
 End Sub
 
+Public Sub setQueryAutoClose (Value As Boolean)
+	mQueryAutoClose = Value
+End Sub
+
+Public Sub setReturnNewRow (Value As Boolean)
+	mReturnNewRow = Value
+End Sub
+
 Public Sub Reset
 	Clear
 	ClearJoins
@@ -653,6 +682,7 @@ End Sub
 
 ' Clear Joins
 Private Sub ClearJoins
+	mJoin = ""
 	mJoins.Initialize
 End Sub
 
@@ -786,6 +816,13 @@ Private Sub SelectFromObject
 		SB.Append(mTable)
 	End If
 	mStatement = SB.ToString
+	
+	mStatement = mStatement & mJoin
+	mStatement = mStatement & mCondition
+	mStatement = mStatement & mGroupBy
+	mStatement = mStatement & mHaving
+	mStatement = mStatement & mOrderBy
+	mStatement = mStatement & mLimit
 End Sub
 
 'Example: IFNULL(amount, 0) AS total
@@ -852,7 +889,49 @@ Public Sub SortByLastId
 	mOrderBy = " ORDER BY id DESC"
 End Sub
 
-' <code>DB.Columns.Add(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0))</code>
+' <code>DB.Column = CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0)</code>
+' Name - Column Name (String)
+' Type - Column Type (String) e.g INTEGER/DECIMAL/VARCHAR/TIMESTAMP
+' Size - Column Length (String) e.g 255/10,2
+' Collation - Collation for char (String) e.g COLLATE utf8mb4_unicode_ci
+' Default - Default Value (String) e.g "Unknown", 0, utc_timestamp(), datetime('now')
+' Function - Use function (Boolean)
+' Unique - Is Unique (Boolean)
+' Null - Allow Null (Boolean)
+' AutoIncrement - Auto increment (Boolean)
+Public Sub setColumn (Attributes As Map)
+	'mColumns.Add(Map2Column(Attributes))
+	mColumns.Add(Attributes)
+End Sub
+
+'Example: JOIN tbl_categories c ON p.category_id = c.id
+'<code>DB.Join("JOIN", "tbl_categories c", Array("p.category_id = c.id"))</code>
+Public Sub Join (Modifier As String, Target As String, Criteria As List)
+	Dim j1 As ORMJoin
+	j1.Initialize
+	j1.Modifier = Modifier
+	j1.Target = Target
+	j1.Criteria = Criteria
+	mJoins.Add(j1)
+	'mJoins.Add(CreateORMJoin(Modifier, Target, Criteria))
+	
+	Dim SB As StringBuilder
+	SB.Initialize
+	For Each j As ORMJoin In mJoins
+		Dim JB As StringBuilder
+		JB.Initialize
+		For Each Criterion As String In j.Criteria
+			If JB.Length = 0 Then JB.Append(" ON ") Else JB.Append(" AND ")
+			JB.Append(Criterion)
+		Next
+		SB.Append(" ")
+		SB.Append(j.Modifier.Replace("JOIN", "").Trim & " JOIN ")
+		SB.Append(j.Target)
+		SB.Append(JB.ToString)
+	Next
+	mJoin = SB.ToString
+End Sub
+
 ' Name - Column Name (String)
 ' Type - Column Type (String) e.g INTEGER/DECIMAL/VARCHAR/TIMESTAMP
 ' Size - Column Length (String) e.g 255/10,2
@@ -863,6 +942,7 @@ End Sub
 ' Null - Allow Null (Boolean)
 ' AutoIncrement - Auto increment (Boolean)
 Public Sub Map2Column (Props As Map) As ORMColumn
+	Dim NullOveridden As Boolean
 	Dim t1 As ORMColumn
 	t1.Initialize
 	t1.ColumnName = ""
@@ -872,7 +952,8 @@ Public Sub Map2Column (Props As Map) As ORMColumn
 	t1.DefaultValue = ""
 	t1.Constraint = ""
 	t1.UseFunction = False
-	t1.AllowNull = True
+	't1.AllowNull = True
+	't1.Required = False
 	t1.Unique = False
 	t1.AutoIncrement = False
 	For Each Key As String In Props.Keys
@@ -895,19 +976,45 @@ Public Sub Map2Column (Props As Map) As ORMColumn
 				t1.Unique = Props.Get(Key)
 			Case "an", "Nullable".ToLowerCase, "Null".ToLowerCase, "AllowNull".ToLowerCase
 				t1.AllowNull = Props.Get(Key)
+				NullOveridden = True
 			Case "ai", "AutoIncrement".ToLowerCase
 				t1.AutoIncrement = Props.Get(Key)
+			Case "r", "Required".ToLowerCase, "Mandatory".ToLowerCase, "Compulsory".ToLowerCase
+				't1.Required = Props.Get(Key)
 			Case Else
 				t1.ColumnName = Key
 		End Select
 	Next
+	' column type default to varchar
 	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
-	If t1.ColumnType = VARCHAR And t1.ColumnLength = "" Then t1.ColumnLength = "255"
-	If t1.ColumnType = BIG_INT And t1.ColumnLength = "" Then t1.ColumnLength = "20"
-	If t1.ColumnType = INTEGER And t1.ColumnLength = "" Then t1.ColumnLength = "11"
-	If t1.ColumnType = TIMESTAMP Then t1.ColumnLength = ""
+	Select t1.ColumnType
+		Case INTEGER
+			If t1.ColumnLength = "" Then t1.ColumnLength = "11"
+		Case BIG_INT
+			If t1.ColumnLength = "" Then t1.ColumnLength = "20"
+		Case DECIMAL
+			If t1.ColumnLength = "" Then t1.ColumnLength = "10,2"
+			If t1.DefaultValue = "" Then t1.DefaultValue = "0.0"
+		Case VARCHAR
+			If t1.ColumnLength = "" Then t1.ColumnLength = "255"
+		Case TIMESTAMP
+			t1.ColumnLength = ""
+	End Select
 	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
+	' if not overriden
+	If Not(NullOveridden) Then
+		t1.AllowNull = Not(IsNotNull(t1.ColumnType))
+	End If
+	'If IsNotNull(t1.ColumnType) Then t1.AllowNull = False Else t1.AllowNull = True
+	't1.AllowNull = Not(IsNotNull(t1.ColumnType))
 	Return t1
+End Sub
+
+Private Sub IsNotNull (ColumnType As String) As Boolean
+	'Return Defaults.NotNull.IndexOf(ColumnType.ToUpperCase) > -1
+	Dim value As Boolean = Defaults.NotNull.IndexOf(ColumnType.ToUpperCase) > -1
+	'If value Then Log($"${ColumnType} -> ${value}"$)
+	Return value
 End Sub
 
 Private Sub BuildColumns As String
@@ -928,30 +1035,16 @@ Private Sub BuildColumns As String
 	End If
 	
 	Dim FirstColumn As Boolean = True
-	Dim IsListOfString As Boolean
-	Dim Columns As List
-	Columns.Initialize
-	If mColumns.Size > 0 Then ' Test first item only
-		If GetType(mColumns.Get(0)) = "java.lang.String" Then 'Check mColumns is a String array
-			IsListOfString = True
-		Else
-			'Log(mObject & " > " & GetType(mColumns.Get(0)))' expects anywheresoftware.b4a.objects.collections.Map$MyMap
-			IsListOfString = False
+	For Each item In mColumns
+		If item Is ORMColumn Then
+			Dim Col As ORMColumn = item
+		Else If item Is Map Then
+			Dim Col As ORMColumn = Map2Column(item)
+		Else 'If item Is String Then
+			'Dim Col As ORMColumn = CreateORMColumn(item, VARCHAR, "", "", "", "", False, True, False, False)
+			Dim Col As ORMColumn = Map2Column(CreateMap("n": item))
 		End If
-		If IsListOfString Then
-			For Each colName As String In mColumns
-				Dim Col As ORMColumn = CreateColumn(colName, VARCHAR, "", "", "", "", False, True, False, False)
-				Columns.Add(Col)
-			Next
-		Else
-			For Each props As Map In mColumns
-				Dim Col As ORMColumn = Map2Column(props)
-				Columns.Add(Col)
-			Next
-		End If
-	End If
-	
-	For Each Col As ORMColumn In Columns
+		
 		If FirstColumn = False Then SB.Append(",").Append(CRLF)
 		SB.Append(Col.ColumnName)
 		SB.Append(" ")
@@ -1006,6 +1099,10 @@ Private Sub BuildColumns As String
 			End Select
 		End If
 		
+		'Col.AllowNull = Not(IsNotNull(Col.ColumnType))
+		'If Col.ColumnType = VARCHAR Then 
+		'	Log($"${Col.ColumnName} -> ${Col.AllowNull}"$)
+		'End If
 		If Col.AllowNull Then
 			If mOptionalNull = False Then SB.Append(" NULL")
 		Else
@@ -1281,7 +1378,7 @@ Public Sub ExecuteScalar As Object
 		LogColor("Database not connected!", COLOR_RED)
 		Return Null
 	End If
-	mStatement = mStatement & getCondition
+	mStatement = mStatement & mCondition
 	Return mSQL.ExecQuerySingleResult(mStatement)
 End Sub
 
@@ -1292,7 +1389,7 @@ Public Sub ExecuteScalar2 As Object
 		LogColor("Database not connected!", COLOR_RED)
 		Return Null
 	End If
-	mStatement = mStatement & getCondition
+	mStatement = mStatement & mCondition
 	Return mSQL.ExecQuerySingleResult2(mStatement, mParameters)
 End Sub
 
@@ -1303,60 +1400,23 @@ Public Sub AddNonQueryToBatch
 	mSQL.AddNonQueryToBatch(mStatement, mParameters)
 End Sub
 
-'Example: LEFT JOIN tbl_categories c ON p.category_id = c.id
-'<code>DB.Join = Array("tbl_categories c", "p.category_id = c.id", "LEFT")</code>
-'Public Sub setJoin (Params As List)
-'	Dim Target As String = IIf(Params.Size > 0, Params.Get(0), "")
-'	Dim Statements As String = IIf(Params.Size > 1, Params.Get(1), "")
-'	Dim Modifier As String = IIf(Params.Size > 2, Params.Get(2), "")
-'	'mJoins.Add(Modifier.Replace("JOIN", "").Trim & " JOIN " & Target & " ON " & Statements)
-'	mStatement = mStatement & " " & Modifier.Replace("JOIN", "").Trim & " JOIN " & Target & " ON " & Statements
-'End Sub
-
-'Example: LEFT JOIN tbl_categories c ON p.category_id = c.id
-'<code>DB.Join = DB.CreateJoin("LEFT", "tbl_categories AS c", Array("p.category_id = c.id"))</code>
-Public Sub setJoin (mJoin As ORMJoin)
-	Dim SB As StringBuilder
-	SB.Initialize
-	For Each Criterion As String In mJoin.Criteria
-		If SB.Length = 0 Then SB.Append(" ON ") Else SB.Append(" AND ")
-		SB.Append(Criterion)
-	Next
-	mJoin.Modifier = mJoin.Modifier.Replace("JOIN", "").Trim & " JOIN "
-	mJoins.Add(mJoin.Modifier & mJoin.Target & SB.ToString)
-End Sub
-
-Public Sub getJoins As String
-	Dim SB As StringBuilder
-	SB.Initialize
-	For Each Statement As String In mJoins
-		SB.Append(" " & Statement)
-	Next
-	Return SB.ToString
-End Sub
-
 Public Sub Union
 	Dim CurrentStatement As String
 	If mStatement.Contains(" UNION ") Then
 		CurrentStatement = mStatement
 	End If
 	SelectFromObject
-	mStatement = mStatement & getJoins
-	mStatement = mStatement & getCondition
-	mStatement = mStatement & mGroupBy
-	mStatement = mStatement & mHaving
-	mStatement = mStatement & mOrderBy
-	mStatement = mStatement & mLimit
 	mStatement = CurrentStatement & mStatement & " UNION "
 	mUnion = mStatement
 End Sub
 
-Public Sub setCondition (Statement As String)
-	mConditions.Add(Statement)
-End Sub
-
 ' Append new condition to existing list or return the full condition statement
 Public Sub getCondition As String
+	Return mCondition
+End Sub
+
+Public Sub setCondition (Statement As String)
+	mConditions.Add(Statement)
 	Dim SB As StringBuilder
 	SB.Initialize
 	For Each Statement As String In mConditions
@@ -1364,13 +1424,18 @@ Public Sub getCondition As String
 		SB.Append(Statement)
 	Next
 	mCondition = SB.ToString
-	Return mCondition
 End Sub
 
 ' Formerly known as setWhere
 Public Sub setConditions (Statements As List)
-	'mConditions.AddAll(Statements)
 	mConditions = Statements
+	Dim SB As StringBuilder
+	SB.Initialize
+	For Each Statement As String In mConditions
+		If SB.Length = 0 Then SB.Append(" WHERE ") Else SB.Append(" AND ")
+		SB.Append(Statement)
+	Next
+	mCondition = SB.ToString	
 End Sub
 
 ' Append new conditions
@@ -1378,8 +1443,9 @@ Public Sub getConditions As List
 	Return mConditions
 End Sub
 
+' Append new parameter
 Public Sub setParameter (Param As Object)
-	mParameter = Param
+	'mParameter = Param
 	Dim NewArray(mParameters.Length + 1) As Object
 	For i = 0 To mParameters.Length - 1
 		NewArray(i) = mParameters(i)
@@ -1388,14 +1454,9 @@ Public Sub setParameter (Param As Object)
 	mParameters = NewArray
 End Sub
 
-' Append new parameter
-Public Sub getParameter As Object
-	Return mParameter
-End Sub
-
 Public Sub setParameters (Params() As Object)
 	mParameters = Params
-	If mParameters.Length > 0 Then mParameter = mParameters(mParameters.Length - 1)
+	'If mParameters.Length > 0 Then mParameter = mParameters(mParameters.Length - 1)
 End Sub
 
 ' Assign array of parameters
@@ -1418,19 +1479,20 @@ Public Sub AppendParameters (Params() As Object)
 	Else
 		mParameters = Params
 	End If
-	If mParameters.Length > 0 Then mParameter = mParameters(mParameters.Length - 1)
+	'If mParameters.Length > 0 Then mParameter = mParameters(mParameters.Length - 1)
 End Sub
 
-' Add single condition and parameter
+' Append single condition and parameter
 Public Sub WhereParam (Statement As String, Param As Object)
 	setCondition(Statement)
 	setParameter(Param)
 End Sub
 
-' Append new Conditions and Parameters
+' Set new Conditions and Parameters
 Public Sub WhereParams (Statements As List, Params() As Object)
 	setConditions(Statements)
-	AppendParameters(Params)
+	'AppendParameters(Params)
+	setParameters(Params)
 End Sub
 
 ' Execute Query
@@ -1454,12 +1516,6 @@ Public Sub Query
 		
 		If mQueryRaw = False Then
 			SelectFromObject
-			mStatement = mStatement & getJoins
-			mStatement = mStatement & getCondition
-			mStatement = mStatement & mGroupBy
-			mStatement = mStatement & mHaving
-			mStatement = mStatement & mOrderBy
-			mStatement = mStatement & mLimit
 		'Else
 			'mQueryRaw = False
 		End If
@@ -1606,6 +1662,7 @@ Public Sub Query
 		LogColor("Are you missing ' = ?' in query?", COLOR_RED)
 		mError = LastException
 	End Try
+	If mQueryAutoClose Then Close
 	Clear
 	If mQueryClearParameters Then ClearParameters
 End Sub
@@ -1677,7 +1734,7 @@ End Sub
 ' Update must have at least 1 condition
 Public Sub Save
 	Dim BlnNew As Boolean
-	If getCondition.Length > 0 Then
+	If mCondition.Length > 0 Then
 		Dim md As Boolean ' contains modified_date
 		Dim SB As StringBuilder
 		SB.Initialize
@@ -1740,13 +1797,18 @@ Public Sub Save
 	If mQueryAddToBatch Then AddNonQueryToBatch
 	If mQueryExecute = False Then Return
 	ExecNonQuery
+	If mError.IsInitialized Then ' bug fixed
+		Return
+	End If
 	If BlnNew Then
 		' View does not support auto-increment id or ID is not autoincrement
 		If mObject = "VIEW" Or mAutoIncrement = False Then Return
-		Dim NewID As Int = getLastInsertID
-		' Return new row
-		Log("Finding NewID FROM " & mTable)
-		Find(NewID)
+		If mReturnNewRow Then
+			Dim NewID As Int = getLastInsertID
+			' Return new row
+			Log($"Finding row from ${mTable} for id = ${NewID}"$)
+			Find(NewID)
+		End If
 	Else
 		'ClearParameters
 		' Count numbers of ?
@@ -1775,7 +1837,7 @@ End Sub
 '<code>DB.Save3 = "UserID"</code>
 Public Sub setSave3 (IdColumn As String)
 	Dim BlnNew As Boolean
-	If getCondition.Length > 0 Then
+	If mCondition.Length > 0 Then
 		Dim md As Boolean ' contains modified_date
 		Dim SB As StringBuilder
 		SB.Initialize
@@ -1874,7 +1936,7 @@ Public Sub getLastInsertID As Object
 End Sub
 
 Public Sub Delete
-	mStatement = $"DELETE FROM ${mTable}"$ & getCondition
+	mStatement = $"DELETE FROM ${mTable}"$ & mCondition
 	If mQueryAddToBatch Then AddNonQueryToBatch
 	If mQueryExecute Then ExecNonQuery
 End Sub
@@ -1899,7 +1961,7 @@ Public Sub Destroy (ids() As Int) As ResumableSub
 		mConditions = Array("id = ?")
 		mCondition = " WHERE id = ?"
 		mStatement = mStatement & mCondition
-		mParameter = mID
+		'mParameter = mID
 		mParameters = Array(id)
 		If mShowExtraLogs Then LogQuery4("Destroy", id)
 		AddNonQueryToBatch
@@ -1919,7 +1981,7 @@ Public Sub SoftDelete
 			If mShowExtraLogs Then Log("Unknown DBType")
 			Return
 	End Select
-	If getCondition.Length = 0 Then
+	If mCondition.Length = 0 Then
 		Log("Missing condition")
 		Return
 	End If
@@ -2053,7 +2115,7 @@ End Sub
 
 ' Return SQL statement
 Public Sub getStatement As String
-	mStatement = mStatement & getCondition
+	'mStatement = mStatement & mCondition
 	Return mStatement
 End Sub
 
@@ -2139,33 +2201,43 @@ Private Sub CountChar (c As String, Word As String) As Int
 	Return count
 End Sub
 
-Private Sub CreateColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, Constraint As String, UseFunction As Boolean, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
-	Dim t1 As ORMColumn
-	t1.Initialize
-	t1.ColumnName = ColumnName
-	t1.ColumnType = ColumnType
-	t1.ColumnLength = ColumnLength
-	t1.Collation = Collation
-	t1.DefaultValue = DefaultValue
-	t1.Constraint = Constraint
-	t1.UseFunction = UseFunction
-	t1.AllowNull = AllowNull
-	t1.Unique = IsUnique
-	t1.AutoIncrement = AutoIncrement
-	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
-	If t1.ColumnType = VARCHAR And t1.ColumnLength = "" Then t1.ColumnLength = "255"
-	If t1.ColumnType = BIG_INT And t1.ColumnLength = "" Then t1.ColumnLength = "20"
-	If t1.ColumnType = INTEGER And t1.ColumnLength = "" Then t1.ColumnLength = "11"
-	If t1.ColumnType = TIMESTAMP Then t1.ColumnLength = ""
-	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
-	Return t1
-End Sub
+'Private Sub CreateORMColumn (ColumnName As String, ColumnType As String, ColumnLength As String, Collation As String, DefaultValue As String, Constraint As String, UseFunction As Boolean, AllowNull As Boolean, IsUnique As Boolean, AutoIncrement As Boolean) As ORMColumn
+'	Dim t1 As ORMColumn
+'	t1.Initialize
+'	t1.ColumnName = ColumnName
+'	t1.ColumnType = ColumnType
+'	t1.ColumnLength = ColumnLength
+'	t1.Collation = Collation
+'	t1.DefaultValue = DefaultValue
+'	t1.Constraint = Constraint
+'	t1.UseFunction = UseFunction
+'	t1.AllowNull = AllowNull
+'	t1.Unique = IsUnique
+'	t1.AutoIncrement = AutoIncrement
+'	' column type default to varchar
+'	If t1.ColumnType = "" Then t1.ColumnType = VARCHAR
+'	Select t1.ColumnType
+'		Case INTEGER
+'			If t1.ColumnLength = "" Then t1.ColumnLength = "11"
+'		Case BIG_INT
+'			If t1.ColumnLength = "" Then t1.ColumnLength = "20"
+'		Case DECIMAL
+'			If t1.ColumnLength = "" Then t1.ColumnLength = "10,2"
+'			If t1.DefaultValue = "" Then t1.DefaultValue = "0.0"
+'		Case VARCHAR
+'			If t1.ColumnLength = "" Then t1.ColumnLength = "255"
+'		Case TIMESTAMP
+'			t1.ColumnLength = ""
+'	End Select
+'	If t1.ColumnLength = "0" Then t1.ColumnLength = ""
+'	Return t1
+'End Sub
 
-Public Sub CreateJoin (Modifier As String, Target As String, Criteria As List) As ORMJoin
-	Dim t1 As ORMJoin
-	t1.Initialize
-	t1.Modifier = Modifier
-	t1.Target = Target
-	t1.Criteria = Criteria
-	Return t1
-End Sub
+'Private Sub CreateORMJoin (Modifier As String, Target As String, Criteria As List) As ORMJoin
+'	Dim t1 As ORMJoin
+'	t1.Initialize
+'	t1.Modifier = Modifier
+'	t1.Target = Target
+'	t1.Criteria = Criteria
+'	Return t1
+'End Sub

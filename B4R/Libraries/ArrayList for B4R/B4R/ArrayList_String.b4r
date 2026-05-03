@@ -1,0 +1,110 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rarraylist
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private alS As ArrayListString
+	Private alStr As ArrayListString
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	alStr.Initialize(alS.LIST_FIXED,2)
+	For i = 0 To alStr.capacity-1 :alStr.add(""):Next     'Array init
+		' init of all items to have .size == .capacity
+		' after cas we can use  .set And .get like in a standard Array fixe
+	    ' => we cannot use ".add" ".remove" ".insert" 
+				
+    alS.Initialize(alS.LIST_FIXED,10)   
+
+
+ 
+	test_String
+End Sub
+
+Sub test_String
+	Log(" ")
+ 	Log("<test_String1> alb size FIXED")
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	Log("alS vide:",alS.isEmpty)
+	For i = 0 To 12
+		alS.add("U"+NumberFormat(i,1,0))
+	Next
+	Log("check new capacity + size after 12 add")
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	Log("(1) list alS with getstring + join")	
+	listAlS	
+	Log("=> alb size Fixed 10 items")
+	
+	Log("modification to Dynamic")
+	alS.setSizeType(alStr.LIST_DYNAMIC)
+	alS.add("H100")
+	alS.insert(1,"H101")
+	alS.insert(2,"H102")
+	Log("AlS listing after modif to Dynamic +'.add' And '.insert'")
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	listAlS	
+	
+	alS.remove(0)
+	alS.removeRange(5,8)
+	Log("AlS list after '.remove(0)' and '.removerange(5,8)'") 
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	listAlS
+	alS.concat(0,1)
+	alS.concat(0,2)
+	Log("AlS list after '.concat()'")
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	listAlS
+	
+	Log("3 set to change value /get")
+	alS.set(0,"A20")
+	alS.set(1,"A25")
+	Log("alS.get(0)=",alS.get(0))
+	Log("alS.get(1=",alS.get(1))
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=",alS.size)
+	listAlS
+	Log("aftert clear")
+	alS.clear
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=0",alS.size)
+	Log("after trimtosize")
+	alS.trimToSize
+	Log("alS.capacity=",alS.capacity)
+	Log("alS.size=0",alS.size)
+End Sub	
+
+
+
+
+Sub listAlS
+	alStr.set(0,"AlS=")
+	For i=0 To alS.size-1
+		alStr.join(0,alS.get(i))
+		If i<alS.size-1 Then alStr.join(0, " * ")
+	Next
+	Log(alStr.get(0))
+End Sub
+
+
+

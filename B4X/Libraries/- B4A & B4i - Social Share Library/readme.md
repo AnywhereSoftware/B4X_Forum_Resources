@@ -1,5 +1,5 @@
 ###  - B4A & B4i - Social Share Library by hatzisn
-### 04/23/2026
+### 04/29/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/99714/)
 
 **(2026-04-23) Update for iPad**. New code has been added in b4xlib to make it compatible with sharing in iPad and the code for B4XPages is now the following (you can also write sc.Instructions to get a starting up code with the lib and copy it) :  
@@ -138,7 +138,7 @@ End Sub
   
 NHSocialShare  
 Author:** Nikolaos Hatzistelios  
-**Version:** 1.1  
+**Version:** 1.25  
   
 
 - **Fields:**
@@ -151,6 +151,7 @@ Author:** Nikolaos Hatzistelios
 - **Whatsapp As String**
 - **Skype As String**
 - **Choosechannel As String**
+- **ButtonForiPad** (write only) - You set the share button (button type) for iPad
 
   
 

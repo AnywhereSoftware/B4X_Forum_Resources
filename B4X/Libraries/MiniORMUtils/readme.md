@@ -1,9 +1,9 @@
 ###  MiniORMUtils by aeric
-### 04/18/2026
+### 04/28/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 5.40  
+Version: 5.50  
 
 ---
 
@@ -45,7 +45,7 @@ Dim MS As ORMSettings
 MS.Initialize  
 MS.DBType = DB.MYSQL  
 MS.JdbcUrl = "jdbc:mysql://{DbHost}:{DbPort}/{DbName}?characterEncoding=utf8&useSSL=False"  
-MS.DriverClass = "com.mysql.cj.jdbc.Driver"  
+MS.Driver = "com.mysql.cj.jdbc.Driver"  
 MS.DBName = "blog"  
 MS.DbHost = "localhost"  
 MS.User = "root"  
