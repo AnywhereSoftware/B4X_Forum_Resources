@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RESPNow</name>
+        <shortname>ESPNow</shortname>
+        <comment>@class B4RESPNow
+@brief ESP-NOW wrapper for ESP32 (B4R style, event-driven).
+
+Role-neutral design:
+- Sender: use SendData()
+- Receiver: handle DataReceived event
+- Both: simply use both
+
+@note Only one instance supported (ESP-NOW uses global callbacks)</comment>
+        <event>DataReceived (Mac() As Byte, Data() As Byte)</event>
+        <event>DataSent (Mac() As Byte, Status As Byte)</event>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>@brief Initialize ESP-NOW
+@param DataReceivedSub Callback for received data
+@param DataSentSub Callback for send result
+@return true if successful</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>DataReceivedSub</name>
+                <type>SubVoidByteArrByteArr</type>
+            </parameter>
+            <parameter>
+                <name>DataSentSub</name>
+                <type>SubVoidByteArrByte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetChannel">SetChannel</name>
+            <comment>@brief Set WiFi channel (must match peers)</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetMAC">GetMAC</name>
+            <comment>@brief Get own MAC address
+@return ArrayByte (6 bytes)</comment>
+            <returntype>Byte[]</returntype>
+        </method>
+        <method>
+            <name DesignerName="AddPeer">AddPeer</name>
+            <comment>@brief Add peer (uses current channel)</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>mac</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RemovePeer">RemovePeer</name>
+            <comment>@brief Remove peer</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>mac</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SendData">SendData</name>
+            <comment>@brief Send data to peer</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>mac</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>data</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="SEND_OK">SEND_OK</name>
+            <comment>@brief Send successful</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="SEND_FAIL">SEND_FAIL</name>
+            <comment>@brief Send failed</comment>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

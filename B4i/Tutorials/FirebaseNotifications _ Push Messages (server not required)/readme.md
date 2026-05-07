@@ -1,8 +1,13 @@
 ### FirebaseNotifications / Push Messages (server not required) by Erel
-### 06/26/2023
+### 05/05/2026
 [B4X Forum - B4i - Tutorials](https://www.b4x.com/android/forum/threads/68645/)
 
-**Updated tutorial: <https://www.b4x.com/android/forum/threads/b4x-firebase-push-notifications-2023.148715/>**  
+**Updated tutorial: <https://www.b4x.com/android/forum/threads/b4x-firebase-push-notifications-2023.148715/>  
+  
+**Update:** It is simpler to use the new and recommended APN authentication keys: <https://www.b4x.com/android/forum/threads/firebase-messaging-apn-authentication-keys-vs-authentication-certificates.126402>  
+  
+![](https://www.b4x.com/android/forum/attachments/171393)**  
+  
 The configuration steps are still relevant.  
   
 [MEDIA=vimeo]261132706[/MEDIA]  
@@ -17,13 +22,12 @@ Push messages in iOS requires some configuration.
 1. Create a new explicit (non-wildcard) **App ID** with the package name of the push app. For example anywheresoftware.b4i.push. Enable push notification service.  
 2. Create an Apple Push Notification SSL certificate. Use the same certSigningRequest.csr file that you previously created.  
 This can be done from App IDs - Choose the id - Edit.  
-![](https://www.b4x.com/basic4android/images/SS-2016-07-04_17.19.12.png)  
   
 **I recommend using a Production SSL Certificate with a Distribution / Ad Hoc provision profile.** This way you can use the same tokens during development and in production.  
   
 3. Create a provision file with the new App ID.  
   
-**Update:** It is simpler to use the new and recommended APN authentication keys: <https://www.b4x.com/android/forum/threads/firebase-messaging-apn-authentication-keys-vs-authentication-certificates.126402>  
+  
   
 **Old keys (works as well):**  
 4. There should be a file named aps\_\*.cer in the keys folder. Now you should click on Tools - Build Server - Create Push Key - Firebase Service:  

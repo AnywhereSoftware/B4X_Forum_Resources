@@ -1,0 +1,257 @@
+	Private Path As String
+	Private Method As String
+	Private Request As ServletRequest
+	Private Response As ServletResponse
+	Private HRM As HttpResponseMessage
+	Private Model As $Endpoints$Model$end$
+End Sub
+
+Public Sub Initialize
+	HRM = Main.HRM
+	Model.Initialize
+End Sub
+
+Sub Handle (req As ServletRequest, resp As ServletResponse)
+	Request = req
+	Response = resp
+	Path = Request.RequestURI
+	Method = Request.Method.ToUpperCase
+	If Path = "/api/$endpoints$" And Method = "GET" Then
+		Get$Endpoints$
+	Else If Path = "/api/$endpoints$" And Method = "POST" Then
+		Post$Endpoint$
+	Else If Path.StartsWith("/api/$endpoints$/") And Method = "GET" Then
+		Get$Endpoint$ById
+	Else If Path.StartsWith("/api/$endpoints$/") And Method = "PUT" Then
+		Put$Endpoint$ById
+	Else If Path.StartsWith("/api/$endpoints$/") And Method = "DELETE" Then
+		Delete$Endpoint$ById
+	Else
+		WebApiUtils.ReturnBadRequest(HRM, Response)
+	End If
+End Sub
+
+Private Sub Get$Endpoint$s
+	Log($"${Method}: ${Path}"$)
+	Dim Data As List = Model.Read
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+	Else
+		HRM.ResponseCode = 200
+		HRM.ResponseData = Data
+	End If
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+Private Sub Get$Endpoint$ById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString("/api/$endpoint$s/".Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid id value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	Dim Row As Map = Model.GetRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+	Else
+		If Model.Found Then
+			HRM.ResponseCode = 200
+			HRM.ResponseObject = Row
+		Else
+			HRM.ResponseCode = 404
+			HRM.ResponseError = "$Endpoint$ not found"
+		End If
+	End If
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+Private Sub Post$Endpoint$
+	Log($"${Method}: ${Path}"$)
+	Dim str As String = WebApiUtils.RequestDataText(Request)
+	If WebApiUtils.ValidateContent(str, HRM.PayloadType) = False Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = $"Invalid ${HRM.PayloadType} payload"$
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If HRM.PayloadType = WebApiUtils.MIME_TYPE_XML Then
+		Dim data As Map = WebApiUtils.ParseXML(str)		' XML payload
+	Else
+		Dim data As Map = WebApiUtils.ParseJSON(str)	' JSON payload
+	End If
+	
+	' Check whether required keys are provided
+	Dim RequiredKeys As List = Array As String("category_id", "$endpoint$_code", "$endpoint$_name")
+	For Each requiredkey As String In RequiredKeys
+		If data.ContainsKey(requiredkey) = False Then
+			HRM.ResponseCode = 400
+			HRM.ResponseError = $"Key '${requiredkey}' not found"$
+			WebApiUtils.ReturnHttpResponse(HRM, Response)
+			Return
+		End If
+	Next
+	
+	Dim category_id As Int = data.Get("category_id")
+	Dim $endpoint$_code As String = data.Get("$endpoint$_code")
+	Dim $endpoint$_name As String = data.Get("$endpoint$_name")
+	
+	' Check conflict $endpoint$ code
+	Dim Found As Boolean = Model.FindRowBy$Endpoint$Code($endpoint$_code)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Found Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "$Endpoint$ already exist"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Insert new row
+	Model.Create(category_id, $endpoint$_code, $endpoint$_name, WebApiUtils.CurrentDateTime)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Retrieve new row
+	HRM.ResponseCode = 201
+	HRM.ResponseObject = Model.First
+	HRM.ResponseMessage = "$Endpoint$ created successfully"
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+Private Sub Put$Endpoint$ById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString("/api/$endpoint$s/".Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid id value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	Dim str As String = WebApiUtils.RequestDataText(Request)
+	If WebApiUtils.ValidateContent(str, HRM.PayloadType) = False Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = $"Invalid ${HRM.PayloadType} payload"$
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If HRM.PayloadType = WebApiUtils.MIME_TYPE_XML Then
+		Dim data As Map = WebApiUtils.ParseXML(str)		' XML payload
+	Else
+		Dim data As Map = WebApiUtils.ParseJSON(str)	' JSON payload
+	End If
+	
+	' Check whether required keys are provided
+	Dim RequiredKeys As List = Array As String("category_id", "$endpoint$_code", "$endpoint$_name")
+	For Each requiredkey As String In RequiredKeys
+		If data.ContainsKey(requiredkey) = False Then
+			HRM.ResponseCode = 400
+			HRM.ResponseError = $"Key '${requiredkey}' not found"$
+			WebApiUtils.ReturnHttpResponse(HRM, Response)
+			Return
+		End If
+	Next
+	
+	' Find row by id
+	Dim Found As Boolean = Model.FindRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Not(Found) Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$Endpoint$ not found"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	Dim category_id As Int = data.Get("category_id")
+	Dim $endpoint$_code As String = data.Get("$endpoint$_code")
+	Dim $endpoint$_name As String = data.Get("$endpoint$_name")
+	
+	' Check conflict $endpoint$ code
+	Dim Found As Boolean = Model.FindRowBy$Endpoint$CodeNotEqualId($endpoint$_code, id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Found Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "$Endpoint$ Code already exist"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Update row by id
+	Model.Update(id, category_id, $endpoint$_code, $endpoint$_name, WebApiUtils.CurrentDateTime)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+
+	' Return updated row
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "$Endpoint$ updated successfully"
+	HRM.ResponseObject = Model.First
+
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+Private Sub Delete$Endpoint$ById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString("/api/$endpoint$s/".Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid id value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	' Find row by id
+	Dim Found As Boolean = Model.FindRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Not(Found) Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "$Endpoint$ not found"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Delete row
+	Model.Delete(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "$Endpoint$ deleted successfully"
+	WebApiUtils.ReturnHttpResponse(HRM, Response)

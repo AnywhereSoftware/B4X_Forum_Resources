@@ -4,8 +4,8 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.3
 @EndOfDesignText@
-' MiniHtml
-' Version: 2.01
+'MiniHtml
+'Version: 2.10
 Sub Class_Globals
 	Private mIndents As Int
 	Private mIndentString As String

@@ -153,7 +153,6 @@ Public Sub show(projectA_ As String, projectB_ As String)
 '	busy = True
 	projectA = projectA_
 	projectB = projectB_
-	Log(projectA & TAB & projectB)
 	For i = 0 To 2
 		clv(i).clear
 		titleLbls(i).Text = titleLbls(i).Text.Replace("Subs", "Modules")

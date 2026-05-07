@@ -1,5 +1,5 @@
 ### [Macro] SubComparator: IDE Helper .jar for Comparing Two B4X Subs Using Myer's Difference Algorithm by William Lancee
-### 04/29/2026
+### 05/02/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/170907/)
 
 Context: A few years ago I created a music app for my own fairly large music archive - LPs and CDs transformed to .wav files.  
@@ -63,8 +63,8 @@ If it doesn't work for or you find bugs or irritations, let me know.
   
 **You have to copy BOTH the SubComparator.bat and SubComparator.jar to your Additional folder**  
   
-This is link to DropBox for a zipped folder containing:  
-[SubComparator.jar](https://www.dropbox.com/scl/fi/k6wvnmjir340f9zgtum2k/SuubCompator.zip?rlkey=q0mg1zr8fnmwev4sl88odqj2n&st=33x5pk5g&dl=0)  
+This is link to DropBox for a zipped folder containing SubComparator.jar:  
+[SubComparatorV1.02](https://www.dropbox.com/scl/fi/qi5yy4u6dv6pvgbuyuv1o/SubCompatorJar.zip?rlkey=86k2w2cwq2m5a42q7nbgmhno1&st=pgyuyocl&dl=0)  
   
 For unknown reasons I can't upload the file with the .bat extension.  
 It is attached as "SubComparator.txt". **Rename to "SubComparator.bat" then copy to Additional.  

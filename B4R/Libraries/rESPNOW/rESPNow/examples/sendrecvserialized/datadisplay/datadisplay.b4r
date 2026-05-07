@@ -1,0 +1,99 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=respnow
+Library3=rconvert
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	datadisplay.bas
+' Project:     	rESPNOW
+' Brief:       	ESP-NOW Advanced Example – 8-byte packet with checksum.
+' Date:        	2026-05-05
+' Author:      	Robert W.B. Linn (c) 2025 MIT
+' Dependencies: rESPNOW, rConvert
+' Description:	See code datareader.b4r.
+' Hardware:		ESP32 Wrover Kit.
+' Software:		B4R 4.00(64 bit), Platform ESP32 3.3.8 (board esp32wroverkit)
+' Wiring:		n/a
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "ESPNow DataDisplay v20260505"
+    
+	Public SerialLine As Serial
+	Private SERIAL_LINE_BAUDRATE As ULong = 115200
+
+	Private Esp As ESPNow
+	Private PeerMac() As Byte = Array As Byte(0xE0,0x8C,0xFE,0x34,0xB4,0xAC)
+	Private LastCounter As Byte = -1
+	Private SerData As B4RSerializator
+	Private SerDataBuffer(10) As Object
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(SERIAL_LINE_BAUDRATE)
+	Log("[DataDisplay.AppStart] ", VERSION)
+
+	Esp.Initialize("OnReceived", "OnDataSent")
+	Log("[DataDisplay.AppStart] MAC=", Convert.BytesToHex(Esp.GetMAC()))
+
+	Esp.SetChannel(1)
+	Esp.AddPeer(PeerMac)
+End Sub
+
+Private Sub OnReceived(mac() As Byte, data() As Byte)
+	Log("[DataDisplay.OnReceived] ", Convert.BytesToHex(data))
+	' [DataDisplay.ParsePacket] Raw=7E0407B81EE541E281B37F
+	' [DataDisplay.ParsePacket] t=28.6400 h=98 f=1 counter=51
+	ParsePacket(data)
+End Sub
+
+Private Sub OnDataSent(mac() As Byte, status As Byte)
+	If status = Esp.SEND_OK Then
+		Log("[DataDisplay.OnDataSent] OK")
+	Else
+		Log("[DataDisplay.OnDataSent][E] FAIL")
+	End If
+End Sub
+
+Private Sub ParsePacket(data() As Byte)
+	Log("[DataDisplay.ParsePacket] Raw=", Convert.BytesToHex(data))
+	Dim objects() As Object = SerData.ConvertBytesToArray(data, SerDataBuffer)
+
+	' Expect 4 objects
+	If objects.Length <> 4 Then
+		Log("[DataDisplay.ParsePacket][E] Length")
+		Return
+	End If
+
+	If data(0) <> 0x7E Or data(data.Length-1) <> 0x7F Then
+		Log("[DataDisplay.ParsePacket][E] Incorrect start or end byte")
+		Return
+	End If
+
+	Dim temp As Float	= objects(0)	' Float (serializer encoded it that way)
+	Dim hum As Int 		= objects(1)	' Send as Byte, but using Int here is actually safer: B4R auto-casts > no problem; Avoids surprises if later change range (e.g. >255)
+	Dim flags As Byte 	= objects(2)	' truly a byte (bitfield)
+	Dim counter As Byte	= objects(3)	' wrap-around logic (0–255)
+
+	If LastCounter <> -1 Then
+		Dim expected As Int = (LastCounter + 1) Mod 256
+		If counter <> expected Then
+			Log("[DataDisplay.ParsePacket][W] Missed packet")
+		End If
+	End If
+
+	LastCounter = counter
+
+	Log("[DataDisplay.ParsePacket] t=", temp, " h=", hum, " f=", flags, " counter=", counter)
+End Sub

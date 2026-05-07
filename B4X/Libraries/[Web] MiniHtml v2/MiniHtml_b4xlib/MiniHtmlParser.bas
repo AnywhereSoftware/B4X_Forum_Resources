@@ -4,9 +4,9 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.3
 @EndOfDesignText@
-' MiniHtml
-' Version: 1.00
-' Credits to: Erel
+'MiniHtmlParser
+'Version: 1.00
+'Credits to: Erel
 Sub Class_Globals
 	Public NoNode As HtmlNode
 	Public EscapedEntitiesMap As Map

@@ -162,20 +162,21 @@ End Sub
 Private Sub addCLVItem(txtA As String, txtB As String) As B4XView
 	 Dim mainpnl As B4XView = xui.CreatePanel("")
 	 mainpnl.SetLayoutAnimated(0, 0, 0, CustomListView1.GetBase.Width, 35)
-	 addLabel(mainpnl, 0, txtA)
+	 addLabel("A" & CustomListView1.Size, mainpnl, 0, txtA)
 	 Dim partition As Label: partition.initialize("")
 	 partition.As(B4XView).Color = xui.Color_RGB(240, 240, 240)
 	 mainpnl.AddView(partition, mainpnl.Width / 2, 0, 2, mainpnl.Height)
-	 addLabel(mainpnl, mainpnl.Width / 2, txtB)
+	 addLabel("B" & CustomListView1.Size, mainpnl, mainpnl.Width / 2, txtB)
 	 CustomListView1.Add(mainpnl, txtA & "__~__" & txtB)
 	 Return mainpnl
 End Sub
 
-Private Sub addLabel(pnl As B4XView, xoffset As Float, txt As String)
+Private Sub addLabel(markTag As String, pnl As B4XView, xoffset As Float, txt As String)
 	Dim lbl As Label: lbl.initialize("codeLine")
 	Dim lblx As B4XView = lbl
 	lblx.textcolor = xui.color_Black
 	lblx.text = txt
+	lblx.Tag = markTag
 	pnl.AddView(lblx, xoffset + 10, 0, pnl.Width / 2  - 20, pnl.Height)
 End Sub
 
@@ -204,9 +205,39 @@ Private Sub compareAB As Boolean
 End Sub
 
 Private Sub	codeLine_MouseClicked (EventData As MouseEvent)
-	Dim lblx As B4XView = Sender
-	fx.Clipboard.SetString("'" & lblx.text)
-	xui.MsgboxAsync("Code Line Copied to Clipboard", "Info")
+	If EventData.SecondaryButtonPressed Then 
+		Dim codeId As String = Sender.As(B4XView).tag
+		Dim lineNum As Int = codeId.SubString(1)
+		Dim sb As StringBuilder: sb.Initialize
+		If codeId.StartsWith("B") Then 
+			Dim cnt As Int
+			For i = lineNum To CustomListView1.Size - 1
+				Dim mpnl As B4XView = CustomListView1.GetPanel(i)
+				Dim Albl As B4XView = mpnl.GetView(0)
+				Dim Blbl As B4XView = mpnl.GetView(2)
+				If Albl.Text <> "" Then Exit
+				cnt = cnt + 1
+				sb.Append("'").Append(Blbl.Text).Append(CRLF)
+			Next
+		Else	
+			Dim cnt As Int
+			For i = lineNum To CustomListView1.Size - 1
+				Dim mpnl As B4XView = CustomListView1.GetPanel(i)
+				Dim Albl As B4XView = mpnl.GetView(0)
+				Dim Blbl As B4XView = mpnl.GetView(2)
+				If Blbl.Text <> "" Then Exit
+				cnt = cnt + 1
+				sb.Append("'").Append(Albl.Text).Append(CRLF)
+			Next
+		End If
+		If sb.Length > 0 Then sb.Remove(sb.Length -1, sb.Length)
+		fx.Clipboard.SetString(sb.toString)
+		xui.MsgboxAsync($"${cnt} Code Line(s) from ${codeId.CharAt(0)} Copied to Clipboard"$, "Info")
+	Else
+		Dim lblx As B4XView = Sender
+		fx.Clipboard.SetString("'" & lblx.text)
+		xui.MsgboxAsync("Code Line Copied to Clipboard", "Info")
+	End If
 End Sub
 
 Private Sub B4XPage_Resize (Width As Int, Height As Int)

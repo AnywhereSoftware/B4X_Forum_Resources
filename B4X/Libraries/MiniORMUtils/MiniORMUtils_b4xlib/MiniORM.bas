@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 5.50
+' Version 5.60
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -39,7 +39,7 @@ Sub Class_Globals
 	Private mShowExtraLogs 			As Boolean
 	Private mIfNotExist				As Boolean
 	Private mOptionalNull			As Boolean
-	Private mReturnNewRow			As Boolean
+	Private mReturnRow				As Boolean ' query new inserted or updated row after Save
 	Private mUseTimestamps 			As Boolean ' may need to disable when working on view
 	Private mUseTimestampsAsTicks 	As Boolean ' B4J only 'ignore
 	Private mUseDataAuditUserId 	As Boolean
@@ -119,7 +119,7 @@ Public Sub Initialize
 	mIfNotExist = False
 	mOptionalNull = True ' NULL is not added to column in CREATE
 	mQueryAutoClose = True
-	mReturnNewRow = True ' set to False?
+	mReturnRow = False ' set to True?
 	mQueryAddToBatch = False
 	mQueryExecute = True
 	mQueryRaw = False
@@ -357,6 +357,7 @@ Public Sub GetDate As String
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	Return str
 End Sub
@@ -382,6 +383,7 @@ Public Sub GetDate2 As ResumableSub
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	Return str
 End Sub
@@ -410,6 +412,7 @@ Public Sub GetDateTime As String
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	Return str
 End Sub
@@ -435,6 +438,7 @@ Public Sub GetDateTime2 As ResumableSub
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	Return str
 End Sub
@@ -646,8 +650,12 @@ Public Sub setQueryAutoClose (Value As Boolean)
 	mQueryAutoClose = Value
 End Sub
 
-Public Sub setReturnNewRow (Value As Boolean)
-	mReturnNewRow = Value
+Public Sub setReturnRow (Value As Boolean)
+	mReturnRow = Value
+End Sub
+
+Public Sub getReturnRow As Boolean
+	Return mReturnRow
 End Sub
 
 Public Sub Reset
@@ -1339,6 +1347,7 @@ Private Sub ExecQuery As ResultSet
 	Catch
 		LogColor($"[ExecQuery] ${LastException.Message}"$, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	Return RS
 End Sub
@@ -1355,6 +1364,7 @@ Private Sub ExecNonQuery
 	Catch
 		LogColor($"ExecNonQuery: ${LastException.Message}"$, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 End Sub
 
@@ -1532,6 +1542,7 @@ Public Sub Query
 		End If
 		If mError <> Null And mError.IsInitialized Then
 			If Initialized(RS) Then RS.Close
+			Close
 			Return
 		End If
 		ORMTable.ResultSet = RS
@@ -1661,6 +1672,7 @@ Public Sub Query
 		LogColor(LastException.Message, COLOR_RED)
 		LogColor("Are you missing ' = ?' in query?", COLOR_RED)
 		mError = LastException
+		Close
 	End Try
 	If mQueryAutoClose Then Close
 	Clear
@@ -1798,12 +1810,13 @@ Public Sub Save
 	If mQueryExecute = False Then Return
 	ExecNonQuery
 	If mError.IsInitialized Then ' bug fixed
+		Close
 		Return
 	End If
 	If BlnNew Then
 		' View does not support auto-increment id or ID is not autoincrement
 		If mObject = "VIEW" Or mAutoIncrement = False Then Return
-		If mReturnNewRow Then
+		If mReturnRow Then
 			Dim NewID As Int = getLastInsertID
 			' Return new row
 			Log($"Finding row from ${mTable} for id = ${NewID}"$)
@@ -1823,7 +1836,9 @@ Public Sub Save
 		mColumns = Array As String()
 		' Return row after update
 		'Log("Return row after update")
-		Query
+		If mReturnRow Then
+			Query
+		End If
 	End If
 End Sub
 
@@ -2040,6 +2055,7 @@ Public Sub ViewExists (ViewName As String) As Boolean
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 		Return False
 	End Try
 End Sub
@@ -2056,12 +2072,14 @@ Public Sub ListTables As List
 				Do While RS.NextRow
 					lst.Add(RS.GetString("name"))
 				Loop
+				RS.Close
 			Case MYSQL, MARIADB
 				mStatement = "SELECT TABLE_NAME FROM TABLES WHERE TABLE_SCHEMA = ?"
 				Dim RS As ResultSet = mSQL.ExecQuery2(mStatement, Array As String(mDatabaseName))
 				Do While RS.NextRow
 					lst.Add(RS.GetString("TABLE_NAME"))
 				Loop
+				RS.Close
 			Case Else
 				If mShowExtraLogs Then Log("Unknown DBType")
 				Return lst
@@ -2069,37 +2087,39 @@ Public Sub ListTables As List
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
-	RS.Close
 	Return lst
 End Sub
 
 ' Show Create Table query
 Public Sub ShowCreateTable (TableName As String) As String
 	Try
+		Dim stmt As String
 		Select mDbType
 			Case SQLITE
 				mStatement = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?"
 				Dim RS As ResultSet = mSQL.ExecQuery2(mStatement, Array As String(TableName))
 				Do While RS.NextRow
-					Return RS.GetString("sql")
+					stmt = RS.GetString("sql")
 				Loop
+				RS.Close
 			Case MYSQL, MARIADB
 				mStatement = $"SHOW CREATE TABLE ${TableName}"$
 				Dim RS As ResultSet = mSQL.ExecQuery(mStatement)
 				Do While RS.NextRow
-					Return RS.GetString("CREATE TABLE")
+					stmt = RS.GetString("CREATE TABLE")
 				Loop
+				RS.Close
 			Case Else
 				If mShowExtraLogs Then Log("Unknown DBType")
-				Return ""
 		End Select
 	Catch
 		LogColor(LastException.Message, COLOR_RED)
 		mError = LastException
+		Close
 	End Try
-	RS.Close
-	Return ""
+	Return stmt
 End Sub
 
 ' Append to the end of SQL statement

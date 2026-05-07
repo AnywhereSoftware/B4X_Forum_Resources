@@ -1,5 +1,5 @@
 ### Remote debugging with B4J-Bridge by Erel
-### 10/15/2025
+### 05/04/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/38804/)
 
 B4J v1.80 adds support for remote debugging using B4J-Bridge, a tool similar to the beloved [B4A-Bridge](http://www.b4x.com/android/forum/threads/7978/#content).  
@@ -38,5 +38,8 @@ If the debugger fails to connect to the remote machine then you should open the 
   
 **Updates**  
   
+v1.62 - Fixed the extra empty lines in the logs on remote Windows computers (<https://www.b4x.com/android/forum/threads/ide-log-extra-line-break-with-b4j-bridge.170914>)  
 v1.50 - Adds support for signed Mac Java 14. See the Java section here: <https://www.b4x.com/android/forum/threads/building-notarized-mac-packages.130890>  
-v1.44 - Adds support for Java versions above Java 11.
+v1.44 - Adds support for Java versions above Java 11.  
+  
+Source code is attached. Jar is available here: [www.b4x.com/b4j/files/b4j-bridge.jar](https://www.b4x.com/b4j/files/b4j-bridge.jar)

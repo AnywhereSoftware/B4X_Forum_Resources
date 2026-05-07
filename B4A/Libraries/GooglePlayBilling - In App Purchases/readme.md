@@ -1,5 +1,5 @@
 ### GooglePlayBilling - In App Purchases by Erel
-### 10/12/2025
+### 05/04/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/109945/)
 
 GooglePlayBilling is based on the new in app purchases service: <https://developer.android.com/google/play/billing/billing_library_overview>  
@@ -63,6 +63,7 @@ Tips:
   
 **Updates**  
   
+- v8.00 - Based on Google Play Billing v8.00.  
 - v7.01 - Fixed outdated manifest macro.  
 - v7.00 - Based on Google Play Billing v7.00. **Note that the android.test.purchased id no longer works. This partially breaks the example.**  
 - v5.21 - Based on Google Play Billing v5.21.  

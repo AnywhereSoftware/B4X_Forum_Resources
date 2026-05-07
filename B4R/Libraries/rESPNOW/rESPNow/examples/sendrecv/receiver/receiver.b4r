@@ -1,0 +1,58 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=respnow
+Library3=rconvert
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	receiver.bas
+' Project:     	rESPNOW
+' Brief:       	Receiver handling incoming data from the ESP32 sender using ESP-NOW protocol.
+' Date:        	2026-05-05
+' Author:      	Robert W.B. Linn (c) 2025 MIT
+' Dependencies: rESPNOW, rConvert
+' Description:	The ESP32 sender sends 2 bytes to the ESP32 receiver.
+' Hardware:		ESP32 Wrover Kit.
+' Software:		B4R 4.00(64 bit), Platform ESP32 3.3.8 (board esp32wroverkit)
+' Wiring:		n/a
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rESPNOW Receiver v20260505"
+	
+	' Communication
+	Public SerialLine As Serial
+	Private SERIAL_LINE_BAUDRATE As ULong = 115200
+
+	'Sensor
+	Private Esp As ESPNow
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(SERIAL_LINE_BAUDRATE)
+	Log("[Main.AppStart] ", VERSION)
+
+	Esp.Initialize("OnReceived", "OnDataSent")
+	Log("[Main.AppStart] espmac=", Convert.BytesToHex(Esp.GetMAC()))
+End Sub
+
+' Example bytearray sent by the sender:
+' [OnReceived] mac=8298FC3F7C98 data=1958
+Private Sub OnReceived(mac() As Byte, data() As Byte)
+	Log("[OnReceived] mac=", Convert.BytesToHex(mac), " data=", Convert.BytesToHex(data))
+End Sub
+
+Private Sub OnDataSent(mac() As Byte, status As Byte)
+	Log("[OnDataSent] mac=", Convert.BytesToHex(mac), " status=", Convert.ByteToHex(status))
+End Sub
+
