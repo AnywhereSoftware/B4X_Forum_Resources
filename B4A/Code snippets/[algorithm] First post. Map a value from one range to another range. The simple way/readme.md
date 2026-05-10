@@ -1,5 +1,5 @@
 ### [algorithm] First post. Map a value from one range to another range. The simple way. by max123
-### 10/24/2024
+### 05/07/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/144391/)
 
 Hi all,  
@@ -24,7 +24,7 @@ What I want discuss with you are:
 - **Bresenham's Line Algorithm** (This is used eg. to calculate points in a line on a screen, I used this to do linear interpolation on 3D Printers and CNC machines using stepper motors. See [Bresenham](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)). I discuss it here: <https://www.b4x.com/android/forum/threads/algorithm-bresenham-line-algorithm-linear-interpolation.145218/#post-920459>  
 - **Kalman Filter** (this is a real complex algorithm I never used, but I want to know, maybe some peoples used it ? See [Kalman Filter](https://en.wikipedia.org/wiki/Kalman_filter))  
   
-Many thanks to **Wikipedia** (The free encyclopedia) for great detailed explanations.  
+Many thanks to [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia) (The free encyclopedia) for great detailed explanations.  
   
 ————————————————————————————————————————–  
   
@@ -38,7 +38,7 @@ From Arduino reference:
 function uses integer math so will not generate fractions, when the math might indicate that it should do so.  
 Fractional remainders are truncated, and are not rounded or averaged.**  
   
-Because it worked with better results, I always use it on Arduino side instead of original map() function. It is two+ times faster and more precise.  
+Because it worked with better results, I always use it on Arduino side instead of original map() function. **It is two+ times faster and more precise**.  
   
 Here need a precisation, I use it on ESP8266 and ESP32 that have 32 bit MCU, probably on an 8 bit Arduino the floating point math slow down. I never tried because I do not have Arduino to try, I have one but actually is wired on my CNC machine controller. If you have an 8 bit Arduino like Uno, Mega and so… you can try yourself and test the elapsed time calling a function in a long loop that repeat eg 1.000.000 times and compare the same loop using map(). If you try it maybe post here results.  
   
