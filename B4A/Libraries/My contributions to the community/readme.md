@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 03/02/2026
+### 05/09/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -132,6 +132,7 @@ B4R***
 [Android messages cool new feature for smsing from everywhere](https://www.b4x.com/android/forum/threads/android-messages-cool-new-feature-for-smsing-from-everywhere.94564/)  
   
 ***B4J***  
+[What to do, If you update the dependencies of a library, due to vulnerable dependencies](https://www.b4x.com/android/forum/threads/jpoi-commons-compress-1-20-jar-to-commons-compress-1-28-jar-compiles-but-does-not-run.170968/post-1046308).  
 How to debug an MCP Server using MCP Inspector ([Post#1](https://www.b4x.com/android/forum/threads/test-and-debug-an-mcp-server.169730/), [Post#2](https://www.b4x.com/android/forum/threads/test-and-debug-an-mcp-server.169730/post-1039521), [Post#3](https://www.b4x.com/android/forum/threads/test-and-debug-an-mcp-server.169730/post-1039522))  
 [How to use an MCP server in your AI B4X projects](https://www.b4x.com/android/forum/threads/building-an-mcp-server-in-b4j.169512/post-1038839)  
 [Jetty Server - NOTE - Create and handle dynamic controls in a websocket app.](https://www.b4x.com/android/forum/threads/b4j-server-jetty-how-to-handle-dynamically-created-controls.161699/post-991829)  

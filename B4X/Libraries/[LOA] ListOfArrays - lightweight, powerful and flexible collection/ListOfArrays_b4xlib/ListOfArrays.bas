@@ -227,7 +227,7 @@ Public Sub AddColumn(Header As String, Column As List)
 		For i = 0 To mInternalArray.Size - 1
 			Dim row1() As Object = mInternalArray.Get(i)
 			Dim NewRow(row1.Length + 1) As Object
-			ArrayCopy(row1, 0, NewRow, 0, row1.Length)
+			LOAUtils.ArrayCopy(row1, 0, NewRow, 0, row1.Length)
 			NewRow(row1.Length) = IIf(i = 0 And mFirstDataRowIndex = 1, Header, Column.Get(i - mFirstDataRowIndex))
 			mInternalArray.Set(i, NewRow)
 		Next
@@ -304,21 +304,33 @@ Public Sub Merge(LOA As ListOfArrays)
 		Dim row1() As Object = mInternalArray.Get(i)
 		Dim row2() As Object = LOA.mInternalArray.Get(i)
 		Dim NewRow(row1.Length + row2.Length) As Object
-		ArrayCopy(row1, 0, NewRow, 0, row1.Length)
-		ArrayCopy(row2, 0, NewRow, row1.Length, row2.Length)
+		LOAUtils.ArrayCopy(row1, 0, NewRow, 0, row1.Length)
+		LOAUtils.ArrayCopy(row2, 0, NewRow, row1.Length, row2.Length)
 		mInternalArray.Set(i, NewRow)
 	Next
 	InternalUpdateIndicesMap
 End Sub
 
-Private Sub ArrayCopy(SrcArray() As Object, SrcOffset As Int, DestArray() As Object, DestOffset As Int, Length As Int)
-	#if B4A or B4J
-	Bit.ArrayCopy(SrcArray, SrcOffset, DestArray, DestOffset, Length)
-	#Else
-	For i = 0 To Length - 1
-		DestArray(DestOffset + i) = SrcArray(SrcOffset + i)
+
+
+'Ensures that all rows have the same number of columns as the headers or first row.
+'Short rows are padded with Null values and long rows are truncated.
+Public Sub VerifyRowsLengths
+	If getIsEmpty Then Return
+	Dim FirstRow() As Object = mInternalArray.Get(0)
+	Dim NumberOfColumns As Int = FirstRow.Length
+	For r = mFirstDataRowIndex To mInternalArray.Size - 1
+		Dim row() As Object = mInternalArray.Get(r)
+		If row.Length <> NumberOfColumns Then
+			Dim OrigLength As Int = Min(row.Length, NumberOfColumns)
+			Dim NewRow(NumberOfColumns) As Object
+			LOAUtils.ArrayCopy(row, 0, NewRow, 0, OrigLength)
+			For c = OrigLength To NumberOfColumns - 1
+				NewRow(c) = Null
+			Next
+			mInternalArray.Set(r, NewRow)
+		End If
 	Next
-	#End If
 End Sub
 
 Private Sub ThrowError(Message As String)
@@ -346,7 +358,7 @@ Public Sub DeepClone As ListOfArrays
 	New.Initialize(Null)
 	For Each Row() As Object In mInternalArray
 		Dim NewRow(Row.Length) As Object
-		ArrayCopy(Row, 0, NewRow, 0, Row.Length)
+		LOAUtils.ArrayCopy(Row, 0, NewRow, 0, Row.Length)
 		New.mInternalArray.Add(NewRow)
 	Next
 	New.FirstRowIsHeader = getFirstRowIsHeader

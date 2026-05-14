@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 'MiniHtml
-'Version: 2.10
+'Version: 2.20
 Sub Class_Globals
 	Private mIndents As Int
 	Private mIndentString As String

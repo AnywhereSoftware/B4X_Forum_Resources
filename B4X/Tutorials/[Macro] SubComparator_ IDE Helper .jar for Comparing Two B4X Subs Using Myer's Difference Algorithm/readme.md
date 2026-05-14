@@ -1,5 +1,5 @@
 ### [Macro] SubComparator: IDE Helper .jar for Comparing Two B4X Subs Using Myer's Difference Algorithm by William Lancee
-### 05/02/2026
+### 05/12/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/170907/)
 
 Context: A few years ago I created a music app for my own fairly large music archive - LPs and CDs transformed to .wav files.  
@@ -63,17 +63,12 @@ If it doesn't work for or you find bugs or irritations, let me know.
   
 **You have to copy BOTH the SubComparator.bat and SubComparator.jar to your Additional folder**  
   
-This is link to DropBox for a zipped folder containing SubComparator.jar:  
-[SubComparatorV1.02](https://www.dropbox.com/scl/fi/qi5yy4u6dv6pvgbuyuv1o/SubCompatorJar.zip?rlkey=86k2w2cwq2m5a42q7nbgmhno1&st=pgyuyocl&dl=0)  
+This is link to DropBox for:  
+[Zipped folder containing all parts needed](https://www.dropbox.com/scl/fi/p63c8xtyilr8hfl5ak8iq/SubComparator2.0.zip?rlkey=27n9xrzgnqgo97b9wsk9dkfyd&st=t5iqg5a1&dl=0)  
   
-For unknown reasons I can't upload the file with the .bat extension.  
-It is attached as "SubComparator.txt". **Rename to "SubComparator.bat" then copy to Additional.  
-  
-SubComparator.zip** contains the source code of the helper app. It is included here for interest only. It is not needed if you use the .jar file.  
-  
-The final piece - the macro. Place on top of Main or b4xMainPage.  
-  
-
-```B4X
-#Macro: Title, Sub Comparator, ide://run?File=%ADDITIONAL%\SubComparator.bat&Args="%PROJECT% %JAVABIN%"
-```
+It contains:  
+ ****SubComparator.bat**  
+ SubComparator.jar  
+ SubComparator.zip  
+ **SubComparatorMacro.txt  
+ ReadMe.txt****

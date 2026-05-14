@@ -1,5 +1,5 @@
 ### XLUtils  / jPOI 5 - Read and write MS Excel workbooks by Erel
-### 08/04/2024
+### 05/10/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/129969/)
 
 As written [here](https://www.b4x.com/android/forum/threads/excel-time.129613/), I plan to make it easier to read and write Excel workbooks.  
@@ -110,6 +110,8 @@ Tips:
   
 Updates:  
   
+- V2.10 - Adds support for reading to LOA and writing from LOA: <https://www.b4x.com/android/forum/threads/xlutils-loa-reading-and-writing-excel-data-with-listofarrays.170983/>  
+Depends on ListOfArrays (it will be an internal library in the future): <https://www.b4x.com/android/forum/threads/b4x-loa-listofarrays-lightweight-powerful-and-flexible-collection.170543/#content>  
 - V2.09 - New bidi attribute for paragraph tags.  
 - V2.08 - New FieldCode tag for Word documents: <https://www.b4x.com/android/forum/threads/xlutils-jpoi-5-read-and-write-ms-excel-workbooks.129969/post-996012>  
 - V2.07 - Fixes an issue with xl.AddressToString and columns with 'Z' address. Thanks [USER=99040]@angel\_[/USER] !  

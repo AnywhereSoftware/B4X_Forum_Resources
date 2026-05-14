@@ -1,5 +1,5 @@
 ### WebGL library. Focus on space animations. by max123
-### 04/03/2026
+### 05/09/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/170485/)
 
 Hi everyone,  
@@ -165,7 +165,7 @@ The Composer will process one or more effects previously added to the chain, fol
   composer.render();    // Instead render the scene in the composer
 ```
 
-- I didn't like the fact that the background was static, so I made it so that the Bloom effect Threshold parameter change at random intervals for a random duration. Since the effect is applied to the entire scene (including the background), it creates the impression of stars exploding in distant galaxies. The nebulae light up, and the spaceship receives a matching glow effect. This resulted in a very realistic look, as you can see the effect in the video.
+- I didn't like the fact that the background was static, so I made it so that the Bloom effect Threshold parameter change at random intervals for a random duration. Since the effect is applied to the entire scene (including the background), it creates the impression of stars exploding in distant galaxies. The nebulae light up, and the spaceship receives a matching glow effect. This resulted in a very realistic look, you can see the effect in the video.
 Please note that I used a global Bloom effect on the entire scene here, which has a certain computational cost during rendering.
 However, it is also possible to use a Selective Bloom to apply the effect only to specific objects without affecting others.
 To see how it works, you can check out this demo where you can switch any sphere light ON/OFF by just clicking with mouse on it: <https://threejs.org/examples/?q=SELE#webgl_postprocessing_unreal_bloom_selective>

@@ -85,3 +85,16 @@ Public Sub ListToArray(Items As List) As Object()
     Return b
     #End If
 End Sub
+
+'Same as Bit.ArrayCopy. Needed because Bit.ArrayCopy in B4i is limited to arrays of bytes.
+Public Sub ArrayCopy(SrcArray() As Object, SrcOffset As Int, DestArray() As Object, DestOffset As Int, Length As Int)
+	#if B4A or B4J
+	Bit.ArrayCopy(SrcArray, SrcOffset, DestArray, DestOffset, Length)
+	#Else
+	For i = 0 To Length - 1
+		DestArray(DestOffset + i) = SrcArray(SrcOffset + i)
+	Next
+	#End If
+End Sub
+
+

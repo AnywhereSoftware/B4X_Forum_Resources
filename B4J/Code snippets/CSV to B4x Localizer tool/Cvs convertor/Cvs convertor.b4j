@@ -1,0 +1,121 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jsql
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+#Region Project Attributes 
+    #MainFormWidth: 600
+    #MainFormHeight: 400
+#End Region
+#AdditionalJar: sqlite-jdbc-3.41.2.1.jar
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form ' Dit staat meestal al bovenin je code
+	Private sql1 As SQL
+End Sub
+
+Sub Globals
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Show
+    
+	' Roep de conversie aan EN geef het formulier mee
+	ConvertCsvToSqlite(MainForm)
+End Sub
+Sub ConvertCsvToSqlite(ParentForm As Form)
+	Dim fc As FileChooser
+	fc.Initialize
+	fc.Title = "Selecteer CSV vertaalbestand"
+	fc.SetExtensionFilter("CSV Bestanden", Array As String("*.csv"))
+    
+	Dim inputFile As String = fc.ShowOpen(ParentForm)
+	If inputFile = "" Then Return
+
+	Dim dir As String = File.GetFileParent(inputFile)
+	Dim filename As String = File.GetName(inputFile).Replace(".csv", ".db")
+    
+	If File.Exists(dir, filename) Then File.Delete(dir, filename)
+    
+	sql1.InitializeSQLite(dir, filename, True)
+    
+	Try
+		Dim lines As List = File.ReadList("", inputFile)
+		If lines.Size < 2 Then Return
+        
+		' 1. Headers ophalen en opschonen
+		Dim firstLine As String = lines.Get(0)
+		Dim headers() As String = Regex.Split(";", firstLine)
+        
+		Dim lastColumnIndex As Int = 0
+		For i = 1 To headers.Length - 1
+			If headers(i).Trim <> "" Then
+				lastColumnIndex = i
+			Else
+				Exit
+			End If
+		Next
+        
+		' 2. Tabel aanmaken met de juiste Primary Keys
+		sql1.ExecNonQuery("DROP TABLE IF EXISTS data")
+		sql1.ExecNonQuery("CREATE TABLE data (key TEXT, lang TEXT, value TEXT, PRIMARY KEY (key, lang))")
+
+		' 3. Data verwerken
+		sql1.BeginTransaction
+        
+		For i = 1 To lines.Size - 1
+			Dim currentLine As String = "" & lines.Get(i)
+			currentLine = currentLine.Trim
+            
+			If currentLine = "" Then Continue
+            
+			Dim rowData() As String = Regex.Split(";", currentLine)
+            
+			If rowData.Length > 0 Then
+				' FORCEER KEY NAAR LOWERCASE
+				Dim currentKey As String = rowData(0).Trim.Replace("""", "").ToLowerCase
+                
+				If currentKey = "" Then Continue
+                
+				For j = 1 To lastColumnIndex
+					' FORCEER LANG NAAR LOWERCASE
+					Dim langCode As String = headers(j).Trim.ToLowerCase
+                    
+					Dim translation As String = ""
+					If j < rowData.Length Then
+						translation = rowData(j).Trim.Replace("""", "")
+					End If
+                    
+					' Alleen invoegen als er een vertaling is
+					If translation <> "" Then
+						sql1.ExecNonQuery2("INSERT OR IGNORE INTO data VALUES (?, ?, ?)", _
+                            Array As String(currentKey, langCode, translation))
+					End If
+				Next
+			End If
+		Next
+        
+		sql1.TransactionSuccessful
+		fx.Msgbox(ParentForm, "Database succesvol aangemaakt!" & CRLF & "Keys en Talen zijn nu in Lowercase.", "Succes")
+        
+	Catch
+		Log(LastException)
+		fx.Msgbox(ParentForm, "Fout: " & LastException.Message, "Error")
+	End Try
+    
+	sql1.Close
+End Sub
