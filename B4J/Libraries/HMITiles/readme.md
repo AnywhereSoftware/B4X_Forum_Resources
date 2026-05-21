@@ -1,5 +1,5 @@
 ### HMITiles by rwblinn
-### 04/17/2026
+### 05/19/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/169774/)
 
 **HMITiles** - an Open-Source HMI Tile Library for Industrial Dashboards and SCADA Applications  
@@ -46,7 +46,7 @@ All tiles share a unified styling and state model.
 
   
   
-![](https://www.b4x.com/android/forum/attachments/171206)  
+![](https://www.b4x.com/android/forum/attachments/171533)  
   
 
 ---
@@ -55,7 +55,7 @@ All tiles share a unified styling and state model.
   
 **Source Code**  
 This project is maintained in the GitHub repository [HMITiles](https://github.com/rwbl/HMITiles/tree/main).  
-Note: As of 2026-04-17, updates are published on GitHub only and are no longer posted on this forum.  
+Note: As of 2026-04-17, source code updates are published on GitHub only and are no longer posted on this forum.  
   
 
 ---

@@ -1,5 +1,5 @@
 ### New Get iPhone Model by Filippo
-### 09/30/2022
+### 05/18/2026
 [B4X Forum - B4i - Code snippets](https://www.b4x.com/android/forum/threads/143225/)
 
 Enclosed is the updated list.  
@@ -85,6 +85,19 @@ deviceNamesByCode = @{@"i386" :@"Simulator",
 @"iPhone14,8" :@"iPhone 14 Plus", //  
 @"iPhone15,2" :@"iPhone 14 Pro", //  
 @"iPhone15,3" :@"iPhone 14 Pro Max", //  
+@"iPhone15,4" :@"iPhone 15", //  
+@"iPhone15,5" :@"iPhone 15 Plus", //  
+@"iPhone16,2" :@"iPhone 15 Pro Max", //  
+@"iPhone17,1" :@"iPhone 16 Pro", //  
+@"iPhone17,2" :@"iPhone 16 Pro Max", //  
+@"iPhone17,3" :@"iPhone 16", //  
+@"iPhone17,4" :@"iPhone 16 Plus", //  
+@"iPhone17,5" :@"iPhone 16e", //  
+@"iPhone18,1" :@"iPhone 17 Pro", //  
+@"iPhone18,2" :@"iPhone 17 Pro Max", //  
+@"iPhone18,3" :@"iPhone 17", //  
+@"iPhone18,4" :@"iPhone Air", //  
+@"iPhone18,5" :@"iPhone 17e", //  
   
 @"iPad1,1" :@"iPad", // (Original)  
 @"iPad1,2" :@"iPad 3G", //  
@@ -162,6 +175,10 @@ deviceNamesByCode = @{@"i386" :@"Simulator",
 @"iPad13,11" :@"iPad Pro 12.9 inch 5th Gen", //  
 @"iPad13,16" :@"iPad Air 5th Gen (WiFi)", //  
 @"iPad13,17" :@"iPad Air 5th Gen (WiFi+Cellular)", //  
+@"iPad13,18" :@"iPad (10th generation) Wi-Fi", //  
+@"iPad13,19" :@"iPad (10th generation) Wi-Fi + Cellular", //  
+@"iPad15,7" :@"iPad (A16) Wi-Fi", //  
+@"iPad15,8" :@"iPad (A16) Wi-Fi + Cellular", //  
   
 @"Watch1,1" :@"Apple Watch 38mm", // Apple Watch 38mm case  
 @"Watch1,2" :@"Apple Watch 38mm", // Apple Watch 38mm case  
