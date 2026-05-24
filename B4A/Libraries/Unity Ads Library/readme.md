@@ -1,5 +1,5 @@
 ### Unity Ads Library by Pendrush
-### 06/11/2025
+### 05/22/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/120648/)
 
 Original library: <https://github.com/Unity-Technologies/unity-ads-android>  
@@ -236,4 +236,6 @@ v4.90**
 - Update for original library. [Changelog](https://docs.unity.com/grow/en-us/ads/changelog).
 
   
-Download library from: <https://mega.nz/file/MBxQGQjT#qFjWMIaOk7Umxn74nsBHqT7x-eorzbSBpd6Ue2AUWFU>
+Download library from: <https://mega.nz/file/MBxQGQjT#qFjWMIaOk7Umxn74nsBHqT7x-eorzbSBpd6Ue2AUWFU>  
+  
+Edit (Erel): updated dependencies: <https://www.b4x.com/android/forum/threads/unity-ads-library.120648/post-1046796>

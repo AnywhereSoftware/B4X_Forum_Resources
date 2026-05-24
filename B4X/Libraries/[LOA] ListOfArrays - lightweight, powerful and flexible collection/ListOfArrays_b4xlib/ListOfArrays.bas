@@ -212,6 +212,7 @@ End Sub
 
 'Adds a column to the LOA. Number of rows must match. The list should hold the values directly, not arrays of objects.
 'Use Merge if the list holds arrays of objects.
+'Pass empty string for the header, if LOA is without a header.
 Public Sub AddColumn(Header As String, Column As List)
 	If mInternalArray.Size = 0 Then
 		If Header <> "" Then
@@ -233,6 +234,16 @@ Public Sub AddColumn(Header As String, Column As List)
 		Next
 	End If
 	InternalUpdateIndicesMap
+End Sub
+
+'Adds a new column and fills all rows with the same value.
+'Pass empty string for the header, if LOA is without a header.
+Public Sub AddColumnWithValue(Header As String, Value As Object)
+	Dim col As List = B4XCollections.CreateList(Null)
+	For i = 1 To getSize
+		col.Add(Value)
+	Next
+	AddColumn(Header, col)
 End Sub
 
 'Replaces the column with the new one. The passed columns should hold values, not arrays of objects.
@@ -280,7 +291,7 @@ Public Sub AddRows(LOA As ListOfArrays)
 	If LOA.IsEmpty Then Return
 	CheckColumnsMatch("AddRows", LOA.NumberOfColumns)
 	If LOA.FirstRowIsHeader Then
-		#if B4J
+		#if B4J or B4A
 		mInternalArray.AddAll(LOA.mInternalArray.SubList(LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
 		#else
 		mInternalArray.AddAll(B4XCollections.SubList(LOA.mInternalArray, LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
@@ -372,7 +383,8 @@ Public Sub IterateRows As List
 		Return B4XCollections.GetEmptyList
 	End If
 	If getFirstRowIsHeader Then
-		#if B4J
+		#if B4J or B4A
+		'change SORT to create modifiable list.
 		Return mInternalArray.SubList(1, mInternalArray.Size)
 		#else
 		Return B4XCollections.SubList(mInternalArray, 1, mInternalArray.Size)
@@ -633,7 +645,7 @@ Public Sub Sort (ColumnIndex As Object, Ascending As Boolean)
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
 	Dim ListToSort As List
 	If getFirstRowIsHeader Then
-		#if B4J
+		#if B4J or B4A
 		ListToSort = B4XCollections.CreateList(IterateRows)
 		#else
 		ListToSort = IterateRows

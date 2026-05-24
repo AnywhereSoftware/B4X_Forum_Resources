@@ -50,6 +50,14 @@ Public Sub CreateFromListOfMaps(Maps As List, OverrideHeaders() As Object) As Li
 	Return loa
 End Sub
 
+'Creates a one-column LOA from a list.
+'Pass empty string for the header, if no header is needed.
+Public Sub CreateFrom1DList (Header As String, Data As List) As ListOfArrays
+	Dim loa As ListOfArrays = CreateEmpty(Null)
+	loa.AddColumn(Header, Data)
+	Return loa
+End Sub
+
 'Wraps the list and treats the first row as the header.
 Public Sub WrapWithHeader(Items As List) As ListOfArrays
 	Dim loa As ListOfArrays

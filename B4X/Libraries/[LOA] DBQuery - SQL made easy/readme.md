@@ -1,5 +1,5 @@
 ### [LOA] DBQuery - SQL made easy by Erel
-### 03/11/2026
+### 05/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170560/)
 
 DBQuery is a thin wrapper around the platforms' SQL libraries: SQL, iSQL and jSQL.  
@@ -28,4 +28,4 @@ Log(res.ToString(0)) 'print all rows
   
   
 ListOfArrays library is available here: <https://www.b4x.com/android/forum/threads/b4x-loa-listofarrays-lightweight-powerful-and-flexible-collection.170543/#content>  
-It will become an internal library in the future.
+It will become an internal library in the future (it is included with B4A v13.5).

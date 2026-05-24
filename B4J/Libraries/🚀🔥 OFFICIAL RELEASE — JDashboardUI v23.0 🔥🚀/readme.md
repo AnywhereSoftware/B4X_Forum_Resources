@@ -1,5 +1,5 @@
 ### 🚀🔥 OFFICIAL RELEASE — JDashboardUI v23.0 🔥🚀 by fernando1987
-### 05/19/2026
+### 05/20/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171057/)
 
 The biggest evolution of JDashboardUI is finally here.  
@@ -47,9 +47,22 @@ You can now create modern buttons for:
   
 Using a much cleaner and more flexible implementation:  
   
-DUI.AddIconButton("maximize",Chr(0xE3E0),fx.Colors.DarkGray,fx.CreateMaterialIcons(22),DUI.ACTION\_MAXIMIZE,"maximize")  
+
+```B4X
+UI.AddIconButton("maximize",Chr(0xE3E0),fx.Colors.DarkGray,fx.CreateMaterialIcons(22),UI.ACTION_MAXIMIZE,"maximize app")  
   
-DUI.AddIconButton("minimize",Chr(0xE15B),fx.Colors.DarkGray,fx.CreateMaterialIcons(22),DUI.ACTION\_MINIMIZE,"minimize")  
+UI.AddIconButton("minimize",Chr(0xE15B),fx.Colors.DarkGray,fx.CreateMaterialIcons(22),UI.ACTION_MINIMIZE,"minimize app")  
+  
+Private sub maximize_Click  
+  
+End sub  
+  
+Private sub minimize_Click  
+  
+End sub
+```
+
+  
   
 ✔ Modern integration  
 ✔ Material icons support  

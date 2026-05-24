@@ -1,5 +1,5 @@
 ###  Comment Links and #Macros by Erel
-### 09/16/2025
+### 05/20/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/119897/)
 
 ![](https://www.b4x.com/basic4android/images/qHTNrUJnPQ.gif)  
@@ -56,10 +56,14 @@ Note that the external program working directory will be the current project Obj
 - The parameters values are url decoded.
 - The ide://run method supports these additional arguments:
 
-- FilesSync=True - Causes the IDE to sync the Files folder after operation completes.
-- CleanProject=True - Causes the IDE to clean the project after operation completes.
-- VMArgs - Similar to Args but added as a JVM argument.
-You can add: VMArgs=-DZeroSharedFiles%3DTrue to a zipper call to delete the content of the platform specific copies of shared files (the content will be added back when the program runs, because of the custom build action).
+- *LibrariesRefresh=True*: automatically refresh the libraries after the task runs.
+- *Codesync=True*: force the IDE to synchronize the code modules with the files.
+- *AutoSave=True*: automatically save the project BEFORE running the task. Note that Tools - IDE Options - Auto Save should be enabled for this to have effect.
+- *FilesSync=True*: sync the Files folder after operation completes.
+- *CleanProject=True*: clean the project after operation completes.
+- *VMArgs*: similar to Args but added as a JVM argument.
+You can add: VMArgs=-DZeroSharedFiles%3DTrue to a zipper call to delete the content of the platform specific copies of shared files (the content will be added back when the program runs, because of the custom build action).- *NoTimeout=True*: disable the process timeout.
+
 - The parameter values can include the following case sensitive aliases:
 
 - %B4X% - installation folder.
@@ -69,6 +73,8 @@ You can add: VMArgs=-DZeroSharedFiles%3DTrue to a zipper call to delete the cont
 - %ADDITIONAL% - Platform specific additional libraries folder.
 - Any other environment variable.
 
+ide://KillProcess: kills all the currently running processes. Useful when running non-ui processes with no timeout  
+  
 **Macros**  
   
 Similar to comment links, but accessible through the window title buttons (with the shortcuts) or automated in some other way.  

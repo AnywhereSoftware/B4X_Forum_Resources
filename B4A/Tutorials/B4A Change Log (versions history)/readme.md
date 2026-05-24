@@ -1,7 +1,41 @@
 ### B4A Change Log (versions history) by Erel
-### 07/16/2025
+### 05/20/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/19332/)
 
+**v13.5** - May 20, 2026 - <https://www.b4x.com/android/forum/threads/b4a-v13-5-integrated-code-bundle-and-more.171062/>  
+
+- Integreated code bundle
+- The Starter service is being deprecated due to restrictions applied by Android, which can lead to crashes in debug mode, and it becoming less useful with B4XPages. Removing the Starter service no longer affects the behavior of unhandled exceptions.
+- New warning in B4XPages projects when the starter service is included.
+- Application\_Error sub can be added to the Main module (when the Starter service is excluded).
+- B4XPages project template updated accordingly.
+- #ExcludeCodeFromBundle attribute - set to True to exclude the current module from the code bundle. Note that public sub signatures and comments (before the subs only) will still be included in the bundle.
+- New log filter:
+Error - includes the app logs and system level error logs. Very useful when looking for ANRs, startup errors and other mysterious crashes.- Autocomplete in #If lines.
+- List.Sublist - Very fast method that returns a read-only sub-list.
+- Fix for String.ToLower not explicitly setting the locale. Mainly fixes the Turkish I: [https://www.b4x.com/android/forum/t...ctly-for-the-turkish-language.163961/#content](https://www.b4x.com/android/forum/threads/tolowercase-does-not-work-correctly-for-the-turkish-language.163961/#content)
+- New #Macro / comment link options: (case insensitive)
+
+- librariesrefresh - set to True to automatically refresh the libraries after the task runs.
+- codesync - set to True to force the IDE to synchronize the code modules with the files.
+- autosave - set to True to automatically save the project BEFORE running the task. Note that Tools - IDE Options - Auto Save should be enabled for this to have effect.
+- filessync (not new) - set to True to synchronize the Files tab after the task.
+- cleanproject (not new) - set to True to "clean project" after the task
+- %STATE1% - new variable that causes the IDE to create a temporary file with the IDE state based on the new options under Tools - IDE Options. The file path will be passed to the process. This is used by Code Bundle and can be used by other similar tools. Note that the format can be modified in the future.
+- NoTimeout - set to True to disable the default process timeout (currently not available in B4J).
+- ide://KillProcesses - new option to kill all the currently running processes. Useful when running non-ui processes with no timeout (currently not available in B4J).
+Note that starting a B4J app as an external tool is as simple as:
+
+```B4X
+ide://run?File=<path to jar>\App.jar&NoTimeout=True
+```
+
+
+- B4X Map collection can now wrap Java Maps.
+- Internal libraries updated.
+- Other bug fixes and minor improvements.
+
+  
 **v13.4** - July 16, 2025 - <https://www.b4x.com/android/forum/threads/b4a-v13-4-is-available-for-download.167803/>  
 
 - New command line tools and prepackaged SDK.
