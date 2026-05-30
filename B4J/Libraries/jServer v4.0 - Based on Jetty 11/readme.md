@@ -1,9 +1,9 @@
 ### jServer v4.0 - Based on Jetty 11 by Erel
-### 07/22/2025
+### 05/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/140437/)
 
 **Starting from B4J v9.80 this library is included as an internal library.** Old library: <https://www.b4x.com/android/forum/threads/141323/#content>  
-This is a new version of jServer. It is based on Jetty 11.0.9. Previous versions were based on an early version of Jetty 9.  
+This is a new version of jServer. It is based on Jetty 11. Previous versions were based on an early version of Jetty 9.  
 There were many improvements in Jetty during the last couple of years: <https://github.com/eclipse/jetty.project/releases>  
   
 It requires Java 11+.  
@@ -26,4 +26,5 @@ Note that http sessions are not created automatically for WebSockets. You can us
 b4j\_ws.js v0.93 is attached. It includes a fix suggested by [USER=974]@alwaysbusy[/USER]: <https://www.b4x.com/android/forum/threads/jserver-v4-0-based-on-jetty-11.140437/post-889892>  
   
 Updates:  
+- v4.10 (beta) - dependencies updated with Jetty 11.0.26. Download link: <https://www.b4x.com/b4j/files/jserver_4_10.zip>  
 - v4.03 - suppresses the stack trace logs for ClosedChannelExceptions, which can happen sporadically on disconnections.
