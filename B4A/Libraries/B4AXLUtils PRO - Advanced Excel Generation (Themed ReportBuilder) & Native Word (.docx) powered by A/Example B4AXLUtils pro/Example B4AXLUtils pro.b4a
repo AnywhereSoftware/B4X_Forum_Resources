@@ -1,0 +1,447 @@
+﻿Build1=Default,b4a.example
+File1=art.png
+File2=footer.jpg
+File3=header.jpg
+File4=Layout.bal
+File5=LOGO_CNEL_WEB_440x194.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=core
+Library2=permissionsmanager
+Library3=xui
+Library4=b4axlutils pro
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~AddPermission("android.permission.MANAGE_EXTERNAL_STORAGE")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=4
+NumberOfModules=1
+Version=13.5
+@EndOfDesignText@
+#Region Project Attributes
+	#ApplicationLabel: Report Generator
+	#VersionCode: 1
+	#VersionName: 1.0
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region Activity Attributes
+	#FullScreen: False
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	' These global variables will be declared once when the application starts
+	' These variables can be accessed from all modules
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	' These global variables will be redeclared each time the activity is created
+	Private btnMultiSheetReport As Button
+	Private btnProtectedReport As Button
+	Private btnWordReport As Button
+	Private btnExcelRead As Button
+	Private lblStatus As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	' Request storage permission
+	Dim PM As PermissionsManager
+	PM.CheckAndRequestPermission(PermissionsManager.SPECIAL_MANAGE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	
+	If Result Then
+		lblStatus.Text = "Ready - Storage permission granted"
+		Log("Storage permission granted")
+	Else
+		lblStatus.Text = "Error - Storage permission denied"
+		Log("Storage permission denied")
+	End If
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+' ============================================
+' BUTTON 1: Multi-Sheet Themed Excel Report
+' ============================================
+Sub btnMultiSheetReport_Click
+	CreateMultiSheetThemedReport
+	lblStatus.Text = "Multi-sheet themed report created successfully!"
+End Sub
+
+' Creates an Excel workbook with 4 different sheets, each with its own color theme
+Sub CreateMultiSheetThemedReport
+	' 1. Initialize the Excel manager
+	Dim excel As ExcelManager
+	excel.Initialize(Me, "excel")
+	excel.CreateWorkbook
+  
+	' Define sheet names
+	Dim sheetNames() As String = Array As String("North Consumption", "South Consumption", "Center Consumption", "Special Consumption")
+    
+	' Loop to create 4 sheets with different themes
+	For i = 0 To sheetNames.Length - 1
+		Dim name As String = sheetNames(i)
+        
+		' 2. Create a new sheet
+		Dim sheet As ExcelSheet = excel.CreateSheet(name)
+        
+		' 3. Configure the ReportBuilder for THIS specific sheet
+		Dim report As ExcelReportBuilder
+		report.Initialize(excel, sheet)
+        
+		' --- APPLY DYNAMIC THEMES ---
+		' Assign different themes to each sheet
+		Select i
+			Case 0: report.SetTheme(report.THEME_BLUE)   ' North: Blue Corporate
+			Case 1: report.SetTheme(report.THEME_GREEN)  ' South: Green
+			Case 2: report.SetTheme(report.THEME_ORANGE) ' Center: Orange
+			Case 3: report.SetTheme(report.THEME_PURPLE) ' Special: Purple
+		End Select
+		
+		' --- REPORT CONFIGURATION ---
+		' The title will automatically inherit the theme's color
+		report.SetLogo(File.DirAssets, "LOGO_CNEL_WEB_440x194.png") _
+		.SetLogoRange(0, 1, 1, 3) _
+			.SetTitle("MONTHLY CONSUMPTION REPORT - " & name.ToUpperCase) _
+			.SetSubtitle("Manta, Manabí - 2026 Period") _
+			.SetShowDate(True, "Issue Date:") _
+			.SetShowTotals(True, "TOTAL SUMMARY:") _
+			.SetStartColumn(1) ' Start at Column B to leave left margin
+        
+		' --- COLUMN CONFIGURATION (SECTIONS) ---
+		report.AddColumn("ID", excel.TYPE_NUMERIC) _
+			.AddColumn("Customer", excel.TYPE_STRING) _
+			.AddColumnEx("Reading Date", excel.TYPE_DATE, "dd/mmm/yyyy") _
+			.AddColumn("kWh", excel.TYPE_NUMERIC) _
+			.AddColumnEx("Subtotal", excel.TYPE_CURRENCY, "$#,##0.00")
+        
+		' --- TOTALS ---
+		' Specify which columns should be summed at the end of the table
+		report.AddTotalColumn(3) ' kWh column
+		report.AddTotalColumn(4) ' Subtotal column
+        
+		' --- DATA LOADING ---
+		report.AddRow(Array As Object(1001, "Customer A - " & name, "2026-05-10", 125.50, 18.25))
+		report.AddRow(Array As Object(1002, "Customer B - " & name, "2026-05-11", 450.00, 72.10))
+		report.AddRow(Array As Object(1003, "Customer C - " & name, "2026-05-12", 89.20, 12.40))
+		report.AddRow(Array As Object(1004, "Customer D - " & name, "2026-05-13", 1200.00, 210.00))
+        
+		' 4. BUILD CURRENT SHEET
+		' This processes the theme, draws the table with zebra striping, and calculates totals
+		report.Build
+        
+	Next
+    
+	' 5. SAVE THE FINAL PRODUCT (Workbook with 4 themed sheets)
+	Dim fileName As String = "Thematic_MultiSheet_Report_2026.xlsx"
+    
+	'Save using the manager
+	excel.Save(File.DirRootExternal, fileName)
+    
+	Log("✅ Multi-sheet Themed Report created successfully: " & fileName)
+End Sub
+
+' ============================================
+' BUTTON 2: Protected Excel Report with Logo
+' ============================================
+Sub btnProtectedReport_Click
+	CreateProtectedExcelReport
+	lblStatus.Text = "Protected Excel report created successfully!"
+End Sub
+
+' Creates a protected Excel report with logo, locked cells, and auto-filters
+Sub CreateProtectedExcelReport
+	Dim ex As ExcelManager
+	ex.Initialize(Me,"ex")
+    
+	' 1. Create new workbook and worksheet
+	ex.CreateWorkbook
+	Dim sheet As ExcelSheet = ex.CreateSheet("Inventory 2026")
+    
+	' 2. Add a Logo
+	' Place logo at column 0, row 0
+	Dim picture As Int = ex.AddPicture(File.DirAssets, "art.png", ex.PICTURE_TYPE_PNG)
+	sheet.AddPictureRange(picture, 0, 0, 1, 3)
+
+    
+	' 3. Create Headers (Start at row 3 to leave space for logo)
+	Dim headers() As String = Array As String("ID", "Product", "Current Stock", "Audit Notes")
+	Dim headerRow As ExcelRow = sheet.GetRow(3)
+    
+	For i = 0 To headers.Length - 1
+		Dim cell As ExcelCell = headerRow.GetCell(i)
+		cell.Value = headers(i)
+		' Apply style: bold, dark background, etc.
+		cell.SetBold(True)
+		cell.SetBackgroundColor(ex.CORP_OLIVE)
+		cell.SetTextColor(ex.COLOR_GREEN)
+	Next
+    
+	' 4. Fill sample data
+	For r = 4 To 10
+		Dim row As ExcelRow = sheet.GetRow(r)
+        
+		' ID and Product (cells that will remain locked by default)
+		row.GetCell(0).Value = "PROD-" & r
+		row.GetCell(1).Value = "Electronic Component " & r
+		row.GetCell(2).Value = Rnd(10, 100)
+        
+		' Notes cell (UNLOCKED so user can write)
+		Dim noteCell As ExcelCell = row.GetCell(3)
+		noteCell.Value = ""
+		noteCell.SetLocked(False) ' <--- NEW METHOD
+	Next
+    
+	' 5. Enable Auto-Filters (on the header range)
+	sheet.SetAutoFilter(3, 3, 0, 3) ' Apply filters from row 3, columns 0-3
+    
+	' 6. Auto-size columns
+	sheet.AutoSizeColumns(0, 3)
+    
+	' 7. Protect the sheet with password
+	' This locks everything except cells where we used SetLocked(False)
+	sheet.ProtectSheet("manta2026")
+    
+	' 8. Save the file
+	Dim fileName As String = "Protected_Report.xlsx"
+	ex.Save(File.DirRootExternal, fileName)
+	Log("Protected report created successfully at: " & fileName)
+End Sub
+
+' ============================================
+' BUTTON 3: Professional Word Document Report
+' ============================================
+Sub btnWordReport_Click
+	GenerateWordReport
+	lblStatus.Text = "Word document report created successfully!"
+End Sub
+
+' Creates a professional Word document with headers, footers, tables, and formatted text
+Sub GenerateWordReport
+	Dim wr As WordManager
+	wr.Initialize(Me, "wr")
+
+	' --- GLOBAL CONFIGURATION ---
+	wr.SetDocumentFont(wr.FONT_TIMES)
+
+	' --- HEADER CONFIGURATION ---
+	Dim header As WordHeader = wr.GetHeader
+	header.AddText("MANABÍ BUSINESS UNIT - ENERGY CONTROL", True, 10, "004A99")
+	header.AddImage(File.DirAssets, "header.jpg", 620, 80)
+
+	' --- FOOTER CONFIGURATION ---
+	Dim footer As WordFooter = wr.GetFooter
+	footer.AddImage(File.DirAssets, "footer.jpg", 620, 80)
+	
+	' Add page numbers in footer
+	wr.AddPageNumberExt(wr.ALIGN_CENTER, "Page", "of")
+	
+	' --- TITLE AND CUSTOMER DATA ---
+	Dim p1 As WordParagraph = wr.CreateParagraph
+	p1.SetAlignment(wr.ALIGN_BOTH) _
+		.AddText("Collection of Non-Energy Items: Labor and Materials for Customer GABRIELA MERCEDES LOOR VELASQUEZ, Contract 200055262477, Manta Canton") _
+		.SetBold(True).SetFontSize(11).ApplyStyle
+	p1.SetSpacingAfterPoints(40)
+	
+	' --- SECTION: BACKGROUND ---
+	Dim p2 As WordParagraph = wr.CreateParagraph
+	p2.AddText("BACKGROUND").SetBold(True).SetFontSize(12).ApplyStyle
+	wr.CreateParagraph
+	
+	Dim p3 As WordParagraph = wr.CreateParagraph
+	p3.SetAlignment(wr.ALIGN_BOTH)
+    
+	' Normal text
+	p3.AddText("According to the technical inspection conducted by CNELEP UN Manabí personnel on ").ApplyStyle
+	
+	' Date in bold
+	p3.AddText("01/13/2026").SetBold(True).SetFontSize(11).ApplyStyle
+    
+	p3.AddText(", evidence showed ").ApplyStyle
+	
+	' Technical issue (Bold, Italic, Red)
+	p3.AddText("meter manipulation").SetBold(True).SetItalic(True).SetTextColor(Colors.Red).SetFontSize(11).ApplyStyle
+    
+	p3.AddText(" at the electrical service installation for contract 200055262477 (CUEN 1100498204), under the name of ").ApplyStyle
+	
+	' Name in bold
+	p3.AddText("GABRIELA MERCEDES LOOR VELASQUEZ").SetBold(True).SetFontSize(11).ApplyStyle
+    
+	p3.AddText("; therefore, it was proceeded to recalculate the unbilled consumption.").ApplyStyle
+	p3.SetSpacingAfterPoints(15)
+    
+	' --- SECTION: DEVELOPMENT ---
+	Dim p5 As WordParagraph = wr.CreateParagraph
+	p5.AddText("DEVELOPMENT").SetBold(True).SetFontSize(12).ApplyStyle
+	wr.CreateParagraph
+	
+	Dim p6 As WordParagraph = wr.CreateParagraph
+	p6.SetAlignment(wr.ALIGN_BOTH)
+	p6.AddText("During the technical inspection, issues related to the manipulation of the measurement system were identified, leading to the correction and normalization of the electrical service. ").ApplyStyle
+	p6.AddText("This resulted in the rebilling of unbilled consumption, generation of a fine, and billing for materials and labor used.").ApplyStyle
+	p6.SetSpacingAfterPoints(15)
+    
+	' --- SECTION: ACTIONS AND PENALTIES ---
+	Dim p8 As WordParagraph = wr.CreateParagraph
+	p8.AddText("ACTIONS AND APPLICABLE PENALTIES").SetBold(True).SetFontSize(12).ApplyStyle
+	wr.CreateParagraph
+	
+	Dim p9 As WordParagraph = wr.CreateParagraph
+	p9.SetAlignment(wr.ALIGN_BOTH)
+	p9.AddText("In accordance with the supply contract, Annex 2 Details of Infractions, Actions, and Penalties, the following is determined:").ApplyStyle
+	wr.CreateParagraph
+	
+	' Table for penalties
+	Dim t1 As WordTable = wr.CreateTable(2, 2)
+	t1.SetAutoFit
+	t1.SetCellPadding(100, 100, 100, 100)
+
+	' Header row
+	t1.SelectCell(0, 0).SetBold(True).AddText("Consumer Infractions").ApplyStyle
+	t1.SelectCell(0, 1).SetBold(True).AddText("Action/Penalty").ApplyStyle
+
+	' Data row
+	t1.SelectCell(1, 0).AddText("Consuming energy through installations that alter the normal functioning of measurement instruments").ApplyStyle
+	t1.SelectCell(1, 1).SetAlignment("CENTER").AddText("1/2/4/6/7/9").ApplyStyle
+    
+	wr.CreateParagraph ' Manual space
+    
+	Dim pSanc2 As WordParagraph = wr.CreateParagraph
+	pSanc2.SetAlignment(wr.PAGE_LOC_LEFT)
+
+	' Point 2
+	pSanc2.AddText($"2. "Payment for repair or replacement of installations, equipment, and materials owned by the DISTRIBUTOR.""$ ).AddLineBreak.AddLineBreak
+
+	' Point 4
+	pSanc2.AddText($"4. "Payment for energy consumed, calculated and billed according to current regulations, for up to 12 months prior to the determination of the infraction.""$) _
+		.AddLineBreak.AddLineBreak
+
+	' Point 6
+	pSanc2.AddText($"6. "Payment of three hundred percent (300%) of the effective billing value from the month prior to the determination of the infraction...""$)
+
+	' Apply final style to all bullet points
+	pSanc2.SetItalic(True) _
+		.SetFontSize(11) _
+		.ApplyStyle
+	pSanc2.SetSpacingAfterPoints(15)
+    
+	' --- FINAL SECTION: VALUES ---
+	Dim p18 As WordParagraph = wr.CreateParagraph
+	p18.AddText("CONCLUSION AND REQUEST").SetBold(True).SetFontSize(12).ApplyStyle
+	
+	Dim p19 As WordParagraph = wr.CreateParagraph
+	p19.AddText("We request that the customer be billed through miscellaneous cash for the detailed concepts on ").ApplyStyle
+	p19.AddText("04/06/2026").SetBold(True).SetFontSize(11).ApplyStyle
+	p19.AddText(":").ApplyStyle
+	wr.CreateParagraph
+    
+	' Table with values
+	Dim tVal As WordTable = wr.CreateTable(6, 3)
+	tVal.SetAutoFit
+	
+	' Header
+	tVal.SelectCell(0,0).SetBold(True).AddText("ITEM").ApplyStyle
+	tVal.SelectCell(0,1).SetBold(True).SetAlignment(wr.ALIGN_CENTER).AddText("DESCRIPTION").ApplyStyle
+	tVal.SelectCell(0,2).SetBold(True).AddText("VALUE").ApplyStyle
+	
+	' Data rows
+	tVal.AddRow(Array As String("1", "Equipment and materials value", "$ 0.29"))
+	tVal.AddRow(Array As String("2", "Labor value", "$ 10.84"))
+
+	' Post-edit formatting
+	tVal.SelectCell(1,2).SetTextColor(xui.Color_Blue).SetBold(True).ApplyStyle
+	tVal.SelectCell(2,2).SetTextColor(xui.Color_Red).SetBold(True).ApplyStyle
+
+	' Subtotal (merged cells)
+	tVal.MergeCellsHorizontal(3, 0, 1)
+	tVal.SelectCell(3, 0).SetAlignment(wr.ALIGN_LEFT).AddText("SUB TOTAL").ApplyStyle
+	tVal.SelectCell(3, 1).AddText("$ 11.13").ApplyStyle
+
+	' IVA (merged cells)
+	tVal.MergeCellsHorizontal(4, 0, 1)
+	tVal.SelectCell(4, 0).SetAlignment(wr.ALIGN_LEFT).AddText("IVA 15%").ApplyStyle
+	tVal.SelectCell(4, 1).AddText("$ 1.67").ApplyStyle
+
+	' TOTAL (merged cells with highlighting)
+	tVal.MergeCellsHorizontal(5, 0, 1)
+	tVal.SelectCell(5, 0).SetAlignment(wr.ALIGN_LEFT).SetBold(True).AddText("TOTAL").ApplyStyle
+	tVal.SelectCell(5, 1).SetBold(True).AddText("$ 12.80").ApplyStyle.SetBackgroundColor(xui.Color_RGB(93, 201, 165))
+	
+	wr.CreateParagraph
+ 
+	Dim pFinal As WordParagraph = wr.CreateParagraph
+	pFinal.SetSpacingAfterPoints(10)
+	pFinal.AddText("Based on the above, we appreciate initiating and completing the process for billing the aforementioned amounts.").ApplyStyle
+    
+	' Save the document
+	wr.Save(File.DirRootExternal, "Loor_Final_Report.docx")
+End Sub
+
+' ============================================
+' BUTTON 4: Excel Read Example
+' ============================================
+Sub btnExcelRead_Click
+	ReadExcelExample
+	lblStatus.Text = "Excel file read completed - check logs"
+End Sub
+
+' Demonstrates how to read data from an existing Excel file
+Sub ReadExcelExample
+	Dim em As ExcelManager
+	em.Initialize(Me, "em")
+    
+	' Read existing workbook
+	em.ReadWorkbook(File.DirRootExternal, "Thematic_MultiSheet_Report_2026.xlsx")
+    
+	' Get the first sheet
+	Dim firstSheet As ExcelSheet = em.GetSheetAt(0)
+    
+	' Read row 9 (where data typically starts)
+	Dim row As ExcelRow = firstSheet.GetRow(9)
+    
+	If row.IsInitialized Then
+		' Get values from columns
+		Dim id As Object = row.GetCell(1).Value
+		Dim customerName As Object = row.GetCell(2).Value
+		Dim kWh As Object = row.GetCell(4).Value
+		Dim subtotal As Object = row.GetCell(5).Value
+        
+		' Build the message
+		Dim message As String = ""
+		message = message & "Excel Data Retrieved:" & CRLF & CRLF
+		message = message & "ID: " & id & CRLF
+		message = message & "Customer: " & customerName & CRLF
+		message = message & "kWh: " & kWh & CRLF
+		message = message & "Subtotal: $" & subtotal & CRLF
+        
+		' Show in message box
+		xui.MsgboxAsync(message, "Excel Read Example")
+        
+	Else
+		xui.MsgboxAsync("Could not read row 9. The file might be empty or have a different structure.", "Error")
+	End If
+    
+	' Clean up
+	em.Close
+End Sub
+' Callback for Word save completion
+Private Sub wr_SaveCompleted(Success As Boolean)
+	If Success Then
+		Log("Word document saved successfully!")
+	Else
+		Log("Error saving Word document!")
+	End If
+End Sub
+

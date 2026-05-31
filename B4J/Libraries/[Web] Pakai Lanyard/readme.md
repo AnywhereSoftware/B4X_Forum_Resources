@@ -1,8 +1,8 @@
 ### [Web] Pakai Lanyard by aeric
-### 05/06/2026
+### 05/29/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170932/)
 
-Version: 0.10  
+Version: 0.20  
   
 Auth extension for Pakai Server v6  
 GitHub: <https://github.com/pyhoon/pakai-lanyard>  

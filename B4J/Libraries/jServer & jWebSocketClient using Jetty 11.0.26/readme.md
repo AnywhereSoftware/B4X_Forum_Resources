@@ -1,7 +1,11 @@
 ### jServer & jWebSocketClient using Jetty 11.0.26 by Chris2
-### 02/16/2026
+### 05/27/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/170233/)
 
+[UPDATE: [USER=1]@Erel[/USER] has now released an official (beta) jServer v4.10 with dependencies updated to jetty 11.0.26. I suggest you start there:  
+<https://www.b4x.com/android/forum/threads/jserver-v4-0-based-on-jetty-11.140437/post-1047071> ]  
+  
+  
 I did this more as a learning exercise than anything else and also because I noted a later version of [jetty 11](https://jetty.org/download.html) had been released that addressed a CVE ([CVE-2025-5115](https://github.com/advisories/GHSA-mmxm-8w33-wc4h)) .  
 I thought I'd post it here in case anyone is interested.  
 Also, because I really didn't know what I was doing, and was largely copying the work of [USER=1]@Erel[/USER], [USER=12970]@tchart[/USER], & [USER=125673]@teddybear[/USER], I'd be grateful if someone can check what I've done here and point out any problems. Thanks.  
@@ -48,7 +52,7 @@ As per [USER=1]@Erel[/USER]'s post above in order to build a standalone package 
   
 [note the addition of java.desktop in the IncludedModules]  
   
-[EDIT: I have found that some apps using the jWebScocketClient-11.0.26 library need extra IncludedModules. I suggest that anyone encountering java.lang.ClassNotFoundException errors when using these libraries follow [@Daestrum's instructions here](https://www.b4x.com/android/forum/threads/solved-missing-java-class-in-a-packaged-exe.118705/post-742706) to determine which modules need to be added]  
+[EDIT: I have found that some apps using the jWebScocketClient-11.0.26 library need extra IncludedModules. I suggest that anyone encountering java.lang.ClassNotFoundException errors when using these libraries follow the [instructions here](https://www.b4x.com/android/forum/threads/solved-missing-java-class-in-a-packaged-exe.118705/post-742706) from [USER=52836]@Daestrum[/USER] to determine which modules need to be added]  
   
 [SPOILER="What I did:"]  
 **jServer-11.0.26**  

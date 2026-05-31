@@ -1,8 +1,10 @@
 ### mcInAppReviewManager - Initiate App reviews using Google API inside your app by mcqueccu
-### 05/26/2026
+### 05/29/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171121/)
 
 This works on Apps already in the Playstore  
+  
+<https://developer.android.com/guide/playcore/in-app-review>  
   
 How to use:  
 1. Add Additional Jars to the MAIN Module (or download them using the SDK Manager  
@@ -37,7 +39,7 @@ AddApplicationText(
 Sub Class_Globals  
     Private Root As B4XView  
     Private xui As XUI  
-      
+     
     Private ReviewManager As mcInAppReviewManager  
 End Sub  
   
@@ -49,7 +51,7 @@ End Sub
 Private Sub B4XPage_Created (Root1 As B4XView)  
     Root = Root1  
     Root.LoadLayout("MainPage")  
-      
+     
     ReviewManager.Initialize  
 End Sub  
   
@@ -63,9 +65,9 @@ End Sub
   
   
   
-**mcInAppReviewManager**  
+**mcInAppReviewManager  
   
-**Author:** Mcqueccu  
+Author:** Mcqueccu  
 **Version:** 1.00  
 
 - **mcInAppReviewManager**
@@ -74,3 +76,7 @@ End Sub
 
 - **Initialize**
 - **LaunchReviewFlow**
+
+  
+  
+![](https://www.b4x.com/android/forum/attachments/171710)

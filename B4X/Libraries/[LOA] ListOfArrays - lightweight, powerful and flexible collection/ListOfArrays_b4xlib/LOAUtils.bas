@@ -58,6 +58,16 @@ Public Sub CreateFrom1DList (Header As String, Data As List) As ListOfArrays
 	Return loa
 End Sub
 
+'Creates a two-column LOA from a map. Every key/value pair is added as a row.
+'Header should be Null, or an array with exactly two items.
+Public Sub CreateFromMap(Header() As Object, Values As Map) As ListOfArrays
+	Dim loa As ListOfArrays = CreateEmpty(Header)
+	For Each key As Object In Values.Keys
+		loa.AddRow(Array(key, Values.Get(key)))
+	Next
+	Return loa
+End Sub
+
 'Wraps the list and treats the first row as the header.
 Public Sub WrapWithHeader(Items As List) As ListOfArrays
 	Dim loa As ListOfArrays

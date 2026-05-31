@@ -5,166 +5,193 @@ Type=Class
 Version=13.5
 @EndOfDesignText@
 '========================
-' InAppUpdateManager
-' Version: 1.0
+' mcInAppUpdateManager
+' Version: 1.01
 ' Author: McQueccu
 '========================
 
+
+#Event: Complete (Success As Boolean, ErrorDetails() As String)
+
 Sub Class_Globals
-
-	Private jo As JavaObject
-	Private ctxt As JavaObject
-
 	Private mCallback As Object
 	Private mEventName As String
-
-	Public Const FLEXIBLE As Int = 0
-	Public Const IMMEDIATE As Int = 1
-
+	Private oInAppUpdate As JavaObject
 End Sub
 
 Public Sub Initialize(Callback As Object, EventName As String)
-
-	mCallback = Callback
-	mEventName = EventName
-
-	jo.InitializeStatic("anywheresoftware.b4a.BA")
-
-	ctxt.InitializeContext
-
-End Sub
-
-Public Sub CheckForUpdate
-
 	Try
+		mCallback = Callback
+		mEventName = EventName
 
-		Dim manager As JavaObject
+		Dim oContext As JavaObject
+		oContext.InitializeContext
 
-		manager = manager.InitializeStatic("com.google.android.play.core.appupdate.AppUpdateManagerFactory") _
-            .RunMethod("create", Array(ctxt))
-
-		Dim task As JavaObject
-		task = manager.RunMethod("getAppUpdateInfo", Null)
-
-		Dim listener As Object
-		listener = CreateUpdateListener(manager)
-
-		task.RunMethod("addOnSuccessListener", Array(listener))
-
-	Catch
-
-		Log(LastException)
-
-		Dim m As Map
-		m.Initialize
-
-		m.Put("success", False)
-
-		CallSubDelayed2(mCallback, mEventName & "_OnCheckCompleted", m)
-
-	End Try
-
-End Sub
-
-Private Sub CreateUpdateListener(manager As JavaObject) As Object
-
-	Return Me.As(JavaObject).RunMethod("createUpdateListener", Array(manager))
-
-End Sub
-
-Public Sub StartUpdateFlow(AppUpdateInfo As JavaObject, UpdateType As Int)
-
-	Try
-
-		Dim manager As JavaObject
-
-		manager = manager.InitializeStatic("com.google.android.play.core.appupdate.AppUpdateManagerFactory") _
-            .RunMethod("create", Array(ctxt))
-
-		manager.RunMethod("startUpdateFlowForResult", Array( _
-            AppUpdateInfo, _
-            UpdateType, _
-            ctxt, _
-            9871 _
-        ))
+		oInAppUpdate.InitializeNewInstance( _
+            Application.PackageName.ToLowerCase & ".mcinappupdatemanager.UpdateHelper", _
+            Array(oContext, Me))
 
 	Catch
 		Log(LastException)
 	End Try
-
 End Sub
 
-#if JAVA
+'Immediate = True  -> IMMEDIATE update flow
+'Immediate = False -> FLEXIBLE update flow
+Public Sub CheckAndUpdate(Immediate As Boolean)
+	Try
+		If oInAppUpdate.IsInitialized = True Then
+			oInAppUpdate.RunMethod("checkAndUpdate", Array(Immediate))
+		Else
+			Event_OnComplete(False, "InAppUpdate", "InAppUpdate is null.")
+		End If
+	Catch
+		Log(LastException)
+		Event_OnComplete(False, "CheckAndUpdate", LastException.Message)
+	End Try
+End Sub
 
-import com.google.android.play.core.appupdate.*;
-import com.google.android.play.core.install.model.*;
-import com.google.android.gms.tasks.*;
+Private Sub Event_OnComplete (Success As Boolean, ErrorType As String, ErrorDescription As String)
+	Try
+		If SubExists(mCallback, mEventName & "_Complete") Then
+			Dim ErrorDetails() As String = Array As String(ErrorType, ErrorDescription)
+			CallSub3(mCallback, mEventName & "_Complete", Success, ErrorDetails)
+		End If
+	Catch
+		Log(LastException)
+	End Try
+End Sub
 
-public Object createUpdateListener(AppUpdateManager manager) {
+#If Java
 
-    update_success_listener listener =
-        new update_success_listener();
+import android.app.Activity;
+import android.content.IntentSender;
 
-    listener.ba = ba;
-    listener.manager = manager;
+import androidx.annotation.NonNull;
 
-    return listener;
-}
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
 
-public static class update_success_listener
-implements OnSuccessListener<AppUpdateInfo> {
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
-    public anywheresoftware.b4a.BA ba;
+public static class UpdateHelper {
 
-    public AppUpdateManager manager;
+    private static final int UPDATE_REQUEST_CODE = 1234;
 
-    @Override
-    public void onSuccess(AppUpdateInfo info) {
+    private Activity activity;
+    private B4AClass target;
+    private AppUpdateManager appUpdateManager;
+
+    // Constructor
+    public UpdateHelper(Activity activity, B4AClass target) {
+        try {
+            this.activity = activity;
+            this.target = target;
+            this.appUpdateManager = AppUpdateManagerFactory.create(activity);
+        } catch (Exception e) {
+            if (target != null) {
+                target.getBA().raiseEventFromDifferentThread(
+                    target, null, 0,
+                    "event_oncomplete", false,
+                    new Object[] {false, "Initialization", e.getMessage()}
+                );
+            }
+        }
+    }
+
+    // immediate = true  -> IMMEDIATE
+    // immediate = false -> FLEXIBLE
+    public void checkAndUpdate(final boolean immediate) {
 
         try {
+            if (appUpdateManager == null) {
+                target.getBA().raiseEventFromDifferentThread(
+                    target, null, 0,
+                    "event_oncomplete", false,
+                    new Object[] {false, "CheckAndUpdate", "AppUpdateManager is null."}
+                );
+                return;
+            }
 
-            boolean available =
-                info.updateAvailability() ==
-                UpdateAvailability.UPDATE_AVAILABLE;
+            final int updateType = immediate ? AppUpdateType.IMMEDIATE : AppUpdateType.FLEXIBLE;
 
-            boolean developerTriggered =
-                info.updateAvailability() ==
-                UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS;
+            Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
 
-            anywheresoftware.b4a.objects.collections.Map map =
-                new anywheresoftware.b4a.objects.collections.Map();
+            if (appUpdateInfoTask == null) {
+                target.getBA().raiseEventFromDifferentThread(
+                    target, null, 0,
+                    "event_oncomplete", false,
+                    new Object[] {false, "CheckAndUpdate", "getAppUpdateInfo() returned null."}
+                );
+                return;
+            }
 
-            map.Initialize();
+            appUpdateInfoTask.addOnSuccessListener(new OnSuccessListener<AppUpdateInfo>() {
+                @Override
+                public void onSuccess(AppUpdateInfo appUpdateInfo) {
 
-            map.Put("success", true);
+                    if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                            && appUpdateInfo.isUpdateTypeAllowed(updateType)) {
 
-            map.Put("available",
-                available || developerTriggered);
+                        try {
+                            appUpdateManager.startUpdateFlowForResult(
+                                    appUpdateInfo,
+                                    updateType,
+                                    activity,
+                                    UPDATE_REQUEST_CODE
+                            );
 
-            map.Put("info", info);
+                            // Flow successfully started
+                            target.getBA().raiseEventFromDifferentThread(
+                                target, null, 0,
+                                "event_oncomplete", false,
+                                new Object[] {true, "UpdateFlowStarted", ""}
+                            );
 
-            ba.raiseEventFromUI(
-                this,
-                "inappupdate_oncheckcompleted",
-                map
-            );
+                        } catch (IntentSender.SendIntentException e) {
+                            target.getBA().raiseEventFromDifferentThread(
+                                target, null, 0,
+                                "event_oncomplete", false,
+                                new Object[] {false, "StartUpdateFlow", e.getMessage()}
+                            );
+                        }
 
-        } catch(Exception e) {
+                    } else {
+                        // No suitable update available
+                        target.getBA().raiseEventFromDifferentThread(
+                            target, null, 0,
+                            "event_oncomplete", false,
+                            new Object[] {false, "NoUpdateAvailable", "No update available or type not allowed."}
+                        );
+                    }
+                }
+            });
 
-            anywheresoftware.b4a.objects.collections.Map map =
-                new anywheresoftware.b4a.objects.collections.Map();
+            appUpdateInfoTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    target.getBA().raiseEventFromDifferentThread(
+                        target, null, 0,
+                        "event_oncomplete", false,
+                        new Object[] {false, "CheckAndUpdate", e.getMessage()}
+                    );
+                }
+            });
 
-            map.Initialize();
-
-            map.Put("success", false);
-
-            ba.raiseEventFromUI(
-                this,
-                "inappupdate_oncheckcompleted",
-                map
+        } catch (Exception e) {
+            target.getBA().raiseEventFromDifferentThread(
+                target, null, 0,
+                "event_oncomplete", false,
+                new Object[] {false, "CheckAndUpdate", e.getMessage()}
             );
         }
     }
 }
 
 #End If
+

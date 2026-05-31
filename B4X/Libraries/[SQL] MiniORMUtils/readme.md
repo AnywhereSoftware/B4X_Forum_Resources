@@ -1,9 +1,9 @@
 ###  [SQL] MiniORMUtils by aeric
-### 05/13/2026
+### 05/29/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 5.60  
+Version: 6.00  
 
 ---
 
