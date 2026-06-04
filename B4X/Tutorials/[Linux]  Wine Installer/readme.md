@@ -1,5 +1,5 @@
 ### [Linux]  Wine Installer by aeric
-### 05/28/2026
+### 06/03/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/171136/)
 
 [HEADING=1]📦 Install B4A+B4J on Linux Mint using Wine with a single silent script[/HEADING]  
@@ -42,6 +42,7 @@ chmod +x install_b4x_wine.sh
 1. When you double-click on a launcher (desktop icon), Linux Mint will prompt you to choose "Launch Anyway" or "Mark Executable". Choose the latter so it won't ask you again.
 2. Remember to comment the #CustomBuildAction: folders ready for RoboCopy.exe or Shared Files
 3. Even if you have run "configure\_b4a\_settings.sh", B4A still pops up asking you to set the Paths, just click "Ok" to save the settings.
+4. Make sure you have deleted old scripts and you are not downloaded the new script which renamed to **.sh1** extension. Otherwise you are not executing the new script.
 
 [HEADING=1]🤝 Contributing[/HEADING]  
 Found an issue or have an improvement?  

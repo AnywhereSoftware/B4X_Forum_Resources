@@ -6,41 +6,54 @@ Module1=|absolute|C:\users\walter\My Documents\_WM\Dropbox\B4X\0_B4XsharedModule
 NumberOfFiles=0
 NumberOfLibraries=1
 NumberOfModules=1
-Version=10
+Version=10.5
 @EndOfDesignText@
 'Non-UI application (console / server application)
 #Region Project Attributes 
 	#MergeLibraries: True
 
 	' THIS NEXT LINE SIMULATES COMMAND LINE ARGUMENTS PASSED TO THE PROGRAM:
-	#CommandLineArgs: --Animal cat --NODETAILS --number 7 -s 3
+	#CommandLineArgs: --Animal=cat --NODETAILS --multiple a b c --number 7 -s 3
 #End Region
 
 Sub Process_Globals
-	
+
+	Private Const appName As String = "wmB4JargsDemo"
+
 End Sub
 
 Sub AppStart (Args() As String)
 
 	Dim wmB4Jargs1 As wmB4Jargs
 	wmB4Jargs1.Initialize
+	wmB4Jargs1.AddStandaloneArg("--help", "-h", "Prints this help text and terminates", False)
 	wmB4Jargs1.AddStandaloneArg("--nodetails", "-n", "This (optional) argument stands alone and does not need a value", False)
 	wmB4Jargs1.AddValueArg("--number", "-u", "The 'number' argument (optional) needs a numeric value", False, True)
 	wmB4Jargs1.AddPermittedValuesArg("--selectednumber", "-s", "'SelectedNumber' (optional) needs an integer value between 1 and 5 (both included)", False, Array(1, 2, 3, 4, 5), True)
 	wmB4Jargs1.AddPermittedValuesArg("--animal", "-a", "The 'animal' argument (required) needs one of these values: Ape, Bear, Cat", True, Array("Ape", "Bear", "Cat"), False)
+	wmB4Jargs1.AddMultipleValuesArg("--multiple", "-m", "2 to 4 values that must be validated by the caller", False, 2, 4)
 
-	Dim parseResult As wmB4JargsResult = wmB4Jargs1.Parse(Args)
-	If parseResult.firstError <> 0 Then
-		Log("ERROR: " & parseResult.offendingArg & ": " & parseResult.errorMsg)
-	Else
-		Log("Argument values found:")
-		Log("Animal: " & parseResult.valuesMap.GetDefault("--animal", "<not specified>"))
-		Log("NoDetails: " & parseResult.valuesMap.GetDefault("--nodetails", "<not specified>"))
-		Log("Number: " & parseResult.valuesMap.GetDefault("--number", "<not specified>"))
-		Log("SelectedNumber: " & parseResult.valuesMap.GetDefault("--selectednumber", "<not specified>"))
+	'wmB4Jargs1.LogValuesBeforeParsing = True
+	Dim wmB4JargsResult1 As wmB4JargsResult = wmB4Jargs1.ParseCaseInsensitive(Args)
+	If wmB4JargsResult1.valuesMap.ContainsKey("--help") Then
+		wmB4Jargs1.PrintHelp2(appName, 26, 80, True, " " & CRLF & "This is some optional preface text" & CRLF, " " & CRLF & "This is some optional epilogue text", False)
+		ExitApplication
+		Return
+	Else If wmB4JargsResult1.firstError <> 0 Then
+		Log(" ")
+		Log("Command line argument error" & IIf(wmB4JargsResult1.offendingArg = "", "", " (" & wmB4JargsResult1.offendingArg & ")") & ": " & wmB4JargsResult1.errorMsg)
+		Log("Use '" & appName & " -h' for help")
+		ExitApplication2(1)
+		Return
 	End If
 
-	Log("==========================")
-	wmB4Jargs1.PrintHelp("Arguments:", 26, 80, True)
+	Log("Argument values found:")
+	Log("Animal: " & wmB4JargsResult1.valuesMap.GetDefault("--animal", "<not specified>"))
+	Log("NoDetails: " & wmB4JargsResult1.valuesMap.GetDefault("--nodetails", "<not specified>"))
+	Log("Number: " & wmB4JargsResult1.valuesMap.GetDefault("--number", "<not specified>"))
+	Log("SelectedNumber: " & wmB4JargsResult1.valuesMap.GetDefault("--selectednumber", "<not specified>"))
+	If wmB4JargsResult1.valuesMap.ContainsKey("--multiple") Then
+		Log("Multiple (a List) is: " & wmB4JargsResult1.valuesMap.Get("--multiple").As(List))
+	End If
 
 End Sub
