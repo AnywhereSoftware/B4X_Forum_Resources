@@ -1,9 +1,8 @@
-### [LIB} eProper V3.08 by T201016
-### 06/02/2026
+### [LIB} eProper V3.08 Update 04.06.2026 by T201016
+### 06/04/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171163/)
 
-**eProper v.3.08** - *in the testing phase!*  
-It is still in the testing phase and is a helpful library to use  
+**eProper v.3.08** Update 04.06.2026 - Is a helpful library to use  
 with the correct spelling of words, taking into account personal exceptions.  
   
 An example of a personal exception may include, among others: word: **SQLite**  

@@ -1,5 +1,5 @@
 ### [Fix - Class] Proper Case For Names by T201016
-### 05/14/2026
+### 06/04/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171018/)
 
 First of all, a thank you [USER=9800]@stevel05[/USER] for sharing an interesting source of this [class](https://www.b4x.com/android/forum/threads/proper-case-for-names.41189/#content).  
@@ -8,6 +8,8 @@ which eliminates the error on line: 67 (Proper) - see original class.
 The fix in this form will handle one event omitted by the author, namely:  
 - when the length of the Word variable is zero.  
 In my case it works for now…  
+  
+My modified library based on this source: [HERE](https://www.b4x.com/android/forum/threads/lib-eproper-v3-08.171163/)  
   
 Error occurred on line: 67 (Proper)  
 java.lang.StringIndexOutOfBoundsException: String index out of range: 1  
