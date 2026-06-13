@@ -1,12 +1,12 @@
 ### [Linux]  Wine Installer by aeric
-### 06/04/2026
+### 06/06/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/171136/)
 
 [HEADING=1]📦 Install B4A+B4J on Linux Mint using Wine with a single silent script[/HEADING]  
   
 GitHub: <https://github.com/pyhoon/b4x-wine-installer>  
   
-![](https://github.com/pyhoon/b4x-wine-installer/raw/main/screenshots/Screenshot1.png) ![](https://github.com/pyhoon/b4x-wine-installer/blob/main/screenshots/Screenshot2.png?raw=true)  
+[MEDIA=youtube]f\_b\_WflGoUw[/MEDIA]  
   
 **Files:**  
 
