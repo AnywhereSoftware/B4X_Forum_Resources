@@ -1,0 +1,81 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=1.jpg
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=simplewebserver
+Library3=javaobject
+Module1=Handlers
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=10.5
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Dim WebServer As SimpleWebServer	
+	Dim myNumber As Int ' This is a global, not per session (as there are no sessions)
+End Sub
+
+Sub AppStart (Args() As String)
+	myNumber = Rnd(0, 101)
+		
+	Dim staticfiles As String = File.Combine(File.DirApp,"www")	
+	
+	File.MakeDir(staticfiles,"www")
+	
+	File.Copy(File.DirAssets,"1.jpg",staticfiles,"b4x.jpg")
+	
+	WebServer.Initialize(8888,staticfiles,"WebServer")
+	WebServer.Start
+	
+	StartMessageLoop
+	
+	'Form http://localhost:8888/
+	'Game http://localhost:8888/guessmynumber
+	'JSON Exmaple http://localhost:8888/helloworld
+	
+End Sub
+
+Sub WebServer_Get(path As String, QueryString As String) As String
+	Log("Its a GET")
+	
+	'Static files take priority, so request for /b4x.jpg will come from static files
+	
+	Log(path)
+	Log(QueryString)
+	
+	Select Case path
+		Case "", "/", "/index"
+			Return Handlers.Index(QueryString)
+		Case "/helloworld"
+			Return $"{"hello":"world"}"$
+		Case "/guessmynumber"
+			Return Handlers.GuessPage(QueryString)			
+	End Select
+	Return Null
+End Sub
+
+Sub WebServer_Post(path As String, body As String) As String
+	Log("Its a POST")
+	
+	Log(path)
+	Log(body)
+	
+	Select Case path
+		Case "/process_form"
+			Return Handlers.ProcessPost(body)
+		Case "/guess"
+			Return Handlers.Guess(body)
+		Case "/reset"
+			myNumber = Rnd(0, 101)
+			Return "OK"			
+	End Select
+	Return Null
+End Sub

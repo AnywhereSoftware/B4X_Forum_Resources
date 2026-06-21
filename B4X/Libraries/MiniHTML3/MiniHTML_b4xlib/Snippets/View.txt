@@ -1,0 +1,510 @@
+	Private App As EndsMeet
+End Sub
+
+Public Sub Initialize
+	App = Main.App
+End Sub
+
+Public Sub Show As String
+	Dim CacheName As String = "$Endpoints$ Page"
+	If App.ExistInCache(CacheName) = False Then
+		App.WriteToCache(CacheName, $Endpoints$Page)
+	End If
+	Dim page1 As MiniHtml = App.ReadFromCache(CacheName)
+	Dim doc As MiniHtml
+	doc.Initialize("doctype")
+	doc.Append(page1.build)
+	Return doc.ToString
+End Sub
+
+Public Sub Modal (Action As String, CategoryList As List, Data As Map) As String
+	Select Action
+		Case "Add"
+			Dim CacheName As String = "$Endpoints$ Add Modal"
+			If App.ExistInCache(CacheName) = False Then
+				App.WriteToCache(CacheName, ModalAdd)
+			End If
+			Dim modal1 As MiniHtml = App.ReadFromCache(CacheName)
+			Dim select1 As MiniHtml = modal1.ChildById("category1")
+			select1.Children.Clear
+			Dim option1 As MiniHtml = Helper.Option.up(select1)
+			option1.attr("value", "")
+			option1.text("Select Category")
+			option1.selected
+			option1.disabled
+			For Each row As Map In CategoryList
+				Dim option2 As MiniHtml = Helper.Option.up(select1)
+				option2.attr("value", row.Get("id"))
+				option2.text(row.Get("category_name"))
+			Next
+			Return modal1.build
+		Case "Edit"
+			Dim CacheName As String = "$Endpoints$ Edit Modal"
+			If App.ExistInCache(CacheName) = False Then
+				App.WriteToCache(CacheName, ModalEdit)
+			End If
+			Dim modal1 As MiniHtml = App.ReadFromCache(CacheName)
+			Dim id1 As MiniHtml = modal1.ChildById("id")
+			id1.attr("value", Data.Get("id"))
+			Dim select1 As MiniHtml = modal1.ChildById("category2")
+			select1.Children.Clear
+			Dim option1 As MiniHtml = Helper.Option.up(select1)
+			option1.attr("value", "")
+			option1.text("Select Category")
+			option1.disabled
+			For Each row As Map In CategoryList
+				Dim option2 As MiniHtml = Helper.Option.up(select1)
+				option2.attr("value", row.Get("id"))
+				option2.text(row.Get("category_name"))
+				If row.Get("id") = Data.Get("category_id") Then option2.selected
+			Next
+			Dim input2 As MiniHtml = modal1.ChildById("input2")
+			input2.attr("value", Data.Get("product_code"))
+			Dim input3 As MiniHtml = modal1.ChildById("input3")
+			input3.attr("value", Data.Get("product_name"))
+			Dim input4 As MiniHtml = modal1.ChildById("input4")
+			Dim price As String = NumberFormat2(Data.Get("product_price"), 1, 2, 2, False)
+			input4.attr("value", price)
+			Return modal1.build
+		Case "Delete"
+			Dim CacheName As String = "$Endpoints$ Delete Modal"
+			If App.ExistInCache(CacheName) = False Then
+				App.WriteToCache(CacheName, ModalDelete)
+			End If
+			Dim modal1 As MiniHtml = App.ReadFromCache(CacheName)
+			Dim id1 As MiniHtml = modal1.ChildById("id")
+			id1.attr("value", Data.Get("id"))
+			Dim p1 As MiniHtml = modal1.ChildById("p1")
+			p1.text2($"Delete ${Data.Get("product_name")} (${Data.Get("product_code")})?"$)
+			Return modal1.build
+		Case Else
+			Return ""
+	End Select
+End Sub
+
+Public Sub Alert (info As AlertInfo) As String
+	Dim div1 As MiniHtml = Helper.Div
+	div1.cls("alert alert-" & info.Status)
+	div1.text(info.Message)
+	Return div1.build
+End Sub
+
+Public Sub Toast (info As ToastInfo, data As List) As String
+	Dim div1 As MiniHtml = Helper.Div
+	div1.attr("id", "$endpoints$-container")
+	div1.attr("hx-swap-oob", "true")
+	$Endpoints$TableFilled(data).up(div1)
+	Dim script1 As MiniJs
+	script1.Initialize
+	script1.AddCustomEventDispatch("entity:changed", _
+	CreateMap( _
+	"entity": info.Entity, _
+	"action": info.Action, _
+	"message": info.Message, _
+	"status": info.Status))
+	Return div1.build & CRLF & script1.Generate
+End Sub
+
+Public Sub RenderedTable (data As List) As String
+	Return $Endpoints$TableFilled(data).build
+End Sub
+
+Private Sub $Endpoints$Page As MiniHtml
+	Dim main1 As MainView
+	main1.Initialize
+	main1.LoadContent(ContainerContent)
+	main1.LoadSubContent(GitHubLink)
+	main1.LoadModal(ContainerModal)
+	main1.LoadToast(ContainerToast)
+	Dim page1 As MiniHtml = main1.Render
+	Dim navitem1 As MiniHtml = page1.ChildById("nav-item")
+	CategoriesLink.up(navitem1)
+	If App.api.EnableHelp Then
+		HelpLink.up(navitem1)
+	End If
+	Return page1
+End Sub
+
+Private Sub ContainerContent As MiniHtml
+	Dim content1 As MiniHtml = Helper.Div.cls("row mt-3")
+	Dim col12 As MiniHtml = Helper.Div.up(content1).cls("col-md-12")
+	Dim form1 As MiniHtml = Helper.Form.up(col12).cls("form mb-3")
+	Dim row1 As MiniHtml = Helper.Div.up(form1).cls("row")
+	Dim col1 As MiniHtml = Helper.Div.up(row1).cls("col-md-6 col-lg-6")
+	Dim group1 As MiniHtml = Helper.Div.up(col1).cls("input-group mb-3")
+	Dim label1 As MiniHtml = Helper.Label.up(group1)
+	label1.attr("for", "keyword")
+	label1.cls("input-group-text mt-2")
+	label1.text("Search")
+	Dim input1 As MiniHtml = Helper.Input.up(group1)
+	input1.attr("type", "text")
+	input1.cls("form-control col-md-6 mt-2")
+	input1.attr("id", "keyword")
+	input1.attr("name", "keyword")
+	Dim searchBtn As MiniHtml = Helper.Button.up(group1)
+	searchBtn.cls("btn btn-danger btn-md pl-3 pr-3 ml-3 mt-2")
+	searchBtn.text("Submit")
+	searchBtn.attr("hx-post", "/hx/$endpoints$/table")
+	searchBtn.attr("hx-target", "#$endpoints$-container")
+	searchBtn.attr("hx-swap", "innerHTML")
+	Dim col2 As MiniHtml = Helper.Div.up(row1).cls("col-md-6 col-lg-6")
+	Dim div2 As MiniHtml = Helper.Div.up(col2).cls("float-end mt-2")
+	Dim button1 As MiniHtml = Helper.Button.up(div2)
+	button1.cls("btn btn-success ml-2")
+	button1.attr("hx-get", "/hx/$endpoints$/add")
+	button1.attr("hx-target", "#modal-content")
+	button1.attr("hx-trigger", "click")
+	button1.attr("data-bs-toggle", "modal")
+	button1.attr("data-bs-target", "#modal-container")
+	Helper.Icon.up(button1).cls("bi bi-plus-lg me-2")
+	button1.text("Add $Endpoints$")
+	Dim container1 As MiniHtml = Helper.Div.up(col12)
+	container1.attr("id", "$endpoints$-container")
+	container1.attr("hx-get", "/hx/$endpoints$/table")
+	container1.attr("hx-trigger", "load")
+	container1.text("Loading...")
+	Return content1
+End Sub
+
+Private Sub $Endpoints$TableFilled (data As List) As MiniHtml
+	Dim CacheName As String = "$Endpoints$ Table"
+	If ExistInCache(CacheName) = False Then
+		WriteToCache(CacheName, $Endpoints$Table)
+	End If
+	
+	Dim CacheName As String = "$Endpoints$ Table Row"
+	If ExistInCache(CacheName) = False Then
+		WriteToCache(CacheName, $Endpoints$TableRow.ConvertToBytes) ' bytes()
+	End If
+
+	Dim table1 As MiniHtml = ReadFromCache("$Endpoints$ Table")
+	Dim tbody1 As MiniHtml = table1.ChildByIndex(1)
+	tbody1.Children.Clear
+	For Each row As Map In data
+		Dim tr1 As MiniHtml = ReadFromCache("$Endpoints$ Table Row") ' bytes()
+		tr1.ChildByIndex(0).text2(row.Get("id"))
+		tr1.ChildByIndex(1).text2(row.Get("product_code"))
+		tr1.ChildByIndex(2).text2(row.Get("product_name"))
+		tr1.ChildByIndex(3).text2(row.Get("category_name"))
+		tr1.ChildByIndex(4).text2(NumberFormat2(row.Get("product_price"), 1, 2, 2, True))
+		tr1.ChildByIndex(5).ChildByIndex(0).attr("hx-get", "/hx/$endpoints$/edit/" & row.Get("id"))
+		tr1.ChildByIndex(5).ChildByIndex(1).attr("hx-get", "/hx/$endpoints$/delete/" & row.Get("id"))
+		tr1.up(tbody1)
+	Next
+	Return table1
+End Sub
+
+Private Sub $Endpoints$Table As MiniHtml
+	Dim table1 As MiniHtml = Helper.Table
+	table1.cls("table table-bordered table-hover rounded small")
+	Dim thead1 As MiniHtml = Helper.Thead.cls("table-light").up(table1)
+	Helper.Th.up(thead1).sty("text-align: right; width: 50px").text("#")
+	Helper.Th.up(thead1).text("Code")
+	Helper.Th.up(thead1).text("Name")
+	Helper.Th.up(thead1).text("Category")
+	Helper.Th.up(thead1).sty("text-align: right").text("Price")
+	Helper.Th.up(thead1).sty("text-align: center; width: 120px").text("Actions")
+	Helper.Tbody.up(table1)
+	Return table1
+End Sub
+
+Private Sub $Endpoints$TableRow As MiniHtml
+	Dim tr1 As MiniHtml = Helper.Tr
+	Helper.Td.up(tr1).cls("align-middle").sty("text-align: right")'.text("{id}")
+	Helper.Td.up(tr1).cls("align-middle")'.text("{code}")
+	Helper.Td.up(tr1).cls("align-middle")'.text("{name}")
+	Helper.Td.up(tr1).cls("align-middle")'.text("{category}")
+	Helper.Td.up(tr1).cls("align-middle").sty("text-align: right")'.text("{price}")
+	Dim td6 As MiniHtml = Helper.Td.up(tr1)
+	td6.cls("align-middle text-center px-1 py-1")
+	Dim a1 As MiniHtml = Helper.Anchor.up(td6)
+	a1.cls("edit text-primary mx-2")
+	a1.attr("hx-get", "/hx/$endpoints$/edit/{id}")
+	a1.attr("hx-target", "#modal-content")
+	a1.attr("hx-trigger", "click")
+	a1.attr("data-bs-toggle", "modal")
+	a1.attr("data-bs-target", "#modal-container")
+	Helper.Icon.up(a1).cls("bi bi-pencil")
+	a1.attr("title", "Edit")
+	Dim a2 As MiniHtml = Helper.Anchor.up(td6)
+	a2.cls("delete text-danger mx-2")
+	a2.attr("hx-get", "/hx/$endpoints$/delete/{id}")
+	a2.attr("hx-target", "#modal-content")
+	a2.attr("hx-trigger", "click")
+	a2.attr("data-bs-toggle", "modal")
+	a2.attr("data-bs-target", "#modal-container")
+	Helper.Icon.up(a2).cls("bi bi-trash3")
+	a2.attr("title", "Delete")
+	Return tr1
+End Sub
+
+Private Sub ModalAdd As MiniHtml
+	Dim form1 As MiniHtml = Helper.Form
+	form1.attr("hx-post", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	Dim modalHeader As MiniHtml = Helper.Div.up(form1)
+	modalHeader.cls("modal-header")
+	Dim h51 As MiniHtml = Helper.H5.up(modalHeader)
+	h51.cls("modal-title").text("Add $Endpoint$")
+	Dim close1 As MiniHtml = Helper.Button.up(modalHeader)
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+	Dim modalBody As MiniHtml = Helper.Div.up(form1)
+	modalBody.cls("modal-body")
+	Helper.Div.up(modalBody).attr("id", "modal-messages")
+	Dim group1 As MiniHtml = Helper.Div.up(modalBody)
+	group1.cls("form-group")
+	Dim label1 As MiniHtml = Helper.Label.up(group1)
+	label1.attr("for", "category1")
+	label1.text("Category ")
+	Dim span1 As MiniHtml = Helper.Span.up(label1)
+	span1.cls("text-danger").text("*")
+	Dim select1 As MiniHtml = Helper.SelectTag.up(group1)
+	select1.cls("form-select")
+	select1.attr("id", "category1")
+	select1.attr("name", "category")
+	select1.required
+	Dim group2 As MiniHtml = Helper.Div.up(modalBody)
+	group2.cls("form-group")
+	Dim label2 As MiniHtml = Helper.Label.up(group2)
+	label2.text("Code ")
+	Dim span2 As MiniHtml = Helper.Span.up(label2)
+	span2.cls("text-danger").text("*")
+	Dim input2 As MiniHtml = Helper.Input.up(group2)
+	input2.attr("type", "text")
+	input2.attr("name", "code")
+	input2.cls("form-control")
+	input2.required
+	Dim group3 As MiniHtml = Helper.Div.up(modalBody)
+	group3.cls("form-group")
+	Dim label3 As MiniHtml = Helper.Label.up(group3)
+	label3.text("Name ")
+	Dim span3 As MiniHtml = Helper.Span.up(label3)
+	span3.cls("text-danger").text("*")
+	Dim input3 As MiniHtml = Helper.Input.up(group3)
+	input3.attr("type", "text")
+	input3.attr("name", "name")
+	input3.cls("form-control")
+	input3.required
+	Dim group4 As MiniHtml = Helper.Div.up(modalBody)
+	group4.cls("form-group")
+	Dim label4 As MiniHtml = Helper.Label.up(group4)
+	label4.text("Price ")
+	Dim input4 As MiniHtml = Helper.Input.up(group4)
+	input4.attr("type", "text")
+	input4.attr("name", "price")
+	input4.cls("form-control")
+	Dim modalFooter As MiniHtml = Helper.Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Helper.Button.up(modalFooter)
+	button1.attr("type", "submit")
+	button1.cls("btn btn-success px-3")
+	button1.text("Create")
+	Dim button2 As MiniHtml = Helper.Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ModalEdit As MiniHtml
+	Dim form1 As MiniHtml = Helper.Form
+	form1.attr("hx-put", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	Dim modalHeader As MiniHtml = Helper.Div.up(form1).cls("modal-header")
+	Dim h51 As MiniHtml = Helper.H5.up(modalHeader)
+	h51.cls("modal-title").text("Edit $Endpoint$")
+	Dim close1 As MiniHtml = Helper.Button.up(modalHeader)
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+	Dim modalBody As MiniHtml = Helper.Div.up(form1).cls("modal-body")
+	Dim div1 As MiniHtml = Helper.Div.up(modalBody)
+	div1.attr("id", "modal-messages")
+	Dim id1 As MiniHtml = Helper.Input.up(modalBody)
+	id1.attr("type", "hidden")
+	id1.attr("name", "id")
+	Dim group1 As MiniHtml = Helper.Div.up(modalBody)
+	group1.cls("form-group")
+	Dim label1 As MiniHtml = Helper.Label.up(group1)
+	label1.attr("for", "category2")
+	label1.text("Category ")
+	Dim span1 As MiniHtml = Helper.Span.up(label1)
+	span1.cls("text-danger").text("*")
+	Dim select1 As MiniHtml = Helper.SelectTag.up(group1)
+	select1.cls("form-select")
+	select1.attr("id", "category2")
+	select1.attr("name", "category")
+	select1.required
+	Dim option1 As MiniHtml = Helper.Option.up(select1)
+	option1.attr("value", "")
+	option1.text("Select Category")
+	Dim group2 As MiniHtml = Helper.Div.up(modalBody)
+	group2.cls("form-group")
+	Dim label2 As MiniHtml = Helper.Label.up(group2)
+	label2.text("Code ")
+	Dim span2 As MiniHtml = Helper.Span.up(label2)
+	span2.cls("text-danger").text("*")
+	Dim input2 As MiniHtml = Helper.Input.up(group2)
+	input2.attr("type", "text")
+	input2.cls("form-control")
+	input2.attr("name", "code")
+	input2.attr("id", "input2")
+	input2.required
+	Dim group3 As MiniHtml = Helper.Div.up(modalBody)
+	group3.cls("form-group")
+	Dim label3 As MiniHtml = Helper.Label.up(group3)
+	label3.attr("for", "name")
+	label3.text("Name ")
+	Dim span3 As MiniHtml = Helper.Span.up(label3)
+	span3.cls("text-danger").text("*")
+	Dim input3 As MiniHtml = Helper.Input.up(group3)
+	input3.attr("type", "text")
+	input3.cls("form-control")
+	input3.attr("id", "name")
+	input3.attr("name", "name")
+	input3.attr("id", "input3")
+	input3.required
+	Dim group4 As MiniHtml = Helper.Div.up(modalBody)
+	group4.cls("form-group")
+	Dim label4 As MiniHtml = Helper.Label.up(group4)
+	label4.text("Price ")
+	Dim input4 As MiniHtml = Helper.Input.up(group4)
+	input4.attr("type", "text")
+	input4.cls("form-control")
+	input4.attr("name", "price")
+	input4.attr("id", "input4")
+	Dim modalFooter As MiniHtml = Helper.Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Helper.Button.up(modalFooter)
+	button1.cls("btn btn-primary px-3")
+	button1.text("Update")
+	Dim button2 As MiniHtml = Helper.Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ModalDelete As MiniHtml
+	Dim form1 As MiniHtml = Helper.Form
+	form1.attr("hx-delete", "/hx/$endpoints$")
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	Dim modalHeader As MiniHtml = Helper.Div.cls("modal-header").up(form1)
+	Dim h51 As MiniHtml = Helper.H5.up(modalHeader)
+	h51.cls("modal-title").text("Delete $Endpoint$")
+	Dim close1 As MiniHtml = Helper.Button.up(modalHeader)
+	close1.attr("type", "button")
+	close1.cls("btn-close")
+	close1.attr("data-bs-dismiss", "modal")
+	Dim modalBody As MiniHtml = Helper.Div.cls("modal-body").up(form1)
+	Dim div1 As MiniHtml = Helper.Div.up(modalBody)
+	div1.attr("id", "modal-messages")
+	Dim id1 As MiniHtml = Helper.Input.up(modalBody)
+	id1.attr("type", "hidden")
+	id1.attr("name", "id")
+	id1.attr("id", "id")
+	Helper.P.up(modalBody).Id = "p1"
+	Dim modalFooter As MiniHtml = Helper.Div.up(form1).cls("modal-footer")
+	Dim button1 As MiniHtml = Helper.Button.up(modalFooter)
+	button1.cls("btn btn-danger px-3")
+	button1.text("Delete")
+	Dim button2 As MiniHtml = Helper.Button.up(modalFooter)
+	button2.attr("type", "button")
+	button2.cls("btn btn-secondary px-3")
+	button2.attr("data-bs-dismiss", "modal")
+	button2.text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ContainerModal As MiniHtml
+	Dim modal1 As MiniHtml = Helper.Div
+	modal1.attr("id", "modal-container")
+	modal1.cls("modal fade")
+	modal1.attr("tabindex", "-1")
+	modal1.attr("aria-hidden", "true")
+	Dim modalDialog As MiniHtml = Helper.Div.up(modal1)
+	modalDialog.cls("modal-dialog modal-dialog-centered")
+	Dim div1 As MiniHtml = Helper.Div.up(modalDialog)
+	div1.cls("modal-content")
+	div1.attr("id", "modal-content")
+	Return modal1
+End Sub
+
+Private Sub ContainerToast As MiniHtml
+	Dim div1 As MiniHtml = Helper.Div
+	div1.cls("position-fixed end-0 p-3")
+	div1.sty("z-index: 2000")
+	div1.sty("bottom: 0%")
+	Dim toast1 As MiniHtml = Helper.Div.up(div1)
+	toast1.attr("id", "toast-container")
+	toast1.cls("toast align-items-center text-bg-success border-0")
+	toast1.attr("role", "alert")
+	Dim div2 As MiniHtml = Helper.Div.up(toast1)
+	div2.cls("d-flex")
+	Dim div3 As MiniHtml = Helper.Div.up(div2)
+	div3.cls("toast-body")
+	div3.attr("id", "toast-body")
+	div3.text("Operation successful!")
+	Dim close1 As MiniHtml = Helper.Button.up(div2)
+	close1.attr("type", "button")
+	close1.cls("btn-close btn-close-white me-2 m-auto")
+	close1.attr("data-bs-dismiss", "toast")
+	Return div1
+End Sub
+
+Private Sub GitHubLink As MiniHtml
+	Dim div1 As MiniHtml = Helper.Div.cls("text-center mb-3")
+	Dim a1 As MiniHtml = Helper.Anchor.up(div1)
+	a1.attr("href", "https://github.com/pyhoon/pakai-server-b4j")
+	a1.cls("text-primary mr-1")
+	a1.attr("aria-label", "github")
+	a1.attr("title", "GitHub")
+	a1.attr("target", "_blank")
+	Dim svg1 As MiniHtml = Helper.Svg.up(a1)
+	svg1.attr("aria-hidden", "true")
+	svg1.attr("width", "24")
+	svg1.attr("height", "24")
+	svg1.attr("version", "1.1")
+	svg1.attr("viewBox", "0 0 16 16")
+	Dim path1 As MiniHtml = Helper.Path.up(svg1)
+	path1.attr("fill-rule", "evenodd")
+	path1.attr("d", "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z")
+	Dim a2 As MiniHtml = Helper.Anchor.up(div1)
+	a2.attr("href", "https://github.com/pyhoon/pakai-server-b4j")
+	a2.sty("text-decoration: none")
+	a2.attr("target","_blank")
+	Dim span1 As MiniHtml = Helper.Span.up(a2)
+	span1.sty("vertical-align: middle")
+	span1.text("GitHub")
+	Return div1
+End Sub
+
+Private Sub CategoriesLink As MiniHtml
+	Dim li1 As MiniHtml = Helper.Li
+	li1.cls("nav-item d-block d-lg-block")
+	Dim a1 As MiniHtml = Helper.Anchor.up(li1)
+	a1.attr("href", "/categories")
+	a1.cls("nav-link float-end")
+	a1.text("Categories")
+	Dim i1 As MiniHtml = Helper.Icon.up(a1)
+	i1.cls("bi bi-tag me-2")
+	i1.attr("title", "Categories")
+	Return li1
+End Sub
+
+Private Sub HelpLink As MiniHtml
+	Dim li1 As MiniHtml = Helper.Li
+	li1.cls("nav-item d-block d-lg-block")
+	Dim a1 As MiniHtml = Helper.Anchor.up(li1)
+	a1.attr("href", "/help")
+	a1.cls("nav-link float-end")
+	a1.text("API")
+	Dim i1 As MiniHtml = Helper.Icon.up(a1)
+	i1.cls("bi bi-gear me-2")
+	i1.attr("title", "API")
+	Return li1

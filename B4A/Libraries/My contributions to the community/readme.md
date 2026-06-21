@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 05/09/2026
+### 06/17/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -22,6 +22,7 @@ B4J***
 [[B4X] B4X Programming Technics + Track Changes Tool](https://www.b4x.com/android/forum/threads/b4x-b4x-programming-technics-track-changes-tool.112452/#post-701089)  
   
 ***B4R***  
+[Play the Piano - Create Arduino And B4R Code](https://www.b4x.com/android/forum/threads/play-the-piano-create-arduino-and-b4r-code.171313)  
 [View PCB at the same time from both sides](https://www.b4x.com/android/forum/threads/sonoff-dual-smart-switch-wifi-fuse.142335/post-902061)  
   
 ***B4i***  
@@ -56,6 +57,7 @@ B4A***
 [[Chargeable] Add in app purchases on the fly to your b4a and b4i projects](https://www.b4x.com/android/forum/threads/chargeable-class-add-in-app-purchases-on-the-fly-to-your-b4a-and-b4i-projects.122780/#content)  
   
 ***B4R***  
+[rESP8266MusicBox - Play music from eeprom and also single tones](https://www.b4x.com/android/forum/threads/resp8266musicbox-b4xlib-play-music-from-eeprom-and-also-single-tones.171315/)  
 [rDebug.b4xlib - Add debugging capabilites to all microprocessors (even the older ones) by adding breakpoints](https://www.b4x.com/android/forum/threads/rdebug-b4xlib-debug-arduino-code-in-all-microprocessors-even-the-older-ones.145028)  
 [ESP32CAM - Print Logs In B4R workaround](https://www.b4x.com/android/forum/threads/esp32cam-print-logs-workaround-b4xlib-included.143731/) (there is the rESP32CAM.b4xlib)  
 [rSPI32.b4xlib - A port of rSPI for Esp32 boards](https://www.b4x.com/android/forum/threads/rspi32-a-port-of-rspi-for-esp32-boards.136588/)  

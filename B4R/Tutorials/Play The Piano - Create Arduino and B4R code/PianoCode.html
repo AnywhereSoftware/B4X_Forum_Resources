@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-Octave Piano Logger</title>
+    <style>
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: #333; 
+            font-family: sans-serif; 
+            padding: 20px; 
+            color: white; 
+        }
+        
+        .piano { display: flex; position: relative; margin-bottom: 20px; }
+        .key { width: 30px; height: 150px; border: 1px solid #000; background: white; cursor: pointer; }
+        .key.black { width: 22px; height: 100px; background: black; margin: 0 -11px; z-index: 1; }
+        .key:active { background: #ccc; }
+        
+        .log-wrapper { 
+            display: flex; 
+            gap: 20px; 
+            width: 800px; 
+            align-items: flex-start; 
+        }
+        .col { display: flex; flex-direction: column; flex: 1; gap: 10px; }
+        
+        .col label { height: 40px; display: flex; align-items: flex-end; font-weight: bold; }
+        
+        textarea { height: 200px; padding: 10px; font-family: monospace; }
+        
+        .controls { margin-top: 20px; display: flex; gap: 10px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; font-weight: bold; border-radius: 4px; }
+        .btn-green { background-color: #28a745; color: white; }
+        .btn-cyan { background-color: #17a2b8; color: white; }
+        .btn-red { background-color: #dc3545; color: white; }
+        
+        #overlay { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            z-index: 10; 
+        }
+    </style>
+</head>
+<body>
+
+<div id="overlay">Click to enable sound and logging</div>
+<div class="piano" id="piano"></div>
+
+<div class="log-wrapper">
+    <div class="col">
+        <label>Arduino Code</label>
+        <textarea id="log1" readonly></textarea>
+        <button class="btn-green" onclick="copyToClipboard('log1')">Copy Arduino Code</button>
+    </div>
+    <div class="col">
+        <label>B4R code (rESP8266MusicBox.b4xlib library is needed)</label>
+        <textarea id="log2" readonly></textarea>
+        <button class="btn-cyan" onclick="copyToClipboard('log2')">Copy B4R Code</button>
+    </div>
+</div>
+
+<div class="controls">
+    <button class="btn-red" onclick="clearLogs()">Clear Logs</button>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const log1 = document.getElementById('log1');
+    const log2 = document.getElementById('log2');
+    
+    let lastPressTime = null;
+    let lastFreq = null;
+    let inactivityTimer = null;
+    const initialLog1 = "pinNumber=8;\n";
+    
+    log1.value = initialLog1;
+
+    const baseNotes = [
+        { note: 'C', freq: 261.63 }, { note: 'C#', freq: 277.18, black: true },
+        { note: 'D', freq: 293.66 }, { note: 'D#', freq: 311.13, black: true },
+        { note: 'E', freq: 329.63 }, { note: 'F', freq: 349.23 },
+        { note: 'F#', freq: 369.99, black: true }, { note: 'G', freq: 392.00 },
+        { note: 'G#', freq: 415.30, black: true }, { note: 'A', freq: 440.00 },
+        { note: 'A#', freq: 466.16, black: true }, { note: 'B', freq: 493.88 }
+    ];
+
+    document.getElementById('overlay').addEventListener('click', (e) => {
+        e.target.style.display = 'none';
+        const piano = document.getElementById('piano');
+        for (let octave = 0; octave < 4; octave++) {
+            baseNotes.forEach(n => {
+                const freq = Math.round(n.freq * Math.pow(2, octave));
+                const key = document.createElement('div');
+                key.className = `key ${n.black ? 'black' : ''}`;
+                key.onmousedown = () => handlePlay(freq);
+                piano.appendChild(key);
+            });
+        }
+    });
+
+    function handlePlay(freq) {
+        const now = Date.now();
+        
+        // Log previous note if it exists
+        if (lastPressTime !== null) {
+            const duration = now - lastPressTime;
+            log1.value += `tone(pinNumber, ${lastFreq}, ${duration});\ndelay(${duration});\n`;
+            log2.value += `ESP8266MusicBox.Play(D2, ${lastFreq}, ${duration})\n`;
+        }
+        
+        lastPressTime = now;
+        lastFreq = freq;
+        
+        // Setup inactivity check
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(logFinalNote, 1800);
+        
+        // Play Audio
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function logFinalNote() {
+        if (lastFreq) {
+            log1.value += `tone(pinNumber, ${lastFreq}, 500);\ndelay(500);\n`;
+            log2.value += `ESP8266MusicBox.Play(D2, ${lastFreq}, 500)\nDelay(500)\n`;
+            lastPressTime = null;
+            lastFreq = null;
+        }
+    }
+
+    function clearLogs() {
+        log1.value = initialLog1;
+        log2.value = "";
+        lastPressTime = null;
+        lastFreq = null;
+        clearTimeout(inactivityTimer);
+    }
+
+    function copyToClipboard(id) {
+        const textarea = document.getElementById(id);
+        textarea.select();
+        document.execCommand('copy');
+        alert("Copied to clipboard!");
+    }
+</script>
+</body>
+</html>
