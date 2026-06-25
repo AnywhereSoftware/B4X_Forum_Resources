@@ -1,8 +1,8 @@
 ###  jRDC2 - B4J implementation of RDC (Remote Database Connector) by Erel
-### 03/13/2024
+### 06/22/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/61801/)
 
-[MEDIA=vimeo]260642577[/MEDIA]  
+**New version: <https://www.b4x.com/android/forum/threads/b4x-jrdc-3-remote-database-connector.171345/>**  
   
 RDC is a middleware server that makes it simple to safely connect clients and remote SQL database servers.  
   

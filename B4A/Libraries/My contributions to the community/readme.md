@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 06/17/2026
+### 06/23/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -84,6 +84,7 @@ B4A***
 ***[SIZE=4]Tutorials[/SIZE]  
   
 B4R***  
+[B4R state-machine code example](https://www.b4x.com/android/forum/threads/b4r-state-machine-code-example.171351/post-1048067)  
 [All ESP32 modules in 2025](https://www.b4x.com/android/forum/threads/all-esp32-modules-in-2025.169654/)  
 [On line Ethics DB for robots and 4 laws of robotics](https://www.b4x.com/android/forum/threads/robots.165844/post-1017531)  
 [How to change libraries folder in arduino-cli](https://www.b4x.com/android/forum/threads/solved-liquidcrystal-h-not-found-how-to-change-libraries-folder-in-arduino-cli.161202/post-989181)  
