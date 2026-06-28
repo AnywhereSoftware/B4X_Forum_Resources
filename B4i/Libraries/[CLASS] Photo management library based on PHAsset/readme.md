@@ -1,5 +1,5 @@
 ### [CLASS] Photo management library based on PHAsset by JackKirk
-### 03/18/2025
+### 06/27/2026
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/110812/)
 
 This class is a collaborative effort between myself and Narek Adonts.  
@@ -44,4 +44,8 @@ Find an .mp4 video of your choice and copy it to the Files folder with the name 
   
 For reason for the update see:  
   
-<https://www.b4x.com/android/forum/threads/my-phassets-class-died-at-ios-18-ms-copilot-to-the-rescue.166185/>
+<https://www.b4x.com/android/forum/threads/my-phassets-class-died-at-ios-18-ms-copilot-to-the-rescue.166185/>  
+  
+**MAJOR UPDATE - 3.0** - see new zip below  
+  
+This version has significant improvements in the area of iCloud handling - courtesy of Claude Code

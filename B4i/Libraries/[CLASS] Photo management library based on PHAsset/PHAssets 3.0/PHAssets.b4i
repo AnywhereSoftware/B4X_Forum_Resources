@@ -1,0 +1,321 @@
+﻿Build1=Default,treetopscustomer.b4i.phassets
+File1=testbitmap.jpg
+File2=testvideo.mp4
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=icore
+Library2=ihud
+Module1=PHAssets
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+'************************************************************************************
+'
+'This code required for publication, see:
+'
+'https://www.b4x.com/android/forum/threads/publishing-your-app-to-the-app-store.57528/
+'
+'************************************************************************************
+'This code required for publication, see:
+'https://www.b4x.com/android/forum/threads/publishing-your-app-to-the-app-store.57528/
+#If DEBUG
+    #CertificateFile: ios_development.cer
+    #ProvisionFile: treetopscustomer.mobileprovision
+#END IF
+
+#If RELEASE
+'These 2 lines are for testing, comment them out if building iTunes release
+    #CertificateFile: ios_development.cer
+    #ProvisionFile: treetopscustomer.mobileprovision
+'These 2 lines are for building iTunes release, comment them out if testing
+'    #CertificateFile: ios_distribution.cer
+'    #ProvisionFile: treetopscustomer_distribution.mobileprovision
+#END IF
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: PHAssetsClassDemo
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait
+	#iPadOrientations: Portrait
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 16
+	
+	#PlistExtra:<key>NSPhotoLibraryUsageDescription</key><string>So we can manipulate your photos and videos.</string> 
+
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private ph As PHAssets
+	Public UI_hud As HUD
+
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	
+	'Uncomment if program crashes before all logs are printed
+	'SetDebugAutoFlushLogs(True)
+	
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+	'************************************************************************************
+
+	LogColor("If you are using Version 5.50 or later you can" & CRLF & _
+	         "click the arrow on the LHS of the log to see" & CRLF & _
+			 "where the line was generated in the code", Colors.Red)
+	
+	ph.Initialize
+	
+	'Added trailing Ask parameter - True = permission is to be asked for if current
+	'authorization status is 0 (not determined)
+	ph.PermissionGet(True)
+	Wait For Event_ph_PermissionGet_done
+	Log("Permission: " & ph.PermissionGet_result)
+	If Not(ph.PermissionGet_result) Then Return
+	
+	'************************************************************************************
+
+	LogColor("Following lists all 'smart' albums - a 'smart'" & CRLF & _
+	         "album is one which is created by iOS that you" & CRLF & _
+			 "can not create/delete either via the Photos" & CRLF & _
+			 "app or code such as this", Colors.Red)
+	
+	'The parameter passed can be PHAssetCollectionSubtypeAny or a
+	'PHAssetCollectionSubtypeSmartAlbum???
+	ph.SmartAlbumsGet(ph.PHAssetCollectionSubtypeAny)
+'	ph.SmartAlbumsGet(ph.PHAssetCollectionSubtypeSmartAlbumVideos)
+'	ph.SmartAlbumsGet(ph.PHAssetCollectionSubtypeSmartAlbumUserLibrary)
+	Wait For Event_ph_SmartAlbumsGet_done
+	
+	If ph.SmartAlbumsGet_result.IsInitialized Then
+		Private wrk_phalbum As PHAlbum
+		Private wrk_phasset As PHAsset
+		wrk_phalbum.Initialize
+		wrk_phasset.Initialize
+		Private wrk_i, wrk_j As Int
+		For wrk_i = 0 To ph.SmartAlbumsGet_result.Size -1
+			wrk_phalbum = ph.SmartAlbumsGet_result.Get(wrk_i)
+			Log("Smart Album: " & wrk_phalbum.Name & " " & wrk_phalbum.PHAssetsList.Size)
+'			If wrk_phalbum.Name = "Videos" Then
+'				For wrk_j =  0 To wrk_phalbum.PHAssetsList.Size - 1
+'					wrk_phasset = wrk_phalbum.PHAssetsList.Get(wrk_j)
+'					Log(wrk_phasset.UniqueID & " " & wrk_phasset.Width & " " & wrk_phasset.Height & " " & wrk_phasset.isVideo & " " & wrk_phasset.Duration)
+'				Next
+'			End If
+		Next
+
+	End If
+	
+	'************************************************************************************
+
+	LogColor("Following lists all 'user' albums and their" & CRLF & _
+	         "contents - a 'user' album is one which you" & CRLF & _
+			 "can create/delete either via the Photos" & CRLF & _
+			 "app or code such as this", Colors.Red)
+	
+	'The parameter passed can be PHAssetCollectionSubtypeAny or a
+	'PHAssetCollectionSubtypeAlbum???
+	ph.UserAlbumsGet(ph.PHAssetCollectionSubtypeAny)
+	Wait For Event_ph_UserAlbumsGet_done
+	Private wrk_phalbum As PHAlbum
+	Private wrk_phasset As PHAsset
+	wrk_phalbum.Initialize
+	wrk_phasset.Initialize
+	Private wrk_i, wrk_j As Int
+	For wrk_i = 0 To ph.UserAlbumsGet_result.Size -1
+		wrk_phalbum = ph.UserAlbumsGet_result.Get(wrk_i)
+		Log("User Album: " & wrk_phalbum.Name & " " & wrk_phalbum.PHAssetsList.Size)
+		For wrk_j =  0 To wrk_phalbum.PHAssetsList.Size - 1
+			wrk_phasset = wrk_phalbum.PHAssetsList.Get(wrk_j)
+			Log(wrk_phasset.GUID & " " & wrk_phasset.Width & " " & wrk_phasset.Height & " " & wrk_phasset.isVideo & " " & wrk_phasset.Duration)
+		Next
+	Next
+	
+	'************************************************************************************
+
+	LogColor("Delete user album [PHAssets Test Album] - note" & CRLF & _
+	         "the return code will be 'true' if the album was" & CRLF & _
+			 "deleted or it did not exist - note also that" & CRLF & _
+	         "any assets in this user album are actually" & CRLF & _
+	         "pointers and the original assets will still" & CRLF & _
+	         "exist in smart album [All Photos]", Colors.Red)
+	
+	ph.UserAlbumDelete("PHAssets Test Album")
+	Wait For Event_ph_UserAlbumDelete_done
+	Log("UserAlbumDelete " & ph.UserAlbumDelete_result)
+	
+	'************************************************************************************
+
+	LogColor("Add user album [PHAssets Test Album] - note" & CRLF & _
+	         "the return code will be 'true' if the album was" & CRLF & _
+			 "created or it already existed", Colors.Red)
+	
+	ph.UserAlbumAdd("PHAssets Test Album")
+	Wait For Event_ph_UserAlbumAdd_done
+	Log("UserAlbumAdd [PHAssets Test Album] " & ph.UserAlbumAdd_result)
+	
+	'************************************************************************************
+
+	LogColor("Check if user album [PHAssets Test Album]" & CRLF & _
+	         "exists", Colors.Red)
+	
+	ph.UserAlbumExists("PHAssets Test Album")
+	Wait For Event_ph_UserAlbumExists_done
+	Log("UserAlbumExists [PHAssets Test Album] " & ph.UserAlbumExists_result)
+	
+	'************************************************************************************
+
+	LogColor("List all user albums - which should now" & CRLF & _
+	         "include [PHAssets Test Album]", Colors.Red)
+	
+	ph.UserAlbumsGet(ph.PHAssetCollectionSubtypeAny)
+	Wait For Event_ph_UserAlbumsGet_done
+	Private wrk_phalbum As PHAlbum
+	Private wrk_phasset As PHAsset
+	wrk_phalbum.Initialize
+	wrk_phasset.Initialize
+	Private wrk_i, wrk_j As Int
+	For wrk_i = 0 To ph.UserAlbumsGet_result.Size -1
+		wrk_phalbum = ph.UserAlbumsGet_result.Get(wrk_i)
+		Log("User Album: " & wrk_phalbum.Name & " " & wrk_phalbum.PHAssetsList.Size)
+'		For wrk_j =  0 To wrk_phalbum.PHAssetsList.Size - 1
+'			wrk_phasset = wrk_phalbum.PHAssetsList.Get(wrk_j)
+'			Log(wrk_phasset.UniqueID & " " & wrk_phasset.Width & " " & wrk_phasset.Height & " " & wrk_phasset.isVideo & " " & wrk_phasset.Duration)
+'		Next
+	Next
+	
+	'************************************************************************************
+
+	LogColor("Add photo to user album [PHAssets Test" & CRLF & _
+	         "Album] - note that photo is actually added" & CRLF & _
+			 "to smart album [All Photos] and a pointer" & CRLF & _
+			 "is added to [PHAssets Test Album]", Colors.Red)
+
+	'Load test bitmap
+	Private wrk_bitmap As Bitmap
+	wrk_bitmap.Initialize(File.DirAssets, "testbitmap.jpg")
+	
+	ph.PhotoAdd("PHAssets Test Album", wrk_bitmap)
+	Wait For Event_ph_PhotoAdd_done
+	'ph.PhotoAdd_result contains unique ID of just added photo - blank if error
+	Log("PhotoAdd: " & ph.PhotoAdd_result)
+	
+	'************************************************************************************
+
+	LogColor("Check if photo exists in smart album [All Photos]", Colors.Red)
+
+	'Added trailing iCloud parameter - True = include assets that only exist in iCloud,
+	'False = only include assets on device
+	ph.AssetExists(ph.PhotoAdd_result, True)
+	Wait For Event_ph_AssetExists_done
+	Log("AssetExists: " & ph.PhotoAdd_result & " " & ph.AssetExists_result)
+	
+	'************************************************************************************
+
+	LogColor("Get photo from smart album [All Photos]", Colors.Red)
+	
+	'Added trailing iCloud parameter - True = access photo from iCloud if necessary,
+	'False = only access photo if on device
+	ph.PhotoGet(ph.PhotoAdd_result, True)
+	Wait For Event_ph_PhotoGet_done
+	Log("PhotoGet: " & ph.PhotoGet_result.IsInitialized)
+
+	If ph.PhotoGet_result.IsInitialized Then
+		
+		Private wrk_imageview As ImageView
+		wrk_imageview.Initialize("")
+		wrk_imageview.Bitmap = ph.PhotoGet_result.Resize(Page1.RootPanel.Width, ph.PhotoGet_result.Height * Page1.RootPanel.Width / ph.PhotoGet_result.Width, True)
+     	wrk_imageview.SizeToFit		
+		
+		Page1.RootPanel.AddView(wrk_imageview, 0, 0, wrk_imageview.Width, wrk_imageview.Height)
+
+	End If
+	
+	'************************************************************************************
+
+	LogColor("Delete photo from smart album [All Photos]" & CRLF & _
+	         "- note this will also delete any pointers to" & CRLF & _
+	         "the photo in any other user or smart album", Colors.Red)
+			 
+	ph.AssetDelete(ph.PhotoAdd_result)
+	Wait For Event_ph_AssetDelete_done
+	Log("AssetDelete: " & ph.AssetDelete_result)
+	
+	Page1.RootPanel.RemoveAllViews
+	
+	'************************************************************************************
+
+	LogColor("Add video to user album [PHAssets Test" & CRLF & _
+	         "Album] - note that video is actually added" & CRLF & _
+			 "to smart album [All Photos] and a pointer" & CRLF & _
+			 "is added to [PHAssets Test Album]", Colors.Red)
+
+	'Load test video to temp directory
+	File.Copy(File.DirAssets, "testvideo.mp4", File.DirTemp, "testvideo.mp4")
+
+	ph.VideoAdd("PHAssets Test Album", File.DirTemp & "testvideo.mp4")
+	Wait For Event_ph_VideoAdd_done
+	'ph.VideoAdd_result contains unique ID of just added video - blank if error
+	Log("VideoAdd: " & ph.VideoAdd_result)
+	
+	'************************************************************************************
+
+	LogColor("Check if video exists in smart album [All Photos]", Colors.Red)
+	
+	'Added trailing iCloud parameter - True = access video from iCloud if necessary,
+	'False = only access video if on device
+	ph.AssetExists(ph.VideoAdd_result, True)
+	Wait For Event_ph_AssetExists_done
+	Log("AssetExists: " & ph.VideoAdd_result & " " & ph.AssetExists_result)
+	
+	'************************************************************************************
+
+	LogColor("Get video from smart album [All Photos]", Colors.Red)
+	
+	'Delete test video from temp directory
+	File.Delete(File.DirTemp, "testvideo.mp4")
+
+	'Added trailing iCloud parameter - True = access video from iCloud if necessary,
+	'False = only access video if on device
+	ph.VideoGet(ph.VideoAdd_result, File.DirTemp & "testvideo.mp4", True)
+	Wait For Event_ph_VideoGet_done
+	Log("VideoGet: " & ph.VideoGet_result)
+
+	Log("Video on temp directory: " & File.Exists(File.DirTemp, "testvideo.mp4"))
+	
+	'************************************************************************************
+
+	LogColor("Delete video from smart album [All Photos]" & CRLF & _
+	         "- note this will also delete any pointers to" & CRLF & _
+	         "the video in any other user or smart album", Colors.Red)
+			 
+	ph.AssetDelete(ph.VideoAdd_result)
+	Wait For Event_ph_AssetDelete_done
+	Log("AssetDelete: " & ph.AssetDelete_result)
+
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+
+
+
