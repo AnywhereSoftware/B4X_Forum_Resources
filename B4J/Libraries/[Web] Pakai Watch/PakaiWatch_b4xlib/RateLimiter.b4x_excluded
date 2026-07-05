@@ -1,0 +1,281 @@
+'Filter class
+Sub Class_Globals
+    ' Per-endpoint route configuration loaded from Main.GetRateLimitConfig
+    Private RouteConfig As Map
+    
+    ' Default limits (used as fallback)
+    Private MaxRequests As Int = 10
+    Private WindowMs As Long = 10000
+    
+    ' Whitelist Settings
+    Private Whitelist As B4XSet
+    Private const WHITELIST_FILE As String = "whitelist.txt"
+    
+    ' Logging Settings
+    Private const SECURITY_LOG_FILE As String = "security_violations.log"
+    
+    ' Periodic maintenance (every N requests)
+    Private const CLEANUP_EVERY As Int = 100
+    
+    ' Per-API-key limit overrides (keyed by client identifier)
+    Private KeyOverrides As Map
+End Sub
+
+Public Sub Initialize
+    ' Initialize persistent state in Main module using a server-level ThreadSafeMap
+    If Main.RateLimiterRequestCounts.IsInitialized = False Then
+        Main.RateLimiterRequestCounts = Main.App.srvr.CreateThreadSafeMap
+        Main.RateLimiterRequestCounts.Put("__meta_blocks", 0)
+        Main.RateLimiterRequestCounts.Put("__meta_date", "")
+        Main.RateLimiterRequestCounts.Put("__meta_processed", 0)
+    End If
+    
+    RouteConfig.Initialize
+    KeyOverrides.Initialize
+    Whitelist.Initialize
+    LoadWhitelistFromFile
+    
+    If SubExists(Main, "GetRateLimitConfig") Then
+        Dim Cfg As Map = CallSub(Main, "GetRateLimitConfig")
+        If Cfg.IsInitialized And Cfg.Size > 0 Then
+            If Cfg.ContainsKey("__key_overrides__") Then
+                Dim Ko As Map = Cfg.Get("__key_overrides__")
+                If Ko.IsInitialized And Ko.Size > 0 Then KeyOverrides = Ko
+                Cfg.Remove("__key_overrides__")
+            End If
+            RouteConfig = Cfg
+        End If
+    End If
+    
+    DateTime.DateFormat = "yyyy-MM-dd"
+    Dim savedDate As String = Main.RateLimiterRequestCounts.Get("__meta_date")
+    If savedDate = "" Then
+        Main.RateLimiterRequestCounts.Put("__meta_date", DateTime.Date(DateTime.Now))
+    End If
+End Sub
+
+Private Sub AsList (Value As Object) As List
+    If Value Is List Then Return Value
+    Dim Arr() As Int = Value
+    Dim L As List
+    L.Initialize
+    L.Add(Arr(0))
+    L.Add(Arr(1))
+    Return L
+End Sub
+
+Private Sub ApplyLimits (URI As String, ClientIdentifier As String)
+    If KeyOverrides.IsInitialized And KeyOverrides.Size > 0 And KeyOverrides.ContainsKey(ClientIdentifier) Then
+        Dim Limits As List = AsList(KeyOverrides.Get(ClientIdentifier))
+        If Limits.Size >= 2 Then
+            MaxRequests = Limits.Get(0)
+            WindowMs = Limits.Get(1)
+            Return
+        End If
+    End If
+    
+    If RouteConfig.IsInitialized And RouteConfig.Size > 0 Then
+        For Each Pattern As String In RouteConfig.Keys
+            If URI.StartsWith(Pattern) Then
+                Dim Limits As List = AsList(RouteConfig.Get(Pattern))
+                If Limits.Size >= 2 Then
+                    MaxRequests = Limits.Get(0)
+                    WindowMs = Limits.Get(1)
+                    Return
+                End If
+            End If
+        Next
+    End If
+    
+    MaxRequests = 10
+    WindowMs = 10000
+End Sub
+
+Public Sub Filter (req As ServletRequest, resp As ServletResponse) As Boolean
+    ' Only rate-limit POST requests. Update filter registration to target specific paths.
+    If req.Method <> "POST" Then Return True
+    
+    Dim ClientIdentifier As String = ""
+    Dim AuthHeader As String = req.GetHeader("Authorization")
+    
+    If AuthHeader <> "" And AuthHeader <> Null Then
+        If AuthHeader.StartsWith("Bearer ") Then
+            ClientIdentifier = AuthHeader.SubString(7).Trim
+        Else
+            ClientIdentifier = AuthHeader.Trim
+        End If
+    End If
+    
+    Dim UserIP As String = req.GetHeader("CF-Connecting-IP")
+    If UserIP = "" Or UserIP = Null Then UserIP = req.RemoteAddress
+    
+    If ClientIdentifier = "" Then ClientIdentifier = "GUEST-" & UserIP
+    
+    If IsWhitelisted(ClientIdentifier, UserIP) Then Return True
+    
+    ApplyLimits(req.RequestURI, ClientIdentifier)
+    Return EnforceRateLimit(ClientIdentifier, req.RequestURI, resp)
+End Sub
+
+Private Sub LoadWhitelistFromFile
+    Try
+        If File.Exists(File.DirApp, WHITELIST_FILE) = False Then
+            File.WriteList(File.DirApp, WHITELIST_FILE, Array As String("127.0.0.1"))
+        End If
+        
+        Dim Lines As List = File.ReadList(File.DirApp, WHITELIST_FILE)
+        
+        Whitelist.Clear
+        For Each Entry As String In Lines
+            Dim CleanEntry As String = Entry.Trim
+            If CleanEntry <> "" And CleanEntry.StartsWith("#") = False Then
+                Whitelist.Add(CleanEntry)
+            End If
+        Next
+    Catch
+        Log("RateLimiter Error: Whitelist load failed: " & LastException.Message)
+    End Try
+End Sub
+
+Private Sub LogViolation (Identifier As String, RequestPath As String)
+    Dim LogLine As String = $"[${DateTime.Date(DateTime.Now)} ${DateTime.Time(DateTime.Now)}] BLOCKED: ID/IP [${Identifier}] spamming ${RequestPath}${CRLF}"$
+    Try
+        Dim Out As OutputStream = File.OpenOutput(File.DirApp, SECURITY_LOG_FILE, True)
+        Dim tw As TextWriter
+        tw.Initialize(Out)
+        tw.Write(LogLine)
+        tw.Close
+        
+        Dim blocks As Int = Main.RateLimiterRequestCounts.Get("__meta_blocks")
+        Main.RateLimiterRequestCounts.Put("__meta_blocks", blocks + 1)
+        
+    Catch
+        Log("RateLimiter Error: Failed to write to security log: " & LastException.Message)
+    End Try
+End Sub
+
+Private Sub GenerateDailySummaryReport (ReportDate As String, BlocksCount As Int)
+    Dim ReportFile As String = $"daily_report_${ReportDate}.txt"$
+    Dim ReportContent As String = _
+        $"=========================================${CRLF}"$ & _
+        $"RATE LIMITER DAILY SUMMARY REPORT        ${CRLF}"$ & _
+        $"Date: ${ReportDate}                     ${CRLF}"$ & _
+        $"=========================================${CRLF}"$ & _
+        $"Total Security Interceptions: ${BlocksCount}${CRLF}"$ & _
+        $"Status: Completed                         ${CRLF}"$
+        
+    Try
+        File.WriteString(File.DirApp, ReportFile, ReportContent)
+        Log("RateLimiter Background Worker: Generated daily summary report file " & ReportFile)
+    Catch
+        Log("RateLimiter Error: Failed to generate summary report: " & LastException.Message)
+    End Try
+End Sub
+
+Private Sub IsWhitelisted (Identifier As String, UserIP As String) As Boolean
+    Try
+        If Whitelist.Contains(Identifier) Or Whitelist.Contains(UserIP) Then
+            Return True
+        End If
+        
+        For Each Rule As String In Whitelist.AsList
+            If Rule.Contains("*") Then
+                Dim Prefix As String = Rule.Replace("*", "")
+                If UserIP.StartsWith(Prefix) Then
+                    Return True
+                End If
+            End If
+        Next
+        
+        Return False
+    Catch
+        Log("RateLimiter Error in IsWhitelisted: " & LastException.Message)
+        Return False
+    End Try
+End Sub
+
+Private Sub EnforceRateLimit (Identifier As String, RequestURI As String, Resp As ServletResponse) As Boolean
+    Try
+        Dim Now As Long = DateTime.Now
+        
+        Dim RequestHistory As List
+        Dim HadExisting As Boolean = Main.RateLimiterRequestCounts.ContainsKey(Identifier)
+        
+        If HadExisting Then
+            RequestHistory = Main.RateLimiterRequestCounts.Get(Identifier)
+        Else
+            RequestHistory.Initialize
+            Main.RateLimiterRequestCounts.Put(Identifier, RequestHistory)
+        End If
+        
+        Dim CutoffTime As Long = Now - WindowMs
+        Do While RequestHistory.Size > 0 And RequestHistory.Get(0) < CutoffTime
+            RequestHistory.RemoveAt(0)
+        Loop
+        
+        If RequestHistory.Size >= MaxRequests Then
+            LogViolation(Identifier, RequestURI)
+            
+            Resp.Status = 429 
+            Resp.SetHeader("Retry-After", NumberFormat(WindowMs / 1000, 1, 0))
+            Resp.ContentType = "text/plain"
+            Resp.Write("Too Many Requests. Please wait.")
+            
+            DoPeriodicMaintenance
+            Return False 
+        End If
+        
+        RequestHistory.Add(Now)
+        
+        DoPeriodicMaintenance
+        Return True 
+    Catch
+        Log("RateLimiter Error in EnforceRateLimit: " & LastException.Message)
+        Return True
+    End Try
+End Sub
+
+Private Sub DoPeriodicMaintenance
+    Dim processed As Int = Main.RateLimiterRequestCounts.Get("__meta_processed")
+    processed = processed + 1
+    If processed < CLEANUP_EVERY Then
+        Main.RateLimiterRequestCounts.Put("__meta_processed", processed)
+        Return
+    End If
+    
+    Main.RateLimiterRequestCounts.Put("__meta_processed", 0)
+    
+    LoadWhitelistFromFile
+    
+    DateTime.DateFormat = "yyyy-MM-dd"
+    Dim CheckTodayString As String = DateTime.Date(DateTime.Now)
+    
+    Dim savedDate As String = Main.RateLimiterRequestCounts.Get("__meta_date")
+    If CheckTodayString <> savedDate Then
+        GenerateDailySummaryReport(savedDate, Main.RateLimiterRequestCounts.Get("__meta_blocks"))
+        Main.RateLimiterRequestCounts.Put("__meta_blocks", 0)
+        Main.RateLimiterRequestCounts.Put("__meta_date", CheckTodayString)
+    End If
+    
+    Dim Now As Long = DateTime.Now
+    Dim CutoffTime As Long = Now - WindowMs
+    Dim IDsToRemove As List
+    IDsToRemove.Initialize
+    
+    For Each Identifier As String In Main.RateLimiterRequestCounts.Keys
+        If Identifier.StartsWith("__meta") Then Continue
+        Dim RequestHistory As List = Main.RateLimiterRequestCounts.Get(Identifier)
+        
+        Do While RequestHistory.Size > 0 And RequestHistory.Get(0) < CutoffTime
+            RequestHistory.RemoveAt(0)
+        Loop
+        
+        If RequestHistory.Size = 0 Then
+            IDsToRemove.Add(Identifier)
+        End If
+    Next
+    
+    For Each InactiveID As String In IDsToRemove
+        Main.RateLimiterRequestCounts.Remove(InactiveID)
+    Next
+End Sub

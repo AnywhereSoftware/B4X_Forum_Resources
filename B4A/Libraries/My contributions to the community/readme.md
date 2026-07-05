@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 06/23/2026
+### 07/02/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -186,6 +186,7 @@ B4R***
 [Get device's google account](https://www.b4x.com/android/forum/threads/get-devices-google-account.99344/)  
   
 ***B4J***  
+[B4J Server - Rate Limiting Background Worker](https://www.b4x.com/android/forum/threads/rate-limit-worker.171429/post-1048536)  
 [Sql Server - Convert Sql Server datetime value to unix datetime and vice versa](https://www.b4x.com/android/forum/threads/sql-server-convert-sql-server-datetime-value-to-unix-datetime-and-vice-versa.143939/)  
 [RSA256 encryption in @aeric 's JWT project](https://www.b4x.com/android/forum/threads/solved-javaobject-problem-jwt-with-rsa256.143234/post-907556)  
 [Pdf to text with pdfbox app 3.0.4 - Free of vulnerabilities (for the time being today Feb 9th, 2025)](https://www.b4x.com/android/forum/threads/pdf-to-text-with-pdfbox-app-3-0-4-free-of-vulnerabilities-for-the-time-being-today-feb-9th-2025.165524/)  

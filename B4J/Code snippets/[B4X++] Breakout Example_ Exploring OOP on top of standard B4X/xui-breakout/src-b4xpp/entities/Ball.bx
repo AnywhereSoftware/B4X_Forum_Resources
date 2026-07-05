@@ -1,0 +1,64 @@
+#Class Ball Extends GameEntity Final
+
+#Property VelocityX As Float = 190
+#Property VelocityY As Float = -230
+#Property Radius As Float = 7
+
+#Constructor(aX As Float, aY As Float, aRadius As Float, aColor As Int)
+    ' The ball is stored as a rectangle but rendered as a circle.
+    Super.Initialize(aX - aRadius, aY - aRadius, aRadius * 2, aRadius * 2, aColor)
+    Radius = aRadius
+    VelocityX = 190
+    VelocityY = -230
+#End Constructor
+
+Public Sub ResetAt(aBallCenterX As Float, aBallCenterY As Float)
+    ' Places the ball above the paddle before launch / relaunch.
+    SetPosition(aBallCenterX - getRadius, aBallCenterY - getRadius)
+    VelocityX = 190
+    VelocityY = -230
+End Sub
+
+Public Sub Advance(aDeltaSeconds As Float, aBoundsWidth As Float)
+    ' Moves the ball and bounces against the left, right and top walls.
+    SetPosition(getX + getVelocityX * aDeltaSeconds, getY + getVelocityY * aDeltaSeconds)
+
+    If Left <= 0 Then
+        SetPosition(0, getY)
+        BounceX
+    Else If Right >= aBoundsWidth Then
+        SetPosition(aBoundsWidth - getWidth, getY)
+        BounceX
+    End If
+
+    If Top <= 0 Then
+        SetPosition(getX, 0)
+        BounceY
+    End If
+End Sub
+
+Public Sub BounceX
+    ' Reverses horizontal movement.
+    VelocityX = -getVelocityX
+End Sub
+
+Public Sub BounceY
+    ' Reverses vertical movement.
+    VelocityY = -getVelocityY
+End Sub
+
+Public Sub AimFromPaddle(aPlayerPaddle As Paddle)
+    ' Changes the exit angle depending on where the ball touched the paddle.
+    Dim offset As Float = (CenterX - aPlayerPaddle.CenterX) / Max(1, aPlayerPaddle.getWidth / 2)
+    offset = BreakoutMath.ClampF(offset, -1, 1)
+    VelocityX = 260 * offset
+    VelocityY = -BreakoutMath.AbsF(getVelocityY)
+End Sub
+
+Override Sub Render(aCvs As B4XCanvas)
+    ' Draws the ball as a filled circle.
+    If getVisible = False Then Return
+    aCvs.DrawCircle(CenterX, CenterY, getRadius, getColor, True, 0)
+End Sub
+
+#End Class

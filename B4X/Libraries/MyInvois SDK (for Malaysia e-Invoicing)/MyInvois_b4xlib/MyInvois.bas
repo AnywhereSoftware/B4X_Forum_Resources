@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 ' B4X MyInvois Class
-' Version 1.00
+' Version 1.01
 Sub Class_Globals
 	Type Document (name As String, schema As Schema, schema2 As Schema2, invoice As Invoice)
 	Type AccountingCustomerParty (Party As Party)
@@ -760,7 +760,8 @@ Public Sub GenerateInvoiceJSON (Document As Document, Compact As Boolean) As Str
 	Return gen.ToPrettyString(2)
 End Sub
 
-Public Sub GetValue (CustomClass As Object) As List
+' Get value of the object with no attribute
+Private Sub GetValue (CustomClass As Object) As List
 	Dim value As Object
 	Dim col As Map
 	col.Initialize
@@ -849,8 +850,8 @@ Public Sub GetValue (CustomClass As Object) As List
 	Return lst
 End Sub
 
-' Get value and 1 attribute
-Public Sub GetValue2 (CustomClass As Object) As List
+' Get value of the object with 1 attribute
+Private Sub GetValue2 (CustomClass As Object) As List
 	Dim col As Map
 	col.Initialize
 	Select True
@@ -944,8 +945,8 @@ Public Sub GetValue2 (CustomClass As Object) As List
 	Return lst
 End Sub
 
-' Get value and up to 2 attributes
-Public Sub GetValue3 (CustomClass As Object) As List
+' Get value of the object with 2 attributes
+Private Sub GetValue3 (CustomClass As Object) As List
 	Dim col As Map
 	col.Initialize
 	Select True
@@ -966,8 +967,8 @@ Public Sub GetValue3 (CustomClass As Object) As List
 	Return lst
 End Sub
 
-' Get all attributes
-Public Sub GetValues (CustomClass As Object) As List
+' Get value of the object with available attributes
+Private Sub GetValues (CustomClass As Object) As List
 	Dim lst As List
 	lst.Initialize
 	Select True
@@ -1398,20 +1399,4 @@ Public Sub GetValues (CustomClass As Object) As List
 			lst.Add(col)
 	End Select
 	Return lst
-End Sub
-
-'Create a List with 1 value
-Public Sub PutValue (Value As Object) As List
-	Dim List1 As List
-	List1.Initialize
-	List1.Add(CreateMap("_": Value))
-	Return List1
-End Sub
-
-'Create a List with a map
-Public Sub PutValues (Items As Map) As List
-	Dim List1 As List
-	List1.Initialize
-	List1.Add(Items)
-	Return List1
 End Sub

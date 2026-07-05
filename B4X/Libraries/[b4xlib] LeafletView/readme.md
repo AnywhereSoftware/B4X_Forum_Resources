@@ -1,9 +1,9 @@
 ###    [b4xlib] LeafletView by Abdull Cadre
-### 03/14/2026
+### 07/02/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170589/)
 
-[HEADING=1]![](https://www.b4x.com/android/forum/attachments/170596)![](https://www.b4x.com/android/forum/attachments/170598)  
-[/HEADING]  
+[HEADING=1]![](https://www.b4x.com/android/forum/attachments/170596)![](https://www.b4x.com/android/forum/attachments/170598)[/HEADING]  
+[HEADING=1][/HEADING]  
 LeafletView is a cross-platform wrapper for **Leaflet.js**, providing a lightweight alternative to Google Maps. It uses OpenStreetMap by default, meaning no API keys are required for basic mapping.  
   
 This version is distributed as a **.b4xlib**, making it easy to include in any B4A or B4J project.  
@@ -43,8 +43,4 @@ This version is distributed as a **.b4xlib**, making it easy to include in any B
 - **LeafletView.b4xlib:** The compiled library.
 - **Example Project:** A demo showing markers, routing, and event handling.
 
-**Credits:** - [Leaflet.js](https://leafletjs.com/)  
-  
-[HEADING=2]Support[/HEADING]  
-If this library is useful to you and you'd like to support my work, feel free to buy me a coffee!  
-**PayPal:** [EMAIL]yusrahassamo@gmail.com[/EMAIL]
+**Credits:** - [Leaflet.js](https://leafletjs.com/)
