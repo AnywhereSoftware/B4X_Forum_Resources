@@ -1,5 +1,5 @@
-﻿' Help Handler class
-' Version 6.30
+' Help Handler class
+' Version 6.99
 Sub Class_Globals
 	Private AllGroups 	As Map
 	Private AllMethods 	As List
@@ -33,10 +33,36 @@ End Sub
 Sub Handle (req As ServletRequest, resp As ServletResponse)
 	Request = req
 	Response = resp
+	
+	Dim FormatParam As String = req.GetParameter("format")
+	If FormatParam.ToLowerCase = "openapi" Then
+		' Intercept to serve raw OpenAPI JSON spec
+		ServeOpenApiJson
+		Return
+	Else If FormatParam.ToLowerCase = "snippets" Then
+		' Generate the code blocks for all endpoints
+		Dim AllCode As StringBuilder
+		AllCode.Initialize
+    	
+		'Build all methods first
+		BuildMethods
+		
+		' Loops directly over the native collection built by WebApiUtils!
+		For Each SingleMethod As Map In AllMethods
+			AllCode.Append(GenerateAppSnippet(SingleMethod)).Append(CRLF).Append(CRLF)
+		Next
+    
+		' Print clean text lines straight to the browser
+		resp.ContentType = "text/plain;charset=UTF-8"
+		resp.Write(AllCode.ToString)
+		Return
+	End If
+
 	ShowHelpPage
 End Sub
 
 Private Sub ShowHelpPage
+	If Request.Method.EqualsIgnoreCase("GET") = False Then Return
 	#If Debug
 	'ReadHandlers ' Read from source (optional) - comment hashtags are required
 	BuildMethods ' Build page programatically
@@ -228,7 +254,7 @@ Private Sub GenerateHelpPage As String 'ignore
 	caption1.text("Made with")
 	Dim span3 As MiniHtml = MH.Span.up(caption1)
 	span3.sty("color: red")
-	span3.text("❤")
+	span3.text("?")
 	caption1.text(" using Pakai")
 	'Local assets
 	'body1.cdn("script", "/assets/js/bootstrap.min.js")
@@ -244,9 +270,8 @@ Private Sub GenerateHelpPage As String 'ignore
 	MH.Script.up(body1).text(script2.SubString2(0, script2.LastIndexOf(CRLF))).multiline
 	
 	Dim doc As MiniHtml
-	doc.Initialize("")
-	doc.Write("<!DOCTYPE html>")
-	doc.Write(html1.build)
+	doc.Initialize("doctype")
+	doc.Append(html1.build)
 	Return doc.ToString
 End Sub
 
@@ -303,9 +328,9 @@ Private Sub BuildMethods 'ignore
 	
 	Dim Method As Map = RetrieveMethod("Find", "SearchByKeywords ' #post")
 	Dim FormatMap As Map = CreateMap("keyword": "text")
-	Dim BodytMap As Map = CreateMap("keyword": "")
+	Dim BodyMap As Map = CreateMap("keyword": "")
 	Method.Put("Format", FormatMap.As(JSON).ToString)
-	Method.Put("Body", BodytMap.As(JSON).ToString)
+	Method.Put("Body", BodyMap.As(JSON).ToString)
 	Method.Put("Desc", "Filter Products (with Category name)")
 	'Method.Put("Expected", GetExpectedResponse(Method.Get("Verb"))) ' POST
 	Method.Put("Expected", GetExpectedResponse(""))
@@ -326,6 +351,7 @@ Private Sub BuildMethods 'ignore
 	Dim BodyMap As Map = CreateMap("category_id": 1, "product_code": "", "product_name": "", "product_price": 0)
 	Method.Put("Format", FormatMap.As(JSON).ToString)
 	Method.Put("Body", BodyMap.As(JSON).ToString)
+	Method.Put("Authenticate", "token") '<-- Tells Pakai this route is protected (test)
 	ReplaceMethod(Method)
 	
 	Dim Method As Map = RetrieveMethod("Products", "PutProductById (id As Int)")
@@ -1181,4 +1207,301 @@ Private Sub SaveToken As String
 	script1.IncreaseIndent
 	script1.AddLine("}")
 	Return script1.Generate2
+End Sub
+
+Private Sub ServeOpenApiJson '(resp As ServletResponse)
+	' 1. Define OpenAPI Metadata
+	Dim InfoMap As Map = CreateMap( _
+        "title": "Pakai Server v6 API", _
+        "version": "6.99", _
+        "description": "Auto-compiled specification generated directly by HelpHandler" _
+    )
+    
+	Dim OpenApiRoot As Map = CreateMap( _
+        "openapi": "3.0.0", _
+        "info": InfoMap _
+    )
+    
+	Dim PathsMap As Map
+	PathsMap.Initialize
+    
+	' 2. Parse Pakai v6 Endpoints (Modify 'APIList' to match your internal routes variable)
+	BuildMethods
+	For Each Method As Map In AllMethods
+		Dim section As VerbSection = GenerateVerbSection(Method)
+		Dim verb As String = section.Verb.ToLowerCase
+		Dim path As String = section.Link.Replace("$SERVER_URL$", "")
+		Dim desc As String = section.Description
+		Dim tag As String = Method.Get("Group")
+		Dim tags As List
+		tags.Initialize
+		tags.Add(tag)
+		
+		' Build Operation Object
+		Dim OperationMap As Map = CreateMap( _
+            "summary": desc, _
+            "tags": tags, _
+			"responses": CreateMap( _
+                "200": CreateMap("description": "Success response processed by Pakai Engine") _
+            ) _
+        )
+
+		' --- DYNAMIC PATH PARAMETER PARSER ---
+		' Check if the route string includes URL variables like {id} or {category}
+		If path.Contains("{") And path.Contains("}") Then
+			Dim ParametersList As List
+			ParametersList.Initialize
+        
+			' -----------------------------------------------------------------
+			' STEP A: PATH PARAMETER ENGINE
+			' -----------------------------------------------------------------
+			If path.Contains("{") And path.Contains("}") Then
+				' Parse out the exact string trapped inside the brackets
+				Dim StartIdx As Int = path.IndexOf("{") + 1
+				Dim EndIdx As Int = path.IndexOf("}")
+				Dim ParamName As String = path.SubString2(StartIdx, EndIdx)
+        
+				' Define default schemas based on standard B4X conventions
+				Dim ParamSchema As Map = CreateMap("type": "string", "example": "1")
+				Dim ParamDesc As String = "The unique route modifier variable"
+			
+				' Contextualize details based on what path folder it belongs to
+				If ParamName.ToLowerCase = "id" Then
+					If path.Contains("find") Then
+						ParamSchema = CreateMap("type": "integer", "example": "1")
+						ParamDesc = "The sequential database numeric Category Id"
+					Else If path.Contains("product") Then
+						ParamSchema = CreateMap("type": "integer", "example": 1)
+						ParamDesc = "The sequential database numeric Product Id"
+					Else If path.Contains("categories") Then
+						ParamSchema = CreateMap("type": "integer", "example": 1)
+						ParamDesc = "The sequential database numeric Category Id"
+					End If
+				End If
+        
+				' Map the parameter according to OpenAPI path parameter specifications
+				Dim ParamObject As Map = CreateMap( _
+		            "name": ParamName, _
+		            "in": "path", _
+		            "required": True, _
+		            "description": ParamDesc, _
+		            "schema": ParamSchema _
+        		)
+        
+				ParametersList.Add(ParamObject)
+			End If
+			
+			' -----------------------------------------------------------------
+			' STEP B: DYNAMIC QUERY PARAMETER ENGINE
+			' -----------------------------------------------------------------
+			' Query parameters are most commonly used on list/GET actions without specific IDs
+			'If verb = "GET" And Not(path.Contains("{id}")) Then
+			'    ' 1. Define 'limit' query parameter
+			'    Dim LimitParam As Map = CreateMap( _
+			'        "name": "limit", _
+			'        "in": "query", _
+			'        "required": False, _
+			'        "description": "Max number of records to return", _
+			'        "schema": CreateMap("type": "integer", "default": 10, "example": 20) _
+			'    )
+			'    ParametersList.Add(LimitParam)
+			'
+			'    ' 2. Define 'page' query parameter
+			'    Dim PageParam As Map = CreateMap( _
+			'        "name": "page", _
+			'        "in": "query", _
+			'        "required": False, _
+			'        "description": "The current page offset indicator", _
+			'        "schema": CreateMap("type": "integer", "default": 1, "example": 2) _
+			'    )
+			'    ParametersList.Add(PageParam)
+			'
+			'    ' 3. Optional: Add specialized search query filters depending on the route target
+			'    If path.Contains("products") Or path.Contains("inventory") Then
+			'        Dim SearchParam As Map = CreateMap( _
+			'            "name": "search", _
+			'            "in": "query", _
+			'            "required": False, _
+			'            "description": "Filter products by name or code pattern match", _
+			'            "schema": CreateMap("type": "string", "example": "Wireless") _
+			'        )
+			'        ParametersList.Add(SearchParam)
+			'    End If
+			'End If
+			
+			' -----------------------------------------------------------------
+			' STEP C: ATTACH PARAMETERS LIST IF NOT EMPTY
+			' -----------------------------------------------------------------
+			If ParametersList.Size > 0 Then
+				OperationMap.Put("parameters", ParametersList)
+			End If
+		End If
+		' -------------------------------------
+
+		' Handle payload structure for data-modifying requests
+		If verb = "post" Or verb = "put" Then
+			' 1. Define the properties (fields) for the JSON body
+			Dim PropertiesMap As Map
+			PropertiesMap.Initialize
+    
+			' 2. Define which fields are strictly required
+			Dim RequiredFields As List
+			RequiredFields.Initialize
+    
+			' --- DYNAMIC FIELD DEFINITION ENGINE ---
+			' Customize this logic based on your route definitions
+			If path.StartsWith("/api/products") Then
+				PropertiesMap.Put("category_id", CreateMap("type": "integer", "example": 3))
+				PropertiesMap.Put("product_code", CreateMap("type": "string", "example": "E001"))
+				PropertiesMap.Put("product_name", CreateMap("type": "string", "example": "Wireless Mouse"))
+				PropertiesMap.Put("product_price", CreateMap("type": "number", "example": 29.99))
+        
+				RequiredFields.Add("product_code")
+				RequiredFields.Add("product_name")
+				RequiredFields.Add("category_id")
+			Else If path.StartsWith("/api/categories") Then
+				PropertiesMap.Put("category_name", CreateMap("type": "string", "example": "Electronics"))
+				
+				RequiredFields.Add("category_name")
+			Else if path.StartsWith("/api/find") Then
+				PropertiesMap.Put("keyword", CreateMap("type": "string", "example": "mouse"))
+				
+				RequiredFields.Add("keyword")
+			Else
+				' Fallback generic body placeholder if no route match is found
+				PropertiesMap.Put("payload", CreateMap("type": "string", "example": "value"))
+			End If
+			' ---------------------------------------
+			' 3. Assemble the complete schema definition
+			Dim SchemaMap As Map = CreateMap("type": "object", "properties": PropertiesMap)
+		    
+			' Only attach the required constraint list if it contains items
+			If RequiredFields.Size > 0 Then
+				SchemaMap.Put("required", RequiredFields)
+			End If
+			
+			' 4. Wrap everything into the standard OpenAPI requestBody hierarchy
+			Dim ContentMap As Map = CreateMap( _
+		        "application/json": CreateMap( _
+		            "schema": SchemaMap _
+		        ) _
+		    )
+			
+			OperationMap.Put("requestBody", CreateMap("required": True, "content": ContentMap))
+		End If
+		
+		If verb = "post" Then
+			Dim newResponses As Map = OperationMap.Get("responses")
+			newResponses.Put("201", CreateMap("description": "Success resource creation by Pakai Engine"))
+		End If
+			
+		' Safely push to the global Paths Map framework
+		Dim PathMethods As Map
+		If PathsMap.ContainsKey(path) Then
+			PathMethods = PathsMap.Get(path)
+		Else
+			PathMethods.Initialize
+			PathsMap.Put(path, PathMethods)
+		End If
+        
+		PathMethods.Put(verb, OperationMap)
+	Next
+    
+	OpenApiRoot.Put("paths", PathsMap)
+    
+	' 3. Serialize and stream JSON response
+	Dim Generator As JSONGenerator
+	Generator.Initialize(OpenApiRoot)
+    
+	Response.ContentType = "application/json;charset=UTF-8"
+	Response.Write(Generator.ToString)
+End Sub
+
+' Add this at the bottom of HelpHandler.bas
+Private Sub GenerateAppSnippet (MethodMap As Map) As String
+    ' Extract properties already configured by you in BuildMethods
+    Dim Group As String = MethodMap.GetDefault("Group", "Core")
+    Dim SubName As String = MethodMap.GetDefault("Method", "ApiCall")
+    Dim Summary As String = MethodMap.GetDefault("Desc", "API Endpoint Call")
+    Dim Verb As String = MethodMap.GetDefault("Verb", "GET").As(String).ToUpperCase
+    Dim ElementsJson As String = MethodMap.GetDefault("Elements", "[]")
+    Dim AuthType As String = MethodMap.GetDefault("Authenticate", "")
+    Dim BasePathName As String = MethodMap.GetDefault("Name", Group).As(String).ToLowerCase
+	
+    ' Build a clean name for your client app subroutine
+    Dim CleanSubName As String = SubName
+    CleanSubName = CleanSubName.Replace(" ", "_").Replace("(", "").Replace(")", "")
+
+    Dim Sb As StringBuilder
+    Sb.Initialize
+    
+    Sb.Append($"' --- SNIPPET FOR: [${Verb}] /api/${BasePathName} ---"$).Append(CRLF)
+    Sb.Append($"' Description: ${Summary}"$).Append(CRLF)
+
+    ' Read URL elements natively stored by WebApiUtils (e.g. ["{id}"])
+    Dim JSON As JSONParser
+    JSON.Initialize(ElementsJson)
+    Dim PathElements As List = JSON.NextArray
+    
+    ' Track parameter inputs and URL structures
+    Dim ParamSignature As String = ""
+    Dim UrlBuilder As String = $"BaseURL & "/api/${BasePathName}""$
+    
+    For Each Element As String In PathElements
+        If Element.StartsWith("{") And Element.EndsWith("}") Then
+            Dim VarName As String = Element.Replace("{", "").Replace("}", "")
+            ParamSignature = ParamSignature & VarName & " As String, "
+            UrlBuilder = UrlBuilder & " & ""/"" & " & VarName
+        Else
+            UrlBuilder = UrlBuilder & " & ""/" & Element & """"
+        End If
+    Next
+	
+    ' Inject authentication field if required by WebApiUtils configuration
+    If AuthType = "token" Then
+        ParamSignature = ParamSignature & "AuthToken As String, "
+    End If
+	
+	' Trim trailing space and comma from your parameter signature if it exists
+    ParamSignature = ParamSignature.Trim
+    If ParamSignature.EndsWith(",") Then
+        ParamSignature = ParamSignature.SubString2(0, ParamSignature.Length - 1)
+    End If
+	
+    ' Output exact B4X client code based on the Request type
+    If Verb = "POST" Or Verb = "PUT" Then
+		' If there are existing path or auth parameters, add a trailing comma before JsonBody
+        Dim FormattedParams As String = ""
+        If ParamSignature <> "" Then FormattedParams = ParamSignature & ", "
+		
+        Sb.Append($"Public Sub ${CleanSubName} (${FormattedParams}JsonBody As String)"$).Append(CRLF)
+        Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
+        Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
+        Sb.Append($"    j.PostString(${UrlBuilder}, JsonBody)"$).Append(CRLF)
+        Sb.Append($"    j.GetRequest.SetContentType("application/json")"$).Append(CRLF)
+    Else
+		' For GET requests, if there are no parameters, output directly without empty spaces inside parens
+        If ParamSignature = "" Then
+            Sb.Append($"Public Sub ${CleanSubName}"$).Append(CRLF)
+        Else
+            Sb.Append($"Public Sub ${CleanSubName} (${ParamSignature})"$).Append(CRLF)
+        End If
+		
+        Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
+        Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
+        Sb.Append($"    j.Download(${UrlBuilder})"$).Append(CRLF)
+    End If
+    
+    ' Inject the HTTP header for your JWT bearer authentication token automatically
+    If AuthType = "token" Then
+        Sb.Append($"    j.GetRequest.SetHeader("Authorization", "Bearer " & AuthToken)"$).Append(CRLF)
+    End If
+    
+	Sb.Append($"    Wait For (j) JobDone(j As HttpJob)"$).Append(CRLF)
+	Sb.Append($"    If j.Success Then"$).Append(CRLF)
+	Sb.Append($"        Log(j.GetString)"$).Append(CRLF).Append(CRLF)
+	Sb.Append($"    End If"$).Append(CRLF)
+    Sb.Append($"    j.Release"$).Append(CRLF)
+    Sb.Append($"End Sub"$).Append(CRLF)
+    Return Sb.ToString
 End Sub

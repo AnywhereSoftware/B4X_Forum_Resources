@@ -64,6 +64,7 @@ Sub Class_Globals
 	Private mIsInitialized As Boolean = False
 	Private mBackgroundValidationPending As Boolean = False
 	Private mHasWarnedMissingFields As Boolean = False
+	Private mAutoRestoreTriggered As Boolean = False  ' One-time auto-restore on first launch with empty cache
 End Sub
 
 ' Theme color configuration type
@@ -508,6 +509,8 @@ End Sub
 ' Check and refresh purchase/subscription status from cache
 ' Call this on app resume, page appear, or after user actions that might affect status
 ' Automatically triggers background validation if cache is expired (no waiting)
+' Automatically triggers a one-time restore if products are configured but no purchase history exists
+' (handles new device, reinstall, or migration from another system)
 ' This is instant - it loads from cache and validates in background if needed
 Public Sub CheckStatus
 	UnlockManager.LoadCachedStatus
@@ -524,11 +527,36 @@ Public Sub CheckStatus
 	' Skip if background validation is already pending/running
 	If Billing.IsActive Or Subscriptions.IsActive Then Return
 	
+	' Auto-restore: If products are configured but no purchase history exists,
+	' trigger a one-time restore to catch existing purchases (new device, reinstall, migration)
+	If mAutoRestoreTriggered = False Then
+		Dim needsInappRestore As Boolean = Billing.Products.IsInitialized And Billing.Products.Size > 0 And UnlockManager.HasInappHistory = False
+		Dim needsSubRestore As Boolean = Subscriptions.Subscriptions.IsInitialized And Subscriptions.Subscriptions.Size > 0 And UnlockManager.HasSubscriptionHistory = False
+		If needsInappRestore Or needsSubRestore Then
+			mAutoRestoreTriggered = True
+			LogColor("🛡  First launch with no purchase history — checking store for existing purchases", UnlockManager.LOG_COLOR_LIB)
+			CallSubDelayed(Me, "AutoRestoreInBackground")
+			Return
+		End If
+	End If
+	
 	' Check if cache is expired and trigger background validation if needed
 	If UnlockManager.IsCacheValid = False And mBackgroundValidationPending = False Then
 		mBackgroundValidationPending = True
 		' Start background validation (don't wait for it)
 		CallSubDelayed(Me, "CheckAndRefreshInBackground")
+	End If
+End Sub
+
+' Internal: One-time auto-restore for new device / reinstall / migration
+Private Sub AutoRestoreInBackground
+	If Billing.Products.IsInitialized And Billing.Products.Size > 0 And UnlockManager.HasInappHistory = False Then
+		SyncPropertiesToBilling
+		Wait For (Billing.RestorePurchases) Complete (InappSuccess As Boolean)
+	End If
+	If Subscriptions.Subscriptions.IsInitialized And Subscriptions.Subscriptions.Size > 0 And UnlockManager.HasSubscriptionHistory = False Then
+		SyncPropertiesToSubscriptions
+		Wait For (Subscriptions.RestoreSubscriptions) Complete (SubSuccess As Boolean)
 	End If
 End Sub
 

@@ -910,6 +910,16 @@ Public Sub ValidationInProgress As Boolean
 	Return mValidationInProgress
 End Sub
 
+' Check if in-app purchases have ever been validated (0 = never)
+Public Sub HasInappHistory As Boolean
+	Return mPurchaseTimestampInapp > 0
+End Sub
+
+' Check if subscriptions have ever been validated (0 = never)
+Public Sub HasSubscriptionHistory As Boolean
+	Return mPurchaseTimestampSubscription > 0
+End Sub
+
 ' Get active subscription ID
 Public Sub GetActiveSubscriptionId As String
 	Return mCachedSubscriptionId
