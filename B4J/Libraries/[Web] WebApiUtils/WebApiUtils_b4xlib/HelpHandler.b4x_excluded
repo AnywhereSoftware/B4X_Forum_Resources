@@ -1,5 +1,5 @@
 ' Help Handler class
-' Version 6.99
+' Version 6.99 rev1
 Sub Class_Globals
 	Private AllGroups 	As Map
 	Private AllMethods 	As List
@@ -1419,89 +1419,98 @@ End Sub
 
 ' Add this at the bottom of HelpHandler.bas
 Private Sub GenerateAppSnippet (MethodMap As Map) As String
-    ' Extract properties already configured by you in BuildMethods
-    Dim Group As String = MethodMap.GetDefault("Group", "Core")
-    Dim SubName As String = MethodMap.GetDefault("Method", "ApiCall")
-    Dim Summary As String = MethodMap.GetDefault("Desc", "API Endpoint Call")
-    Dim Verb As String = MethodMap.GetDefault("Verb", "GET").As(String).ToUpperCase
-    Dim ElementsJson As String = MethodMap.GetDefault("Elements", "[]")
-    Dim AuthType As String = MethodMap.GetDefault("Authenticate", "")
-    Dim BasePathName As String = MethodMap.GetDefault("Name", Group).As(String).ToLowerCase
+	' Extract properties already configured by you in BuildMethods
+	Dim Group As String = MethodMap.GetDefault("Group", "Core")
+	Dim SubName As String = MethodMap.GetDefault("Method", "ApiCall")
+	Dim Summary As String = MethodMap.GetDefault("Desc", "API Endpoint Call")
+	Dim Verb As String = MethodMap.GetDefault("Verb", "GET").As(String).ToUpperCase
+	Dim ElementsJson As String = MethodMap.GetDefault("Elements", "[]")
+	Dim AuthType As String = MethodMap.GetDefault("Authenticate", "")
+	Dim BasePathName As String = MethodMap.GetDefault("Name", Group).As(String).ToLowerCase
 	
-    ' Build a clean name for your client app subroutine
-    Dim CleanSubName As String = SubName
-    CleanSubName = CleanSubName.Replace(" ", "_").Replace("(", "").Replace(")", "")
+	' Build a clean name for your client app subroutine
+	Dim CleanSubName As String = SubName
+	CleanSubName = CleanSubName.Replace(" ", "_").Replace("(", "").Replace(")", "")
 
-    Dim Sb As StringBuilder
-    Sb.Initialize
+	Dim Sb As StringBuilder
+	Sb.Initialize
     
-    Sb.Append($"' --- SNIPPET FOR: [${Verb}] /api/${BasePathName} ---"$).Append(CRLF)
-    Sb.Append($"' Description: ${Summary}"$).Append(CRLF)
+	Sb.Append($"' --- SNIPPET FOR: [${Verb}] /api/${BasePathName} ---"$).Append(CRLF)
+	Sb.Append($"' Description: ${Summary}"$).Append(CRLF)
 
-    ' Read URL elements natively stored by WebApiUtils (e.g. ["{id}"])
-    Dim JSON As JSONParser
-    JSON.Initialize(ElementsJson)
-    Dim PathElements As List = JSON.NextArray
+	' Read URL elements natively stored by WebApiUtils (e.g. ["{id}"])
+	Dim JSON As JSONParser
+	JSON.Initialize(ElementsJson)
+	Dim PathElements As List = JSON.NextArray
     
-    ' Track parameter inputs and URL structures
-    Dim ParamSignature As String = ""
-    Dim UrlBuilder As String = $"BaseURL & "/api/${BasePathName}""$
+	' Track parameter inputs and URL structures
+	Dim ParamSignature As String = ""
+	Dim UrlBuilder As String = $"BaseURL & "/api/${BasePathName}""$
     
-    For Each Element As String In PathElements
-        If Element.StartsWith("{") And Element.EndsWith("}") Then
-            Dim VarName As String = Element.Replace("{", "").Replace("}", "")
-            ParamSignature = ParamSignature & VarName & " As String, "
-            UrlBuilder = UrlBuilder & " & ""/"" & " & VarName
-        Else
-            UrlBuilder = UrlBuilder & " & ""/" & Element & """"
-        End If
-    Next
+	For Each Element As String In PathElements
+		If Element.StartsWith("{") And Element.EndsWith("}") Then
+			Dim VarName As String = Element.Replace("{", "").Replace("}", "")
+			ParamSignature = ParamSignature & VarName & " As String, "
+			UrlBuilder = UrlBuilder & " & ""/"" & " & VarName
+		Else
+			UrlBuilder = UrlBuilder & " & ""/" & Element & """"
+		End If
+	Next
 	
-    ' Inject authentication field if required by WebApiUtils configuration
-    If AuthType = "token" Then
-        ParamSignature = ParamSignature & "AuthToken As String, "
-    End If
+	' Inject authentication field if required by WebApiUtils configuration
+	If AuthType = "token" Then
+		ParamSignature = ParamSignature & "AuthToken As String, "
+	End If
 	
 	' Trim trailing space and comma from your parameter signature if it exists
-    ParamSignature = ParamSignature.Trim
-    If ParamSignature.EndsWith(",") Then
-        ParamSignature = ParamSignature.SubString2(0, ParamSignature.Length - 1)
-    End If
+	ParamSignature = ParamSignature.Trim
+	If ParamSignature.EndsWith(",") Then
+		ParamSignature = ParamSignature.SubString2(0, ParamSignature.Length - 1)
+	End If
 	
-    ' Output exact B4X client code based on the Request type
-    If Verb = "POST" Or Verb = "PUT" Then
-		' If there are existing path or auth parameters, add a trailing comma before JsonBody
-        Dim FormattedParams As String = ""
-        If ParamSignature <> "" Then FormattedParams = ParamSignature & ", "
-		
-        Sb.Append($"Public Sub ${CleanSubName} (${FormattedParams}JsonBody As String)"$).Append(CRLF)
-        Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
-        Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
-        Sb.Append($"    j.PostString(${UrlBuilder}, JsonBody)"$).Append(CRLF)
-        Sb.Append($"    j.GetRequest.SetContentType("application/json")"$).Append(CRLF)
-    Else
-		' For GET requests, if there are no parameters, output directly without empty spaces inside parens
-        If ParamSignature = "" Then
-            Sb.Append($"Public Sub ${CleanSubName}"$).Append(CRLF)
-        Else
-            Sb.Append($"Public Sub ${CleanSubName} (${ParamSignature})"$).Append(CRLF)
-        End If
-		
-        Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
-        Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
-        Sb.Append($"    j.Download(${UrlBuilder})"$).Append(CRLF)
-    End If
-    
-    ' Inject the HTTP header for your JWT bearer authentication token automatically
-    If AuthType = "token" Then
-        Sb.Append($"    j.GetRequest.SetHeader("Authorization", "Bearer " & AuthToken)"$).Append(CRLF)
-    End If
+	' Output exact B4X client code based on the Request type
+	Select Verb
+		Case "POST", "PUT"
+			' If there are existing path or auth parameters, add a trailing comma before JsonBody
+			Dim FormattedParams As String = ""
+			If ParamSignature <> "" Then FormattedParams = ParamSignature & ", "
+			
+			Sb.Append($"Public Sub ${CleanSubName} (${FormattedParams}JsonBody As String)"$).Append(CRLF)
+			Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
+			Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
+			If Verb = "PUT" Then
+				Sb.Append($"    j.PutString(${UrlBuilder}, JsonBody)"$).Append(CRLF)
+			Else
+				Sb.Append($"    j.PostString(${UrlBuilder}, JsonBody)"$).Append(CRLF)
+			End If
+			Sb.Append($"    j.GetRequest.SetContentType("application/json")"$).Append(CRLF)
+		Case Else ' "GET", "DELETE"
+			' For GET requests, if there are no parameters, output directly without empty spaces inside parens
+			If ParamSignature = "" Then
+				Sb.Append($"Public Sub ${CleanSubName}"$).Append(CRLF)
+			Else
+				Sb.Append($"Public Sub ${CleanSubName} (${ParamSignature})"$).Append(CRLF)
+			End If
+			
+			Sb.Append($"    Dim j As HttpJob"$).Append(CRLF)
+			Sb.Append($"    j.Initialize("", Me)"$).Append(CRLF)
+			If Verb = "DELETE" Then
+				Sb.Append($"    j.Delete(${UrlBuilder})"$).Append(CRLF)
+			Else
+				Sb.Append($"    j.Download(${UrlBuilder})"$).Append(CRLF)
+			End If
+	End Select
+	    
+	' Inject the HTTP header for your JWT bearer authentication token automatically
+	If AuthType = "token" Then
+		Sb.Append($"    j.GetRequest.SetHeader("Authorization", "Bearer " & AuthToken)"$).Append(CRLF)
+	End If
     
 	Sb.Append($"    Wait For (j) JobDone(j As HttpJob)"$).Append(CRLF)
 	Sb.Append($"    If j.Success Then"$).Append(CRLF)
 	Sb.Append($"        Log(j.GetString)"$).Append(CRLF).Append(CRLF)
 	Sb.Append($"    End If"$).Append(CRLF)
-    Sb.Append($"    j.Release"$).Append(CRLF)
-    Sb.Append($"End Sub"$).Append(CRLF)
-    Return Sb.ToString
+	Sb.Append($"    j.Release"$).Append(CRLF)
+	Sb.Append($"End Sub"$).Append(CRLF)
+	Return Sb.ToString
 End Sub

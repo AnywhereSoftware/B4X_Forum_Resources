@@ -1,5 +1,5 @@
 ### [tool] OTA Deployer - Easily distribute your app to beta testers by Erel
-### 06/11/2025
+### 07/14/2026
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/61672/)
 
 This is a tool for developers who use the hosted builder. With this tool your beta testers can install your app over the air by clicking on a link.  
@@ -22,4 +22,8 @@ The server will return a long link starting with itms-services. Send this link t
 - A single IPA file (the last one) is stored per account.  
 - IPA files will be deleted from the server after 30 days.  
   
-Download link: <https://www.b4x.com/b4i/files/ota.zip>
+Download link: <https://www.b4x.com/b4i/files/ota.zip>  
+  
+**Updates**  
+  
+v2.11 - Fixes compatibility issue with updated server.

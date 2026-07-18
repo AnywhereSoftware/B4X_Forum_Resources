@@ -1,5 +1,5 @@
 ### WebGL library. Focus on space animations. by max123
-### 05/09/2026
+### 07/13/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/170485/)
 
 Hi everyone,  
@@ -108,7 +108,7 @@ function addStars() {
         // Loop through each star  
         for(var i = 0; i < stars.length; i++) {  
             star = stars;  
-            star.position.z += i * 0.0020;     // And move it forward dependent on the mouseY position  
+            star.position.z += i * 0.0020;     // And move it forward   
             if(star.position.z > 1000) star.position.z -= 2000; // If the particle is too close move it to the back  
         }  
     }

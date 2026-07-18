@@ -1,5 +1,5 @@
 ###  CustomMinimalSlider - Minimalistic slider that can do slider or progress bar by max123
-### 08/06/2025
+### 07/13/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/141213/)
 
 Hi all,  
@@ -19,7 +19,7 @@ Features:
 - Fully OpenSource library, .jar and .xml provided, demo projects to test it provided, full B4A library source code provided here and on github.  
 - Fully resizable sliders by setting the layout in the constructor line that create it, eg. you can use small sliders or put a full screen single slider with a big bar  
 - Minimalistic control, only show a colored bar with borders, a Tag label that is a slider/progress name and can be used to identify any slider and a value label that show the current value  
-- Any slider/progress have it's parameters that can be customized separately from others  
+- Any slider/progress have it's parameters that can be customized separately  
 - Full multi touch, any istance of it has separate touch events, this mean that you can move five sliders the same time with five fingers (even more using two hands) and track the moved/released sliders by index in the event callback sub  
 - Acts as minimal (generic non customized) slider, it has a label to show the slider name and a label that show it's value  
 - Acts as minimal (generic non customized) progress bar, it has a label to show the progress bar name and a label that show it's value. Touch control can be disabled  

@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=5.9
 @EndOfDesignText@
-'version 2.30
+'version 2.31
 Sub Class_Globals
 	Public Const CINT = 1, CSTRING = 2, CMAP = 3, ENDOFMAP = 4, BOOL = 5, CCOLOR = 6, _
 		CFLOAT = 7, CACHED_STRING = 9, RECT32 = 11, CNULL = 12 As Byte
@@ -30,6 +30,7 @@ Public Sub ConvertJsonToBal(Dir As String, FileName As String)
 	jp.Initialize(File.ReadString(Dir, FileName))
 	Dim Json As Map = jp.NextObject
 	ConvertJsonToBalInMemory(Json, Dir, bfile)
+	
 End Sub
 
 Public Sub ConvertJsonToBalInMemory(json As Map, Dir As String, FileName As String)
@@ -65,7 +66,8 @@ Public Sub ConvertBalToJsonInMemory(Dir As String, FileName As String) As Map
 	reader.Initialize2(Dir, FileName, True, True)
 	Dim design As Map
 	Dim lh As Map = ReadLayoutHeader(reader)
-	If lh.Get("Version") < 3 Then
+	Dim version As Int = lh.Get("Version")
+	If version < 3 Then
 #If UI
 		Dim xui As XUI
 		xui.MsgboxAsync("Unsupported version: " & FileName, "")
@@ -87,8 +89,10 @@ Public Sub ConvertBalToJsonInMemory(Dir As String, FileName As String) As Map
 	design.Put("Variants", variants)
 	design.Put("Data", ReadMap(reader, cache))
 	reader.ReadInt(reader.CurrentPosition) '0
-	design.Put("FontAwesome", reader.ReadSignedByte(reader.CurrentPosition) = 1)
-	design.Put("MaterialIcons", reader.ReadSignedByte(reader.CurrentPosition) = 1)
+	If version >= 5 Then
+		design.Put("FontAwesome", reader.ReadSignedByte(reader.CurrentPosition) = 1)
+		design.Put("MaterialIcons", reader.ReadSignedByte(reader.CurrentPosition) = 1)
+	End If
 	reader.Close
 	Return design
 End Sub

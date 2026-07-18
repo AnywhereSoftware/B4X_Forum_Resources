@@ -1,5 +1,5 @@
 ###  JsonLayouts - synchronize json and binary layouts by Erel
-### 02/23/2026
+### 07/12/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/167398/)
 
 The purpose of this tool is to automatically generate json layout files, and synchronize them as they are updated. This can be useful when working with a source control and especially when multiple developers work on the same project.  
@@ -29,4 +29,6 @@ Notes
 
   
   
-The B4J code is attached.
+The B4J code is attached.  
+  
+v1.01 - Fixed issue with old layouts failing to convert (BalConverter v2.31).

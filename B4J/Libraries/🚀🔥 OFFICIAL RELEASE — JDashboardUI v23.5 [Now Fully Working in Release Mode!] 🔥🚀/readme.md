@@ -1,4 +1,4 @@
-### 🚀🔥 OFFICIAL RELEASE — JDashboardUI v23.0 🔥🚀 by fernando1987
+### 🚀🔥 OFFICIAL RELEASE — JDashboardUI v23.5 [Now Fully Working in Release Mode!] 🔥🚀 by fernando1987
 ### 05/20/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171057/)
 

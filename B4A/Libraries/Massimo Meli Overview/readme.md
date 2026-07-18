@@ -1,5 +1,5 @@
 ### Massimo Meli Overview by max123
-### 08/25/2025
+### 07/13/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/144941/)
 
 **[SIZE=5]B4A-B4J-B4R[/SIZE]** [SIZE=5]**Libraries, Classes,**[/SIZE] **[SIZE=5]Code Snippets[/SIZE]**  
@@ -51,4 +51,5 @@ Code Snippets**
 [WebGL library, working with static and animated models](https://www.b4x.com/android/forum/threads/webgl-library-working-with-static-and-animated-models.166523/)  
 [WebGL library, working with fog](https://www.b4x.com/android/forum/threads/webgl-library-working-with-fog.168091/)  
 [Develop full 3D games with WebGL library](https://www.b4x.com/android/forum/threads/develop-full-3d-games-with-webgl-library.167783/)  
-[The first playable 3D game developed with WebGL library](https://www.b4x.com/android/forum/threads/the-first-playable-3d-game-developed-with-webgl-library.168178/)
+[The first playable 3D game developed with WebGL library](https://www.b4x.com/android/forum/threads/the-first-playable-3d-game-developed-with-webgl-library.168178/)  
+[WebGL library. Focus on space animations](https://www.b4x.com/android/forum/threads/webgl-library-focus-on-space-animations.170485/)
