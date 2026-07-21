@@ -1,3 +1,5 @@
+' MiniHtml Handler class
+' Version 3.03
 	Private App As EndsMeet
 	Private Path As String
 	Private Method As String
@@ -19,7 +21,7 @@ Sub Handle (req As ServletRequest, resp As ServletResponse)
 	Path = Request.RequestURI
 	Method = Request.Method.ToUpperCase
 	Log($"${Method}: ${Path}"$)
-	If Path = "/$endpoints$" Then
+	If Path = "/" Then
 		HandlePage
 	Else If Path = "/hx/$endpoints$/table" Then
 		HandleTable
@@ -105,8 +107,6 @@ Private Sub Handle$Endpoints$
 			' Create
 			Dim code As String = Request.GetParameter("code")
 			Dim name As String = Request.GetParameter("name")
-			Dim tempprice As String = Request.GetParameter("price")
-			Dim price As Double = IIf(tempprice.Trim = "", 0, tempprice)			
 			Dim category As Int = Request.GetParameter("category")
 
 			If code = "" Or code.Trim.Length < 2 Then
@@ -126,7 +126,7 @@ Private Sub Handle$Endpoints$
 			End If
 
 			' Insert new row
-			Model.Create(category, code, name, price, Main.CurrentDateTime)
+			Model.Create(category, code, name, Main.CurrentDateTime)
 			If Model.Error.IsInitialized Then
 				ShowAlert($"Database error: ${Model.Error.Message}"$, "danger")
 				Return
@@ -137,7 +137,6 @@ Private Sub Handle$Endpoints$
 			Dim id As Int = Request.GetParameter("id")
 			Dim code As String = Request.GetParameter("code")
 			Dim name As String = Request.GetParameter("name")
-			Dim price As Double = Request.GetParameter("price")
 			Dim category As Int = Request.GetParameter("category")
 			
 			If code = "" Or code.Trim.Length < 2 Then
@@ -170,7 +169,7 @@ Private Sub Handle$Endpoints$
 			End If
 			
 			' Update row
-			Model.Update(id, category, code, name, price, Main.CurrentDateTime)
+			Model.Update(id, category, code, name, Main.CurrentDateTime)
 			If Model.Error.IsInitialized Then
 				ShowAlert($"Database error: ${Model.Error.Message}"$, "danger")
 				Return
@@ -201,11 +200,11 @@ Private Sub Handle$Endpoints$
 End Sub
 
 Private Sub ShowAlert (Message As String, Status As String)
-	Dim info As AlertInfo = Helper.CreateAlertInfo(Message, Status)
+	Dim info As AlertInfo = MH.CreateAlertInfo(Message, Status)
 	App.WriteHtml(Response, View.Alert(info))
 End Sub
 
 Private Sub ShowToast (Entity As String, Action As String, Message As String, Status As String)
 	Dim data As List = Model.Read
-	Dim info As ToastInfo = Helper.CreateToastInfo(Entity, Action, Message, Status)
+	Dim info As ToastInfo = MH.CreateToastInfo(Entity, Action, Message, Status)
 	App.WriteHtml(Response, View.Toast(info, data))

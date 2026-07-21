@@ -1,8 +1,8 @@
 ###  MiniHTML3 by aeric
-### 06/19/2026
+### 07/16/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/171326/)
 
-Version 3.00  
+Version 3.03  
 MiniHTML library for B4X — a fluent HTML builder for B4J/B4A/B4i.  
   
 GitHub: <https://github.com/pyhoon/MiniHTML3>  
@@ -19,7 +19,6 @@ MiniHTML3 lets you construct HTML documents programmatically in B4X using an obj
 - Handler Class
 - Model Class
 - View Class
-- Cache
-- Helper
-
-Following details are mostly copied and modified from markdown files created by *DeepSeek V4 Flash Free* through *OpenCode.*
+- Cache Module
+- Helper Module
+- CurrentDateTime Sub

@@ -1,0 +1,780 @@
+'MiniHTML Helper
+'Version 3.03
+	Type AlertInfo (Message As String, Status As String)
+	Type ToastInfo (Entity As String, Action As String, Message As String, Status As String)
+End Sub
+
+Public Sub CreateTag (Name As String) As MiniHtml
+	Dim tag1 As MiniHtml
+	tag1.Initialize(Name)
+	Return tag1
+End Sub
+
+Public Sub Anchor As MiniHtml
+	Return CreateTag("a")
+End Sub
+
+Public Sub Button As MiniHtml
+	Return CreateTag("button")
+End Sub
+
+Public Sub Div As MiniHtml
+	Return CreateTag("div")
+End Sub
+
+Public Sub Span As MiniHtml
+	Return CreateTag("span")
+End Sub
+
+Public Sub Strong As MiniHtml
+	Return CreateTag("strong")
+End Sub
+
+Public Sub Br As MiniHtml
+	Return CreateTag("br")
+End Sub
+
+Public Sub Nav As MiniHtml
+	Return CreateTag("nav")
+End Sub
+
+Public Sub Form As MiniHtml
+	Return CreateTag("form")
+End Sub
+
+Public Sub H1 As MiniHtml
+	Return CreateTag("h1")
+End Sub
+
+Public Sub H2 As MiniHtml
+	Return CreateTag("h2")
+End Sub
+
+Public Sub H3 As MiniHtml
+	Return CreateTag("h3")
+End Sub
+
+Public Sub H5 As MiniHtml
+	Return CreateTag("h5")
+End Sub
+
+Public Sub H6 As MiniHtml
+	Return CreateTag("h6")
+End Sub
+
+Public Sub P As MiniHtml
+	Return CreateTag("p")
+End Sub
+
+Public Sub Html As MiniHtml
+	Return CreateTag("html").lang("en")
+End Sub
+
+Public Sub Head As MiniHtml
+	Return CreateTag("head")
+End Sub
+
+Public Sub Title As MiniHtml
+	Return CreateTag("title")
+End Sub
+
+Public Sub Script As MiniHtml
+	Return CreateTag("script")
+End Sub
+
+Public Sub Style As MiniHtml
+	Return CreateTag("style")
+End Sub
+
+Public Sub Meta As MiniHtml
+	Return CreateTag("meta")
+End Sub
+
+Public Sub Link As MiniHtml
+	Return CreateTag("link")
+End Sub
+
+Public Sub Body As MiniHtml
+	Return CreateTag("body")
+End Sub
+
+Public Sub Icon As MiniHtml
+	Return CreateTag("i")
+End Sub
+
+Public Sub Img As MiniHtml
+	Return CreateTag("img")
+End Sub
+
+Public Sub Svg As MiniHtml
+	Return CreateTag("svg")
+End Sub
+
+Public Sub Path As MiniHtml
+	Return CreateTag("path")
+End Sub
+
+Public Sub Input As MiniHtml
+	Return CreateTag("input")
+End Sub
+
+Public Sub Label As MiniHtml
+	Return CreateTag("label")
+End Sub
+
+Public Sub Caption As MiniHtml
+	Return CreateTag("caption")
+End Sub
+
+Public Sub Footer As MiniHtml
+	Return CreateTag("footer")
+End Sub
+
+Public Sub Table As MiniHtml
+	Return CreateTag("table")
+End Sub
+
+Public Sub Tbody As MiniHtml
+	Return CreateTag("tbody")
+End Sub
+
+Public Sub Td As MiniHtml
+	Return CreateTag("td")
+End Sub
+
+Public Sub Th As MiniHtml
+	Return CreateTag("th")
+End Sub
+
+Public Sub Thead As MiniHtml
+	Return CreateTag("thead")
+End Sub
+
+Public Sub Tr As MiniHtml
+	Return CreateTag("tr")
+End Sub
+
+Public Sub Ul As MiniHtml
+	Return CreateTag("ul")
+End Sub
+
+Public Sub Li As MiniHtml
+	Return CreateTag("li")
+End Sub
+
+Public Sub SelectTag As MiniHtml
+	Return CreateTag("select")
+End Sub
+
+Public Sub Option As MiniHtml
+	Return CreateTag("option")
+End Sub
+
+Public Sub Textarea As MiniHtml
+	Return CreateTag("textarea")
+End Sub
+
+' ====================
+'  Custom Components
+' ====================
+Public Sub CreateAlertInfo (Message As String, Status As String) As AlertInfo
+	Dim t1 As AlertInfo
+	t1.Initialize
+	t1.Message = Message
+	t1.Status = Status
+	Return t1
+End Sub
+
+Public Sub CreateToastInfo (Entity As String, Action As String, Message As String, Status As String) As ToastInfo
+	Dim t1 As ToastInfo
+	t1.Initialize
+	t1.Entity = Entity
+	t1.Action = Action
+	t1.Message = Message
+	t1.Status = Status
+	Return t1
+End Sub
+
+Public Sub Alert (info As AlertInfo) As String
+	Dim div1 As MiniHtml = Div
+	div1.cls("alert alert-" & info.Status)
+	div1.text(info.Message)
+	Return div1.build
+End Sub
+
+Public Sub Toast (id As String, table1 As MiniHtml, info As ToastInfo) As String
+	Dim div1 As MiniHtml = Div
+	div1.attr("id", id)
+	div1.attr("hx-swap-oob", "true")
+	table1.up(div1)
+	Dim script1 As MiniJs
+	script1.Initialize
+	script1.AddCustomEventDispatch("entity:changed", _
+	CreateMap( _
+	"entity": info.Entity, _
+	"action": info.Action, _
+	"message": info.Message, _
+	"status": info.Status))
+	Return div1.build & CRLF & script1.Generate
+End Sub
+
+Public Sub NavLinkItem (text As String, href As String, icon_cls As String, icon_title As String) As MiniHtml
+	Dim li1 As MiniHtml = Li
+	li1.cls("nav-item d-block d-lg-block")
+	Dim a1 As MiniHtml = Anchor.up(li1)
+	a1.attr("href", href)
+	a1.cls("nav-link float-end")
+	a1.text(text)
+	Dim i1 As MiniHtml = Icon.up(a1)
+	i1.cls(icon_cls)
+	i1.attr("title", icon_title)
+	Return li1
+End Sub
+
+Public Sub AnchorIcon (cls As String, hx_get As String, title_text As String, icon_class As String) As MiniHtml
+	Dim a1 As MiniHtml = Anchor
+	a1.cls(cls)
+	a1.attr("hx-get", hx_get)
+	a1.attr("hx-target", "#modal-content")
+	a1.attr("hx-trigger", "click")
+	a1.attr("data-bs-target", "#modal-container")
+	a1.attr("data-bs-toggle", "modal")
+	Icon.up(a1).cls(icon_class)
+	a1.attr("title", title_text)
+	Return a1
+End Sub
+
+Public Sub ButtonClose As MiniHtml
+	Dim button1 As MiniHtml = Button
+	button1.attr("type", "button")
+	button1.cls("btn-close")
+	button1.attr("data-bs-dismiss", "modal")
+	Return button1
+End Sub
+
+Public Sub ButtonAdd (text As String, cls As String, hx_get As String, hx_target As String, hx_trigger As String, data_bs_target As String, data_bs_toggle As String) As MiniHtml
+	Dim button1 As MiniHtml = Button
+	button1.cls(cls)
+	button1.attr("hx-get", hx_get)
+	button1.attr("hx-target", hx_target)
+	button1.attr("hx-trigger", hx_trigger)
+	button1.attr("data-bs-target", data_bs_target)
+	button1.attr("data-bs-toggle", data_bs_toggle)
+	Icon.up(button1).cls("bi bi-plus-lg me-2")
+	button1.text(text)
+	Return button1
+End Sub
+
+Public Sub ButtonSubmit (text As String, cls As String) As MiniHtml
+	Dim button1 As MiniHtml = Button
+	button1.attr("type", "submit")
+	button1.cls(cls)
+	button1.text(text)
+	Return button1
+End Sub
+
+Public Sub ButtonCancel (text As String, cls As String) As MiniHtml
+	Dim button1 As MiniHtml = Button
+	button1.attr("type", "button")
+	button1.cls(cls)
+	button1.attr("data-bs-dismiss", "modal")
+	button1.text(text)
+	Return button1
+End Sub
+
+Public Sub ButtonSearch (text As String, cls As String, hx_post As String, hx_target As String) As MiniHtml
+	Dim searchBtn As MiniHtml = Button
+	searchBtn.cls("btn btn-danger btn-md pl-3 pr-3 ml-3 mt-2")
+	searchBtn.text("Submit")
+	searchBtn.attr("hx-post", "/hx/products/table")
+	searchBtn.attr("hx-target", "#products-container")
+	searchBtn.attr("hx-swap", "innerHTML")
+	Return searchBtn
+End Sub
+
+Public Sub InputSearch (cls As String, id As String, name As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "text")
+	input1.cls(cls)
+	input1.attr("id", id)
+	input1.attr("name", name)
+	Return input1
+End Sub
+
+Public Sub TextLabel (text As String, cls As String, forId As String) As MiniHtml
+	Dim label1 As MiniHtml = Label
+	label1.attr("for", forId)
+	label1.cls(cls)
+	label1.text(text)
+	Return label1
+End Sub
+
+Public Sub FormGroup As MiniHtml
+	Return Div.cls("form-group")
+End Sub
+
+Public Sub InputGroup As MiniHtml
+	Return Div.cls("input-group mb-3")
+End Sub
+
+Public Sub HiddenInput (id As String, name As String, value As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "hidden")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	Return input1
+End Sub
+
+Public Sub RequiredLabel (text As String, forId As String) As MiniHtml
+	Dim label1 As MiniHtml = Label
+	If forId <> "" Then label1.attr("for", forId)
+	label1.text(text)
+	Span.up(label1).cls("text-danger").text("*")
+	Return label1
+End Sub
+
+Public Sub RequiredTextInput (id As String, name As String, value As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "text")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	input1.required
+	Return input1
+End Sub
+
+Public Sub RequiredDropdown (id As String, name As String) As MiniHtml
+	Dim select1 As MiniHtml = SelectTag
+	select1.cls("form-select")
+	select1.attr("id", id)
+	select1.attr("name", name)
+	select1.required
+	Return select1
+End Sub
+
+Public Sub ContainerModal As MiniHtml
+	Dim modal1 As MiniHtml = Div
+	modal1.attr("id", "modal-container")
+	modal1.cls("modal fade")
+	modal1.attr("tabindex", "-1")
+	modal1.attr("aria-hidden", "true")
+	Dim dialog1 As MiniHtml = Div.up(modal1)
+	dialog1.cls("modal-dialog modal-dialog-centered")
+	Dim content1 As MiniHtml = Div.up(dialog1)
+	content1.cls("modal-content")
+	content1.attr("id", "modal-content")
+	Return modal1
+End Sub
+
+Public Sub ContainerModalWithButton (TitleText As String, ParagraphText As String, ButtonText As String) As MiniHtml
+    Dim div1 As MiniHtml = Div
+    div1.cls("modal-dialog modal-lg modal-dialog-centered")
+    Dim div2 As MiniHtml = Div.up(div1)
+    div2.cls("modal-content")
+    Dim div3 As MiniHtml = Div.up(div2)
+    div3.cls("modal-header")
+    Dim h51 As MiniHtml = H5.up(div3)
+    h51.cls("modal-title")
+    h51.text(TitleText)
+    Dim div4 As MiniHtml = Div.up(div2)
+    div4.cls("modal-body")
+    Dim p1 As MiniHtml = P.up(div4)
+    p1.text(ParagraphText)
+    Dim div5 As MiniHtml = Div.up(div2)
+    div5.cls("modal-footer")
+    Dim button1 As MiniHtml = Button.up(div5)
+    button1.attr("type", "button")
+    button1.cls("btn btn-secondary text-uppercase")
+    button1.attr("data-bs-dismiss", "modal")
+    button1.text(ButtonText)
+    Return div1
+End Sub
+
+Public Sub ContainerToast As MiniHtml
+	Dim div1 As MiniHtml = Div
+	div1.cls("position-fixed end-0 p-3")
+	div1.sty("z-index: 2000")
+	div1.sty("bottom: 0%")
+	Dim toast1 As MiniHtml = Div.up(div1)
+	toast1.attr("id", "toast-container")
+	toast1.cls("toast align-items-center text-bg-success border-0")
+	toast1.attr("role", "alert")
+	Dim div2 As MiniHtml = Div.up(toast1)
+	div2.cls("d-flex")
+	Dim div3 As MiniHtml = Div.up(div2)
+	div3.cls("toast-body")
+	div3.attr("id", "toast-body")
+	div3.text("Operation successful!")
+	ButtonClose.up(div2).cls("btn-close-white me-2 m-auto").attr("data-bs-dismiss", "toast")
+	Return div1
+End Sub
+
+' ====================
+'  Conversion Helpers
+' ====================
+Public Sub ConvertFromBytes (Buffer() As Byte) As MiniHtml
+	Dim tag1 As MiniHtml
+	tag1.Initialize("")
+	Dim s As String = BytesToString(Buffer, 0, Buffer.Length, "UTF-8")
+	Return tag1.Parse(s)
+End Sub
+
+Public Sub ConvertToMiniHtml (Root As MiniHtml) As Byte()
+	Dim s As String = Root.build
+	Return s.GetBytes("UTF8")
+End Sub
+
+' ============================
+'  Bootstrap Layout Helpers
+' ============================
+Public Sub Container As MiniHtml
+	Return Div.cls("container")
+End Sub
+
+Public Sub ContainerFluid As MiniHtml
+	Return Div.cls("container-fluid")
+End Sub
+
+Public Sub Row As MiniHtml
+	Return Div.cls("row")
+End Sub
+
+Public Sub Col (cols As String) As MiniHtml
+	Return Div.cls("col-" & cols)
+End Sub
+
+' ============================
+'  Form Input Helpers
+' ============================
+Public Sub InputText (id As String, name As String, value As String, placeholder As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "text")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	If placeholder <> "" Then input1.attr("placeholder", placeholder)
+	Return input1
+End Sub
+
+Public Sub InputEmail (id As String, name As String, value As String, placeholder As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "email")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	If placeholder <> "" Then input1.attr("placeholder", placeholder)
+	Return input1
+End Sub
+
+Public Sub InputPassword (id As String, name As String, placeholder As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "password")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If placeholder <> "" Then input1.attr("placeholder", placeholder)
+	Return input1
+End Sub
+
+Public Sub InputNumber (id As String, name As String, value As String, MinValue As String, MaxValue As String, StepValue As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "number")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	If MinValue <> "" Then input1.attr("min", MinValue)
+	If MaxValue <> "" Then input1.attr("max", MaxValue)
+	If StepValue <> "" Then input1.attr("step", StepValue)
+	Return input1
+End Sub
+
+Public Sub InputDate (id As String, name As String, value As String) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "date")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	Return input1
+End Sub
+
+Public Sub InputFile (id As String, name As String, accept As String, multiple As Boolean) As MiniHtml
+	Dim input1 As MiniHtml = Input
+	input1.attr("type", "file")
+	input1.cls("form-control")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If accept <> "" Then input1.attr("accept", accept)
+	If multiple Then input1.attr3("multiple")
+	Return input1
+End Sub
+
+Public Sub TextareaInput (id As String, name As String, value As String, rows As Int, placeholder As String) As MiniHtml
+	Dim textarea1 As MiniHtml = Textarea
+	textarea1.cls("form-control")
+	If id <> "" Then textarea1.attr("id", id)
+	If name <> "" Then textarea1.attr("name", name)
+	If rows > 0 Then textarea1.attr("rows", rows)
+	If placeholder <> "" Then textarea1.attr("placeholder", placeholder)
+	If value <> "" Then textarea1.text(value)
+	Return textarea1
+End Sub
+
+Public Sub CheckboxInput (id As String, name As String, value As String, text As String, checked As Boolean) As MiniHtml
+	Dim div1 As MiniHtml = Div.cls("form-check")
+	Dim input1 As MiniHtml = Input.up(div1)
+	input1.attr("type", "checkbox")
+	input1.cls("form-check-input")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	If checked Then input1.attr3("checked")
+	If text <> "" Then
+		Dim label1 As MiniHtml = Label.up(div1)
+		label1.cls("form-check-label")
+		If id <> "" Then label1.attr("for", id)
+		label1.text(text)
+	End If
+	Return div1
+End Sub
+
+Public Sub RadioInput (name As String, id As String, value As String, text As String, checked As Boolean) As MiniHtml
+	Dim div1 As MiniHtml = Div.cls("form-check")
+	Dim input1 As MiniHtml = Input.up(div1)
+	input1.attr("type", "radio")
+	input1.cls("form-check-input")
+	If id <> "" Then input1.attr("id", id)
+	If name <> "" Then input1.attr("name", name)
+	If value <> "" Then input1.attr("value", value)
+	If checked Then input1.attr3("checked")
+	If text <> "" Then
+		Dim label1 As MiniHtml = Label.up(div1)
+		label1.cls("form-check-label")
+		If id <> "" Then label1.attr("for", id)
+		label1.text(text)
+	End If
+	Return div1
+End Sub
+
+Public Sub SelectInput (id As String, name As String, options As List, selectedValue As String, prompt As String, required As Boolean) As MiniHtml
+	Dim select1 As MiniHtml = SelectTag
+	select1.cls("form-select")
+	If id <> "" Then select1.attr("id", id)
+	If name <> "" Then select1.attr("name", name)
+	If required Then select1.required
+	If prompt <> "" Then
+		Dim opt1 As MiniHtml = Option.up(select1)
+		opt1.attr("value", "")
+		opt1.text(prompt)
+		opt1.disabled
+	End If
+	For Each M1 As Map In options
+		Dim opt2 As MiniHtml = Option.up(select1)
+		Dim optValue As String = M1.Get("value")
+		Dim optText As String = M1.Get("text")
+		opt2.attr("value", optValue)
+		opt2.text(optText)
+		If selectedValue <> "" And optValue = selectedValue Then opt2.selected
+	Next
+	Return select1
+End Sub
+
+' ============================
+'  Bootstrap UI Components
+' ============================
+Public Sub Card As MiniHtml
+	Return Div.cls("card")
+End Sub
+
+Public Sub CardHeader As MiniHtml
+	Return Div.cls("card-header")
+End Sub
+
+Public Sub CardBody As MiniHtml
+	Return Div.cls("card-body")
+End Sub
+
+Public Sub CardFooter As MiniHtml
+	Return Div.cls("card-footer")
+End Sub
+
+Public Sub CardTitle As MiniHtml
+	Return CreateTag("h5").cls("card-title")
+End Sub
+
+Public Sub CardText As MiniHtml
+	Return CreateTag("p").cls("card-text")
+End Sub
+
+Public Sub Badge (text As String, cls As String) As MiniHtml
+	Dim span1 As MiniHtml = Span
+	span1.cls("badge " & cls)
+	span1.text(text)
+	Return span1
+End Sub
+
+Public Sub ListGroup As MiniHtml
+	Return CreateTag("ul").cls("list-group")
+End Sub
+
+Public Sub ListGroupItem (text As String, cls As String) As MiniHtml
+	Dim li1 As MiniHtml = Li
+	li1.cls("list-group-item " & cls)
+	If text <> "" Then li1.text(text)
+	Return li1
+End Sub
+
+Public Sub ListGroupButton (text As String, cls As String, active As Boolean) As MiniHtml
+	Dim btn1 As MiniHtml = Button
+	btn1.cls("list-group-item list-group-item-action " & cls)
+	If active Then btn1.cls("active")
+	btn1.text(text)
+	Return btn1
+End Sub
+
+Public Sub ProgressBar (now As Int, MinValue As Int, MaxValue As Int, cls As String, showLabel As Boolean) As MiniHtml
+	Dim div1 As MiniHtml = Div.cls("progress")
+	Dim bar1 As MiniHtml = Div.up(div1)
+	bar1.cls("progress-bar " & cls)
+	bar1.attr("role", "progressbar")
+	bar1.sty("width: " & now & "%")
+	bar1.attr("aria-valuenow", now)
+	bar1.attr("aria-valuemin", MinValue)
+	bar1.attr("aria-valuemax", MaxValue)
+	If showLabel Then bar1.text(now & "%")
+	Return div1
+End Sub
+
+Public Sub Spinner (cls As String, text As String) As MiniHtml
+	Dim div1 As MiniHtml = Div
+	div1.cls("spinner-border " & cls)
+	div1.attr("role", "status")
+	If text <> "" Then
+		Span.up(div1).cls("visually-hidden").text(text)
+	End If
+	Return div1
+End Sub
+
+Public Sub SpinnerGrow (cls As String, text As String) As MiniHtml
+	Dim div1 As MiniHtml = Div
+	div1.cls("spinner-grow " & cls)
+	div1.attr("role", "status")
+	If text <> "" Then
+		Span.up(div1).cls("visually-hidden").text(text)
+	End If
+	Return div1
+End Sub
+
+Public Sub AlertDismissible (message As String, status As String) As MiniHtml
+	Dim div1 As MiniHtml = Div
+	div1.cls("alert alert-" & status & " alert-dismissible fade show")
+	div1.attr("role", "alert")
+	div1.text(message)
+	Dim btn1 As MiniHtml = Button.up(div1)
+	btn1.attr("type", "button")
+	btn1.cls("btn-close")
+	btn1.attr("data-bs-dismiss", "alert")
+	Return div1
+End Sub
+
+' ============================
+'  HTMX Helpers
+' ============================
+Public Sub HxGet (href As String, target As String, swap As String, trigger As String) As MiniHtml
+	Dim a1 As MiniHtml = Anchor
+	a1.attr("href", "#")
+	a1.attr("hx-get", href)
+	If target <> "" Then a1.attr("hx-target", target)
+	If swap <> "" Then a1.attr("hx-swap", swap)
+	If trigger <> "" Then a1.attr("hx-trigger", trigger)
+	Return a1
+End Sub
+
+Public Sub HxPost (href As String, target As String, swap As String) As MiniHtml
+	Dim btn1 As MiniHtml = Button
+	btn1.attr("type", "button")
+	btn1.attr("hx-post", href)
+	If target <> "" Then btn1.attr("hx-target", target)
+	If swap <> "" Then btn1.attr("hx-swap", swap)
+	Return btn1
+End Sub
+
+' ============================
+'  Navigation Helpers
+' ============================
+Public Sub Navbar (brand As String, expand As String, cls As String) As MiniHtml
+	Dim nav1 As MiniHtml = Nav
+	nav1.cls("navbar navbar-expand-" & expand & " " & cls)
+	Dim container1 As MiniHtml = ContainerFluid.up(nav1)
+	If brand <> "" Then
+		Dim a1 As MiniHtml = Anchor.up(container1)
+		a1.cls("navbar-brand")
+		a1.attr("href", "#")
+		a1.text(brand)
+	End If
+	Return nav1
+End Sub
+
+Public Sub NavItem (text As String, href As String, active As Boolean) As MiniHtml
+	Dim li1 As MiniHtml = Li
+	li1.cls("nav-item")
+	Dim a1 As MiniHtml = Anchor.up(li1)
+	a1.attr("href", href)
+	If active Then
+		a1.cls("nav-link active")
+	Else
+		a1.cls("nav-link")
+	End If
+	a1.text(text)
+	Return li1
+End Sub
+
+' ============================
+'  Utility Helpers
+' ============================
+Public Sub CssLink (href As String) As MiniHtml
+	Dim link1 As MiniHtml = Link
+	link1.attr("rel", "stylesheet")
+	link1.attr("href", href)
+	Return link1
+End Sub
+
+Public Sub JsScript (src As String) As MiniHtml
+	Dim script1 As MiniHtml = Script
+	script1.attr("src", src)
+	Return script1
+End Sub
+
+Public Sub ImgResponsive (src As String, alt As String, cls As String) As MiniHtml
+	Dim img1 As MiniHtml = Img
+	img1.attr("src", src)
+	img1.attr("alt", alt)
+	img1.cls("img-fluid " & cls)
+	Return img1
+End Sub
+
+Public Sub PageHeading (text As String, tag As String) As MiniHtml
+	Dim heading As MiniHtml = CreateTag(tag)
+	heading.text(text)
+	Return heading
+End Sub
+
+Public Sub ButtonIcon (text As String, iconCls As String, btnCls As String) As MiniHtml
+	Dim btn1 As MiniHtml = Button
+	btn1.cls(btnCls)
+	If iconCls <> "" Then Icon.up(btn1).cls(iconCls)
+	If text <> "" Then btn1.text(" " & text)
+	Return btn1
+End Sub
+
+Public Sub AnchorButton (text As String, href As String, cls As String) As MiniHtml
+	Dim a1 As MiniHtml = Anchor
+	a1.attr("href", href)
+	a1.cls("btn " & cls)
+	If text <> "" Then a1.text(text)
+	Return a1

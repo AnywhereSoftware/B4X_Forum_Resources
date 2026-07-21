@@ -1,4 +1,4 @@
-### [Web][Server] EndsMeet by aeric
+### [Web] [Server] EndsMeet by aeric
 ### 06/19/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/167395/)
 
