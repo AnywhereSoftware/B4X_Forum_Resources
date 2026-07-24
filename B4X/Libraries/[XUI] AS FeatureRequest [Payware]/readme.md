@@ -1,12 +1,9 @@
 ###  [XUI] AS FeatureRequest [Payware] by Alexander Stolte
-### 11/28/2024
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/163524/)
 
 AS FeatureRequest is a lightweight, easy-to-integrate library that allows you to present a list of potential features to your users, enabling them to vote on the ones they find most valuable. By collecting and prioritizing user feedback, you can accelerate the development of the most desired features. The library is flexible and can be connected to your own backend.  
   
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/YeGOL>  
-Thanks for your understanding. :)  
   
 ![](https://www.b4x.com/android/forum/attachments/157617) ![](https://www.b4x.com/android/forum/attachments/157618) ![](https://www.b4x.com/android/forum/attachments/157620)  
   
@@ -238,5 +235,4 @@ Version: 1.00
 
 - The title can now also be multline text
 
-Have Fun :)  
-<https://payhip.com/b/YeGOL>
+Have Fun :)

@@ -1,12 +1,8 @@
 ###  [XUI] AS Swipe Card - a tinder like swipeable card view [Payware] by Alexander Stolte
-### 04/02/2024
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/117415/)
 
 Hello Community,  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/ma7bR>  
-Thanks for your understanding. :)  
   
 This library is compatible and tested with **B4A**,**B4I** and **B4J**!  
 If you have bugs or a wish then tell me it in the comments.  
@@ -167,6 +163,4 @@ Version: 2.00**
 
 - Call this after you have added the cards
 
-Have Fun :)  
-[USER=102342]@Alexander Stolte[/USER]  
-<https://payhip.com/b/ma7bR>
+Have Fun :)

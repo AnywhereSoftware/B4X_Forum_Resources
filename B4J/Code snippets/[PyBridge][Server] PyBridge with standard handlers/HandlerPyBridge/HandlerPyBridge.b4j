@@ -1,0 +1,33 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=pybridge
+Module1=PyBridgeWorker
+Module2=Test
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	Public PyWorker As PyBridgeWorker
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddHandler("/test", "Test", False)
+	srvr.AddBackgroundWorker("PyBridgeWorker")
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:51042/test?code=10*2
+End Sub

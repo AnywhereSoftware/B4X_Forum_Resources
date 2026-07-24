@@ -1,14 +1,10 @@
 ###  [XUI] AS Scheduler 📅 - MonthView, DayView (Week), AgendaView and CalendarView [Payware] by Alexander Stolte
-### 03/04/2025
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/138410/)
 
 The AS Scheduler is a B4X library for displaying and interacting with appointments.  
   
 You want to try the views out? Then click [here](https://www.b4x.com/android/forum/threads/b4x-xui-as-scheduler-%F0%9F%93%85-monthview-dayview-week-agendaview-and-calendarview-payware.138410/#post-876275)  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/nrtw5>  
-Thanks for your understanding. :)  
   
 ![](https://www.b4x.com/android/forum/attachments/162238)  
   
@@ -1852,5 +1848,4 @@ If you have features or something is still missing, let me know.
 
 - Default: None
 
-Have Fun :)  
-<https://payhip.com/b/nrtw5>
+Have Fun :)

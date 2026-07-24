@@ -1,5 +1,5 @@
 ### QuickCurl v1.3: by Maxcfgos
-### 03/15/2026
+### 07/21/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/170591/)
 
 This wrapper is a lightweight utility designed to bridge the gap between cURL commands and B4X code. It’s built to be a "plug-and-play" tool for testing APIs and generating production-ready code.  
@@ -17,15 +17,15 @@ Nested JSON Support: Includes a recursive FlattenJson helper to turn complex API
 Sub btnRunTest_Click  
     Dim qc As QuickCurl  
     qc.Initialize  
-      
+    
     Dim myCommand As String = $"curl -X POST "https://httpbin.org/post" -d '{"item": "coffee"}'"$  
-      
+    
     ' Execute with a 5 second timeout  
     Wait For (qc.Execute(myCommand, 5)) Complete (Result As Map)  
-      
+    
     If Result.Get("success") Then  
         Log("Status: " & Result.Get("status"))  
-          
+        
         ' Print everything we found in the JSON response  
         Dim flat As List = Result.Get("flat_json")  
         For Each line As String In flat  
@@ -46,12 +46,12 @@ End Sub
 Sub GenerateMyCode  
     Dim qc As QuickCurl  
     qc.Initialize  
-      
-    Dim rawCurl As String = "curl -H 'tenant: walak-web' https://api.conexen.services/api/test"  
-      
+    
+    Dim rawCurl As String = "curl -H 'tenant: walak-web' https://api.test.com"  
+    
     ' Get the formatted B4X code  
     Dim b4xCode As String = qc.ExportB4X(rawCurl)  
-      
+    
     ' Output it to the log so you can copy/paste it into your project  
     Log(b4xCode)  
 End Sub

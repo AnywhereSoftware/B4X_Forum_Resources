@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 07/05/2026
+### 07/20/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -68,6 +68,7 @@ B4A***
 [rESP8266OTA - Update to the original library by @Siam](https://www.b4x.com/android/forum/threads/esp8266-ota-updater.101387/post-1028251) (new update at 2025-07-10)  
   
 ***B4J***  
+[NHRedis.b4xlib - Access Redis from B4J (and maybe also B4A - not advisable)](https://www.b4x.com/android/forum/threads/nhredis-b4xlib-access-redis-from-b4j-and-maybe-also-b4a-not-advisable.171601/#post-1049472)  
 [B4X JSON Path Library](https://www.b4x.com/android/forum/threads/b4x-b4x-library-json-path.170315/)  
 [NHTreeViewHandler.b4xlib - Handle easily treeviewitems with metadata in a treeview](https://www.b4x.com/android/forum/threads/nhtreeviewhandler-b4xlib-handle-easily-treeviewitems-with-metadata-in-a-treeview.169968/)  
 [NHEnvirnomentVariables - Get all environment variables of a linux distribution (now you can get environment variables in all OSs)](https://www.b4x.com/android/forum/threads/nhenvironentvariables-get-a-map-with-all-environment-variables-of-a-linux-distribution-does-not-break-in-windows-and-macos.158264/)  

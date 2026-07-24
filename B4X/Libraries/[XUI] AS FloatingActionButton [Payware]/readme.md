@@ -1,13 +1,9 @@
 ###  [XUI] AS FloatingActionButton [Payware] by Alexander Stolte
-### 12/16/2024
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/125687/)
 
 HeyHo,  
 this is a cross platform Floating Action Button.  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/q5oIT>  
-Thanks for your understanding. :)  
   
 ![](https://www.b4x.com/android/forum/attachments/104554)![](https://www.b4x.com/android/forum/attachments/104555)![](https://www.b4x.com/android/forum/attachments/104556)![](https://www.b4x.com/android/forum/attachments/104653)![](https://www.b4x.com/android/forum/attachments/104654)![](https://www.b4x.com/android/forum/attachments/107552)  
 
@@ -224,5 +220,4 @@ Version: 1.05**
 - The height of the area is now determined and the gap closed
 - B4XPages is now required in B4I
 
-Have Fun :)  
-<https://payhip.com/b/q5oIT>
+Have Fun :)

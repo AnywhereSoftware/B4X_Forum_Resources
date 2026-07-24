@@ -1,14 +1,8 @@
 ###  [XUI] AS PremiumSummary [Payware] by Alexander Stolte
-### 02/26/2025
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/160614/)
 
 With this view you can easily and with little effort list your premium features and make it easier for the customer to choose the right premium package.  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-You can buy the view here:  
-<https://payhip.com/b/M16Wz>  
-With the purchase you will receive a zip file containing the b4xlib. and a text file with the password, so that later updates can be easily downloaded here in the forum.  
-If you have any questions or problems, I am available here in the forum, thanks for your support.  
   
 Thanks for your understanding. :)  
   
@@ -150,6 +144,5 @@ Version: 1.00
 - Add ShowInfo and HideInfo - display a message to the user, e.g. if no connection to the app store could be established
 - Add Event InfoButtonClicked
 
-<https://payhip.com/b/M16Wz>  
 Have Fun :)  
 [![](https://www.b4x.com/android/forum/attachments/paypal-donate-button-png-clipart-png.79848/)](https://www.paypal.com/donate/?hosted_button_id=PBJGJWDDSM6ZG)

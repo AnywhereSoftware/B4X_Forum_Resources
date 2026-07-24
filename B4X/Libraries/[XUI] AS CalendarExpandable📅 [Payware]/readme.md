@@ -1,14 +1,10 @@
 ###  [XUI] AS CalendarExpandable📅 [Payware] by Alexander Stolte
-### 05/26/2025
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/146808/)
 
 This view was developed from scratch based on the [AS\_DatePicker](https://www.b4x.com/android/forum/threads/b4x-xui-as-datepicker-fast-navigate-to-a-month-year-decade-century-rangedatepicker.139957/) and the AS\_CalendarViewWeek from the [AS\_Scheduler](https://www.b4x.com/android/forum/threads/b4x-xui-as-scheduler-%F0%9F%93%85-monthview-dayview-week-agendaview-and-calendarview-payware.138410/). Both combined results in a fantastic new view.  
   
 **Those who have already purchased** [**AS\_CalendarAdvanced**](https://www.b4x.com/android/forum/threads/b4x-xui-as-calendaradvanced-%F0%9F%93%85-onerow-fiverow-calendar-expand-and-collapse-payware.128809/) **can use the same key to use this library.**  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/dq0uS>  
-Thanks for your understanding. :)  
   
 The calendar can be **collapsed** and **expanded**  
 ![](https://www.b4x.com/android/forum/attachments/140277)  
@@ -500,5 +496,4 @@ Version: 1.00**
 
 - BugFixes
 
-Have Fun :)  
-<https://payhip.com/b/dq0uS>
+Have Fun :)

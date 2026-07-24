@@ -1,14 +1,10 @@
 ###  [XUI] AS WheelPicker - Spinner - a modern single/multiple choice picker view - based on xCustomListView [Payware] by Alexander Stolte
-### 06/04/2025
+### 07/20/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/127505/)
 
 Hello,  
 this is a modern wheel picker, like the IOS-PickerView.  
 WheelPicker/Spinner  
-  
-This library is **not free**, because, it cost a lot of time and gray hair to create such views.  
-<https://payhip.com/b/IvqnN>  
-Thanks for your understanding. :)  
   
 V3.00-Preview  
 [MEDIA=youtube]xzrcl6aT6bw[/MEDIA]  
@@ -454,5 +450,4 @@ Version: 3.01
 - Everything should now look more centered and neat when working with separators
 - Separators at index -1, i.e. before the 1st item, and separators at the last idnex, i.e. after the last item, use the entire width of the item instead of just half of it
 
-Have Fun :)  
-<https://payhip.com/b/IvqnN>
+Have Fun :)
