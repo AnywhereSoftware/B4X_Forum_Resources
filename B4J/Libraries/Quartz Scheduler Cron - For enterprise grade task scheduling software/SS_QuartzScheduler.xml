@@ -14,12 +14,13 @@
         <event>SchedulerStarted</event>
         <event>SchedulerShutdown</event>
         <event>JobExecute (JobName As String, Data As Map)</event>
+        <event>ExecutorHealth (Healthy As Boolean)</event>
         <method>
             <name>JobExists</name>
             <comment>Checks whether a job with the given name exists in any group.
  jobName is the Job name.
  Returns true if the job exists, false otherwise.</comment>
-            <returntype>boolean</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
@@ -27,7 +28,7 @@
         </method>
         <method>
             <name>PauseJob</name>
-            <comment>Pauses a job by name in any group.
+            <comment>Pauses a job by name in any group on a background thread.
  jobName is the Job name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -36,26 +37,40 @@
             </parameter>
         </method>
         <method>
+            <name>WatchdogStatus</name>
+            <comment>Logs a watchdog snapshot of scheduler and executor health.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
             <name>GetLog</name>
             <comment>Returns the full internal log of the scheduler.
  Returns a List of strings.</comment>
             <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
         </method>
         <method>
-            <name>Start</name>
-            <comment>Start scheduler synchronously.
- Blocks until scheduler.start() returns.</comment>
-            <returntype>void</returntype>
+            <name>GetSchedulerState</name>
+            <comment>Returns a B4J Map with scheduler metadata: started(boolean), inStandby(boolean), shutdown(boolean)</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>GetNextFireTime</name>
+            <comment>Returns the next fire time for a given job (by name) as a Date, or Null if not found.
+ Searches across all groups for the job name.</comment>
+            <returntype>java.util.Date</returntype>
+            <parameter>
+                <name>jobName</name>
+                <type>java.lang.String</type>
+            </parameter>
         </method>
         <method>
             <name>ListGroups</name>
             <comment>Returns all job groups currently registered in the scheduler.
  Returns A List of group names.</comment>
-            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <returntype>void</returntype>
         </method>
         <method>
             <name>DeleteGroup</name>
-            <comment>Deletes all jobs in a given group.
+            <comment>Deletes all jobs in a given group on a background thread.
  groupName is the Group name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -64,19 +79,11 @@
             </parameter>
         </method>
         <method>
-            <name>Initialize</name>
-            <comment>Initialise synchronously.
- Uses RAMJobStore.
- eventName is the Event name prefix (e.g., "qs").</comment>
+            <name>StopAsync</name>
+            <comment>Stop the scheduler completely.
+ Deletes all scheduled jobs, shuts down Quartz,
+ clears internal state, and destroys the instance.</comment>
             <returntype>void</returntype>
-            <parameter>
-                <name>ba</name>
-                <type>anywheresoftware.b4a.BA</type>
-            </parameter>
-            <parameter>
-                <name>eventName</name>
-                <type>java.lang.String</type>
-            </parameter>
         </method>
         <method>
             <name>SetJobChain</name>
@@ -91,10 +98,10 @@
         </method>
         <method>
             <name>ScheduleRepeatingJob</name>
-            <comment>Schedule a repeating job synchronously (default group).
+            <comment>Schedule a repeating job (default group) on a background thread.
  jobName is the Job name.
  intervalSeconds is the Interval in seconds.
- repeatCount Number of repeats (&lt;= 0 =&gt; forever).
+ repeatCount Number of repeats, zero or less means repeat forever.
  data is the Map data.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -116,7 +123,7 @@
         </method>
         <method>
             <name>ResumeGroup</name>
-            <comment>Resumes all jobs in a given group.
+            <comment>Resumes all jobs in a given group on a background thread.
  groupName is the Group name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -159,15 +166,20 @@
             <comment>Retrieves the Map of data associated with a job.
  jobName is the Job name.
  Returns a Map of job data (empty if job not found).</comment>
-            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
             </parameter>
         </method>
         <method>
+            <name>IsStarted</name>
+            <comment>Returns true if the scheduler is started and not shutdown.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
             <name>CancelJob</name>
-            <comment>Alias for DeleteJob.
+            <comment>Alias for PauseJob.
  jobName is the Job name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -176,8 +188,14 @@
             </parameter>
         </method>
         <method>
+            <name>CheckExecutorHealth</name>
+            <comment>Checks if the executor is alive and not shutdown.
+ Raises event: ExecutorHealth (Boolean)</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
             <name>DeleteJob</name>
-            <comment>Deletes a job by name in any group.
+            <comment>Deletes a job by name in any group on a background thread.
  jobName is the Job name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -187,7 +205,7 @@
         </method>
         <method>
             <name>ClearLog</name>
-            <comment>Clears internal log entries.</comment>
+            <comment>Clears the internal log entries.</comment>
             <returntype>void</returntype>
         </method>
         <method>
@@ -226,8 +244,17 @@
             </parameter>
         </method>
         <method>
+            <name>GetJobNames</name>
+            <comment>Returns a list of job names for a given group.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>groupName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
             <name>PauseGroup</name>
-            <comment>Pauses all jobs in a given group.
+            <comment>Pauses all jobs in a given group on a background thread.
  groupName is the Group name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -240,7 +267,7 @@
             <comment>Returns basic job detail metadata as Map: Name, Group, Description.
  jobName is the Job name.
  Returns a Map with keys "Name", "Group", "Description" (empty if job not found).</comment>
-            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
@@ -259,11 +286,11 @@
         </method>
         <method>
             <name>ScheduleRepeatingJob2</name>
-            <comment>Schedule a repeating job synchronously with group.
+            <comment>Schedule a repeating job with group on a background thread.
  jobName is the Job name.
  groupName is the Group name.
  intervalSeconds is the Interval in seconds.
- repeatCount is the Number of repeats (&lt;= 0 =&gt; forever).
+ repeatCount Number of repeats, zero or less means repeat forever.
  data is the Map data.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -288,12 +315,17 @@
             </parameter>
         </method>
         <method>
+            <name>GetJobGroups</name>
+            <comment>Returns a list of job group names.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
             <name>GetTriggerInfo</name>
             <comment>Returns detailed trigger information for a specific job.
  Each item in the returned list is a Map containing trigger metadata.
  jobName is the job name.
  Returns A List of Maps describing the job's triggers.</comment>
-            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
@@ -305,13 +337,8 @@
             <returntype>void</returntype>
         </method>
         <method>
-            <name>Shutdown</name>
-            <comment>Shutdown scheduler synchronously. Waits for running jobs to complete.</comment>
-            <returntype>void</returntype>
-        </method>
-        <method>
             <name>ResumeJob</name>
-            <comment>Resumes a previously paused job by name in any group.
+            <comment>Resumes a previously paused job by name in any group on a background thread.
  jobName is the Job name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -321,7 +348,7 @@
         </method>
         <method>
             <name>ScheduleCronJob</name>
-            <comment>Schedule a cron job synchronously (default group).
+            <comment>Schedule a cron job (default group) on a background thread.
  jobName is the Job name (unique).
  cron is the Cron expression.
  data is the Map of data to pass to job (can be null).</comment>
@@ -341,8 +368,7 @@
         </method>
         <method>
             <name>RunJobNow</name>
-            <comment>Triggers a job to run immediately, searching all groups for the job name.
- jobName is the Job name.</comment>
+            <comment>Run a job immediately by name (helper used by chaining).</comment>
             <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
@@ -351,13 +377,13 @@
         </method>
         <method>
             <name>StartAsync</name>
-            <comment>Start scheduler on background thread.
- Returns immediately.</comment>
+            <comment>Start the scheduler on a background thread.
+ The call returns immediately without waiting for the scheduler to start.</comment>
             <returntype>void</returntype>
         </method>
         <method>
             <name>ScheduleCronJob2</name>
-            <comment>Schedule a cron job synchronously with group.
+            <comment>Schedule a cron job with group on a background thread.
  jobName is the Job name.
  groupName is the Group name.
  cron is the Cron expression.
@@ -385,7 +411,7 @@
             <comment>Returns the next scheduled execution time for a job.
  jobName is the Job name.
  Returns Next run time in milliseconds (0 if not found or no upcoming run).</comment>
-            <returntype>long</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
@@ -394,17 +420,10 @@
         <method>
             <name>GetJobState</name>
             <comment>Returns the current state of a job.
-
- Possible values:
- SCHEDULED
- PAUSED
- RUNNING
- COMPLETE
- NOT_FOUND
-
+ Possible values: SCHEDULED, PAUSED, RUNNING, COMPLETE, NOT_FOUND.
  jobName The job name.
  Returns State string.</comment>
-            <returntype>java.lang.String</returntype>
+            <returntype>void</returntype>
             <parameter>
                 <name>jobName</name>
                 <type>java.lang.String</type>
@@ -412,22 +431,21 @@
         </method>
         <method>
             <name>InitializeAsync</name>
-            <comment>Initialise asynchronously (wrapper entry point).
- Uses RAMJobStore.
- eventName is the Event name prefix (e.g., "qs").</comment>
+            <comment>Initialise asynchronously, Uses RAMJobStore.
+ eventName is the Event name prefix ("QS", "Quartz", "Schedule" etc).</comment>
             <returntype>void</returntype>
             <parameter>
                 <name>ba</name>
                 <type>anywheresoftware.b4a.BA</type>
             </parameter>
             <parameter>
-                <name>eventName</name>
+                <name>EventName</name>
                 <type>java.lang.String</type>
             </parameter>
         </method>
         <method>
             <name>InterruptJob</name>
-            <comment>Requests interruption of a running job (if it implements InterruptableJob).
+            <comment>Requests interruption of a running job on a background thread.
  jobName is the Job name.</comment>
             <returntype>void</returntype>
             <parameter>
@@ -436,12 +454,36 @@
             </parameter>
         </method>
         <method>
-            <name>ListJobs</name>
-            <comment>Returns a List of job names currently known to the scheduler.</comment>
+            <name>GetAllJobs</name>
+            <comment>Returns a B4J List of all job names across all groups.
+ Each item is a Map with keys: "group" and "name".</comment>
             <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
         </method>
+        <method>
+            <name>ListJobs</name>
+            <comment>Returns a List of job names currently known to the scheduler.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetLogs</name>
+            <comment>Returns a copy of the internal log entries as a B4J List.
+ The returned list contains the log lines in chronological order (oldest first).</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetLogCount</name>
+            <comment>Returns the number of log entries currently stored.</comment>
+            <returntype>int</returntype>
+        </method>
+        <field>
+            <name>SetMaxLogEntries</name>
+            <comment>Sets the maximum number of log entries to retain.
+ Default entries is set to 1000.
+ Older entries are removed automatically.</comment>
+            <returntype>int</returntype>
+        </field>
     </class>
-    <version>1.0</version>
+    <version>1.11</version>
     <author>Peter Simpson</author>
     <dependsOn>quartz-2.3.2</dependsOn>
     <dependsOn>slf4j-api-1.7.36</dependsOn>

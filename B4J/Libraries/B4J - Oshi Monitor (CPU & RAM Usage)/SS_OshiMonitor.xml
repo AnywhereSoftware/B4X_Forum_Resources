@@ -17,11 +17,8 @@
         <event>ProcessRamUsage (Value As Double)</event>
         <event>ProcessFound (Name As String)</event>
         <event>ProcessTerminated (Name As String)</event>
-        <method>
-            <name>hasCpuTemp</name>
-            <comment>Returns true if CPU temperature monitoring is supported.</comment>
-            <returntype>boolean</returntype>
-        </method>
+        <event>BatteryCharging (Value As Boolean)</event>
+        <event>BatteryWatts (Value As Double)</event>
         <method>
             <name>Start</name>
             <comment>Starts the background monitoring thread.
@@ -35,9 +32,25 @@
             <returntype>void</returntype>
         </method>
         <method>
-            <name>ListProcesses</name>
-            <comment>Returns a List of unique running process names, sorted A–Z.</comment>
+            <name>GetSystemUptimeSeconds</name>
+            <comment>Returns the system uptime in seconds.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetDisplays</name>
+            <comment>Returns a list containing information about connected displays.</comment>
             <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetProcessorLoad</name>
+            <comment>Returns an array of CPU load percentages for each individual logical processor.</comment>
+            <returntype>double[]</returntype>
+        </method>
+        <method>
+            <name>GetMostActiveInterfaceIndex</name>
+            <comment>Returns the index of the network interface with the highest combined 
+ Traffic (received + sent) since system boot.</comment>
+            <returntype>int</returntype>
         </method>
         <method>
             <name>ResetProcessMaximums</name>
@@ -45,14 +58,38 @@
             <returntype>void</returntype>
         </method>
         <method>
+            <name>GetSoundCards</name>
+            <comment>Returns a list containing the names of active sound cards or audio interfaces.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetNetworkInterfaceNames</name>
+            <comment>Returns a list of names of all network interfaces.</comment>
+            <returntype>java.util.List</returntype>
+        </method>
+        <method>
+            <name>GetSwapTotal</name>
+            <comment>Returns the total swap file size in bytes.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
             <name>IsInitialized</name>
             <comment>Returns true if the object has been initialized and not yet killed.</comment>
             <returntype>boolean</returntype>
         </method>
         <method>
-            <name>ResetMaximums</name>
-            <comment>Resets the tracked maximum CPU and RAM values for the system to zero.</comment>
-            <returntype>void</returntype>
+            <name>GetNetworkIPv6Addresses</name>
+            <comment>Returns a list containing the IPv6 addresses for each active network interface.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetProcessDetails</name>
+            <comment>Returns a map containing detailed information about a specific process by its name.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+            <parameter>
+                <name>processName</name>
+                <type>java.lang.String</type>
+            </parameter>
         </method>
         <method>
             <name>Initialize</name>
@@ -68,10 +105,261 @@
             </parameter>
         </method>
         <method>
+            <name>GetGraphicsCards</name>
+            <comment>Returns a List containing the name and video memory size of each graphics card.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetSwapUsed</name>
+            <comment>Returns the currently used swap file size in bytes.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetTotalBytesForInterface</name>
+            <comment>Returns the total bytes (received + sent) for a specific network interface.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetVirtualMemoryUsed</name>
+            <comment>Returns the currently used virtual memory in bytes.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetMotherboardModel</name>
+            <comment>Returns the motherboard or baseboard model name.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetOSBuild</name>
+            <comment>Returns the exact build number of the current operating system.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetTotalBytesRead</name>
+            <comment>Returns total bytes read across all disks since system boot.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetTotalBytesSent</name>
+            <comment>Returns the number of bytes sent across all network interfaces.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetUsbDevices</name>
+            <comment>Returns a list containing the names of connected USB devices.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetNetworkInErrors</name>
+            <comment>Returns the number of inbound errors for a specific interface index.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetBiosVersion</name>
+            <comment>Returns the system BIOS or firmware version string.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>IsLaptopByBattery</name>
+            <comment>Returns true if the system appears to be a laptop based on battery presence.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetLogicalProcessorCount</name>
+            <comment>Returns the total number of logical processors (threads).</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetProcessorName</name>
+            <comment>Returns the processor name from the system.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetRefreshRate</name>
+            <comment>Returns the current refresh rate of the primary display in Hz.
+ Returns 0 if the refresh rate is unknown or cannot be determined.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>GetBatteryCurrentCapacity</name>
+            <comment>Returns the current battery capacity in mAh.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetCurrentPowerWatts</name>
+            <comment>Returns the current power usage in watts as reported by the battery controller.
+ Note: When plugged in, this reflects the charge rate; when on battery, 
+ this reflects the total system power draw.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetSystemModel</name>
+            <comment>Returns the physical computer system model name.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetBatteryDesignCapacity</name>
+            <comment>Returns the battery design capacity in mAh.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetPhysicalCoreCount</name>
+            <comment>Returns the number of physical CPU cores.</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>ListProcesses</name>
+            <comment>Returns a List of unique running process names, sorted A-Z.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetBatteryCharging</name>
+            <comment>Returns true if the battery is currently charging, false otherwise.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetSystemUptimeMinutes</name>
+            <comment>Returns the system uptime in minutes.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetFanSpeeds</name>
+            <comment>Returns an array containing the current speed of each system fan in RPM.</comment>
+            <returntype>int[]</returntype>
+        </method>
+        <method>
+            <name>GetTrackedPeakMemory</name>
+            <comment>Returns the highest combined resident set size (physical memory) used by all instances 
+ of a specific process name since the application started monitoring.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>processName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetVirtualMemoryTotal</name>
+            <comment>Returns the total virtual memory in bytes.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetTotalBytesReceived</name>
+            <comment>Returns the number of bytes received across all network interfaces.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetSystemUptimeHours</name>
+            <comment>Returns the system uptime in hours.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>ResetMaximums</name>
+            <comment>Resets the tracked maximum CPU and RAM values for the system to zero.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
             <name>Kill</name>
             <comment>Kills the ba object reference to free memory and stops the thread cleanly.
  After calling this, IsInitialized will return false.</comment>
             <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetDriveLatency</name>
+            <comment>Returns the average I/O latency in milliseconds for a specific drive index.
+ Latency = (Total Time Spent / Total Operations)</comment>
+            <returntype>double</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetNetworkInDrops</name>
+            <comment>Returns the number of inbound packets dropped for a specific interface index.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetCpuVoltage</name>
+            <comment>Returns the current CPU voltage in volts.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetOSName</name>
+            <comment>Returns the full family and description name of the operating system.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetProcessPeakMemory</name>
+            <comment>Returns the peak resident set size (physical memory) used by a process in bytes.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>processName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetBatteryWatts</name>
+            <comment>Returns the current power usage in watts as reported by the battery controller.
+ Note: When plugged in, this reflects the charge rate; when on battery, 
+ this reflects the total system power draw.</comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>GetNetworkOutErrors</name>
+            <comment>Returns the number of outbound errors for a specific interface index.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HasCpuTemp</name>
+            <comment>Returns true if CPU temperature monitoring is supported.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>IsCharging</name>
+            <comment>Checks if the primary battery is currently charging.
+ Return true if charging, false otherwise.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetNetworkIPv4Addresses</name>
+            <comment>Returns a list containing the IPv4 addresses for each active network interface.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetInterfaceTrafficSpeed</name>
+            <comment>Returns a custom result object (or array) with current traffic speeds 
+ in Bytes per second for a specific interface.</comment>
+            <returntype>double[]</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLogicalDrives</name>
+            <comment>Returns a list containing space and mount point information for logical drives.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>GetTotalBytesWritten</name>
+            <comment>Returns total bytes written across all disks since system boot.</comment>
+            <returntype>long</returntype>
         </method>
         <property>
             <name>IntervalMs</name>
@@ -100,7 +388,7 @@
         <property>
             <name>CpuTemp</name>
             <returntype>double</returntype>
-            <comment>Returns CPU temperature in °C.</comment>
+            <comment>Returns CPU temperature in C.</comment>
         </property>
         <property>
             <name>ProcessCpuUsage</name>
@@ -153,6 +441,12 @@
             <comment>Returns the highest CPU usage recorded since start or reset.</comment>
         </property>
         <property>
+            <name>PowerUsageWatts</name>
+            <returntype>double</returntype>
+            <comment>Gets the current power usage in watts.
+ Return Watts being used or supplied.</comment>
+        </property>
+        <property>
             <name>MaxProcessCpuUsage</name>
             <returntype>double</returntype>
             <comment>Returns the highest Process CPU usage recorded since the process was targeted or reset.</comment>
@@ -179,7 +473,7 @@
             <returntype>boolean</returntype>
         </field>
     </class>
-    <version>1.0</version>
+    <version>1.1</version>
     <author>Peter Simpson</author>
     <dependsOn>oshi-core-6.9.3.jar</dependsOn>
     <dependsOn>jna-5.18.1.jar</dependsOn>

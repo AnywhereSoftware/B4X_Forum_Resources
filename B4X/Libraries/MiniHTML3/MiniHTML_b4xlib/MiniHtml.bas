@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 'MiniHtml
-'Version: 3.03
+'Version: 3.06
 Sub Class_Globals
 	Private mIndents As Int
 	Private mIndentString As String
@@ -225,23 +225,35 @@ Public Sub attr3 (key As String) As MiniHtml
 	Return Me
 End Sub
 
-'same as addTo (child)
+'Add to Parent and return the current (child) tag (alias of addTo)
 Public Sub up (ParentTag As MiniHtml) As MiniHtml
 	Return addTo(ParentTag)
 End Sub
 
-'Add to Parent and return current tag (child)
+'Add to Parent and return the current (child) tag
 Public Sub addTo (ParentTag As MiniHtml) As MiniHtml
 	ParentTag.add(Me)
 	mParent = ParentTag
 	Return Me
 End Sub
 
-'Add a Child and return the added tag (child)
+'Append a Child but return the (parent) tag - breaking! previously return child
 Public Sub add (ChildTag As MiniHtml) As MiniHtml
 	mChildren.Add(ChildTag)
 	ChildTag.Parent = Me
+	Return Me
+End Sub
+
+'Append a Child and return the (child) tag
+Public Sub add2 (ChildTag As MiniHtml) As MiniHtml
+	mChildren.Add(ChildTag)
+	ChildTag.Parent = Me
 	Return ChildTag
+End Sub
+
+'Append a Child and return the (child) tag (alias of add2)
+Public Sub down (ChildTag As MiniHtml) As MiniHtml
+	Return add2(ChildTag)
 End Sub
 
 'Return the Children list
@@ -354,35 +366,63 @@ Public Sub comment2 (value As String, newline As Boolean)
 End Sub
 
 '<code>body1.cdn("script", "/assets/js/cdn.min.js")</code>
-Public Sub cdn (format As String, url As String) As MiniHtml
-	Return cdn2(format, url, "", "")
-End Sub
+'Public Sub cdn (format As String, url As String) As MiniHtml
+'	Return cdn2(format, url, "", "")
+'End Sub
 
-'<code>body1.cdn2("script", "/assets/js/cdn.min.js", "sha384-hashes", "anonymous")</code>
-Public Sub cdn2 (format As String, url As String, integrity As String, crossorigin As String) As MiniHtml
+'<code>body1.cdn("js", "/assets/js/cdn.min.js")</code>
+Public Sub cdn (format As String, url As String) As MiniHtml
 	Select format.ToLowerCase
 		Case "script", "js"
-			Dim map1 As Map = CreateMap("src": url)
-			If integrity <> "" Then map1.Put("integrity", integrity)
-			If crossorigin <> "" Then map1.Put("crossorigin", crossorigin)
-			mChildren.Add(Create("script").attr2(map1))
-		Case "style", "css"
-			Dim map2 As Map = CreateMap("rel": "stylesheet", "href": url)
-			If integrity <> "" Then map2.Put("integrity", integrity)
-			If crossorigin <> "" Then map2.Put("crossorigin", crossorigin)
-			mChildren.Add(Create("link").attr2(map2))
+			'Dim map1 As Map = CreateMap("src": url)
+			'If integrity <> "" Then map1.Put("integrity", integrity)
+			'If crossorigin <> "" Then map1.Put("crossorigin", crossorigin)
+			'mChildren.Add(Create("script").attr2(map1))
+			'Return Create("script").attr2(map1).up(Me)
+			Return Create("script").attr("src", url).up(Me)
+		Case Else '"style", "css"
+			'Dim map2 As Map = CreateMap("rel": "stylesheet", "href": url)
+			'If integrity <> "" Then map2.Put("integrity", integrity)
+			'If crossorigin <> "" Then map2.Put("crossorigin", crossorigin)
+			'mChildren.Add(Create("link").attr2(map2))
+			'Return Create("link").attr2(map2).up(Me)
+			Return Create("link").attr("rel", "stylesheet").attr("href", url).up(Me)
 	End Select
+	'Return Me
+End Sub
+
+'<code>body1.cdn2("script", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", "sha384-hashes", "anonymous")</code>
+'Deprecated
+Public Sub cdn2 (format As String, url As String, hash As String, credentials As String) As MiniHtml
+	Dim m1 As MiniHtml = cdn(format, url)
+	If hash <> "" Then m1.attr("integrity", hash)
+	If credentials <> "" Then m1.attr("crossorigin", credentials)
+	Return m1
+End Sub
+
+'<code>body1.cdn3("script", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", CreateMap("integrity": "sha384-hashes", "crossorigin": "anonymous"))</code>
+'Deprecated
+Public Sub cdn3 (format As String, url As String, keyvals As Map) As MiniHtml
+	'Select format.ToLowerCase
+	'	Case "script", "js"
+	'		mChildren.Add(Create("script").attr("src", url).attr2(keyvals))
+	'	Case Else '"style", "css"
+	'		mChildren.Add(Create("link").attr2(CreateMap("rel": "stylesheet", "href": url)).attr2(keyvals))
+	'End Select
+	Return cdn(format, url).attr2(keyvals).up(Me)
+End Sub
+
+'<code>body1.cdn("js", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js") _
+'.integrity("sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz")</code>
+Public Sub integrity (hash As String) As MiniHtml
+	mAttributes.Put("integrity", hash)
 	Return Me
 End Sub
 
-'<code>body1.cdn3("script", "/assets/js/cdn.min.js", CreateMap("defer": ""))</code>
-Public Sub cdn3 (format As String, url As String, keyvals As Map) As MiniHtml
-	Select format.ToLowerCase
-		Case "script", "js"
-			mChildren.Add(Create("script").attr("src", url).attr2(keyvals))
-		Case "style", "css"
-			mChildren.Add(Create("link").attr2(CreateMap("rel": "stylesheet", "href": url)).attr2(keyvals))
-	End Select
+'<code>body1.cdn("js", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js") _
+'.crossorigin("anonymous")</code>
+Public Sub crossorigin (credentials As String) As MiniHtml
+	mAttributes.Put("crossorigin", credentials)
 	Return Me
 End Sub
 
@@ -650,6 +690,8 @@ Private Sub ShorthandToMiniHtml (m As Map) As MiniHtml
 					el.setFormatAttributes(value)
 				Case "id"
 					el.setId(value)
+				Case "defer"
+					If value = True Then el.defer
 				Case "required"
 					If value = True Then el.required
 				Case "disabled"
@@ -684,7 +726,7 @@ Public Sub ToMap As Map
 	If mIndentation Then props.Put("indentation", True)
 	If mFormatAttributes Then props.Put("formatattributes", True)
 	
-	Dim boolAttrs As List = Array As String("required", "disabled", "checked", "selected", "hidden", "readonly")
+	Dim boolAttrs As List = Array As String("defer", "required", "disabled", "checked", "selected", "hidden", "readonly")
 	Dim rest As Map
 	rest.Initialize
 	For Each key As String In mAttributes.Keys
@@ -837,6 +879,35 @@ Public Sub multiline As MiniHtml
 	Return Me
 End Sub
 
+' Adds a key-value pair to the very beginning of an existing Map
+Private Sub PrependToMap (OriginalMap As Map, NewKey As Object, NewValue As Object) As Map
+    Dim TempMap As Map
+    TempMap.Initialize
+    
+    ' 1. Insert the new key and value first
+    TempMap.Put(NewKey, NewValue)
+    
+    ' 2. Append all the original keys and values
+    For Each Key As Object In OriginalMap.Keys
+        TempMap.Put(Key, OriginalMap.Get(Key))
+    Next
+    
+    ' 3. Clear the original map and copy the reordered data back
+    OriginalMap.Clear
+    For Each Key As Object In TempMap.Keys
+        OriginalMap.Put(Key, TempMap.Get(Key))
+    Next
+    
+    Return OriginalMap
+End Sub
+
+'Prepend defer to script tag
+'<code>body1.cdn("script", "/assets/js/cdn.min.js").defer</code>
+Public Sub defer As MiniHtml
+	PrependToMap(mAttributes, "defer", "")
+	Return Me
+End Sub
+
 Public Sub required As MiniHtml
 	mAttributes.Put("required", "")
 	Return Me
@@ -854,6 +925,11 @@ End Sub
 
 Public Sub selected As MiniHtml
 	mAttributes.Put("selected", "")
+	Return Me
+End Sub
+
+Public Sub selectedIf (Condition As Boolean) As MiniHtml
+	If Condition Then mAttributes.Put("selected", "")
 	Return Me
 End Sub
 

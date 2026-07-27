@@ -248,7 +248,7 @@ Private Sub ParseAttributes (Parent As HtmlNode)
 				Parent.Attributes.Add(CreateHtmlAttribute(attrName, attrName))
 			Else
 				' For regular attributes, check if it's a known boolean attribute
-				Dim commonBooleanAttrs As List = Array As String("disabled", "readonly", "checked", "required", "selected", "multiple", "autofocus", "novalidate", "formnovalidate", "hidden")
+				Dim commonBooleanAttrs As List = Array As String("disabled", "readonly", "checked", "defer", "required", "selected", "multiple", "autofocus", "novalidate", "formnovalidate", "hidden")
             
 				If commonBooleanAttrs.IndexOf(attrName) > -1 Then
 					Parent.Attributes.Add(CreateHtmlAttribute(attrName, attrName))
