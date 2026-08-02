@@ -5,9 +5,10 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 'MiniHtml
-'Version: 3.06
+'Version: 3.31
 Sub Class_Globals
 	Private mIndents As Int
+	Private mDocType As String
 	Private mIndentString As String
 	Private mId As String
 	Private mMode As String
@@ -27,8 +28,7 @@ Sub Class_Globals
 	Private Const mMeta As String = "meta" ' <meta>
 	Private Const mSelf As String = "self" ' <tag />
 	Private Const mUniline As String = "uniline" ' <tag></tag>
-	Private Const mMultiline As String = "multiline" ' <tag> CRLF </tag>
-	Public SpecialTags As List = Array As String("html", "head", "body", "") 'these tags are not indented by default
+	Private Const mMultiline As String = "multiline" ' <tag> CRLF </tag> (if mFlat = False)
 End Sub
 
 ' Initial with tag name
@@ -40,27 +40,29 @@ Public Sub Initialize (Name As String)
 	mClasses.Initialize
 	mBuilder.Initialize
 	mFlat = False
-	mLineFeed = True
-	mIndentation = False
+	mLineFeed = Not(mFlat)
+	mIndentation = Not(mFlat)
+	mDocType = "html"
 	mName = Name
 	Select mName.ToLowerCase
-		Case "doctype"
-			Append("<!DOCTYPE html>")
-			mMode = mMeta
-			Return
 		Case "head", "form", "table"
 			mMode = mMultiline
 		Case "meta", "input", "link"
 			mMode = mMeta
-		Case "title", "h1", "h2", "h3", "h4", "h5", "p", "script", "label", "button", "span", "li", "a", "i", "b", "u", "option", "bold", "italic", "underline", "strong", "em", "del", "th", "td", "small", "textarea"
+		Case "title", "h1", "h2", "h3", "h4", "h5", "p", "script", "label", "button", "div", "span", "li", "a", "i", "b", "u", "option", "bold", "italic", "underline", "strong", "em", "del", "th", "td", "small", "textarea"
 			mMode = mUniline
-		Case "img", "br"', "link"
-			mMode = mSelf ' self closing tag
+		Case "img", "br", "path"
+			mMode = mMeta
 		Case "text", ""
 			mMode = mNoTag
 		Case Else
 			mMode = mMultiline
 	End Select
+	If mName.EndsWith("/") Then 'self closing tag
+		mName = mName.Replace("/", "")
+		mMode = mSelf
+	End If
+	mIndents = 0
 	mIndentString = "  "
 End Sub
 
@@ -86,12 +88,13 @@ Public Sub buildImpl (indent As Int, AlignAttribute2 As Boolean) As String
 	SB.Initialize
 	Dim sIndent As String
 	Dim sSpacing As String
-
-	If mLineFeed Then
-		SB.Append(CRLF)
-	Else
-		indent = -1
+	
+	If mName.EqualsIgnoreCase("html") And mDocType <> "" Then
+		SB.Append($"<!DOCTYPE ${mDocType}>"$)
 	End If
+	
+	If mParent.IsInitialized And mParent.Indentation = False Then indent = 1
+	If mLineFeed Then SB.Append(CRLF)
 	
 	' Build Left Indent
 	Dim SB2 As StringBuilder
@@ -101,11 +104,7 @@ Public Sub buildImpl (indent As Int, AlignAttribute2 As Boolean) As String
 	Next
 	sIndent = SB2.ToString
 	
-	If SpecialTags.IndexOf(mName) < 0 Then
-		SB.Append(sIndent)
-	Else
-		If mIndentation Then SB.Append(sIndent)
-	End If
+	If mIndentation Then SB.Append(sIndent) '(experiment)
 	
 	If mMode <> "" Then
 		SB.Append("<" & mName)
@@ -123,19 +122,19 @@ Public Sub buildImpl (indent As Int, AlignAttribute2 As Boolean) As String
 	
 	For Each key As String In mAttributes.Keys
 		'Log(key & "->" & mAttributes.Get(key))
-		Dim attrs As String = mAttributes.Get(key)
+		Dim attribute As String = mAttributes.Get(key)
 		
 		SB.Append(Separator)
 		SB.Append(key)
-		If attrs.Length > 0 Then
+		If attribute.Length > 0 Then
 			SB.Append("=")
-			If attrs.StartsWith("'") And attrs.EndsWith("'") Then
+			If attribute.StartsWith("'") And attribute.EndsWith("'") Then
 				'SB.Append("'")
-				SB.Append(attrs)
+				SB.Append(attribute)
 				'SB.Append("'")
 			Else
 				SB.Append(QUOTE)
-				SB.Append(attrs)
+				SB.Append(attribute)
 				SB.Append(QUOTE)
 			End If
 		End If
@@ -150,8 +149,7 @@ Public Sub buildImpl (indent As Int, AlignAttribute2 As Boolean) As String
 	
 	Select mMode
 		Case mSelf
-			'SB.Append("/>")
-			SB.Append(">")
+			SB.Append("/>")
 		Case mUniline, mMultiline, mMeta
 			SB.Append(">")
 	End Select
@@ -159,30 +157,24 @@ Public Sub buildImpl (indent As Int, AlignAttribute2 As Boolean) As String
 	For Each tagOrString In mChildren
 		If tagOrString Is MiniHtml Then
 			Dim mCurrent As MiniHtml = tagOrString
-			'If mMode = mUniline Then mCurrent.Mode = mUniline ' (experiment)
-			SB.Append(mCurrent.BuildImpl(indent + 1, False))
+			SB.Append(mCurrent.buildImpl(indent + 1, False))
 		Else
 			SB.Append(tagOrString)
 		End If
 	Next
-	
+
 	Select mMode
 		Case mUniline
-			' Commented (experiment)
-			'If mChildren.Size > 0 Then
-			'SB.Append(CRLF)
-			'If SpecialTags.IndexOf(mName) < 0 Then
-			'	SB.Append(sIndent)
-			'End If
-			'End If
-			SB.Append("</" & mName & ">")
-		Case mMultiline
 			If mChildren.Size > 0 Then
-				SB.Append(CRLF)
-				If SpecialTags.IndexOf(mName) < 0 Then
-					SB.Append(sIndent)
+				If mFlat = False And mMode = mMultiline Then
+					SB.Append(CRLF) '(experiment)
+					SB.Append(sIndent) '(experiment)
 				End If
 			End If
+			SB.Append("</" & mName & ">")
+		Case mMultiline
+			If mLineFeed Then SB.Append(CRLF) '(experiment)
+			If mIndentation Then SB.Append(sIndent) '(experiment)
 			SB.Append("</" & mName & ">")
 	End Select
 	Return SB.ToString
@@ -211,7 +203,7 @@ Public Sub attr (key As String, value As String) As MiniHtml
 End Sub
 
 'Insert more attributes from map
-Public Sub attr2 (keyvals As Map) As MiniHtml
+Public Sub attrs (keyvals As Map) As MiniHtml
 	For Each key As String In keyvals.Keys
 		Dim value As String = keyvals.Get(key)
 		mAttributes.Put(key, value)
@@ -219,10 +211,75 @@ Public Sub attr2 (keyvals As Map) As MiniHtml
 	Return Me
 End Sub
 
+'(deprecated)
+'Insert more attributes from map
+Public Sub attr2 (keyvals As Map) As MiniHtml
+	Return attrs(keyvals)
+End Sub
+
+'(deprecated)
 'Add a no-value attribute
 Public Sub attr3 (key As String) As MiniHtml
+	'mAttributes.Put(key, "")
+	'Return Me
+	Return bool(key)
+End Sub
+
+'Add a boolean attribute (no value)
+Public Sub bool (key As String) As MiniHtml
 	mAttributes.Put(key, "")
 	Return Me
+End Sub
+
+'Set an attribute with a key and value if value is non zero length string
+Public Sub attrIf (condition As Boolean, key As String, value As String) As MiniHtml
+	If condition Then Return attr(key, value)
+	Return Me
+End Sub
+
+'Set an attribute with a key and value if value is non zero length string
+Public Sub attrIfValue (key As String, value As String) As MiniHtml
+	'Return IIf(value.Length > 0, attr(key, value), Me)
+	Return attrIf(value.Length > 0, key, value)
+End Sub
+
+'Insert more attributes from map if each keyconditions by key is true
+Public Sub attrsIfConditions (keyconditions As Map, keyvals As Map) As MiniHtml
+	For Each key As String In keyvals.Keys
+		attrIf(keyconditions.Get(key), key, keyvals.Get(key))
+	Next
+	Return Me
+End Sub
+
+'Insert more attributes from map if each value is non zero length string
+Public Sub attrsIfValues (keyvals As Map) As MiniHtml
+	For Each key As String In keyvals.Keys
+		attrIfValue(key, keyvals.Get(key))
+	Next
+	Return Me
+End Sub
+
+'(deprecated)
+'Add a no-value attribute if condition is true
+Public Sub attr3If (condition As Boolean, key As String) As MiniHtml
+	Return boolIf(condition, key)
+End Sub
+
+'Add a no-value attribute if condition is true
+Public Sub boolIf (condition As Boolean, key As String) As MiniHtml
+	If condition Then Return bool(key)
+	Return Me
+End Sub
+
+'Set text attribute if condition is true
+Public Sub textIf (condition As Boolean, value As String) As MiniHtml
+	If condition Then Return text(value)
+	Return Me
+End Sub
+
+'Set text attribute if value is non zero length string
+Public Sub textIfValue (value As String) As MiniHtml
+	Return textIf(value <> "", value)
 End Sub
 
 'Add to Parent and return the current (child) tag (alias of addTo)
@@ -256,6 +313,19 @@ Public Sub down (ChildTag As MiniHtml) As MiniHtml
 	Return add2(ChildTag)
 End Sub
 
+'Append a Child and return the (Parent) tag if condition is true
+'Public Sub add2If (condition As Boolean, ChildTag As MiniHtml) As MiniHtml
+'	If condition = False Then Return Me
+'	mChildren.Add(ChildTag)
+'	ChildTag.Parent = Me
+'	Return Me 'ChildTag
+'End Sub
+
+'Append a Child and return the (Parent) tag if condition is true (alias of add2If)
+'Public Sub downIf (condition As Boolean, ChildTag As MiniHtml) As MiniHtml
+'	Return add2If(condition, ChildTag)
+'End Sub
+
 'Return the Children list
 Public Sub getChildren As List
 	Return mChildren
@@ -272,15 +342,17 @@ Public Sub setParent (ParentTag As MiniHtml)
 	mParent = ParentTag
 End Sub
 
-' (deprecated) Use ChildByIndex
-'Public Sub Child (tagIndex As Int) As MiniHtml
-'	Return ChildByIndex(tagIndex)
+'Return the Parent tag if condition is true
+'Public Sub ParentIf (condition As Boolean) As MiniHtml
+'	If condition Then Return mParent
+'	 Return Me
 'End Sub
 
-' Get child matches tag name using deep search
-'Public Sub Child (value As String) As MiniHtml
-'	Return ChildByName(value)
-'End Sub
+'(deprecated)
+' alias of ChildByIndex
+Public Sub child (tagIndex As Int) As MiniHtml
+	Return ChildByIndex(tagIndex)
+End Sub
 
 ' Get child by index
 Public Sub ChildByIndex (tagIndex As Int) As MiniHtml
@@ -346,6 +418,37 @@ Private Sub DeepSearchByName (value As String) As MiniHtml
 	Return Null
 End Sub
 
+' Get child containing specified class using deep search
+Public Sub ChildByClass (value As String) As MiniHtml
+	For Each ChildObject In mChildren
+		If ChildObject Is String Then Continue
+		If ChildObject Is MiniHtml Then
+			Dim TheChild As MiniHtml = ChildObject
+			If TheChild.mClasses.IndexOf(value) > -1 Then
+				'Log($"${value} hit ${TheChild.mClasses}"$)
+				Return ChildObject
+			End If
+		End If
+	Next
+	Return DeepSearchByClass(value)
+End Sub
+
+Private Sub DeepSearchByClass (value As String) As MiniHtml
+	If Initialized(mChildren) Then
+		For Each ChildObject In mChildren
+			If ChildObject Is String Then Continue
+			If ChildObject Is MiniHtml Then
+				Dim TheChild As MiniHtml = ChildObject
+				Dim result As MiniHtml = TheChild.ChildByClass(value)
+				If Initialized(result) Then
+					Return result
+				End If
+			End If
+		Next
+	End If
+	Return Null
+End Sub
+
 'Add a linebreak without indent
 Public Sub linebreak
 	mChildren.Add(Create(mNoTag))
@@ -355,72 +458,50 @@ End Sub
 Public Sub comment (value As String)
 	Dim child1 As MiniHtml = Create(mNoTag)
 	child1.Indentation = True
-	child1.text($"<!--${value}-->"$)
+	child1.text($"<!--${value.Replace("--", "")}-->"$)
 	mChildren.Add(child1)
 End Sub
 
 'Add a comment with no indent
 Public Sub comment2 (value As String, newline As Boolean)
 	If newline Then linebreak
-	text($"<!--${value}-->"$)
+	text($"<!--${value.Replace("--", "")}-->"$)
 End Sub
 
-'<code>body1.cdn("script", "/assets/js/cdn.min.js")</code>
-'Public Sub cdn (format As String, url As String) As MiniHtml
-'	Return cdn2(format, url, "", "")
-'End Sub
-
-'<code>body1.cdn("js", "/assets/js/cdn.min.js")</code>
+'(deprecated)
+'<code>head1.cdn("css", "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css")</code>
 Public Sub cdn (format As String, url As String) As MiniHtml
 	Select format.ToLowerCase
 		Case "script", "js"
-			'Dim map1 As Map = CreateMap("src": url)
-			'If integrity <> "" Then map1.Put("integrity", integrity)
-			'If crossorigin <> "" Then map1.Put("crossorigin", crossorigin)
-			'mChildren.Add(Create("script").attr2(map1))
-			'Return Create("script").attr2(map1).up(Me)
-			Return Create("script").attr("src", url).up(Me)
-		Case Else '"style", "css"
-			'Dim map2 As Map = CreateMap("rel": "stylesheet", "href": url)
-			'If integrity <> "" Then map2.Put("integrity", integrity)
-			'If crossorigin <> "" Then map2.Put("crossorigin", crossorigin)
-			'mChildren.Add(Create("link").attr2(map2))
-			'Return Create("link").attr2(map2).up(Me)
-			Return Create("link").attr("rel", "stylesheet").attr("href", url).up(Me)
+			Return add2(Create("script")).attr("src", url)
+		Case "style", "css"
+			Return add2(Create("link")).attr("rel", "stylesheet").attr("href", url)
 	End Select
-	'Return Me
+	Return Me
 End Sub
 
+'(deprecated)
 '<code>body1.cdn2("script", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", "sha384-hashes", "anonymous")</code>
-'Deprecated
 Public Sub cdn2 (format As String, url As String, hash As String, credentials As String) As MiniHtml
-	Dim m1 As MiniHtml = cdn(format, url)
-	If hash <> "" Then m1.attr("integrity", hash)
-	If credentials <> "" Then m1.attr("crossorigin", credentials)
-	Return m1
+	Return cdn(format, url).attrIfValue("integrity", hash).attrIfValue("crossorigin", credentials)
 End Sub
 
+'(deprecated)
 '<code>body1.cdn3("script", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", CreateMap("integrity": "sha384-hashes", "crossorigin": "anonymous"))</code>
-'Deprecated
 Public Sub cdn3 (format As String, url As String, keyvals As Map) As MiniHtml
-	'Select format.ToLowerCase
-	'	Case "script", "js"
-	'		mChildren.Add(Create("script").attr("src", url).attr2(keyvals))
-	'	Case Else '"style", "css"
-	'		mChildren.Add(Create("link").attr2(CreateMap("rel": "stylesheet", "href": url)).attr2(keyvals))
-	'End Select
-	Return cdn(format, url).attr2(keyvals).up(Me)
+	Return cdn(format, url).attrs(keyvals)
 End Sub
 
-'<code>body1.cdn("js", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js") _
-'.integrity("sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz")</code>
+'<code>MH.Script.up(body1).attr("src", "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js") _
+'.integrity("sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y").crossorigin("anonymous")</code>
+'<code>MH.Script.up(body1).attr("src", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js") _
+'.integrity("sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz").crossorigin("anonymous")</code>
 Public Sub integrity (hash As String) As MiniHtml
 	mAttributes.Put("integrity", hash)
 	Return Me
 End Sub
 
-'<code>body1.cdn("js", "https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js") _
-'.crossorigin("anonymous")</code>
+'<code>.crossorigin("anonymous")</code>
 Public Sub crossorigin (credentials As String) As MiniHtml
 	mAttributes.Put("crossorigin", credentials)
 	Return Me
@@ -485,7 +566,10 @@ Public Sub addStyle (value As String) As MiniHtml
 	Try
 		Dim pairs() As String = Regex.Split(";", value)
 		For Each pair As String In pairs
-			Dim keyvals() As String = Regex.Split(":", pair.Trim)
+			Dim kv As String = pair.Trim
+			If kv = "" Then Continue
+			Dim keyvals() As String = Regex.Split(":", kv)
+			If keyvals.Length < 2 Then Continue
 			mStyles.Put(keyvals(0).Trim, keyvals(1).Trim)
 		Next
 		updateStyleAttribute
@@ -500,6 +584,28 @@ Public Sub removeStyle (key As String) As MiniHtml
 	If mStyles.ContainsKey(key) Then mStyles.Remove(key)
 	updateStyleAttribute
 	Return Me
+End Sub
+
+'Add a class if condition is true
+Public Sub addClassIf (condition As Boolean, value As String) As MiniHtml
+	If condition Then Return addClass(value)
+	Return Me
+End Sub
+
+'Add a class if condition is true
+Public Sub clsIf (condition As Boolean, value As String) As MiniHtml
+	Return addClassIf(condition, value)
+End Sub
+
+'Add class based on condition is true or false
+Public Sub addClassIIf (condition As Boolean, valueIfTrue As String, valueIfFalse As String) As MiniHtml
+	If condition Then Return addClass(valueIfTrue)
+	Return addClass(valueIfFalse)
+End Sub
+
+'Add class based on condition is true or false
+Public Sub clsIIf (condition As Boolean, valueIfTrue As String, valueIfFalse As String) As MiniHtml
+	Return addClassIIf(condition, valueIfTrue, valueIfFalse)
 End Sub
 
 'Remove class attribute if empty
@@ -551,51 +657,52 @@ Public Sub ConvertToBytes As Byte()
 End Sub
 
 Public Sub ConvertToMiniHtml (node1 As HtmlNode) As MiniHtml
-    Dim parent As MiniHtml
-    parent.Initialize(node1.Name)
+	Dim parent As MiniHtml
+	parent.Initialize(node1.Name)
     
-    ' Handle class and style attributes first
+	' Handle class and style attributes first
 	Dim parser As MiniHtmlParser
 	parser.Initialize
-    Dim class1 As String = parser.GetAttributeValue(node1, "class", "")
-    Dim style1 As String = parser.GetAttributeValue(node1, "style", "")
-    If class1 <> "" Then parent.addClass(class1)
-    If style1 <> "" Then parent.addStyle(style1)
+	Dim class1 As String = parser.GetAttributeValue(node1, "class", "")
+	Dim style1 As String = parser.GetAttributeValue(node1, "style", "")
+	If class1 <> "" Then parent.addClass(class1)
+	If style1 <> "" Then parent.addStyle(style1)
 
-    For Each att As HtmlAttribute In node1.Attributes
-        ' Skip class and style as we already handled them
-        If att.Key = "class" Or att.Key = "style" Then Continue
-        If att.Key = "value" And att.Value.Trim.Length > 0 Then
-            If node1.Name = "input" Or node1.Name = "option" Then
-                parent.attr(att.Key, att.Value.Trim)
-            Else
-                If att.Value.Trim.Length > 0 Then
-                    parent.Text(att.Value.Trim)
-                End If
-            End If
-        Else
-            ' Handle boolean attributes (where key = value)
-            If att.Key = att.Value And att.Key <> "name" Then
-                parent.attr3(att.Key) ' boolean attribute
-            Else
-                parent.attr(att.Key, att.Value) ' regular attribute
-            End If
-        End If
-    Next
+	For Each att As HtmlAttribute In node1.Attributes
+		' Skip class and style as we already handled them
+		If att.Key = "class" Or att.Key = "style" Then Continue
+		If att.Key = "value" And att.Value.Trim.Length > 0 Then
+			att.Value = att.Value.Trim
+			If node1.Name = "input" Or node1.Name = "option" Then
+				parent.attr(att.Key, att.Value)
+			Else
+				parent.Text(att.Value)
+			End If
+		Else If att.Key = "action" Then
+			parent.attr(att.Key, att.Value) '(experiment) allow empty value
+		Else
+			' Handle boolean attributes (where key = value)
+			If att.Key = att.Value And att.Key <> "name" Then
+				parent.attr3(att.Key) ' boolean attribute
+			Else
+				parent.attr(att.Key, att.Value) ' regular attribute
+			End If
+		End If
+	Next
     
-    For Each node As HtmlNode In node1.Children
-        Dim tag2 As MiniHtml = ConvertToMiniHtml(node)
-        If tag2.Name = "text" Then
-            If tag2.Attributes.ContainsKey("value") Then
-                ' ignore text nodes with "value" attribute
-            Else
-                parent.add(tag2)
-            End If
-        Else
-            parent.add(tag2)
-        End If
-    Next
-    Return parent
+	For Each node As HtmlNode In node1.Children
+		Dim tag2 As MiniHtml = ConvertToMiniHtml(node)
+		If tag2.Name = "" Then ' If tag2.Name = "text" Then '(experiment)
+			If tag2.Attributes.ContainsKey("value") Then
+				' ignore text nodes with "value" attribute
+			Else
+				parent.add(tag2)
+			End If
+		Else
+			parent.add(tag2)
+		End If
+	Next
+	Return parent
 End Sub
 
 Public Sub Parse (HtmlText As String) As MiniHtml
@@ -603,7 +710,7 @@ Public Sub Parse (HtmlText As String) As MiniHtml
 	parser.Initialize
 	Dim node1 As HtmlNode = parser.Parse(HtmlText)
 	For Each HtmlNode1 As HtmlNode In node1.Children
-		If HtmlNode1.Name.EqualsIgnoreCase("text") = False Then Return ConvertToMiniHtml(HtmlNode1)
+		If HtmlNode1.Name <> "" Then Return ConvertToMiniHtml(HtmlNode1)
 	Next
 	Return Create(mNoTag)
 End Sub
@@ -613,9 +720,6 @@ End Sub
 ' Or: {"tagname": "inner text"}
 ' Or an array: [{"div": ...}, {"span": ...}]
 Public Sub FromJson (JsonStr As String) As MiniHtml
-	'Dim parser As JSONParser
-	'parser.Initialize(JsonStr)
-	'Dim obj As Object = parser.NextValue
 	Dim obj As Object = IIf(JsonStr.StartsWith("["), JsonStr.As(JSON).ToList, JsonStr.As(JSON).ToMap)
 	'Log(GetType(obj))
 	Return AnyToMiniHtml(obj)
@@ -669,15 +773,15 @@ Private Sub ShorthandToMiniHtml (m As Map) As MiniHtml
 				Case "text"
 					el.text(value)
 				Case "attrs"
-					Dim attrs As Map = value
-					el.attr2(attrs)
+					Dim attributes As Map = value
+					el.attrs(attributes)
 				Case "children"
-					Dim children As List = value
-					For Each child As Object In children
-						If child Is Map Then
-							ShorthandToMiniHtml(child).up(el)
-						Else If child Is String Then
-							el.text(child)
+					Dim cl As List = value
+					For Each chd As Object In cl
+						If chd Is Map Then
+							ShorthandToMiniHtml(chd).up(el)
+						Else If chd Is String Then
+							el.text(chd)
 						End If
 					Next
 				Case "mode"
@@ -743,36 +847,36 @@ Public Sub ToMap As Map
 	Next
 	If rest.Size > 0 Then props.Put("attrs", rest)
 	
-	Dim children As List
-	children.Initialize
+	Dim cl As List
+	cl.Initialize
 	Dim textCount As Int = 0
 	Dim tagCount As Int = 0
 	
-	For Each child As Object In mChildren
-		If child Is MiniHtml Then
+	For Each chd As Object In mChildren
+		If chd Is MiniHtml Then
 			tagCount = tagCount + 1
-		Else If child Is String Then
+		Else If chd Is String Then
 			textCount = textCount + 1
 		End If
 	Next
 	
 	If textCount = 1 And tagCount = 0 Then
-		For Each child As Object In mChildren
-			If child Is String Then
-				props.Put("text", child)
+		For Each chd As Object In mChildren
+			If chd Is String Then
+				props.Put("text", chd)
 				Exit
 			End If
 		Next
 	Else If textCount > 0 Or tagCount > 0 Then
-		For Each child As Object In mChildren
-			If child Is MiniHtml Then
-				Dim childMap As MiniHtml = child
-				children.Add(childMap.ToMap)
-			Else If child Is String Then
-				children.Add(child)
+		For Each chd As Object In mChildren
+			If chd Is MiniHtml Then
+				Dim childMap As MiniHtml = chd
+				cl.Add(childMap.ToMap)
+			Else If chd Is String Then
+				cl.Add(chd)
 			End If
 		Next
-		props.Put("children", children)
+		props.Put("children", cl)
 	End If
 	
 	Dim result As Map
@@ -807,6 +911,8 @@ End Sub
 'Set flat
 Public Sub setFlat (Value As Boolean)
 	mFlat = Value
+	mLineFeed = Not(mFlat) '(experiment)
+	mIndentation = Not(mFlat) '(experiment)
 End Sub
 Public Sub getFlat As Boolean
 	Return mFlat
@@ -824,7 +930,8 @@ Public Sub getIndents As Int
 	Return mIndents
 End Sub
 
-'Set Indent
+' Disable indentation for head or body
+' ignored by Parse function
 Public Sub setIndentation (Value As Boolean)
 	mIndentation = Value
 End Sub
@@ -876,29 +983,30 @@ End Sub
 'Set normal mode
 Public Sub multiline As MiniHtml
 	mMode = mMultiline
+	'mFlat = False
 	Return Me
 End Sub
 
 ' Adds a key-value pair to the very beginning of an existing Map
 Private Sub PrependToMap (OriginalMap As Map, NewKey As Object, NewValue As Object) As Map
-    Dim TempMap As Map
-    TempMap.Initialize
+	Dim TempMap As Map
+	TempMap.Initialize
     
-    ' 1. Insert the new key and value first
-    TempMap.Put(NewKey, NewValue)
+	' 1. Insert the new key and value first
+	TempMap.Put(NewKey, NewValue)
     
-    ' 2. Append all the original keys and values
-    For Each Key As Object In OriginalMap.Keys
-        TempMap.Put(Key, OriginalMap.Get(Key))
-    Next
+	' 2. Append all the original keys and values
+	For Each Key As Object In OriginalMap.Keys
+		TempMap.Put(Key, OriginalMap.Get(Key))
+	Next
     
-    ' 3. Clear the original map and copy the reordered data back
-    OriginalMap.Clear
-    For Each Key As Object In TempMap.Keys
-        OriginalMap.Put(Key, TempMap.Get(Key))
-    Next
+	' 3. Clear the original map and copy the reordered data back
+	OriginalMap.Clear
+	For Each Key As Object In TempMap.Keys
+		OriginalMap.Put(Key, TempMap.Get(Key))
+	Next
     
-    Return OriginalMap
+	Return OriginalMap
 End Sub
 
 'Prepend defer to script tag
@@ -928,8 +1036,8 @@ Public Sub selected As MiniHtml
 	Return Me
 End Sub
 
-Public Sub selectedIf (Condition As Boolean) As MiniHtml
-	If Condition Then mAttributes.Put("selected", "")
+Public Sub selectedIf (condition As Boolean) As MiniHtml
+	If condition Then mAttributes.Put("selected", "")
 	Return Me
 End Sub
 
@@ -943,6 +1051,15 @@ Public Sub readonly As MiniHtml
 	Return Me
 End Sub
 
+' Set doctype
+' Default = html
+Public Sub setDocType (Value As String)
+	mDocType = Value
+End Sub
+Public Sub getDocType As String
+	Return mDocType
+End Sub
+
 ' Set Indent String
 ' Default = "  " (2 whitespaes)
 Public Sub setIndentString (Value As String)
@@ -952,16 +1069,19 @@ Public Sub getIndentString As String
 	Return mIndentString
 End Sub
 
+'(deprecated)
 ' Add text value to Builder
 Public Sub Append (Value As String)
 	mBuilder.Append(Value)
 End Sub
 
-' (deprecated) Use Append
+'(deprecated) Use Append
 'Public Sub Write (Value As String)
 '	mBuilder.Append(Value)
 'End Sub
 
+'(deprecated)
+' Return String added by Append
 Public Sub ToString As String
 	Return mBuilder.ToString
 End Sub

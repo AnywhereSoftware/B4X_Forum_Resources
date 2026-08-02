@@ -1,8 +1,8 @@
 ### [Web]  MiniCSS by aeric
-### 07/20/2026
+### 07/30/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170299/)
 
-Version 0.30  
+Version 0.40  
 GitHub: <https://github.com/pyhoon/MiniCSS-B4X>  
   
 A lightweight CSS generator library for B4X (B4A, B4i, B4J) that allows you to programmatically generate CSS stylesheets from B4X code.  

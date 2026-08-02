@@ -1,5 +1,5 @@
 ###  Modified AddLine with two color line and pinch zoom, out of xChart 10.0 from Klaus by Frank.G
-### 02/19/2026
+### 07/27/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/170361/)
 
 Hi there,  
@@ -73,10 +73,42 @@ In the end it works
   
 Still I want to share the result and hope someone is inspired by it.  
   
+Edit Version 1.2  
+I modified the ChartData, the respective routines in DrawGridV and also added some properties.  
+This allows to get a two colored sub title string  
+  
+Use:  
+
+```B4X
+    Dim zT As String = "Ziel: "  
+    If mCurrentRow.RefUnter > 0 And mCurrentRow.RefOber < 99999 Then  
+        zT = zT & mCurrentRow.RefUnter & " - " & mCurrentRow.RefOber  
+    Else If mCurrentRow.RefUnter > 0 Then  
+        zT = zT & "> " & mCurrentRow.RefUnter  
+    Else If mCurrentRow.RefOber > 0 And mCurrentRow.RefOber < 99999 Then  
+        zT = zT & "< " & mCurrentRow.RefOber  
+    End If  
+     
+    ' first part in green  
+    chart_labor.Subtitle = zT  
+    chart_labor.SubtitleTextColor = xui.Color_RGB(0, 180, 0)  
+     
+    ' second part in red  
+    If badCount > 0 Then  
+        chart_labor.Subtitle2 = " (" & badCount & " Abweichung!)"  
+        chart_labor.Subtitle2TextColor = AlertColor '  
+    Else  
+        chart_labor.Subtitle2 = ""  
+    End If
+```
+
+  
+  
 Version History:  
 
 - Version 1.0 Initial
 - Version 1.1 Added a helper sub ForceHideValues and modified Java code to prevent info panel to show when two finger pinch zoomed. Reset happens when all fingers are lifted.
+- Version 1.2 Modified Type ChartData (Title As String, Subtitle As String, XAxisName As String, YAxisName As String, YAxisName2 As String, Left As Int, …………) to allow a two colored sub title string
 
   
 Regards  

@@ -1,5 +1,5 @@
 ### Theme Colors by Erel
-### 01/08/2026
+### 07/29/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/87716/)
 
 Changing the action bar, status bar and navigation bar colors is done with resources set in the manifest editor.  
@@ -35,4 +35,6 @@ CreateResource(values, theme.xml,
   
 The colors are set in the first resources block. You can use the built-in color picker to get the values. Just change 0x to #.  
   
-The project is attached.
+The project is attached.  
+  
+**Tip**: remove the default call to CreateResourceFromFile(Macro, Themes.LightTheme)

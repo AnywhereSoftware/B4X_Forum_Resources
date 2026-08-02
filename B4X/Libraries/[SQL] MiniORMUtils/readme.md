@@ -1,9 +1,10 @@
 ###  [SQL] MiniORMUtils by aeric
-### 05/29/2026
+### 07/30/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/166030/)
 
 **MiniORMUtils**  
-Version: 6.00  
+Version: 6.02  
+GitHub: <https://github.com/pyhoon/MiniORMUtils-B4X>  
 
 ---
 
@@ -168,7 +169,5 @@ DB.Parameter = 2
 ```
 
   
-  
-GitHub: <https://github.com/pyhoon/MiniORMUtils-B4X>  
   
 [SPOILER="Version 1"]<https://www.b4x.com/android/forum/threads/b4x-miniormutils-sql-query-builder.141446/>[/SPOILER]

@@ -91,6 +91,8 @@ Private Sub Create_Slider3_4
 	Slider3.TextColor = Colors.Black
 	Slider3.ActiveLineColor = Colors.RGB(0,120,255)
 	Slider3.SetItems(Array As String("Min","25","50","75","Max"),2)
+	'disables touch selection
+	Slider3.mTouchEnabled = False
 
 	'Right vertical slider: Bottom -> Top
 	Dim SliderPanel4 As Panel

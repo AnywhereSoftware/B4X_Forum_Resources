@@ -1,5 +1,5 @@
 ### jSerial Enhanced Library by Peter Simpson
-### 07/24/2026
+### 07/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171635/)
 
 Hello everyone.  
@@ -134,5 +134,10 @@ Author:** Peter Simpson
 - **EnableAutoReconnect** As Boolean
 *Returns the current AutoReconnect setting.*- **SetDTR** As Boolean
 *Returns the last known DTR state.*
+**PLEASE NOTE:  
+TO RUN THE ATTACHED EXAMPLE, YOU NEED TO DOWNLOAD THE THIRD-PARTY **JAVA DEPENDENCY** LINKED BELOW, AS WELL AS USING THE ATTACHED POST LIBRARY.**  
+  
+[CLICK HERE - Download Extra Library](https://www.dropbox.com/scl/fi/9qv45jlgybr4t1nkbnnhd/jSerialComm-2.11.4.zip?rlkey=hrtwahqf2bn16pdfhct9e6jdm&dl=0) <<<<<<<<<<<<<<<<<<<<<<<<  
+  
   
 **Enjoy…**

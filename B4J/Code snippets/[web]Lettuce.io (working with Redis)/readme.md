@@ -1,8 +1,9 @@
 ### [web]Lettuce.io (working with Redis) by aeric
-### 11/15/2022
+### 07/29/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/141509/)
 
-**UPDATE:** <https://www.b4x.com/android/forum/threads/lettuce-v2-0.144169/>  
+**UPDATE: Lettuce Version 2**  
+<https://www.b4x.com/android/forum/threads/lettuce-v2-0.144169/>  
   
 
 ```B4X

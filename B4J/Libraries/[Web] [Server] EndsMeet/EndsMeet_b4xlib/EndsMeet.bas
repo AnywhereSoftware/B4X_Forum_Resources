@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Product:  EndsMeet
-' Version:  2.20
+' Version:  3.00
 ' License:  MIT License
 ' Author:   Poon Yip Hoon (Aeric)
 ' GitHub:   https://github.com/pyhoon/EndsMeet
@@ -31,11 +31,11 @@ Sub Class_Globals
 	Private Const COLOR_RED 		As Int = 0xFFFF0000
 	Private Const COLOR_BLUE 		As Int = 0xFF0000FF
 	Type Route (Method As String, Path As String, Class As String)
-	Type StaticFilesSettings (Folder As String, Browsable As Boolean)
+	Type StaticFilesSettings (Folder As String, Browsable As Boolean, Options As Map)
 	Type CorsSettings (Enabled As Boolean, Path As List, Settings As Map)
 	Type SslSettings (Enabled As Boolean, Port As Int, KeystoreDir As String, KeystoreFile As String, KeystorePassword As String)
 	Type EmailSettings (SmtpUserName As String, SmtpPassword As String, SmtpServer As String, SmtpUseSsl As String, SmtpPort As Int)
-	Type ApiSettings (Name As String, Versioning As Boolean, PayloadType As String, ContentType As String, EnableHelp As Boolean, VerboseMode As Boolean, OrderedKeys As Boolean)
+	Type ApiSettings (Name As String, Versioning As Boolean, PayloadType As String, ContentType As String, EnableHelp As Boolean, VerboseMode As Boolean)
 End Sub
 
 Public Sub Initialize
@@ -47,14 +47,14 @@ Public Sub Initialize
 	routes.Initialize
 	staticfiles.Initialize
 	srvr.Initialize("")
-	mVersion = "2.20"
+	mVersion = "3.00"
 	mConfigFile = "config.ini"
 	mRemoveUnusedConfig = True
 	mRootUrl = "http://127.0.0.1"
-	staticfiles.Folder = File.Combine(File.DirApp, "www")
+	staticfiles.Folder = srvr.StaticFilesFolder
+	staticfiles.Options.Initialize
 	api.Name = "api"
 	api.VerboseMode = True
-	api.OrderedKeys = True
 	api.PayloadType = "application/json"
 	api.ContentType = "application/json"
 End Sub
@@ -74,6 +74,11 @@ Public Sub Put (Path As String, Class As String)
 	AddRouteIfNotAvailable("PUT", Path, Class)
 End Sub
 
+' Add path and class which allows PATCH method 
+Public Sub Patch (Path As String, Class As String)
+	AddRouteIfNotAvailable("PATCH", Path, Class)
+End Sub
+
 ' Add path and class which allows DELETE method 
 Public Sub Delete (Path As String, Class As String)
 	AddRouteIfNotAvailable("DELETE", Path, Class)
@@ -81,7 +86,7 @@ End Sub
 
 ' Add path and class for RESTful methods (GET, POST, PUT, DELETE)
 Public Sub Rest (Path As String, Class As String)
-	For Each Method As String In Array As String("GET", "POST", "PUT", "DELETE")
+	For Each Method As String In Array As String("GET", "POST", "PUT", "PATCH", "DELETE")
 		AddRouteIfNotAvailable(Method, Path, Class)
 	Next
 End Sub
@@ -171,7 +176,6 @@ Public Sub LoadConfig
 	If ctx.ContainsKey("API_NAME") Then api.Name = ctx.Get("API_NAME")
 	If ctx.ContainsKey("API_VERSIONING") Then api.Versioning = ctx.Get("API_VERSIONING").As(String).EqualsIgnoreCase("True")
 	If ctx.ContainsKey("API_VERBOSE_MODE") Then api.VerboseMode = ctx.Get("API_VERBOSE_MODE").As(String).EqualsIgnoreCase("True")
-	If ctx.ContainsKey("API_ORDERED_KEYS") Then api.OrderedKeys = ctx.Get("API_ORDERED_KEYS").As(String).EqualsIgnoreCase("True")
 	If ctx.ContainsKey("REDIRECT_TO_HTTPS") Then mRedirectToHttps = ctx.Get("REDIRECT_TO_HTTPS").As(String).EqualsIgnoreCase("True")
 End Sub
 
@@ -191,7 +195,6 @@ Public Sub Start
 		ctx.Remove("API_NAME")
 		ctx.Remove("API_VERSIONING")
 		ctx.Remove("API_VERBOSE_MODE")
-		ctx.Remove("API_ORDERED_KEYS")
 		ctx.Remove("REDIRECT_TO_HTTPS")
 	End If
 	mServerUrl = mRootUrl
@@ -250,7 +253,10 @@ Public Sub Start
 		Next
 		If mLogEnabled Then	LogColor("CORS is enabled", COLOR_BLUE)
 	End If
-	srvr.StaticFilesFolder = staticfiles.Folder
+	If staticfiles.Folder <> srvr.StaticFilesFolder Then
+		srvr.StaticFilesFolder = staticfiles.Folder
+	End If
+	If staticfiles.Options.ContainsKey("dirAllowed") Then staticfiles.Browsable = staticfiles.Options.Get("dirAllowed")
 	srvr.SetStaticFilesOptions(CreateMap("dirAllowed": staticfiles.Browsable))
 	srvr.Start
 End Sub

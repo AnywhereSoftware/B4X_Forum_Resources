@@ -5,7 +5,7 @@ Type=Class
 Version=10.5
 @EndOfDesignText@
 ' Mini Object-Relational Mapper (ORM) class
-' Version 6.00
+' Version 6.02
 Sub Class_Globals
 	Private mSQL 					As SQL
 	Private mID 					As Int
@@ -854,8 +854,8 @@ Public Sub setHaving (Statements As List)
 	mHaving = SB.ToString
 End Sub
 
-'Example: ORDER BY id, name DESC
-'<code>DB.OrderBy = CreateMap("id": "", "name", "DESC")</code>
+'Example: ORDER BY id DESC, name
+'<code>DB.OrderBy = CreateMap("id": "DESC", "name": "")</code>
 Public Sub setOrderBy (Col As Map)
 	If Col.IsInitialized Then
 		Dim SB As StringBuilder
@@ -971,7 +971,7 @@ Public Sub Map2Column (Props As Map) As ORMColumn
 				t1.ColumnName = Props.Get(Key)
 			Case "t", "ColumnType".ToLowerCase, "Type".ToLowerCase
 				t1.ColumnType = Props.Get(Key)
-			Case "s", "ColumnLength".ToLowerCase, "ColumnSize".ToLowerCase, "Length".ToLowerCase, "Size".ToLowerCase
+			Case "l", "s", "ColumnLength".ToLowerCase, "ColumnSize".ToLowerCase, "Length".ToLowerCase, "Size".ToLowerCase
 				t1.ColumnLength = Props.Get(Key)
 			Case "c", "Collation".ToLowerCase
 				t1.Collation = Props.Get(Key)
@@ -1020,10 +1020,10 @@ Public Sub Map2Column (Props As Map) As ORMColumn
 End Sub
 
 Private Sub IsNotNull (ColumnType As String) As Boolean
-	'Return Defaults.NotNull.IndexOf(ColumnType.ToUpperCase) > -1
-	Dim value As Boolean = Defaults.NotNull.IndexOf(ColumnType.ToUpperCase) > -1
-	'If value Then Log($"${ColumnType} -> ${value}"$)
-	Return value
+	For Each CT As String In Defaults.NotNull
+		If CT.EqualsIgnoreCase(ColumnType) Then Return True
+	Next
+	Return False
 End Sub
 
 Private Sub BuildColumns As String
@@ -1050,7 +1050,6 @@ Private Sub BuildColumns As String
 		Else If item Is Map Then
 			Dim Col As ORMColumn = Map2Column(item)
 		Else 'If item Is String Then
-			'Dim Col As ORMColumn = CreateORMColumn(item, VARCHAR, "", "", "", "", False, True, False, False)
 			Dim Col As ORMColumn = Map2Column(CreateMap("n": item))
 		End If
 		
@@ -1080,10 +1079,10 @@ Private Sub BuildColumns As String
 				Case INTEGER, BIG_INT, TIMESTAMP, DATE_TIME
 					Select mDbType
 						Case SQLITE
-							If Col.ColumnType = TIMESTAMP Then ' TIMESTAMP = TEXT
-								SB.Append(" DEFAULT ").Append("'").Append(Col.DefaultValue).Append("'")
-							Else If Col.DefaultValue.StartsWith("(") And Col.DefaultValue.EndsWith(")") Then
+							If Col.DefaultValue.StartsWith("(") And Col.DefaultValue.EndsWith(")") Then
 								SB.Append(" DEFAULT ").Append(Col.DefaultValue)
+							Else If Col.ColumnType = TIMESTAMP Then ' TIMESTAMP = TEXT
+								SB.Append(" DEFAULT ").Append("'").Append(Col.DefaultValue).Append("'")
 							Else
 								SB.Append(" DEFAULT ").Append("(").Append(Col.DefaultValue).Append(")")
 							End If
@@ -1108,10 +1107,6 @@ Private Sub BuildColumns As String
 			End Select
 		End If
 		
-		'Col.AllowNull = Not(IsNotNull(Col.ColumnType))
-		'If Col.ColumnType = VARCHAR Then 
-		'	Log($"${Col.ColumnName} -> ${Col.AllowNull}"$)
-		'End If
 		If Col.AllowNull Then
 			If mOptionalNull = False Then SB.Append(" NULL")
 		Else
@@ -1185,10 +1180,7 @@ Private Sub BuildColumns As String
 		Else
 			Dim chk As String = SB.ToString
 			If chk.EndsWith(",") Then
-				'	LogColor("*** Contains comma", COLOR_RED)
 				SB.Remove(SB.Length - 1, SB.Length) ' remove the last comma
-				'Else
-				'	LogColor("*** Good", COLOR_BLUE)
 			End If
 		End If
 	End If
@@ -1210,7 +1202,6 @@ Private Sub BuildColumns As String
 		SB.Append(CRLF)
 		SB.Append(mConstraints)
 	End If
-	'SB.Append(")")
 	Return SB.ToString
 End Sub
 
@@ -1427,7 +1418,9 @@ Public Sub ExecuteScalar As Object
 		LogColor("Database not connected!", COLOR_RED)
 		Return Null
 	End If
-	mStatement = mStatement & mCondition
+	SelectFromObject
+	'mStatement = mStatement & mCondition
+	If mShowExtraLogs Then LogQuery("ExecuteScalar")
 	If ParametersCount = 0 Then
 		Return mSQL.ExecQuerySingleResult(mStatement)
 	Else
@@ -1550,7 +1543,7 @@ Public Sub Query
 		If mUnion <> "" Then
 			mStatement = mUnion & mStatement
 		End If
-			mUnion = ""
+		mUnion = ""
 		'Log(mStatement)
 		
 		If mQueryExecute = False Then Return

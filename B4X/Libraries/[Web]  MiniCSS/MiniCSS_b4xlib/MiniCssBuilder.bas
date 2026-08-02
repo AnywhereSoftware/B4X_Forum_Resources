@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' CSS Builder Helper class (for fluent syntax)
-' Version 0.30
+' Version 0.40
 Sub Class_Globals
 	Private css As MiniCss
 End Sub

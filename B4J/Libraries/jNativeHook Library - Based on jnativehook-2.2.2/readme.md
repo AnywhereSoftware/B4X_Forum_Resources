@@ -1,5 +1,5 @@
 ### jNativeHook Library - Based on jnativehook-2.2.2 by Peter Simpson
-### 07/25/2026
+### 07/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171640/)
 
 Hello everyone,  
@@ -8,9 +8,9 @@ This is an updated release of the jNativeHook library, built on the latest versi
 **B4J library tab:**  
 ![](https://www.b4x.com/android/forum/attachments/172576)  
   
-**SS\_jNativeHook**  
+**SS\_jNativeHook  
   
-**Author:** Peter Simpson  
+Author:** Peter Simpson  
 **Version:** 1.0  
 
 - **NativeHook**
@@ -194,5 +194,10 @@ MouseReleased → {Button=1, ClickCount=1, X=2601, Y=667, Modifiers=0}
 MouseClicked → {Button=1, ClickCount=1, X=2601, Y=667, Modifiers=0}  
 MousePressed → {Button=1, ClickCount=1, X=2282, Y=980, Modifiers=256}  
 [/SPOILER]  
+  
+**PLEASE NOTE:  
+TO RUN THE ATTACHED EXAMPLE, YOU NEED TO DOWNLOAD THE THIRD-PARTY **JAVA DEPENDENCY** LINKED BELOW, AS WELL AS USING THE ATTACHED POST LIBRARY.  
+[CLICK HERE](https://www.dropbox.com/scl/fi/8ajla9ubrk3hw9ec2f9ca/Modbus-Serial-RTU-Dependencies.zip?rlkey=qo3f1qa99g5c7ehnminv7y6k4&dl=0)**[- Download Dependency](https://www.dropbox.com/scl/fi/n63h8wmvsqc7b2goslcsy/jnativehook-2.2.2.zip?rlkey=6f0bkthq4t60u7u8lobrm14pe&dl=0) <<<<<<<<<<<<<<<<<<<<<<<<  
+  
   
 **Enjoy…**

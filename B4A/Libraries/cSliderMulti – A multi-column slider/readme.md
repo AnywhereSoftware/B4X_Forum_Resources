@@ -1,5 +1,5 @@
 ### cSliderMulti – A multi-column slider by Grinaute
-### 07/21/2026
+### 07/25/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171590/)
 
 To dynamically change the number of columns in a B4A CustomListView, I needed a specific slider component that I couldn’t find anywhere on the forums.  
@@ -25,4 +25,8 @@ I have also reorganized the class using #Region sections to clearly separate the
   
 The goal remains the same: to provide a simple, reusable, and adaptable slider component for B4A projects.  
   
-Feel free to use it, adapt it, or improve it according to your needs. Feedback and suggestions are welcome!
+Feel free to use it, adapt it, or improve it according to your needs. Feedback and suggestions are welcome!  
+  
+**v1.20 Disabled touch**  
+  
+When it's disabled, users can no longer select points by tapping on them; points can only be selected programmatically through code.

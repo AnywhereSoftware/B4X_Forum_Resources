@@ -23,6 +23,7 @@ Public Sub ExecuteQuery (QueryName As String, Parameters() As Object) As Resumab
 	Dim j As HttpJob
 	j.Initialize("", Me)
 	j.PostBytes(mLink & "?method=query2", data)
+	j.GetRequest.SetContentType("application/octet-stream")
 	Wait For (j) JobDone(j As HttpJob)
 	Dim res As RDCResult
 	If j.Success Then
@@ -67,6 +68,7 @@ Public Sub ExecuteBatch (Commands As List) As ResumableSub
 	Dim j As HttpJob
 	j.Initialize("", Me)
 	j.PostBytes(mLink & "?method=batch2", Bytes)
+	j.GetRequest.SetContentType("application/octet-stream")
 	Wait For (j) JobDone(j As HttpJob)
 	Dim res As RDCResult
 	If j.Success Then

@@ -7,6 +7,7 @@ Version=8.3
 'MiniHtmlParser
 'Version: 1.02
 'Credits to: Erel
+'Modified for MiniHTML3 by Aeric
 Sub Class_Globals
 	Public NoNode As HtmlNode
 	Public EscapedEntitiesMap As Map
@@ -17,7 +18,7 @@ Sub Class_Globals
 	Private VoidTags As B4XSet
 	Private Const COLOR_RED     As Int = 0xFFFF0000
 	Private Const COLOR_ORANGE  As Int = 0xFFFF8C00
-	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode)	
+	Type HtmlNode (Name As String, Children As List, Attributes As List, Closed As Boolean, Parent As HtmlNode, DocType As String)
 	Type HtmlAttribute (Key As String, Value As String)
 End Sub
 
@@ -49,10 +50,14 @@ Private Sub ParseImpl (Parent As HtmlNode)
 			If PeekNextChar = "/" Then
 				CloseElement(Parent)
 				If IsRoot(Parent) = False Then Return
+			Else If PeekNextChar = "!" Then ' possible <!DOCTYPE>
+				CloseElement(Parent)
+				If IsRoot(Parent) = False Then Return
 			Else
 				If WhiteSpaceIgnored Then
-					Dim TextNode As HtmlNode = CreateHtmlNode("text", Parent)
-					TextNode.Attributes.Add(CreateHtmlAttribute("value", " "))
+					'modified by Aeric
+					Dim TextNode As HtmlNode = CreateHtmlNode("", Parent) 'textnode has empty name
+					TextNode.Attributes.Add(CreateHtmlAttribute("value", ""))
 					Parent.Children.Add(TextNode)
 				End If
 				Parent.Children.Add(ParseTagStart(Parent))
@@ -64,7 +69,7 @@ Private Sub ParseImpl (Parent As HtmlNode)
 	Loop
 End Sub
 
-Public Sub IsRoot(n As HtmlNode) As Boolean
+Public Sub IsRoot (n As HtmlNode) As Boolean
 	Return n.Parent.IsInitialized = False
 End Sub
 
@@ -72,6 +77,7 @@ Private Sub CloseElement (Parent As HtmlNode)
 	Dim start As Int = mIndex + 1
 	ReadUntil(">")
 	Dim pname As String = mHtml.SubString2(start, mIndex - 1).Trim
+	If pname.Contains("DOCTYPE") Then Parent.DocType = pname
 	Parent.Closed = True
 	If pname <> Parent.Name Then
 		Dim CorrectParent As HtmlNode
@@ -95,7 +101,8 @@ Private Sub CloseElement (Parent As HtmlNode)
 End Sub
 
 Private Sub CreateTextNode (Parent As HtmlNode, AddSpaceAtBeginning As Boolean) As HtmlNode
-	Dim TextNode As HtmlNode = CreateHtmlNode("text", Parent)
+	'modified by Aeric
+	Dim TextNode As HtmlNode = CreateHtmlNode("", Parent) ' textnode has empty name
 	Dim start As Int = mIndex - 1
 	ReadUntil("<")
 	If mIndex < mHtml.Length Then
@@ -107,9 +114,15 @@ Private Sub CreateTextNode (Parent As HtmlNode, AddSpaceAtBeginning As Boolean) 
 	Return TextNode
 End Sub
 
-Private Sub ParseRawTextNode(n As HtmlNode)
+Private Sub ParseRawTextNode (n As HtmlNode)
 	Dim start As Int = mIndex
 	ReadUntil($"</${n.Name}>"$)
+	For Each att As HtmlAttribute In n.Attributes
+		If att.Key.EqualsIgnoreCase("src") Then ' script tag has no "src"						
+			ReadUntil(">")
+			Return
+		End If
+	Next
 	n.Attributes.Add(CreateHtmlAttribute("value", mHtml.SubString2(start, mIndex - 1)))
 	ReadUntil(">")
 End Sub
@@ -117,7 +130,7 @@ End Sub
 Private Sub ReadUntil (s As String)
 	Dim i As Int = mHtml.IndexOf2(s, mIndex)
 	If i = -1 Then
-'		Log("not found: " & s)
+		'Log("not found: " & s)
 		mIndex = mHtml.Length
 	Else
 		mIndex = i + 1
@@ -128,7 +141,7 @@ Private Sub IgnoreWhiteSpace As Boolean
 	Dim ignored As Boolean
 	Do While mIndex < mHtml.Length
 		Dim c As String = GetNextChar
-		If WhiteSpace.IndexOf(c) = -1 Then 
+		If WhiteSpace.IndexOf(c) = -1 Then
 			mIndex = mIndex - 1
 			Return ignored
 		End If
@@ -172,7 +185,7 @@ Private Sub ParseTagStart (Parent As HtmlNode) As HtmlNode
 		Else If IsWhiteSpace(c) Then
 			node.Name = sb.ToString
 			If node.Name = "!--" Then
-				ParseComment (node)
+				ParseComment(node)
 			Else
 				ParseAttributes(node)
 			End If
@@ -207,7 +220,7 @@ Private Sub ParseAttributes (Parent As HtmlNode)
 	Dim s As String = mHtml.SubString2(start, mIndex - 1)
 	
 	' Parse attributes with values (key="value" or key='value')
-	' Updated regex to support special characters like @ and : for HTMX and Alpine.js
+	' Updated regex to support special characters like @click and :class for Alpine.js
 	For Each EscapeChar As String In Array("'", $"""$)
 		Dim m As Matcher = Regex.Matcher($"([@:a-zA-Z0-9._-]+)\s*=\s*\${EscapeChar}([^${EscapeChar}]*)\${EscapeChar}"$, s)
 		Do While m.Find
@@ -216,23 +229,11 @@ Private Sub ParseAttributes (Parent As HtmlNode)
 	Next
 	
 	' Parse boolean attributes (standalone keys like "disabled")
-	' Updated regex to support special characters like @ and : for HTMX and Alpine.js
-	Dim m As Matcher = Regex.Matcher($"([@:][a-zA-Z0-9._-]+)(?=\s*[/>]|\s*$)|([a-zA-Z0-9-]+)(?=\s*[/>]|\s*$)"$, s)
+	' Updated regex to support special characters like @click and :class for Alpine.js
+	' Group 1: Starts with @ or :, then requires at least one letter, followed by valid word/char symbols
+	Dim m As Matcher = Regex.Matcher($"((?:@[a-zA-Z]|[a-zA-Z])[a-zA-Z0-9._-]*)(?=\s*[/>]|\s*$)(?!\s*=)"$, s)
 	Do While m.Find
-		Dim attrName As String = ""
-		' Check which group matched – safely handle null
-		Dim group1 As String = m.Group(1)
-		Dim group2 As String = m.Group(2)
-    
-		If group1 <> Null And group1 <> "" Then
-			attrName = group1
-		Else If group2 <> Null And group2 <> "" Then
-			attrName = group2
-		Else
-			' No valid attribute name found – skip this match
-			Continue
-		End If
-    
+		Dim attrName As String = m.Match
 		' Skip if this attribute was already processed as a key=value pair
 		Dim isAlreadyProcessed As Boolean = False
 		For Each existingAttr As HtmlAttribute In Parent.Attributes
@@ -249,7 +250,6 @@ Private Sub ParseAttributes (Parent As HtmlNode)
 			Else
 				' For regular attributes, check if it's a known boolean attribute
 				Dim commonBooleanAttrs As List = Array As String("disabled", "readonly", "checked", "defer", "required", "selected", "multiple", "autofocus", "novalidate", "formnovalidate", "hidden")
-            
 				If commonBooleanAttrs.IndexOf(attrName) > -1 Then
 					Parent.Attributes.Add(CreateHtmlAttribute(attrName, attrName))
 				Else

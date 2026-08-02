@@ -1,5 +1,5 @@
 ###  jRDC3 - remote database connector by Erel
-### 07/09/2026
+### 07/26/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/171345/)
 
 This is version 3 of the beloved RDC / jRDC feature - a middleware server that makes it simple to safely connect clients and remote SQL database servers.  
@@ -57,4 +57,7 @@ See attached example for more information.
 Attached files:  
 RDC\_Client.b4xlib - the cross platform client library.  
 RDC\_Server.zip - B4J server project.  
-ClientExample - Client example.
+ClientExample - Client example.  
+  
+**Updates**  
+RDC\_Client v3.01 - Fixes an issue with jServer v5, related to the content type not being set correctly.

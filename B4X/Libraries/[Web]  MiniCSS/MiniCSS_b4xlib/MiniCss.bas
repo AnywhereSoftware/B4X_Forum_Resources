@@ -5,7 +5,7 @@ Type=Class
 Version=10.3
 @EndOfDesignText@
 ' Mini CSS Generator class
-' Version 0.30
+' Version 0.40
 Sub Class_Globals
 	Private rules As Map
 	Private mediaQueries As Map
@@ -19,6 +19,7 @@ Sub Class_Globals
 	Private mUseTabs As Boolean					' Optional: use tabs instead of spaces
 	Private mIndentSize As Int					' Number of spaces (if not using tabs)
 	Private mStartIndent As String
+	Private mRootSelector As String
 End Sub
 
 Public Sub Initialize (Name As String)
@@ -34,6 +35,7 @@ Public Sub Initialize (Name As String)
 	mUseTabs = False
 	mIndentSize = 2
 	mStartIndent = ""
+	mRootSelector = ":root"
 End Sub
 
 ' Add a new CSS rule
@@ -169,6 +171,10 @@ Public Sub ResetKeyframeContext
     currentKeyframeSelector = ""
 End Sub
 
+Public Sub setRootSelector (selector As String)
+	mRootSelector = selector
+End Sub
+
 ' Set vendor prefixes
 Public Sub SetPrefix (vPrefix As String)
 	prefix = vPrefix
@@ -176,25 +182,27 @@ End Sub
 
 ' Generate final CSS string
 Public Sub GenerateCSS As String
-	Dim sb As StringBuilder
-	sb.Initialize
-	sb.Append(CRLF) ' new line
+    Dim sb As StringBuilder
+    sb.Initialize
+	'sb.Append(CRLF) ' new line
 	
 	' Add CSS variables (custom properties)
 	Dim plural As Boolean ' adjusted by aeric
-	If variables.Size > 0 Then
-		If plural Then sb.Append(CRLF).Append(CRLF)
+    ' Output variables inside @theme instead of :root
+    If variables.Size > 0 Then
+        'sb.Append(mIndent)
 		sb.Append(mStartIndent)
-		sb.Append(":root {").Append(CRLF)
-		For Each varName As String In variables.Keys
-			Dim varValue As String = variables.Get(varName)
+		sb.Append(mRootSelector).Append(" {").Append(CRLF)
+        For Each k As String In variables.Keys
+            ' Maintain indentation
 			sb.Append(mStartIndent)
-			sb.Append(mIndent).Append(varName).Append(": ").Append(varValue).Append(";").Append(CRLF)
-		Next
+			sb.Append(mIndent).Append(mIndent)
+            sb.Append(k).Append(": ").Append(variables.Get(k)).Append(";").Append(CRLF)
+        Next
 		sb.Append(mStartIndent)
-		sb.Append("}")
-		plural = True
-	End If
+		sb.Append(mIndent)
+		sb.Append("}")'.Append(CRLF)
+    End If
 	
 	' Add regular rules
 	plural = False
@@ -266,8 +274,8 @@ Public Sub GenerateCSS As String
 		sb.Append(mStartIndent)
 		sb.Append("}")
 	Next
-	
-	Return sb.ToString
+
+    Return sb.ToString
 End Sub
 
 Public Sub SetStartIndent (IndentString As String)

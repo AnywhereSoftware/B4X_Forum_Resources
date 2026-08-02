@@ -7,8 +7,8 @@ Version=1.0
 '
 'Customizable B4X step slider with labels, touch selection, and full appearance control.
 '
-'Version: 1.10
-'Date: 2026/07/20
+'Version: 1.20
+'Date: 2026/07/25
 'Author: Grinaute
 'Dépendences: XUI
 '
@@ -79,6 +79,8 @@ Version=1.0
 '	Slider3.TextColor = Colors.Black
 '	Slider3.ActiveLineColor = Colors.RGB(0,120,255)
 '	Slider3.SetItems(Array As String("Min","25","50","75","Max"),2)
+'	'disables touch selection
+'	Slider3.mTouchEnabled = False
 '	
 '	'Right vertical slider: Bottom -> Top
 '	Dim SliderPanel4 As Panel
@@ -134,6 +136,7 @@ Sub Class_Globals
 	Private mActiveLineColor As Int = Colors.Blue
 	Private mTextColor As Int = Colors.Black
 	Private mVertical, mReverseVertical As Boolean = False
+	Public mTouchEnabled As Boolean = True
 End Sub
 
 #Region initialization
@@ -388,8 +391,19 @@ End Sub
 #End Region
 
 #Region User interaction
+' Enables or disables touch selection
+Public Sub SetTouchEnabled(Value As Boolean)
+	mTouchEnabled = Value
+End Sub
+
+' Returns whether touch selection is enabled
+Public Sub GetTouchEnabled As Boolean
+	Return mTouchEnabled
+End Sub
+
 ' Touch handling
 Public Sub Touch(Action As Int, X As Float, Y As Float)
+	If mTouchEnabled = False Then Return
 	If Action = 0 Or Action = 2 Then
 		Dim p As Float
 		If mVertical Then

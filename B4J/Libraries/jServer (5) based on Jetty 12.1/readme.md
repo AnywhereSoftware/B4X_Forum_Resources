@@ -1,5 +1,5 @@
 ### jServer (5) based on Jetty 12.1 by Erel
-### 07/13/2026
+### 07/29/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171536/)
 
 This is a beta version.  
@@ -40,3 +40,7 @@ Standalone package declarations:
 #PackagerProperty: IncludedModules = jdk.charsets, jdk.crypto.ec  
 #CustomBuildAction: After Packager, %WINDIR%\System32\robocopy.exe, www temp\build\bin\www /E
 ```
+
+  
+  
+v5.02 - Fixes the debugger issue with WebSockets and filters. Thank you [USER=108242]@Chris2[/USER] for the detailed report.
