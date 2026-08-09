@@ -1,0 +1,145 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+Library1=core
+Library2=ime
+Library3=xui
+Library4=declarativeui
+Library5=okhttputils2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddPermission(android.permission.INTERNET)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=13.62
+@EndOfDesignText@
+#Region  Project Attributes
+    #ApplicationLabel: Declarative Counter
+    #VersionCode: 1
+    #VersionName: 1.0
+    #SupportedOrientations: portrait
+    #EdgeToEdgeOldDevices: True
+#End Region
+
+#Region  Activity Attributes
+    #FullScreen: False
+    #IncludeTitle: False
+#End Region
+
+' Minimal demo: one Activity, one screen and one observable state.
+' The full widget showcase belongs in separate examples; this file only proves
+' the main promise: a Flutter-style counter with very little application code.
+
+Sub Process_Globals
+    Private CounterState As UIState
+End Sub
+
+Sub Globals
+    Private Root As B4XView
+    Private Navigator As UINavigator
+    Private AppTheme As UITheme
+    Private UiMounted As Boolean
+    Private LastWidth, LastHeight As Int
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Root = Activity
+    If FirstTime Then
+        CounterState.Initialize(0)
+    End If
+
+    AppTheme.Initialize.Scheme(0xFF6558D3)
+    Root.Color = AppTheme.Background
+    RebuildUI
+End Sub
+
+' Rebuilds the declarative tree when the theme changes.
+Private Sub RebuildUI
+    If Navigator.IsInitialized Then Navigator.Unmount
+
+    Navigator.Initialize
+    Navigator.AddScreen("Counter", CounterScreen)
+
+    UiMounted = False
+    LastWidth = 0
+    LastHeight = 0
+    MountUI
+End Sub
+
+Private Sub CounterScreen As UIScaffold
+    Dim description As UILabel
+    description.Initialize.Text("You have pushed the button this many times:") _
+        .Size(AppTheme.BodyLarge).Color(AppTheme.SecondaryText).ApplyTheme(AppTheme)
+
+    Dim value As UILabel
+    value.Initialize.BindText(CounterState).Size(52).Color(AppTheme.PrimaryText).ApplyTheme(AppTheme)
+
+    Dim content As UIColumn
+    content.Initialize.Spacing(12dip).MainAxisAlignment("center") _
+        .CrossAxisAlignment("stretch").AddChild(description).AddChild(value)
+
+    Dim center As UICenter
+    center.Initialize.Child(content).ApplyTheme(AppTheme)
+
+    Dim plus As UIFloatingActionButton
+    plus.Initialize.Text("+").OnClick(Me, "Increment_Click").ApplyTheme(AppTheme)
+
+    Dim result As UIScaffold
+    result.Initialize.AppBar(BuildAppBar).Body(center) _
+        .FloatingActionButtonRight(plus).ApplyTheme(AppTheme)
+    Return result
+End Sub
+
+Private Sub BuildAppBar As UIAppBar
+    Dim bar As UIAppBar
+    bar.Initialize.Title("Declarative Counter").ApplyTheme(AppTheme)
+
+    Dim themeIcon As UIIcon
+    themeIcon.Initialize.FontAwesome(ThemeIconGlyph).Size(24) _
+        .Color(AppTheme.DashboardBarText).OnClick(Me, "ToggleTheme_Click")
+    bar.Action(themeIcon)
+    Return bar
+End Sub
+
+Private Sub ThemeIconGlyph As String
+    If AppTheme.IsDark Then Return Chr(0xF185) ' FontAwesome sun: switch to light mode
+    Return Chr(0xF186) ' FontAwesome moon: switch to dark mode
+End Sub
+
+Private Sub MountUI
+    If Root.Width <= 0 Or Root.Height <= 0 Then Return
+
+    If UiMounted = False Or LastWidth <> Root.Width Or LastHeight <> Root.Height Then
+        Navigator.SetParent(Root)
+        Navigator.SetPosition(0, 0)
+        Navigator.SetSize(Root.Width, Root.Height)
+        Navigator.Render
+        UiMounted = True
+        LastWidth = Root.Width
+        LastHeight = Root.Height
+    End If
+    Navigator.RefreshInsets
+End Sub
+
+Sub Increment_Click
+    CounterState.SetState(CounterState.GetState + 1)
+End Sub
+
+Sub ToggleTheme_Click
+    AppTheme.Toggle
+    Root.Color = AppTheme.Background
+    RebuildUI
+End Sub
+
+Sub Activity_Resume
+    MountUI
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+' Application code shown by this demo:
+' - one UIState for the source of truth;
+' - one declarative screen builder;
+' - automatic label updates after SetState;
+' - a theme action declared in the AppBar;
+' - a safe-area-aware Navigator used only as the root host.
+' No manual AddView, layout coordinates or label.Text updates are needed here.

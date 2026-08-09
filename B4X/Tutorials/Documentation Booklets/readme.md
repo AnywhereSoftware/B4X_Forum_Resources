@@ -1,5 +1,5 @@
 ###  Documentation Booklets by klaus
-### 08/24/2025
+### 08/07/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/88985/)
 
 The B4X documentation booklets are available in PDF format, [**Download Link**](https://www.b4x.com/android/files/Booklets.zip).  
@@ -58,9 +58,6 @@ B4A version 12.80
 B4i version 8.50  
 B4J version 10.00  
 B4R version 4.00  
-  
-Future booklets:  
-None in the to do list.  
   
 Some of these booklets exist in Spanish:  
   

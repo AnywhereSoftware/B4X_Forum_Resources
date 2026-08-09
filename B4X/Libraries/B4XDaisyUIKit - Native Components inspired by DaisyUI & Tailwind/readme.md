@@ -1,8 +1,14 @@
 ###   B4XDaisyUIKit - Native Components inspired by DaisyUI & Tailwind by Mashiane
-### 06/29/2026
+### 08/06/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170352/)
 
 Hi Fam  
+  
+> Please note the **source of truth** for all the working examples for this library will always be the **latest demo source code** from github/google drive, use that rather as a reference point for your development.  
+>   
+> The library is still under development and sometimes things change and perhaps code examples posted here might have changed / inaccurate when a latest release is published.
+
+  
   
 [Download from GitHub](https://github.com/Mashiane/Sithaso-B4XDaisy-UIKit---Native-Android-Components-inspired-by-DaisyUI)  
   

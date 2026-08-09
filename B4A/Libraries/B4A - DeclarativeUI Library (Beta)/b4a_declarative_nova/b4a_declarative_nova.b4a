@@ -1,0 +1,388 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+Library1=core
+Library2=ime
+Library3=xui
+Library4=declarativeui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=13.62
+@EndOfDesignText@
+#Region  Project Attributes
+    #ApplicationLabel: NOVA Tasks
+    #VersionCode: 1
+    #VersionName: 1.0
+    #SupportedOrientations: portrait
+    #EdgeToEdgeOldDevices: True
+#End Region
+#Region  Activity Attributes
+    #FullScreen: False
+    #IncludeTitle: False
+#End Region
+
+' One Activity. The UI is expressed as a tree of widgets and builders:
+' state -> screen -> scaffold -> column/row/card -> controls.
+Sub Process_Globals
+    Private Tasks As List
+    Private TitleState, NoteState, SummaryState, SavingState As UIState
+    Private SaveState As UIAsyncState
+End Sub
+
+Sub Globals
+    Private Root As B4XView
+    Private Navigator As UINavigator
+    Private Theme As UITheme
+    Private ScreenName As String
+    Private ActiveTaskIndex As Int
+    Private ActionButtons As List
+    Private DetailsCard As UICard
+    Private LastWidth, LastHeight As Int
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Root = Activity
+    If FirstTime Then InitializeState
+    Theme.Initialize.Scheme(0xFF6750A4)
+    If ScreenName = "" Then ScreenName = "Tasks"
+    Root.Color = Theme.Background
+    RenderApp
+End Sub
+
+Private Sub InitializeState
+    Tasks.Initialize
+    ActionButtons.Initialize
+    ActiveTaskIndex = -1
+    Tasks.Add(Task("Take the dog for a walk", "A brisk walk keeps both of you happy and healthy.", 72))
+    Tasks.Add(Task("Water the plants", "Check the soil and give each plant the water it needs.", 44))
+    Tasks.Add(Task("Do 20 minutes of cardio", "A short workout is enough to keep your daily routine moving.", 18))
+    TitleState.Initialize("")
+    NoteState.Initialize("")
+    SummaryState.Initialize("3 household tasks for today")
+    SavingState.Initialize(False)
+    SaveState.Initialize
+End Sub
+
+Private Sub Task(Title As String, Note As String, Percent As Int) As Map
+    Dim value As Map
+    value.Initialize
+    value.Put("title", Title)
+    value.Put("note", Note)
+    value.Put("progress", Percent)
+    Return value
+End Sub
+
+Private Sub RenderApp
+    If Navigator.IsInitialized Then Navigator.Unmount
+    Navigator.Initialize
+    Navigator.AddScreen("Tasks", TasksScreen)
+    Navigator.AddScreen("Details", DetailsScreen)
+    Navigator.SetParent(Root)
+    Navigator.SetPosition(0, 0)
+    Navigator.SetSize(Root.Width, Root.Height)
+    Navigator.NavigateTo(ScreenName)
+    Navigator.Render
+    LastWidth = Root.Width
+    LastHeight = Root.Height
+End Sub
+
+Private Sub TasksScreen As UIScaffold
+    Dim intro As UIColumn
+    intro.Initialize.Spacing(4dip).CrossAxisAlignment("stretch") _
+        .AddChild(TextLabel("NOVA TASKS", Theme.LabelMedium, Theme.Accent)) _
+        .AddChild(TextLabel("Focus on the work.", Theme.HeadlineSmall, Theme.PrimaryText)) _
+        .AddChild(BoundText(SummaryState, Theme.BodyMedium, Theme.SecondaryText))
+
+    Dim overview As UIColumn
+    overview.Initialize.Spacing(12dip).CrossAxisAlignment("stretch") _
+        .AddChild(intro).AddChild(Progress(62))
+
+    Dim taskColumn As UIColumn
+    taskColumn.Initialize.Spacing(12dip).CrossAxisAlignment("stretch")
+    If ActionButtons.IsInitialized = False Then
+        ActionButtons.Initialize
+    Else
+        ActionButtons.Clear
+    End If
+    For i = 0 To Tasks.Size - 1
+        Dim actionButton As UIButton
+        actionButton.Initialize.Text("Open details").OnClick(Me, "OpenDetails_Click").ApplyTheme(Theme)
+        ActionButtons.Add(actionButton)
+        taskColumn.AddChild(TaskCard(Tasks.Get(i), actionButton))
+    Next
+    Dim list As UIScrollView
+    list.Initialize.Child(taskColumn)
+
+    Dim body As UIColumn
+    body.Initialize.Spacing(16dip).CrossAxisAlignment("stretch") _
+        .AddChild(Card(overview)).AddChild(Expand(list))
+
+    Dim add As UIFloatingActionButton
+    add.Initialize.Text("+").OnClick(Me, "NewTask_Click").ApplyTheme(Theme)
+    Dim screen As UIScaffold
+    screen.Initialize.AppBar(AppBar).Body(Pad(body, 16dip)) _
+        .FloatingActionButtonRight(add).ApplyTheme(Theme)
+    Return screen
+End Sub
+
+Private Sub TaskCard(Value As Object, ActionButton As UIButton) As UICard
+    Dim item As Map = Value
+    Dim title As UILabel
+    title.Initialize.Text("" & item.Get("title")).Size(Theme.TitleMedium).Color(Theme.PrimaryText).ApplyTheme(Theme)
+    Dim mark As UIIcon
+    mark.Initialize.MaterialCode(0xE5CA).Size(22).Color(Theme.Accent).ApplyTheme(Theme)
+    Dim titleRow As UIRow
+    titleRow.Initialize.Spacing(8dip).CrossAxisAlignment("center") _
+        .AddChild(mark).AddChild(Expand(title))
+
+    Dim percent As Int = item.Get("progress")
+    Dim content As UIColumn
+    content.Initialize.Spacing(10dip).CrossAxisAlignment("stretch") _
+        .AddChild(titleRow) _
+        .AddChild(TextLabel("" & item.Get("note"), Theme.BodyMedium, Theme.SecondaryText)) _
+        .AddChild(Progress(percent)) _
+        .AddChild(ActionButton)
+    Return Card(content)
+End Sub
+
+Private Sub DetailsScreen As UIScaffold
+    Dim headerText As String = "Create a task"
+    If ActiveTaskIndex >= 0 Then headerText = "Edit task"
+
+    Dim content As UIColumn
+    content.Initialize.Spacing(12dip).CrossAxisAlignment("stretch") _
+        .AddChild(TextLabel(headerText, Theme.TitleLarge, Theme.PrimaryText)) _
+        .AddChild(TextLabel("State drives the form and feedback.", Theme.BodyMedium, Theme.SecondaryText)) _
+        .AddChild(Input("Task title", TitleState, "TitleChanged")) _
+        .AddChild(Input("Short description", NoteState, "NoteChanged")) _
+        .AddChild(SaveProgress).AddChild(SavingLabel) _
+        .AddChild(Button("Save task", "Save_Click"))
+
+    If ActiveTaskIndex >= 0 Then
+        content.AddChild(Button("Delete task", "DeleteTask_Click"))
+    End If
+    content.AddChild(Divider).AddChild(Button("Clear all tasks", "Clear_Click"))
+
+    DetailsCard = Card(Pad(content, 16dip))
+    Dim screen As UIScaffold
+    screen.Initialize.AppBar(AppBar).Body(Pad(DetailsCard, 16dip)).ApplyTheme(Theme)
+    Return screen
+End Sub
+
+Private Sub AppBar As UIAppBar
+    Dim bar As UIAppBar
+    Dim title As String = "New task"
+    If ScreenName = "Tasks" Then title = "NOVA Tasks"
+    bar.Initialize.Title(title).ApplyTheme(Theme)
+    Dim icon As UIIcon
+    If ScreenName = "Tasks" Then
+        Dim themeIcon As Int = 0xF186 ' Moon in the light scheme.
+        If Theme.IsDark Then themeIcon = 0xF185 ' Sun in the dark scheme.
+        icon.Initialize.FontAwesomeCode(themeIcon).Size(22).Color(Theme.DashboardBarText).OnClick(Me, "Theme_Click")
+    Else
+        icon.Initialize.FontAwesomeCode(0xF060).Size(22).Color(Theme.DashboardBarText).OnClick(Me, "Back_Click")
+    End If
+    bar.Action(icon)
+    Return bar
+End Sub
+
+Private Sub TextLabel(Text As String, Size As Int, Color As Int) As UILabel
+    Dim view As UILabel
+    view.Initialize.Text(Text).Size(Size).Color(Color).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub BoundText(State As UIState, Size As Int, Color As Int) As UILabel
+    Dim view As UILabel
+    view.Initialize.BindText(State).Size(Size).Color(Color).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub Input(Hint As String, State As UIState, EventName As String) As UIInput
+    Dim view As UIInput
+    view.Initialize.Hint(Hint).BindText(State).OnTextChanged(Me, EventName).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub Button(Text As String, EventName As String) As UIButton
+    Dim view As UIButton
+    view.Initialize.Text(Text).OnClick(Me, EventName).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub Progress(Value As Int) As UIProgressBar
+    Dim view As UIProgressBar
+    view.Initialize.Value(Value).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub SaveProgress As UIProgressBar
+    Dim view As UIProgressBar
+    If SaveState.IsLoading Then view.Initialize.Indeterminate(True) Else view.Initialize.Value(0)
+    view.ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub SavingLabel As UIVisibility
+    Dim view As UIVisibility
+    view.Initialize.BindVisible(SavingState).Child(TextLabel("Saving…", Theme.BodyMedium, Theme.Accent))
+    Return view
+End Sub
+
+Private Sub Divider As UIDivider
+    Dim view As UIDivider
+    view.Initialize.ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub Card(Child As Object) As UICard
+    Dim view As UICard
+    view.Initialize.Child(Pad(Child, 16dip)).ApplyTheme(Theme)
+    Return view
+End Sub
+
+Private Sub Pad(Child As Object, Amount As Int) As UIPadding
+    Dim view As UIPadding
+    view.Initialize.All(Amount).Child(Child)
+    Return view
+End Sub
+
+Private Sub Expand(Child As Object) As UIExpanded
+    Dim view As UIExpanded
+    view.Initialize.Child(Child)
+    Return view
+End Sub
+
+Sub NewTask_Click
+    ActiveTaskIndex = -1
+    TitleState.SetState("")
+    NoteState.SetState("")
+    ScreenName = "Details"
+    RenderApp
+    AnimateDetails
+End Sub
+
+Sub OpenDetails_Click
+    Dim actionButton As UIButton = Sender
+    If actionButton = Null Then Return
+    If ActionButtons.IsInitialized = False Then Return
+
+    ActiveTaskIndex = ActionButtons.IndexOf(actionButton)
+    If ActiveTaskIndex < 0 Or ActiveTaskIndex >= Tasks.Size Then Return
+
+    Dim item As Map = Tasks.Get(ActiveTaskIndex)
+    TitleState.SetState(item.Get("title"))
+    NoteState.SetState(item.Get("note"))
+    ScreenName = "Details"
+    RenderApp
+    AnimateDetails
+End Sub
+
+Sub Back_Click
+    SavingState.SetState(False)
+    ActiveTaskIndex = -1
+    ScreenName = "Tasks"
+    RenderApp
+End Sub
+
+Sub Theme_Click
+    Theme.Toggle
+    Root.Color = Theme.Background
+    RenderApp
+End Sub
+
+Sub TitleChanged(Value As String) 'ignore
+    TitleState.SetState(Value)
+End Sub
+
+Sub NoteChanged(Value As String) 'ignore
+    NoteState.SetState(Value)
+End Sub
+
+Sub Save_Click
+    If ("" & TitleState.GetState).Trim = "" Then
+        ShowSnack("Give the task a title first.")
+        Return
+    End If
+    SaveTask
+End Sub
+
+Private Sub SaveTask
+    SavingState.SetState(True)
+    SaveState.SetLoading
+    RenderApp
+    Sleep(700)
+    If ActiveTaskIndex < 0 Then
+        Tasks.Add(Task(TitleState.GetState, NoteState.GetState, 0))
+    Else If ActiveTaskIndex < Tasks.Size Then
+        Dim item As Map = Tasks.Get(ActiveTaskIndex)
+        item.Put("title", TitleState.GetState)
+        item.Put("note", NoteState.GetState)
+    End If
+    SummaryState.SetState(Tasks.Size & " tasks in your workspace")
+    SaveState.SetSuccess("saved")
+    TitleState.SetState("")
+    NoteState.SetState("")
+    SavingState.SetState(False)
+    ActiveTaskIndex = -1
+    ScreenName = "Tasks"
+    RenderApp
+    ShowSnack("Task saved")
+End Sub
+
+Sub DeleteTask_Click
+    If ActiveTaskIndex < 0 Or ActiveTaskIndex >= Tasks.Size Then Return
+    Tasks.RemoveAt(ActiveTaskIndex)
+    ActiveTaskIndex = -1
+    If Tasks.Size = 0 Then
+        SummaryState.SetState("No tasks yet")
+    Else
+        SummaryState.SetState(Tasks.Size & " tasks in your workspace")
+    End If
+    ScreenName = "Tasks"
+    RenderApp
+    ShowSnack("Task deleted")
+End Sub
+
+Sub Clear_Click
+    Dim dialog As UIAlertDialog
+    dialog.Initialize.Title("Clear workspace?").Message("Remove the demo tasks from this session?") _
+        .NegativeButton("Cancel", Me, "DialogClosed") _
+        .PositiveButton("Clear", Me, "ConfirmClear").ApplyTheme(Theme).Show(Root)
+End Sub
+
+Sub ConfirmClear 'ignore
+    Tasks.Clear
+    ActiveTaskIndex = -1
+    SummaryState.SetState("No tasks yet")
+    ScreenName = "Tasks"
+    RenderApp
+    ShowSnack("Workspace cleared")
+End Sub
+
+Private Sub ShowSnack(Message As String)
+    Dim snack As UISnackBar
+    snack.Initialize.Message(Message).Duration(2200).ApplyTheme(Theme).Show(Root)
+End Sub
+
+Private Sub AnimateDetails
+    Sleep(60)
+    If DetailsCard = Null Then Return
+    Dim view As B4XView = DetailsCard.GetView
+    If view = Null Then Return
+    Dim animation As UIAnimation
+    animation.Initialize.TargetView(view).Duration(220).MoveTo(view.Left, view.Top + 8dip).Start
+End Sub
+
+Sub Activity_Resume
+    If Root.IsInitialized = False Then Return
+    If LastWidth <> Root.Width Or LastHeight <> Root.Height Then RenderApp
+    Navigator.RefreshInsets
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+' The application code is deliberately small: the reusable builders above
+' describe the UI, while state-changing subs describe behavior.

@@ -1,5 +1,5 @@
 ### B4AXLUtils PRO - Advanced Excel Generation (Themed ReportBuilder) & Native Word (.docx) powered by Apache POI 5.x by fernando1987
-### 05/28/2026
+### 08/03/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171133/)
 
 Hi everyone,  
@@ -23,134 +23,298 @@ To compile this library package, please make sure you enable the following libra
   
   
 [HEADING=1]📑 Technical Class Reference Documentation (API)[/HEADING]  
-[HEADING=2]1. ExcelManager[/HEADING]  
-The core component managing the workbook life cycle and IO persistence.  
+[HEADING=2]B4AXLUtils Pro Library API Reference Manual[/HEADING]  
+This is the complete, comprehensive public API documentation for **B4AXLUtils Pro 3.0**  
   
 
-- **Initialize**(CallBack As Object, EventName As String)
-- **CreateWorkbook**()
-- **ReadWorkbook**(Directory As String, FileName As String) As ExcelManager
-- **CreateSheet**(Name As String) As ExcelSheet
+---
 
-- *Return Type Usage:* <code>Dim sheet As ExcelSheet = excel.CreateSheet("Inventory")</code>
-
-- **GetSheetAt**(Index As Int) As ExcelSheet
-
-- *Return Type Usage:* <code>Dim sheetSection As ExcelSheet = excel.GetSheetAt(0)</code>
-
-- **AddPicture**(Directory As String, FileName As String, PictureType As Int) As Int
-
-- *Return Type Usage:* <code>Dim picId As Int = excel.AddPicture(File.DirAssets, "logo.png", excel.PICTURE\_TYPE\_PNG)</code>
-
-- **Save**(Directory As String, FileName As String)
-- **SearchAndReplace**(SearchText As String, ReplaceText As String) As ExcelManager
-- **Close**()
-
-[HEADING=2]2. ExcelSheet[/HEADING]  
-Represents a single sheet grid workspace section inside the open workbook document.  
+  
+[HEADING=2]1. PDF Generation Suite[/HEADING]  
+[HEADING=3]PDFManager[/HEADING]  
+*High-level PDF document builder and layout engine using native B4X code.*  
   
 
-- **GetRow**(RowIndex As Int) As ExcelRow
+- **Events**:
 
-- *Return Type Usage:* <code>Dim row As ExcelRow = sheet.GetRow(3)</code>
+- SaveCompleted (Success As Boolean): Raised when the asynchronous compilation finishes.
+- PageCreated: Raised whenever a new page is initialized, allowing low-level canvas decoration.
 
-- **AddPictureRange**(PictureId As Int, StartCol As Int, StartRow As Int, EndCol As Int, EndRow As Int)
-- **AutoSizeColumns**(StartCol As Int, EndCol As Int)
-- **ProtectSheet**(Password As String)
+- **Properties**:
 
-[HEADING=2]3. ExcelRow[/HEADING]  
-Represents an horizontal layout record row inside a specific worksheet.  
+- Header As PDFHeader [read only]: Access the automatic page header builder.
+- Footer As PDFFooter [read only]: Access the automatic page footer builder.
+- PagesCount As Int [read only]: The total number of pages currently in the document.
+
+- **Key Functions**:
+
+- Initialize (Callback As Object, EventName As String, Unit As String) As PDFManager
+- SetMargins (Left As Double, Right As Double, Top As Double, Bottom As Double) As PDFManager
+- AddParagraph (Text As String) As PDFParagraph
+- AddTable () As PDFTable
+- AddImage (Dir As String, FileName As String, Width As Double, Height As Double)
+- AddImageAbsolute (Dir As String, FileName As String, X As Double, Y As Double, Width As Double, Height As Double)
+- Save (Directory As String, FileName As String)
+
+[HEADING=3]PDFTemplateManager[/HEADING]  
+*Visual layout decoration engine offering corporate templates.*  
   
 
-- **GetCell**(ColIndex As Int) As ExcelCell
+- **Functions**:
 
-- *Return Type Usage:* <code>Dim cell As ExcelCell = row.GetCell(1)</code>
+- DrawPageBackground (ColorInt As Int): Paints the entire page with a solid color.
+- DrawFrame (BorderColor As Int, BGColor As Int, BorderWidth As Float): Draws a border frame.
+- DrawWaveHeader (ThemeColor As Int): Organic wave-shaped header.
+- DrawDiagonalHeader (ThemeColor As Int): Tech-oriented diagonal header.
+- DrawSweepHeader (ThemeColor As Int): Elegant curved sweep header.
+- DrawRectangleHeader (ThemeColor As Int): Minimalist corporate header.
+- DrawCard (X As Double, Y As Double, Width As Double, Height As Double, BGColor As Int, BorderColor As Int, BorderWidth As Float): Draws absolute layout cards.
 
-[HEADING=2]4. ExcelCell[/HEADING]  
-Granular element containing cell formats, direct alignments, protection tags, and safe mathematical values.  
+[HEADING=3]PDFChartHelper[/HEADING]  
+*High-definition cross-platform chart generator mapping canvas grids directly to bitmaps.*  
   
 
-- **SetLocked**(Locked As Boolean)
-- **GetOrCloneStyle**() As JavaObject
+- **Properties**:
 
-- *Return Type Usage:* <code>Dim style As JavaObject = cell.GetOrCloneStyle</code>
+- ShowGridLines As Boolean: Turns background grids on or off.
+- CustomYTicks As List: Sets custom Y-axis markers (e.g. 100, 300, 1000).
 
-- **clear**()
-- **toString**() As String
+- **Functions**:
 
-- *Return Type Usage:* <code>Dim txt As String = cell.toString</code>
+- CreateLineChart (Title As String, XAxis As List, YValues As List, ValueSuffix As String, Smooth As Boolean, Fill As Boolean) As B4XBitmap
+- CreateMultiLineChart (Title As String, XAxis As List, SeriesNames As List, SeriesValues As List, ValueSuffix As String, Smooth As Boolean, Fill As Boolean) As B4XBitmap
+- CreateBarChart (Title As String, XAxis As List, YValues As List, ValueSuffix As String) As B4XBitmap
+- CreateMultiBarChart (Title As String, XAxis As List, SeriesNames As List, SeriesValues As List, ValueSuffix As String) As B4XBitmap
+- CreatePieChart (Title As String, Categories As List, Values As List, ValueSuffix As String) As B4XBitmap
+- ClearTempFiles (): Deletes temporary chart PNG files to save storage space.
 
-- **Value Property**(Object): Dynamic evaluation injection layer.
-
-- *Reading extraction usage:* <code>Dim value As Object = cell.Value</code>
-
-- **Formula Property** (String)
-- **Reference Property**As String
-
-- *Return Type Usage:* <code>Dim ref As String = cell.Reference</code>
-
-[HEADING=2]5. ExcelReportBuilder[/HEADING]  
-Automated tabular design utility utilizing corporate presets for fast deployments.  
+[HEADING=3]PDFHeader[/HEADING]  
+*Represents the automatically rendered page header segment.*  
   
 
-- **Initialize**(Manager As ExcelManager, Sheet As ExcelSheet)
-- **SetTheme**(ThemeConstant As Int) As ExcelReportBuilder
-- **SetLogo**(Directory As String, FileName As String) As ExcelReportBuilder
-- **SetLogoRange**(StartRow As Int, StartCol As Int, EndRow As Int, EndCol As Int) As ExcelReportBuilder
-- **SetTitle**(Title As String) As ExcelReportBuilder
-- **SetSubtitle**(Subtitle As String) As ExcelReportBuilder
-- **AddColumn**(HeaderName As String, CellType As Int) As ExcelReportBuilder
-- **AddColumnEx**(HeaderName As String, CellType As Int, FormatPattern As String) As ExcelReportBuilder
-- **AddTotalColumn**(TableColumnIndex As Int) As ExcelReportBuilder
-- **AddRow**(Data() As Object) As ExcelReportBuilder
-- **Build**()
+- **Functions**:
 
-[HEADING=2]6. WordManager[/HEADING]  
-Main processing wrapper to write and restructure native OpenXML .docx Word structures.  
+- AddParagraph (Text As String) As PDFParagraph
+- AddImage (Dir As String, FileName As String, Width As Double, Height As Double)
+- AddLine (X1 As Double, Y1 As Double, X2 As Double, Y2 As Double, Width As Double, ColorInt As Int)
+- AddLine2 (Width As Double, ColorInt As Int)
+- SetHeight (Height As Double)
+
+[HEADING=3]PDFFooter[/HEADING]  
+*Represents the automatically rendered page footer segment supporting page number injection.*  
   
 
-- **Initialize**(Callback As Object, EventName As String)
-- **SetDocumentFont**(FontName As String)
-- **CreateParagraph**() As WordParagraph
+- **Functions**:
 
-- *Return Type Usage:* <code>Dim p As WordParagraph = word.CreateParagraph</code>
+- AddParagraph (Text As String) As PDFParagraph
+- AddImage (Dir As String, FileName As String, Width As Double, Height As Double)
+- AddLine (X1 As Double, Y1 As Double, X2 As Double, Y2 As Double, Width As Double, ColorInt As Int)
+- AddLine2 (Width As Double, ColorInt As Int)
+- SetHeight (Height As Double)
 
-- **CreateTable**(Rows As Int, Cols As Int) As WordTable
-
-- *Return Type Usage:* <code>Dim t As WordTable = word.CreateTable(5, 3)</code>
-
-- **GetHeader**() As WordHeader
-
-- *Return Type Usage:* <code>Dim h As WordHeader = word.GetHeader</code>
-
-- **GetFooter**() As WordFooter
-
-- *Return Type Usage:* <code>Dim f As WordFooter = word.GetFooter</code>
-
-- **AddPageNumberExt**(Alignment As String, PageLabel As String, OfLabel As String)
-- **Save**(Directory As String, FileName As String)
-
-[HEADING=2]7. WordParagraph[/HEADING]  
-Fluid styling wrapper to create customized text run structures inline.  
+[HEADING=3]PDFParagraph[/HEADING]  
+*Builder-pattern text formatting block for PDF paragraph elements.*  
   
 
-- **AddText**(Text As String) As WordParagraph
-- **SetBold**(Enabled As Boolean) As WordParagraph
-- **SetItalic**(Enabled As Boolean) As WordParagraph
-- **SetTextColor**(Color As Int) As WordParagraph
-- **ApplyStyle**() As WordParagraph
-- **SetSpacingAfterPoints**(Points As Int) As WordParagraph
+- **Properties (Chained Setters)**:
 
-[HEADING=2]8. WordTable[/HEADING]  
-Grid structure wrapper handling rows and explicit styling elements inside text documents.  
+- Bold As Boolean, Italic As Boolean, Underline As Boolean, StrikeThrough As Boolean
+- FontSize As Double, TextColor As Int, FontFamily As String, Alignment As String
+
+- **Functions**:
+
+- AddLineBreak () As PDFParagraph
+- ApplyStyle () As PDFParagraph
+
+[HEADING=3]PDFTable[/HEADING]  
+*Flow-based PDF table structure builder.*  
   
 
-- **SelectCell**(Row As Int, Col As Int) As WordTable
-- **AddText**(Text As String) As WordTable
-- **MergeCellsHorizontal**(Row As Int, FromCol As Int, ToCol As Int) As WordTable
-- **AddRow**(Data() As String) As WordTable
-- **SetAutoFit**() As WordTable
+- **Functions**:
 
+- SetColWidths (Widths() As Double) As PDFTable
+- AddRow () As PDFTableRow
+- AddCell (Row As PDFTableRow, Text As String) As PDFTableCell
+- AddCell2 (Row As PDFTableRow, Paragraph As PDFParagraph) As PDFTableCell
+- AddCellSpan (Row As PDFTableRow, Text As String, ColSpan As Int) As PDFTableCell
+
+---
+
+  
+[HEADING=2]2. Excel Generation Suite[/HEADING]  
+[HEADING=3]ExcelManager[/HEADING]  
+*POI-based workbook structure manager.*  
+  
+
+- **Events**:
+
+- SaveCompleted (Success As Boolean)
+
+- **Properties**:
+
+- ActiveSheetIndex As Int [read only]
+- ActiveSheetName As String [read only]
+
+- **Functions**:
+
+- CreateSheet (Name As String) As ExcelSheet
+- GetSheet (Name As String) As ExcelSheet
+- GetSheetAt (Index As Int) As ExcelSheet
+- GetSheetName (Index As Int) As String
+- Save (Directory As String, FileName As String)
+
+[HEADING=3]ExcelSheet[/HEADING]  
+*Worksheet layout, locking, formatting, and graphics patriarch placement.*  
+  
+
+- **Properties**:
+
+- SheetName As String [read only]
+- SheetIndex As Int [read only]
+
+- **Functions**:
+
+- GetRow (RowIndex As Int) As ExcelRow
+- ProtectSheet (Password As String)
+- SetRangeStyle (RowStart As Int, RowEnd As Int, ColStart As Int, ColEnd As Int, Bold As Boolean, Border As Boolean, Centered As Boolean, BGColor As Short, Italic As Boolean, Strike As Boolean, TextColor As Short, Size As Int)
+- AddPictureExact (PictureIndex As Int, Col As Int, Row As Int, ScaleX As Double, ScaleY As Double): Positioned image anchored to MOVE\_DONT\_RESIZE.
+- AutoSizeColumns (ColStart As Int, ColEnd As Int)
+
+[HEADING=3]ExcelRow[/HEADING]  
+*Excel worksheet row manager.*  
+  
+
+- **Functions**:
+
+- GetCell (ColIdx As Int) As ExcelCell
+- CreateCellTyped (ColIdx As Int, CellType As Int) As ExcelCell
+
+[HEADING=3]ExcelCell[/HEADING]  
+*Excel worksheet cell value, formulas, styles, comments, and smart data type detection.*  
+  
+
+- **Properties**:
+
+- CellType As Int, CellTypeName As String [read only], Formula As String [write only]
+- Value As Object, SmartValue As Object [write only], Date As Long
+- Bold As Boolean [write only], Underline As Boolean [write only]
+- TextColor As Short [write only], TextSize As Short [write only], BackgroundColor As Short [write only]
+
+- **Functions**:
+
+- clear () As Void
+- setCurrency (Value As Double, Symbol As String) As Void
+- setCurrencyISO (Value As Double, ISO As String) As Void
+- setDateFormatted (Value As Long, FormatStr As String) As Void
+
+[HEADING=3]ExcelReportBuilder[/HEADING]  
+*Orchestrates complete spreadsheet reports with theme layouts.*  
+  
+
+- **Functions**:
+
+- SetTheme (ThemeName As String)
+- SetCustomColors (HeaderBG As Short, HeaderText As Short, ZebraColor As Short)
+- SetLogoExactPosition (ColOffset As Int, RowStart As Int, WidthPixels As Int, HeightPixels As Int)
+- AddColumn (Name As String, ColType As Int)
+- AddColumnEx (Name As String, ColType As Int, FormatOrISO As String)
+- AddRow (Values() As Object)
+- AddTotalColumn (ColumnIndex As Int)
+- Build ()
+
+[HEADING=3]ExcelTableBuilder[/HEADING]  
+*Dynamic builder for standalone data tables inside worksheets.*  
+  
+
+- **Functions**:
+
+- AddColumn (Name As String, ColType As Int)
+- AddColumnEx (Name As String, ColType As Int, FormatOrISO As String)
+- AddRow (Values() As Object)
+- Build ()
+
+---
+
+  
+[HEADING=2]3. Word Generation Suite[/HEADING]  
+[HEADING=3]WordManager[/HEADING]  
+*DOCX Word document builder.*  
+  
+
+- **Events**:
+
+- SaveCompleted (Success As Boolean)
+
+- **Properties**:
+
+- Header As WordHeader [read only]
+- Footer As WordFooter [read only]
+
+- **Functions**:
+
+- AddParagraph (Text As String) As WordParagraph
+- CreateTable (Rows As Int, Cols As Int) As WordTable
+- AddImage (Dir As String, FileName As String, WidthPoints As Float, HeightPoints As Float)
+- SearchAndReplace (SearchText As String, ReplaceText As String)
+- Save (Directory As String, FileName As String)
+
+[HEADING=3]WordParagraph[/HEADING]  
+*Text paragraph and typography style runner.*  
+  
+
+- **Properties (Chained Setters)**:
+
+- Bold As Boolean, Italic As Boolean, Underline As Boolean
+- FontSize As Int, TextColor As Int, Alignment As String, SpacingAfterPoints As Int
+
+- **Functions**:
+
+- AddText (Text As String) As WordParagraph
+- AddLineBreak () As WordParagraph
+- AddPageBreak () As WordParagraph
+- AddImage (Directory As String, FileName As String, WidthPoints As Int, HeightPoints As Int, Align As String)
+- ApplyStyle () As WordParagraph
+
+[HEADING=3]WordTable[/HEADING]  
+*Word table formatting, dimensions, padding, borders, and cell spans.*  
+  
+
+- **Properties**:
+
+- Bold As Boolean [write only], Italic As Boolean [write only], Underline As Boolean [write only]
+- FontSize As Int [write only], TextColor As Int [write only], BackgroundColor As Int [write only]
+
+- **Functions**:
+
+- SelectCell (Row As Int, Col As Int) As WordTable
+- AddText (Text As String) As WordTable
+- AddRow (Data() As String)
+- MergeCellsHorizontal (Row As Int, FromCol As Int, ToCol As Int) As WordTable
+- SetCellPadding (TwipsTop As Int, TwipsLeft As Int, TwipsBottom As Int, TwipsRight As Int) As WordTable
+- SetBorders () As WordTable
+- SetAutoFit () As WordTable
+
+[HEADING=3]WordHeader[/HEADING]  
+*Represents the automatically rendered page header segment in Word.*  
+  
+
+- **Functions**:
+
+- AddText (Text As String, Bold As Boolean, Size As Int, ColorHex As String)
+- AddImage (Directory As String, FileName As String, WidthPoints As Int, HeightPoints As Int)
+
+[HEADING=3]WordFooter[/HEADING]  
+*Represents the automatically rendered page footer segment in Word.*  
+  
+
+- **Functions**:
+
+- AddText (Text As String, Bold As Boolean, Size As Int, ColorHex As String)
+- AddImage (Directory As String, FileName As String, WidthPoints As Int, HeightPoints As Int)
+
+  
+  
+  
 [HEADING=1]💻 Full Code Implementation Example[/HEADING]  
 
 ```B4X
