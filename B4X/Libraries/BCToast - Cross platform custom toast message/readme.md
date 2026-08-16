@@ -1,5 +1,5 @@
 ###  BCToast - Cross platform custom toast message by Erel
-### 12/06/2020
+### 08/09/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/111046/)
 
 BCToast is a custom "toast" message implementation based on BCTextEngine: <https://www.b4x.com/android/forum/threads/b4x-bctextengine-bbcodeview-text-engine-bbcode-parser-rich-text-view.106207/#content>  
@@ -8,7 +8,7 @@ It requires BCTextEngine v1.65+.
   
 ![](https://www.b4x.com/basic4android/images/java_Vr5tF2Iymf.png)  
   
-Note that unlike B4A built-in toast message feature, this toast message can only be displayed from an Activity.  
+Note that unlike B4A built-in toast message feature, this toast message can only be displayed from an Activity (or B4XPages, but not a Service).  
   
 Usage example:  
 
@@ -18,7 +18,7 @@ Sub Globals
 End Sub  
   
 Sub Activity_Create(FirstTime As Boolean)  
-   toast.Initialize(Activity) 'Use Page1.RootPanel in B4i or MainForm.RootPane in B4J.  
+   toast.Initialize(Root)   
 End Sub  
   
 Sub Activity_Click  

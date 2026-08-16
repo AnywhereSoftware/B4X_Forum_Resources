@@ -4,106 +4,119 @@ ModulesStructureVersion=1
 Type=Class
 Version=13.4
 @EndOfDesignText@
-'Class Module: ExcelSheet
+' Class Module: ExcelSheet
 Sub Class_Globals
+#If B4A Or B4J
 	Private nativeSheet As JavaObject
+#End If
 	Private managerRef As ExcelManager
-	Private StylesCache As Map
+	Private xui As XUI
 End Sub
 
-Public Sub Initialize (Manager As ExcelManager, sJavaObj As JavaObject)
+' Initializes the ExcelSheet instance.
+Public Sub Initialize (Manager As ExcelManager, sJavaObj As Object)
 	managerRef = Manager
+#If B4A Or B4J
 	nativeSheet = sJavaObj
-	StylesCache.Initialize
+#End If
 End Sub
 
-' Returns the row resource
+' Returns the ExcelRow instance at the specified index, creating it if it doesn't exist.
+' <code>Dim row As ExcelRow = sheet.GetRow(5)</code>
 Public Sub GetRow(RowIdx As Int) As ExcelRow
+	Dim rowObj As ExcelRow
+#If B4A Or B4J
 	Dim r As JavaObject = nativeSheet.RunMethod("getRow", Array(RowIdx))
 	If r.IsInitialized = False Then r = nativeSheet.RunMethod("createRow", Array(RowIdx))
-	Dim rowObj As ExcelRow
 	rowObj.Initialize(managerRef, Me, r)
+#End If
 	Return rowObj
 End Sub
 
-
+' Protects the worksheet with a password.
+' <code>sheet.ProtectSheet("pass123")</code>
 Public Sub ProtectSheet(Password As String)
+#If B4A Or B4J
 	nativeSheet.RunMethod("protectSheet", Array(Password))
+#End If
 End Sub
 
 ' === SAFE ADJUSTMENT ENGINEERING FOR ANDROID ===
 
-
-
-' Finds the index of the last row with data
+' Finds the 0-based index of the last row containing actual cell data.
+' <code>Dim lastRow As Int = sheet.LastRowWithData</code>
 Public Sub LastRowWithData As Int
+#If B4A Or B4J
 	Dim lastRow As Int = nativeSheet.RunMethod("getLastRowNum", Null)
 	For i = lastRow To 0 Step -1
 		Dim r As JavaObject = nativeSheet.RunMethod("getRow", Array(i))
 		If r.IsInitialized Then
-			' Pass the Java object directly
 			If RowHasData(r) Then Return i
 		End If
 	Next
+#End If
 	Return -1
 End Sub
 
-Private Sub RowHasData(r As JavaObject) As Boolean
-	Dim lastCell As Int = r.RunMethod("getLastCellNum", Null)
+' Helper to determine if a POI Row contains any non-blank cells.
+Private Sub RowHasData(r As Object) As Boolean
+#If B4A Or B4J
+	Dim joRow As JavaObject = r
+	Dim lastCell As Int = joRow.RunMethod("getLastCellNum", Null)
 	For j = 0 To lastCell - 1
-		Dim cell As JavaObject = r.RunMethod("getCell", Array(j))
+		Dim cell As JavaObject = joRow.RunMethod("getCell", Array(j))
 		If cell.IsInitialized Then
-			' 🔥 CORRECTION FOR POI 5: Get the enum type name as String
 			Dim cellTypeEnum As JavaObject = cell.RunMethod("getCellType", Null)
 			Dim typeName As String = cellTypeEnum.RunMethod("name", Null)
             
-			' If it's not blank and not an error, there is data
 			If typeName <> "BLANK" And typeName <> "ERROR" Then
-				' Check that the content is not just whitespace
 				If typeName = "STRING" Then
 					If cell.RunMethod("getStringCellValue", Null).As(String).Trim <> "" Then Return True
 				Else
-					Return True ' It's numeric, boolean or formula
+					Return True
 				End If
 			End If
 		End If
 	Next
+#End If
 	Return False
 End Sub
 
-
-' <code>Dim uCol As Int = MySheet.LastColumnWithData</code>
+' Returns the 0-based index of the last column containing actual cell data.
+' <code>Dim lastCol As Int = sheet.LastColumnWithData</code>
 Public Sub LastColumnWithData As Int
+#If B4A Or B4J
 	Dim lastRowIdx As Int = nativeSheet.RunMethod("getLastRowNum", Null)
 	Dim maxColFound As Int = -1
     
 	For i = 0 To lastRowIdx
 		Dim r As JavaObject = nativeSheet.RunMethod("getRow", Array(i))
 		If r.IsInitialized Then
-			' Find the ACTUAL last column with content in this section
 			Dim lastCellInRow As Int = GetLastCellInRowWithData(r)
 			If lastCellInRow > maxColFound Then maxColFound = lastCellInRow
 		End If
 	Next
     
 	Return maxColFound
+#Else
+	Return -1
+#End If
 End Sub
 
-' Helper to ignore cells with formatting but no value (Blank) adapted for POI 5
-Private Sub GetLastCellInRowWithData(Row As JavaObject) As Int
-	Dim lastCellNum As Int = Row.RunMethod("getLastCellNum", Null)
+' Helper to find the last cell in a row containing data (ignoring empty styled cells).
+Private Sub GetLastCellInRowWithData(Row As Object) As Int
+#If B4A Or B4J
+	Dim joRow As JavaObject = Row
+	Dim lastCellNum As Int = joRow.RunMethod("getLastCellNum", Null)
 	If lastCellNum <= 0 Then Return -1
     
-	' Search from right to left for the first cell that is not BLANK or ERROR
 	For i = lastCellNum - 1 To 0 Step -1
-		Dim cell As JavaObject = Row.RunMethod("getCell", Array(i))
+		Dim cell As JavaObject = joRow.RunMethod("getCell", Array(i))
 		If cell.IsInitialized Then
-			' 🔥 POI 5 CORRECTION: Compare the Enum name, not the integer
 			Dim cellTypeEnum As JavaObject = cell.RunMethod("getCellType", Null)
 			Dim typeName As String = cellTypeEnum.RunMethod("name", Null)
             
 			If typeName <> "BLANK" And typeName <> "ERROR" Then
-				' If it's text, check that it's not empty after Trim
 				If typeName = "STRING" Then
 					If cell.RunMethod("getStringCellValue", Null).As(String).Trim <> "" Then Return i
 				Else
@@ -112,22 +125,22 @@ Private Sub GetLastCellInRowWithData(Row As JavaObject) As Int
 			End If
 		End If
 	Next
+#End If
 	Return -1
 End Sub
 
+#If B4A Or B4J
+' Returns the native POI Sheet JavaObject.
 Public Sub getNativeSheet As JavaObject
 	Return nativeSheet
 End Sub
+#End If
 
+' === COMPREHENSIVE STYLE ENGINE (CACHE OPTIMIZED) ===
 
-
-
-' === STYLE ENGINE WITH CACHE (THE HEART OF THE MODULE) ===
-
-' === COMPREHENSIVE STYLE ENGINE (THE ONLY ERROR-FREE WAY) ===
-
-' <code>sheet.SetRangeStyle(0, 10, 0, 5, True, True, True, excel.PASTEL_CORAL, False, False, excel.COLOR_RED, "@")</code>
-Public Sub SetRangeStyle(F1 As Int, F2 As Int, C1 As Int, C2 As Int, _
+' Applies a cached CellStyle style across a range of cells.
+' <code>sheet.SetRangeStyle(0, 10, 0, 5, True, True, True, excel.PASTEL_CORAL, False, False, excel.COLOR_RED, 12)</code>
+Public Sub SetRangeStyle(StartRow As Int, EndRow As Int, StartCol As Int, EndCol As Int, _
                         Bold As Boolean, _
                         Center As Boolean, _
                         Border As Boolean, _
@@ -136,119 +149,50 @@ Public Sub SetRangeStyle(F1 As Int, F2 As Int, C1 As Int, C2 As Int, _
                         Underline As Boolean, _
                         TextColor As Short, _
                         TextSize As String)
-    
-	' Get the style from cache that already combines EVERYTHING
+#If B4A Or B4J
 	Dim style As JavaObject = GetCachedStyle(Bold, Center, Border, ColorBG, Italic, Underline, TextColor, TextSize)
     
-	For r = F1 To F2
+	For r = StartRow To EndRow
 		Dim rowObj As ExcelRow = GetRow(r)
-		For c = C1 To C2
-			' Apply the complete style object. No property overrides another.
+		For c = StartCol To EndCol
 			rowObj.GetCell(c).getObject.RunMethod("setCellStyle", Array(style))
 		Next
 	Next
+#End If
 End Sub
 
-' Visual resources engine with Intelligent Cache
-' Manages Borders, Alignment, Fonts, Colors and Sizes in an optimized way.
+' Helper to retrieve or create a cached style from the workbook manager.
 Private Sub GetCachedStyle(Bold As Boolean, Center As Boolean, Border As Boolean, ColorBG As Short, _
                           Italic As Boolean, Underline As Boolean, TextColor As Short, _
                           FontSize As Int) As JavaObject
-    
-	' 1. Generate the resource key.
-	' The value -1 (COLOR_NONE) is part of the key to differentiate styles without color.
-	Dim key As String = $"B${Bold}_C${Center}_Br${Border}_BG${ColorBG}_I${Italic}_U${Underline}_TC${TextColor}_S${FontSize}"$
-    
-	' 2. Check if the resource already exists in the cache map
-	If StylesCache.ContainsKey(key) Then
-		Return StylesCache.Get(key)
-	End If
-    
-	' 3. If it doesn't exist, create a new style in the Workbook
-	Dim st As JavaObject = managerRef.getNativeWorkbook.RunMethod("createCellStyle", Null)
-    
-	' --- PROPERTY: ALIGNMENT ---
-	If Center Then
-		Dim alignEnum As JavaObject : alignEnum.InitializeStatic("org.apache.poi.ss.usermodel.HorizontalAlignment")
-		Dim vAlignEnum As JavaObject : vAlignEnum.InitializeStatic("org.apache.poi.ss.usermodel.VerticalAlignment")
-		st.RunMethod("setAlignment", Array(alignEnum.GetField("CENTER")))
-		st.RunMethod("setVerticalAlignment", Array(vAlignEnum.GetField("CENTER")))
-	End If
-	
-	' --- PROPERTY: BORDERS ---
-	If Border Then
-		Dim bEnum As JavaObject : bEnum.InitializeStatic("org.apache.poi.ss.usermodel.BorderStyle")
-		Dim thin As Object = bEnum.GetField("THIN")
-		st.RunMethod("setBorderTop", Array(thin))
-		st.RunMethod("setBorderBottom", Array(thin))
-		st.RunMethod("setBorderLeft", Array(thin))
-		st.RunMethod("setBorderRight", Array(thin))
-	End If
-	
-	' --- PROPERTY: FONT (Bold, Italic, Size, Color) ---
-	Dim font As JavaObject = managerRef.getNativeWorkbook.RunMethod("createFont", Null)
-	font.RunMethod("setBold", Array(Bold))
-	font.RunMethod("setItalic", Array(Italic))
-    
-	' Apply size if greater than 0
-	If FontSize > 0 Then
-		font.RunMethod("setFontHeightInPoints", Array(FontSize.As(Short)))
-	End If
-    
-	' Underline (1 = Standard)
-	If Underline Then font.RunMethod("setUnderline", Array(1))
-    
-	' COLOR_NONE LOGIC: Only applies text color if it's not -1
-	If TextColor <> managerRef.COLOR_NONE Then
-		font.RunMethod("setColor", Array(TextColor))
-	End If
-    
-	st.RunMethod("setFont", Array(font))
-    
-	' --- PROPERTY: BACKGROUND ---
-	Dim fillEnum As JavaObject : fillEnum.InitializeStatic("org.apache.poi.ss.usermodel.FillPatternType")
-	
-	' COLOR_NONE LOGIC: If it's -1 or White (9), leave the cell without fill
-	If ColorBG <> managerRef.COLOR_NONE And ColorBG <> 9 Then
-		st.RunMethod("setFillPattern", Array(fillEnum.GetField("SOLID_FOREGROUND")))
-		st.RunMethod("setFillForegroundColor", Array(ColorBG))
-	Else
-		' Force NO_FILL to make it transparent or respect the sheet background
-		st.RunMethod("setFillPattern", Array(fillEnum.GetField("NO_FILL")))
-	End If
-    
-	' 4. Save the final product in the cache and return it
-	StylesCache.Put(key, st)
-    
-	Return st
+#If B4A Or B4J
+	Return managerRef.GetCachedStyleInternal(Bold, Center, Border, ColorBG, Italic, Underline, TextColor, FontSize, 0)
+#Else
+	Return Null
+#End If
 End Sub
-' === ADDITIONAL UTILITIES ===
 
-' Automatic column adjustment (Safe for Android)
+' Auto-adjusts column widths between StartCol and EndCol to fit cell contents dynamically.
+' <code>sheet.AutoSizeColumns(0, 5)</code>
 Public Sub AutoSizeColumns(StartCol As Int, EndCol As Int)
+#If B4A Or B4J
 	Try
 		Dim lastRowNum As Int = nativeSheet.RunMethod("getLastRowNum", Null)
-		' If the sheet is empty, there's nothing to adjust
 		If lastRowNum < 0 Then Return
 		
-		' Use a Map instead of an Array to avoid size issues
-		' and only process the columns we actually need.
 		Dim maxLen As Map
 		maxLen.Initialize
         
-		' Initialize the map with a minimum width (e.g., 8 characters)
 		For c = StartCol To EndCol
-			maxLen.Put(c, 8)
+			maxLen.Put(c, 8) ' Set a minimum width of 8 characters
 		Next
 
-		' 1. Scan the sheet to find maximum lengths
 		For rowIndex = 0 To lastRowNum
 			Dim row As JavaObject = nativeSheet.RunMethod("getRow", Array(rowIndex))
 			If row.IsInitialized Then
 				For col = StartCol To EndCol
 					Dim cell As JavaObject = row.RunMethod("getCell", Array(col))
 					If cell.IsInitialized Then
-						' toString is safe to get a value representation
 						Dim sValue As String = cell.RunMethod("toString", Null)
 						Dim currentMax As Int = maxLen.Get(col)
                         
@@ -260,63 +204,48 @@ Public Sub AutoSizeColumns(StartCol As Int, EndCol As Int)
 			End If
 		Next
 
-		' 2. Apply the calculated widths
 		For i = StartCol To EndCol
 			Dim colWidth As Int = maxLen.Get(i)
-            
-			' (Characters + margin) * 256 POI units[cite: 1]
-			' Use +3 as a balanced margin so it's not too tight
-			Dim finalWidth As Int = (colWidth + 3) * 256
-            
-			' Limit the maximum width to avoid exaggerated columns (optional)
-			If finalWidth > 255 * 256 Then finalWidth = 255 * 256
-            
+			Dim finalWidth As Int = (colWidth + 3) * 256 ' POI units: (chars + margin) * 256
+			If finalWidth > 255 * 256 Then finalWidth = 255 * 256 ' Bound to Excel column width limits
 			nativeSheet.RunMethod("setColumnWidth", Array(i, finalWidth))
 		Next
-        
 	Catch
 		Log("❌ Error in AutoSizeColumns: " & LastException)
 	End Try
+#End If
 End Sub
 
-
-' Applies a data format (currency, date, etc.) respecting the previous visual design
-' <code>sheet.SetRangeDataFormat(startRow + 1, lastRow, startCol + i, startCol + i, "$#,##0.00")</code>
-Public Sub SetRangeDataFormat(F1 As Int, F2 As Int, C1 As Int, C2 As Int, FormatStr As String)
+' Applies a data formatting mask across a range of cells, utilizing cached styles.
+' <code>sheet.SetRangeDataFormat(1, 100, 3, 3, "$#,##0.00")</code>
+Public Sub SetRangeDataFormat(StartRow As Int, EndRow As Int, StartCol As Int, EndCol As Int, FormatStr As String)
+#If B4A Or B4J
 	If FormatStr = "" Then Return
     
 	Dim wb As JavaObject = managerRef.getNativeWorkbook
 	Dim dataFormat As JavaObject = wb.RunMethod("createDataFormat", Null)
 	Dim formatIdx As Object = dataFormat.RunMethod("getFormat", Array(FormatStr))
     
-	For r = F1 To F2
+	For r = StartRow To EndRow
 		Dim rowObj As ExcelRow = GetRow(r)
-		For c = C1 To C2
+		For c = StartCol To EndCol
 			Dim cellJO As JavaObject = rowObj.GetCell(c).getObject
-            
-			' 1. Retrieve the visual style that the cell already has (borders, colors, etc.)
 			Dim currentStyle As JavaObject = cellJO.RunMethod("getCellStyle", Null)
-            
-			' 2. IMPORTANT: In POI we should not modify the shared style from cache.
-			' Create a new style based on the previous one for this specific cell or column.
-			' NOTE: If the report is massive, it is recommended to also cache these combinations.
-			Dim newStyle As JavaObject = wb.RunMethod("createCellStyle", Null)
-			newStyle.RunMethod("cloneStyleFrom", Array(currentStyle))
-            
-			' 3. Inject only the data format
-			newStyle.RunMethod("setDataFormat", Array(formatIdx))
-            
-			' 4. Apply it back
+			
+			' Retain existing cell style attributes and only override the data format mask in cache
+			Dim newStyle As JavaObject = managerRef.GetModifiedStyle(currentStyle, "DATAFORMAT", formatIdx)
 			cellJO.RunMethod("setCellStyle", Array(newStyle))
 		Next
 	Next
+#End If
 End Sub
 
-
-
+' Sets a clickable hyperlink address to the cell.
+' <code>sheet.AddHyperlink(1, 1, "https://www.google.com", "Go to Google")</code>
 Public Sub AddHyperlink(Row As Int, Col As Int, Address As String, Text As String)
+#If B4A Or B4J
 	Dim helper As JavaObject = managerRef.getNativeWorkbook.RunMethod("getCreationHelper", Null)
-	Dim link As JavaObject = helper.RunMethod("createHyperlink", Array(1)) ' 1 = URL
+	Dim link As JavaObject = helper.RunMethod("createHyperlink", Array(1)) ' URL Type = 1
     
 	link.RunMethod("setAddress", Array(Address))
     
@@ -324,58 +253,71 @@ Public Sub AddHyperlink(Row As Int, Col As Int, Address As String, Text As Strin
 	cell.setValue(Text)
     
 	cell.Object.RunMethod("setHyperlink", Array(link))
+#End If
 End Sub
 
-
+' Merges a rectangular block of cells.
+' <code>sheet.MergeCells(0, 1, 0, 5)</code>
 Public Sub MergeCells(FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int)
-	Dim region As JavaObject
-	region.InitializeNewInstance("org.apache.poi.ss.util.CellRangeAddress", _
+#If B4A Or B4J
+	Dim region As JavaObject = InitializeNewInstanceSafe("org.apache.poi.ss.util.CellRangeAddress", _
         Array(FirstRow, LastRow, FirstCol, LastCol))
     
 	nativeSheet.RunMethod("addMergedRegion", Array(region))
+#End If
 End Sub
 
-
+' Freezes rows and columns splits.
+' <code>sheet.Freeze(1, 1)</code>
 Public Sub Freeze(ColSplit As Int, RowSplit As Int)
+#If B4A Or B4J
 	nativeSheet.RunMethod("createFreezePane", Array(ColSplit, RowSplit))
+#End If
 End Sub
 
+' Enables Excel autofilter across a range of cells.
+' <code>sheet.SetAutoFilter(0, 100, 0, 5)</code>
 Public Sub SetAutoFilter(FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int)
-	Dim region As JavaObject
-	region.InitializeNewInstance("org.apache.poi.ss.util.CellRangeAddress", _
+#If B4A Or B4J
+	Dim region As JavaObject = InitializeNewInstanceSafe("org.apache.poi.ss.util.CellRangeAddress", _
         Array(FirstRow, LastRow, FirstCol, LastCol))
     
 	nativeSheet.RunMethod("setAutoFilter", Array(region))
+#End If
 End Sub
 
-
+' Enables Excel autofilter using a range string definition.
+' <code>sheet.SetAutoFilter2("A1:F100")</code>
 Public Sub SetAutoFilter2(Range As String)
+#If B4A Or B4J
 	Try
-		' 1. Use the CellRangeAddress class to convert the String
-		' Use InitializeStatic to access the valueOf method
-		Dim craStatic As JavaObject
-		craStatic.InitializeStatic("org.apache.poi.ss.util.CellRangeAddress")
-        
-		' 2. Get the region object from the String (e.g. "A1:B10")
+		Dim craStatic As JavaObject = InitializeStaticSafe("org.apache.poi.ss.util.CellRangeAddress")
 		Dim region As JavaObject = craStatic.RunMethod("valueOf", Array(Range))
-        
-		' 3. Apply the filter to the native sheet
 		nativeSheet.RunMethod("setAutoFilter", Array(region))
 	Catch
 		Log("❌ Error in SetAutoFilter2 (Range): " & LastException)
-		' Tip: Make sure the range is valid, for example "A1:D1"
 	End Try
+#End If
 End Sub
 
+' Password protects the worksheet.
+' <code>
+'   sheet.Protect("secretPassword")
+' </code>
 Public Sub Protect(Password As String)
+#If B4A Or B4J
 	nativeSheet.RunMethod("protectSheet", Array(Password))
+#End If
 End Sub
 
+' Auto-adjusts a column width based on characters lengths.
+' <code>
+'   sheet.AutoSizeColumnPOI(0)
+' </code>
 Public Sub AutoSizeColumnPOI(Column As Int)
+#If B4A Or B4J
 	Try
-		Dim MaxLength As Int = 5 ' Minimum initial width
-        
-		' Go through existing rows to find the longest text in that column
+		Dim MaxLength As Int = 5
 		Dim LastRow As Int = nativeSheet.RunMethod("getLastRowNum", Null)
         
 		For i = 0 To LastRow
@@ -383,28 +325,28 @@ Public Sub AutoSizeColumnPOI(Column As Int)
 			If row.IsInitialized Then
 				Dim cell As JavaObject = row.RunMethod("getCell", Array(Column))
 				If cell.IsInitialized Then
-					' Get the value as String to count characters
 					Dim cellValue As String = cell.RunMethod("toString", Null)
 					MaxLength = Max(MaxLength, cellValue.Length)
 				End If
 			End If
 		Next
         
-		' Apply the width: (characters + margin) * 256 POI units
-		' Use setColumnWidth which does NOT depend on AWT and doesn't fail on Android
 		nativeSheet.RunMethod("setColumnWidth", Array(Column, (MaxLength + 2) * 256))
-        
 	Catch
 		Log("❌ Error in AutoSizeColumnPOI: " & LastException)
-		' If counting fails, set a standard width to not crash the app
 		nativeSheet.RunMethod("setColumnWidth", Array(Column, 15 * 256))
 	End Try
+#End If
 End Sub
 
+#If B4A Or B4J
+' Returns the native POI Sheet JavaObject.
 Public Sub SheetJO As JavaObject
 	Return nativeSheet
 End Sub
+#End If
 
+' Helper to convert numeric column index to Excel column letter (e.g. 0 -> "A").
 Private Sub ColumnToLetter(col As Int) As String
 	Dim result As String = ""
 	col = col + 1
@@ -416,133 +358,183 @@ Private Sub ColumnToLetter(col As Int) As String
 	Return result
 End Sub
 
+' Creates a structured table mapping.
+' <code>sheet.CreateTable(0, 10, 0, 5)</code>
 Public Sub CreateTable(FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int)
-    
+#If B4A Or B4J
 	Dim startRef As String = ColumnToLetter(FirstCol) & (FirstRow + 1)
 	Dim endRef As String = ColumnToLetter(LastCol) & (LastRow + 1)
-    
 	Dim fullRef As String = startRef & ":" & endRef
     
 	Dim table As JavaObject = nativeSheet.RunMethod("createTable", Null)
+	Dim version As JavaObject = InitializeStaticSafe("org.apache.poi.ss.SpreadsheetVersion")
     
-	Dim version As JavaObject
-	version.InitializeStatic("org.apache.poi.ss.SpreadsheetVersion")
-    
-	Dim area As JavaObject
-	area.InitializeNewInstance("org.apache.poi.ss.util.AreaReference", _
+	Dim area As JavaObject = InitializeNewInstanceSafe("org.apache.poi.ss.util.AreaReference", _
         Array(fullRef, version.GetField("EXCEL2007")))
     
 	table.RunMethod("setArea", Array(area))
+#End If
 End Sub
 
-
-'<code>sheet.CreateTablePro(0, 20, 0, 4, "TableStyleMedium9")</code>
+' Creates a styled structured table mapping.
+' <code>sheet.CreateTable2(0, 10, 0, 5, "TableStyleMedium2")</code>
 Public Sub CreateTable2(FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int, StyleName As String)
-    
-	' 1. Create dynamic A1:D10 style reference
+#If B4A Or B4J
 	Dim startRef As String = ColumnToLetter(FirstCol) & (FirstRow + 1)
 	Dim endRef As String = ColumnToLetter(LastCol) & (LastRow + 1)
 	Dim fullRef As String = startRef & ":" & endRef
 
-	' 2. Create table
 	Dim table As JavaObject = nativeSheet.RunMethod("createTable", Null)
+	Dim version As JavaObject = InitializeStaticSafe("org.apache.poi.ss.SpreadsheetVersion")
     
-	' 3. AreaReference
-	Dim version As JavaObject
-	version.InitializeStatic("org.apache.poi.ss.SpreadsheetVersion")
-    
-	Dim area As JavaObject
-	area.InitializeNewInstance("org.apache.poi.ss.util.AreaReference", _
+	Dim area As JavaObject = InitializeNewInstanceSafe("org.apache.poi.ss.util.AreaReference", _
         Array(fullRef, version.GetField("EXCEL2007")))
     
 	table.RunMethod("setArea", Array(area))
-    
-	' 4. Enable headers
 	table.RunMethod("setHeaderRowCount", Array(1))
     
-	' 5. Apply style (TableStyle)
 	Dim ctTable As JavaObject = table.RunMethod("getCTTable", Null)
 	Dim style As JavaObject = ctTable.RunMethod("addNewTableStyleInfo", Null)
     
-	style.RunMethod("setName", Array(StyleName)) ' e.g.: TableStyleMedium2
+	style.RunMethod("setName", Array(StyleName))
 	style.RunMethod("setShowRowStripes", Array(True))
 	style.RunMethod("setShowColumnStripes", Array(False))
     
-	' 6. AutoFilter (this is KEY)
 	nativeSheet.RunMethod("setAutoFilter", Array(area))
-    
+#End If
 End Sub
 
-
+' Unprotects the worksheet.
+' <code>sheet.Unprotect</code>
 Public Sub Unprotect
+#If B4A Or B4J
 	nativeSheet.RunMethod("protectSheet", Array(Null))
+#End If
 End Sub
 
-
+' Inserts a workbook image at the top-left corner of the specified cell, spanning exactly one cell range.
+' <code>sheet.AddPictureToCell(picIdx, 1, 1)</code>
 Public Sub AddPictureToCell(PictureIndex As Int, Col As Int, Row As Int)
+#If B4A Or B4J
 	Try
 		Dim helper As JavaObject = managerRef.getNativeWorkbook.RunMethod("getCreationHelper", Null)
 		Dim anchor As JavaObject = helper.RunMethod("createClientAnchor", Null)
         
-		' Define the exact cell area
 		anchor.RunMethod("setCol1", Array(Col))
 		anchor.RunMethod("setRow1", Array(Row))
-		anchor.RunMethod("setCol2", Array(Col + 1)) ' Ends in the next column
-		anchor.RunMethod("setRow2", Array(Row + 1)) ' Ends in the next row
+		anchor.RunMethod("setCol2", Array(Col + 1))
+		anchor.RunMethod("setRow2", Array(Row + 1))
         
-		' Anchor type so it stretches with the cell
-		Dim anchorTypeEnum As JavaObject
-		anchorTypeEnum.InitializeStatic("org.apache.poi.ss.usermodel.ClientAnchor$AnchorType")
+		Dim anchorTypeEnum As JavaObject = InitializeStaticSafe("org.apache.poi.ss.usermodel.ClientAnchor$AnchorType")
 		anchor.RunMethod("setAnchorType", Array(anchorTypeEnum.GetField("MOVE_AND_RESIZE")))
         
 		Dim drawing As JavaObject = nativeSheet.RunMethod("createDrawingPatriarch", Null)
 		drawing.RunMethod("createPicture", Array(anchor, PictureIndex))
-        
-		' NOTE: Don't use pict.resize() here, as the anchor defines the size.
 	Catch
 		Log("❌ Error in AddPictureToCell: " & LastException)
 	End Try
+#End If
 End Sub
 
+' Inserts an image starting at the specified cell (Col, Row) scaled exactly to a custom width and height in pixels.
+' <code>sheet.AddPictureExact(picIdx, 1, 1, 200, 100)</code>
+Public Sub AddPictureExact(PictureIndex As Int, Col As Int, Row As Int, ScaleX As Double, ScaleY As Double)
+#If B4A Or B4J
+	Try
+		Dim helper As JavaObject = managerRef.getNativeWorkbook.RunMethod("getCreationHelper", Null)
+		Dim anchor As JavaObject = helper.RunMethod("createClientAnchor", Null)
+        
+		anchor.RunMethod("setCol1", Array(Col))
+		anchor.RunMethod("setRow1", Array(Row))
+        
+		' Set anchor type to MOVE_DONT_RESIZE to prevent logo stretching on column auto-sizing
+		Try
+			Dim anchorTypeClass As String = "org.apache.poi.ss.usermodel.ClientAnchor$AnchorType"
+			Dim enumJO As JavaObject = InitializeStaticSafe(anchorTypeClass)
+			Dim moveDontResize As JavaObject = enumJO.GetField("MOVE_DONT_RESIZE")
+			anchor.RunMethod("setAnchorType", Array(moveDontResize))
+		Catch
+			Try
+				anchor.RunMethod("setAnchorType", Array(2)) ' Fallback to POI 3.x integer constant
+			Catch
+				Log("⚠️ Could not set anchor type: " & LastException)
+			End Try
+		End Try
+        
+		Dim drawing As JavaObject = nativeSheet.RunMethod("createDrawingPatriarch", Null)
+		Dim pict As JavaObject = drawing.RunMethod("createPicture", Array(anchor, PictureIndex))
+        
+		Dim meJO As JavaObject = Me
+		meJO.RunMethod("fixResizePicture", Array(pict, ScaleX, ScaleY))
+	Catch
+		Log("❌ Error in AddPictureExact: " & LastException)
+	End Try
+#End If
+End Sub
 
+' Inserts an image starting at the specified cell (Col, Row) scaled exactly to a custom width and height in pixels.
+' This helper automatically loads the image file to calculate the correct scaling factor.
+' <code>sheet.AddPictureExact2(picIdx, 1, 1, File.DirAssets, "logo.png", 200, 100)</code>
+Public Sub AddPictureExact2(PictureIndex As Int, Col As Int, Row As Int, Dir As String, FileName As String, WidthPixels As Int, HeightPixels As Int)
+#If B4A Or B4J
+	Try
+		Dim bmp As B4XBitmap = xui.LoadBitmap(Dir, FileName)
+		Dim scaleX As Double = WidthPixels / bmp.Width
+		Dim scaleY As Double = HeightPixels / bmp.Height
+		AddPictureExact(PictureIndex, Col, Row, scaleX, scaleY)
+	Catch
+		Log("❌ Error in AddPictureExact2: " & LastException)
+	End Try
+#End If
+End Sub
+
+' Adds a dropdown select combobox list constraint to a cell range.
+' <code>sheet.AddComboBox(Array As String("A", "B", "C"), 1, 20, 1, 1)</code>
 Public Sub AddComboBox(Options() As String, FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int)
+#If B4A Or B4J
 	Try
 		Dim helper As JavaObject = nativeSheet.RunMethod("getDataValidationHelper", Null)
-        
-		' Create the constraint with the list of options
 		Dim constraint As JavaObject = helper.RunMethod("createExplicitListConstraint", Array(Options))
         
-		' Define the cell range (CellRangeAddressList)
-		Dim addressList As JavaObject
-		addressList.InitializeNewInstance("org.apache.poi.ss.util.CellRangeAddressList", Array(FirstRow, LastRow, FirstCol, LastCol))
+		Dim addressList As JavaObject = InitializeNewInstanceSafe("org.apache.poi.ss.util.CellRangeAddressList", Array(FirstRow, LastRow, FirstCol, LastCol))
         
-		' Create the validation
 		Dim validation As JavaObject = helper.RunMethod("createValidation", Array(constraint, addressList))
-        
-		' Additional settings
 		validation.RunMethod("setShowErrorBox", Array(True))
 		validation.RunMethod("setEmptyCellAllowed", Array(True))
         
-		' Apply to the sheet[cite: 2]
 		nativeSheet.RunMethod("addValidationData", Array(validation))
-        
 	Catch
 		Log("❌ Error in Validation: " & LastException)
 	End Try
+#End If
 End Sub
 
-
+' Activates/switches active worksheet focus by name.
+' <code>
+'   sheet.SetActiveSheetByName("Summary")
+' </code>
 Public Sub SetActiveSheetByName(Name As String)
+#If B4A Or B4J
 	nativeSheet = managerRef.getNativeWorkbook.RunMethod("getSheet", Array(Name))
+#End If
 End Sub
 
-
+' Activates/switches active worksheet focus by index.
+' <code>
+'   sheet.SetActiveSheetByIndex(0)
+' </code>
 Public Sub SetActiveSheetByIndex(Index As Int)
+#If B4A Or B4J
 	nativeSheet = managerRef.getNativeWorkbook.RunMethod("getSheetAt", Array(Index))
+#End If
 End Sub
 
-' Clones an existing sheet by its index and gives it a new name
+' Clones an existing sheet by index and names the clone sheet.
+' <code>
+'   sheet.CloneSheet(0, "Sales_Copy")
+' </code>
 Public Sub CloneSheet(SourceIndex As Int, NewName As String)
+#If B4A Or B4J
 	Try
 		Dim workbook As JavaObject = managerRef.getNativeWorkbook
 		Dim ClonedSheet As JavaObject = workbook.RunMethod("cloneSheet", Array(SourceIndex))
@@ -552,14 +544,15 @@ Public Sub CloneSheet(SourceIndex As Int, NewName As String)
 	Catch
 		Log("❌ Error cloning sheet: " & LastException)
 	End Try
+#End If
 End Sub
 
-
+' Clones an existing sheet by name and names the clone sheet.
+' <code>sheet.CloneSheetByName("Sales", "Sales_Copy")</code>
 Public Sub CloneSheetByName(ExistingName As String, NewName As String)
+#If B4A Or B4J
 	Try
 		Dim workbook As JavaObject = managerRef.getNativeWorkbook
-        
-		' Find the index of the original sheet by its name
 		Dim SourceIndex As Int = workbook.RunMethod("getSheetIndex", Array(ExistingName))
         
 		If SourceIndex = -1 Then
@@ -567,10 +560,7 @@ Public Sub CloneSheetByName(ExistingName As String, NewName As String)
 			Return
 		End If
         
-		' Use the native method to clone
 		Dim ClonedSheet As JavaObject = workbook.RunMethod("cloneSheet", Array(SourceIndex))
-        
-		' Get the index of the new cloned sheet to rename it
 		Dim NewIndex As Int = workbook.RunMethod("getSheetIndex", Array(ClonedSheet))
 		workbook.RunMethod("setSheetName", Array(NewIndex, NewName))
         
@@ -578,9 +568,15 @@ Public Sub CloneSheetByName(ExistingName As String, NewName As String)
 	Catch
 		Log("❌ Error cloning sheet by name: " & LastException)
 	End Try
+#End If
 End Sub
 
+' Removes a sheet by name.
+' <code>
+'   sheet.RemoveSheetByName("Old_Data")
+' </code>
 Public Sub RemoveSheetByName(SheetName As String)
+#If B4A Or B4J
 	Try
 		Dim workbook As JavaObject = managerRef.getNativeWorkbook
 		Dim index As Int = workbook.RunMethod("getSheetIndex", Array(SheetName))
@@ -594,21 +590,21 @@ Public Sub RemoveSheetByName(SheetName As String)
 	Catch
 		Log("❌ Error removing sheet: " & LastException)
 	End Try
+#End If
 End Sub
 
+' Copies a sheet structure and content directly into another workbook.
+' <code>sheet.CopySheetToNewWorkbook(excelDest, "Exported_Sheet")</code>
 Public Sub CopySheetToNewWorkbook(TargetManager As ExcelManager, NewSheetName As String)
+#If B4A Or B4J
 	Try
-		' 1. Create the new sheet in the destination workbook
 		Dim targetSheet As JavaObject = TargetManager.getNativeWorkbook.RunMethod("createSheet", Array(NewSheetName))
-        
 		Dim RowCount As Int = nativeSheet.RunMethod("getLastRowNum", Null)
         
 		For i = 0 To RowCount
 			Dim sourceRow As JavaObject = nativeSheet.RunMethod("getRow", Array(i))
 			If sourceRow.IsInitialized Then
 				Dim targetRow As JavaObject = targetSheet.RunMethod("createRow", Array(i))
-                
-				' Copy row height
 				targetRow.RunMethod("setHeight", Array(sourceRow.RunMethod("getHeight", Null)))
                 
 				Dim colCount As Int = sourceRow.RunMethod("getLastCellNum", Null)
@@ -625,9 +621,11 @@ Public Sub CopySheetToNewWorkbook(TargetManager As ExcelManager, NewSheetName As
 	Catch
 		Log("❌ Error copying between workbooks: " & LastException)
 	End Try
+#End If
 End Sub
 
-' Helper to copy content (you can expand to copy styles)
+#If B4A Or B4J
+' Helper to copy cell content by type.
 Private Sub CopyCellContent(OldCell As JavaObject, NewCell As JavaObject)
 	Dim cellType As Int = OldCell.RunMethod("getCellType", Null)
 	Select Case cellType
@@ -641,71 +639,249 @@ Private Sub CopyCellContent(OldCell As JavaObject, NewCell As JavaObject)
 			NewCell.RunMethod("setCellFormula", Array(OldCell.RunMethod("getCellFormula", Null)))
 	End Select
 End Sub
+#End If
 
+' Inserts a workbook image spanning a specific rectangular cell range.
+' <code>sheet.AddPictureRange(picIdx, 1, 1, 3, 5)</code>
 Public Sub AddPictureRange(PictureIndex As Int, Col1 As Int, Row1 As Int, Col2 As Int, Row2 As Int)
+#If B4A Or B4J
 	Try
 		Dim helper As JavaObject = managerRef.getNativeWorkbook.RunMethod("getCreationHelper", Null)
 		Dim anchor As JavaObject = helper.RunMethod("createClientAnchor", Null)
         
-		' Assign coordinates
 		anchor.RunMethod("setCol1", Array(Col1))
 		anchor.RunMethod("setRow1", Array(Row1))
 		anchor.RunMethod("setCol2", Array(Col2))
 		anchor.RunMethod("setRow2", Array(Row2))
         
-		' --- CORRECTION FOR POI 5.x ---
-		' Instead of passing a 0, pass the MOVE_AND_RESIZE Enum object
-		Dim anchorTypeEnum As JavaObject
-		anchorTypeEnum.InitializeStatic("org.apache.poi.ss.usermodel.ClientAnchor$AnchorType")
-        
-		' Use MOVE_AND_RESIZE (which is equivalent to the old 0)
+		Dim anchorTypeEnum As JavaObject = InitializeStaticSafe("org.apache.poi.ss.usermodel.ClientAnchor$AnchorType")
 		anchor.RunMethod("setAnchorType", Array(anchorTypeEnum.GetField("MOVE_AND_RESIZE")))
         
-		' Create the drawing resource and the image
 		Dim drawing As JavaObject = SheetJO.RunMethod("createDrawingPatriarch", Null)
 		drawing.RunMethod("createPicture", Array(anchor, PictureIndex))
-        
 	Catch
 		Log("❌ Critical error in AddPictureRange: " & LastException)
 	End Try
+#End If
 End Sub
-' <code>sheet.SetColumnWidth(3, 5000)</code>
+
+' Sets the width of a specific column.
+' <code>
+'   sheet.SetColumnWidth(0, 4500)
+' </code>
 Public Sub SetColumnWidth(ColumnIndex As Int, Width As Int)
+#If B4A Or B4J
 	nativeSheet.RunMethod("setColumnWidth", Array(ColumnIndex, Width))
+#End If
 End Sub
 
-' Shows or hides the gridlines
+' Sets visibility of gridlines in the worksheet.
+' <code>
+'   sheet.SetDisplayGridlines(True)
+' </code>
 Public Sub SetDisplayGridlines(Visible As Boolean)
+#If B4A Or B4J
 	SheetJO.RunMethod("setDisplayGridlines", Array(Visible))
+#End If
 End Sub
 
-' Changes the height of a specific row (e.g., so the title has breathing room)
-' <code>sheet.SetRowHeight(0, 50)</code>
+' Sets the height of a specific row in points.
+' <code>
+'   sheet.SetRowHeight(0, 25)
+' </code>
 Public Sub SetRowHeight(RowIndex As Int, Height As Float)
+#If B4A Or B4J
 	Dim r As ExcelRow = GetRow(RowIndex)
-	' POI uses units of 1/20 point, B4A uses points. Multiply by 20.
 	r.HeightPoints = Height
+#End If
 End Sub
 
-' Changes the height of a range of rows at once
+' Sets the height of a range of rows at once in points.
+' <code>
+'   sheet.SetRowsHeight(1, 10, 22.5)
+' </code>
 Public Sub SetRowsHeight(RowStart As Int, RowEnd As Int, Height As Float)
 	For r = RowStart To RowEnd
 		SetRowHeight(r, Height)
 	Next
 End Sub
 
-' Activates text wrapping in a range. 
-' Crucial so long texts don't get cut off in Android.
+' Enables or disables word wrapping in a cell range.
+' <code>
+'   sheet.SetRangeWrapText(1, 10, 0, 5, True)
+' </code>
 Public Sub SetRangeWrapText(RowStart As Int, RowEnd As Int, ColStart As Int, ColEnd As Int, Enabled As Boolean)
+#If B4A Or B4J
 	For r = RowStart To RowEnd
 		Dim rowObj As ExcelRow = GetRow(r)
 		For c = ColStart To ColEnd
 			Dim cell As ExcelCell = rowObj.GetCell(c)
 			Dim currentStyle As JavaObject = cell.Object.RunMethod("getCellStyle", Null)
-			
-			' Clone or modify the style to enable wrapping
 			currentStyle.RunMethod("setWrapText", Array(Enabled))
 			cell.Object.RunMethod("setCellStyle", Array(currentStyle))
 		Next
 	Next
+#End If
 End Sub
+
+#If B4A Or B4J
+Private Sub InitializeStaticSafe(ClassName As String) As JavaObject
+	Dim jo As JavaObject
+	Dim realClassName As String = ClassName
+	#If B4A
+	Try
+		jo.InitializeStatic(ClassName)
+	Catch
+		realClassName = "poishadow." & ClassName
+		jo.InitializeStatic(realClassName)
+	End Try
+	#Else
+	jo.InitializeStatic(ClassName)
+	#End If
+	Return jo
+End Sub
+
+Private Sub InitializeNewInstanceSafe(ClassName As String, Args() As Object) As JavaObject
+	Dim jo As JavaObject
+	Dim realClassName As String = ClassName
+	#If B4A
+	Try
+		jo.InitializeNewInstance(ClassName, Args)
+	Catch
+		realClassName = "poishadow." & ClassName
+		jo.InitializeNewInstance(realClassName, Args)
+	End Try
+	#Else
+	Return jo.InitializeNewInstance(realClassName, Args)
+	#End If
+	Return jo
+End Sub
+
+#End If
+
+' Exports the active Excel sheet contents to an HTML table string.
+' This HTML represents rows, cells, cell text values, alignments, and background colors.
+' <code>Dim html As String = sheet.ExportToHTML</code>
+Public Sub ExportToHTML As String
+#If B4A Or B4J
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("<!DOCTYPE html><html><head><meta charset='utf-8'><style>")
+	sb.Append("body { font-family: sans-serif; margin: 20px; }")
+	sb.Append("table { border-collapse: collapse; width: auto; }")
+	sb.Append("td { border: 1px solid #ccc; padding: 6px; min-width: 60px; font-size: 10pt; }")
+	sb.Append("</style></head><body><table>")
+    
+	Try
+		Dim firstRow As Int = nativeSheet.RunMethod("getFirstRowNum", Null)
+		Dim lastRow As Int = nativeSheet.RunMethod("getLastRowNum", Null)
+        
+		For r = firstRow To lastRow
+			Dim rowJO As JavaObject = nativeSheet.RunMethod("getRow", Array(r))
+			If rowJO.IsInitialized = False Then
+				sb.Append("<tr></tr>")
+				Continue
+			End If
+            
+			sb.Append("<tr>")
+			Dim lastCell As Int = rowJO.RunMethod("getLastCellNum", Null)
+			For c = 0 To lastCell - 1
+				Dim cellJO As JavaObject = rowJO.RunMethod("getCell", Array(c))
+				If cellJO.IsInitialized = False Then
+					sb.Append("<td></td>")
+					Continue
+				End If
+                
+				Dim cellValue As String = ""
+				Try
+					cellValue = cellJO.RunMethod("toString", Null)
+				Catch
+				End Try
+                
+				Dim styleStyle As String = ""
+				Dim cellStyle As JavaObject = cellJO.RunMethod("getCellStyle", Null)
+				If cellStyle.IsInitialized Then
+					Dim fillCol As JavaObject = cellStyle.RunMethod("getFillForegroundColorColor", Null)
+					If fillCol.IsInitialized Then
+						Dim hex As String = ExtractColorHex(fillCol)
+						If hex <> "" Then
+							styleStyle = styleStyle & "background-color: #" & hex & ";"
+						End If
+					End If
+                    
+					Dim alignObj As JavaObject = cellStyle.RunMethod("getAlignment", Null)
+					If alignObj.IsInitialized Then
+						Dim alignStr As String = alignObj.RunMethod("name", Null).As(String).ToLowerCase
+						styleStyle = styleStyle & "text-align: " & alignStr & ";"
+					End If
+				End If
+                
+				sb.Append("<td")
+				If styleStyle <> "" Then sb.Append(" style='" & styleStyle & "'")
+				sb.Append(">")
+				sb.Append(cellValue.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;"))
+				sb.Append("</td>")
+			Next
+			sb.Append("</tr>")
+		Next
+	Catch
+		Log("❌ Error exporting Excel to HTML: " & LastException)
+	End Try
+    
+	sb.Append("</table></body></html>")
+	Return sb.ToString
+#Else
+	Return ""
+#End If
+End Sub
+
+Private Sub ExtractColorHex(color As JavaObject) As String
+	Try
+		Dim hex As String = color.RunMethod("getARGBHex", Null)
+		If hex <> "null" And hex <> Null And hex <> "" Then
+			If hex.Length = 8 Then Return hex.SubString(2) ' Remove alpha
+			Return hex
+		End If
+	Catch
+	End Try
+	Return ""
+End Sub
+
+' Returns the name of this worksheet.
+' <code>
+'   Dim name As String = sheet.SheetName
+' </code>
+Public Sub getSheetName As String
+#If B4A Or B4J
+	Return nativeSheet.RunMethod("getSheetName", Null)
+#Else
+	Return ""
+#End If
+End Sub
+
+' Returns the 0-based index of this worksheet inside the workbook.
+' <code>
+'   Dim idx As Int = sheet.SheetIndex
+' </code>
+Public Sub getSheetIndex As Int
+#If B4A Or B4J
+	Return managerRef.getNativeWorkbook.RunMethod("getSheetIndex", Array(nativeSheet))
+#Else
+	Return -1
+#End If
+End Sub
+
+
+
+#If Java
+import java.lang.reflect.Method;
+
+public void fixResizePicture(Object picture, double scaleX, double scaleY) {
+    try {
+        Method resizeMethod = picture.getClass().getMethod("resize", double.class, double.class);
+        resizeMethod.invoke(picture, scaleX, scaleY);
+    } catch (Exception e) {
+        System.err.println("Error resizing picture: " + e.getMessage());
+    }
+}
+#End If

@@ -1,5 +1,5 @@
 ### Check an mp4 file is structurally complete - courtesy of Claude code by JackKirk
-### 08/07/2026
+### 08/09/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/171739/)
 
 ```B4X
@@ -134,3 +134,7 @@ Private Sub Is_Complete_MP4(Directory As String, Filename As String) As Boolean
   
 End Sub
 ```
+
+  
+  
+My use case was checking a mp4 survived an FTP upload.

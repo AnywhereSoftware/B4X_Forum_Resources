@@ -1,7 +1,9 @@
 ### Theme Colors by Erel
-### 07/29/2026
+### 08/10/2026
 [B4X Forum - B4A - Code snippets](https://www.b4x.com/android/forum/threads/87716/)
 
+Edge to edge example: <https://www.b4x.com/android/forum/threads/actionbar-and-statusbar-colors-programmatically-with-edge-to-edge.171763/>  
+  
 Changing the action bar, status bar and navigation bar colors is done with resources set in the manifest editor.  
   
   

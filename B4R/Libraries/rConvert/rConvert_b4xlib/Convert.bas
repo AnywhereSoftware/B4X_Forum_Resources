@@ -15,7 +15,7 @@ Version=4
 ' DependsOn:    rRandomAccessFile 1.91 or higher.
 ' Author:      	Robert W.B. Linn (c) 2025-2026 MIT
 ' Date:         See Process_Globals VERSION
-' Version:		1.5.0
+' Version:		1.6.0
 ' ================================================================
 #End Region
 
@@ -58,6 +58,12 @@ Version=4
 'FloatToBytes(value) : 32-Bit float > little-endian bytes.
 'BytesToFloat(b) : Little-endian 4 bytes > 32-Bit float.
 '  
+'-- Double 64-bit (ESP32 only) ---
+'D64Millis - Fetches the True 13-digit absolute Unix epoch milliseconds from the hardware.
+'D64ToBytes(d) - Convert large Double into the 8-byte global Array `D64Buffer`. **Note**: Tiny rounding steps may occur on high values during inline B4R math operations (e.g., a difference of 9984ms instead of exactly 10000ms).
+'D64ToString(d) - Format any large Double safely into the global Array `D64String` As printable text characters To bypass standard B4R Log `ovf` limitations.
+'D64ToHex(d) - Convert large Double into a 16-character hexadecimal string, with option To swap byte-order To Little- Or Big-Endian.
+
 '-- Bin --
 'ByteToBin(b) : Convert 0–255 byte > "xxxxxxxx" binary string.
 'BytesToBin(b()) : Converts byte array > Binary string representation.
@@ -135,7 +141,7 @@ Version=4
 
 Sub Process_Globals
 
-	Public VERSION As ULong = 20260414
+	Public VERSION As ULong = 20260810
 
 	' Constants for numeric ranges
 	' Based on Arduino / C standard integer sizes
@@ -159,6 +165,14 @@ Sub Process_Globals
     Public Const UINT32_MIN 		As ULong = 0
     Public Const UINT32_MAX			As ULong = 4294967295
 
+	' D64 (double 64-bit ESP32 only)
+    ' Receive the 64-bit value from Inline C
+    Public D64Val As Double
+	' Raw 8-byte buffer register
+	Public D64Buffer(8) As Byte
+	' Raw 16-byte HEX string register
+	Public D64String(16) As Byte
+	
     ' -------------------------
     ' Floating point types
     ' -------------------------
@@ -535,7 +549,7 @@ End Sub
 '----------------------------------------------
 Public Sub BytesToFloatScaled(b() As Byte, fractions As Byte) As Float
 	Dim f As Float = BytesToFloat(b)
-	Return round(f * 10.0)/10.0
+	Return Round(f * 10.0)/10.0
 
 '	Dim f As Float = BytesToFloat(b)
 '	' Scale
@@ -1413,4 +1427,142 @@ Public Sub DirectionToString(direction As Byte) As String
 			Return ""
 	End Select
 End Sub
+#End Region
+
+'====================================================
+' D64 - 64-bit data type ESP32 only
+' ESP32 - a double is a true 64-Bit IEEE 754 precision floating-point number And is exactly 8 bytes long (unlike 8-Bit AVR Arduinos where double is only 4 bytes).
+' Endianness: The ESP32 uses Little-Endian. The least significant byte is stored at the lowest memory address (byteArray[0]). 
+' If receiving device Or protocol expects Big-Endian, ensure To reverse the Array order before sending.
+' Note on Math Precision:
+' Because B4R processes standard inline calculations (like Millis + 10000) through a temporary 32-bit single-precision layer, notice tiny rounding 
+' steps (e.g., a difference of 9984 instead of exactly 10000). 
+' This is a normal characteristic of B4R's core variable handling and is OK for time tracking!
+'====================================================
+#Region D64
+' D64Millis
+' Gets the absolute Unix time epoch in milliseconds as a Double.
+' Perfect for high-precision time tracking and native B4R math.
+' Fetches the absolute Unix time epoch in milliseconds as a Double
+' Parameters:
+'	None
+' Returns:
+'	Double
+Public Sub D64Millis() As Double
+	RunNative("D64Millis", Null)
+	Return D64Val
+End Sub
+
+' D64ToBytes
+' Extracts the raw 8-byte layout of an ESP32 double into the global 8-byte array D64Buffer
+' Parameters:
+'	Value - Double
+' Returns:
+'	Global var D64Buffer(8) As Byte
+Public Sub D64ToBytes(Value As Double) As Byte()
+	RunNative("D64ToBytes", Value)
+	Return D64Buffer
+End Sub
+
+' D64ToHex
+' Convert the 64-bit double to a 16-character HEX string (with option to reverse as Big-Endian)
+' Parameters:
+'    Value - Double
+'    BigEndian - True to reverse the byte-order
+' Returns:
+'    String - 16-character HEX
+Public Sub D64ToHex(Value As Double, BigEndian As Boolean) As String
+	RunNative("D64ToBytes", Value)
+	If BigEndian Then
+		Return ByteConv.HexFromBytes(ReverseBytes(D64Buffer))
+	Else
+		Return ByteConv.HexFromBytes(D64Buffer)
+	End If
+End Sub
+
+' D64ToString
+' Extracts the raw 8-byte layout of an ESP32 double into the global array D64String
+' Parameters:
+'	Value - Double
+' Returns
+'	Global var D64String(16) As Byte
+Public Sub D64ToString(Value As Double) As Byte()
+	RunNative("D64ToString", Value)
+	Return D64String
+End Sub
+
+'----------------------------------------------
+' INLINE 
+'----------------------------------------------
+#If C
+
+// Convert time millis to global b4r double 64-bit as long long integer
+void D64Millis(B4R::Object* args) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    
+    // Calculate 64-bit milliseconds
+	// tv.tv_sec is a real 64-bit integer (time_t)
+	// It is casted to a int64_t and then multiply by 1000LL (a literal 64-bit Long Long integer).
+    int64_t ms = ((int64_t)tv.tv_sec * 1000LL) + ((int64_t)tv.tv_usec / 1000LL);
+    
+    // Assign the value directly to the global B4R Double variable without wrapper macros
+    // Use the lowercase class name variable (see src for reference)
+    b4r_convert::_d64val = (double)ms;
+}
+
+// Convert double value into global array D64Buffer(8) As Byte
+// Argument must be 10-digits (i.e. 1786176213) and NOT 13-digits.
+// Example: Double 1786176208896
+// Output in Little-Endian order (from Byte 7 down to Byte 0):0x00 0x00 0x01 0x9F 0xE0 0x66 0x00 0x00
+// Called via: RunNative("D64ToBytes", MillisNow)
+void D64ToBytes(B4R::Object* args) {
+    // Extract the double value from the B4R argument wrapper
+    double val = args->toDouble();
+    
+    // Convert the floating-point double into a raw 64-bit integer
+    // Use round() here too just in case floating point inaccuracies skewed the value
+    int64_t raw_integer = (int64_t)round(val); 
+   
+    // Copy the 8 bytes of the int64_t directly into the B4R global data buffer
+    // This removes the intermediate local array loop entirely
+    memcpy(b4r_convert::_d64buffer->data, &raw_integer, sizeof(int64_t));
+}
+
+// Convert double value into global array D64String(16) As Byte
+// Argument must be 10-digits (i.e. 1786176213) and NOT 13-digits.
+// Formats ANY B4R Double into the global text byte array with almost 100% precision
+// Called via: RunNative("D64ToString", MillisNow)
+void D64ToString(B4R::Object* args) {
+	// Cast argument to double
+    double val = args->toDouble();
+    
+    // Round to nearest whole number to ensure floating-point precision stays intact
+    int64_t raw_integer = (int64_t)round(val); 
+    
+    // Format the 64-bit integer directly as a text string using %lld
+    char textBuffer[16];
+    snprintf(textBuffer, sizeof(textBuffer), "%lld", raw_integer);
+    
+    // Clear the global B4R array with zeros first to prevent ghost characters
+    memset(b4r_convert::_d64string->data, 0, b4r_convert::_d64string->length);
+    
+    // Copy the text characters straight into the global B4R byte array
+    int bytesToCopy = strlen(textBuffer) < b4r_convert::_d64string->length ? 
+                      strlen(textBuffer) : b4r_convert::_d64string->length;
+    
+	// Update the global array               
+    memcpy(b4r_convert::_d64string->data, textBuffer, bytesToCopy);
+}
+
+// Directly prints the whole number to the serial log
+/*
+void PrintMillisDouble(B4R::Object* args) {
+    double val = args->toDouble();
+    Serial.printf("%.0f", val);
+}
+*/
+
+#End If
+
 #End Region

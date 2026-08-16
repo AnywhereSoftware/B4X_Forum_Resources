@@ -1,6 +1,15 @@
 ### B4A Change Log (versions history) by Erel
-### 05/20/2026
+### 08/09/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/19332/)
+
+**v13.7** - August 9, 2026 - <https://www.b4x.com/android/forum/threads/b4a-v13-7-targetsdkversion-36-edge-to-edge.171756/>  
+
+- Support for targetSdkVersion=36 and EdgeToEdge mode.
+- EdgeToEdgeOldDevices attribute. It enables E2E mode on older devices and is recommended for better compatibility.
+Note that the IME library was updated with features related to this mode. The handling of keyboard height changes is implemented differently when running in E2E and I expect it to work better than the previous non-E2E implementation.- The enableOnBackInvokedCallback attribute is set to false by default: <https://developer.android.com/guide/topics/manifest/activity-element#enableOnBackInvokedCallback>.
+The light and dark theme macros were updated. You can find the updated snippets inside libraries\Themes.jar. The now disabled enforcement of non-E2E was removed and windowLightStatusBar was added to the light theme.- Exception.StackTrace property.
+- ThrowException keyword
+- Bug fixes and other minor changes.
 
 **v13.5** - May 20, 2026 - <https://www.b4x.com/android/forum/threads/b4a-v13-5-integrated-code-bundle-and-more.171062/>  
 

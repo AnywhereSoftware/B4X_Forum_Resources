@@ -1,5 +1,5 @@
 ### Check a jpg file is structurally complete - courtesy of Claude code by JackKirk
-### 08/07/2026
+### 08/09/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/171738/)
 
 ```B4X
@@ -26,7 +26,7 @@
 '       o Bytes are masked with 0xFF because B4X bytes are signed  
 '  
 '************************************************************************************  
-Private Sub Is_Complete_JPG(Directory As String, Filename As String) As Boolean     
+Private Sub Is_Complete_JPG(Directory As String, Filename As String) As Boolean    
   
     'If file has gone missing or is too small to be a jpg…  
     If Not(File.Exists(Directory, Filename)) Or File.Size(Directory, Filename) < 4 Then Return False  
@@ -71,3 +71,7 @@ Private Sub Is_Complete_JPG(Directory As String, Filename As String) As Boolean
   
 End Sub
 ```
+
+  
+  
+My use case was checking a jpg survived an FTP upload.

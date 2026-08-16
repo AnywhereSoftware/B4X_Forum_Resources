@@ -1,0 +1,137 @@
+﻿Build1=Default,b4a.PanelBarNize
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=ime
+Library3=javaobject
+Library4=xui
+Library5=panelbarnize
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=13.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A PanelBarNize
+	#VersionCode: 1
+	#VersionName: Simple
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#EdgeToEdgeOldDevices: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private ime As IME
+	Private root As B4XView
+	
+	Private ABAR As PanelBarNize
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	ime.Initialize("ime")
+	root = xui.CreatePanel("")
+	Dim Content As Rect = ime.GetContentRect
+	Activity.AddView(root, Content.Left, Content.Top, Content.Width, Content.Height)
+	ime.UpdatePercentageReference(root.Width, root.Height)
+	root.LoadLayout("Layout")
+	
+	
+	
+	
+'	Dim ABAR As PanelBarNize
+	
+	ABAR.Initialize(Activity)
+'	ABAR.Initialize(root.parent)
+
+	ABAR.Add_Sidepopup(Chr(0xE148),"title1",Array("Pop1",2,3,4),"Side_Pop1")
+	ABAR.Add_SideContinue(1)
+	ABAR.Add_SideAction("","Label1","Side_aaa")
+	ABAR.Add_SideContinue(1)
+	ABAR.Add_SideAction(Chr(0xE148),"lbl2","Side_LblAct2")
+	ABAR.Add_SideContinue(1)
+	ABAR.Add_SideEmpty(1)
+	ABAR.Add_SideAction("","Label3","Side_LblAct3")
+	ABAR.Add_SideContinue(2)
+	ABAR.Set_isIconAbove(True)
+	
+	'to write Even Subs watch the Logs...
+	'you Can for (SideBar, PanelBar, PanelMenu) :
+	' - get it as Panel:
+'	Dim SideBar1 As Panel = ABAR.get_SideBar("t",12,Colors.white,Colors.Cyan,Colors.black) 'Way0 as Panel
+	'OR 'Dim SideBar1 As Panel = ABAR.Show_SideBar(root,"t",12,Colors.white,Colors.Cyan,Colors.black)
+	
+	' - Add SideBar To Aview Direct :
+'	ABAR.Show_SideBar(root,"t",14,Colors.white,Colors.Cyan,Colors.black) 'Way1
+	
+	' - Use ExtraForScroll :
+	ABAR.Set_ExtraForScroll(100dip) 'Way2
+	ABAR.Show_SideBar(Activity,"t",14,Colors.white,Colors.Cyan,Colors.black) 'Way2
+
+	' - for Auto Scroll :
+'	ABAR.Show_SideBar(root,"t",-14,Colors.white,Colors.Cyan,Colors.black) 'Way3
+'----------------------------------
+
+	ABAR.Add_Panelpopup(Chr(0xE148),xui.Color_green,"title1",Array("Combo1",2,3,4),xui.Color_blue,"Panel_Como2")
+	ABAR.Add_panelAction("",0,"Label1",xui.Color_blue,"Panel_Lbl12")
+	ABAR.Add_PanelContinue(1)
+	ABAR.Add_panelEmpty(1)
+	ABAR.Add_panelAction(Chr(0xE148),xui.Color_Black,"Label2",xui.Color_green,"Panel_Lbl22")
+	ABAR.Set_isIconAbove(True)
+	'ABAR.Set_ExtraForScroll(100dip)
+	
+'	Dim pnl As B4XView=ABAR.Show_PanelBar(Activity,-14,0dip,200dip,350dip,0dip,xui.Color_Gray)
+	ABAR.Show_PanelBar(Activity,14,20dip,300dip,100%x-2*20dip,0dip,0xFFCA6B60)
+	'--------------------------------
+'	ABAR.Add_MenuEmpty(1)
+	ABAR.Add_MenuAction(Chr(0xE148),xui.Color_Blue," Label1",xui.Color_Green,"Menu_Lbl1")
+'	ABAR.Add_MenuContinue(1)
+
+	ABAR.Add_Menupopup(Chr(0xE148),xui.Color_green,"title1",Array("Pop1",2,3,4),xui.Color_blue,"Menu_Pop1")
+'	ABAR.Add_MenuContinue(1)
+	ABAR.Add_MenuAction(Chr(0xE148),xui.Color_Blue," ",xui.Color_Green,"Menu_Lbl2")
+	ABAR.Add_MenuAction(Chr(0xE148),xui.Color_Blue,"Label3",xui.Color_Green,"Menu_Lbl3")
+'	ABAR.Add_MenuEmpty(1)
+'	ABAR.Set_isIconAbove(True)
+'	ABAR.Set_ExtraForScroll(100dip)
+	ABAR.Show_Panelmenu(Activity,-14,120dip,400dip,100%x-2*120dip,150dip,0xFF5FA4AB)
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+
+Private Sub Side_Pop1_SelectedIndexChanged (Index As Int, Value As String)
+	Log ( "Index = " & Index & " - Value = " & Value)
+End Sub
+Private Sub Side_aaa_Click 
+	Log("Side_aaa_Click")
+End Sub
+Private Sub Side_aaa_LongClick 
+	Log("Side_aaa_LongClick")
+End Sub

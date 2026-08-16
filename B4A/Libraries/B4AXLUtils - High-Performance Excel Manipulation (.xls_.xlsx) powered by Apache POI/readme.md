@@ -1,5 +1,5 @@
 ### B4AXLUtils - High-Performance Excel Manipulation (.xls/.xlsx) powered by Apache POI by fernando1987
-### 05/27/2026
+### 08/08/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171131/)
 
 Hi All,  
@@ -15,7 +15,7 @@ To use this library in your B4A project, please ensure you check the following l
 
 - **Core**
 - **JavaObject**
-- **SQL**
+- **XUI**
 
 [HEADING=2]Architecture Design[/HEADING]  
 The library splits its features into four main classes (components) that encapsulate the native Excel API structure:  
@@ -27,37 +27,80 @@ The library splits its features into four main classes (components) that encapsu
 4. **ExcelCell**: Handles the cell as an atomic entity (applying specific fonts, formulas, numeric formatting, colors, and hyperlinks).
 
 [HEADING=2]📂 Main Methods Reference[/HEADING]  
-[HEADING=3]1. ExcelManager[/HEADING]  
 
-- **CreateWorkbook**: Initializes an empty in-memory workbook using the modern .xlsx standard.
-- **ReadWorkbook** (Directory As String, FileName As String) As ExcelManager Loads an existing spreadsheet file, auto-detecting whether it is a .xls or .xlsx structure. *Return format:* **Dim xl As ExcelManager = Manager.ReadWorkbook(File.DirInternal, "data.xlsx")**
-- **SearchAndReplace** (SearchText As String, ReplaceText As String) As ExcelManager Performs a global search-and-replace routine across every single sheet in the workbook. *Return format:* **Dim xl As ExcelManager = Manager.SearchAndReplace("{DATE}", "2026-05-27")**
-- **CreateSheet** (Name As String) As ExcelSheet Adds a brand-new worksheet to the current book with the given name. *Return format:* **Dim sheet As ExcelSheet = Manager.CreateSheet("Summary")**
-- **TableToExcel** (Rs As ResultSet, SheetName As String) Dumps a SQL ResultSet automatically into an elegant sheet, rendering clear headers, borders, and custom-tailored column widths optimized for Android devices.
-- **TableToExcelWithItem** (Rs As ResultSet, SheetName As String) Identical to the method above, but prepends an incremental "ITEM" column on the far left for numbered row tracking.
+---
 
-[HEADING=3]2. ExcelSheet[/HEADING]  
+  
+[HEADING=2]Excel Generation Suite[/HEADING]  
+[HEADING=3]ExcelManager[/HEADING]  
+*POI-based workbook structure manager.*  
+  
 
-- **GetRow** (RowIdx As Int) As ExcelRow Returns the requested row wrapper. If the row is missing from the physical sheet structure, it initializes it automatically on the fly. *Return format:* **Dim row As ExcelRow = Sheet.GetRow(5)**
-- **LastRowWithData** As Int Finds the true last row index containing useful data, completely ignoring rows with empty formatting or white spaces. *Return format:* **Dim lastRow As Int = Sheet.LastRowWithData**
-- **SetRangeStyle** (F1 As Int, F2 As Int, C1 As Int, C2 As Int, Bold As Boolean, Center As Boolean, Border As Boolean, ColorBG As Short, Italic As Boolean, Underline As Boolean, TextColor As Short, TextSize As String) Applies a comprehensive visual style layout to a block of cells. It leverages an inner style cache to heavily prevent memory bloat
-- **AutoSizeColumns** (StartCol As Int, EndCol As Int) Scans text length across the given columns and resizes them perfectly, bypassing any GUI environment constraints
-- **CreateTable2** (FirstRow As Int, LastRow As Int, FirstCol As Int, LastCol As Int, StyleName As String) Converts a regular cell range into a native Excel Smart Table with built-in styling and filtering enabled (e.g., "TableStyleMedium9")
+- **Events**:
 
-[HEADING=3]3. ExcelRow[/HEADING]  
+- SaveCompleted (Success As Boolean)
 
-- **GetCell** (Index As Int) As ExcelCell Retrieves the cell at the selected column index. If it does not exist yet, it creates it dynamically. *Return format:* **Dim cell As ExcelCell = Row.GetCell(2)**
-- **SetValues** (Values() As Object) Quickly populates the whole row using a one-dimensional array of objects while safely handling type conversions
+- **Properties**:
 
-[HEADING=3]4. ExcelCell[/HEADING]  
+- ActiveSheetIndex As Int [read only]
+- ActiveSheetName As String [read only]
 
-- **setValue** (Val As Object) Sets the cell data value. It intelligently processes Strings, Numbers, Booleans, and Dates
-> **Precision Engineering Note:** If a number exceeds 10 digits (e.g., long contract IDs or bank account numbers), the library forces it as a STRING data type. This safely stops Excel from converting your precise IDs into scientific notation (E+11).
+- **Functions**:
 
-- **getValue** As Object Extracts the raw typed value from the cell cleanly. *Return format:* **Dim myData As Object = Cell.getValue**
-- **getFormulaValue** As Object Evaluates and returns the calculated output of an active cell formula by executing the Apache POI evaluation engine. *Return format:* **Dim res As Object = Cell.getFormulaValue**
-- **setFormula** (Formula As String) Sets a standard mathematical formula without the leading = sign (e.g., "SUM(B1:B10)").
+- CreateSheet (Name As String) As ExcelSheet
+- GetSheet (Name As String) As ExcelSheet
+- GetSheetAt (Index As Int) As ExcelSheet
+- GetSheetName (Index As Int) As String
+- Save (Directory As String, FileName As String)
 
+[HEADING=3]ExcelSheet[/HEADING]  
+*Worksheet layout, locking, formatting, and graphics patriarch placement.*  
+  
+
+- **Properties**:
+
+- SheetName As String [read only]
+- SheetIndex As Int [read only]
+
+- **Functions**:
+
+- GetRow (RowIndex As Int) As ExcelRow
+- ProtectSheet (Password As String)
+- SetRangeStyle (RowStart As Int, RowEnd As Int, ColStart As Int, ColEnd As Int, Bold As Boolean, Border As Boolean, Centered As Boolean, BGColor As Short, Italic As Boolean, Strike As Boolean, TextColor As Short, Size As Int)
+- AddPictureExact (PictureIndex As Int, Col As Int, Row As Int, ScaleX As Double, ScaleY As Double): Positioned image anchored to MOVE\_DONT\_RESIZE.
+- AutoSizeColumns (ColStart As Int, ColEnd As Int)
+
+[HEADING=3]ExcelRow[/HEADING]  
+*Excel worksheet row manager.*  
+  
+
+- **Functions**:
+
+- GetCell (ColIdx As Int) As ExcelCell
+- CreateCellTyped (ColIdx As Int, CellType As Int) As ExcelCell
+
+[HEADING=3]ExcelCell[/HEADING]  
+*Excel worksheet cell value, formulas, styles, comments, and smart data type detection.*  
+  
+
+- **Properties**:
+
+- CellType As Int, CellTypeName As String [read only], Formula As String [write only]
+- Value As Object, SmartValue As Object [write only], Date As Long
+- Bold As Boolean [write only], Underline As Boolean [write only]
+- TextColor As Short [write only], TextSize As Short [write only], BackgroundColor As Short [write only]
+
+- **Functions**:
+
+- clear () As Void
+- setCurrency (Value As Double, Symbol As String) As Void
+- setCurrencyISO (Value As Double, ISO As String) As Void
+- setDateFormatted (Value As Long, FormatStr As String) As Void
+
+---
+
+  
+[HEADING=2][/HEADING]  
 [HEADING=2]💻 Practical Code Example[/HEADING]  
 
 ```B4X

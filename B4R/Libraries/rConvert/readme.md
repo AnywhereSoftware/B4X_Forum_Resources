@@ -1,5 +1,5 @@
 ### rConvert by rwblinn
-### 04/14/2026
+### 08/10/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/168251/)
 
 **B4R Library rConvert**  
@@ -12,8 +12,9 @@
 rConvert** is a lightweight, open-source helper library for **B4R** that provides practical conversion routines often needed when working with micro controllers, sensors, and communication protocols.  
   
 It includes converting methods:  
-- Unsigned integers (UInt, ULong) and byte arrays.  
-- Floats and byte arrays (IEEE-754).  
+- Unsigned integers (UInt, ULong) and Byte Arrays.  
+- Floats, Byte Arrays (IEEE-754).  
+- Double 64-bit ESP32 only.  
 - Numbers and formatted strings.  
 - Bytes and hexadecimal strings.  
 - Common convenience helpers (e.g. On/Off → Boolean).  
@@ -24,8 +25,8 @@ It includes converting methods:
   
 The goal is to keep the routines small, efficient, and compatible with B4R’s limitations (no StringBuilder, limited standard libraries, etc.), so you can drop them into any project.  
   
-- Developed with B4R 4.00 (64 bit), arduino-cli 1.3.1.  
-- Tested with MCU Arduino UNO, Arduino MEGA and ESP32 Wrover Kit.  
+- Developed with B4R 4.00 (64 bit), arduino-cli 1.3.1, arduino esp32 board manager 3.3.10  
+- Tested with MCU's: Arduino UNO, Arduino MEGA and ESP32 Wrover Kit.  
   
 
 ---
@@ -79,7 +80,8 @@ Private Sub AppStart
     TestBitWise  
     TestCSVParsing  
     TestByteConverter  
-     
+    TestD64  
+    
     Log(CRLF, "[Main.AppStart] Done", CRLF)  
 End Sub  
   
@@ -89,7 +91,7 @@ Private Sub TestInt
   
     Log("=================================")  
     Log("[TestInt] Start")  
-     
+    
     ' Bytes 80 00  
     ' little-endian (80 00) > LSB = 0x80, MSB = 0x00 > 0x0080 = 128  
     ' big-endian (80 00) > MSB = 0x80, LSB = 0x00 > 0x8000 = -32768  
@@ -129,7 +131,7 @@ Private Sub TestUInt
     testbytes = Convert.UIntToBytes(testvalue)  
     Log("[UIntToBytes] int=", testvalue, " > result hex=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length)  
     ' [UIntToBytes] int=10 > result hex=0A00, length=2  
-     
+    
     testbytes = Array As Byte(0x0A, 0x00)  
     testvalue = Convert.BytesToUInt(testbytes)  
     Log("[BytesToUInt] bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
@@ -140,12 +142,12 @@ Private Sub TestUInt
     testvalue = Convert.TwoBytesToUInt(testbytes, True)  
     Log("[TwoBytesToUInt] littleendian bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
     ' [TwoBytesToUInt] littleendian bytes=8000, length=2 > result uint=128  
-     
+    
     ' 80 00 > big-endian 32768  
     testvalue = Convert.TwoBytesToUInt(testbytes, False)  
     Log("[TwoBytesToUInt] bigendian bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
     ' [TwoBytesToUInt] bigendian bytes=8000, length=2 > result uint=32768  
-     
+    
     teststring = "200"  
     testvalue = Convert.UIntFromString(teststring)  
     Log("[UIntFromString] string=", teststring, ", length=",teststring.Length," > result uint=", testvalue)  
@@ -167,20 +169,20 @@ Private Sub TestULong
     testbytes = Convert.ULongToBytes(testvalue)  
     Log("[ULongToBytes] long=", testvalue, " > result hex=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length)  
     ' [ULongToBytes] long=10 > result hex=0A000000, length=4  
-     
+    
     testbytes = Array As Byte(0x0A,0x00,0x00,0x00)  
     testvalue = Convert.BytesToULong(testbytes)  
     Log("[BytesToULong] bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result ulong=", testvalue)  
     ' [BytesToULong] bytes=0A000000, length=4 > result ulong=10  
-     
+    
     teststring = testvalue  
     Log("[ULongToString Cast] ulong=", testvalue, " > result teststring=", teststring)  
     ' [ULongToString Cast] ulong=10 > result teststring=10.00  
-     
+    
     teststring = NumberFormat(testvalue, 0, 0)  
     Log("[ULongToString NumberFormat] ulong=", testvalue, " > result teststring=", teststring)  
     ' [ULongToString NumberFormat] ulong=10 > result teststring=10  
-     
+    
     Log("[TestULong] Done")  
     Log("=================================")  
 End Sub  
@@ -191,7 +193,7 @@ Private Sub TestFloat
   
     Log("=================================")  
     Log("[TestFloat] Start")  
-     
+    
     ' 19.58 > little-endian D7A39C41 > big-endian 419CA3D7  
     testvalue = 19.58  
   
@@ -202,7 +204,7 @@ Private Sub TestFloat
     testbytes = Convert.ReverseBytes(testbytes)  
     Log("[FloatToBytes Big-Endian] float=", testvalue, " > result hex=", Convert.BytesToHex(testbytes))  
     ' [FloatToBytes Big-Endian] float=19.5800 > result hex=419CA3D7  
-     
+    
     testbytes = Array As Byte(0X41,0X9C,0XA3,0XD7)  
     ' Ensure to set little-endian if not done in the previous array  
     testbytes = Convert.ReverseBytes(testbytes)  
@@ -223,7 +225,7 @@ Private Sub TestTwoBytesHex
   
     Log("[TwoBytesToHex] b1=", b1, ", b2=", b2, " > result hex=", Convert.TwoBytesToHex(b1, b2))  
     ' [TwoBytesToHex] b1=10, b2=15 > result hex=0A0F  
-     
+    
     Log("[TestTwoBytesHex] Done")  
     Log("=================================")  
 End Sub  
@@ -250,15 +252,15 @@ Private Sub TestBinary
     testbyte = 0x43  
     Log("[ByteToBin] byte=",testbyte, ", hex=0x", Convert.ByteToHex(testbyte), " > result bin=", Convert.ByteToBin(testbyte))  
     ' [ByteToBin] byte=67, hex=0x43 > result bin=01000011  
-     
+    
     testbyte = 0x0A  
     Log("[NibbleToBin] byte=",testbyte, ", hex=0x", Convert.ByteToHex(testbyte), " > result bin=", Convert.NibbleToBin(testbyte))  
     ' [NibbleToBin] byte=10, hex=0x0A > result bin=1010  
-     
+    
     teststring = "11100011"  
     Log("[BinToDec] bytes=",teststring.GetBytes, " > result dec=", Convert.BinToDec(teststring))  
     ' [BinToDec] bytes=11100011 > result dec=227  
-     
+    
     Log("[TestBinary] Done")  
     Log("=================================")  
 End Sub  
@@ -266,13 +268,13 @@ End Sub
 Private Sub TestBoolean  
     Log("=================================")  
     Log("[TestBoolean] Start")  
-     
+    
     Log("[OnOffToBool] on > result ", Convert.OnOffToBool("on"), ", off > result ", Convert.OnOffToBool("off"))  
     ' [OnOffToBool] on > result 1, off > result 0  
-     
+    
     Log("[BoolToByte] true > result ", Convert.BoolToByte(True), ", false > result ", Convert.BoolToByte(False))  
     ' [BoolToByte] true > result 1, false > result 0  
-     
+    
     Log("[TestBoolean] Done")  
     Log("=================================")  
 End Sub  
@@ -287,7 +289,7 @@ Private Sub TestXORChecksum
     testbyte = Convert.XORChecksum(testbytes)  
     Log("[XORChecksum] bytes=", Convert.BytesToHex(testbytes), " > result byte=", Convert.ByteToHex(testbyte))  
     ' [XORChecksum] bytes=0A0B > result byte=01  
-     
+    
     testbytes = Array As Byte(0x5A,0x6B,0x02,0x00,0x05,0x02,0x1E,0x00,0x00,0x01)    ' > 2B  
     testbytes = Convert.AppendXORChecksum(testbytes)  
     Log("[AppendXORChecksum] bytes=", Convert.BytesToHex(testbytes), " > result checksum lastbyte=", Convert.ByteToHex(testbytes(testbytes.Length - 1)))  
@@ -305,11 +307,11 @@ Private Sub TestSwap
   
     Log("[SwapUInt16] uint=", testvalue, " > result uint=", Convert.SwapUInt16(testvalue))  
     ' [SwapUInt16] uint=23 > result uint=5888  
-     
+    
     testbytes = Convert.SwapUInt16ToBytes(testvalue)  
     Log("[SwapUInt16ToBytes] uint=", testvalue, " > result bytes=", Convert.ByteToHex(testbytes(0)), Convert.ByteToHex(testbytes(1)))  
     ' [SwapUInt16ToBytes] uint=23 > result bytes=0017  
-     
+    
     Log("[TestSwap] Done")  
     Log("=================================")  
 End Sub  
@@ -322,19 +324,19 @@ Private Sub TestModbusCRC16
   
     Log("=================================")  
     Log("[TestModbusCRC16] Start")  
-     
+    
     testbytes = Convert.ModbusCRC16(testframe)  
     Log("[ModbusCRC16] frame=", Convert.BytesToHex(testframe), " > result CRC bytes [low, high]=", Convert.BytesToHex(testbytes))  
     ' [ModbusCRC16] frame=01030000000A > result CRC bytes [low, high]=C5CD  
-     
+    
     crcNum = Convert.ModbusCRC16UInt(testframe)  
     Log("[ModbusCRC16UInt] frame=", Convert.BytesToHex(testframe), " > result CRC numeric=0x" , Convert.BytesToHex(Array As Byte(Bit.ShiftRight(crcNum, 8), Bit.And(crcNum, 0xFF))), " (decimal=" , crcNum , ")")  
     ' [ModbusCRC16UInt] frame=01030000000A > result CRC numeric=0xCDC5 (decimal=52677)  
-     
+    
     testbytes = Convert.ModbusCRC16TransmittedFrame(testframe)  
     Log("[ModbusCRC16TransmittedFrame] frame=", Convert.BytesToHex(testframe), " > result= Transmitted frame=" , Convert.BytesToHex(testbytes))  
     ' [ModbusCRC16TransmittedFrame] frame=01030000000A > result= Transmitted frame=01030000000AC5CD  
-     
+    
     valid = Convert.ModbusCRC16Check(testbytes)  
     Log("[ModbusCRC16Check] frame=", Convert.BytesToHex(testbytes), " > result= CRC valid (1=true) " , valid)  
     ' [ModbusCRC16Check] frame=01030000000AC5CD > result= CRC valid (1=true) 1  
@@ -355,20 +357,20 @@ Private Sub TestBitWise
     testbyte = Convert.SetBit(testbyte, 3, True)  
     Log("[SetBit] Set bit 3 from value 0 > result=", testbyte)  
     ' [SetBit] Set bit 3 from value 0 > result=8  
-     
+    
     testbyte = Convert.SetBit(testbyte, 3, False)  
     Log("[SetBit] Clear bit 3 from value 8 > result=", testbyte)  
     ' [SetBit] Clear bit 3 from value 8 > result=0  
-     
+    
     testbyte = 8  
     testbyte = Convert.ToggleBit(testbyte, 3)  
     Log("[ToggleBit] Toggle bit 3 from DEC value 8 > result=", testbyte)  
     ' [ToggleBit] Toggle bit 3 from DEC value 8 > result=0  
-     
+    
     testbyte = Convert.ToggleBit(testbyte, 1)  
     Log("[ToggleBit] Toggle bit 1 from DEC value 0 > result=", testbyte)  
     ' [ToggleBit] Toggle bit 1 from DEC value 0 > result=2  
-     
+    
     testbyte = 8  
     Log("[GetBit] Get bit 0 from DEC value 8 > result=", Convert.GetBit(testbyte, 0), " - ", Convert.ByteToBitsString(testbyte))  
     ' [GetBit] Get bit 0 from DEC value 8 > result=0 - 00001000  
@@ -385,7 +387,7 @@ Private Sub TestBitWise
     teststring = Convert.BytesToBitsString(testbytes)  
     Log("[BytesToBitsString] Byte 1=5, byte 2=170 > result=", teststring, " length=", teststring.Length)  
     ' [BytesToBitsString] Byte 1=5, byte 2=170 > result=0000010110101010 length=16  
-     
+    
     Log("[TestBitWise] Done")  
     Log("=================================")  
 End Sub  
@@ -463,6 +465,41 @@ Private Sub TestByteConverter
   
     Log("[TestByteConverter] Done")  
     Log("=================================")  
+End Sub  
+  
+Private Sub TestD64  
+    Log("=================================")  
+    Log("[TestD64] Start - ESP32 only")  
+  
+    ' Fetch the 13-digit absolute millisecond timestamp  
+    Dim MillisNow As Double = Convert.D64Millis  
+    ' Test assignment  
+    ' MillisNow = 1786176213  
+    Log("[TestD64] Current Time (ms): ", MillisNow)  
+  
+    ' Convert to 64-bit global D64String  
+    Convert.D64ToString(MillisNow)  
+    ' Use D64String to bypass the B4R log 'ovf' limitation when logging D64Val  
+    Log("[TestD64] Current Time (ms) (string): ", Convert.D64String, " Hex (8-bytes big-endian): ", Convert.D64ToHex(MillisNow, True))  
+  
+    ' Do native math operations directly but with tiny rounding issues  
+    ' ' Adds 10,000 milliseconds (10 seconds)  
+    Dim FutureTime As Double = MillisNow + 10000  
+    Convert.D64ToString(FutureTime)  
+    Log("[TestD64] Future Time  (ms): ", Convert.D64String)  
+  
+    Dim Difference As Double = FutureTime - MillisNow  
+    Convert.D64ToString(Difference)  
+    Log("[TestD64] Difference   (ms): ", Convert.D64String)  
+  
+    Log("[TestD64] Done")  
+    Log("=================================")  
+  
+'    Output with 16 ms rounding difference occurred when usig large values  
+'    [TestD64] Current Time (ms): 1786176256  
+'    [TestD64] Current Time (ms) (string): 1786176256 Hex (8-bytes big-endian): 000000006A76E300  
+'    [TestD64] Future Time  (ms): 1786186240  
+'    [TestD64] Difference   (ms): 9984  
 End Sub
 ```
 
@@ -513,7 +550,13 @@ End Sub
 '– Float –  
 'FloatToBytes(value) : 32-Bit float > little-endian bytes.  
 'BytesToFloat(b) : Little-endian 4 bytes > 32-Bit float.  
-'   
+'  
+'– Double 64-bit (ESP32 only) —  
+'D64Millis - Fetches the True 13-digit absolute Unix epoch milliseconds from the hardware.  
+'D64ToBytes(d) - Convert large Double into the 8-byte global Array `D64Buffer`. **Note**: Tiny rounding steps may occur on high values during inline B4R math operations (e.g., a difference of 9984ms instead of exactly 10000ms).  
+'D64ToString(d) - Format any large Double safely into the global Array `D64String` As printable text characters To bypass standard B4R Log `ovf` limitations.  
+'D64ToHex(d) - Convert large Double into a 16-character hexadecimal string, with option To swap byte-order To Little- Or Big-Endian.  
+'  
 '– Bin –  
 'ByteToBin(b) : Convert 0–255 byte > "xxxxxxxx" binary string.  
 'BytesToBin(b()) : Converts byte array > Binary string representation.  
@@ -587,4 +630,4 @@ End Sub
 MIT.  
   
 **Attached**  
-Library v1.5.0
+Library v1.6.0
