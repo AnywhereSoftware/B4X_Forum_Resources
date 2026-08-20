@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <version>1.00</version>
+    <doclet-version-NOT-library-version>1.05</doclet-version-NOT-library-version>
+    <dependsOn>com.google.android.material:material</dependsOn>
+    <dependsOn>androidx.appcompat:appcompat</dependsOn>
+    <dependsOn>androidx.emoji2:emoji2-views-helper</dependsOn>
+    <dependsOn>androidx.emoji2:emoji2</dependsOn>
+    <dependsOn>androidx.core:core</dependsOn>
+    <class>
+        <name>com.sithaso.b4a.components.B4AChipGroup</name>
+        <shortname>B4AChipGroup</shortname>
+        <objectwrapper>com.google.android.material.chip.ChipGroup</objectwrapper>
+        <owner>activity</owner>
+        <event>ChipSelected (Key As String)</event>
+        <event>ChipCheckedChange (Key As String, Checked As Boolean)</event>
+        <event>SelectionChanged (CheckedKeys As List)</event>
+        <event>ChipClick (Key As String)</event>
+        <event>ChipClose (Key As String)</event>
+        <comment>Google Native Material ChipGroup container with String Key-Value pairs and eye-friendly theme presets.
+Supports multi-selection, single-choice filter chips, closeable action tags, leading icons, dynamic multi-row flow wrapping, and custom Object tags.
+
+Example setup:
+&lt;code&gt;
+Sub Globals
+    Private B4AChipGroup1 As B4AChipGroup
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Activity.LoadLayout("Layout")
+    B4AChipGroup1.Clear
+    B4AChipGroup1.Theme = "Emerald" ' Options: Primary, Emerald, Amber, Rose, Purple, Teal, Dark, Custom
+    B4AChipGroup1.AddChip("all", "All Categories")
+    B4AChipGroup1.AddChip2("tech", "Technology", True, True, True)
+    B4AChipGroup1.AddChip2("science", "Science", True, True, False)
+    B4AChipGroup1.AddChip2("ai_ml", "AI &amp; ML", True, True, False)
+    B4AChipGroup1.AddChip2("mobile", "Mobile Dev", True, False, False)
+End Sub
+
+Sub B4AChipGroup1_SelectionChanged (CheckedKeys As List)
+    For Each key As String In CheckedKeys
+        Log("Selected Key: " &amp; key &amp; " -> " &amp; B4AChipGroup1.GetChipText(key))
+    Next
+End Sub
+
+Sub B4AChipGroup1_ChipClose (Key As String)
+    Log("Closed tag: " &amp; Key)
+    B4AChipGroup1.RemoveChip(Key)
+End Sub
+&lt;/code&gt;</comment>
+        <method>
+            <name>DesignerCreateView</name>
+            <comment>Internal hook called by LayoutBuilder to apply Visual Designer properties.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>base</name>
+                <type>anywheresoftware.b4a.objects.PanelWrapper</type>
+            </parameter>
+            <parameter>
+                <name>lw</name>
+                <type>anywheresoftware.b4a.objects.LabelWrapper</type>
+            </parameter>
+            <parameter>
+                <name>props</name>
+                <type>anywheresoftware.b4a.objects.collections.Map</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment>Returns True if the view object has been initialized.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the B4AChipGroup view programmatically.
+Example:
+&lt;code&gt;
+Dim cg As B4AChipGroup
+cg.Initialize(Activity, "B4AChipGroup1")
+Activity.AddView(cg, 10dip, 10dip, 100%x - 20dip, 120dip)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ApplyTheme</name>
+            <comment>Applies a curated theme palette to all new chips created in this group.
+Theme presets: "Primary", "Emerald", "Amber", "Rose", "Purple", "Teal", "Dark".
+Example:
+&lt;code&gt;
+B4AChipGroup1.ApplyTheme("Emerald")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>themeName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetDefaultColors</name>
+            <comment>Sets custom default colors for newly created chips when Theme is Custom.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetDefaultColors(0xFFEFF6FF, 0xFF2563EB, 0xFF1E40AF, 0xFFFFFFFF, 0xFF93C5FD)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>bgUnchecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>bgChecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>textUnchecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>textChecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>strokeColor</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipCheckedColors</name>
+            <comment>Customizes resting and checked colors for a specific chip.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipCheckedColors("tech", 0xFFEFF6FF, 0xFF2563EB, 0xFF1E40AF, 0xFFFFFFFF, 0xFF93C5FD)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>bgUnchecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>bgChecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>textUnchecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>textChecked</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>strokeColor</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>FitHeight</name>
+            <comment>Measures and resizes the container height to perfectly fit all wrapped rows of chips without clipping.
+Example:
+&lt;code&gt;
+B4AChipGroup1.FitHeight
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>AddChip</name>
+            <comment>Adds a simple checkable filter chip with a unique String key and display label text.
+Example:
+&lt;code&gt;
+B4AChipGroup1.AddChip("tech", "Technology")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddChip2</name>
+            <comment>Adds a configurable chip with String key, specifying whether it is checkable, closeable, and checked by default.
+Example:
+&lt;code&gt;
+' Add a closeable filter chip that is checked by default
+B4AChipGroup1.AddChip2("ai_ml", "AI &amp; Machine Learning", True, True, True)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>isCheckable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isCloseable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isChecked</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddChip3</name>
+            <comment>Adds a fully customized chip with String key, leading icon and custom trailing close icon bitmaps.
+Example:
+&lt;code&gt;
+Dim icon As Bitmap = LoadBitmap(File.DirAssets, "tag_icon.png")
+B4AChipGroup1.AddChip3("featured", "Featured", True, True, False, icon, Null)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>isCheckable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isCloseable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isChecked</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>iconBmp</name>
+                <type>android.graphics.Bitmap</type>
+            </parameter>
+            <parameter>
+                <name>closeIconBmp</name>
+                <type>android.graphics.Bitmap</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddChipWithTag</name>
+            <comment>Adds a chip with an associated custom Object tag value (e.g. Map, custom Type, or User ID).
+Example:
+&lt;code&gt;
+Dim userProps As Map = CreateMap("id": 101, "role": "admin")
+B4AChipGroup1.AddChipWithTag("user_101", "Admin User", userProps, True, True, False)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.Object</type>
+            </parameter>
+            <parameter>
+                <name>isCheckable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isCloseable</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>isChecked</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RemoveChip</name>
+            <comment>Removes the chip with the given String key from the group.
+Example:
+&lt;code&gt;
+B4AChipGroup1.RemoveChip("tech")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Clear</name>
+            <comment>Removes all chips from the group and resets key mappings.
+Example:
+&lt;code&gt;
+B4AChipGroup1.Clear
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Check</name>
+            <comment>Programmatically checks/selects the chip with the given String key.
+Example:
+&lt;code&gt;
+B4AChipGroup1.Check("tech")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Uncheck</name>
+            <comment>Programmatically unchecks/deselects the chip with the given String key.
+Example:
+&lt;code&gt;
+B4AChipGroup1.Uncheck("tech")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ClearCheck</name>
+            <comment>Clears all chip selections in the group.
+Example:
+&lt;code&gt;
+B4AChipGroup1.ClearCheck
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>IsChecked</name>
+            <comment>Returns True if the chip with the given String key is currently checked.
+Example:
+&lt;code&gt;
+If B4AChipGroup1.IsChecked("tech") Then
+    Log("Technology is active")
+End If
+&lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetKeyAt</name>
+            <comment>Returns the String key of the chip at the given zero-based child index.
+Example:
+&lt;code&gt;
+Dim firstKey As String = B4AChipGroup1.GetKeyAt(0)
+&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>index</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetChipText</name>
+            <comment>Returns the display text of the chip with the specified String key.
+Example:
+&lt;code&gt;
+Dim label As String = B4AChipGroup1.GetChipText(Key)
+&lt;/code&gt;</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipText</name>
+            <comment>Updates the display text of the chip with the specified String key.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipText("tech", "Tech &amp; Gadgets")
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetChipTag</name>
+            <comment>Gets the custom Object tag value attached to the chip with the given String key.
+Example:
+&lt;code&gt;
+Dim tagValue As Object = B4AChipGroup1.GetChipTag("user_101")
+&lt;/code&gt;</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipTag</name>
+            <comment>Attaches a custom Object tag value to the chip with the given String key.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipTag("tech", CreateMap("category_id": 42))
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>tag</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipVisible</name>
+            <comment>Sets whether the chip with the specified String key is visible.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipVisible("science", False)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>visible</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipEnabled</name>
+            <comment>Sets whether the chip with the specified String key is enabled for interaction.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipEnabled("tech", False)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipColors</name>
+            <comment>Customizes the background color, text color, and border stroke color for an individual chip.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipColors("tech", Colors.RGB(230, 240, 255), Colors.Blue, Colors.Blue)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>backgroundColor</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>textColor</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>strokeColor</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipIcon</name>
+            <comment>Sets or updates the leading icon for the chip with the specified String key.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipIcon("tech", LoadBitmap(File.DirAssets, "star.png"))
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>iconBmp</name>
+                <type>android.graphics.Bitmap</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipCloseIconVisible</name>
+            <comment>Sets whether the close/dismiss icon is visible for the specified chip.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipCloseIconVisible("tech", True)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>visible</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetChipSpacing</name>
+            <comment>Sets the horizontal and vertical spacing between chips in dips.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SetChipSpacing(12, 10)
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>horizontalDip</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>verticalDip</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BringToFront</name>
+            <comment>Brings the view to the front of its parent container.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SendToBack</name>
+            <comment>Sends the view to the back of its parent container.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>RemoveViewFromParent</name>
+            <comment>Removes this view from its parent container.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetLayout</name>
+            <comment>Changes the view bounds immediately.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Left</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Top</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Width</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Height</name>
+                <type Pixel="true">int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetLayoutAnimated</name>
+            <comment>Smoothly animates the view to the specified position and dimensions.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Duration</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Left</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Top</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Width</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <parameter>
+                <name>Height</name>
+                <type Pixel="true">int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetVisibleAnimated</name>
+            <comment>Smoothly fades the view visibility in or out.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Duration</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Visible</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Theme</name>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>themeName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <comment>Gets or sets the curated theme preset (Primary, Emerald, Amber, Rose, Purple, Teal, Dark, Custom).
+Example:
+&lt;code&gt;
+B4AChipGroup1.Theme = "Emerald"
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>SingleSelection</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>single</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether only one chip can be selected at a time (radio button behavior).
+Example:
+&lt;code&gt;
+B4AChipGroup1.SingleSelection = True
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>SelectionRequired</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>required</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether at least one chip must always remain selected.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SelectionRequired = True
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>SingleLine</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>singleLine</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether chips are laid out in a single horizontal row or multi-line wrapped.
+Example:
+&lt;code&gt;
+B4AChipGroup1.SingleLine = False ' Multi-row flow wrapping
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>AutoFitHeight</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>autoFit</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether the group automatically expands its container height to fit all wrapped chip rows.
+Example:
+&lt;code&gt;
+B4AChipGroup1.AutoFitHeight = True
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>CheckedKey</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Returns the String key of the currently checked chip in SingleSelection mode, or "" if none is selected.
+Example:
+&lt;code&gt;
+Dim activeKey As String = B4AChipGroup1.CheckedKey
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>CheckedKeys</name>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <comment>Returns a List of String keys of all currently checked chips in multi-selection mode.
+Example:
+&lt;code&gt;
+For Each key As String In B4AChipGroup1.CheckedKeys
+    Log("Checked Key: " &amp; key)
+Next
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>NumberOfChips</name>
+            <returntype>int</returntype>
+            <comment>Returns the total number of chips in the group.
+Example:
+&lt;code&gt;
+Dim total As Int = B4AChipGroup1.NumberOfChips
+&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>Left</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Left</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <comment>Gets or sets the horizontal position in pixels.</comment>
+        </property>
+        <property>
+            <name>Top</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Top</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <comment>Gets or sets the vertical position in pixels.</comment>
+        </property>
+        <property>
+            <name>Width</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Width</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <comment>Gets or sets the view width in pixels.</comment>
+        </property>
+        <property>
+            <name>Height</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Height</name>
+                <type Pixel="true">int</type>
+            </parameter>
+            <comment>Gets or sets the view height in pixels.</comment>
+        </property>
+        <property>
+            <name>Visible</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Visible</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets view visibility.</comment>
+        </property>
+        <property>
+            <name>Enabled</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Gets or sets whether user touch interaction is enabled.</comment>
+        </property>
+        <property>
+            <name>Tag</name>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>Tag</name>
+                <type>java.lang.Object</type>
+            </parameter>
+            <comment>Gets or sets arbitrary user data attached to this view.</comment>
+        </property>
+        <designerProperty>key:Theme, displayname:Theme, defaultvalue:Primary, fieldtype:String, list:Primary|Emerald|Amber|Rose|Purple|Teal|Dark|Custom, description:Choose a curated theme preset, or select 'Custom' to use manual colors.</designerProperty>
+        <designerProperty>key:SingleSelection, displayname:Single Selection, defaultvalue:False, fieldtype:Boolean, description:Allow only one chip to be selected at a time.</designerProperty>
+        <designerProperty>key:SelectionRequired, displayname:Selection Required, defaultvalue:False, fieldtype:Boolean, description:Enforce that at least one chip is always selected.</designerProperty>
+        <designerProperty>key:SingleLine, displayname:Single Line (Horizontal Scroll), defaultvalue:False, fieldtype:Boolean, description:Layout chips in a single horizontal row rather than auto-wrapping.</designerProperty>
+        <designerProperty>key:AutoFitHeight, displayname:Auto Fit Height, defaultvalue:True, fieldtype:Boolean, description:Automatically expand container height to fit all wrapped chip rows.</designerProperty>
+        <designerProperty>key:ChipSpacingHorizontal, displayname:Horizontal Gap (dip), defaultvalue:8, fieldtype:Int, description:Horizontal gap between adjacent chips.</designerProperty>
+        <designerProperty>key:ChipSpacingVertical, displayname:Vertical Gap (dip), defaultvalue:8, fieldtype:Int, description:Vertical gap between chip rows.</designerProperty>
+        <designerProperty>key:ChipCornerRadius, displayname:Corner Radius (dip), defaultvalue:16, fieldtype:Int, description:Corner radius for chips in dip (16dip creates standard pill shape).</designerProperty>
+        <designerProperty>key:ChipStrokeWidth, displayname:Stroke Width (dip), defaultvalue:1, fieldtype:Int, description:Border outline stroke width in dip.</designerProperty>
+        <designerProperty>key:ChipStrokeColor, displayname:Custom Stroke Color, defaultvalue:0xFF93C5FD, fieldtype:Color, description:Border outline color when Theme is 'Custom'.</designerProperty>
+        <designerProperty>key:ChipBackgroundColor, displayname:Custom Resting Background, defaultvalue:0xFFEFF6FF, fieldtype:Color, description:Resting background color when Theme is 'Custom'.</designerProperty>
+        <designerProperty>key:ChipCheckedBackgroundColor, displayname:Custom Checked Background, defaultvalue:0xFF2563EB, fieldtype:Color, description:Selected background color when Theme is 'Custom'.</designerProperty>
+        <designerProperty>key:ChipTextColor, displayname:Custom Resting Text, defaultvalue:0xFF1E40AF, fieldtype:Color, description:Resting typography color when Theme is 'Custom'.</designerProperty>
+        <designerProperty>key:ChipCheckedTextColor, displayname:Custom Checked Text, defaultvalue:0xFFFFFFFF, fieldtype:Color, description:Selected typography color when Theme is 'Custom'.</designerProperty>
+        <designerProperty>key:SampleChips, displayname:Designer Preview Chips, defaultvalue:android|Android;kotlin|Kotlin;b4a|B4A;google|Google, fieldtype:String, description:Key-value chips formatted as key|Value;key2|Value2 for IDE preview.</designerProperty>
+    </class>
+</root>

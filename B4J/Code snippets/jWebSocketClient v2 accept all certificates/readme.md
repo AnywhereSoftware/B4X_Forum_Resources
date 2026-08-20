@@ -1,5 +1,5 @@
 ### jWebSocketClient v2 accept all certificates by Erel
-### 10/25/2023
+### 08/16/2026
 [B4X Forum - B4J - Code snippets](https://www.b4x.com/android/forum/threads/157001/)
 
 Useful when you want to make a not so secure connection to a server with self signed certificate:  
@@ -7,7 +7,7 @@ Useful when you want to make a not so secure connection to a server with self si
 ```B4X
 Sub Process_Globals  
     Private MainForm As Form  
-    Private xui As XUI   
+    Private xui As XUI  
     Private ws As WebSocketClient  
 End Sub  
   
@@ -16,7 +16,7 @@ Sub AppStart (Form1 As Form, Args() As String)
     MainForm.RootPane.LoadLayout("Layout1")  
     MainForm.Show  
     ws.Initialize("ws")  
-    SetAcceptAll(ws)      
+    SetAcceptAll(ws)     
     ws.Connect("wss://ws.postman-echo.com/raw")  
     Wait For ws_Connected  
     Log("connected")  
@@ -32,7 +32,7 @@ Private Sub SetAcceptAll (WebSocket As WebSocketClient)
     Dim Infos As JavaObject  
     Infos.InitializeArray("org.eclipse.jetty.io.ClientConnectionFactory$Info", Array())  
     Dim HttpTransport As JavaObject  
-    HttpTransport.InitializeNewInstance("org.eclipse.jetty.client.dynamic.HttpClientTransportDynamic", Array(ClientConnector, Infos))  
+    HttpTransport.InitializeNewInstance("org.eclipse.jetty.client.transport.HttpClientTransportDynamic", Array(ClientConnector, Infos))  
     Dim HttpClient As JavaObject  
     HttpClient.InitializeNewInstance("org.eclipse.jetty.client.HttpClient", Array(HttpTransport))  
     Dim jo As JavaObject = WebSocket  
