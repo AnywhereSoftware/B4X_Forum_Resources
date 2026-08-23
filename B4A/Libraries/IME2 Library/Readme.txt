@@ -1,1 +1,0 @@
-Move the jar and the xml file to your Additional Libraries folder.
