@@ -1,0 +1,71 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=ronewireex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rOneWireEx
+' Brief:	Basic example read data from DS1820b with resolution 10 (0.25°)
+' Date:		2026-08-26
+' Author: 	Robert W.B. Linn
+' License:	MIT — see LICENSE file.
+' MCU:		ESP-WROOM-32, B4R 4.00 (64 bit), IDE ESP32 Dev Module, Arduino Board Manager ESP32 3.3.11.
+' Hardware:	ESP-WROOM-32, Arduino UNO R4. Ensure to reset after upload.
+' Software:	B4R 4.00 (64 bit), IDE ESP32 Dev Module
+'			Arduino Board Manager ESP32 3.3.11.
+'			Arduino OneWire library 2.3.8
+' Wiring:	ESP32 D4 = DS1820b Signal
+'			ESP32 3V3 = DS1820b VCC
+'			ESP32 GND = DS1820b GND
+'			Physical 4.7 kOhm pull-up resistor is installed linking your VCC and Data pin lines.
+' Log:
+'[AppStart] rOneWireEX DS1820b v20260824
+'[ReadTemperature] 19.25
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rOneWireEx DS1820b v20260826"
+
+	' Communication
+	Public Serial1 As Serial
+	
+	' WireBus
+	Private WireBus As OneWireEx
+	Private BUS_PIN As Byte = 4
+	Private Address(8) As Byte
+	Private RESOLUTION As Byte = 10		' 0.25°C
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init onewire device 
+	WireBus.Initialize(BUS_PIN)
+
+	' REad the device address
+	If WireBus.ReadAddress(Address) Then
+		' Set resolution
+		WireBus.SetResolution(Address, RESOLUTION)
+		' Read the temperature 0.25°C resolution
+		Dim t As Float = WireBus.ReadTemperature(Address)
+		Log("[AppStart] ReadTemperature: t=", t)
+		'[ReadTemperature] 19.25
+	Else
+		Log("[AppStart][E] ReadAddress: No OneWire device found! Check wiring.")
+	End If
+End Sub
+

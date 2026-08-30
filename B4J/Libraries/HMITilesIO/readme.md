@@ -1,5 +1,5 @@
 ### HMITilesIO by rwblinn
-### 08/21/2026
+### 08/23/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
@@ -81,30 +81,52 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TR]  
 [TD]**Tile Type**[/TD]  
 [TD]**Brief**[/TD]  
+[TD][/TD]  
 [/TR]  
 [TR]  
-[TD]Switch[/TD]  
-[TD]Rocker Switch: Crisp, tactile 3D effect with clear status symbols.[/TD]  
+[TD]ByteStatus[/TD]  
+[TD]Byte Bit Matrix: An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.[/TD]  
+[TD][/TD]  
 [/TR]  
 [TR]  
 [TD]Gauge[/TD]  
 [TD]180° Gauge: Beautiful, perfectly mapped left-to-right neon tracking arc.[/TD]  
+[TD][/TD]  
 [/TR]  
 [TR]  
 [TD]LEDPanel[/TD]  
 [TD]LED Panel: Deep, polished status lens with a realistic glare overlay.[/TD]  
+[TD][/TD]  
 [/TR]  
 [TR]  
-[TD]VerticalMeter[/TD]  
-[TD]Vertical Meter: Simplified scale column with an aligned reference tracking arrow.[/TD]  
-[/TR]  
-[TR]  
-[TD]Slider[/TD]  
-[TD]Technical Slider: Symmetrical control groove rail with flawless cursor mapping.[/TD]  
+[TD]ReadOut[/TD]  
+[TD]Read Out: Crisp telemetry display that cleanly outputs dynamic process numbers or operational status string values (e.g., "23.5 °C", "1013 hPa", "RUNNING").[/TD]  
+[TD][/TD]  
 [/TR]  
 [TR]  
 [TD]SevenSegment[/TD]  
 [TD]7-Segment Display: 40px zero-padded local font that is completely visually centered.[/TD]  
+[TD][/TD]  
+[/TR]  
+[TR]  
+[TD]Spinner[/TD]  
+[TD]Spinner: High-precision directional increment control featuring clear high-contrast tactile action touch targets for exact setpoint calibration.[/TD]  
+[TD][/TD]  
+[/TR]  
+[TR]  
+[TD]Slider[/TD]  
+[TD]Technical Slider: Symmetrical control groove rail with flawless cursor mapping.[/TD]  
+[TD][/TD]  
+[/TR]  
+[TR]  
+[TD]Switch[/TD]  
+[TD]Rocker Switch: Crisp, tactile 3D effect with clear status symbols.[/TD]  
+[TD][/TD]  
+[/TR]  
+[TR]  
+[TD]VerticalMeter[/TD]  
+[TD]Vertical Meter: Simplified scale column with an aligned reference tracking arrow.[/TD]  
+[TD][/TD]  
 [/TR]  
 [/TABLE]  
   
@@ -115,7 +137,7 @@ Developing a single CustomView codebase that renders identically and handles rea
   
 **Screenshots**  
   
-![](https://www.b4x.com/android/forum/attachments/173061)  
+![](https://www.b4x.com/android/forum/attachments/173099)  
 
 ---
 
@@ -177,8 +199,9 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 End Sub  
   
 ' Fires instantly when an operator touches the component area  
-Private Sub TileIOSwitch_Click(State As Boolean, Value As Float)  
-    Log($"[TileIOSwitch_Click] State changed to: ${State}, Value: ${Value}"$)  
+Private Sub TileIOSwitch_Click(State As Boolean, Value As String)  
+    TileIOSwitch.State = Not(State)  
+    Log($"[TileIOSwitch_Click] state=${TileIOSwitch.state} value=${TileIOSwitch.value}"$)  
 End Sub
 ```
 

@@ -1,0 +1,78 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rarduinoledmatrix
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rArduinoLEDMatrix
+' Brief:	Basic example to test various geometric functions.
+' Date:		2026-08-27
+' Author: 	Robert W.B. Linn
+' License:	MIT — see LICENSE file.
+' Hardware:	Arduino UNO R4 WiFi.
+' Software:	B4R 4.00 (64 bit)
+'			Arduino UNO R4 Boards 1.6.0
+'			Arduino LED Matrix library 2.3.8
+'			Arduino Graphics library 1.1.5
+' Wiring:	N/A
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rArduinoLEDMatrix Geometric v20260827"
+
+	' Communication
+	Public Serial1 As Serial
+	
+	' Matrix
+	Private Matrix As ArduinoLEDMatrix
+	    
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init matrix 12x8
+	Matrix.Initialize
+
+	' Clear
+	Matrix.Clear
+
+	Log("[AppStart] Drawing vector components...")
+    
+	' Draw an X cross-pattern completely splitting the panel borders
+	Log("[AppStart] Draw an X cross-pattern")
+	Matrix.DrawLine(0, 0, 11, 7, 1)
+    Matrix.DrawLine(11, 0, 0, 7, 1)
+    Delay(2000)
+    Matrix.Clear
+   
+	' Draw a perimeter rectangle mapping the boundaries out
+	Log("[AppStart] Draw perimeter rectangle")
+	' X=0, Y=0, Width=12 columns wide, Height=8 rows deep
+    Matrix.DrawRect(0, 0, 12, 8, 1)
+    Delay(2000)
+    Matrix.Clear
+    
+    ' Draw a center target ring bubble context circle
+	' Centered at X=5, Y=3 with a radius value index of 3 pixels
+	Log("[AppStart] Draw circle")
+	Matrix.DrawCircle(5, 3, 3, 1)
+	Delay(2000)
+	Matrix.Clear
+
+End Sub
+

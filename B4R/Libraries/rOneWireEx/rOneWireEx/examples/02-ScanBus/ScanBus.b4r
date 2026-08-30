@@ -1,0 +1,90 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=ronewireex
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rOneWireEx
+' Brief:	Basic scan bus example and read data from devices like ds1820b
+' Date:		2026-08-24
+' Author: 	Robert W.B. Linn
+' License:	MIT — see LICENSE file.
+' Hardware:	ESP-WROOM-32
+' Software:	B4R 4.00 (64 bit), IDE ESP32 Dev Module
+'			Arduino Board Manager ESP32 3.3.11.
+'			Arduino OneWire library 2.3.8
+' Wiring:	ESP32 D4 = DS1820b Signal
+'			ESP32 3V3 = DS1820b VCC
+'			ESP32 GND = DS1820b GND
+'			Physical 4.7 kOhm pull-up resistor is installed linking your VCC and Data pin lines.
+'			Also tested with Arduino UNO R4. Ensure to reset after upload.
+' Log:
+'[AppStart] rOneWireEx ScanBus v20260825
+'[ScanBus] Starting
+'[ScanBus] Device #1 Address = 28330A9497040373 Type = DS18B20
+'[ScanBus] -> Temp: 18.2500 °C
+'[ScanBus] Scan finished. Total devices found: 1
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rOneWireEx ScanBus v20260825"
+
+	' Communication
+	Public Serial1 As Serial
+	
+	' WireBus
+	Private WireBus As OneWireEx
+	Private BUS_PIN As Byte = 4
+	Private Address(8) As Byte
+	
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init onewire
+	WireBus.Initialize(BUS_PIN)
+	' Scan the onewire bus connected to pin D4
+	ScanBus
+End Sub
+
+Private Sub ScanBus
+	Log("[ScanBus] Starting")
+    
+	' Clear search state to point to the first device
+	WireBus.ResetSearch
+    
+	' Loop through all connected devices
+	Dim DeviceCount As Byte = 0
+	Do While WireBus.ReadAddress(Address)
+		DeviceCount = DeviceCount + 1
+		Log("[ScanBus] Device #", DeviceCount, " Address = ", bc.HexFromBytes(Address), " Type = ", WireBus.GetDeviceTypeName(Address))
+        
+		' Instantly read the temperature of the newly discovered address
+		Dim Temp As Float = WireBus.ReadTemperature(Address)
+		Log("[ScanBus] -> Temp: ", Temp, " °C")
+	Loop
+    
+	If DeviceCount = 0 Then
+		Log("[ScanBus][W] No OneWire devices found on this pin ", BUS_PIN)
+	Else
+		Log("[ScanBus] Scan finished. Total devices found: ", DeviceCount)
+	End If
+End Sub

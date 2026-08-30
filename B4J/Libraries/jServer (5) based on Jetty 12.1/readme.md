@@ -1,12 +1,7 @@
 ### jServer (5) based on Jetty 12.1 by Erel
-### 07/29/2026
+### 08/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171536/)
 
-This is a beta version.  
-  
-Download link:  
-<https://www.b4x.com/b4j/files/jserver5.zip>  
-  
 Copy the files to the internal libraries folder (keep the inner jserver folder). The files are different than jServer(4) files so both will work together.  
 The library is named jServer5. It will be renamed to jServer with the next release of B4J.  
   

@@ -1,5 +1,5 @@
 ### [Tool] Simple Library Compiler - Build libraries without Eclipse by Erel
-### 01/20/2025
+### 08/27/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/29918/)
 
 The purpose of Simple Library Compiler (SLC) is to make it easier to build libraries. SLC is responsible for taking the Java source code files and generating the Jar and XML files.  
@@ -48,6 +48,7 @@ In order to compile it (and use it) you should download their SDK and copy Flurr
   
 ![](http://www.b4x.com/basic4android/images/SS-2013-12-02_10.01.50.png)  
   
+V1.15 (doclet tool v1.11) - Support for @DefaultValue annotation.  
 V1.15 - Adds support for lambdas.  
 V1.14 - Fixes an issue with running SLC from command line.  
 V1.13 - Added a field to set the path to Java 8 compiler (javac.exe). Should be similar to: C:\Program Files\Java\jdk1.8.0\_211\bin\javac.exe  

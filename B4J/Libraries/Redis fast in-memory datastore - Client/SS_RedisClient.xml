@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.RedisClient.RedisClient</name>
+        <shortname>RedisClient</shortname>
+        <owner>process</owner>
+        <event>PoolInitialized (Success As Boolean)</event>
+        <event>CommandResult (Command As String, Success As Boolean, Result As Object)</event>
+        <event>MessageReceived (Channel As String, Message As String)</event>
+        <event>Error (Error As String)</event>
+        <event>TaskRejected (Command As String, Reason As String)</event>
+        <event>Log (Message As String)</event>
+        <method>
+            <name>HExistsAsync</name>
+            <comment>Async HEXISTS - Hash
+ Checks if a specific hash field exists.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>PublishAsync</name>
+            <comment>Async PUBLISH</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>message</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializePool</name>
+            <comment>Initialises a Jedis Redis connection pool.
+
+ EventName: B4X event prefix used for callbacks (e.g., EventName + "_PoolInitialized").
+ Host: Redis server hostname or IP ("127.0.0.1" for local, cloud endpoint for hosted Redis).
+ Port: Redis TCP port (default 6379).
+ TimeoutMs: Socket timeout in milliseconds (typical 2000-5000).
+ Password: Redis authentication password; empty if not required.
+ Database: Logical Redis database index (0-15), default is 0.
+ MaxTotal: Maximum total connections allowed in the pool.
+ MaxIdle: Maximum idle connections kept ready for reuse.
+
+ Notes:
+ - Fires EventName + "_PoolInitialized" with success/failure.
+ - Failure indicates DNS, socket, or authentication issues.
+ - Call Redis.Close() on shutdown to release pool resources.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>port</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>timeoutMs</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>database</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>maxTotal</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>maxIdle</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExistsAsync</name>
+            <comment>Async EXISTS
+ Checks if a key exists in Redis. Returns a boolean.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SRemAsync</name>
+            <comment>Async SREM - Set
+ Removes a member from a set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>member</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SCardAsync</name>
+            <comment>Async SCARD - Set
+ Returns the member count (cardinality) of a set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DBSizeAsync</name>
+            <comment>Async DBSIZE
+ Returns the number of keys in the currently selected database.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>IncrAsync</name>
+            <comment>Async INCR
+ Increments the number stored at key by one.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetAsync</name>
+            <comment>Async SET</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment>Returns true if the object has been initialized and not yet closed.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>LRangeAsync</name>
+            <comment>Async LRANGE - List
+ Retrieves a range of elements from a list.
+ To see all elements, set stop to -1.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>start</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>stop</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Subscribe</name>
+            <comment>Subscribe to a channel. Uses a dedicated subscriber thread and Jedis instance.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetDebugMode</name>
+            <comment>Enable or disable debug mode. When enabled, error results include stack traces.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>debug</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ZAddAsync</name>
+            <comment>Async ZADD - Sorted Set
+ Adds a member with a score to a sorted set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>score</name>
+                <type>double</type>
+            </parameter>
+            <parameter>
+                <name>member</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialize with default queue size (100).</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>maxThreads</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetRawPool</name>
+            <comment>Expose raw pool for advanced usage. Use with caution.</comment>
+            <returntype>redis.clients.jedis.JedisPool</returntype>
+        </method>
+        <method>
+            <name>RPushAsync</name>
+            <comment>Async RPUSH - List
+ Inserts a value at the tail of a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DecrAsync</name>
+            <comment>Async DECR
+ Decrements the number stored at key by one.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ZCardAsync</name>
+            <comment>Async ZCARD - Sorted Set
+ Returns the member count (cardinality) of a sorted set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SMembersAsync</name>
+            <comment>Async SMEMBERS - Set
+ Returns all members of a set as a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ZRangeAsync</name>
+            <comment>Async ZRANGE - Sorted Set
+ Retrieves a range of members from a sorted set by index.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>start</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>stop</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RPopAsync</name>
+            <comment>Async RPOP - List
+ Removes and returns the last element of a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Unsubscribe</name>
+            <comment>Unsubscribe and attempt to deterministically stop the subscriber thread.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>LPushAsync</name>
+            <comment>Async LPUSH - List
+ Inserts a value at the head of a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DecrByAsync</name>
+            <comment>Async DECRBY
+ Decrements the number stored at key by value.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HDelAsync</name>
+            <comment>Async HDel - Hash</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAsync</name>
+            <comment>Async GET</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HGetAsync</name>
+            <comment>Async HGET - Hash</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>field</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DelAsync</name>
+            <comment>Async DEL</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HGetAllAsync</name>
+            <comment>Async HGETALL - Hash
+ Retrieves all fields and values in a hash.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>LLenAsync</name>
+            <comment>Async LLEN - List
+ Returns the length of a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetBlockingSubmit</name>
+            <comment>Configure whether submissions should block when the queue is full (CallerRunsPolicy) or use the default rejection handler.
+ Must be called after Initialize/InitializeEx.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>blocking</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetSubscriberJoinTimeout</name>
+            <comment>Set subscriber join timeout in milliseconds used when waiting for subscriber thread termination during Unsubscribe.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>timeoutMs</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HSetAsync</name>
+            <comment>Async HSET - Hash</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>field</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InitializeEx</name>
+            <comment>Initialize with custom thread and queue sizes.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>maxThreads</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>queueSize</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SIsMemberAsync</name>
+            <comment>Async SISMEMBER - Set
+ Checks if a member exists in a set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>member</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IncrByAsync</name>
+            <comment>Async INCRBY
+ Increments the number stored at key by value.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ZRemAsync</name>
+            <comment>Async ZREM - Sorted Set
+ Removes a member from a sorted set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>member</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>KeysAsync</name>
+            <comment>Async KEYS
+ Retrieves all keys matching the given pattern as a B4X List.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>pattern</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SAddAsync</name>
+            <comment>Async SADD - Set
+ Adds a unique member to a set.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>member</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>TTLAsync</name>
+            <comment>Async TTL
+ Gets the remaining time to live of a key in seconds.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ExpireAsync</name>
+            <comment>Async EXPIRE
+ Sets a timeout on a key in seconds.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>seconds</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>InfoAsync</name>
+            <comment>Async INFO
+ Retrieves information and statistics about the Redis server.
+ Pass an empty string or section name such as memory, clients, server.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>section</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Close</name>
+            <comment>Close everything: unsubscribe, close pool, shutdown executor.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>LPopAsync</name>
+            <comment>Async LPOP - List
+ Removes and returns the first element of a list.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.01</version>
+    <author>Peter Simpson</author>
+    <dependsOn>jedis-5.0.0</dependsOn>
+    <dependsOn>slf4j-api-1.7.36</dependsOn>
+    <dependsOn>slf4j-simple-1.7.36.jar</dependsOn>
+    <dependsOn>commons-pool2-2.11.1</dependsOn>
+</root>

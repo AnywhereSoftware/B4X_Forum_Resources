@@ -1,0 +1,135 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=ronewireex
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rOneWireEx
+' Brief:	Example discover devices including sensors like ds1820b
+'			The 1-Wire bus is a generic protocol that can host many different types of hardware chips, not just temperature sensors. 
+' Date:		2026-08-25
+' Author: 	Robert W.B. Linn
+' License:	MIT — see LICENSE file.
+' Hardware:	ESP-WROOM-32, Arduino UNO R4. Ensure to reset after upload.
+' Software:	B4R 4.00 (64 bit), IDE ESP32 Dev Module
+'			Arduino Board Manager ESP32 3.3.11.
+'			Arduino OneWire library 2.3.8
+' Wiring:	ESP32 D4 = DS1820b Signal
+'			ESP32 3V3 = DS1820b VCC
+'			ESP32 GND = DS1820b GND
+'			Physical 4.7 kOhm pull-up resistor is installed linking your VCC and Data pin lines.
+' Log:
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+
+Sub Process_Globals
+	Private VERSION As String = "rOneWireEx MultipleDevices v20260825"
+
+	' Expanded Type definition with a unique identifier
+	Type TDevice (Address(8) As Byte, Id As Byte)
+
+	' Communication
+	Public Serial1 As Serial
+	
+	' Sensor
+	Private WireBus As OneWireEx
+	Private BUS_PIN As Byte = 4
+
+	' Support up to 5 devices max (5 sensors * 8 bytes = 40 bytes total)
+	Private const MAX_DEVICES As Byte = 5
+	' Physical data buffers (5 devices * 8 bytes = 40 bytes)
+	Private DevicesAddress(40) As Byte
+	Private FoundDevices As Byte = 0
+    
+	' Temporary window buffer required by your ReadAddress method
+	Private TempAddr(8) As Byte
+	
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	' Init onewire
+	WireBus.Initialize(BUS_PIN)
+	
+	' Discover connected devices
+	If DiscoverDevices Then
+		ReadAllDevices
+	End If
+End Sub
+
+' Scans the physical 1-Wire line and stores addresses sequentially
+Private Sub DiscoverDevices As Boolean
+	FoundDevices = 0
+	WireBus.ResetSearch
+	
+	' Loop as long as another device answers and space remains in our 40-byte buffer
+	Do While WireBus.ReadAddress(TempAddr) And FoundDevices < MAX_DEVICES
+		Dim StartIndex As Int = FoundDevices * 8
+		
+		' Safely copy the 8-byte discovery package into the global flat storage block
+		bc.ArrayCopy2(TempAddr, 0, DevicesAddress, StartIndex, 8)
+		
+		FoundDevices = FoundDevices + 1
+		Log("Device #", FoundDevices, " Discovered = ", bc.HexFromBytes(TempAddr))
+	Loop
+
+	If FoundDevices > 0 Then
+		Log("[DiscoverDevices] Bus Scan Complete. Total Devices Stored: ", FoundDevices)
+	Else
+		Log("[DiscoverDevices][W] Bus Scan Complete. Total Devices Stored: ", FoundDevices)
+	End If
+	
+	Return (FoundDevices > 0)
+End Sub
+
+' Extracts an address from the flat storage array using an index
+Private Sub ExtractAddress(DeviceIndex As Byte, TargetBuffer() As Byte)
+	' DeviceIndex should be 0-based (0 to FoundDevices - 1)
+	Dim StartIndex As Int = DeviceIndex * 8
+	bc.ArrayCopy2(DevicesAddress, StartIndex, TargetBuffer, 0, 8)
+End Sub
+
+' Loops through all discovered devices and requests data
+Private Sub ReadAllDevices
+	Log("--- Reading All Sensors ---")
+	For i = 0 To FoundDevices - 1
+		' Extract the 8-byte identifier into our safe transfer window buffer
+		ExtractAddress(i, TempAddr)
+		
+		' Query the temperature from the exact address window
+		Dim Temp As Float = WireBus.ReadTemperature(TempAddr)
+		
+		Log("Device index [", i, "] addr=", bc.HexFromBytes(TempAddr), " type=", WireBus.GetDeviceTypeName(TempAddr), " t=", Temp, " °C")
+	Next
+End Sub
+
+'' Helper function to match the Family Code byte to a human-readable String name
+'Private Sub GetDeviceTypeName(Code As Byte) As String
+'	Select Case Code
+'		Case 0x28: Return "DS18B20"
+'		Case 0x10: Return "DS18S20"
+'		Case 0x22: Return "DS1822"
+'		Case 0x3B: Return "MAX31820"
+'		Case 0x01: Return "iButton Key"
+'		Case 0x24: Return "EEPROM Storage"
+'		Case Else: Return "Unknown Device"
+'	End Select
+'End Sub
