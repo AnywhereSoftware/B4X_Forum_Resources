@@ -7,59 +7,92 @@ Version=10.5
 #Region Class Header
 ' ================================================================
 ' File: 		HMITilesIO.bas
-' Brief:		CustomView HMITile showing an asset from a SVG image.
-' Date:			2026-08-23
+' Brief:		CustomView Human Machine Interface tile showing assets from a SVG image.
+' Date:			2026-08-31
 ' Author:		Robert W.B. Linn (c) 2026 MIT
-' Description:	
-' Hints: 		HMITile can not be resized after form loaded.
-' Layout:
+' Description:	HMITilesIO brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.
+'				Target has been to combine highly optimized vector graphics with native input tracking For microcontrollers And IoT applications.
+'				This customview (CV) holds various tile types which use Scalable Vector Graphics - open, text-based image format to display two-dimensional graphics.
+'				The SVG XML definitions are stored in the assets folder. Each tile type has its own definition with same naming as the tile type.
+'				Example: Tile type slider is defined in file `slider.svg`. This definition is loaded in the HTML image `image.html` used for each tile type.
+' Notes: 		The HMITile can not be resized after form loaded. Default 120x120px.
+'				The tile border is set for each tile in its svg file:
+'				<!-- Base Grid Tile Frame - ser rx to f.e. 6 for rounded corders -->
+'				<rect width="120" height="120" rx="0" fill="transparent" stroke="#334155" stroke-width="1" />
+'				Default tile type is Switch.
+'				Create a new tile type requires: 
+'				- Update designerproperty tiletype like NewTileType
+'				- add new class HMITilesIONewTileType - use any existing tile type as a base, like HMITilesIOReadOut
+'				- add constant Private TILE_NEWTILETYPE As String = "NEWTILETYPE" - must be upperacase
+'				- add Private InstanceNewTileType As HMITilesIONewTileType
+'				- update sub InitInstance with the new tile type
+'				- update subs setState or setValue depending type of tile
+'				- create new svg file in assets like newtiletype.svg (lowercase) and add to the files manager
+'					
+' Layout:		Panel/Pane with WebView
 '				+------------------+
-'				|     SVG Image    |  < 100% 120x120px
+'				|    Panel/Pane    | < 100% 120x120px
+'				|+----------------+|
+'				||    SVG Image   ||
+'				|+----------------+|
 '				+------------------+
 ' ================================================================
 #End Region
 
-
 ' Designer properties (ensure to define the key in lowercase)
-#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |ByteStatus|Gauge|LEDPanel|ReadOut|SevenSegment|Slider|Spinner|Switch||VerticalMeter|, DefaultValue: Switch
-#DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: Header, Description: Header for all tiles
-#DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: Footer, Description: Footer for all tiles
-#DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for SPINNER Gauge ReadOut SevenSegment Slider VerticalMeter
-#DesignerProperty: Key: minvalue, DisplayName: Min Value, FieldType: Float, DefaultValue: 0, Description: Min value for all tiles
-#DesignerProperty: Key: maxvalue, DisplayName: Max Value, FieldType: Float, DefaultValue: 100, Description: Max value for all tiles
-#DesignerProperty: Key: greenmaxpct, DisplayName: Green Max Pct, FieldType: Int, DefaultValue: 70, Description: Green segment  for Gauge
-#DesignerProperty: Key: yellowmaxpct, DisplayName: Yellow Max Pct, FieldType: Int, DefaultValue: 90, , Description: Yellow segment for Gauge
-#DesignerProperty: Key: state, DisplayName: State, FieldType: Boolean, DefaultValue: False, Description: State true or false for Switch and LEDPanel
-#DesignerProperty: Key: backgroundcolor,DisplayName: Background Color, FieldType: Color, DefaultValue: 0xFFFFFFFF, Description: Background color for all tiles
+#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Button|ByteStatus|Gauge|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Slider|Spinner|Switch||VerticalMeter|, DefaultValue: Switch.
+#DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: Header, Description: Header for all tiles.
+#DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: Footer, Description: Footer for all tiles.
+#DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
+#DesignerProperty: Key: minvalue, DisplayName: Min Value, FieldType: Float, DefaultValue: 0, Description: Min value for all tiles.
+#DesignerProperty: Key: maxvalue, DisplayName: Max Value, FieldType: Float, DefaultValue: 100, Description: Max value for all tiles.
+#DesignerProperty: Key: greenmaxpct, DisplayName: Green Max Pct, FieldType: Int, DefaultValue: 70, Description: Green segment for tile Gauge.
+#DesignerProperty: Key: yellowmaxpct, DisplayName: Yellow Max Pct, FieldType: Int, DefaultValue: 90, , Description: Yellow segment for tile Gauge.
+#DesignerProperty: Key: state, DisplayName: State, FieldType: Boolean, DefaultValue: False, Description: State true or false for tile Switch and LEDPanel.
+#DesignerProperty: Key: backgroundcolor,DisplayName: Background Color, FieldType: Color, DefaultValue: 0xFFFFFFFF, Description: Background color for all tiles.
 
 ' Events
 #Event: Click(State As Boolean, Value As String)
 
-private Sub Class_Globals
+Private Sub Class_Globals
 
 	' Constants
+	' Tile type names (uppercase) aligned with the designerProperty tiletype
+	Private TILE_BUTTON As String 			= "BUTTON"
 	Private TILE_BYTESTATUS As String 		= "BYTESTATUS"
 	Private TILE_GAUGE As String 			= "GAUGE"
+	Private TILE_IOPANEL As String 			= "IOPANEL"
 	Private TILE_SPINNER As String 			= "SPINNER"
 	Private TILE_LEDPANEL As String 		= "LEDPANEL"
+	Private TILE_MULTISTATE As String 		= "MULTISTATE"
 	Private TILE_READOUT As String 			= "READOUT"
+	Private TILE_SELECTOR As String 		= "SELECTOR"
 	Private TILE_SEVENSEGMENT As String 	= "SEVENSEGMENT"
 	Private TILE_SLIDER As String 			= "SLIDER"
 	Private TILE_SWITCH As String 			= "SWITCH"
 	Private TILE_VERTICALMETER As String 	= "VERTICALMETER"
-	
+
+	' Tile segment names and color HTML HEX format (used by tiles like Gauge)	
+	Public SEGMENT_GREEN			As String = "green"
+	Public SEGMENT_YELLOW			As String = "yellow"
+	Public SEGMENT_RED				As String = "red"
+	Public SEGMENT_GREEN_COLOR 		As String = "#22c55e"
+	Public SEGMENT_YELLOW_COLOR		As String = "#eab308"
+	Public SEGMENT_RED_COLOR 		As String = "#ef4444"
+
+	' Touch data
+	Type HMITouchData (Action As Int, X As Float, Y As Float, State As Boolean, Value As String)
+	' Touch result state
+	Type HMITouchResult (State As Object, Value As String)
+
 	' Base
 	Public BasePane As B4XView
 	Public Tag As Object
-	Private mEventName As String 'ignore
-	Private mCallBack As Object 'ignore
 	
 	' UI
 	Private xui As XUI 'ignore
 	Private WebViewSVG As WebView
-	' #if B4A
 	Private PanelWebViewSVG As B4XView	
-	' #End If
 	
 	' Properties
 	Private mTileType As String
@@ -70,22 +103,46 @@ private Sub Class_Globals
 	Private mMaxValue As Float
 	Private mGreenMaxPct As Int
 	Private mYellowMaxPct As Int
-	Private mBackgroundColor As Int
+	Private mBackgroundColor As String
 	Private mState As Boolean
+
+	' Local properties for specific tiles, like Selector
+	Private mItems As List										' Selector
+
+	' Local for events
+	Private mEventName As String 'ignore
+	Private mCallBack As Object 'ignore
+
+	' Instances (from the class modules)
+	Public InstanceButton As HMITilesIOButton
+	Public InstanceByteStatus As HMITilesIOByteStatus
+	Public InstanceGauge As HMITilesIOGauge
+	Public InstanceIOPanel As HMITilesIOPanel
+	Public InstanceLEDPanel As HMITilesIOLEDPanel
+	Public InstanceMultiState As HMITilesIOMultiState
+	Public InstanceReadOut As HMITilesIOReadOut
+	Public InstanceSelector As HMITilesIOSelector
+	Public InstanceSevenSegment As HMITilesIOSevenSegment
+	Public InstanceSlider As HMITilesIOSlider
+	Public InstanceSpinner As HMITilesIOSpinner
+	Public InstanceSwitch As HMITilesIOSwitch
+	Public InstanceVerticalMeter As HMITilesIOVerticalMeter
 	
-	' Locals
+	' Local for SVG image
 	Private IMAGE_MARKUP_PLACEHOLDER As String = "#IMAGE_PLACEHOLDER#"
 	' SVG Image HMTL 
 	Private IMAGE_MARKUP_FILE As String = "image.html"
 	Private ImageMarkup As String
 
+	' Local for value font
 	Private mValueFontSize As Int
-	Private mValueFill As String
+	Private mValueFontColor As String		' Font color as HTML HEX string, i.e.#RRGGBB
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
 	mEventName = EventName
 	mCallBack = Callback
+	mItems.Initialize
 End Sub
 
 'Base type must be Object
@@ -110,8 +167,14 @@ Private Sub AfterLoadLayout(Props As Map)	'ignore
 	mGreenMaxPct		= Props.GetDefault("greenmaxpct", 70)
 	mYellowMaxPct		= Props.GetDefault("yellowmaxpct", 100)
 	mState 				= Props.GetDefault("state", False)
-	mBackgroundColor	= xui.PaintOrColorToColor(Props.Get("backgroundcolor"))
+	' Color
+	Dim clr As Int		= xui.PaintOrColorToColor(Props.Get("backgroundcolor"))
+	' Convert the B4X Int color to a standard web CSS hex string (#RRGGBB)
+	mBackgroundColor	= $"#${Bit.ToHexString(clr).SubString(2)}"$
 
+	' Init the instance depending tiletype
+	InitInstance
+	
 	' Load the HTML
 	ImageMarkup = File.ReadString(File.DirAssets, IMAGE_MARKUP_FILE)
 
@@ -123,6 +186,47 @@ End Sub
 Private Sub Base_Resize (Width As Double, Height As Double)
 	If Not(WebViewSVG.IsInitialized) Then Return
 	DrawImage
+End Sub
+
+' =========================
+' INSTANCES
+' =========================
+
+'InitInstance
+' Init the selected instances from the tiletype
+Private Sub InitInstance
+
+	Select mTileType
+		Case TILE_BUTTON
+			InstanceButton.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_BYTESTATUS
+			InstanceByteStatus.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_GAUGE
+			InstanceGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_IOPANEL
+			InstanceIOPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_LEDPANEL
+			InstanceLEDPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_MULTISTATE
+			InstanceMultiState.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SELECTOR
+			InstanceSelector.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SEVENSEGMENT
+			InstanceSevenSegment.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SLIDER
+			InstanceSlider.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SPINNER
+			InstanceSpinner.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SWITCH
+			InstanceSwitch.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_READOUT
+			InstanceReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_VERTICALMETER
+			InstanceVerticalMeter.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case Else
+			Return
+	End Select
+	Sleep(1)
 End Sub
 
 ' =========================
@@ -158,7 +262,7 @@ Public Sub DrawImage
 	Select mTileType
 		Case TILE_SEVENSEGMENT
 			' Load the xml markup with digital font
-			xmlmarkup = HMITilesIOSevenSegment.LoadTemplate(xmlmarkup)
+			xmlmarkup = InstanceSevenSegment.LoadTemplate(xmlmarkup)
 	End Select
 	
 	' Load the HTML markup with the XML markup
@@ -169,6 +273,11 @@ End Sub
 ' Public API
 ' =========================
 
+' Set or get the tile type.
+' Parameter:
+'	value - Tile type, like Gauge, Switch etc.
+' Returns:
+'	String
 Public Sub setTileType(value As String)
 	mTileType = value.ToLowerCase
 	DrawImage
@@ -178,28 +287,31 @@ Public Sub getTileType As String
 End Sub
 
 ' Get or set tile state.
-' Supported are tile Switch, LEDPanel.
-' State: False = Off/Closed, True = On/Open
+' Supported are all tiles which use a state, like Button, LEDPanel, Switch.
+' Parameter
+' 	state: False = Off/Closed, True = On/Open
 Public Sub setState(state As Boolean)
 	Dim js As String
 
+	' Assign state as boolean to global class var
 	mState = state
+	' Assign the state value as binary 0 or 1 to global class var 
 	mValue = IIf(state, 1, 0)
 
 	' Delegate internally based on the instance configuration
 	Select mTileType
-		Case TILE_SWITCH
-			' js = HMITilesIOSwitch.SetState(state)
-			js = HMITilesIOSwitch.SetTile(mHeader, mFooter, mState)
+		Case TILE_BUTTON
+			js = InstanceButton.SetTile(mHeader, mFooter, mState)
 		Case TILE_LEDPANEL
-			' js = HMITilesIOLEDPanel.SetState(state)
-			js = HMITilesIOLEDPanel.SetTile(mHeader, mFooter, mState)
+			js = InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
+		Case TILE_SWITCH
+			js = InstanceSwitch.SetTile(mHeader, mFooter, mState)
 		Case Else
 			Return
 	End Select
 
 	' Change the state using JavaScript
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[setState][E] Can not set the state for tile ${mTileType}"$)
 	End If
@@ -209,54 +321,74 @@ Public Sub getState As Boolean
 End Sub
 
 ' Set or get the tile value.
-' Supported are tile Gauge, SevenSegment, Slider, VerticalMeter.
+' Supported are tiles which use a value, like ByteStatus, Gauge, Selector, SevenSegment, Spinner, Slider, VerticalMeter.
 ' Parameter:
 '	value - Value between min and max properties. The value is casted according tile type.
 Public Sub setValue(value As String)
 	Dim js As String
-	
+
+	' Assign the state value as binary 0 or 1 to global class var
+	mValue = value
+
+	' Select the tile type and assign the value to global var with casting as required	
 	Select mTileType
 		Case TILE_BYTESTATUS
-			mValue = value.As(Byte)
-			js = HMITilesIOByteStatus.SetTile(mHeader, mFooter, HMITilesIOByteStatus.PinsAttached, mValue)
+			js = InstanceByteStatus.SetTile(mHeader, mFooter, InstanceByteStatus.PinsAttached, mValue)
 		Case TILE_GAUGE
-			mValue = Max(mMinValue, Min(mMaxValue, value.As(Float)))
-			js = HMITilesIOGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
-		Case TILE_SPINNER
-			mValue = Max(mMinValue, Min(mMaxValue, value.As(Float)))
-			js = HMITilesIOSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
-		Case TILE_READOUT
-			mValue = value
-			js = HMITilesIOReadOut.SetTile(mHeader, mFooter, mValue)
+			js = InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
+		Case TILE_IOPANEL
+			js = InstanceIOPanel.SetTile(mHeader, mFooter, mValue)
+		Case TILE_MULTISTATE
+			js = InstanceMultiState.SetTile(mHeader, mFooter, InstanceMultiState.States, mValue)
+		Case TILE_SELECTOR
+			js = InstanceSelector.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SEVENSEGMENT
-			mValue = Max(mMinValue, Min(mMaxValue, value.As(Float)))
-			js = HMITilesIOSevenSegment.SetTile(mHeader, mFooter, HMITilesIOSevenSegment.TEXT_COLOR, mValue)
+			js = InstanceSevenSegment.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SLIDER
-			mValue = Max(mMinValue, Min(mMaxValue, value.As(Float)))
-			js = HMITilesIOSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+			js = InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_SPINNER
+			js = InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_READOUT
+			js = InstanceReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_VERTICALMETER
-			mValue = Max(mMinValue, Min(mMaxValue, value.As(Float)))
-			js = HMITilesIOVerticalMeter.SetTile(mHeader, mFooter, HMITilesIOVerticalMeter.COLOR_TRACK, mMinValue, mMaxValue, mValue)
+			js = InstanceVerticalMeter.SetTile(mHeader, mFooter, InstanceVerticalMeter.COLOR_TRACK, mMinValue, mMaxValue, mValue)
 		Case Else
 			Return
 	End Select
-	' 
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+	'
+	Wait For (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[setValue][E] Can not set the value for tile ${mTileType}"$)
 	End If
+	Sleep(1)
 End Sub
 Public Sub getValue As String
 	Return mValue
 End Sub
 
+' Get or set items as list
+Public Sub setItems(value As List)
+	mItems = value
+	Select mTileType
+		Case TILE_SELECTOR
+			InstanceSelector.SetItems(mItems)
+	End Select
+End Sub
+Public Sub getItems As List
+	Return mItems
+End Sub
+
+' Set or get the tile header.
+' Parameter:
+'	value - header
 Public Sub setHeader(value As String)
 	mHeader = value.Replace("'", "\'")
 	Dim js As String = $"
         var header = document.getElementById("tile-header");
         if(header) { header.textContent = "${mHeader}"; };
     "$
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[setHeader][E] Can not set the tile header ${mTileType}"$)
 	End If
@@ -265,13 +397,17 @@ Public Sub getHeader As String
 	Return mHeader
 End Sub
 
+' Set or get the tile footer.
+' Parameter:
+'	value - footer
 Public Sub setFooter(value As String)
 	mFooter = value.Replace("'", "\'")
 	Dim js As String = $"
         var footer = document.getElementById("tile-footer");
         if(footer) { footer.textContent = "${mFooter}"; };
     "$
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[setFooter][E] Can not set the tile footer ${mTileType}"$)
 	End If
@@ -280,13 +416,17 @@ Public Sub getFooter As String
 	Return mFooter
 End Sub
 
+' Set or get the tile value font size.
+' Parameter:
+'	value - font size, like 24
 Public Sub setValueFontSize(value As Int)
 	mValueFontSize = value
 	Dim js As String = $"
         var valuedisplay = document.getElementById("value-display");
         if (valuedisplay) { valuedisplay.style.fontSize = "${value}px"; }
     "$
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[setValueFontSize][E] Can not set the value font size ${mValueFontSize}"$)
 	End If
@@ -295,29 +435,32 @@ Public Sub getValueFontSize As Int
 	Return mValueFontSize
 End Sub
 
-Public Sub setValueFill(value As String)
-	mValueFill = value
+' Set or get the tile value font color.
+' Parameter:
+'	value - Font color as HEX string with # prefix, like #FF0000 (red)
+Public Sub setValueFontColor(value As String)
+	mValueFontColor = value
 	Dim js As String = $"
         var valuedisplay = document.getElementById("value-display");
         if (valuedisplay) { valuedisplay.style.fill = "${value}"; }
     "$
-	Wait for (ExecuteJS(js)) complete (result As Boolean)
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[setValueFill][E] Can not set the value font color ${mValueFill}"$)
+		Log($"[setValueFontColor][E] Can not set color ${mValueFontColor}"$)
 	End If
 End Sub
-Public Sub getValueFill As String
-	Return mValueFill
+Public Sub getValueFontColor As String
+	Return mValueFontColor
 End Sub
 
+' Get or set the tile background color.
 ' Dynamically Sets the background color of both the WebView Tile and the HTML content
-Public Sub setBackgroundColor(ColorAsInt As Int)
-	mBackgroundColor = ColorAsInt
+'	value - Font color as HEX string with # prefix, like #FF0000 (red)
+Public Sub setBackgroundColor(value As String)
+	mBackgroundColor = value
 
-	' Convert the B4X Int color to a standard web CSS hex string (#RRGGBB)
-	Dim hexColor As String = $"#${Bit.ToHexString(ColorAsInt).SubString(2)}"$
-        
-	' Create a global runtime CSS rule style script block
+  	' Create a global runtime CSS rule style script block
 	' This overrides any hardcoded fill="url(#...)" attributes immediately upon element creation
 	Dim js As String = $"
         var styleId = "b4x-dynamic-theme";
@@ -327,15 +470,31 @@ Public Sub setBackgroundColor(ColorAsInt As Int)
             styleEl.id = styleId;
             document.head.appendChild(styleEl);
         };
-        styleEl.innerHTML = "html, body { background-color: ${hexColor} !important; } svg > rect:first-of-type { fill: ${hexColor} !important; }";
+        styleEl.innerHTML = "html, body { background-color: ${mBackgroundColor} !important; } svg > rect:first-of-type { fill: ${mBackgroundColor} !important; }";
     "$
-	wait for (ExecuteJS(js)) complete (result As Boolean)
+	'
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log("[setBackgroundColor][E] DOM not ready yet, but styling rule queued.")
 	End If
 End Sub
-Public Sub getBackgroundColor As Int
+Public Sub getBackgroundColor As String
 	Return mBackgroundColor
+End Sub
+
+' Set segment color for tile gauge.
+' Parameter:
+'	segment - string green, yellow, red
+'	value - string with HTML HEX color, i.e. "#00FF00
+Public Sub SetSegmentColor(segment As String, value As String)
+	Select mTileType
+		Case TILE_GAUGE
+			Dim js As String = InstanceGauge.SetSegmentColor(segment, value)
+			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
+			If Not(result) Then
+				Log($"[HMITilesIO.SetSegmentColor][E] Can not set the segment color for tile ${mTileType}"$)
+			End If
+	End Select
 End Sub
 
 ' =========================
@@ -351,10 +510,16 @@ Private Sub WebViewSVG_PageFinished (Url As String)
 	Select mTileType
 		Case TILE_SLIDER
 			#if B4J
-			ExecuteJS(HMITilesIOSlider.Init(False))			
+			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, InstanceSlider.Init(False))) complete (result As Boolean)
+			If Not(result) Then
+				Log($"[WebViewSVG_PageFinished][E] Can not set the state for tile ${mTileType}"$)
+			End If
 			#End If
 			#if B4A
-			ExecuteJS(HMITilesIOSlider.Init(0))
+			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, InstanceSlider.Init(0))) complete (result As Boolean)
+			If Not(result) Then
+				Log($"[WebViewSVG_PageFinished][E] Can not set the state for tile ${mTileType}"$)
+			End If
 			#End If
 	End Select
 
@@ -387,169 +552,55 @@ Private Sub WebViewSVG_LocationChanged (url As String) As Boolean
 	Return False
 End Sub
 
-' NOIT USED as replaced by panelwebview_touch event
-' MouseClicked
-' Every Tile a mouse clicked event with parameters state and value.
-'#if B4J
-'Private Sub WebViewSVG_MouseClicked (EventData As MouseEvent)
-'	If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
-'		CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue.As(String))
-'	End If
-'End Sub
-'#End If
-
 ' =========================
 ' PANELWEBVIEW EVENTS
 ' =========================
 
 ' PanelWebViewSVG_Touch
 ' Handle touching the panel.
-' Down (0) and Move (2) actions to handle tracking and dragging, Up(1) not used
+' Action: Down (0) and Move (2) to handle tracking and dragging, Up(1) not used
 Private Sub PanelWebViewSVG_Touch (Action As Int, X As Float, Y As Float)
-	Dim ACTION_DOWN As Int = 0
-	Dim ACTION_UP As Int = 1
-	Dim ACTION_MOVE As Int = 2
-	
 	' Action Up not handled
-	If Action = ACTION_UP Then Return
+	If Action = HMITilesIOUtils.ACTION_UP Then Return
 
-	Select mTileType
+	Dim targetInstance As Object = Null
+	Dim touchData As HMITouchData
+	
+	' Assign the touch data
+	touchData.Initialize
+	touchData.Action = Action
+	touchData.X = x
+	touchData.Y = y
+	touchData.state = mState
+	touchData.value = mValue
 
-		' Tile click call click event
-		Case TILE_BYTESTATUS, TILE_GAUGE, TILE_LEDPANEL, TILE_READOUT, TILE_SWITCH
-			If Action = ACTION_DOWN Then
-				If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
-					CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
-				End If
-			End If
-			Return
-		
-		' Tile spinner value up or down
-        Case TILE_SPINNER
-            ' Only trigger increments on the initial touch down event
-            If Action = ACTION_DOWN Then
-                Dim PanelWidth As Float = PanelWebViewSVG.Width
-                ' Translate the physical screen pixel touch point into your 120-unit SVG matrix space
-                Dim svgTouchX As Float = (X / PanelWidth) * 120
-                
-                Dim ValueChanged As Boolean = False
-                
-                ' Check boundary conditions based on exact 120-unit canvas sizing layout
-                If svgTouchX <= 40 Then
-                    ' MINUS REGION CLICKED
-                    mValue = mValue - 1
-                    ValueChanged = True
-                Else If svgTouchX >= 80 Then
-                    ' PLUS REGION CLICKED
-                    mValue = mValue + 1
-                    ValueChanged = True
-                End If
-				' Set the new value                
-				If ValueChanged Then
-					setValue(mValue)
-                End If
-            End If
-            Return
+	' Assign the targetinstance
+	Dim targetInstance As Object = Null
 
-		' Tile slider new value
-		Case TILE_SLIDER
-			If Action = ACTION_DOWN Or Action = ACTION_MOVE Then
-				Dim PanelWidth As Float = PanelWebViewSVG.Width
-				Dim svgTouchX As Float = (X / PanelWidth) * 120
-		
-				If svgTouchX < 20 Then svgTouchX = 20
-				If svgTouchX > 100 Then svgTouchX = 100
-		
-				Dim pct As Float = (svgTouchX - 20) / 80
-				Dim finalValue As Int = Round(pct * 100)
-		
-				' Only execute UI updates and raise events if the value has actually shifted
-				If finalValue <> mValue Then
-					mValue = finalValue
-			
-					' Update the vector graphics layers inside the WebView container
-					Dim jsUpdate As String = $"
-						var handle = document.getElementById("hmi-handle");
-						var prog = document.getElementById("hmi-progress");
-						var txt = document.getElementById("slider-val");
-						
-						if (handle) { handle.setAttribute("x", "${svgTouchX - 5}"); }
-						if (prog)   { prog.setAttribute("x2", "${svgTouchX}"); }
-						if (txt)    { txt.textContent = "${finalValue}"; }
-					"$
-					ExecuteJS(jsUpdate.Replace(Chr(10), " ").Replace(Chr(13), " "))
-		
-					If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
-						CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
-					End If
-				End If
-			End If
+	' Select the tiletype and assign the targetinstance
+	Select mTileType 
+		Case TILE_BUTTON:		targetInstance = InstanceButton
+		Case TILE_BYTESTATUS:	targetInstance = InstanceByteStatus
+		Case TILE_GAUGE:		targetInstance = InstanceGauge
+		Case TILE_IOPANEL:		targetInstance = InstanceIOPanel
+		Case TILE_MULTISTATE:	targetInstance = InstanceMultiState
+		Case TILE_LEDPANEL:		targetInstance = InstanceLEDPanel
+		Case TILE_READOUT:		targetInstance = InstanceReadOut
+		Case TILE_SELECTOR:		targetInstance = InstanceSelector
+		Case TILE_SEVENSEGMENT:	targetInstance = InstanceSevenSegment
+		Case TILE_SLIDER:		targetInstance = InstanceSlider
+		Case TILE_SPINNER:		InstanceSpinner.MinValue = mMinValue
+								InstanceSpinner.MaxValue = mMaxValue
+								targetInstance = InstanceSpinner
+		Case TILE_SWITCH:		targetInstance = InstanceSwitch
+		Case TILE_VERTICALMETER:targetInstance = InstanceVerticalMeter
 	End Select
-End Sub
 
-' ================================================================
-' JAVASCRIPT
-' ================================================================
-
-' ExecuteJS
-' Helper to execute a JavaScript string inside the B4AB4J WebView engine using JavaObject
-Private Sub ExecuteJS(js As String)As ResumableSub
-	' Check js length
-	If js.Length == 0 Then
-		Return False
-	End If
-
-	' Standard flattening to safeguard single-line delivery execution
-	js = js.Replace(Chr(10), " ").Replace(Chr(13), " ")
-	' Log($"[ExecuteJS] ${js}"$)
-
-	' Short sleep 
-	Sleep(1)
-
-	' Initialize a JavaObject pointing directly to the WebView instance wrapper
-	Dim joWebView As JavaObject = WebViewSVG
-
-	' Try executing the JavaScript
-	Try
-		#if B4A
-		' Define a null callback object since we are pushing data outwards (Fire-and-forget)
-		Dim callback As Object = Null
-		' Invoke the native android.webkit.WebView.evaluateJavascript method
-		joWebView.RunMethod("evaluateJavascript", Array(js, callback))
-		#End If
-
-		#If B4J
-		Dim engine As JavaObject = joWebView.RunMethodJO("getEngine", Null)
-		engine.RunMethod("executeScript", Array(js))
-		#End If
-
-		Return True
-	Catch
-		Log("[ExecuteJS][E]" & LastException.Message)
-		Return False
-	End Try
-End Sub
-
-' ================================================================
-' COLORS
-' ================================================================
-
-' Helper to get uniform colors
-Private Sub GetStateColor(State As Int) As String	'ignore
-	Select State
-		Case 1: 	Return "#20bf6b" 	' Muted Green (Running)
-		Case 2: 	Return "#eb3b5a" 	' Muted Red (Alarm)
-		Case Else: Return "#4b6584"		' Muted Slate (Off)
-	End Select
-End Sub
-
-' Evaluates incoming ESP32 data and returns an ISA-101 compliant color string
-Private Sub GetLimitColor(CurrentValue As Float, WarningLimit As Float, AlarmLimit As Float) As String	'ignore
-	If CurrentValue >= AlarmLimit Then
-		Return "#dc2626" ' Level 4: Critical Alarm Red
-	Else If CurrentValue >= WarningLimit Then
-		Return "#d97706" ' Level 3: Warning Amber
-	Else
-		Return "#0f172a" ' Level 2: Normal Black/Dark Slate (Visually quiet)
+	' Process the touch handler for the assigned instance
+	If targetInstance <> Null Then
+		' Pass all 5 parameters inside a single type asset
+		Dim res As HMITouchResult = CallSub2(targetInstance, "ProcessTouchHandler", touchData)
+		mState = res.State
+		mValue = res.Value
 	End If
 End Sub

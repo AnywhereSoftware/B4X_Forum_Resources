@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.11</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.OPCUAClient.OPCUAClient</name>
+        <shortname>OPCUAClient</shortname>
+        <comment>OPC UA Client library.
+ This class provides a bridge to OPC UA services including endpoint discovery,
+ session management, subscription monitoring, and data communication.</comment>
+        <owner>process</owner>
+        <event>Connected</event>
+        <event>Disconnected</event>
+        <event>ConnectionError (Error As String)</event>
+        <event>BrowseResult (Nodes As List)</event>
+        <event>ReadResult (NodeId As String, Value As Object, Status As String)</event>
+        <event>WriteResult (NodeId As String, Success As Boolean)</event>
+        <event>SubscriptionValueChanged (NodeId As String, Value As Object, Timestamp As Long)</event>
+        <method>
+            <name>Write</name>
+            <comment>Writes a value to an node.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ Value is the new value to write.
+ Raises WriteResult or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Value</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ConnectWithCertificate</name>
+            <comment>Connect using a client certificate (PKCS#12) and anonymous user identity.
+ EndpointUrl: opc.tcp://host:port/...
+ p12Path: full path to the .p12/.pfx file
+ p12Password: password for the keystore
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ConnectAutoSecure</name>
+            <comment>Connects using the strongest secure endpoint available.
+ Automatically selects the best SecurityPolicy and MessageSecurityMode.
+ Uses anonymous authentication.
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>UnsubscribeAll</name>
+            <comment>Unsubscribe all monitored subscriptions.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Subscribe</name>
+            <comment>Subscribes to value changes on an node.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ SamplingIntervalMs specifies the sampling interval in milliseconds.
+ Raises SubscriptionValueChanged or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SamplingIntervalMs</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HasSubscription</name>
+            <comment>Returns True if any active subscription contains the specified node, otherwise False.
+ NodeIdString is the OPC UA node identifier.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the OPC UA client.
+ EventName is the prefix used for all raised events.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>UnSubscribe</name>
+            <comment>Unsubscribes from a specific node.
+ Deletes the entire subscription containing that node.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Read</name>
+            <comment>Reads a single node.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ Returns Value and Status in the ReadResult event.
+ Raises ReadResult or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Disconnect</name>
+            <comment>Disconnects from the OPC UA server.
+ Closes the client session and releases resources.
+ Raises Disconnected or ConnectionError.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>HasMonitoredItem</name>
+            <comment>Checks if a specific NodeId is currently being monitored in any subscription.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SubscribeOnce</name>
+            <comment>Subscribes to a node only if it is not already monitored.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ SamplingIntervalMs is the sampling interval in milliseconds.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SamplingIntervalMs</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DebugDump</name>
+            <comment>Returns a basic Map summarizing active subscriptions and items.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>DebugDumpDetailed</name>
+            <comment>Returns a detailed Map containing every subscription and its monitored items currently active in the client.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>ListMonitoredItems</name>
+            <comment>Returns a List of NodeIds being monitored in the given subscription.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>SubscriptionId</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadMultiple</name>
+            <comment>Reads multiple nodes.
+ NodeIds is a List of node id strings.
+ Raises ReadResult for each node.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIds</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteMultiple</name>
+            <comment>Writes multiple nodes.
+ NodeIds is a B4X List of node id strings.
+ Values is a B4X List of values matching the node ids.
+ Raises WriteResult for each node.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIds</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+            <parameter>
+                <name>Values</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Connect</name>
+            <comment>Connects to an OPC UA server using anonymous authentication.
+ EndpointUrl is the OPC UA endpoint such as opc.tcp://host:4840.
+ Selects the server's None/None endpoint.
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>BrowseFull</name>
+            <comment>Browses a node and returns full details.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ Returns a List of Maps with NodeId, DisplayName and NodeClass.
+ Raises BrowseResult.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadWrite</name>
+            <comment>Reads a value from a node, writes a new value, then reads again to verify.
+ NodeIdString is the OPC UA node identifier.
+ NewValue is the value to write.
+ Raises ReadWriteResult.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>NewValue</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ConnectAuthWithCertificate</name>
+            <comment>Connect using a client certificate (PKCS#12) for TLS and username/password for user identity.
+ SecurityPolicyName: e.g. "Basic256Sha256" or full URI
+ MessageSecurityModeName: e.g. "SignAndEncrypt" or "Sign"
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Username</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SecurityPolicyName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>MessageSecurityModeName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ConnectAuth</name>
+            <comment>Connects to a secure OPC UA server using username and password.
+ EndpointUrl is the OPC UA endpoint such as opc.tcp://host:4840.
+ Username is the OPC UA user name.
+ Password is the OPC UA password.
+ SecurityPolicyName specifies the required security policy such as Basic256Sha256.
+ MessageSecurityModeName specifies the required security mode such as Sign or SignAndEncrypt.
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Username</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SecurityPolicyName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>MessageSecurityModeName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Browse</name>
+            <comment>Browses the specified node.
+ NodeIdString is the OPC UA node identifier such as ns=2;s=MyNode.
+ Returns a List of browse names.
+ Raises BrowseResult or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteAndVerify</name>
+            <comment>Writes a value to a node and then reads it back to verify success.
+ NodeIdString is the node identifier.
+ Value is the value to write.
+ Raises WriteVerified.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIdString</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Value</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SubscribeMultiple</name>
+            <comment>Subscribes to multiple nodes at once.
+ NodeIds is a B4X List of node id strings.
+ SamplingIntervalMs specifies the sampling interval.
+ Raises SubscriptionValueChanged for each node.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>NodeIds</name>
+                <type>anywheresoftware.b4a.objects.collections.List</type>
+            </parameter>
+            <parameter>
+                <name>SamplingIntervalMs</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ListSubscriptions</name>
+            <comment>Returns a List of active subscription IDs.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+        </method>
+        <method>
+            <name>ConnectAutoSecureWithCertificate</name>
+            <comment>Auto secure connect: choose the strongest endpoint available, use client certificate for TLS.
+ Anonymous user identity.
+ Raises Connected or ConnectionError.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>EndpointUrl</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Path</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>p12Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsConnected</name>
+            <comment>Returns whether the client is currently connected.
+ Returns true when the OPC UA session is active.
+ Returns false when not connected or after a disconnect.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <field>
+            <name>FireOnlyOnChange</name>
+            <comment>When set to True, subscription events are only raised when the value changes.
+ Duplicate values are ignored even if they arrive seconds apart.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>SuppressDuplicateValues</name>
+            <comment>When set to True, duplicate values arriving too quickly are suppressed.
+ This prevents rapid duplicate events caused by server timestamp behaviour.</comment>
+            <returntype>boolean</returntype>
+        </field>
+    </class>
+    <version>1.0</version>
+    <author>Peter Simpson</author>
+    <dependsOn>bcpkix-jdk18on-1.78.1.jar</dependsOn>
+    <dependsOn>bcprov-jdk18on-1.78.1.jar</dependsOn>
+    <dependsOn>guava-33.0.0-jre.jar</dependsOn>
+    <dependsOn>netty-buffer-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-channel-fsm-0.9.jar</dependsOn>
+    <dependsOn>netty-codec-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-codec-http-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-codec-http2-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-common-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-handler-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-resolver-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-resolver-dns-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-transport-4.1.86.Final.jar</dependsOn>
+    <dependsOn>sdk-client-0.6.16.jar</dependsOn>
+    <dependsOn>sdk-core-0.6.16.jar</dependsOn>
+    <dependsOn>slf4j-api-2.0.17.jar</dependsOn>
+    <dependsOn>slf4j-simple-2.0.17.jar</dependsOn>
+    <dependsOn>stack-client-0.6.16.jar</dependsOn>
+    <dependsOn>stack-core-0.6.16.jar</dependsOn>
+    <dependsOn>strict-machine-0.6.jar</dependsOn>
+</root>

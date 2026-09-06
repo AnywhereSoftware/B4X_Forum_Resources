@@ -1,9 +1,9 @@
 ###  xRotaryTimeLimitbar b4xlib by klaus
-### 10/23/2025
+### 08/31/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/168897/)
 
 The xRotaryTimeLimitbar is a B4X CustomView, it allows the selection of two time values with two sliders from a rotary slider bar.  
-It is b4xlib library running on all three platforms.  
+It is a b4xlib library running on all three platforms.  
   
 The xRotaryTimeLimitbar.zip demo project and the xRotaryTimeLimitbar.b4xlib library files are added.  
 You must copy the xRotaryTimeLimitbar.b4xlib file into the AdditionalLibraries\B4X folder.  

@@ -1,5 +1,5 @@
 ### rConvert by rwblinn
-### 08/10/2026
+### 09/03/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/168251/)
 
 **B4R Library rConvert**  
@@ -26,7 +26,7 @@ It includes converting methods:
 The goal is to keep the routines small, efficient, and compatible with B4R’s limitations (no StringBuilder, limited standard libraries, etc.), so you can drop them into any project.  
   
 - Developed with B4R 4.00 (64 bit), arduino-cli 1.3.1, arduino esp32 board manager 3.3.10  
-- Tested with MCU's: Arduino UNO, Arduino MEGA and ESP32 Wrover Kit.  
+- Tested with Arduino UNO R3, UNO R4 WiFi, MEGA and ESP32 Wrover Kit.  
   
 
 ---
@@ -64,25 +64,98 @@ End Sub
 Private Sub AppStart  
     Serial1.Initialize(115200)  
     Log(CRLF, "*****", CRLF)  
-    Log(CRLF, "[Main.AppStart] Convert ", Convert.VERSION, CRLF)  
-  
+    Log(CRLF, "[Main.AppStart] Basic Example rConvert ", Convert.VERSION, CRLF)  
+     
+    TestBitWise  
+    TestByteWise  
     TestInt  
     TestUInt  
     TestULong  
     TestFloat  
-    TestTwoBytesHex  
     TestBCD  
     TestBinary  
     TestBoolean  
     TestXORChecksum  
     TestSwap  
     TestModbusCRC16  
-    TestBitWise  
     TestCSVParsing  
     TestByteConverter  
+    TestMisc  
+     
+    ' MCU specific using conditional symbols  
+    #If ESP32  
     TestD64  
-    
+    #End If  
+         
     Log(CRLF, "[Main.AppStart] Done", CRLF)  
+End Sub  
+  
+Private Sub TestByteWise  
+    Dim testbyte As Byte  
+    Dim testbytes() As Byte  
+    Dim resultbytes() As Byte  
+    Dim resultboolean As Boolean  
+    Dim resultbooleans() As Boolean  
+     
+    Log("=================================")  
+    Log("[TestByteWise] Start")  
+  
+    Dim b1 As Byte = 10  
+    Dim b2 As Byte = 15  
+    Log("[TwoBytesToHex] b1=", b1, ", b2=", b2, " > result hex=", Convert.TwoBytesToHex(b1, b2))  
+    ' [TwoBytesToHex] b1=10, b2=15 > result hex=0A0F  
+      
+    testbytes = Array As Byte(0x0A, 0x1F, 0x2E, 0x3D)  
+    resultbytes = Convert.SliceBytes(testbytes, 1, 2)  
+    Log("[SliceBytes]", _  
+        " bytes=", Convert.BytesToHex(testbytes), _  
+        " start=1, length=2", _  
+        " > result=", Convert.BytesToHex(resultbytes))  
+    ' [SliceBytes] bytes=0A1F2E3D start=1, length=2 > result=1F2E  
+     
+    ' Concat byte arrays  
+    Dim ba1() As Byte = Array As Byte(0x01,0x02)  
+    Dim ba2() As Byte = Array As Byte(0x03,0x04)  
+    resultbytes = Convert.ConcatBytes(ba1, ba2)  
+    Log("[ConcatBytes]", _  
+        " ba1=", Convert.BytesToHex(ba1), _  
+        " ba2=", Convert.BytesToHex(ba2), _  
+        " > result=", Convert.BytesToHex(resultbytes), _  
+        " length=", resultbytes.length)  
+    ' [ConcatBytes] ba1=0102 ba2=0304 > result=01020304 length=4  
+     
+    testbyte = 0x81  
+    resultbooleans = Convert.ByteToBits(testbyte)  
+    Log("[ByteToBits] byte=", Convert.ByteToHex(testbyte))  
+    For Each b As Boolean In resultbooleans  
+        Log("[ByteToBits] ", b, " ", Convert.BoolToTrueFalse(b))  
+    Next  
+    ' byte=81 8 bits = 10000001 = True, False, False, False, False, False, False, True  
+  
+    testbyte = Convert.BitsToByte(resultbooleans)  
+    Log("[BitsToByte]", _  
+        " bits=", Convert.ByteToBin(testbyte), _  
+        " byte=", Convert.ByteToHex(testbyte))  
+    ' [BitsToByte] bits=10000001 byte=81  
+  
+    testbytes = Array As Byte(0x1A, 0x2B, 0x3C)  
+    resultbytes = Convert.ShiftArrayBytesRight(testbytes, 1)  
+    Log("[ShiftArrayBytesRight]", _  
+        " testbytes hex=", Convert.BytesToHex(testbytes), _  
+        " testbytes bin=", Convert.BytesToBin(testbytes), _  
+        " > result hex=", Convert.BytesToHex(resultbytes), _  
+        " > result bin=", Convert.BytesToBin(resultbytes))     
+  
+    testbytes = Array As Byte(0x1A, 0x2B, 0x3C)  
+    resultbytes = Array As Byte(0x1A, 0x2B, 0x3D)  
+    resultboolean = Convert.ByteArrayCompare(testbytes, resultbytes)  
+    Log("[ByteArrayCompare]", _  
+        " bytearray1=", Convert.BytesToHex(testbytes), _  
+        " bytearray2=", Convert.BytesToHex(resultbytes), _  
+        " > result=", resultboolean, " (1=equal else 0=not equal)")     
+  
+    Log("[TestByteWise] Done")  
+    Log("=================================")  
 End Sub  
   
 Private Sub TestInt  
@@ -91,7 +164,7 @@ Private Sub TestInt
   
     Log("=================================")  
     Log("[TestInt] Start")  
-    
+     
     ' Bytes 80 00  
     ' little-endian (80 00) > LSB = 0x80, MSB = 0x00 > 0x0080 = 128  
     ' big-endian (80 00) > MSB = 0x80, LSB = 0x00 > 0x8000 = -32768  
@@ -131,7 +204,7 @@ Private Sub TestUInt
     testbytes = Convert.UIntToBytes(testvalue)  
     Log("[UIntToBytes] int=", testvalue, " > result hex=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length)  
     ' [UIntToBytes] int=10 > result hex=0A00, length=2  
-    
+     
     testbytes = Array As Byte(0x0A, 0x00)  
     testvalue = Convert.BytesToUInt(testbytes)  
     Log("[BytesToUInt] bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
@@ -142,12 +215,12 @@ Private Sub TestUInt
     testvalue = Convert.TwoBytesToUInt(testbytes, True)  
     Log("[TwoBytesToUInt] littleendian bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
     ' [TwoBytesToUInt] littleendian bytes=8000, length=2 > result uint=128  
-    
+     
     ' 80 00 > big-endian 32768  
     testvalue = Convert.TwoBytesToUInt(testbytes, False)  
     Log("[TwoBytesToUInt] bigendian bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result uint=", testvalue)  
     ' [TwoBytesToUInt] bigendian bytes=8000, length=2 > result uint=32768  
-    
+     
     teststring = "200"  
     testvalue = Convert.UIntFromString(teststring)  
     Log("[UIntFromString] string=", teststring, ", length=",teststring.Length," > result uint=", testvalue)  
@@ -169,20 +242,20 @@ Private Sub TestULong
     testbytes = Convert.ULongToBytes(testvalue)  
     Log("[ULongToBytes] long=", testvalue, " > result hex=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length)  
     ' [ULongToBytes] long=10 > result hex=0A000000, length=4  
-    
+     
     testbytes = Array As Byte(0x0A,0x00,0x00,0x00)  
     testvalue = Convert.BytesToULong(testbytes)  
     Log("[BytesToULong] bytes=", Convert.BytesToHex(testbytes), ", length=",testbytes.Length," > result ulong=", testvalue)  
     ' [BytesToULong] bytes=0A000000, length=4 > result ulong=10  
-    
+     
     teststring = testvalue  
     Log("[ULongToString Cast] ulong=", testvalue, " > result teststring=", teststring)  
     ' [ULongToString Cast] ulong=10 > result teststring=10.00  
-    
+     
     teststring = NumberFormat(testvalue, 0, 0)  
     Log("[ULongToString NumberFormat] ulong=", testvalue, " > result teststring=", teststring)  
     ' [ULongToString NumberFormat] ulong=10 > result teststring=10  
-    
+     
     Log("[TestULong] Done")  
     Log("=================================")  
 End Sub  
@@ -193,7 +266,7 @@ Private Sub TestFloat
   
     Log("=================================")  
     Log("[TestFloat] Start")  
-    
+     
     ' 19.58 > little-endian D7A39C41 > big-endian 419CA3D7  
     testvalue = 19.58  
   
@@ -204,7 +277,7 @@ Private Sub TestFloat
     testbytes = Convert.ReverseBytes(testbytes)  
     Log("[FloatToBytes Big-Endian] float=", testvalue, " > result hex=", Convert.BytesToHex(testbytes))  
     ' [FloatToBytes Big-Endian] float=19.5800 > result hex=419CA3D7  
-    
+     
     testbytes = Array As Byte(0X41,0X9C,0XA3,0XD7)  
     ' Ensure to set little-endian if not done in the previous array  
     testbytes = Convert.ReverseBytes(testbytes)  
@@ -213,20 +286,6 @@ Private Sub TestFloat
     ' [FloatToBytesScaled] bytes=D7A39C41 > result float=19.6000  
   
     Log("[TestFloat] Done")  
-    Log("=================================")  
-End Sub  
-  
-Private Sub TestTwoBytesHex  
-    Dim b1 As Byte = 10  
-    Dim b2 As Byte = 15  
-  
-    Log("=================================")  
-    Log("[TestTwoBytesHex] Start")  
-  
-    Log("[TwoBytesToHex] b1=", b1, ", b2=", b2, " > result hex=", Convert.TwoBytesToHex(b1, b2))  
-    ' [TwoBytesToHex] b1=10, b2=15 > result hex=0A0F  
-    
-    Log("[TestTwoBytesHex] Done")  
     Log("=================================")  
 End Sub  
   
@@ -252,15 +311,15 @@ Private Sub TestBinary
     testbyte = 0x43  
     Log("[ByteToBin] byte=",testbyte, ", hex=0x", Convert.ByteToHex(testbyte), " > result bin=", Convert.ByteToBin(testbyte))  
     ' [ByteToBin] byte=67, hex=0x43 > result bin=01000011  
-    
+     
     testbyte = 0x0A  
     Log("[NibbleToBin] byte=",testbyte, ", hex=0x", Convert.ByteToHex(testbyte), " > result bin=", Convert.NibbleToBin(testbyte))  
     ' [NibbleToBin] byte=10, hex=0x0A > result bin=1010  
-    
+     
     teststring = "11100011"  
     Log("[BinToDec] bytes=",teststring.GetBytes, " > result dec=", Convert.BinToDec(teststring))  
     ' [BinToDec] bytes=11100011 > result dec=227  
-    
+     
     Log("[TestBinary] Done")  
     Log("=================================")  
 End Sub  
@@ -268,13 +327,13 @@ End Sub
 Private Sub TestBoolean  
     Log("=================================")  
     Log("[TestBoolean] Start")  
-    
+     
     Log("[OnOffToBool] on > result ", Convert.OnOffToBool("on"), ", off > result ", Convert.OnOffToBool("off"))  
     ' [OnOffToBool] on > result 1, off > result 0  
-    
+     
     Log("[BoolToByte] true > result ", Convert.BoolToByte(True), ", false > result ", Convert.BoolToByte(False))  
     ' [BoolToByte] true > result 1, false > result 0  
-    
+     
     Log("[TestBoolean] Done")  
     Log("=================================")  
 End Sub  
@@ -289,7 +348,7 @@ Private Sub TestXORChecksum
     testbyte = Convert.XORChecksum(testbytes)  
     Log("[XORChecksum] bytes=", Convert.BytesToHex(testbytes), " > result byte=", Convert.ByteToHex(testbyte))  
     ' [XORChecksum] bytes=0A0B > result byte=01  
-    
+     
     testbytes = Array As Byte(0x5A,0x6B,0x02,0x00,0x05,0x02,0x1E,0x00,0x00,0x01)    ' > 2B  
     testbytes = Convert.AppendXORChecksum(testbytes)  
     Log("[AppendXORChecksum] bytes=", Convert.BytesToHex(testbytes), " > result checksum lastbyte=", Convert.ByteToHex(testbytes(testbytes.Length - 1)))  
@@ -307,11 +366,11 @@ Private Sub TestSwap
   
     Log("[SwapUInt16] uint=", testvalue, " > result uint=", Convert.SwapUInt16(testvalue))  
     ' [SwapUInt16] uint=23 > result uint=5888  
-    
+     
     testbytes = Convert.SwapUInt16ToBytes(testvalue)  
     Log("[SwapUInt16ToBytes] uint=", testvalue, " > result bytes=", Convert.ByteToHex(testbytes(0)), Convert.ByteToHex(testbytes(1)))  
     ' [SwapUInt16ToBytes] uint=23 > result bytes=0017  
-    
+     
     Log("[TestSwap] Done")  
     Log("=================================")  
 End Sub  
@@ -324,19 +383,19 @@ Private Sub TestModbusCRC16
   
     Log("=================================")  
     Log("[TestModbusCRC16] Start")  
-    
+     
     testbytes = Convert.ModbusCRC16(testframe)  
     Log("[ModbusCRC16] frame=", Convert.BytesToHex(testframe), " > result CRC bytes [low, high]=", Convert.BytesToHex(testbytes))  
     ' [ModbusCRC16] frame=01030000000A > result CRC bytes [low, high]=C5CD  
-    
+     
     crcNum = Convert.ModbusCRC16UInt(testframe)  
     Log("[ModbusCRC16UInt] frame=", Convert.BytesToHex(testframe), " > result CRC numeric=0x" , Convert.BytesToHex(Array As Byte(Bit.ShiftRight(crcNum, 8), Bit.And(crcNum, 0xFF))), " (decimal=" , crcNum , ")")  
     ' [ModbusCRC16UInt] frame=01030000000A > result CRC numeric=0xCDC5 (decimal=52677)  
-    
+     
     testbytes = Convert.ModbusCRC16TransmittedFrame(testframe)  
     Log("[ModbusCRC16TransmittedFrame] frame=", Convert.BytesToHex(testframe), " > result= Transmitted frame=" , Convert.BytesToHex(testbytes))  
     ' [ModbusCRC16TransmittedFrame] frame=01030000000A > result= Transmitted frame=01030000000AC5CD  
-    
+     
     valid = Convert.ModbusCRC16Check(testbytes)  
     Log("[ModbusCRC16Check] frame=", Convert.BytesToHex(testbytes), " > result= CRC valid (1=true) " , valid)  
     ' [ModbusCRC16Check] frame=01030000000AC5CD > result= CRC valid (1=true) 1  
@@ -348,29 +407,30 @@ End Sub
 Private Sub TestBitWise  
     Dim testbyte As Byte  
     Dim testbytes() As Byte  
+    Dim testresult() As Byte  
     Dim teststring() As Byte  
   
     Log("=================================")  
     Log("[TestBitWise] Start")  
   
     testbyte = 0  
-    testbyte = Convert.SetBit(testbyte, 3, True)  
-    Log("[SetBit] Set bit 3 from value 0 > result=", testbyte)  
-    ' [SetBit] Set bit 3 from value 0 > result=8  
-    
-    testbyte = Convert.SetBit(testbyte, 3, False)  
-    Log("[SetBit] Clear bit 3 from value 8 > result=", testbyte)  
-    ' [SetBit] Clear bit 3 from value 8 > result=0  
-    
+    testbyte = Convert.SetBit(testbyte, 3)  
+    Log("[SetBit] Set bit 3 from value 0 > result=", testbyte, " ", Convert.ByteToBitsString(testbyte))  
+    ' [SetBit] Set bit 3 from value 0 > result=8 00001000  
+     
+    testbyte = Convert.ClearBit(testbyte, 3)  
+    Log("[ClearBit] Clear bit 3 from value 8 > result=", testbyte, " ", Convert.ByteToBitsString(testbyte))  
+    ' [ClearBit] Clear bit 3 from value 8 > result=0 00000000  
+     
     testbyte = 8  
     testbyte = Convert.ToggleBit(testbyte, 3)  
     Log("[ToggleBit] Toggle bit 3 from DEC value 8 > result=", testbyte)  
     ' [ToggleBit] Toggle bit 3 from DEC value 8 > result=0  
-    
+     
     testbyte = Convert.ToggleBit(testbyte, 1)  
     Log("[ToggleBit] Toggle bit 1 from DEC value 0 > result=", testbyte)  
     ' [ToggleBit] Toggle bit 1 from DEC value 0 > result=2  
-    
+     
     testbyte = 8  
     Log("[GetBit] Get bit 0 from DEC value 8 > result=", Convert.GetBit(testbyte, 0), " - ", Convert.ByteToBitsString(testbyte))  
     ' [GetBit] Get bit 0 from DEC value 8 > result=0 - 00001000  
@@ -387,70 +447,44 @@ Private Sub TestBitWise
     teststring = Convert.BytesToBitsString(testbytes)  
     Log("[BytesToBitsString] Byte 1=5, byte 2=170 > result=", teststring, " length=", teststring.Length)  
     ' [BytesToBitsString] Byte 1=5, byte 2=170 > result=0000010110101010 length=16  
-    
+  
+    testbyte = 0x81  
+    testresult = Convert.GetBitIndices(testbyte, True)  
+    Log("[GetBitIndices]", _  
+        " byte=", Convert.ByteToBitsString(testbyte), _  
+        " > result=", Convert.BytesToHex(testresult), _  
+        " length=", testresult.Length)  
+    ' [GetBitIndices] byte=10000001 > result=0007 length=2  
+     
+    testbytes = Array As Byte(0x2,0x5,0x6)  
+    testbyte = Convert.SetBitIndices(testbytes)  
+    Log("[SetBitIndices]", _  
+        " bytes=",Convert.BytesToHex(testbytes), _  
+        " > result=", Convert.ByteToBitsString(testbyte), " DEC=", testbyte, " HEX=", Convert.ByteToHex(testbyte))  
+    ' [SetBitIndices] bytes=020506 > result=01100100 DEC=100 HEX=64  
+     
+    testbyte = 0x81  
+    Log("[CountActiveBits]", _  
+        " byte=",Convert.ByteToBitsString(testbyte), _  
+        " > result=", Convert.CountActiveBits(testbyte,True))  
+    ' [CountActiveBits] byte=10000001 > result=2  
+  
+    testbytes = Array As Byte(0x2,0x5,0x6)  
+    testbyte = Convert.ClearBitIndices(testbytes)  
+    Log("[ClearBitIndices]", _  
+        " bytes=",Convert.BytesToHex(testbytes), _  
+        " > result=", Convert.ByteToBitsString(testbyte), " DEC=", testbyte, " HEX=", Convert.ByteToHex(testbyte))  
+    ' [SetBitIndices] bytes=020506 > result=01100100 DEC=100 HEX=64  
+  
+    testbytes = Array As Byte(0x80, 0x01)  
+    testresult = Convert.ShiftArrayBitsLeft(testbytes)  
+    Log("[ShiftArrayBitsLeft]", _  
+        " bytes=",Convert.BytesToHex(testbytes), _  
+        " bin=",Convert.BytesToBitsString(testbytes), _  
+        " > result=", Convert.BytesToBitsString(testresult))  
+    ' [ShiftArrayBitsLeft] bytes=8001 bin=1000000000000001 > result=0000000000000010  
+     
     Log("[TestBitWise] Done")  
-    Log("=================================")  
-End Sub  
-  
-Private Sub TestCSVParsing  
-    Log("=================================")  
-    Log("[TestCSVParsing] Start")  
-  
-    ' Set rule to allow empty item as 0.  
-    Convert.SplitAllowEmptyAsZero = False  
-  
-    Dim teststringbytes() As Byte = "1,21,39,   255   ,,"    ' "1,21,39,256" <<< teststring with wrong byte  
-    Dim testbytes() As Byte  
-    testbytes = Convert.CSVToBytes(teststringbytes, ",")  
-    ' [CSVToBytes][E] Empty item at index 4 not allowed.  
-    If testbytes.Length > 0 Then  
-        For Each byteitem As Int In testbytes  
-            Log("[CSVToBytes] ", byteitem)  
-        Next  
-    Else  
-        Log("[CSVToBytes][E] String contains not a number or not a byte item: ", teststringbytes)  
-    End If  
-  
-    Dim teststringints() As Byte = "1,20,300,4000"            ' "1,2,3,4,5, 45000" <<< teststing with wrong int  
-    Dim testints() As Int  
-    testints = Convert.CSVToInts(teststringints, ",")  
-    Log("[CSVToInts] string=", teststringints, " > result=", testints.length, " ints")  
-    ' [CSVToInts] string=1,20,300,4000 > result=4 ints  
-    If testints.Length > 0 Then  
-        For Each intitem As Int In testints  
-            Log("[CVSToInts] ", intitem)  
-        Next  
-'    Else  
-'        Log("[CVSToInts][E] String contains not a number or not an int item.")  
-    End If  
-  
-    Dim teststringuints() As Byte = "1,2,3"                    ' "1,2,3,-4,5" <<< testsringwith wrong uint  
-    Dim testuints() As UInt  
-    testuints = Convert.CSVToUInts(teststringuints, ",")  
-    Log("[CSVToUInts] string=", teststringuints, " > result=", testuints.length, " ints")  
-    ' [CSVToUInts] string=1,2,3 > result=3 ints  
-    If testuints.Length > 0 Then  
-        For Each uintitem As UInt In testuints  
-            Log("[CSVToUInts] ", uintitem)  
-        Next  
-'    Else  
-'        Log("[CSVToUInts][E] String contains not a number or not an unsigned integer item")  
-    End If  
-  
-    Dim teststringfloats() As Byte = "1,2.234,-3,4.23,5.1"  
-    Dim testfloats() As Float  
-    testfloats = Convert.CSVToFloats(teststringfloats, ",")  
-    Log("[CSVToFloats] string=", teststringfloats, " > result=", testfloats.length, " floats")  
-    ' [CSVToFloats] string=1,2.234,-3,4.23,5.1 > result=5 floats  
-    If testfloats.Length > 0 Then  
-        For Each floatitem As Float In testfloats  
-            Log("[CSVToFloats] ", floatitem)  
-        Next  
-'    Else  
-'        Log("[CSVToFloats][E] String contains not a number item.")  
-    End If  
-  
-    Log("[TestCSVParsing] Done")  
     Log("=================================")  
 End Sub  
   
@@ -467,9 +501,105 @@ Private Sub TestByteConverter
     Log("=================================")  
 End Sub  
   
+' TestCSVParsing  
+' Important: Memory Reclamation: By moving the variables out of one large container routine, B4R completely purges the memory spaces utilized by  
+Private Sub TestCSVParsing  
+    Log("=================================")  
+    Log("[TestCSVParsing] Start")  
+  
+    ' Rule definition  
+    Convert.SplitAllowEmptyAsZero = True  
+  
+    ' Execute each test block inside its own isolated routine.  
+    ' This forces B4R to clear the memory stacks between calls!  
+    TestCSVToBytes  
+    TestCSVToInts  
+    TestCSVToUInts  
+    TestCSVToFloats  
+  
+    Log("[TestCSVParsing] Done")  
+    Log("=================================")  
+End Sub  
+  
+Private Sub TestCSVToBytes  
+    Dim testbytes() As Byte = Convert.CSVToBytes("1,21,39,255", ",")  
+    If Convert.CSVParserResult Then  
+        For Each byteitem As Int In testbytes  
+            Log("[TestCSVToBytes] ", byteitem)  
+        Next  
+    Else  
+        Log("[TestCSVToBytes][E] Invalid byte item.")  
+    End If  
+    Log("[TestCSVToBytes] done")  
+End Sub  
+  
+Private Sub TestCSVToInts  
+    Dim teststring_ints() As Byte = "1,20,300,4000"  
+    Dim testints() As Int = Convert.CSVToInts(teststring_ints, ",")  
+    Log("[TestCSVToInts] string=", Convert.ByteConv.StringFromBytes(teststring_ints), " > result=", testints.length, " ints")  
+     
+    If Convert.CSVParserResult Then  
+        For Each intitem As Int In testints  
+            Log("[TestCSVToInts] ", intitem)  
+        Next  
+    Else  
+        Log("[TestCSVToInts][E] Invalid int item.")  
+    End If  
+    Log("[TestCSVToInts] done")  
+End Sub  
+  
+Private Sub TestCSVToUInts  
+    Dim teststring_uints() As Byte = "1,2,3"  
+    Dim testuints() As UInt = Convert.CSVToUInts(teststring_uints, ",")  
+    Log("[TestCSVToUInts] string=", Convert.ByteConv.StringFromBytes(teststring_uints), " > result=", testuints.length, " uints")  
+     
+    If Convert.CSVParserResult Then  
+        For Each uintitem As UInt In testuints  
+            Log("[TestCSVToUInts] ", uintitem)  
+        Next  
+    Else  
+        Log("[TestCSVToUInts][E] Invalid uint item.")  
+    End If  
+    Log("[TestCSVToUInts] done")  
+End Sub  
+  
+Private Sub TestCSVToFloats  
+    Dim teststring_floats() As Byte = "1,2.234,-3,4.23,5.1"  
+    Dim testfloats() As Float = Convert.CSVToFloats(teststring_floats, ",")  
+    Log("[TestCSVToFloats] string=", Convert.ByteConv.StringFromBytes(teststring_floats), " > result=", testfloats.length, " floats")  
+     
+    If Convert.CSVParserResult Then  
+        For Each floatitem As Float In testfloats  
+            Log("[TestCSVToFloats] ", floatitem)  
+        Next  
+    Else  
+        Log("[TestCSVToFloats][E] Invalid float item.")  
+    End If  
+    Log("[TestCSVToFloats] done")  
+End Sub  
+  
+Private Sub TestMisc  
+    Log("=================================")  
+    Log("[TestMisc] Start")  
+     
+    Dim m As ULong = Millis + (1 * 60 * 1000) + (20 * 1000)  
+    Log("MillisToTimeString]", _  
+        " millis=", m, _  
+        " > result=", Convert.MillisToTimeString(m))  
+    'MillisToTimeString] millis=80062 > result=00:01:20  
+  
+    Log("[TestMisc] Done")  
+    Log("=================================")  
+End Sub  
+  
+' ================================================================  
+' 64-BIT ONLY LIKE ESP32  
+' ==========================================================  
+  
+#if ESP32  
 Private Sub TestD64  
     Log("=================================")  
-    Log("[TestD64] Start - ESP32 only")  
+    Log("[TestD64] ESP32")  
   
     ' Fetch the 13-digit absolute millisecond timestamp  
     Dim MillisNow As Double = Convert.D64Millis  
@@ -492,15 +622,16 @@ Private Sub TestD64
     Convert.D64ToString(Difference)  
     Log("[TestD64] Difference   (ms): ", Convert.D64String)  
   
-    Log("[TestD64] Done")  
+    Log("[TestD64] ESP32 Done")  
     Log("=================================")  
   
-'    Output with 16 ms rounding difference occurred when usig large values  
+'    Output with 16 ms rounding difference occurred when using large values  
 '    [TestD64] Current Time (ms): 1786176256  
 '    [TestD64] Current Time (ms) (string): 1786176256 Hex (8-bytes big-endian): 000000006A76E300  
 '    [TestD64] Future Time  (ms): 1786186240  
 '    [TestD64] Difference   (ms): 9984  
-End Sub
+End Sub  
+#End If
 ```
 
   
@@ -513,7 +644,7 @@ End Sub
 (Taken from source Convert.bas)  
 
 ```B4X
-'– Bytes –  
+'– ByteWise –  
 'ByteToBool(byte) : Byte 0 | 1 > True, Else False.  
 'AsciiByteToBool(byte) : Byte "1" > True, Byte "0" > False.  
 'AsciiBytesToBool(byte) : First Byte "1" > True, Byte "0" > False.  
@@ -522,12 +653,21 @@ End Sub
 'BytesToHex(bytes) : Byte Array > HEX string.  
 'TwoBytesToHex(b1,b2) : Two bytes > HEX string.  
 'ReverseBytes(b) : Reverse Byte order Byte Array.  
-'BytesToString(b): Convert Bytes > String.  
+'SliceBytes(b,i,n) : Extract a portion of a byte array.  
+'ConcatBytes(b1,b2) : Concatenate two byte arrays into a new single byte array.  
+'IndexOf(b, index) : Search for the first occurrence of a specific byte value.  
+'GetByte(b, index) : Get a byte at a specific index with safety checking.  
+'ByteToBits(b) : Convert a single byte into an array of 8 Booleans (bits).  
+'BitsToByte(b()) : Convert an array of 8 Booleans (bits) back into a single byte.  
+'ShiftArrayBytesLeft(b) : Shift all bytes across an array to the left by a specified number of positions.  
+'ShiftArrayBytesRight(b) : Shift all bytes across an array to the right by a specified number of positions.  
+'ByteArrayCompare(b1,b2) : Compare two byte arrays for exact equality.  
 '  
 '– Bool –  
 'BoolToString(state) : True > "1", False > "0".  
 'BoolToOnOff(state) : True > "ON", False > "OFF".  
 'OnOffToBool(value) : "ON"/"On"/"on"/"oN" > True.  
+'BoolToTrueFalse(value) : "True" or "False".  
 'IntToBool(value) : Convert Int 0, 1 > Bool.  
 'BoolToByte : Converts a Boolean value > Byte 1 (True) or 0 (False).  
 '  
@@ -550,7 +690,7 @@ End Sub
 '– Float –  
 'FloatToBytes(value) : 32-Bit float > little-endian bytes.  
 'BytesToFloat(b) : Little-endian 4 bytes > 32-Bit float.  
-'  
+'   
 '– Double 64-bit (ESP32 only) —  
 'D64Millis - Fetches the True 13-digit absolute Unix epoch milliseconds from the hardware.  
 'D64ToBytes(d) - Convert large Double into the 8-byte global Array `D64Buffer`. **Note**: Tiny rounding steps may occur on high values during inline B4R math operations (e.g., a difference of 9984ms instead of exactly 10000ms).  
@@ -597,11 +737,19 @@ End Sub
 'ModbusCRC16Test(frame) : Test the Modbus CRC16 functions for a frame.  
 '  
 '– BitWise —  
-'SetBit(b, index, on) : Sets Or clears a Bit in a byte at the given index.  
+' SetBit(b,i) : Sets a specific bit index in a byte to HIGH (1).  
+' ClearBit(b, i) : Clears a specific bit index in a byte to LOW (0).  
 'ToggleBit(b, index) : Flips (toggles) a Bit in a byte at the given index.  
-'GetBit(b, index) : Tests If a Bit at the given index in a byte is set.  
+'GetBit(b, index) : Tests Bit at the given index in a byte is set (true, 1).  
+'TestBit(b, index) : Alias for GetBit.  
 'ByteToBitsString(b) : Converts a single byte > 8-character binary string (same As ByteToBin).  
-'BytesToBitsString)b()) : Converts a byte Array > binary string representation (same As BytesToBin).  
+'BytesToBitsString(b) : Converts a byte Array > binary string representation (same As BytesToBin).  
+'GetBitIndices(b,bool) : Get the positions (0 to 7) of all bits that are either HIGH or LOW.  
+'SetBitIndices(b): Create a single byte by setting specific bit positions to HIGH (1).  
+'ClearBitIndices(b) : Create a single byte where specified bit positions are cleared to LOW (0).  
+'CountActiveBits(b, bool) : Count how many bits inside a byte are set to HIGH or LOW.  
+'ShiftArrayBitsLeft(b) : Shift all bits across a whole byte array to the left by 1 bit position.  
+'ShiftArrayBitsRight(b) : Shift all bits across a whole byte array to the right by 1 bit position.  
 '  
 ' – CSV Parsing –  
 'CSVCountItems: Get the number of items from a CSV string.  
@@ -617,7 +765,7 @@ End Sub
   
 ' – Misc –  
 'DirectionToString(direction) : Convert direction given as Byte > String.  
-'MillisToBytes(millis): Convert milliseconds > hh:mm:ss string
+'MillisToTimeString(millis): Convert milliseconds > hh:mm:ss string
 ```
 
   
@@ -630,4 +778,4 @@ End Sub
 MIT.  
   
 **Attached**  
-Library v1.6.0
+Library v1.7.0

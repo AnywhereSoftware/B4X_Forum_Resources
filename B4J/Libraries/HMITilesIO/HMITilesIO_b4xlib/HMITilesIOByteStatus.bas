@@ -1,16 +1,58 @@
 ﻿B4J=true
 Group=Default Group
 ModulesStructureVersion=1
-Type=StaticCode
+Type=Class
 Version=10.5
 @EndOfDesignText@
-'Static code module
-Private Sub Process_Globals
+#Region Class Header
+' ================================================================
+' File:     	HMITilesIOByteStatus.bas
+' Brief:    	Matrix 4x2 to set the state of the 8-bits for a byte value.
+' Date:			2026-08-29
+' Description:	An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.
+'				Array-Based Configuration — Introduced a human-readable byte-Array masking scheme (`PinsAttached`) To easily enable, disable, Or gray out individual Bit status slots.
+'				The matrix 8 items are named pins.
+' Usage:		Set the value range 0-255.
+'				TileByteStatus.Value = 103	' 0110 0111
+'
+'				Shows R=0 (OFF), G=1 (ON):
+'				[R][G][G][R]
+'				[R][G][G][G]
+'				Default all pins are set 1,1,1,1,1,1,1,1.
+' ================================================================
+#End Region
+
+Private Sub Class_Globals
+	Private xui As XUI
+	
+	' Instance-specific configuration variables (completely isolated for each tile)
+	Public TEXT_COLOR As String = "#0f172a"
+	Public TEXT_SIZE As Int = 24
 	Public PinsAttached() As Byte = Array As Byte (1,1,1,1,1,1,1,1)
+
+	Private mState						As Boolean		
+	Private mValue						As String       
+	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
+	Private mWebView					As WebView		'ignore Local WebView reference handle container
+	Private mEventName 					As String 		
+	Private mCallBack 					As Object 		
+End Sub
+
+' Initializes the instance
+Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+	mParentPanel = pnl
+	mWebView = wv
+	mEventName = evt
+	mCallBack = cb
 End Sub
 
 ' SetTile
-' Updates the readout text, size, and coloring instantly without page reloads
+' Updates the header, footer and the state of the 8 pins without page reloads.
+' Parameter:
+'	Header - Tile header
+'	Footer - Tile footer
+'	Pins() - Byte array with 8 items 0 or 1
+'	Value - Value used to set the binary state of the pins()
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   Pins() As Byte, _ 
@@ -36,8 +78,11 @@ Public Sub SetTile(Header As String, _
 End Sub
 
 ' Updates all 8 bits visually by passing a raw status byte and an activity layout array
-' StatusByte: The live data integer (0 - 255)
-' PinsAttached: An array of 8 bytes where 1 = Active/Monitored, 0 = Disabled/Gray
+' Parameter:
+' 	StatusByte - The live data integer (0 - 255)
+' 	PinsAttached - An array of 8 bytes where 1 = Active/Monitored, 0 = Disabled/Gray
+' Returns:
+'	String - Javascript to set the pins and the tile footer
 Private Sub UpdateByteStatus(StatusByte As Int, Pins() As Byte) As String
 	Dim sb As StringBuilder
 	sb.Initialize
@@ -81,57 +126,27 @@ Private Sub UpdateByteStatus(StatusByte As Int, Pins() As Byte) As String
 	Return sb.ToString
 End Sub
 
-' ================================================================
-' HELPERS
-' ================================================================
+' ProcessTouchHandler
+' Process the tile touch event.
+' Parameter:
+'	Data - Type with all touch properties
+Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult
+	' Update internal class state
+	mState = Data.State
+	mValue = Data.Value
 
-Private Sub GetBitArray(b As Byte) As Boolean()	'ignore
-	Dim result(8) As Boolean
-	For i = 0 To 7
-		result(i) = GetBit(b, i)
-	Next
-	Return result
-End Sub
-
-Private Sub SetBit(b As Byte, index As Int, value As Boolean) As Byte	'ignore
-	If value Then
-		Return Bit.Or(b, Bit.ShiftLeft(1, index))
-	Else
-		Return Bit.And(b, Bit.Not(Bit.ShiftLeft(1, index)))
+	' Only trigger interactions on the initial touch down event
+	If Data.Action = HMITilesIOUtils.ACTION_DOWN Then
+		' Trigger the event if it exists in the parent module
+		If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
+			CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
+		End If
 	End If
-End Sub
-
-Private Sub GetBit(b As Byte, bitpos As Int) As Boolean	'ignore
-	Dim Result As Boolean = False
-	Select bitpos
-		Case 0
-			Result = Bit.And(b, 1) = 1
-		Case 1
-			Result = Bit.And(b, 2) = 2
-		Case 2
-			Result = Bit.And(b, 4) = 4
-		Case 3
-			Result = Bit.And(b, 8) = 8
-		Case 4
-			Result = Bit.And(b, 18) = 16
-		Case 5
-			Result = Bit.And(b, 32) = 32
-		Case 6
-			Result = Bit.And(b, 64) = 64
-		Case 7
-			Result = Bit.And(b, 128) = 128
-	End Select
-	Return Result
-End Sub
-
-' ByteToBin
-' Convert byte to binary string starting bit 7.
-' Example: 103 > 01100111
-Public Sub ByteToBin(b As Byte) As String
-	Dim sb As StringBuilder
-	sb.Initialize
-	For i = 7 To 0 Step -1
-		sb.Append(IIf(GetBit(b, i), "1", "0"))
-	Next
-	Return sb.ToString
+    
+	' Simplify result creation using standard B4X Type initialization shorthand
+	Dim result As HMITouchResult
+	result.Initialize
+	result.State = mState
+	result.Value = mValue
+	Return result
 End Sub

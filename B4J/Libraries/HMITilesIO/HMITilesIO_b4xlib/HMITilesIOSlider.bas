@@ -1,12 +1,57 @@
 ﻿B4J=true
 Group=Default Group
 ModulesStructureVersion=1
-Type=StaticCode
+Type=Class
 Version=10.5
 @EndOfDesignText@
-'Static code module
-Private Sub Process_Globals
-	'
+#Region Class Header
+' ================================================================
+' File:     	HMITilesIOSlider.bas
+' Brief:    	Horizontal slider with default range 0-100.
+' Date:			2026-08-29
+' Description:	Symmetrical control groove rail with flawless cursor mapping.
+' Usage:		
+'				TileSlider.Value = 68
+' ================================================================
+#End Region
+
+Private Sub Class_Globals
+	Private xui As XUI
+
+	Public TEXT_COLOR As String = "#0f172a"
+	Public TEXT_SIZE As Int = 24
+
+	Private mState						As Boolean
+	Private mValue						As String
+	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
+	Private mWebView					As WebView		'ignore Local WebView reference handle container
+	Private mEventName 					As String
+	Private mCallBack 					As Object
+
+	Private mMinValue					As Float
+	Private mMaxValue					As Float
+End Sub
+
+' Initializes the instance
+Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+	mParentPanel = pnl
+	mWebView = wv
+	mEventName = evt
+	mCallBack = cb
+End Sub
+
+Public Sub setMinValue(value As Float)
+	mMinValue = value
+End Sub
+Public Sub getMinValue As Float
+	Return mMinValue
+End Sub
+
+Public Sub setMaxValue(value As Float)
+	mMaxValue = value
+End Sub
+Public Sub getMaxValue As Float
+	Return mMaxValue
 End Sub
 
 #If B4J
@@ -116,6 +161,11 @@ End Sub
 
 ' SetTile
 ' Set all tile properties.
+' Parameter:
+'	Header - String set text at tile top
+'	Footer - String set text at tile bottom
+' 	MinValue / MaxValue - Float for calibration floor and ceiling limits
+' 	Value - Float current value
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   MinValue As Int, _
@@ -124,7 +174,8 @@ Public Sub SetTile(Header As String, _
 				   
 	' Check boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
-    
+	mValue = Value
+	    
 	' Calculates accurate offsets based on tracking layout standards
 	Dim handleX As Float = 20.0 + ((Value / 100.0) * 80.0)
 	Dim rectOriginX As Float = handleX - 5.0
@@ -146,5 +197,65 @@ Public Sub SetTile(Header As String, _
         if(prog) { prog.setAttribute("x2", "${handleX}"); };
     "$
 	Return js
+End Sub
+
+Private Sub UpdateSlider(x As Float, value As String)
+	Dim js As String = $"
+						var handle = document.getElementById("hmi-handle");
+						var prog = document.getElementById("hmi-progress");
+						var txt = document.getElementById("slider-val");
+						
+						if (handle) { handle.setAttribute("x", "${X - 5}"); }
+						if (prog)   { prog.setAttribute("x2", "${X}"); }
+						if (txt)    { txt.textContent = "${value}"; }
+					"$
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Slider.UpdateValue][E] Can not update value"$)
+	End If
+End Sub
+
+' ProcessTouchHandler
+' Process the tile touch event.
+' Parameter:
+'	Data - Type with all touch properties
+Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult
+	' Update internal class state
+	mState = Data.State
+	mValue = Data.Value
+
+	' Only trigger interactions on the initial touch down event
+	' Handle actions
+	If Data.Action = HMITilesIOUtils.ACTION_DOWN Or _ 
+	   Data.Action = HMITilesIOUtils.ACTION_MOVE Then
+		Dim PanelWidth As Float = mParentPanel.Width
+		Dim svgTouchX As Float = (Data.X / PanelWidth) * 120
+		
+		If svgTouchX < 20 Then svgTouchX = 20
+		If svgTouchX > 100 Then svgTouchX = 100
+		
+		Dim pct As Float = (svgTouchX - 20) / 80
+		Dim finalValue As Int = Round(pct * 100)
+		
+		' Only execute UI updates and raise events if the value has actually shifted
+		If finalValue <> mValue Then
+		
+			mValue = finalValue
+
+			UpdateSlider(svgTouchX, mValue)
+			
+			' Update the vector graphics layers inside the WebView container
+			If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
+				CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
+			End If
+		End If
+	End If
+    
+	' Simplify result creation using standard B4X Type initialization shorthand
+	Dim result As HMITouchResult
+	result.Initialize
+	result.State = mState
+	result.Value = mValue
+	Return result
 End Sub
 

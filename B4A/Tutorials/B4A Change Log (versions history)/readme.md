@@ -1,7 +1,17 @@
 ### B4A Change Log (versions history) by Erel
-### 08/09/2026
+### 09/02/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/19332/)
 
+**v14.0** - September 2, 2026 - <https://www.b4x.com/android/forum/threads/new-release-b4a-v14-0-with-optional-parameters.171962/>  
+  
+
+- Optional parameters: <https://www.b4x.com/android/forum/threads/171906/#content>
+- Various libraries updated with default parameters.
+- Errors in referenced b4xlibs are marked with their library and module.
+- Doclet tool updated to support default values: [https://www.b4x.com/android/forum/t...mpiler-build-libraries-without-eclipse.29918/](https://www.b4x.com/android/forum/threads/tool-simple-library-compiler-build-libraries-without-eclipse.29918/)
+- Bug fixes and other minor improvements. Including the navigation bar light theme issue with edge to edge.
+
+  
 **v13.7** - August 9, 2026 - <https://www.b4x.com/android/forum/threads/b4a-v13-7-targetsdkversion-36-edge-to-edge.171756/>  
 
 - Support for targetSdkVersion=36 and EdgeToEdge mode.

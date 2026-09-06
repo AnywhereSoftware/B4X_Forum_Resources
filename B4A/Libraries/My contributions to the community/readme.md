@@ -1,5 +1,5 @@
 ### My contributions to the community by hatzisn
-### 07/20/2026
+### 09/01/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/108945/)
 
 ***My Creations with B4X IDEs  
@@ -155,6 +155,7 @@ How to debug an MCP Server using MCP Inspector ([Post#1](https://www.b4x.com/and
 [Create shared folders in virtual box Ubuntu 20.04 machine to transfer files to compile in linux your b4j apps and how to use B4J Bridge](https://www.b4x.com/android/forum/threads/create-shared-folders-in-virtual-box-ubuntu-20-04-machine-to-transfer-files-to-compile-in-linux-your-b4j-apps.124724/)  
   
 ***B4Χ***  
+[Vibe Coding - Create Layout files and Use them to vibe code](https://www.b4x.com/android/forum/threads/ai-assisted-engineered-apps-showcase.171882/post-1051492)  
 [Show an image with an IDE Link in the IDEs. Also B4J created Program Starter.](https://www.b4x.com/android/forum/threads/b4x-show-image-in-ide-link-b4j-created-program-starter.167763/)  
 [Using B4X tool JsonLayouts, add in a B4i layout "n" image files selected out of "N" from B4A layout where n>>1 and N>>n.](https://www.b4x.com/android/forum/threads/b4x-jsonlayouts-synchronize-json-and-binary-layouts.167398/post-1026283)  
   

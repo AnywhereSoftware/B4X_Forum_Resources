@@ -1,5 +1,5 @@
 ### HMITilesIO by rwblinn
-### 08/23/2026
+### 08/31/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
@@ -80,53 +80,73 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TABLE]  
 [TR]  
 [TD]**Tile Type**[/TD]  
-[TD]**Brief**[/TD]  
-[TD][/TD]  
+[TD]**Brief Description**[/TD]  
+[TD]**Primary IoT / HMI Use Case**[/TD]  
 [/TR]  
 [TR]  
-[TD]ByteStatus[/TD]  
+[TD]**Button**[/TD]  
+[TD]Push Button: Multi-layered bezel with high-contrast borders and an offset shadow to give it strong physical depth.[/TD]  
+[TD]Discrete Input: Momentary engine starts, manual horn triggers, or tactile latch reset commands.[/TD]  
+[/TR]  
+[TR]  
+[TD]**ByteStatus**[/TD]  
 [TD]Byte Bit Matrix: An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.[/TD]  
-[TD][/TD]  
+[TD]Discrete Output: Real-time CAN-Bus frame analysis, GPIO expander debugging, or low-level register tracking.[/TD]  
 [/TR]  
 [TR]  
-[TD]Gauge[/TD]  
+[TD]**Gauge**[/TD]  
 [TD]180° Gauge: Beautiful, perfectly mapped left-to-right neon tracking arc.[/TD]  
-[TD][/TD]  
+[TD]Analog Readout: High-visibility analog readouts like Engine RPM, Vehicle Speed, or active Pump Pressure.[/TD]  
 [/TR]  
 [TR]  
-[TD]LEDPanel[/TD]  
-[TD]LED Panel: Deep, polished status lens with a realistic glare overlay.[/TD]  
-[TD][/TD]  
+[TD]**IOPanel**[/TD]  
+[TD]IO Panel: Up-to 8 rectangles to set multiple states ON / OFF.[/TD]  
+[TD]Discrete Input: Multi-relay smart home control, zone lighting management, or individual valve line triggers.[/TD]  
 [/TR]  
 [TR]  
-[TD]ReadOut[/TD]  
+[TD]**LEDPanel**[/TD]  
+[TD]LED Panel: Flat, flush pilot light embedded smoothly into the dashboard surface.[/TD]  
+[TD]Discrete Output: Passive system notifications such as Overheat Alerts, Connectivity Pings, or Safe Run indicators.[/TD]  
+[/TR]  
+[TR]  
+[TD]**MultiState**[/TD]  
+[TD]Multi State: Up-to 8 rectangles to set a single state ON / OFF.[/TD]  
+[TD]Discrete Input: Interlocked control patterns like Fan Speeds (Low/Med/High) or Machine Mode options.[/TD]  
+[/TR]  
+[TR]  
+[TD]**ReadOut**[/TD]  
 [TD]Read Out: Crisp telemetry display that cleanly outputs dynamic process numbers or operational status string values (e.g., "23.5 °C", "1013 hPa", "RUNNING").[/TD]  
-[TD][/TD]  
+[TD]Analog Readout: Environmental sensor arrays (DHT22/BME280) or text-based state machines.[/TD]  
 [/TR]  
 [TR]  
-[TD]SevenSegment[/TD]  
-[TD]7-Segment Display: 40px zero-padded local font that is completely visually centered.[/TD]  
-[TD][/TD]  
+[TD]**Selector**[/TD]  
+[TD]Selector: Select an item from list of items via touch.[/TD]  
+[TD]Analog Control: Changing dynamic setpoint parameters or choosing target device profiles on the fly.[/TD]  
 [/TR]  
 [TR]  
-[TD]Spinner[/TD]  
-[TD]Spinner: High-precision directional increment control featuring clear high-contrast tactile action touch targets for exact setpoint calibration.[/TD]  
-[TD][/TD]  
+[TD]**SevenSegment**[/TD]  
+[TD]7-Segment Display: 40px zero-padded local font that is completely visually centered to display 1-4 digits.[/TD]  
+[TD]Analog Readout: Authentic dashboard instrumentation readouts like active Transmission Gear or Digital Odometers.[/TD]  
 [/TR]  
 [TR]  
-[TD]Slider[/TD]  
+[TD]**Slider**[/TD]  
 [TD]Technical Slider: Symmetrical control groove rail with flawless cursor mapping.[/TD]  
-[TD][/TD]  
+[TD]Analog Control: Continuous range modulation, such as adjusting LED Dimmer Levels or Motor Throttle bounds.[/TD]  
 [/TR]  
 [TR]  
-[TD]Switch[/TD]  
+[TD]**Spinner**[/TD]  
+[TD]Spinner: High-precision directional increment control featuring clear high-contrast tactile action touch targets for exact setpoint calibration.[/TD]  
+[TD]Analog Control: Fine-tuning targeted temperature settings or adjusting calibration offset parameters step-by-step.[/TD]  
+[/TR]  
+[TR]  
+[TD]**Switch**[/TD]  
 [TD]Rocker Switch: Crisp, tactile 3D effect with clear status symbols.[/TD]  
-[TD][/TD]  
+[TD]Discrete Input: Main system Power Toggles, isolated battery disconnects, or Cruise Control activation.[/TD]  
 [/TR]  
 [TR]  
-[TD]VerticalMeter[/TD]  
+[TD]**VerticalMeter**[/TD]  
 [TD]Vertical Meter: Simplified scale column with an aligned reference tracking arrow.[/TD]  
-[TD][/TD]  
+[TD]Analog Readout: Linear volumetric calculations like Fuel Tank Capacity, Water Levels, or Battery Charge (SoC).[/TD]  
 [/TR]  
 [/TABLE]  
   
@@ -137,7 +157,8 @@ Developing a single CustomView codebase that renders identically and handles rea
   
 **Screenshots**  
   
-![](https://www.b4x.com/android/forum/attachments/173099)  
+![](https://www.b4x.com/android/forum/attachments/173344)  
+  
 
 ---
 
@@ -200,8 +221,7 @@ End Sub
   
 ' Fires instantly when an operator touches the component area  
 Private Sub TileIOSwitch_Click(State As Boolean, Value As String)  
-    TileIOSwitch.State = Not(State)  
-    Log($"[TileIOSwitch_Click] state=${TileIOSwitch.state} value=${TileIOSwitch.value}"$)  
+    Log($"[TileIOSwitch_Click] State changed to: ${State}, Value: ${Value}"$)  
 End Sub
 ```
 

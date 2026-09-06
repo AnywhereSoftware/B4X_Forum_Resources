@@ -1,5 +1,5 @@
 ### (b4j)[juuid] Get Unique hardware ID by behnam_tr
-### 06/21/2026
+### 09/02/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/132277/)
 
 Get Unique hardware ID in b4j  
@@ -83,6 +83,27 @@ MainBoardSerialWithPowerShell
 updated v2.9 (2025/04)  
 getPrintersList() as list  
 getDefaultPrinter() as string  
+  
+updated v3.0 (2026/08)  
+Code optimization and bug fixing with AI  
+Merged overloaded functions / functions with the same name have been merged  
+New functions have been added  
+
+```B4X
+    Log("Windows : " & p.IsWindows)  
+    Log("Linux   : " & p.IsLinux)  
+    Log("macOS   : " & p.IsMacOS)  
+    Log("Unix    : " & p.IsUnix)  
+    Log("Primary Network : " & p.Get_PrimaryNetworkInterface)  
+    Log("Administrator : " & p.IsAdministrator)  
+    Log("Battery : " & p.HasBattery)  
+    Log("Battery Level : " & p.Get_BatteryLevel)  
+    Log("Virtual Machine : " & p.IsVirtualMachine)  
+    Log("Time Zone : " & p.Get_TimeZone)
+```
+
+  
+  
   
 [/SPOILER]  
   

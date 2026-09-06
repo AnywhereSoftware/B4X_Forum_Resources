@@ -8,19 +8,23 @@ Version=4
 ' ================================================================
 ' File:         Convert.bas
 ' Brief:        Code module with various conversions
+' Author:      	Robert W.B. Linn (c) 2025-2026 MIT
+' Date:         20260903
+' Version:		1.7.0
+' Hardware:		Arduino UNO, UNOR4, ESP32
+' Software:		B4R 4.00 (64 bit), arduino-cli 1.3.1, ESP32 Board Manager 3.3.11
+' DependsOn:    rRandomAccessFile 1.91 or higher.
+' Conditionals	Following conditional symbols to support specific MCU's:
+'				ESP32 - Compile specific methods for the ESP32 MCU's
 ' Notes:		On ESP32, ESP8266, Arduino AVR, B4R ByteConverter uses the MCU’s native endian.
 '				Most ARM/AVR microcontrollers are little-endian, so ByteConv.DoublesToBytes produces little-endian bytes.
 '				The IEEE-754 defines a standard bit format, but the byte-order of that format is dependent on the host machine.
 '				Use the method ReverseBytes to change endian.
-' DependsOn:    rRandomAccessFile 1.91 or higher.
-' Author:      	Robert W.B. Linn (c) 2025-2026 MIT
-' Date:         See Process_Globals VERSION
-' Version:		1.6.0
 ' ================================================================
 #End Region
 
 #Region Function Index (one-liners)
-'-- Bytes --
+'-- ByteWise --
 'ByteToBool(byte) : Byte 0 | 1 > True, Else False.
 'AsciiByteToBool(byte) : Byte "1" > True, Byte "0" > False.
 'AsciiBytesToBool(byte) : First Byte "1" > True, Byte "0" > False.
@@ -29,12 +33,21 @@ Version=4
 'BytesToHex(bytes) : Byte Array > HEX string.
 'TwoBytesToHex(b1,b2) : Two bytes > HEX string.
 'ReverseBytes(b) : Reverse Byte order Byte Array.
-'BytesToString(b): Convert Bytes > String.
+'SliceBytes(b,i,n) : Extract a portion of a byte array.
+'ConcatBytes(b1,b2) : Concatenate two byte arrays into a new single byte array.
+'IndexOf(b, index) : Search for the first occurrence of a specific byte value.
+'GetByte(b, index) : Get a byte at a specific index with safety checking.
+'ByteToBits(b) : Convert a single byte into an array of 8 Booleans (bits).
+'BitsToByte(b()) : Convert an array of 8 Booleans (bits) back into a single byte.
+'ShiftArrayBytesLeft(b) : Shift all bytes across an array to the left by a specified number of positions.
+'ShiftArrayBytesRight(b) : Shift all bytes across an array to the right by a specified number of positions.
+'ByteArrayCompare(b1,b2) : Compare two byte arrays for exact equality.
 '
 '-- Bool --
 'BoolToString(state) : True > "1", False > "0".
 'BoolToOnOff(state) : True > "ON", False > "OFF".
 'OnOffToBool(value) : "ON"/"On"/"on"/"oN" > True.
+'BoolToTrueFalse(value) : "True" or "False".
 'IntToBool(value) : Convert Int 0, 1 > Bool.
 'BoolToByte : Converts a Boolean value > Byte 1 (True) or 0 (False).
 '
@@ -63,7 +76,7 @@ Version=4
 'D64ToBytes(d) - Convert large Double into the 8-byte global Array `D64Buffer`. **Note**: Tiny rounding steps may occur on high values during inline B4R math operations (e.g., a difference of 9984ms instead of exactly 10000ms).
 'D64ToString(d) - Format any large Double safely into the global Array `D64String` As printable text characters To bypass standard B4R Log `ovf` limitations.
 'D64ToHex(d) - Convert large Double into a 16-character hexadecimal string, with option To swap byte-order To Little- Or Big-Endian.
-
+'
 '-- Bin --
 'ByteToBin(b) : Convert 0–255 byte > "xxxxxxxx" binary string.
 'BytesToBin(b()) : Converts byte array > Binary string representation.
@@ -104,11 +117,19 @@ Version=4
 'ModbusCRC16Test(frame) : Test the Modbus CRC16 functions for a frame.
 '
 '-- BitWise ---
-'SetBit(b, index, on) : Sets Or clears a Bit in a byte at the given index.
+' SetBit(b,i) : Sets a specific bit index in a byte to HIGH (1).
+' ClearBit(b, i) : Clears a specific bit index in a byte to LOW (0).
 'ToggleBit(b, index) : Flips (toggles) a Bit in a byte at the given index.
-'GetBit(b, index) : Tests If a Bit at the given index in a byte is set.
+'GetBit(b, index) : Tests Bit at the given index in a byte is set (true, 1).
+'TestBit(b, index) : Alias for GetBit.
 'ByteToBitsString(b) : Converts a single byte > 8-character binary string (same As ByteToBin).
-'BytesToBitsString)b()) : Converts a byte Array > binary string representation (same As BytesToBin).
+'BytesToBitsString(b) : Converts a byte Array > binary string representation (same As BytesToBin).
+'GetBitIndices(b,bool) : Get the positions (0 to 7) of all bits that are either HIGH or LOW.
+'SetBitIndices(b): Create a single byte by setting specific bit positions to HIGH (1).
+'ClearBitIndices(b) : Create a single byte where specified bit positions are cleared to LOW (0).
+'CountActiveBits(b, bool) : Count how many bits inside a byte are set to HIGH or LOW.
+'ShiftArrayBitsLeft(b) : Shift all bits across a whole byte array to the left by 1 bit position.
+'ShiftArrayBitsRight(b) : Shift all bits across a whole byte array to the right by 1 bit position.
 '
 ' -- CSV Parsing --
 'CSVCountItems: Get the number of items from a CSV string.
@@ -124,7 +145,7 @@ Version=4
 
 ' -- Misc --
 'DirectionToString(direction) : Convert direction given as Byte > String.
-'MillisToBytes(millis): Convert milliseconds > hh:mm:ss string
+'MillisToTimeString(millis): Convert milliseconds > hh:mm:ss string
 '----------------------------------------------
 #End Region
 
@@ -141,7 +162,11 @@ Version=4
 
 Sub Process_Globals
 
-	Public VERSION As ULong = 20260810
+	' Version and build
+	' 1 (Major): Incremented For massive rewrites Or breaking API signature updates.
+	' 7 (Minor): Incremented when adding new functionalities that are backward-compatible.
+	' 0 (Patch): Incremented For small backward-compatible bug fixes.
+	Public Const VERSION 			As String = "1.7.0 - Build 20260903"
 
 	' Constants for numeric ranges
 	' Based on Arduino / C standard integer sizes
@@ -194,8 +219,10 @@ Sub Process_Globals
 	' Modbus RTU
 	Private Const MODBUS_POLYNOMIAL	As ULong = 0xA001
 
+	' CSV Parser
 	' Split option to allow empty string as 0
 	Public SplitAllowEmptyAsZero 	As Boolean = True
+	Public CSVParserResult			As Boolean = False
 
 	' Byte converter instance (from lib rRandomAccessFile) for conversions between bytes and strings
 	' Public so it can be accessed from this module.
@@ -203,9 +230,9 @@ Sub Process_Globals
 End Sub
 
 ' ================================================================
-' BYTES
+' BYTEWISE
 ' ================================================================
-#Region Bytes
+#Region ByteWise
 '----------------------------------------------
 ' ByteToBool
 ' Converts byte 0 | 1 to a Boolean value.
@@ -272,7 +299,11 @@ End Sub
 '----------------------------------------------
 ' ReverseBytes
 ' Reverse the bytes of a byte array. This can be used to convert little endian to big endian.
-' Example: [0x0A, 0x1F] > "0A1F"
+' Parameter:
+'	b() - Byte Array
+' Returns:
+'	Byte Array
+' Example: Two byte array [0x0A, 0x1F] > [0x0A, 0x1F]
 '----------------------------------------------
 Public Sub ReverseBytes(b() As Byte) As Byte()
 	Dim n As Int = b.Length
@@ -284,14 +315,266 @@ Public Sub ReverseBytes(b() As Byte) As Byte()
 End Sub
 
 '----------------------------------------------
-' BytesToString
-' Convert bytes to string.
+' SliceBytes
+' Extract a portion of a byte array.
+' Parameter:
+'	b() - Source Byte Array
+'	StartIndex - The zero-based starting index
+'	Length - The number of bytes to extract
+' Returns:
+'	Byte Array
+' Example: 
+'	SliceBytes(Array As Byte(0x0A, 0x1F, 0x2E, 0x3D), 1, 2)
+'	[0x0A, 0x1F, 0x2E, 0x3D], Start 1, Length 2 > [0x1F, 0x2E]
 '----------------------------------------------
-Public Sub BytesToString(bytes() As Byte) As String
-	Return ByteConv.StringFromBytes(bytes)
+Public Sub SliceBytes(b() As Byte, StartIndex As Int, Length As Int) As Byte()
+	' Validate input parameters for B4R stability
+	If StartIndex < 0 Or StartIndex >= b.Length Or Length <= 0 Then
+		Dim EmptyArray(0) As Byte
+		Return EmptyArray
+	End If
+	
+	' Prevent index out of bounds if Length is too large
+	Dim ActualLength As Int = Length
+	If StartIndex + ActualLength > b.Length Then
+		ActualLength = b.Length - StartIndex
+	End If
+	
+	Dim r(ActualLength) As Byte
+	For i = 0 To ActualLength - 1
+		r(i) = b(StartIndex + i)
+	Next
+	Return r
 End Sub
+
+'----------------------------------------------
+' ConcatBytes
+' Concatenate two byte arrays into a new single byte array.
+' Parameter:
+'	b1() - First Byte Array
+'	b2() - Second Byte Array
+' Returns:
+'	Byte Array
+' Example: b1=[0x0A, 0x1F], b2=[0x2E, 0x3D] > [0x0A, 0x1F, 0x2E, 0x3D]
+'----------------------------------------------
+Public Sub ConcatBytes(b1() As Byte, b2() As Byte) As Byte()
+	Dim TotalLength As Int = b1.Length + b2.Length
+	Dim r(TotalLength) As Byte
+	
+	' Copy first array
+	For i = 0 To b1.Length - 1
+		r(i) = b1(i)
+	Next
+	
+	' Copy second array
+	For i = 0 To b2.Length - 1
+		r(b1.Length + i) = b2(i)
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' IndexOf
+' Search for the first occurrence of a specific byte value.
+' Parameter:
+'	b() - Byte Array to search within
+'	Value - The byte value to search for
+' Returns:
+'	Int - The zero-based index of the first occurrence, or -1 if not found
+' Example: b=[0x0A, 0x1F, 0x2E], Value=0x1F > 1
+'----------------------------------------------
+Public Sub IndexOf(b() As Byte, Value As Byte) As Int
+	For i = 0 To b.Length - 1
+		If b(i) = Value Then
+			Return i
+		End If
+	Next
+	Return -1
+End Sub
+
+'----------------------------------------------
+' GetByte
+' Get a byte at a specific index with safety checking.
+' Parameter:
+'	b() - Byte Array
+'	Index - The zero-based index to read
+' Returns:
+'	Byte - The byte value, or 0x00 if out of bounds
+'----------------------------------------------
+Public Sub GetByte(b() As Byte, Index As Int) As Byte
+	If Index < 0 Or Index >= b.Length Then
+		Return 0x00
+	End If
+	Return b(Index)
+End Sub
+
+'----------------------------------------------
+' ByteToBits
+' Convert a single byte into an array of 8 Booleans (bits).
+' Index 0 is the Most Significant Bit (MSB, bit 7), Index 7 is the LSB (bit 0).
+' Parameter:
+'	Value - The byte to convert
+' Returns:
+'	Boolean Array of length 8
+' Example: Value = 0x81 (10000001) > [True, False, False, False, False, False, False, True]
+'----------------------------------------------
+Public Sub ByteToBits(b As Byte) As Boolean()
+	Dim r(8) As Boolean
+	
+	' Mask each bit from MSB (bit 7) down to LSB (bit 0)
+	r(0) = ((Bit.And(b, 0x80)) <> 0)
+	r(1) = ((Bit.And(b, 0x40)) <> 0)
+	r(2) = ((Bit.And(b, 0x20)) <> 0)
+	r(3) = ((Bit.And(b, 0x10)) <> 0)
+	r(4) = ((Bit.And(b, 0x08)) <> 0)
+	r(5) = ((Bit.And(b, 0x04)) <> 0)
+	r(6) = ((Bit.And(b, 0x02)) <> 0)
+	r(7) = ((Bit.And(b, 0x01)) <> 0)
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' BitsToByte
+' Convert an array of 8 Booleans (bits) back into a single byte.
+' Index 0 is the Most Significant Bit (MSB, bit 7), Index 7 is the LSB (bit 0).
+' Parameter:
+'	Bits() - Boolean Array of length 8
+' Returns:
+'	Byte - The consolidated byte value (returns 0x00 if input array is invalid)
+' Example: [True, False, False, False, False, False, False, True] > 0x81
+'----------------------------------------------
+Public Sub BitsToByte(Bits() As Boolean) As Byte
+	' Safety check for B4R stability
+	If Bits.Length < 8 Then Return 0x00
+	
+	Dim r As Int = 0
+	
+	' Shift and combine each boolean bit into the integer accumulator
+	If Bits(0) Then r = Bit.Or(r, 0x80)
+	If Bits(1) Then r = Bit.Or(r, 0x40)
+	If Bits(2) Then r = Bit.Or(r, 0x20)
+	If Bits(3) Then r = Bit.Or(r, 0x10)
+	If Bits(4) Then r = Bit.Or(r, 0x08)
+	If Bits(5) Then r = Bit.Or(r, 0x04)
+	If Bits(6) Then r = Bit.Or(r, 0x02)
+	If Bits(7) Then r = Bit.Or(r, 0x01)
+	
+	' Cast back to a single byte
+	Return r
+End Sub
+
+'----------------------------------------------
+' ShiftArrayBytesRight
+' Shift all bytes across an array to the right by a specified number of positions.
+' Vacated positions at the start are explicitly cleared to 0x00. Returns a new array.
+' Parameter:
+'	b() - Source Byte Array
+'	Positions - Number of byte positions to shift
+' Returns:
+'	Byte Array - A new shifted byte array
+' Example: [0x1A, 0x2B, 0x3C], Positions = 1 > [0x00, 0x1A, 0x2B]
+'----------------------------------------------
+Public Sub ShiftArrayBytesRight(b() As Byte, Positions As Int) As Byte()
+	If b.Length = 0 Or Positions < 0 Then
+		Dim EmptyArray(0) As Byte
+		Return EmptyArray
+	End If
+
+	Dim r(b.Length) As Byte
+	
+	' Handle absolute fallback if shift exceeds array length
+	If Positions >= b.Length Then
+		For i = 0 To b.Length - 1
+			r(i) = 0x00
+		Next
+		Return r
+	End If
+	
+	' CRITICAL FIX: Explicitly clear the newly vacated positions at the start
+	For i = 0 To Positions - 1
+		r(i) = 0x00
+	Next
+	
+	' Copy bytes from source to their new shifted index positions
+	For i = 0 To b.Length - 1 - Positions
+		r(i + Positions) = b(i)
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' ShiftArrayBytesLeft
+' Shift all bytes across an array to the left by a specified number of positions.
+' Vacated positions at the end are explicitly cleared to 0x00. Returns a new array.
+' Parameter:
+'	b() - Source Byte Array
+'	Positions - Number of byte positions to shift
+' Returns:
+'	Byte Array - A new shifted byte array
+' Example: [0x1A, 0x2B, 0x3C], Positions = 1 > [0x2B, 0x3C, 0x00]
+'----------------------------------------------
+Public Sub ShiftArrayBytesLeft(b() As Byte, Positions As Int) As Byte()
+	If b.Length = 0 Or Positions < 0 Then
+		Dim EmptyArray(0) As Byte
+		Return EmptyArray
+	End If
+
+	Dim r(b.Length) As Byte
+	
+	' Handle absolute fallback if shift exceeds array length
+	If Positions >= b.Length Then
+		For i = 0 To b.Length - 1
+			r(i) = 0x00
+		Next
+		Return r
+	End If
+	
+	' Copy bytes from source to their new shifted index positions
+	For i = Positions To b.Length - 1
+		r(i - Positions) = b(i)
+	Next
+	
+	' CRITICAL FIX: Explicitly clear the newly vacated positions at the end
+	For i = b.Length - Positions To b.Length - 1
+		r(i) = 0x00
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' ByteArrayCompare
+' Compare two byte arrays for exact equality.
+' Parameter:
+'	b1() - First Byte Array
+'	b2() - Second Byte Array
+' Returns:
+'	Boolean - True if both arrays are identical, otherwise False
+' Example: b1=[0x1A, 0x2B], b2=[0x1A, 0x2B] > True
+'----------------------------------------------
+Public Sub ByteArrayCompare(b1() As Byte, b2() As Byte) As Boolean
+	' If lengths don't match, they cannot be identical
+	If b1.Length <> b2.Length Then Return False
+	
+	' Loop through and compare every single byte slot
+	For i = 0 To b1.Length - 1
+		If b1(i) <> b2(i) Then
+			Return False ' Early exit on first mismatch to save CPU cycles
+		End If
+	Next
+	
+	' If we reach here, every byte matched perfectly
+	Return True
+End Sub
+
 #End Region
 
+' ================================================================
+' BOOLEAN (BOOL)
+' ================================================================
 #Region Bool
 '----------------------------------------------
 ' BoolToString
@@ -325,6 +608,18 @@ End Sub
 Public Sub OnOffToBool(value As String) As Boolean
 	If value == "ON" Or value == "On" Or value == "on" Or value == "oN" Then Return True
 	Return False
+End Sub
+
+'----------------------------------------------
+' BoolToTrueFalse
+' Converts a Boolean value to string "True" or "False".
+'----------------------------------------------
+Public Sub BoolToTrueFalse(state As Boolean) As String
+	If state Then
+		Return "True"
+	Else
+		Return "False"
+	End If
 End Sub
 
 '----------------------------------------------
@@ -1089,56 +1384,84 @@ End Sub
 ' ================================================================
 #Region BitWise
 '----------------------------------------------
-' SetBit
-' Sets or clears a bit in a byte at the given index.
-' b: Input byte value.
-' index: Bit index (0–7).
-' on: True to set the bit, False to clear it.
-' Returns: The modified byte.
-' Example: SetBit(0, 3, True) > 8 (0b00001000)
+' GetBit
+' Tests if a bit at the given index in a byte is set.
+' Bit 0 is the Least Significant Bit (LSB, 0x01), Bit 7 is the MSB (0x80).
+' Parameter:
+'	b - Input byte value.
+' 	index - Bit index (0–7).
+' Returns:
+'	True if the bit is set, otherwise False.
+' Example: GetBit(8, 3) > True
 '----------------------------------------------
-Public Sub SetBit(b As Byte, index As Int, on As Boolean) As Byte
-	If on Then
-		Return Bit.Or(b, Bit.ShiftLeft(1, index))
-	Else
-		Return Bit.And(b, Bit.Not(Bit.ShiftLeft(1, index)))
-	End If
+Public Sub GetBit(b As Byte, index As Int) As Boolean
+	' Guard against invalid indices
+	If index < 0 Or index > 7 Then Return False
+	
+	' Using an Int wrapper prevents signed byte overflow at index 7
+	Dim mask As Int = Bit.ShiftLeft(1, index)
+	Return Bit.And(b, mask) <> 0
+End Sub
+
+' TestBit
+' Alias for GetBit
+Public Sub TestBit(b As Byte, index As Int) As Boolean
+	Return GetBit(b, index)
+End Sub
+
+'----------------------------------------------
+' SetBit
+' Sets a specific bit index in a byte to HIGH (1).
+' Parameter:
+'	b - Input byte value.
+' 	index - Bit index (0–7).
+' Returns:
+'	Byte - The modified byte value.
+' Example: SetBit(0x00, 3) > 0x08 (00001000)
+'----------------------------------------------
+Public Sub SetBit(b As Byte, index As Int) As Byte
+	If index < 0 Or index > 7 Then Return b
+	Return Bit.Or(b, Bit.ShiftLeft(1, index))
+End Sub
+
+'----------------------------------------------
+' ClearBit
+' Clears a specific bit index in a byte to LOW (0).
+' Parameter:
+'	b - Input byte value.
+' 	index - Bit index (0–7).
+' Returns:
+'	Byte - The modified byte value.
+' Example: ClearBit(0x0F, 3) > 0x07 (00000111)
+'----------------------------------------------
+Public Sub ClearBit(b As Byte, index As Int) As Byte
+	If index < 0 Or index > 7 Then Return b
+	Dim mask As Int = Bit.Not(Bit.ShiftLeft(1, index))
+	Return Bit.And(b, mask)
 End Sub
 
 '----------------------------------------------
 ' ToggleBit
-' Flips (toggles) a bit in a byte at the given index.
-' b: Input byte value.
-' index: Bit index (0–7).
-' Returns: The modified byte.
-' Example: ToggleBit(8, 3) > 0 (0b00000000)
+' Toggles (flips) a specific bit index in a byte.
+' Parameter:
+'	b - Input byte value.
+' 	index - Bit index (0–7).
+' Returns:
+'	Byte - The modified byte value.
+' Example: ToggleBit(0x00, 3) > 0x08, ToggleBit(0x08, 3) > 0x00
 '----------------------------------------------
 Public Sub ToggleBit(b As Byte, index As Int) As Byte
-	Dim mask As Byte = Bit.ShiftLeft(1, index)
-	If Bit.And(b, mask) = 0 Then
-		Return Bit.Or(b, mask)
-	Else
-		Return Bit.And(b, Bit.Not(mask))
-	End If
-End Sub
-
-'----------------------------------------------
-' GetBit
-' Tests if a bit at the given index in a byte is set.
-' b: Input byte value.
-' index: Bit index (0–7).
-' Returns: True if the bit is set, otherwise False.
-' Example: GetBit(8, 3) > True
-'----------------------------------------------
-Public Sub GetBit(b As Byte, index As Int) As Boolean
-	Dim mask As Byte = Bit.ShiftLeft(1, index)
-	Return Bit.And(b, mask) = mask
+	If index < 0 Or index > 7 Then Return b
+	Return Bit.Xor(b, Bit.ShiftLeft(1, index))
 End Sub
 
 '----------------------------------------------
 ' ByteToBitsString (same as ByteToBin)
 ' Converts a single byte to an 8-character binary string.
-' Returns: "01010101" representation of the byte.
+' Parameter:
+'	b - Byte
+' Returns: 
+'	"01010101" representation of the byte.
 ' Example: ByteToBitsString(170) > "10101010"
 '----------------------------------------------
 Public Sub ByteToBitsString(b As Byte) As Byte()
@@ -1149,11 +1472,241 @@ End Sub
 ' BytesToBitsString
 ' Converts a byte array to a binary string representation.
 ' Each byte is represented by 8 bits in "01010101" format.
-' Returns: Concatenated string of all bits.
+' Parameter:
+'	bytes() - Array of bytes
+' Returns: 
+'	byte() - Byte array holding concatenated binary string of all bits.
 ' Example: BytesToBitsString(Array As Byte(5,170)) > "0000010110101010"
 '----------------------------------------------
 Public Sub BytesToBitsString(bytes() As Byte) As Byte()
 	Return BytesToBin(bytes)
+End Sub
+
+'----------------------------------------------
+' GetBitIndices
+' Get the positions (0 to 7) of all bits that are either HIGH or LOW.
+' Bit 0 is the Least Significant Bit (LSB, 0x01), Bit 7 is the MSB (0x80).
+' Parameter:
+'	Value - The byte to scan
+'	SearchHigh - True to get indices of HIGH bits (1), False for LOW bits (0)
+' Returns:
+'	Byte Array matching the exact count of found bits
+' Example: Value = 0x64 (Bits 2, 5, 6 are HIGH), SearchHigh = True > [2, 5, 6]
+'----------------------------------------------
+Public Sub GetBitIndices(Value As Byte, SearchHigh As Boolean) As Byte()
+	' Pass 1: Count how many bits match the target state to size our array
+	Dim Count As Int = 0
+	Dim Mask As Int = 1
+	For i = 0 To 7
+		Dim IsHigh As Boolean = (Bit.And(Value, Mask) <> 0)
+		If IsHigh = SearchHigh Then
+			Count = Count + 1
+		End If
+		Mask = Mask * 2 ' Move to the next bit position (0x01 -> 0x02 -> 0x04...)
+	Next
+	
+	' Allocate the exact target array size required for B4R stability
+	Dim r(Count) As Byte
+	Dim TargetIdx As Int = 0
+	
+	' Pass 2: Populate the array with the matching bit indices
+	Mask = 1
+	For i = 0 To 7
+		Dim IsHigh As Boolean = (Bit.And(Value, Mask) <> 0)
+		If IsHigh = SearchHigh Then
+			r(TargetIdx) = i
+			TargetIdx = TargetIdx + 1
+		End If
+		Mask = Mask * 2
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' SetBitIndices
+' Create a single byte by setting specific bit positions to HIGH (1).
+' Bit 0 is the Least Significant Bit (LSB, 0x01), Bit 7 is the MSB (0x80).
+' Parameter:
+'	Indices() - Byte Array containing positions to set (0 to 7)
+' Returns:
+'	Byte - The calculated byte value
+' Example: Indices = [2, 5, 6] > 0x64 (01100100)
+'----------------------------------------------
+Public Sub SetBitIndices(Indices() As Byte) As Byte
+	' Return 0x00 early if the input array is empty
+	If Indices.Length = 0 Then Return 0x00
+	
+	Dim r As Int = 0
+	
+	' Loop through each index and mask it into the result
+	For i = 0 To Indices.Length - 1
+		Dim Idx As Byte = Indices(i)
+		
+		' Explicit safety bounds for microcontroller stability
+		If Idx >= 0 And Idx <= 7 Then
+			' Bit.ShiftLeft(1, Idx) creates the exact mask (e.g. Idx 2 -> 0x04)
+			r = Bit.Or(r, Bit.ShiftLeft(1, Idx))
+		End If
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' CountActiveBits
+' Count how many bits inside a byte are set to HIGH or LOW.
+' Also known as the Hamming weight or population count.
+' Parameter:
+'	Value - The byte to analyze
+'	SearchHigh - True to count HIGH bits (1), False to count LOW bits (0)
+' Returns:
+'	Int - The total number of matching bits (0 to 8)
+' Example: Value = 0x81 (10000001), SearchHigh = True > 2
+'----------------------------------------------
+Public Sub CountActiveBits(Value As Byte, SearchHigh As Boolean) As Int
+	Dim Count As Int = 0
+	Dim Mask As Int = 1
+	
+	' Loop through all 8 bits
+	For i = 0 To 7
+		Dim IsHigh As Boolean = (Bit.And(Value, Mask) <> 0)
+		If IsHigh = SearchHigh Then
+			Count = Count + 1
+		End If
+		Mask = Mask * 2 ' Fast bit-shift via multiplication
+	Next
+	
+	Return Count
+End Sub
+
+'----------------------------------------------
+' ClearBitIndices
+' Create a single byte where specified bit positions are cleared to LOW (0).
+' All other bit positions remain HIGH (1).
+' Bit 0 is the Least Significant Bit (LSB, 0x01), Bit 7 is the MSB (0x80).
+' Parameter:
+'	Indices() - Byte Array containing positions to clear (0 to 7)
+' Returns:
+'	Byte - The calculated byte value (returns 0xFF if input array is empty)
+' Example: Indices = > 0x9B (10011011)
+'----------------------------------------------
+Public Sub ClearBitIndices(Indices() As Byte) As Byte
+	' Return 0xFF (all bits high) early if the input array is empty
+	If Indices.Length = 0 Then Return 0xFF
+	
+	' Start with all bits set to 1
+	Dim r As Int = 0xFF
+	
+	' Loop through each index and clear it from the result
+	For i = 0 To Indices.Length - 1
+		Dim Idx As Byte = Indices(i)
+		
+		' Explicit safety bounds for microcontroller stability
+		If Idx >= 0 And Idx <= 7 Then
+			' Shift 1 to the index position to create a target mask
+			Dim Mask As Int = Bit.ShiftLeft(1, Idx)
+			' Invert the mask so the target bit becomes 0 and all others become 1
+			Dim InvertedMask As Int = Bit.Not(Mask)
+			' Apply via bitwise AND to force the target bit to 0
+			r = Bit.And(r, InvertedMask)
+		End If
+	Next
+	
+	Return r
+End Sub
+
+' Notes for clarity using example clearing bits 2,5,6:
+' 1. The Starting Point
+' Set all bits set To HIGH (1):
+' Binary: 1 1 1 1 1 1 1 1 (Decimal: 255)
+' 2. Clearing the Indices
+' Count positions from right to left (Bit 0 To Bit 7):
+'							7 6 5 4 3 2 1 0
+' Clear Bit 2 (value 4):	1 1 1 1 1 0 1 1
+' Clear Bit 5 (value 32):	1 1 0 1 1 0 1 1
+' Clear Bit 6 (value 64):	1 0 0 1 1 0 1 1
+' 3. Calculating the Final Value
+' Check remaining active bits in 10011011:
+' Bit 7 (128),Bit 4 (16),Bit 3 (8),Bit 1 (2),Bit 0 (1)
+' 128 + 16 + 8 + 2 + 1 = 155 DEC, 98 HEX
+
+'----------------------------------------------
+' ShiftArrayBitsLeft
+' Shift all bits across a whole byte array to the left by 1 bit position.
+' Vacated bit at the end becomes 0. Returns a new array.
+' Parameter:
+'	b() - Source Byte Array
+' Returns:
+'	Byte Array - A new shifted byte array
+' Example: [0x80, 0x01] shifted left becomes [0x00, 0x02]
+'----------------------------------------------
+Public Sub ShiftArrayBitsLeft(b() As Byte) As Byte()
+	' Handle empty input gracefully
+	If b.Length = 0 Then
+		Dim EmptyArray(0) As Byte
+		Return EmptyArray
+	End If
+
+	' Create a completely new target array to protect original memory
+	Dim r(b.Length) As Byte
+	Dim Carry As Int = 0
+	
+	' Process from the last byte down to the first byte
+	For i = b.Length - 1 To 0 Step -1
+		Dim CurrentByte As Int = b(i)
+		
+		' Save the bit that will overflow into the next byte (MSB)
+		Dim NextCarry As Int = 0
+		If Bit.And(CurrentByte, 0x80) <> 0 Then NextCarry = 1
+		
+		' Shift and merge the carry into the new array buffer
+		Dim Shifted As Int = Bit.ShiftLeft(CurrentByte, 1)
+		r(i) = Bit.Or(Shifted, Carry)
+		
+		Carry = NextCarry
+	Next
+	
+	Return r
+End Sub
+
+'----------------------------------------------
+' ShiftArrayBitsRight
+' Shift all bits across a whole byte array to the right by 1 bit position.
+' Vacated bit at the start becomes 0. Returns a new array.
+' Parameter:
+'	b() - Source Byte Array
+' Returns:
+'	Byte Array - A new shifted byte array
+' Example: [0x01, 0x80] shifted right becomes [0x00, 0xC0]
+'----------------------------------------------
+Public Sub ShiftArrayBitsRight(b() As Byte) As Byte()
+	' Handle empty input gracefully
+	If b.Length = 0 Then
+		Dim EmptyArray(0) As Byte
+		Return EmptyArray
+	End If
+
+	' Create a completely new target array to protect original memory
+	Dim r(b.Length) As Byte
+	Dim Carry As Int = 0
+	
+	' Process from the first byte up to the last byte
+	For i = 0 To b.Length - 1
+		Dim CurrentByte As Int = b(i)
+		
+		' Save the bit that will overflow into the next byte (LSB)
+		Dim NextCarry As Int = 0
+		If Bit.And(CurrentByte, 0x01) <> 0 Then NextCarry = 0x80
+		
+		' Shift right, clean sign extension, and merge carry into the new buffer
+		Dim Shifted As Int = Bit.And(Bit.ShiftRight(CurrentByte, 1), 0x7F)
+		r(i) = Bit.Or(Shifted, Carry)
+		
+		Carry = NextCarry
+	Next
+	
+	Return r
 End Sub
 #End Region
 
@@ -1161,6 +1714,11 @@ End Sub
 ' CSVPARSING
 '====================================================
 #Region CSV Parsing Utilities
+' Notes
+' - No Pointer Slicing: It scans the original array element by element via buffer(i), avoiding the unaligned internal windows created by ByteConv.Split.
+' - 32-Bit Alignment Bound: Passing the output through SafeCheckValue ensures the substring is cleanly copied to a fresh, perfectly word-aligned 4-byte segment in RAM.
+' - AVR-Safe Null Prevention: Returning Dim errArray(0) As Int prevents accidental null pointer dereferences on older platforms like the Uno R3 or Arduino Mega.
+
 '----------------------------------------------
 ' CSVCountItems
 ' Counts number of items in a CSV (or delimited) string.
@@ -1176,13 +1734,16 @@ End Sub
 '----------------------------------------------
 ' CSVCheckValue
 ' Common helper: converts bytes to string, trims spaces,
-' and validates empty fields. Private.
+' and validates empty fields.
 '----------------------------------------------
-Private Sub CSVCheckValue(item() As Byte, index As Int, tag As String) As String
+Public Sub CSVCheckValue(item() As Byte, index As Int, tag As String) As String
 	Dim str As String = ByteConv.StringFromBytes(item)
-	str = StringTrim(str)
+	' Log("[Convert.CSVCheckValue] string=", str)
 
-	If str.Length = 0 Then
+	Dim cleanstr As String = StringTrim(str)
+	' Log("[Convert.CSVCheckValue] stringtrim=", cleanstr)
+
+	If cleanstr.Length = 0 Then
 		If SplitAllowEmptyAsZero Then
 			Return "0"
 		Else
@@ -1190,7 +1751,74 @@ Private Sub CSVCheckValue(item() As Byte, index As Int, tag As String) As String
 			Return ""
 		End If
 	End If
-	Return str
+	Return cleanstr
+End Sub
+
+' CSVGetItem
+' Get an items from the CSV string at position n (1-numer of items)
+Public Sub CSVGetItem(s() As Byte, sep As String, n As Int) As Byte()
+	Dim bc As ByteConverter
+	Dim sepBytes() As Byte = sep.GetBytes
+	Dim slength As Int = sepBytes.Length
+	
+	Dim lastk As Int = 0
+	Dim k As Int = -1
+	
+	' Loop up to n-1 to find the start pointer of our item
+	For j = 1 To n
+		' Find where the current item ends
+		k = bc.IndexOf2(s, sepBytes, lastk)
+		
+		' If we reached our target field index (n)
+		If j = n Then
+			' If no trailing separator exists, the item ends at the absolute end of the buffer
+			If k = -1 Then k = s.Length
+			
+			' Extract the raw sliced block securely into word-aligned bounds
+			Dim rawCell() As Byte = bc.SubString2(s, lastk, k)
+			If rawCell.Length > 0 Then
+				' Perform an inline safe byte trim operation
+				Return TrimByteArray(rawCell)
+			Else
+				' rawCell = Array As Byte(0x30)
+			End If
+		End If
+		
+		' If we hit the end of the string before reaching item 'n', it's not available
+		If k = -1 Then Exit
+		
+		' Advance start index past the separator token
+		lastk = k + slength
+	Next
+	
+	Return "n/a"
+End Sub
+
+' TrimByteArray
+' Helper Fast byte-level trimmer to keep safe from string/pointer crashes
+Private Sub TrimByteArray(b() As Byte) As Byte()
+	Dim bc As ByteConverter
+	Dim startIndex As Int = 0
+	Dim endIndex As Int = b.Length - 1
+
+	' Skip leading spaces and tabs
+	Do While startIndex <= endIndex And (b(startIndex) = 32 Or b(startIndex) = 9)
+		startIndex = startIndex + 1
+	Loop
+
+	' Skip trailing spaces, tabs, carriage returns, and line feeds
+	Do While endIndex >= startIndex And (b(endIndex) = 32 Or b(endIndex) = 9 Or b(endIndex) = 13 Or b(endIndex) = 10)
+		endIndex = endIndex - 1
+	Loop
+
+	' Guard: If the item was empty or only contained whitespace, return empty array
+	If startIndex > endIndex Then
+		Dim empty(0) As Byte
+		Return empty
+	End If
+
+	' Returns a perfectly memory-aligned slice copy
+	Return bc.SubString2(b, startIndex, endIndex + 1)
 End Sub
 
 '----------------------------------------------
@@ -1199,27 +1827,47 @@ End Sub
 '----------------------------------------------
 Public Sub CSVToBytes(buffer() As Byte, separator As String) As Byte()
 	Dim count As Int = CSVCountItems(buffer, separator)
+	Log("[CSVToBytes] buffer=", ByteConv.StringFromBytes(buffer), " count=", count)
+
+	CSVParserResult = True
+
+	If count = 0 Then
+		Dim failureResult(1) As Byte = Array As Byte(0xFF)
+		CSVParserResult = False
+		Return failureResult
+	End If
+	
 	Dim result(count) As Byte
-	Dim error() As Byte
-	Dim counter As Int
 
-	For Each item() As Byte In ByteConv.Split(buffer, separator)
-		Dim str As String = CSVCheckValue(item, counter, "CSVToBytes")
-		If str = "" Then Return error
-
-		If IsNumber(str) Then
-			Dim num As Int = str
-			If num < BYTE_MIN Or num > BYTE_MAX Then
-				Log("[CSVToBytes][E] Item ", str, " (index ", counter, _
-					") out of range ", BYTE_MIN, "–", BYTE_MAX, ".")
-				Return error
+	For i = 1 To count
+		Dim item() As Byte = CSVGetItem(buffer, separator, i)
+		' Check if the parsed field is completely empty
+		If item.Length = 0 Then
+			If SplitAllowEmptyAsZero Then
+				result(i - 1) = 0
+				Continue ' Proceed to the next field
+			Else
+				Log("[CSVToBytes][E] Empty item at index ", i, " not allowed.")
+				CSVParserResult = False
+				Return result
 			End If
-			result(counter) = num
-		Else
-			Log("[CSVToBytes][E] Item ", str, " (index ", counter, ") is not a number.")
-			Return error
 		End If
-		counter = counter + 1
+
+		Dim itemStr As String = ByteConv.StringFromBytes(item)
+		
+		If IsNumber(itemStr) Then
+			Dim parsedNum As Int = itemStr
+			If parsedNum < BYTE_MIN Or parsedNum > BYTE_MAX Then
+				Log("[CSVToBytes][E] Item at index ", i, " (value: ", parsedNum, ") out of range.")
+				CSVParserResult = False
+				Return result
+			End If
+			result(i - 1) = parsedNum
+		Else
+			Log("[CSVToBytes][E] Item at index ", i, " is not a number.")
+			CSVParserResult = False
+			Return result
+		End If
 	Next
 	Return result
 End Sub
@@ -1230,27 +1878,45 @@ End Sub
 '----------------------------------------------
 Public Sub CSVToInts(buffer() As Byte, separator As String) As Int()
 	Dim count As Int = CSVCountItems(buffer, separator)
+	CSVParserResult = True
+
+	If count = 0 Then
+		Dim failureResult(1) As Int = Array As Int(0)
+		CSVParserResult = False
+		Return failureResult
+	End If
+	
 	Dim result(count) As Int
-	Dim error() As Int
-	Dim counter As Int
 
-	For Each item() As Byte In ByteConv.Split(buffer, separator)
-		Dim str As String = CSVCheckValue(item, counter, "CSVToInts")
-		If str = "" Then Return error
-
-		If IsNumber(str) Then
-			Dim num As Int = str
-			If num < INT16_MIN Or num > INT16_MAX Then
-				Log("[CSVToInts][E] Item ", str, " (index ", counter, _
-					") out of range ", INT16_MIN, "–", INT16_MAX, ".")
-				Return error
+	For i = 1 To count
+		Dim item() As Byte = CSVGetItem(buffer, separator, i)
+		
+		If item.Length = 0 Then
+			If SplitAllowEmptyAsZero Then
+				result(i - 1) = 0
+				Continue
+			Else
+				Log("[CSVToInts][E] Empty item at index ", i, " not allowed.")
+				CSVParserResult = False
+				Return result
 			End If
-			result(counter) = num
-		Else
-			Log("[CSVToInts][E] Item ", str, " (index ", counter, ") is not a number.")
-			Return error
 		End If
-		counter = counter + 1
+
+		Dim itemStr As String = ByteConv.StringFromBytes(item)
+		
+		If IsNumber(itemStr) Then
+			Dim parsedNum As Long = itemStr
+			If parsedNum < INT16_MIN Or parsedNum > INT16_MAX Then
+				Log("[CSVToInts][E] Item at index ", i, " out of range.")
+				CSVParserResult = False
+				Return result
+			End If
+			result(i - 1) = parsedNum
+		Else
+			Log("[CSVToInts][E] Item at index ", i, " is not a number.")
+			CSVParserResult = False
+			Return result
+		End If
 	Next
 	Return result
 End Sub
@@ -1261,27 +1927,45 @@ End Sub
 '----------------------------------------------
 Public Sub CSVToUInts(buffer() As Byte, separator As String) As UInt()
 	Dim count As Int = CSVCountItems(buffer, separator)
+	CSVParserResult = True
+
+	If count = 0 Then
+		Dim failureResult(1) As UInt = Array As UInt(0)
+		CSVParserResult = False
+		Return failureResult
+	End If
+	
 	Dim result(count) As UInt
-	Dim error() As UInt
-	Dim counter As Int
 
-	For Each item() As Byte In ByteConv.Split(buffer, separator)
-		Dim str As String = CSVCheckValue(item, counter, "CSVToUInts")
-		If str = "" Then Return error
-
-		If IsNumber(str) Then
-			Dim num As Float = str
-			If num < 0 Or num > UINT16_MAX Then
-				Log("[CSVToUInts][E] Item ", str, " (index ", counter, _
-					") out of range 0–", UINT16_MAX, ".")
-				Return error
+	For i = 1 To count
+		Dim item() As Byte = CSVGetItem(buffer, separator, i)
+		
+		If item.Length = 0 Then
+			If SplitAllowEmptyAsZero Then
+				result(i - 1) = 0
+				Continue
+			Else
+				Log("[CSVToUInts][E] Empty item at index ", i, " not allowed.")
+				CSVParserResult = False
+				Return result
 			End If
-			result(counter) = num
-		Else
-			Log("[CSVToUInts][E] Item ", str, " (index ", counter, ") is not a number.")
-			Return error
 		End If
-		counter = counter + 1
+
+		Dim itemStr As String = ByteConv.StringFromBytes(item)
+		
+		If IsNumber(itemStr) Then
+			Dim parsedNum As Long = itemStr
+			If parsedNum < 0 Or parsedNum > UINT16_MAX Then
+				Log("[CSVToUInts][E] Item at index ", i, " out of range.")
+				CSVParserResult = False
+				Return result
+			End If
+			result(i - 1) = parsedNum
+		Else
+			Log("[CSVToUInts][E] Item at index ", i, " is not a number.")
+			CSVParserResult = False
+			Return result
+		End If
 	Next
 	Return result
 End Sub
@@ -1292,21 +1976,39 @@ End Sub
 '----------------------------------------------
 Public Sub CSVToULongs(buffer() As Byte, separator As String) As ULong()
 	Dim count As Int = CSVCountItems(buffer, separator)
+	CSVParserResult = True
+
+	If count = 0 Then
+		Dim failureResult(1) As ULong = Array As ULong(0)
+		CSVParserResult = False
+		Return failureResult
+	End If
+	
 	Dim result(count) As ULong
-	Dim error() As ULong
-	Dim counter As Int
 
-	For Each item() As Byte In ByteConv.Split(buffer, separator)
-		Dim str As String = CSVCheckValue(item, counter, "CSVToULongs")
-		If str = "" Then Return error
-
-		If IsNumber(str) Then
-			result(counter) = str
-		Else
-			Log("[CSVToULongs][E] Item ", str, " (index ", counter, ") is not a number.")
-			Return error
+	For i = 1 To count
+		Dim item() As Byte = CSVGetItem(buffer, separator, i)
+		
+		If item.Length = 0 Then
+			If SplitAllowEmptyAsZero Then
+				result(i - 1) = 0
+				Continue
+			Else
+				Log("[CSVToULongs][E] Empty item at index ", i, " not allowed.")
+				CSVParserResult = False
+				Return result
+			End If
 		End If
-		counter = counter + 1
+
+		Dim itemStr As String = ByteConv.StringFromBytes(item)
+		
+		If IsNumber(itemStr) Then
+			result(i - 1) = itemStr
+		Else
+			Log("[CSVToULongs][E] Item at index ", i, " is not a number.")
+			CSVParserResult = False
+			Return result
+		End If
 	Next
 	Return result
 End Sub
@@ -1317,21 +2019,39 @@ End Sub
 '----------------------------------------------
 Public Sub CSVToFloats(buffer() As Byte, separator As String) As Float()
 	Dim count As Int = CSVCountItems(buffer, separator)
+	CSVParserResult = True
+
+	If count = 0 Then
+		Dim failureResult(1) As Float = Array As Float(0.0)
+		CSVParserResult = False
+		Return failureResult
+	End If
+	
 	Dim result(count) As Float
-	Dim error() As Float
-	Dim counter As Int
 
-	For Each item() As Byte In ByteConv.Split(buffer, separator)
-		Dim str As String = CSVCheckValue(item, counter, "CSVToFloats")
-		If str = "" Then Return error
-
-		If IsNumber(str) Then
-			result(counter) = str
-		Else
-			Log("[CSVToFloats][E] Item ", str, " (index ", counter, ") is not a number.")
-			Return error
+	For i = 1 To count
+		Dim item() As Byte = CSVGetItem(buffer, separator, i)
+		
+		If item.Length = 0 Then
+			If SplitAllowEmptyAsZero Then
+				result(i - 1) = 0.0
+				Continue
+			Else
+				Log("[CSVToFloats][E] Empty item at index ", i, " not allowed.")
+				CSVParserResult = False
+				Return result
+			End If
 		End If
-		counter = counter + 1
+
+		Dim itemStr As String = ByteConv.StringFromBytes(item)
+		
+		If IsNumber(itemStr) Then
+			result(i - 1) = itemStr
+		Else
+			Log("[CSVToFloats][E] Item at index ", i, " is not a number.")
+			CSVParserResult = False
+			Return result
+		End If
 	Next
 	Return result
 End Sub
@@ -1344,7 +2064,7 @@ End Sub
 '----------------------------------------------
 ' RGBToColor
 ' Convert RGB colors 0-255 to ULong.
-' Parameters:
+' Parameter:
 '	r - Red 0-255
 '	g - Green 0-255
 '	b - Blue 0-255
@@ -1358,7 +2078,7 @@ End Sub
 '----------------------------------------------
 ' ColorToRGB
 ' Convert color ULong to Byte Array (length 3) with RGB colors 0-255.
-' Parameters:
+' Parameter:
 '	color - Value ULong
 ' Returns:
 '	Byte Array (length 3) with RGB colors 0-255.
@@ -1377,13 +2097,13 @@ End Sub
 '====================================================
 #Region Misc
 '----------------------------------------------
-' MillisToBytes
+' MillisToTimeString
 ' Convert milliseconds to hh:mm:ss string
-' Parameters:
+' Parameter:
 '	ms - Milliseconds
 ' Returns: String hh:mm:ss
 '----------------------------------------------
-Public Sub MillisToBytes(ms As Long) As String
+Public Sub MillisToTimeString(ms As Long) As String
 	Dim totalSec	As Long = ms / 1000
 	Dim hours 		As Int = totalSec / 3600
 	Dim minutes 	As Int = (totalSec Mod 3600) / 60
@@ -1407,7 +2127,7 @@ Public Sub MillisToBytes(ms As Long) As String
 	b(7) = 48 + seconds Mod 10
 
 	' Convert byte array to string
-	Return BytesToString(b)
+	Return ByteConv.StringFromBytes(b)
 End Sub
 
 '----------------------------------------------
@@ -1429,8 +2149,12 @@ Public Sub DirectionToString(direction As Byte) As String
 End Sub
 #End Region
 
+' ================================================================
+' D64
+' ================================================================
+#Region D64
 '====================================================
-' D64 - 64-bit data type ESP32 only
+' D64 - ESP32 64-bit data type only
 ' ESP32 - a double is a true 64-Bit IEEE 754 precision floating-point number And is exactly 8 bytes long (unlike 8-Bit AVR Arduinos where double is only 4 bytes).
 ' Endianness: The ESP32 uses Little-Endian. The least significant byte is stored at the lowest memory address (byteArray[0]). 
 ' If receiving device Or protocol expects Big-Endian, ensure To reverse the Array order before sending.
@@ -1439,12 +2163,14 @@ End Sub
 ' steps (e.g., a difference of 9984 instead of exactly 10000). 
 ' This is a normal characteristic of B4R's core variable handling and is OK for time tracking!
 '====================================================
-#Region D64
+
+#If ESP32
+
 ' D64Millis
 ' Gets the absolute Unix time epoch in milliseconds as a Double.
 ' Perfect for high-precision time tracking and native B4R math.
 ' Fetches the absolute Unix time epoch in milliseconds as a Double
-' Parameters:
+' Parameter:
 '	None
 ' Returns:
 '	Double
@@ -1455,7 +2181,7 @@ End Sub
 
 ' D64ToBytes
 ' Extracts the raw 8-byte layout of an ESP32 double into the global 8-byte array D64Buffer
-' Parameters:
+' Parameter:
 '	Value - Double
 ' Returns:
 '	Global var D64Buffer(8) As Byte
@@ -1466,7 +2192,7 @@ End Sub
 
 ' D64ToHex
 ' Convert the 64-bit double to a 16-character HEX string (with option to reverse as Big-Endian)
-' Parameters:
+' Parameter:
 '    Value - Double
 '    BigEndian - True to reverse the byte-order
 ' Returns:
@@ -1482,17 +2208,18 @@ End Sub
 
 ' D64ToString
 ' Extracts the raw 8-byte layout of an ESP32 double into the global array D64String
-' Parameters:
+' Parameter:
 '	Value - Double
-' Returns
+' Returns:
 '	Global var D64String(16) As Byte
 Public Sub D64ToString(Value As Double) As Byte()
 	RunNative("D64ToString", Value)
 	Return D64String
 End Sub
+#End Region
 
 '----------------------------------------------
-' INLINE 
+' D64 INLINE C ESP32
 '----------------------------------------------
 #If C
 
@@ -1562,7 +2289,6 @@ void PrintMillisDouble(B4R::Object* args) {
     Serial.printf("%.0f", val);
 }
 */
-
-#End If
-
-#End Region
+#End If		// Inline C
+#End If 	// ESP32 Conditional
+#End Region	// ESP32

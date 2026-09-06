@@ -1,12 +1,56 @@
 ﻿B4J=true
 Group=Default Group
 ModulesStructureVersion=1
-Type=StaticCode
+Type=Class
 Version=10.5
 @EndOfDesignText@
-'Static code module
-Sub Process_Globals
+#Region Class Header
+' ================================================================
+' File:     	HMITilesIOGauge.bas
+' Brief:    	Gauge with 3 segments.
+' Date:			2026-08-29
+' Description:	180° Gauge with beautiful, perfectly mapped left-to-right neon tracking arc.
+' Usage:		
+'				' Gauge with segments green > yellow > red
+'				' Properties designer: Green Max Pxt 70, Yellow Max Pct 90
+'				Private TileGauge As HMITilesIO
+'				' Gauge with segments reversed red > yellow > green
+'				' Properties designer: Green Max Pxt 10, Yellow Max Pct 20
+'				Private TileGaugeReverse As HMITilesIO
 '
+'				TileGauge.Value = TileSlider.Value
+'				TileGauge.SetFooter($"${NumberFormat(TileGauge.Value, 0, 0)}"$)
+'
+'				TileGaugeReverse.Value = TileSlider.Value
+'				TileGaugeReverse.SetFooter($"${NumberFormat(TileGauge.Value, 0, 0)}"$)
+'				TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_RED, TileGaugeReverse.SEGMENT_GREEN_COLOR)
+'				TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_YELLOW, TileGaugeReverse.SEGMENT_YELLOW_COLOR)
+'				TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_GREEN, TileGaugeReverse.SEGMENT_RED_COLOR)
+'
+'				TileGauge.Value = value.As(Float)
+'				TileGauge.SetFooter($"${NumberFormat(TileGauge.Value, 0, 0)}"$)
+'				TileGaugeReverse.Value = value.As(Float)
+'				TileGaugeReverse.SetFooter($"${NumberFormat(TileGaugeReverse.Value, 0, 0)}"$)
+' ================================================================
+#End Region
+
+Private Sub Class_Globals
+	Private xui As XUI
+
+	Private mState						As Boolean
+	Private mValue						As String
+	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
+	Private mWebView					As WebView		'ignore Local WebView reference handle container
+	Private mEventName 					As String
+	Private mCallBack 					As Object
+End Sub
+
+' Initializes the instance
+Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+	mParentPanel = pnl
+	mWebView = wv
+	mEventName = evt
+	mCallBack = cb
 End Sub
 
 ' SetTile
@@ -29,8 +73,9 @@ Public Sub SetTile(Header As String, _
 				   YellowMaxPct As Float, _
 				   Value As Float) As String
     
-	' 1. Guard input values inside safety boundaries
+	' Guard input values inside safety boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
+	mValue = Value
 	
 	' 2. Calculate percentage position across your custom scale range
 	Dim totalRange As Float = MaxValue - MinValue
@@ -73,4 +118,39 @@ Public Sub SetTile(Header As String, _
         };
     "$
 	Return js
+End Sub
+
+Public Sub SetSegmentColor(segment As String, value As String) As String
+	segment = $"arc-${segment.ToLowerCase}"$
+	If Not(value.StartsWith("#")) Then value = $"#${value}"$
+	Dim js As String = $"
+        var segment = document.getElementById("${segment}");
+        if(segment) { segment.setAttribute("stroke", "${value}"); };
+    "$
+	Return js
+End Sub
+
+' ProcessTouchHandler
+' Process the tile touch event.
+' Parameter:
+'	Data - Type with all touch properties
+Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult
+	' Update internal class state
+	mState = Data.State
+	mValue = Data.Value
+
+	' Only trigger interactions on the initial touch down event
+	If Data.Action = HMITilesIOUtils.ACTION_DOWN Then
+		' Trigger the event if it exists in the parent module
+		If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
+			CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
+		End If
+	End If
+    
+	' Simplify result creation using standard B4X Type initialization shorthand
+	Dim result As HMITouchResult
+	result.Initialize
+	result.State = mState
+	result.Value = mValue
+	Return result
 End Sub

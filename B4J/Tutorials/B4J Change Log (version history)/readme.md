@@ -1,7 +1,21 @@
 ### B4J Change Log (version history) by Erel
-### 03/11/2026
+### 09/02/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/37448/)
 
+**v10.7** - September 2, 2026 - <https://www.b4x.com/android/forum/threads/new-release-b4j-v10-7-with-optional-parameters-jserver-5-and-more.171961/#post-1051550>  
+
+- Optional parameters: <https://www.b4x.com/android/forum/threads/171906/#content>
+- jServer 5 based on Jetty 12.1: <https://www.b4x.com/android/forum/threads/171536/#content>
+- OkHttp / OkHttpUtils2 updated to Okhttp 5.4.
+- Exception.StackTrace and ThrowException keyword.
+- Various libraries updated with default parameters.
+- sqlite-jdbc.jar included in the internal libraries. The old sqlite-jdbc-3.7.2.jar is also kept for backward compatibility. It is recommended to reference sqlite-jdbc.jar. This jar will be updated from time to time as sqlite evolves. Current version is 3.53.2.
+- Inno Setup template updated with x64compatible setting to support ARM windows. Note that B4X installer was updated as well.
+- Errors in referenced b4xlibs are marked with their library and module.
+- Doclet tool updated to support default values: [https://www.b4x.com/android/forum/t...mpiler-build-libraries-without-eclipse.29918/](https://www.b4x.com/android/forum/threads/tool-simple-library-compiler-build-libraries-without-eclipse.29918/)
+- Bug fixes and other minor improvements.
+
+  
 **v10.5** - March 11, 2026 - <https://www.b4x.com/android/forum/threads/b4j-v10-5-with-integrated-code-bundle-tool-has-been-released.170564/>  
 
 - CodeBundle AI tool.

@@ -1,20 +1,54 @@
 ﻿B4J=true
 Group=Default Group
 ModulesStructureVersion=1
-Type=StaticCode
+Type=Class
 Version=10.5
 @EndOfDesignText@
-'Static code module
-Sub Process_Globals
+#Region Class Header
+' ================================================================
+' File:     	HMITilesIOVerticalMeter.bas
+' Brief:    	Vertical meter with actual value arrow.
+' Date:			2026-08-29
+' Description:	Simplified scale column with a perfectly aligned left-pointing reference tracking arrow.
+' Usage:		
+'				TileVerticalMeter.Value = 68
+' ================================================================
+#End Region
+
+Private Sub Class_Globals
 	Private xui As XUI
+
+	Public TEXT_COLOR As String = "#0f172a"
+	Public TEXT_SIZE As Int = 24
 	Public COLOR_TRACK As String = "#808080"
+
+	Private mState						As Boolean
+	Private mValue						As String
+	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
+	Private mWebView					As WebView		'ignore Local WebView reference handle container
+	Private mEventName 					As String
+	Private mCallBack 					As Object
+
+	Private mMinValue					As Float		'ignore
+	Private mMaxValue					As Float		'ignore
+End Sub
+
+' Initializes the instance
+Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+	mParentPanel = pnl
+	mWebView = wv
+	mEventName = evt
+	mCallBack = cb
 End Sub
 
 ' SetTile
 ' Set all tile properties.
-' CurrentValue: Raw reading from the microcontroller
-' MinValue / MaxValue: Calibration floor and ceiling limits
-' ColorHex: Web format color string passed down dynamically (e.g. "#22c55e")
+' Parameter:
+'	Header - String set text at tile top
+'	Footer - String set text at tile bottom
+'	TrackColor - String HTML HEX Color of the tracking showing the current value
+' 	MinValue / MaxValue - Float for calibration floor and ceiling limits
+' 	Value - Float current value
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   TrackColor As String, _ 
@@ -22,23 +56,26 @@ Public Sub SetTile(Header As String, _
 				   MaxValue As Float, _
 				   Value As Float) As String	' HEX #RRGGBB
     
-	' 1. Guard input values inside safety boundaries
-	If Value < MinValue Then Value = MinValue
-	If Value > MaxValue Then Value = MaxValue
+	' Guard input values inside safety boundaries
+	Value = Max(MinValue, Min(MaxValue, Value))
+
+	mMinValue = MinValue
+	mMaxValue = MaxValue
+	mValue = Value
     
-	' 2. Calculate percentage position across your custom scale range
+	' Calculate percentage position across custom scale range
 	Dim totalRange As Float = MaxValue - MinValue
 	Dim pct As Float = 0
 	If totalRange > 0 Then pct = (Value - MinValue) / totalRange
     
-	' 3. Calculate explicit height and tracking coordinates (Total track slot span = 64px)
+	' Calculate explicit height and tracking coordinates (Total track slot span = 64px)
 	Dim barHeight As Float = pct * 64.0
 	Dim barY As Float = 94.0 - barHeight
     
-	' 4. Calculate vertical slide translate vector shift for the pointer arrow
+	' Calculate vertical slide translate vector shift for the pointer arrow
 	Dim arrowShiftY As Float = -barHeight
     
-	' 5. Clean text variables
+	' Clean text variables
 	Header = Header.Replace("'", "\'")
 	Footer = Footer.Replace("'", "\'")
 	TrackColor = TrackColor.Replace("'", "\'")
@@ -67,4 +104,29 @@ Public Sub SetTile(Header As String, _
         };
     "$
 	Return js
+End Sub
+
+' ProcessTouchHandler
+' Process the tile touch event.
+' Parameter:
+'	Data - Type with all touch properties
+Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult
+	' Update internal class state
+	mState = Data.State
+	mValue = Data.Value
+
+	' Only trigger interactions on the initial touch down event
+	If Data.Action = HMITilesIOUtils.ACTION_DOWN Then
+		' Trigger the event if it exists in the parent module
+		If xui.SubExists(mCallBack, mEventName & "_Click", 1) Then
+			CallSubDelayed3(mCallBack, mEventName & "_Click", mState, mValue)
+		End If
+	End If
+    
+	' Simplify result creation using standard B4X Type initialization shorthand
+	Dim result As HMITouchResult
+	result.Initialize
+	result.State = mState
+	result.Value = mValue
+	Return result
 End Sub
