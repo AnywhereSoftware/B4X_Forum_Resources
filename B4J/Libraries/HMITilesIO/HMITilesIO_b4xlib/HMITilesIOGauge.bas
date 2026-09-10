@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOGauge.bas
 ' Brief:    	Gauge with 3 segments.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	180° Gauge with beautiful, perfectly mapped left-to-right neon tracking arc.
 ' Usage:		
 '				' Gauge with segments green > yellow > red
@@ -71,7 +71,7 @@ Public Sub SetTile(Header As String, _
 				   MaxValue As Float, _
                    GreenMaxPct As Float, _
 				   YellowMaxPct As Float, _
-				   Value As Float) As String
+				   Value As Float)
     
 	' Guard input values inside safety boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
@@ -117,17 +117,43 @@ Public Sub SetTile(Header As String, _
             needle.setAttribute("transform", "rotate(" + deg + ", 60, 80)");
         };
     "$
-	Return js
+	UpdateTile(js)
 End Sub
 
-Public Sub SetSegmentColor(segment As String, value As String) As String
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Gauge.UpdateTile][E] Can not update the tile."$)
+	End If
+End Sub
+
+' SetSegmentColor
+' Parameter:
+'	segment - Arc red, yellow or green (lowercase)
+'	value - Web HMTL color with # prefix
+Public Sub SetSegmentColor(segment As String, value As String)
 	segment = $"arc-${segment.ToLowerCase}"$
 	If Not(value.StartsWith("#")) Then value = $"#${value}"$
 	Dim js As String = $"
         var segment = document.getElementById("${segment}");
         if(segment) { segment.setAttribute("stroke", "${value}"); };
     "$
-	Return js
+	UpdateSegment(js)
+End Sub
+
+' UpdateSegment
+' Change the segment using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateSegment(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Gauge.UpdateSegment][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

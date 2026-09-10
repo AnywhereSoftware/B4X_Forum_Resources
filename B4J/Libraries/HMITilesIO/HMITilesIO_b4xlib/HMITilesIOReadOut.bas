@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOReadOut.bas
 ' Brief:    	ReadOut to show value, text or number.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	Crisp telemetry display that cleanly outputs dynamic process numbers or 
 '				operational status string values (e.g., "23.5 °C", "1013 hPa", "RUNNING").
 ' Usage:		
@@ -47,8 +47,8 @@ End Sub
 ' 	Value - String readout the text
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
-				   Value As String) As String
-	' Formulate a safe, compact single-line DOM manipulator execution string
+				   Value As String)
+
 	Dim js As String = $"
 		var head = document.getElementById("tile-header");
 		var foot = document.getElementById("tile-footer");
@@ -68,7 +68,18 @@ Public Sub SetTile(Header As String, _
 			txt.setAttribute("fill", "${TEXT_COLOR}");
 		}
 	"$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[ReadOut.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

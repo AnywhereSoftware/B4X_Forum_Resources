@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:         HMITilesIOPanel.bas
 ' Brief:        Independent Input/Output Panel Matrix (4x2 layout).
-' Date:         2026-08-30
+' Date:         2026-09-06
 ' Description:  An 8-channel bidirectional control dashboard layout tracking a 
 '               binary string state (e.g. "1010"). Automatically scales its physical 
 '               density dynamically based on input string lengths, handling up to 8 
@@ -74,10 +74,13 @@ End Sub
 '	Value - Binary content string matching channel states (e.g. "11111111" or "0101")
 ' Returns:
 '	String - JavaScript DOM alteration payload bundle text
-Public Sub SetTile(Header As String, Footer As String, Value As String) As String
+Public Sub SetTile(Header As String, _
+				   Footer As String, _ 
+				   Value As String)
+
 	mValue = Value
 	
-	' 1. Parse the incoming string length to automatically configure density layouts
+	' Parse the incoming string length to automatically configure density layouts
 	Dim ActiveCount As Int = mValue.Length
 	
 	For i = MIN_CHANNEL_INDEX To MAX_CHANNEL_INDEX
@@ -95,7 +98,7 @@ Public Sub SetTile(Header As String, Footer As String, Value As String) As Strin
 		End If
 	Next
 
-	' 2. Compile base structural text adjustments
+	' Compile base structural text adjustments
 	Dim sb As StringBuilder
 	sb.Initialize
 	sb.Append($"
@@ -103,10 +106,10 @@ Public Sub SetTile(Header As String, Footer As String, Value As String) As Strin
 		if(head) { head.textContent = "${Header}"; };
 	"$)
 	
-	' 3. Append visual layout color update matrix strings
+	' Append visual layout color update matrix strings
 	sb.Append(UpdateLayout)
 	
-	' 4. Handle footer display tracking fallback mechanisms smoothly
+	' Handle footer display tracking fallback mechanisms smoothly
 	Dim DeterminedFooter As String = Footer
 	If DeterminedFooter = "" Then DeterminedFooter = mValue
 	sb.Append($"
@@ -114,7 +117,19 @@ Public Sub SetTile(Header As String, Footer As String, Value As String) As Strin
 		if(foot) { foot.textContent = "${DeterminedFooter}"; };
 	"$)
 	
-	Return sb.ToString
+	Dim js As String = sb.ToString
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[IOPanel.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' Generates layout commands by evaluating the simple channel state integer array directly

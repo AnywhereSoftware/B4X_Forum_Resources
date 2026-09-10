@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSlider.bas
 ' Brief:    	Horizontal slider with default range 0-100.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	Symmetrical control groove rail with flawless cursor mapping.
 ' Usage:		
 '				TileSlider.Value = 68
@@ -18,8 +18,8 @@ Version=10.5
 Private Sub Class_Globals
 	Private xui As XUI
 
-	Public TEXT_COLOR As String = "#0f172a"
-	Public TEXT_SIZE As Int = 24
+'	Public TEXT_COLOR As String = "#0f172a"
+'	Public TEXT_SIZE As Int = 24
 
 	Private mState						As Boolean
 	Private mValue						As String
@@ -55,7 +55,7 @@ Public Sub getMaxValue As Float
 End Sub
 
 #If B4J
-Public Sub Init(showmovement As Boolean) As String
+Public Sub Init(showmovement As Boolean)
 	Dim movement As String = ""
 	If showmovement Then
 		movement = $"window.location.href = "http://slider?val=" + finalValue;"$
@@ -131,16 +131,25 @@ Public Sub Init(showmovement As Boolean) As String
         })();
     "$
 
-	' Standard flattening to safeguard single-line execution mechanics
-	js = js.Replace(Chr(10), " ").Replace(Chr(13), " ")
-	Return js
+	InitTile(js)
+End Sub
+
+' InitTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to init the tile.
+Private Sub InitTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Slider.InitTile][E] Can not init the tile."$)
+	End If
 End Sub
 #End If
 
 #if B4A
 ' Init
 ' Set starting position touch
-Public Sub Init(StartingValue As Int) As String
+Public Sub Init(StartingValue As Int)
 	' Pre-calculate the starting visual layout vectors based on your hardware initialization parameters
 	Dim startX As Float = 20 + ((StartingValue / 100) * 80)
 	
@@ -155,7 +164,18 @@ Public Sub Init(StartingValue As Int) As String
 			if (txt)    { txt.textContent = "${StartingValue}"; }
 		})();
 	"$
-	Return js.Replace(Chr(10), " ").Replace(Chr(13), " ")
+	InitTile(js)
+End Sub
+
+' InitTile
+' Init the tile using JavaScript.
+' Parameters:
+'	js - JavaScript to init the tile.
+Private Sub InitTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Slider.InitTile][E] Can not init the tile."$)
+	End If
 End Sub
 #End If
 
@@ -170,7 +190,7 @@ Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   MinValue As Int, _
 				   MaxValue As Int, _ 
-				   Value As Int) As String
+				   Value As Int)
 				   
 	' Check boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
@@ -196,7 +216,18 @@ Public Sub SetTile(Header As String, _
         if(handle) { handle.setAttribute("x", "${rectOriginX}"); };
         if(prog) { prog.setAttribute("x2", "${handleX}"); };
     "$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Slider.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 Private Sub UpdateSlider(x As Float, value As String)
@@ -211,7 +242,7 @@ Private Sub UpdateSlider(x As Float, value As String)
 					"$
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[Slider.UpdateValue][E] Can not update value"$)
+		Log($"[Slider.UpdateSlider][E] Can not update value"$)
 	End If
 End Sub
 

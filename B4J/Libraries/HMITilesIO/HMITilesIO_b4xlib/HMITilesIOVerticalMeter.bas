@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOVerticalMeter.bas
 ' Brief:    	Vertical meter with actual value arrow.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	Simplified scale column with a perfectly aligned left-pointing reference tracking arrow.
 ' Usage:		
 '				TileVerticalMeter.Value = 68
@@ -54,7 +54,7 @@ Public Sub SetTile(Header As String, _
 				   TrackColor As String, _ 
 				   MinValue As Float, _
 				   MaxValue As Float, _
-				   Value As Float) As String	' HEX #RRGGBB
+				   Value As Float)
     
 	' Guard input values inside safety boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
@@ -103,7 +103,18 @@ Public Sub SetTile(Header As String, _
             arrow.setAttribute("transform", "translate(0, " + ${arrowShiftY} + ")");
         };
     "$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[VerticalMeter.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

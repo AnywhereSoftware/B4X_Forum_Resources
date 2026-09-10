@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOLEDPanel.bas
 ' Brief:    	LED with status ON (Green) or OFF (Red).
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	Deep, polished status lens with a realistic glare overlay.
 ' Usage:		Set state ON:
 '				TileLEDPanel.State = True
@@ -42,7 +42,8 @@ End Sub
 ' 	State - Boolean True (ON, Green) or False (OFF, Red)
 Public Sub SetTile(Header As String, _
 					Footer As String, _
-					State As Boolean) As String
+					State As Boolean)
+
 	Dim js As String
     
 	' Escape text values cleanly for safe JS execution strings
@@ -81,7 +82,18 @@ Public Sub SetTile(Header As String, _
             };
         "$
 	End If
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[LEDPanel.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

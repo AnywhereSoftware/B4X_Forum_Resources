@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSelector.bas
 ' Brief:    	Selector with rolling selection using touch.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	Readout style value.
 ' Usage:		
 '				Private TileSelector As HMITilesIO
@@ -93,7 +93,7 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	Value - String current value (can be number or text)
-Public Sub SetTile(Header As String, Footer As String, Value As String) As String
+Public Sub SetTile(Header As String, Footer As String, Value As String)
 	Dim js As String = $"
 		var head = document.getElementById("tile-header");
 		var foot = document.getElementById("tile-footer");
@@ -107,7 +107,18 @@ Public Sub SetTile(Header As String, Footer As String, Value As String) As Strin
 			txt.setAttribute("fill", "${TEXT_COLOR}");
 		}
 	"$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Selector.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 Private Sub UpdateValue(Value As String)

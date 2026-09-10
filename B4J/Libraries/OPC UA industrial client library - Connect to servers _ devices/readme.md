@@ -1,9 +1,9 @@
 ### OPC UA industrial client library - Connect to servers / devices by Peter Simpson
-### 09/05/2026
+### 09/06/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171977/)
 
 Hello everyone,  
-Here is my OPC UA Client library for B4J. I use this library to connect to OPC UA servers for testing, development, and general industrial communication work. It is designed to be simple to use, reliable, and fully compatible with standard OPC UA servers, including my own B4J OPC UA Server library.  
+Here is my OPC UA Client library for B4J. I use this library to connect to OPC UA servers for testing, development, and general industrial communication work. It is designed to be simple to use, reliable, and fully compatible with standard OPC UA servers, compatible hardware devices and machinery, including my own B4J OPC UA Server library.  
   
 **OPC UA server library link below**  
 <https://www.b4x.com/android/forum/threads/opc-ua-industrial-server-library-connect-and-test-your-clients.171976/>  

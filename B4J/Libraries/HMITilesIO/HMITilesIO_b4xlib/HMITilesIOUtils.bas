@@ -43,7 +43,7 @@ Public Sub ExecuteJS(wv As WebView, js As String) As ResumableSub
 	End If
 
 	' Standard flattening to safeguard single-line delivery execution
-	js = js.Replace(Chr(10), " ").Replace(Chr(13), " ")
+	js = js.Replace(CRLF, " ").Replace(Chr(10), " ").Replace(Chr(13), " ")
 	' Log($"[Utils.ExecuteJS] ${js}"$)
 
 	' Short sleep

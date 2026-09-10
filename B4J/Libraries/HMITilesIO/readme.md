@@ -1,5 +1,5 @@
 ### HMITilesIO by rwblinn
-### 08/31/2026
+### 09/06/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
@@ -84,6 +84,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]**Primary IoT / HMI Use Case**[/TD]  
 [/TR]  
 [TR]  
+[TD]**BatteryIndicator**[/TD]  
+[TD]Battery Indicator: Smart, low-footprint charge level layout displaying a responsive 4-segment vertical vector cell. Automatically transitions through visibility and warning color profiles based on raw 0-100% capacity data blocks.[/TD]  
+[TD]Power Supply Monitoring: Live tracking for remote battery nodes, solar charging configurations, UPS backup cells, or low-power ESP32/Pico field telemetry loops.[/TD]  
+[/TR]  
+[TR]  
 [TD]**Button**[/TD]  
 [TD]Push Button: Multi-layered bezel with high-contrast borders and an offset shadow to give it strong physical depth.[/TD]  
 [TD]Discrete Input: Momentary engine starts, manual horn triggers, or tactile latch reset commands.[/TD]  
@@ -94,9 +99,19 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Discrete Output: Real-time CAN-Bus frame analysis, GPIO expander debugging, or low-level register tracking.[/TD]  
 [/TR]  
 [TR]  
+[TD]**DualReadOut**[/TD]  
+[TD]Dual Read Out: High-density, twin-column telemetry layout with independent value nodes and dedicated unit frames for dense cluster environments (e.g., "23 °C" | "68 %").[/TD]  
+[TD]Dual Sensor Arrays: Simultaneous localized parameter tracking (Temperature/Humidity, Voltage/Current, or dual-zone status updates).[/TD]  
+[/TR]  
+[TR]  
 [TD]**Gauge**[/TD]  
 [TD]180° Gauge: Beautiful, perfectly mapped left-to-right neon tracking arc.[/TD]  
 [TD]Analog Readout: High-visibility analog readouts like Engine RPM, Vehicle Speed, or active Pump Pressure.[/TD]  
+[/TR]  
+[TR]  
+[TD]**IconIndicator**[/TD]  
+[TD]Icon Indicator: High-visibility visual alert interface rendering a scalable 48x48px vector symbol frame. Dynamically handles inline status updates (e.g., "OK", "WARNING", "ERROR", "INFO") using low-latency embedded strings.[/TD]  
+[TD]System Health Diagnostics: State-machine fault monitoring, critical hardware overrides, connection status flags, or process validation warnings.[/TD]  
 [/TR]  
 [TR]  
 [TD]**IOPanel**[/TD]  
@@ -129,6 +144,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Analog Readout: Authentic dashboard instrumentation readouts like active Transmission Gear or Digital Odometers.[/TD]  
 [/TR]  
 [TR]  
+[TD]**SignalStrength**[/TD]  
+[TD]Signal Strength: Robust infrastructure diagnostics tile displaying an ascending 4-bar vector staircase. Features built-in string parsing that auto-detects and processes raw whole percentages ("50%"), decimal ratios (".50"), or negative RSSI dBm telemetry ("-65").[/TD]  
+[TD]Network Node Health: Live link tracking for localized Wi-Fi access points, remote cellular modems, or low-power ESP32/Pico mesh field nodes.[/TD]  
+[/TR]  
+[TR]  
 [TD]**Slider**[/TD]  
 [TD]Technical Slider: Symmetrical control groove rail with flawless cursor mapping.[/TD]  
 [TD]Analog Control: Continuous range modulation, such as adjusting LED Dimmer Levels or Motor Throttle bounds.[/TD]  
@@ -144,6 +164,16 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Discrete Input: Main system Power Toggles, isolated battery disconnects, or Cruise Control activation.[/TD]  
 [/TR]  
 [TR]  
+[TD]**Timer**[/TD]  
+[TD]Timer: Production-cycle tracking interface rendering a sharp monospace duration string. Features an active vector progress ring that automatically scales and alters color profiles based on fractional runtime datasets ("CurrentSeconds;TotalSeconds").[/TD]  
+[TD]Process Lifecycles: Countdown metrics for valve flushing operations, automated irrigation windows, thermal dwell intervals, or hardware watchdog tracking loops.[/TD]  
+[/TR]  
+[TR]  
+[TD]**TrendChart**[/TD]  
+[TD]TrendChart: Precise, low-overhead graph tile displaying live trend profiles. Features trend data as sparkline, automatic Min/Max scale labeling and an integrated X/Y reference grid layout designed for compact historical overview.[/TD]  
+[TD]Historical Tracking: Real-time trending datasets (e.g., "10;20;30;25;20;0") for observing thermal gradients, pressure stability profiles, or voltage load patterns over time.[/TD]  
+[/TR]  
+[TR]  
 [TD]**VerticalMeter**[/TD]  
 [TD]Vertical Meter: Simplified scale column with an aligned reference tracking arrow.[/TD]  
 [TD]Analog Readout: Linear volumetric calculations like Fuel Tank Capacity, Water Levels, or Battery Charge (SoC).[/TD]  
@@ -157,7 +187,7 @@ Developing a single CustomView codebase that renders identically and handles rea
   
 **Screenshots**  
   
-![](https://www.b4x.com/android/forum/attachments/173344)  
+![](https://www.b4x.com/android/forum/attachments/173459)  
   
 
 ---
@@ -177,7 +207,9 @@ Developing a single CustomView codebase that renders identically and handles rea
   
 **Examples Included**  
   
-\* Basic Layout: Easy-to-follow example demonstrating rendering configuration loops for every component type.  
+
+- Basic Layout: Easy-to-follow example demonstrating rendering configuration loops for every component type.
+
   
 
 ---

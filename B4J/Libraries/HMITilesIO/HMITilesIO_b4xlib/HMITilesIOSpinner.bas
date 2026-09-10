@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSpinner.bas
 ' Brief:    	Spinner with + and - buttons to set a value.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	High-precision directional increment control featuring clear high-contrast tactile action touch targets for exact setpoint calibration.
 ' Usage:		
 '				TileSpinner.Value = 99
@@ -68,7 +68,7 @@ Public Sub SetTile(Header As String, _
 				   Footer As String, _
                    MinValue As Float, _
 				   MaxValue As Float, _
-				   Value As String) As String
+				   Value As String)
 
 	' Guard input values inside safety boundaries
 	Value = Max(MinValue, Min(MaxValue, Value.As(Float)))
@@ -93,7 +93,18 @@ Public Sub SetTile(Header As String, _
 			txt.setAttribute("fill", "${TEXT_COLOR}");
 		}
 	"$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Spinner.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 Private Sub UpdateValue(Value As String)

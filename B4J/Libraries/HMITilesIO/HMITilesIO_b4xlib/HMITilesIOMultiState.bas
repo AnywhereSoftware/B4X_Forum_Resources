@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOMultiState.bas
 ' Brief:    	Matrix 4x2 to set the state of the 8-bits for a byte value.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.
 '				Array-Based Configuration — Introduced a human-readable byte-Array masking scheme (`PinsAttached`) To easily enable, disable, Or gray out individual Bit status slots.
 '				The matrix 8 items are named pins.
@@ -193,34 +193,32 @@ End Sub
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   States() As Byte, _ 
-				   Value As String) As String
-	Dim sb As StringBuilder
-
-	sb.Initialize	
+				   Value As String)
 
 	setStates(States)
 	
 	mValue = Value.As(Int) ' Sync internal state tracker variable
 
-	sb.Initialize
-	sb.Append($"
+	Dim js As String = $"
 		var head = document.getElementById("tile-header");
 		var foot = document.getElementById("tile-footer");
 		if(head) {
 			head.textContent = "${Header}";
 		};
-	"$)
-	
-	' Execute the updated state matrix drawing logic
-	sb.Append(UpdateLayout(mValue, getStates))
-	Dim js As String = sb.ToString
-	Return js
-	
-'	' Execute asynchronously using your standard framework pipeline
-'	Wait For (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-'	If Not(result) Then
-'		Log($"[SetTile][E] Can not update tile IOMultiState"$)
-'	End If
+	"$
+	js = $"${js}${UpdateLayout(mValue, getStates)}"$
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[MultiState.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 Private Sub UpdateLayout(ActiveState As Int, states() As Byte) As String
@@ -231,7 +229,7 @@ Private Sub UpdateLayout(ActiveState As Int, states() As Byte) As String
 
 	' Guard check to ensure the state density configuration array contains exactly 8 slots
 	If states.Length <> 8 Then
-		Log("[UpdateStates][E] States array must contain exactly 8 elements.")
+		Log("[MultiState.UpdateLayout][E] States array must contain exactly 8 elements.")
 		Return ""
 	End If
 	
@@ -276,7 +274,7 @@ Public Sub UpdateStates(ActiveState As Int, States() As Byte)
 	Dim js As String = UpdateLayout(ActiveState, States)
 	Wait For (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[SetTile][E] Can not update tile IOMultiState"$)
+		Log($"[MultiState.UpdateStates][E] Can not update tile IOMultiState"$)
 	End If
 End Sub
 

@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File: 		HMITilesIO.bas
 ' Brief:		CustomView Human Machine Interface tile showing assets from a SVG image.
-' Date:			2026-08-31
+' Date:			2026-09-05
 ' Author:		Robert W.B. Linn (c) 2026 MIT
 ' Description:	HMITilesIO brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.
 '				Target has been to combine highly optimized vector graphics with native input tracking For microcontrollers And IoT applications.
@@ -17,7 +17,7 @@ Version=10.5
 '				Example: Tile type slider is defined in file `slider.svg`. This definition is loaded in the HTML image `image.html` used for each tile type.
 ' Notes: 		The HMITile can not be resized after form loaded. Default 120x120px.
 '				The tile border is set for each tile in its svg file:
-'				<!-- Base Grid Tile Frame - ser rx to f.e. 6 for rounded corders -->
+'				<!-- Base Grid Tile Frame - set rx to f.e. 6 for rounded corders -->
 '				<rect width="120" height="120" rx="0" fill="transparent" stroke="#334155" stroke-width="1" />
 '				Default tile type is Switch.
 '				Create a new tile type requires: 
@@ -40,7 +40,7 @@ Version=10.5
 #End Region
 
 ' Designer properties (ensure to define the key in lowercase)
-#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Button|ByteStatus|Gauge|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Slider|Spinner|Switch||VerticalMeter|, DefaultValue: Switch.
+#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Battery|Button|ByteStatus|DualReadOut|Gauge|IconIndicator|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|Timer|TrendChart|VerticalMeter|, DefaultValue: Switch.
 #DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: Header, Description: Header for all tiles.
 #DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: Footer, Description: Footer for all tiles.
 #DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
@@ -58,18 +58,24 @@ Private Sub Class_Globals
 
 	' Constants
 	' Tile type names (uppercase) aligned with the designerProperty tiletype
+	Private TILE_BATTERY As String 			= "BATTERY"
 	Private TILE_BUTTON As String 			= "BUTTON"
 	Private TILE_BYTESTATUS As String 		= "BYTESTATUS"
+	Private TILE_DUALREADOUT As String 		= "DUALREADOUT"
 	Private TILE_GAUGE As String 			= "GAUGE"
 	Private TILE_IOPANEL As String 			= "IOPANEL"
+	Private TILE_ICONINDICATOR As String 	= "ICONINDICATOR"
 	Private TILE_SPINNER As String 			= "SPINNER"
 	Private TILE_LEDPANEL As String 		= "LEDPANEL"
 	Private TILE_MULTISTATE As String 		= "MULTISTATE"
 	Private TILE_READOUT As String 			= "READOUT"
 	Private TILE_SELECTOR As String 		= "SELECTOR"
 	Private TILE_SEVENSEGMENT As String 	= "SEVENSEGMENT"
+	Private TILE_SIGNAL As String 			= "SIGNAL"
 	Private TILE_SLIDER As String 			= "SLIDER"
 	Private TILE_SWITCH As String 			= "SWITCH"
+	Private TILE_TIMER As String 			= "TIMER"
+	Private TILE_TRENDCHART As String 		= "TRENDCHART"
 	Private TILE_VERTICALMETER As String 	= "VERTICALMETER"
 
 	' Tile segment names and color HTML HEX format (used by tiles like Gauge)	
@@ -114,19 +120,25 @@ Private Sub Class_Globals
 	Private mCallBack As Object 'ignore
 
 	' Instances (from the class modules)
-	Public InstanceButton As HMITilesIOButton
-	Public InstanceByteStatus As HMITilesIOByteStatus
-	Public InstanceGauge As HMITilesIOGauge
-	Public InstanceIOPanel As HMITilesIOPanel
-	Public InstanceLEDPanel As HMITilesIOLEDPanel
-	Public InstanceMultiState As HMITilesIOMultiState
-	Public InstanceReadOut As HMITilesIOReadOut
-	Public InstanceSelector As HMITilesIOSelector
-	Public InstanceSevenSegment As HMITilesIOSevenSegment
-	Public InstanceSlider As HMITilesIOSlider
-	Public InstanceSpinner As HMITilesIOSpinner
-	Public InstanceSwitch As HMITilesIOSwitch
-	Public InstanceVerticalMeter As HMITilesIOVerticalMeter
+	Public InstanceBattery 			As HMITilesIOBattery
+	Public InstanceButton 			As HMITilesIOButton
+	Public InstanceByteStatus 		As HMITilesIOByteStatus
+	Public InstanceDualReadOut 		As HMITilesIODualReadOut
+	Public InstanceGauge 			As HMITilesIOGauge
+	Public InstanceIOPanel 			As HMITilesIOPanel
+	Public InstanceIconIndicator 	As HMITilesIOIconIndicator
+	Public InstanceLEDPanel 		As HMITilesIOLEDPanel
+	Public InstanceMultiState 		As HMITilesIOMultiState
+	Public InstanceReadOut 			As HMITilesIOReadOut
+	Public InstanceSelector 		As HMITilesIOSelector
+	Public InstanceSevenSegment		As HMITilesIOSevenSegment
+	Public InstanceSignal 			As HMITilesIOSignal
+	Public InstanceSlider 			As HMITilesIOSlider
+	Public InstanceSpinner 			As HMITilesIOSpinner
+	Public InstanceSwitch 			As HMITilesIOSwitch
+	Public InstanceTimer 			As HMITilesIOTimer
+	Public InstanceTrendChart 		As HMITilesIOTrendChart
+	Public InstanceVerticalMeter	As HMITilesIOVerticalMeter
 	
 	' Local for SVG image
 	Private IMAGE_MARKUP_PLACEHOLDER As String = "#IMAGE_PLACEHOLDER#"
@@ -134,9 +146,14 @@ Private Sub Class_Globals
 	Private IMAGE_MARKUP_FILE As String = "image.html"
 	Private ImageMarkup As String
 
-	' Local for value font
-	Private mValueFontSize As Int
-	Private mValueFontColor As String		' Font color as HTML HEX string, i.e.#RRGGBB
+	' Local for font
+	' Colors as HTML HEX string, i.e.#RRGGBB
+	Private mHeaderFontSize 		As Int = 11
+	Private mHeaderFontColor 		As String = "#94a3b8"		
+	Private mValueFontSize 			As Int = 24
+	Private mValueFontColor 		As String = "#0f172a"		
+	Private mFooterFontSize 		As Int = 10
+	Private mFooterFontColor 		As String = "64748b"		
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -197,30 +214,42 @@ End Sub
 Private Sub InitInstance
 
 	Select mTileType
+		Case TILE_BATTERY
+			InstanceBattery.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_BUTTON
 			InstanceButton.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_BYTESTATUS
 			InstanceByteStatus.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_DUALREADOUT
+			InstanceDualReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_GAUGE
 			InstanceGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_ICONINDICATOR
+			InstanceIconIndicator.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_IOPANEL
 			InstanceIOPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_LEDPANEL
 			InstanceLEDPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_MULTISTATE
 			InstanceMultiState.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_READOUT
+			InstanceReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_SELECTOR
 			InstanceSelector.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_SEVENSEGMENT
 			InstanceSevenSegment.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_SIGNAL
+			InstanceSignal.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_SLIDER
 			InstanceSlider.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_SPINNER
 			InstanceSpinner.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_SWITCH
 			InstanceSwitch.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
-		Case TILE_READOUT
-			InstanceReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_TRENDCHART
+			InstanceTrendChart.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+		Case TILE_TIMER
+			InstanceTimer.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case TILE_VERTICALMETER
 			InstanceVerticalMeter.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 		Case Else
@@ -286,13 +315,15 @@ Public Sub getTileType As String
 	Return mTileType
 End Sub
 
+'---------------------------------------
+' STATE
+'---------------------------------------
+
 ' Get or set tile state.
 ' Supported are all tiles which use a state, like Button, LEDPanel, Switch.
 ' Parameter
 ' 	state: False = Off/Closed, True = On/Open
 Public Sub setState(state As Boolean)
-	Dim js As String
-
 	' Assign state as boolean to global class var
 	mState = state
 	' Assign the state value as binary 0 or 1 to global class var 
@@ -301,69 +332,139 @@ Public Sub setState(state As Boolean)
 	' Delegate internally based on the instance configuration
 	Select mTileType
 		Case TILE_BUTTON
-			js = InstanceButton.SetTile(mHeader, mFooter, mState)
+			InstanceButton.SetTile(mHeader, mFooter, mState)
 		Case TILE_LEDPANEL
-			js = InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
+			InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
 		Case TILE_SWITCH
-			js = InstanceSwitch.SetTile(mHeader, mFooter, mState)
+			InstanceSwitch.SetTile(mHeader, mFooter, mState)
 		Case Else
 			Return
 	End Select
-
-	' Change the state using JavaScript
-	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[setState][E] Can not set the state for tile ${mTileType}"$)
-	End If
+	Sleep(1)
 End Sub
 Public Sub getState As Boolean
 	Return mState
 End Sub
+
+'---------------------------------------
+' VALUE
+'---------------------------------------
 
 ' Set or get the tile value.
 ' Supported are tiles which use a value, like ByteStatus, Gauge, Selector, SevenSegment, Spinner, Slider, VerticalMeter.
 ' Parameter:
 '	value - Value between min and max properties. The value is casted according tile type.
 Public Sub setValue(value As String)
-	Dim js As String
-
 	' Assign the state value as binary 0 or 1 to global class var
 	mValue = value
 
 	' Select the tile type and assign the value to global var with casting as required	
 	Select mTileType
+		Case TILE_BATTERY
+			InstanceBattery.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BYTESTATUS
-			js = InstanceByteStatus.SetTile(mHeader, mFooter, InstanceByteStatus.PinsAttached, mValue)
+			InstanceByteStatus.SetTile(mHeader, mFooter, InstanceByteStatus.PinsAttached, mValue)
+		Case TILE_DUALREADOUT
+			InstanceDualReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_GAUGE
-			js = InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
+			InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
+		Case TILE_ICONINDICATOR
+			InstanceIconIndicator.SetTile(mHeader, mFooter, mValue)
 		Case TILE_IOPANEL
-			js = InstanceIOPanel.SetTile(mHeader, mFooter, mValue)
+			InstanceIOPanel.SetTile(mHeader, mFooter, mValue)
 		Case TILE_MULTISTATE
-			js = InstanceMultiState.SetTile(mHeader, mFooter, InstanceMultiState.States, mValue)
-		Case TILE_SELECTOR
-			js = InstanceSelector.SetTile(mHeader, mFooter, mValue)
-		Case TILE_SEVENSEGMENT
-			js = InstanceSevenSegment.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
-		Case TILE_SLIDER
-			js = InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
-		Case TILE_SPINNER
-			js = InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+			InstanceMultiState.SetTile(mHeader, mFooter, InstanceMultiState.States, mValue)
 		Case TILE_READOUT
-			js = InstanceReadOut.SetTile(mHeader, mFooter, mValue)
+			InstanceReadOut.SetTile(mHeader, mFooter, mValue)
+		Case TILE_SELECTOR
+			InstanceSelector.SetTile(mHeader, mFooter, mValue)
+		Case TILE_SEVENSEGMENT
+			InstanceSevenSegment.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_SIGNAL
+			InstanceSignal.SetTile(mHeader, mFooter, mValue)
+		Case TILE_SLIDER
+			InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_SPINNER
+			InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_TIMER
+			InstanceTimer.SetTile(mHeader, mFooter, mValue)
+		Case TILE_TRENDCHART
+			InstanceTrendChart.SetTile(mHeader, mFooter, mValue)
 		Case TILE_VERTICALMETER
-			js = InstanceVerticalMeter.SetTile(mHeader, mFooter, InstanceVerticalMeter.COLOR_TRACK, mMinValue, mMaxValue, mValue)
+			InstanceVerticalMeter.SetTile(mHeader, mFooter, InstanceVerticalMeter.COLOR_TRACK, mMinValue, mMaxValue, mValue)
 		Case Else
 			Return
 	End Select
-	'
-	Wait For (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[setValue][E] Can not set the value for tile ${mTileType}"$)
-	End If
 	Sleep(1)
 End Sub
 Public Sub getValue As String
 	Return mValue
+End Sub
+
+' Set or get the tile value font size.
+' Parameter:
+'	value - font size, like 24
+Public Sub setValueFontSize(value As Int)
+	Dim js As String 
+
+	mValueFontSize = value
+
+	' Handle special cases
+	Select mTileType
+		Case TILE_DUALREADOUT
+			js = $"
+					var valueleft = document.getElementById("value-left");
+					var valueright = document.getElementById("value-right");
+					if(valueleft) { valueleft.style.fontSize = "${value}"; };
+					if(valueright) { valueright.style.fontSize = "${value}"; };
+				"$
+		Case Else
+			js = $"
+		        	var valuedisplay = document.getElementById("value-display");
+		        	if (valuedisplay) { valuedisplay.style.fontSize = "${value}px"; }
+		    	"$
+	End Select
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[setValueFontSize][E] Can not set the value font size ${mValueFontSize}"$)
+	End If
+End Sub
+Public Sub getValueFontSize As Int
+	Return mValueFontSize
+End Sub
+
+' Set or get the tile value font color.
+' Parameter:
+'	value - Font color as HEX string with # prefix, like #FF0000 (red)
+Public Sub setValueFontColor(value As String)
+	Dim js As String
+	
+	mValueFontColor = value
+ 
+ 	Select mTileType
+		Case TILE_DUALREADOUT
+			js = $"
+					var valueleft = document.getElementById("value-left");
+					var valueright = document.getElementById("value-right");
+					if(valueleft) { valueleft.style.fill = "${value}"; };
+					if(valueright) { valueright.style.fill = "${value}"; };
+				"$			
+		Case Else
+			js = $"
+        			var valuedisplay = document.getElementById("value-display");
+			        if (valuedisplay) { valuedisplay.style.fill = "${value}"; }
+    			"$
+
+	End Select
+	
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[setValueFontColor][E] Can not set color ${mValueFontColor}; js=${js}"$)
+	End If
+End Sub
+Public Sub getValueFontColor As String
+	Return mValueFontColor
 End Sub
 
 ' Get or set items as list
@@ -377,6 +478,10 @@ End Sub
 Public Sub getItems As List
 	Return mItems
 End Sub
+
+'---------------------------------------
+' HEADER
+'---------------------------------------
 
 ' Set or get the tile header.
 ' Parameter:
@@ -397,6 +502,48 @@ Public Sub getHeader As String
 	Return mHeader
 End Sub
 
+' Set or get the tile header font size.
+' Parameter:
+'	value - font size, like 24
+Public Sub setHeaderFontSize(value As Int)
+	mHeaderFontSize = value
+	Dim js As String = $"
+        var tileheader = document.getElementById("tile-header");
+        if (tileheader) { tileheader.style.fontSize = "${value}px"; }
+    "$
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[setHeaderFontSize][E] Can not set the value font size ${mHeaderFontSize}"$)
+	End If
+End Sub
+Public Sub getHeaderFontSize As Int
+	Return mHeaderFontSize
+End Sub
+
+' Set or get the tile header font color.
+' Parameter:
+'	value - Font color as HEX string with # prefix, like #FF0000 (red)
+Public Sub setHeaderFontColor(value As String)
+	mHeaderFontColor = value
+	Dim js As String = $"
+        var tileheader = document.getElementById("tile-header");
+        if (tileheader) { tileheader.style.fill = "${value}"; }
+    "$
+
+	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[setHeaderFontColor][E] Can not set color ${mHeaderFontColor}"$)
+	End If
+End Sub
+Public Sub getHeaderFontColor As String
+	Return mHeaderFontColor
+End Sub
+
+'---------------------------------------
+' FOOTER
+'---------------------------------------
+
 ' Set or get the tile footer.
 ' Parameter:
 '	value - footer
@@ -416,43 +563,44 @@ Public Sub getFooter As String
 	Return mFooter
 End Sub
 
-' Set or get the tile value font size.
+' Set or get the tile footer font size.
 ' Parameter:
 '	value - font size, like 24
-Public Sub setValueFontSize(value As Int)
-	mValueFontSize = value
+Public Sub setFooterFontSize(value As Int)
+	' mValueFontSize = value
 	Dim js As String = $"
-        var valuedisplay = document.getElementById("value-display");
-        if (valuedisplay) { valuedisplay.style.fontSize = "${value}px"; }
+        var tilefooter = document.getElementById("tile-footer");
+        if (tilefooter) { tilefooter.style.fontSize = "${value}px"; }
     "$
 
 	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[setValueFontSize][E] Can not set the value font size ${mValueFontSize}"$)
+		Log($"[setFooterFontSize][E] Can not set the value font size ${mFooterFontSize}"$)
 	End If
 End Sub
-Public Sub getValueFontSize As Int
-	Return mValueFontSize
+Public Sub getFooterFontSize As Int
+	Return mFooterFontSize
 End Sub
 
-' Set or get the tile value font color.
+' Set or get the tile footer font color.
 ' Parameter:
 '	value - Font color as HEX string with # prefix, like #FF0000 (red)
-Public Sub setValueFontColor(value As String)
-	mValueFontColor = value
+Public Sub setFooterFontColor(value As String)
+	mFooterFontColor = value
 	Dim js As String = $"
-        var valuedisplay = document.getElementById("value-display");
-        if (valuedisplay) { valuedisplay.style.fill = "${value}"; }
+        var tilefooter = document.getElementById("tile-footer");
+        if (tilefooter) { tilefooter.style.fill = "${value}"; }
     "$
 
 	Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[setValueFontColor][E] Can not set color ${mValueFontColor}"$)
+		Log($"[setFooterFontColor][E] Can not set color ${mFooterFontColor}"$)
 	End If
 End Sub
-Public Sub getValueFontColor As String
-	Return mValueFontColor
+Public Sub getFooterFontColor As String
+	Return mFooterFontColor
 End Sub
+
 
 ' Get or set the tile background color.
 ' Dynamically Sets the background color of both the WebView Tile and the HTML content
@@ -489,11 +637,7 @@ End Sub
 Public Sub SetSegmentColor(segment As String, value As String)
 	Select mTileType
 		Case TILE_GAUGE
-			Dim js As String = InstanceGauge.SetSegmentColor(segment, value)
-			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, js)) complete (result As Boolean)
-			If Not(result) Then
-				Log($"[HMITilesIO.SetSegmentColor][E] Can not set the segment color for tile ${mTileType}"$)
-			End If
+			InstanceGauge.SetSegmentColor(segment, value)
 	End Select
 End Sub
 
@@ -510,16 +654,10 @@ Private Sub WebViewSVG_PageFinished (Url As String)
 	Select mTileType
 		Case TILE_SLIDER
 			#if B4J
-			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, InstanceSlider.Init(False))) complete (result As Boolean)
-			If Not(result) Then
-				Log($"[WebViewSVG_PageFinished][E] Can not set the state for tile ${mTileType}"$)
-			End If
+			InstanceSlider.Init(False)
 			#End If
 			#if B4A
-			Wait for (HMITilesIOUtils.ExecuteJS(WebViewSVG, InstanceSlider.Init(0))) complete (result As Boolean)
-			If Not(result) Then
-				Log($"[WebViewSVG_PageFinished][E] Can not set the state for tile ${mTileType}"$)
-			End If
+			InstanceSlider.Init(0)
 			#End If
 	End Select
 
@@ -578,22 +716,27 @@ Private Sub PanelWebViewSVG_Touch (Action As Int, X As Float, Y As Float)
 	Dim targetInstance As Object = Null
 
 	' Select the tiletype and assign the targetinstance
-	Select mTileType 
-		Case TILE_BUTTON:		targetInstance = InstanceButton
-		Case TILE_BYTESTATUS:	targetInstance = InstanceByteStatus
-		Case TILE_GAUGE:		targetInstance = InstanceGauge
-		Case TILE_IOPANEL:		targetInstance = InstanceIOPanel
-		Case TILE_MULTISTATE:	targetInstance = InstanceMultiState
-		Case TILE_LEDPANEL:		targetInstance = InstanceLEDPanel
-		Case TILE_READOUT:		targetInstance = InstanceReadOut
-		Case TILE_SELECTOR:		targetInstance = InstanceSelector
-		Case TILE_SEVENSEGMENT:	targetInstance = InstanceSevenSegment
-		Case TILE_SLIDER:		targetInstance = InstanceSlider
-		Case TILE_SPINNER:		InstanceSpinner.MinValue = mMinValue
-								InstanceSpinner.MaxValue = mMaxValue
-								targetInstance = InstanceSpinner
-		Case TILE_SWITCH:		targetInstance = InstanceSwitch
-		Case TILE_VERTICALMETER:targetInstance = InstanceVerticalMeter
+	Select mTileType		
+		Case TILE_BATTERY:			targetInstance = InstanceBattery
+		Case TILE_BUTTON:			targetInstance = InstanceButton
+		Case TILE_BYTESTATUS:		targetInstance = InstanceByteStatus
+		Case TILE_DUALREADOUT:		targetInstance = InstanceDualReadOut
+		Case TILE_GAUGE:			targetInstance = InstanceGauge
+		Case TILE_ICONINDICATOR:	targetInstance = InstanceIconIndicator
+		Case TILE_IOPANEL:			targetInstance = InstanceIOPanel
+		Case TILE_MULTISTATE:		targetInstance = InstanceMultiState
+		Case TILE_LEDPANEL:			targetInstance = InstanceLEDPanel
+		Case TILE_READOUT:			targetInstance = InstanceReadOut
+		Case TILE_SELECTOR:			targetInstance = InstanceSelector
+		Case TILE_SEVENSEGMENT:		targetInstance = InstanceSevenSegment
+		Case TILE_SIGNAL:			targetInstance = InstanceSignal
+		Case TILE_SLIDER:			targetInstance = InstanceSlider
+		Case TILE_SPINNER:			InstanceSpinner.MinValue = mMinValue
+									InstanceSpinner.MaxValue = mMaxValue
+									targetInstance = InstanceSpinner
+		Case TILE_SWITCH:			targetInstance = InstanceSwitch
+		Case TILE_TRENDCHART:		targetInstance = InstanceTrendChart
+		Case TILE_VERTICALMETER:	targetInstance = InstanceVerticalMeter
 	End Select
 
 	' Process the touch handler for the assigned instance

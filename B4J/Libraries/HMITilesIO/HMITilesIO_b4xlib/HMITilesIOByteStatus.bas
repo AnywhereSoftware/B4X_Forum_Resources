@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOByteStatus.bas
 ' Brief:    	Matrix 4x2 to set the state of the 8-bits for a byte value.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.
 '				Array-Based Configuration — Introduced a human-readable byte-Array masking scheme (`PinsAttached`) To easily enable, disable, Or gray out individual Bit status slots.
 '				The matrix 8 items are named pins.
@@ -56,13 +56,11 @@ End Sub
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   Pins() As Byte, _ 
-				   Value As String) As String
-	Dim sb As StringBuilder
+				   Value As String)
 
 	PinsAttached = Pins
 
-	sb.Initialize	
-	sb.Append($"
+	Dim js As String = $"
 		var head = document.getElementById("tile-header");
 		var foot = document.getElementById("tile-footer");
 		if(head) {
@@ -72,9 +70,21 @@ Public Sub SetTile(Header As String, _
 		if(foot) {
 			foot.textContent = "${Footer}";
 		};
-	"$)
-	sb.Append(UpdateByteStatus(Value.As(Byte), Pins))
-	Return sb.ToString
+	"$
+	js = $"${js}${UpdateByteStatus(Value.As(Byte), Pins)}"$
+
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[ByteStatus.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' Updates all 8 bits visually by passing a raw status byte and an activity layout array

@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSwitch.bas
 ' Brief:    	Switch with state ON (True, Green) and OFF (False, Red).
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	The Rocker Switch with crisp, tactile 3D effect with clear status symbols.
 ' Usage:		
 '				TileSwitch.State = False - set state OFF, Red
@@ -43,7 +43,8 @@ End Sub
 '	State - Boolean True (ON, Green) or False (OFF, Red)
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
-				   State As Boolean) As String
+				   State As Boolean)
+
 	' Escape text values cleanly for safe JS execution strings
 	Header = Header.Replace("'", "\'")
 	Footer = Footer.Replace("'", "\'")
@@ -107,7 +108,18 @@ Public Sub SetTile(Header As String, _
             };
         "$
 	End If
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[Switch.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

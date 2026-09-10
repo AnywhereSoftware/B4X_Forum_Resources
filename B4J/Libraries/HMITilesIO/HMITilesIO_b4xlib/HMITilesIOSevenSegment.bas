@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSevenSegment.bas
 ' Brief:    	Display number 0-9999 in 4 digits, LED-Seven-Segment, format.
-' Date:			2026-08-29
+' Date:			2026-09-06
 ' Description:	This is a 40px local font that is completely self-contained, 
 '				offline-safe, and visually centered.
 '				Depends on digital.ttf font located in the assets (files) folder.
@@ -86,7 +86,7 @@ Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   MinValue As Float, _
 				   MaxValue As Float, _
-				   Value As String) As String
+				   Value As String)
 	
 	Dim textcolor As String = TEXT_COLOR
 	
@@ -103,7 +103,6 @@ Public Sub SetTile(Header As String, _
 		If MinValue < MIN_VALUE Then MinValue = MIN_VALUE
 		If MaxValue > MAX_VALUE Then MaxValue = MAX_VALUE
     
-		' Validate value against min and max
 		' Validate value against min and max
 		If numValue < MinValue Or numValue > MaxValue Then
 			Value = ERR_TEXT
@@ -161,7 +160,18 @@ Public Sub SetTile(Header As String, _
 			txt.style.filter = "drop-shadow(0px 0px 2px ${textcolor})";
 		};
     "$
-	Return js
+	UpdateTile(js)
+End Sub
+
+' UpdateTile
+' Change the state using JavaScript.
+' Parameters:
+'	js - JavaScript to update the tile elements.
+Private Sub UpdateTile(js As String)
+	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
+	If Not(result) Then
+		Log($"[SevenSegment.UpdateTile][E] Can not update the tile."$)
+	End If
 End Sub
 
 ' ProcessTouchHandler

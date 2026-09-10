@@ -21,7 +21,7 @@ Version=9.85
 #End Region
 
 Private Sub Class_Globals
-	Private VERSION As String	= "HMITilesIO v20260831"
+	Private VERSION As String	= "HMITilesIO 0.7.0 - Build 20260906"
 	Private ABOUT As String 	= "HMITilesIO (c) 2026 Robert W.B. Linn - MIT"
 	
 	' UI
@@ -38,6 +38,7 @@ Private Sub Class_Globals
 	Private TileSlider As HMITilesIO
 	Private TileSevenSegment As HMITilesIO
 	Private TileReadOut As HMITilesIO
+	Private TileReadOutEnv As HMITilesIO
 	Private TileSpinner As HMITilesIO
 	Private TileByteStatus As HMITilesIO
 	Private TileSelector As HMITilesIO
@@ -45,6 +46,13 @@ Private Sub Class_Globals
 	Private TileMultiState As HMITilesIO
 	Private TileVerticalMeter As HMITilesIO
 	Private TileButton As HMITilesIO
+	Private TileDualReadOut As HMITilesIO
+	Private TileIconIndicator As HMITilesIO
+	Private TileTrendChart As HMITilesIO
+	Private TileBattery As HMITilesIO
+	Private TileSignal As HMITilesIO
+	Private TileTimer As HMITilesIO
+	Private TileTimerClock As HMITilesIO
 End Sub
 
 Public Sub Initialize
@@ -93,6 +101,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Value
 	' ----------
 
+	TileBattery.Value = 10
+	
 	' ByteStatus
 	TileByteStatus.Value = 103	' 0110 0111
 	TileByteStatus.InstanceByteStatus.PinsAttached = Array As Byte(1,1,1,1,1,1,1,1)
@@ -100,6 +110,12 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 '	TileByteStatus.Value = 103	' 0110 0111
 '	TileByteStatus.InstanceByteStatus.PinsAttached = Array As Byte(1,1,1,1,0,0,0,0)
 	' Log(HMITilesIOByteStatus.ByteToBin(TileByteStatus.Value.As(Byte)))
+
+	' Dual
+	' TileDualReadOut.ValueFontColor = "#0000FF"
+
+	' Icon Indicator
+	TileIconIndicator.Value = "ok"	' "error"
 
 	' Selector
 	TileSelector.Items = Array As String("COM1","COM2","COM3")
@@ -112,7 +128,13 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	
 	' ReadOut
 	TileReadOut.Value = "Value"
-	TileReadOut.ValueFontColor = "#FF0000"
+	' TileReadOut.ValueFontColor = "#FF0000"
+
+	' ReadOutEnv
+	TileReadOutEnv.Value = $"23°C"$
+	TileReadOutEnv.Footer = "68%RH"
+	' TileReadOutEnv.FooterFontSize = 16
+	' TileReadOutEnv.FooterFontColor = "#000000"
 
 	' Slider
 	TileSlider.Value = 68
@@ -145,6 +167,16 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	TileMultiState.InstanceMultiState.SetStateText(2, "3")
 	TileMultiState.InstanceMultiState.SetStateText(3, "4")
 	TileMultiState.InstanceMultiState.SetStateText(4, "5")
+
+	' TrendChart
+	TileTrendChart.Value = "10;20;30;25;20;68"
+
+	' Timer
+	TileTimer.Value = "40;60"
+	TileTimerClock.InstanceTimer.StartClock
+	'TileTimerClock.Value = TileTimerClock.InstanceTimer.GetTime
+	'TileTimerClock.Footer = TileTimerClock.InstanceTimer.GetDate
+	' CallSubDelayed(Me, "TileTimerTest")
 End Sub
 
 ' ================================================================
@@ -171,10 +203,12 @@ Private Sub TileSlider_Click(state As Boolean, value As String)
 	TileGauge.SetFooter($"${NumberFormat(TileGauge.Value, 0, 0)}"$)
 	TileGaugeReverse.Value = value.As(Float)
 	TileGaugeReverse.SetFooter($"${NumberFormat(TileGaugeReverse.Value, 0, 0)}"$)
-
 	TileVerticalMeter.Value = value.As(Float)
-
 	TileSevenSegment.Value = value.As(Float)
+	TileTrendChart.Value = $"${TileTrendChart.Value};${value.As(Int)}"$
+	TileBattery.Value = value
+	TileSignal.Value = value
+	
 	Log($"[TileSlider_Click] state=${TileSlider.state}, value=${TileSlider.value}"$)
 End Sub
 
@@ -214,3 +248,15 @@ Private Sub TileButton_Click(state As Boolean, value As String)
 	Log($"[TileButton_Click] state=${TileButton.state}, value=${TileButton.value}"$)
 End Sub
 
+' ================================================================
+' TILE SPECIFIC
+' ================================================================
+
+Private Sub TileTimerTest	'ignore
+	Dim currenttime As Long = TileTimer.InstanceTimer.CurrentTime
+	Dim totaltime As Long = TileTimer.InstanceTimer.TotalTime
+	For i = currenttime To totaltime
+		TileTimer.Value = $"${i};${totaltime}"$
+		Sleep(1000)
+	Next
+End Sub
