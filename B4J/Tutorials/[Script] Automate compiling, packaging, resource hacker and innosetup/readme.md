@@ -1,55 +1,230 @@
-### [Script] Automate compiling, packaging, resource hacker and innosetup by aeric
-### 08/30/2026
-[B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/171941/)
+# automate-build-installer
 
-GitHub: <https://github.com/pyhoon/automate-build-installer>  
-  
-Tested with B4J v10.5, Resource Hacker v5.1.8, InnoSetup 6.2.0  
-  
-Clone from GitHub repo link above or download all attachments then rename the files without .txt extensions.  
-Put them inside **\Objects** folder (or your prefer path) of a B4J Windows desktop project.  
-  
-Files:  
+One-click pipeline that turns a B4J project into a branded Windows **standalone package + installer**: compile JAR → build runtime package → patch EXE resources (icon, manifest, version info) → compile Inno Setup installer. Version is single-sourced from your `.b4j` project's `#PackagerProperty` attributes.
 
-1. **automate-build.bat** (main script)
+## Why this exists
 
-1. Extract properties from B4J project (e.g #PackagerProperty: AssemblyVersion)
-2. Compile B4J project to JAR
-3. Inject B4J properties into packager.json
-4. Run B4JPackager11 to create standalone build directory
-5. Inject Custom Icon into Standalone EXE (Resource Hacker)
-6. Inject Custom Manifest (Resource Hacker)
-7. Inject Synced Version Info (Resource Hacker)
-8. Compile Inno Setup Installer
+The integrated B4JPackager11 (`Project > Build Standalone Package`) works, but the resulting EXE still shows:
 
-2. **app.manifest** (for Resource Hacker)
+- `OpenJDK Platform` as the app name in Task Manager / taskbar in some places,
+- the Duke (Java mascot) icon instead of your icon,
+- generic `Version Info` (FileDescription, ProductName, version, copyright),
+- no single-file installer.
 
-1. Similar to content in Manifest tab
-2. You can change the name, version and description
+This repo automates the manual [Resource Hacker](http://www.angusj.com/resourcehacker/) + [Inno Setup](https://jrsoftware.org/isinfo.php) post-processing into a repeatable `automate-build.bat` pipeline.
 
-```B4X
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">  
-    <assemblyIdentity name="MyApp.exe" version="1.00.0.0" processorArchitecture="X86" type="win32"></assemblyIdentity>  
-    <description>Create using B4J</description>  
-</assembly>
+## How it works
+
+```
+.b4j (#PackagerProperty)
+  │
+  ▼
+[0] Parse AssemblyVersion / ExeName / metadata from .b4j file
+[1] B4JBuilder.exe -task=Build                    → MyApp.jar
+[2] Inject properties into Objects\packager.json  → synced ExeName, Title, Version, …
+[3] B4JPackager11.jar packager.json               → Objects\temp\build\MyApp.exe
+[4] Resource Hacker: inject app.ico               → ICONGROUP,MAINICON
+[5] Resource Hacker: inject app.manifest          → MANIFEST,1
+[6] Resource Hacker: compile version.rc → .res,
+    inject VERSIONINFO                            → File/Product version, Company, Copyright, …
+[7] ISCC.exe /DAppVersion=x.y.z.w installer.iss  → Setup MyApp.exe
 ```
 
+Version normalization: `1.0` → `1.0.0.0`. Both `1,0,0,0` (FILEVERSION) and `1.0.0.0` (StringFileInfo) forms are generated from the template.
 
-3. **version\_template.rc** (for Resource Hacker)
+## Repository contents
 
-1. Similar to content in Version Info tab
+| File | Purpose | Where it belongs in your project |
+|---|---|---|
+| `automate-build.bat` | The full 0–7 pipeline. Edit the `CONFIGURATION` block once per project. | `Objects\automate-build.bat` (or project root, adjust paths) |
+| `packager.json` | **Example/template.** Real file lives at `Objects\packager.json` and is auto-generated/updated by the IDE + Step [2]. Build a standalone package manually once so it exists. | `Objects\packager.json` |
+| `installer.iss` | Inno Setup script template. Receives `/DAppVersion` from the batch file. | `Objects\installer.iss` |
+| `app.manifest` | Windows application manifest (DPI awareness incl. PerMonitorV2, Common-Controls v6, `asInvoker`). Injected in Step [5]. | `Objects\app.manifest` |
+| `version_template.rc` | Resource script template with `[VERSION_COMMAS]` / `[VERSION_DOTS]` placeholders. Compiled and injected in Step [6]. | `Objects\version_template.rc` |
 
-4. **packager.json** (for B4JPackager11)
+## Requirements
 
-1. Use for building standalone package
+- Windows 10/11 x64
+- B4J (with `B4JBuilder.exe` and `B4JPackager11.jar`)
+- JDK 19 (or 11+/14+ for the packager) — set `JAVA_EXE` to its `java.exe`
+- [Resource Hacker](http://www.angusj.com/resourcehacker/) (`ResourceHacker.exe`)
+- [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`ISCC.exe`)
 
-5. **installer.iss** (for Inno Setup)
+## Setup
 
-1. Use for building Windows installer
+### 1. Copy files into your B4J project
 
-Modify all the files to your needs.  
-Call the **automate-build.bat** script using Command Prompt or B4J Macro  
-
-```B4X
-#Macro: Title, Build, ide://run?file=%PROJECT%\Objects\automate-build.bat
+```text
+C:\MyProject\B4J\
+  MyApp.b4j
+  Files\app.ico
+  Objects\
+    automate-build.bat
+    installer.iss
+    app.manifest
+    version_template.rc
+    packager.json        ← generated after first manual package build
+    temp\build\MyApp.exe ← generated by B4JPackager11
 ```
+
+### 2. Configure `automate-build.bat`
+
+Edit the `CONFIGURATION` block at the top:
+
+```bat
+set "B4J_PROJECT_DIR=C:\MyProject\B4J"
+set "B4J_FILE=%B4J_PROJECT_DIR%\MyApp.b4j"
+set "TEMPLATE_RC=%B4J_PROJECT_DIR%\Objects\version_template.rc"
+set "GENERATED_RC=%B4J_PROJECT_DIR%\Objects\version.rc"
+set "ICON_PATH=%B4J_PROJECT_DIR%\Files\app.ico"
+set "MANIFEST_PATH=%B4J_PROJECT_DIR%\Objects\app.manifest"
+set "INNO_SCRIPT=%B4J_PROJECT_DIR%\Objects\installer.iss"
+
+set "JAVA_EXE=C:\Java\jdk-19.0.2\bin\java.exe"
+set "B4J_BUILDER=C:\Program Files\Anywhere Software\B4J\B4JBuilder.exe"
+set "B4J_PACKAGER_JAR=C:\Program Files\Anywhere Software\B4J\B4JPackager11.jar"
+set "RESHACKER=C:\Program Files (x86)\Resource Hacker\ResourceHacker.exe"
+set "INNO_COMPILER=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+set "PACKAGER_JSON=%B4J_PROJECT_DIR%\Objects\packager.json"
+set "TARGET_EXE=%B4J_PROJECT_DIR%\Objects\temp\build\MyApp.exe"
+```
+
+> **Important:** `TARGET_EXE` must match your `ExeName` (e.g. `MyApp.exe`). If you rename the app, update both `ExeName` (see below) and this path.
+
+### 3. Declare `#PackagerProperty` in the B4J IDE (single source of truth)
+
+In your main module (`Project Attributes` region), define at minimum:
+
+```b4j
+#PackagerProperty: ExeName = MyApp
+#PackagerProperty: AssemblyTitle = MyApp
+#PackagerProperty: AssemblyProduct = My Awesome App
+#PackagerProperty: AssemblyCompany = Acme Corp
+#PackagerProperty: AssemblyVersion = 1.0.0.0
+#PackagerProperty: AssemblyDescription = Build for B4X Community
+#PackagerProperty: AssemblyCopyrightAttribute = MIT license
+#PackagerProperty: IconFile = ..\Files\app.ico
+#PackagerProperty: IncludedModules = jdk.crypto.ec, jdk.localedata, jdk.charsets
+```
+
+Step [0] parses the first 7 keys out of the `.b4j` file; Step [2] writes them into `packager.json` (`AssemblyVersion` normalized to 4 parts). Bump only `AssemblyVersion` here — the EXE version resource and the installer version follow automatically.
+
+### 4. Build a standalone package manually once
+
+`packager.json` does not exist until you run **Project > Build Standalone Package** at least once in the IDE. Step [2] will abort with an error if it is missing:
+
+```text
+Error: packager.json not found! Build Standalone Package manually in the IDE once to generate it.
+```
+
+### 5. Customize the installer and resources
+
+- **`installer.iss`**: change `MyAppName`, `MyAppPublisher`, `MyAppExeName`, generate a fresh `AppId` GUID (`Tools > Generate GUID` in Inno Setup), and check `[Files] Source: temp\build\*` and `OutputDir`. `AppVersion` is passed in via `/DAppVersion` (falls back to `1.00.0.0` when compiled manually).
+- **`app.manifest`**: update `assemblyIdentity name`, `description`, and `requestedExecutionLevel` if you need elevation.
+- **`version_template.rc`**: update `CompanyName`, `FileDescription`, `InternalName`, `LegalCopyright`, `OriginalFilename`, `ProductName`. Leave `[VERSION_COMMAS]` / `[VERSION_DOTS]` untouched — they are replaced per build.
+
+## Usage
+
+### A. From the command line (double-click also works)
+
+```cmd
+cd C:\MyProject\B4J\Objects
+automate-build.bat
+```
+
+Expected output:
+
+```text
+[0/7] Extracting properties from B4J project...
+Found AssemblyVersion: 1.0.0.0
+Found ExeName:         MyApp
+[1/7] Compiling B4J project to JAR...
+[2/7] Injecting B4J properties into packager.json...
+[3/7] Running B4JPackager11 to create standalone build directory...
+[4/7] Injecting Custom Icon into Standalone EXE...
+[5/7] Injecting Custom Manifest...
+[6/7] Injecting Synced Version Info...
+[7/7] Compiling Inno Setup Installer...
+==========================================
+Pipeline finished successfully! App Version: 1.0.0.0
+==========================================
+```
+
+Any step failing aborts the batch (`exit /b %errorlevel%`) with a message such as `B4J Build Failed!`, `Icon Injection Failed!`, or `Inno Setup Compilation Failed!`.
+
+### B. From inside the B4J IDE using `#Macro` (recommended)
+
+`#Macro` adds a one-click menu entry to the IDE that runs an external command via an `ide://run?` URL. Use it to launch `automate-build.bat` without leaving B4J.
+
+1. Make sure the batch file path in step 2 above is correct.
+2. In your main module, alongside the `#PackagerProperty` lines, add (all on one line):
+
+```b4j
+#Macro: Title, Build Installer, ide://run?File=%WINDIR%\System32\cmd.exe&Args=/c&Args=%PROJECT%\Objects\automate-build.bat
+```
+
+3. Save. A new **Build Installer** entry appears in the IDE (Project menu area). Click it to run the full 0–7 pipeline in a console window.
+4. Optional Ctrl+Click shortcut — add a comment link anywhere in code:
+
+```b4j
+'Build installer (Ctrl+Click): ide://run?File=%WINDIR%\System32\cmd.exe&Args=/c&Args=%PROJECT%\Objects\automate-build.bat
+```
+
+Path notes:
+
+| Placeholder | Meaning | Example |
+|---|---|---|
+| `%WINDIR%` | Windows dir | `C:\Windows` |
+| `%PROJECT%` | Current B4J project folder | `C:\MyProject\B4J` |
+| `%B4X%` | B4X install folder | `C:\Program Files\Anywhere Software\B4J` |
+| `%ADDITIONAL%` | Additional libraries folder | configured under Tools > Configure Paths |
+
+- If `%PROJECT%\Objects\automate-build.bat` does not resolve on your setup, substitute the absolute path: `&Args=C:\MyProject\B4J\Objects\automate-build.bat`.
+- Keep `cmd.exe /c` as the `File` and the batch file as an `Args` entry — `ide://run` executes a file, so the batch file must be launched through `cmd.exe`.
+- Do **not** use `#CustomBuildAction: After Packager, ...` for this batch file. That hook runs *inside* a packager build, while this script already performs its own Build + Packager steps (1–3). Triggering it from there would duplicate/loop the build. Use the `#Macro` on-demand approach instead.
+
+Typical workflow:
+
+1. Edit code in the B4J IDE.
+2. Update `#PackagerProperty: AssemblyVersion` when releasing.
+3. Click **Build Installer** (`#Macro`) → wait for `Pipeline finished successfully!`.
+4. Collect output next to `installer.iss` (`OutputDir=.`): `Setup MyApp.exe`.
+
+## Details per step
+
+| Step | What happens | Key files/commands |
+|---|---|---|
+| 0 | `findstr #PackagerProperty:` in `.b4j`, normalizes version to `w.x.y.z` + `w,x,y,z`, expands `version_template.rc` → `version.rc` | `version_template.rc` → `version.rc` |
+| 1 | `B4JBuilder.exe -task=Build -basefolder=... -configuration=Default` | `MyApp.jar` |
+| 2 | PowerShell `ConvertFrom-Json` → overwrite 7 fields → `ConvertTo-Json` | `Objects\packager.json` |
+| 3 | `java.exe -jar B4JPackager11.jar packager.json` | `Objects\temp\build\` |
+| 4 | `ResourceHacker -open EXE -save EXE -action addoverwrite -res app.ico -mask ICONGROUP,MAINICON,` | icon |
+| 5 | `ResourceHacker ... -res app.manifest -mask MANIFEST,1,0` | manifest |
+| 6 | `ResourceHacker -open version.rc -save version.res -action compile`, then `-mask VERSIONINFO,1,`; temp `.res`/`.rc` deleted | version info |
+| 7 | `ISCC.exe /DAppVersion="1.0.0.0" installer.iss` | `Setup MyApp.exe` |
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| `Could not find AssemblyVersion properties inside ...` | `#PackagerProperty: AssemblyVersion` missing/misspelled in `.b4j`. |
+| `packager.json not found!` | Run **Project > Build Standalone Package** once manually first. |
+| `B4JPackager11 Failed!` | Wrong `JAVA_EXE` (needs JDK with JavaFX for UI apps, e.g. OpenJDK 19 + OpenJFX bundle) or bad `packager.json` (`InputJar`, `IncludedModules`). |
+| Icon still Duke / name still OpenJDK | Step [4]/[5] paths wrong (`ICON_PATH`, `TARGET_EXE` mismatch with `ExeName`), or you inspected the pre-patch JAR output instead of `temp\build\*.exe`. |
+| Version stuck at `1.00.0.0` in installer | `installer.iss` compiled manually without `/DAppVersion` uses the `#ifndef AppVersion` fallback — build via the batch file. |
+| `#Macro` entry missing | `#Macro` line must be a single line in the main module; restart/save project; check `&Args=` path exists. |
+| Garbled `${...}`/quotes in `packager.json` | Values containing `'` break the inline PowerShell assignment — avoid single quotes in titles/descriptions. |
+
+## References
+
+- B4JPackager11 tutorial: `https://www.b4x.com/android/forum/threads/integrated-b4jpackager11-the-simple-way-to-distribute-standalone-ui-apps.117616/`
+- Resource Hacker + B4J icon/version guide: `https://www.b4x.com/android/forum/threads/using-resource-hacker-to-replace-openjdk-platform-app-name-and-icon.136771/`
+- B4JBuilder command-line compilation: `https://www.b4x.com/android/forum/threads/b4abuilder-b4jbuilder-command-line-compilation.50154/`
+
+## License
+
+See [LICENSE](LICENSE).
+
+Generated using OpenCode \
+Model used: Muse Spark 1.3 Free

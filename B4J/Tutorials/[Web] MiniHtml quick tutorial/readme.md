@@ -1,5 +1,5 @@
 ### [Web] MiniHtml Quick Tutorial by aeric
-### 02/20/2026
+### 09/10/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/169429/)
 
 [HEADING=1]A New Paradigm Shift[/HEADING]  
@@ -93,14 +93,13 @@ body1.build
 
 **Use in ServletResponse**  
 
-1. We can also use .Write to add raw String to the object like using StringBuilder.
+1. We can also use .Append to add raw String to the object like using StringBuilder.
 
 ```B4X
 Private Sub ShowIndexPage  
     Dim doc As MiniHtml  
     doc.Initialize("")  
-    doc.Write("<!DOCTYPE html>")  
-    doc.Write(body1.build)  
+    doc.Append(IndexPage.build)  
     Response.Write(doc.ToString)  
 End Sub
 ```

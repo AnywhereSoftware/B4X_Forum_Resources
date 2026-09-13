@@ -1,7 +1,24 @@
 ### B4i Change Log (versions history) by Erel
-### 11/18/2025
+### 09/10/2026
 [B4X Forum - B4i - Tutorials](https://www.b4x.com/android/forum/threads/47187/)
 
+**v10.3** - September 10, 2026 - <https://www.b4x.com/android/forum/threads/new-release-b4i-v10-3-with-optional-parameters-code-bundle-and-more.172020/>  
+
+- Optional parameters: <https://www.b4x.com/android/forum/threads/171906/#content>
+- CodeBundle AI tool: [https://www.b4x.com/android/forum/t...bundle-tool-has-been-released.170564/#content](https://www.b4x.com/android/forum/threads/b4j-v10-5-with-integrated-code-bundle-tool-has-been-released.170564/#content)
+- Exception.StackTrace and ThrowException keyword.
+- Various libraries updated with default parameters.
+- Errors in referenced b4xlibs are marked with their library and module.
+- B4ih2xml tool updated: <https://www.b4x.com/android/forum/threads/objective-c-writing-libraries-for-b4i.47024/>
+- Autocomplete in #If lines.
+- List.Sublist - Very fast method that returns a read-only sub-list.
+- New #Macro / comment link options: [https://www.b4x.com/android/forum/t...ed-code-bundle-tool-has-been-released.170564/](https://www.b4x.com/android/forum/threads/b4j-v10-5-with-integrated-code-bundle-tool-has-been-released.170564/)
+- Parser performance improvements.
+- Many internal libraries updated.
+- Bug fixes and other minor improvements.
+
+  
+  
 **v10.0** - November 18, 2025  
   
 B4i compilation process has been rewritten from scratch based on Apple's latest methodology. All native libraries were rebuilt and most external dependencies were updated with latest versions.  

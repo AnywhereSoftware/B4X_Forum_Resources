@@ -1,10 +1,10 @@
 ###  Material Design 3 Components by Mashiane
-### 09/05/2026
+### 09/10/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171985/)
 
 Hi there  
   
-[Download](https://github.com/Mashiane/B4A-Material-Design-3-Components/blob/main/MD3Components.apk)  
+[Download](https://github.com/Mashiane/B4A-Material-Design-3-Components)  
   
 I've been working on something that I think may be useful to other B4A developers: **bringing Google's Material Design 3 components to B4A through Java wrappers.**  
 This is indeed a challenging process and each component will come as individual jar + xml files for your [$25 certificate of appreciation.](https://paypal.me/anelembanga)  
