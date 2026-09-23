@@ -45,11 +45,13 @@ Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   State As Boolean)
 
+	Dim js As String
+
+	' Log($"[HMITilesIoswitch.SetTile] state=${State}"$)
+
 	' Escape text values cleanly for safe JS execution strings
 	Header = Header.Replace("'", "\'")
 	Footer = Footer.Replace("'", "\'")
-    
-	Dim js As String
     
 	If State Then
 		' State: ON -> Top part turns GREEN / Glowing (Pressed up). Bottom part turns dark dim.
@@ -116,6 +118,7 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
+	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[Switch.UpdateTile][E] Can not update the tile."$)

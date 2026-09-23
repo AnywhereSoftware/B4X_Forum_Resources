@@ -1,5 +1,5 @@
 ### HMITilesIO by rwblinn
-### 09/06/2026
+### 09/15/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
@@ -274,7 +274,6 @@ This project does not follow strict semantic versioning. Updates are published i
   
   
 **Acknowledgments**  
-  
 
 - Anywhere Software for building the excellent cross-platform B4X development suite.
 - The B4X Community Forum for sharing the invaluable feedback, solutions, and ideas that made this library possible.

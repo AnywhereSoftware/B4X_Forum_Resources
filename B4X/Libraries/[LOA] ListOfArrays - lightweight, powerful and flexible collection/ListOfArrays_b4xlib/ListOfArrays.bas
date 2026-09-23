@@ -117,7 +117,7 @@ End Sub
 'Returns a list with arrays of strings with the data. Should be used to save the data as CSV.
 'Types other than strings and numbers will be converted to a their default string representation.
 Public Sub ToListOfStrings As List
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	For Each row() As Object In mInternalArray
 		Dim NewRow(row.Length) As String
 		For i = 0 To row.Length - 1
@@ -181,7 +181,7 @@ Public Sub ColumnIndexToOrdinal (Index As Object) As Int
 	If getFirstRowIsHeader = False Then Return Index
 	Dim ix As Int = mIndicesMap.GetDefault(Index, -1)
 	If ix = -1 Then ix = mIndicesMap.GetDefault(Index.As(String).ToLowerCase, -1)
-	If ix = -1 Then ThrowError("Column index not found: " & Index)
+	If ix = -1 Then ThrowException("Column index not found: " & Index)
 	Return ix
 End Sub
 
@@ -202,7 +202,7 @@ End Sub
 'It excludes the header if one is set.
 Public Sub GetColumn(ColumnIndex As Object) As List
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	For i = mFirstDataRowIndex To mInternalArray.Size - 1
 		Dim row() As Object = mInternalArray.Get(i)
 		res.Add(row(ColumnIndex))
@@ -223,8 +223,8 @@ Public Sub AddColumn(Header As String, Column As List)
 			mInternalArray.Add(Array(o))
 		Next
 	Else
-		If (getFirstRowIsHeader = True) <> (Header <> "") Then ThrowError("AddColumn - column header state must match LOA header state.")
-		If getSize <> Column.Size Then ThrowError("AddColumn - number of rows do not match.")
+		If (getFirstRowIsHeader = True) <> (Header <> "") Then ThrowException("AddColumn - column header state must match LOA header state.")
+		If getSize <> Column.Size Then ThrowException("AddColumn - number of rows do not match.")
 		For i = 0 To mInternalArray.Size - 1
 			Dim row1() As Object = mInternalArray.Get(i)
 			Dim NewRow(row1.Length + 1) As Object
@@ -239,7 +239,7 @@ End Sub
 'Adds a new column and fills all rows with the same value.
 'Pass empty string for the header, if LOA is without a header.
 Public Sub AddColumnWithValue(Header As String, Value As Object)
-	Dim col As List = B4XCollections.CreateList(Null)
+	Dim col As List = B4XCollections.CreateList
 	For i = 1 To getSize
 		col.Add(Value)
 	Next
@@ -248,7 +248,7 @@ End Sub
 
 'Replaces the column with the new one. The passed columns should hold values, not arrays of objects.
 Public Sub SetColumn(ColumnIndex As Object, Column As List)
-	If Column.Size <> getSize Then ThrowError("SetColumn - sizes do not match.")
+	If Column.Size <> getSize Then ThrowException("SetColumn - sizes do not match.")
 	Dim ix As Int = ColumnIndexToOrdinal(ColumnIndex)
 	For i = mFirstDataRowIndex To mInternalArray.Size - 1
 		Dim row() As Object = mInternalArray.Get(i)
@@ -259,7 +259,7 @@ End Sub
 'Returns a list with the column indices. It will be 0..n-1.
 'Can be useful for methods that accept a list of indices.
 Public Sub getColumnIndices As List
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	For i = 0 To getNumberOfColumns - 1
 		res.Add(i)
 	Next
@@ -281,7 +281,7 @@ End Sub
 Private Sub CheckColumnsMatch(MethodName As String, OtherCount As Int)
 	Dim cols As Int = getNumberOfColumns
 	If cols > 0 And cols <> OtherCount Then
-		ThrowError($"${MethodName} - Number of columns do not match."$)
+		ThrowException($"${MethodName} - Number of columns do not match."$)
 	End If
 End Sub
 
@@ -291,11 +291,7 @@ Public Sub AddRows(LOA As ListOfArrays)
 	If LOA.IsEmpty Then Return
 	CheckColumnsMatch("AddRows", LOA.NumberOfColumns)
 	If LOA.FirstRowIsHeader Then
-		#if B4J or B4A
 		mInternalArray.AddAll(LOA.mInternalArray.SubList(LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
-		#else
-		mInternalArray.AddAll(B4XCollections.SubList(LOA.mInternalArray, LOA.mFirstDataRowIndex, LOA.mInternalArray.Size))
-		#end if
 	Else
 		mInternalArray.AddAll(LOA.mInternalArray)
 	End If
@@ -310,7 +306,7 @@ End Sub
 
 'Adds all columns from LOA to this table. Number of rows must match.
 Public Sub Merge(LOA As ListOfArrays)
-	If getSize <> LOA.Size Or mFirstDataRowIndex <> LOA.mFirstDataRowIndex Then ThrowError("Merge - number of rows do not match.")
+	If getSize <> LOA.Size Or mFirstDataRowIndex <> LOA.mFirstDataRowIndex Then ThrowException("Merge - number of rows do not match.")
 	For i = 0 To mInternalArray.Size - 1
 		Dim row1() As Object = mInternalArray.Get(i)
 		Dim row2() As Object = LOA.mInternalArray.Get(i)
@@ -344,15 +340,6 @@ Public Sub VerifyRowsLengths
 	Next
 End Sub
 
-Private Sub ThrowError(Message As String)
-	LogColor("Error: " & Message, 0xffff0000)
-	#if B4A or B4J
-	Me.As(JavaObject).RunMethod("raiseException", Array(Message))
-	#else
-	Dim no As NativeObject
-	no.Initialize("NSException").RunMethod("raise:format:", Array("", Message))
-	#end if
-End Sub
 
 'Returns a shallow copy of this table. The arrays of objects are reused.
 Public Sub Clone As ListOfArrays
@@ -383,13 +370,8 @@ Public Sub IterateRows As List
 		Return B4XCollections.GetEmptyList
 	End If
 	If getFirstRowIsHeader Then
-		#if B4J or B4A
 		'change SORT to create modifiable list.
 		Return mInternalArray.SubList(1, mInternalArray.Size)
-		#else
-		Return B4XCollections.SubList(mInternalArray, 1, mInternalArray.Size)
-		#End If
-		'Will be changed once List.SubList is available in the next version of B4X.
 	Else
 		Return mInternalArray
 	End If
@@ -445,7 +427,7 @@ End Sub
 Public Sub AndRowsSelections(Selection1 As List, Selection2 As List) As List
 	Dim s1 As B4XSet = B4XCollections.CreateSet2(Selection1)
 	Dim s2 As B4XSet = B4XCollections.CreateSet2(Selection2)
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	For Each i As Int In s1.AsList
 		If s2.Contains(i) Then res.Add(i)
 	Next
@@ -459,7 +441,7 @@ End Sub
 'KeepFirst - when duplicate keys exist:
 '            True  = keep the first row index
 '            False = keep the last row index
-Public Sub GetRowIndices(ColumnIndex As Object, KeepFirst As Boolean) As Map
+Public Sub GetRowIndices(ColumnIndex As Object, KeepFirst As Boolean = True) As Map
 	Dim res As Map
 	res.Initialize
 	Dim ix As Int
@@ -526,7 +508,7 @@ End Sub
 'Use GroupBy or GetRowIndices for more options and when searching for multiple values.
 Public Sub GetRowIndicesByValue(ColumnIndex As Object, Value As Object) As List
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	If Value = Null Then
 		For i = 0 To getSize - 1
 			Dim row() As Object = GetRow(i)
@@ -575,11 +557,11 @@ End Sub
 Private Sub ObjectIndicesToIntIndices(Indices As List) As List
 	If NotInitialized(Indices) Then Return B4XCollections.GetEmptyList
 	If getFirstRowIsHeader = False Then Return Indices
-	Dim NumericValueIndices As List = B4XCollections.CreateList(Null)
+	Dim NumericValueIndices As List = B4XCollections.CreateList
 	For Each ox As Object In Indices
 		Dim ix As Int = mIndicesMap.GetDefault(ox, -1)
 		If ix = -1 Then ix = mIndicesMap.GetDefault(ox.As(String).ToLowerCase, -1)
-		If ix = -1 Then ThrowError("Index not found: " & ox)
+		If ix = -1 Then ThrowException("Index not found: " & ox)
 		NumericValueIndices.Add(ix)
 	Next
 	Return NumericValueIndices
@@ -602,9 +584,9 @@ End Sub
 'Returns a list of maps, one map per data row.
 'Each map uses the column headers as keys and the row values as values.
 Public Sub ToListOfMaps As List
-	If getFirstRowIsHeader = False Then ThrowError("Headers must be set")
+	If getFirstRowIsHeader = False Then ThrowException("Headers must be set")
 	Dim h() As Object = getHeader
-	Dim res As List = B4XCollections.CreateList(Null)
+	Dim res As List = B4XCollections.CreateList
 	For i = mFirstDataRowIndex To mInternalArray.Size - 1
 		Dim row() As Object = mInternalArray.Get(i)
 		Dim m As Map = CreateMap()
@@ -618,7 +600,7 @@ End Sub
 
 'Returns a string representation of the table.
 'MaxNumberOfRows - Maximum rows to print. Pass 0 to print all.
-Public Sub ToString (MaxNumberOfRows As Int) As String
+Public Sub ToString (MaxNumberOfRows As Int = 5) As String
 	Dim sb As StringBuilder
 	sb.Initialize
 	If MaxNumberOfRows > 0 And getFirstRowIsHeader Then MaxNumberOfRows = MaxNumberOfRows + 1
@@ -640,16 +622,12 @@ Public Sub ToString (MaxNumberOfRows As Int) As String
 End Sub
 
 'Sorts the table based on the given index. The column must be a column of numbers or strings.
-Public Sub Sort (ColumnIndex As Object, Ascending As Boolean)
+Public Sub Sort (ColumnIndex As Object, Ascending As Boolean = True)
 	If getIsEmpty Then Return
 	ColumnIndex = ColumnIndexToOrdinal(ColumnIndex)
 	Dim ListToSort As List
 	If getFirstRowIsHeader Then
-		#if B4J or B4A
 		ListToSort = B4XCollections.CreateList(IterateRows)
-		#else
-		ListToSort = IterateRows
-		#End If
 	Else
 		ListToSort = mInternalArray
 	End If
@@ -668,6 +646,54 @@ Public Sub Sort (ColumnIndex As Object, Ascending As Boolean)
 			mInternalArray.Set(mFirstDataRowIndex + i, ListToSort.Get(i))
 		Next
 	End If
+End Sub
+
+Private Sub FirstRowType (ColumnIndex As Int) As String
+	If getIsEmpty Then Return ""
+	Dim row() As Object = GetRow(0)
+	If row(ColumnIndex) Is String Then Return "s"
+	If row(ColumnIndex) Is Long Then Return "l"
+	Return "i"
+End Sub
+
+'Uses binary search to find the given key and returns its row index.
+'The LOA must be sorted in ascending order by the specified column. The result is undefined if not sorted.
+'Supports columns of strings or numbers.
+'Returns a negative value if the key is not found. The insertion index is -(result + 1).
+Public Sub BinarySearch (ColumnIndex As Object, Key As Object) As Int
+	If getIsEmpty Then Return -1
+	Dim ci As Int = ColumnIndexToOrdinal(ColumnIndex)
+	Dim t As String = FirstRowType(ci)
+	Dim StringComparison = t = "s", LongComparison = t = "l" As Boolean
+	If StringComparison Then
+		Dim KeyString As String = Key
+	Else If LongComparison Then
+		Dim KeyLong As Long = Key
+	Else
+		Dim KeyDouble As Double = Key
+	End If
+	Dim low  = 0 , high = getSize - 1 As Int
+	Dim cmp As Double
+	Do While low <= high
+		Dim mid As Int = Bit.ShiftRight(low + high, 1)
+		Dim row() As Object = GetRow(mid)
+		Dim MidVal As Object = row(ci)
+		If StringComparison Then
+			cmp = MidVal.As(String).CompareTo(KeyString)
+		Else If LongComparison Then
+			cmp = MidVal.As(Long) - KeyLong
+		Else
+			cmp = MidVal.As(Double) - KeyDouble
+		End If
+		If cmp < 0 Then
+			low = mid + 1
+		Else If cmp > 0 Then
+			high = mid - 1
+		Else
+			Return mid
+		End If
+	Loop
+	Return -(low + 1)
 End Sub
 
 #if Java
@@ -701,7 +727,7 @@ public static class ListOfArrays implements java.util.Comparator<Object[]> {
 	B4IArray* firstItem = items[0];
 	BOOL isNumber = [firstItem.objectsData[index] isKindOfClass:[NSNumber class]];
 	NSStringCompareOptions mask = (NSStringCompareOptions)0;
-	[items sortUsingComparator:^NSComparisonResult(B4IArray* a, B4IArray* b) {
+	[items sortWithOptions:NSSortStable usingComparator:^NSComparisonResult(B4IArray* a, B4IArray* b) {
 			NSComparisonResult r;
 			if (isNumber)
 				r = [(NSNumber*)a.objectsData[index] compare:(NSNumber*)b.objectsData[index]];

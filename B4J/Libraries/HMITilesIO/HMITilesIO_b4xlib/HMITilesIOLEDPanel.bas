@@ -41,8 +41,8 @@ End Sub
 '	Footer - String set text at tile bottom
 ' 	State - Boolean True (ON, Green) or False (OFF, Red)
 Public Sub SetTile(Header As String, _
-					Footer As String, _
-					State As Boolean)
+				   Footer As String, _
+				   State As Boolean)
 
 	Dim js As String
     
@@ -55,12 +55,17 @@ Public Sub SetTile(Header As String, _
             var head = document.getElementById("tile-header");
             var foot = document.getElementById("tile-footer");
             var lens = document.getElementById("led-lens");
-            if(head) { head.textContent = "${Header}"; };
-            if(foot) {
+
+            if(head) { 
+				head.textContent = "${Header}"; 
+			};
+            
+			if(foot) {
                 foot.textContent = "${Footer}";
                 foot.setAttribute("fill", "#64748b");
             };
-            if(lens) {
+            
+			if(lens) {
                 lens.setAttribute("fill", "url(#ledGreen)");
                 lens.setAttribute("filter", "url(#lensGlow)");
             };
@@ -71,17 +76,23 @@ Public Sub SetTile(Header As String, _
             var head = document.getElementById("tile-header");
             var foot = document.getElementById("tile-footer");
             var lens = document.getElementById("led-lens");
-            if(head) { head.textContent = "${Header}"; };
+
+            if(head) { 
+				head.textContent = "${Header}"; 
+			};
+
             if(foot) {
                 foot.textContent = "${Footer}";
                 foot.setAttribute("fill", "#64748b");
             };
+
             if(lens) {
                 lens.setAttribute("fill", "url(#ledOff)");
                 lens.removeAttribute("filter");
             };
         "$
 	End If
+	' Log($"[HMITilesIOLEDPanel] SetTile js=${js}"$)
 	UpdateTile(js)
 End Sub
 
@@ -90,6 +101,7 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
+	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[LEDPanel.UpdateTile][E] Can not update the tile."$)

@@ -73,6 +73,11 @@ Public Sub SetTile(Header As String, _
                    Value As String)
     
 	Dim CleanValue As String = Value.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "").Trim
+	' Check value
+	If CleanValue.Length = 0 Then
+		Log($"[IOTimer.SetTile[E] Missing items. Check value."$)
+		Return
+	End If
     
 	Dim DisplayText As String = CleanValue
 	Dim ProgressPct As Double = 0
@@ -168,6 +173,7 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
+	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[Timer.UpdateTile][E] Can not update the tile."$)

@@ -11,6 +11,7 @@ Sub Class_Globals
 	Public LastAccessed As XLAddress
 	Private jsheet As JavaObject
 	Public Workbook As XLWorkbookWriter
+	Public ExcelDateFormat As String = "yyyy-MM-dd"
 End Sub
 
 '<b>Don't call. Use Writer.CreateSheetWriter instead.</b>
@@ -41,6 +42,56 @@ Public Sub PutFormula (Address As XLAddress, Value As String) As XLSheetWriter
 	If Value.StartsWith("=") Then Value = Value.SubString(1)
 	GetCell(Address).ValueFormula = Value
 	Return Me
+End Sub
+
+'Puts the data from the ListOfArrays, starting from the TopLeft address.
+'DateColumns - Optional list of columns that will be treated as date fields. Date columns will use the format set by the global ExcelDateFormat field.
+'Returns a XLRange with the table range.
+Public Sub PutLOA(loa As ListOfArrays, TopLeft As XLAddress, DateColumns As List) As XLRange
+	Dim a As XLAddress = xl.AddressZero(TopLeft.Col0Based, TopLeft.Row0Based)
+	If loa.FirstRowIsHeader Then
+		For Each h As String In loa.Header
+			PutString(a, h)
+			a.Col0Based = a.Col0Based + 1
+		Next
+		a.Row0Based = a.Row0Based + 1
+	End If
+	Dim DateColumnsOrdinals As B4XSet = B4XCollections.CreateSet
+	Dim DateStyle As XLStyle = Workbook.CreateStyle.DataFormat(ExcelDateFormat)
+	Dim DoubleNumberStyle As XLStyle = Workbook.CreateStyle.DataFormat("#,##0.0")
+	Dim IntNumberStyle As XLStyle = Workbook.CreateStyle.DataFormat("#,##0")
+	If Initialized(DateColumns) Then
+		For Each col As Object In DateColumns
+			DateColumnsOrdinals.Add(loa.ColumnIndexToOrdinal(col))
+		Next
+	End If
+	For r = loa.mFirstDataRowIndex To loa.mInternalArray.Size - 1
+		Dim row() As Object = loa.mInternalArray.Get(r)
+		a.Col0Based = TopLeft.Col0Based
+		For c = 0 To loa.NumberOfColumns - 1
+			Dim v As Object = row(c)
+			If v = Null Then
+				'don't do anything
+			Else If DateColumnsOrdinals.Contains(c) Then
+				PutDate(a, v)
+				SetStyle(a, DateStyle)
+			Else If v Is String Then
+				PutString(a, v)
+			Else
+				PutNumber(a, v)
+				Dim ii As Int = v
+				If ii = v Then
+					SetStyle(a, IntNumberStyle)
+				Else
+					SetStyle(a, DoubleNumberStyle)
+				End If
+			End If
+			a.Col0Based = a.Col0Based + 1
+		Next
+		a.Row0Based = a.Row0Based + 1
+	Next
+	Dim BottomRight As XLAddress = xl.AddressZero(TopLeft.Col0Based + loa.NumberOfColumns - 1, a.Row0Based - 1)
+	Return xl.CreateXLRange(TopLeft, BottomRight)
 End Sub
 
 'Sets the cell style. Existing style properties will be replaced.

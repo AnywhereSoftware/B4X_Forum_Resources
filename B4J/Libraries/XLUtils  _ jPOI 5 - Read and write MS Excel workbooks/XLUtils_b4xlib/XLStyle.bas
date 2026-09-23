@@ -99,6 +99,7 @@ Private Sub SetBorderColor (Property As String, Color As Short) As XLStyle
 	Return Me
 End Sub
 
+'Sets the cell format from one of the built-in formats. Example: https://www.b4x.com/android/forum/threads/xlutils-jpoi-5-read-and-write-ms-excel-workbooks.129969/#post-819485
 Public Sub DataFormat (Format As String) As XLStyle
 	Dim ix As Short = writer.jWorkbook.RunMethodJO("createDataFormat", Null).RunMethod("getFormat", Array(Format))
 	StyleMap.Put(STYLE_KEY_DATA_FORMAT, ix)

@@ -92,3 +92,29 @@ Public Sub GetDefault(Address As XLAddress, DefaultValue As Object) As Object
 	Return res 
 End Sub
 
+'Returns the set range as a ListOfArrays.
+'FirstRowIsHeader - whether the first row is a header row.
+Public Sub GetListOfArrays(Range As XLRange, FirstRowIsHeader As Boolean) As ListOfArrays
+	Dim ldata As List = B4XCollections.CreateList(Null)
+	Dim ColStart As Int = Range.FirstAddress.Col0Based - TopLeft.Col0Based
+	Dim ColEnd As Int = Range.SecondAddress.Col0Based - TopLeft.Col0Based
+	Dim ColSize As Int = ColEnd - ColStart + 1
+	For r = Range.FirstAddress.Row0Based - TopLeft.Row0Based To Range.SecondAddress.Row0Based - TopLeft.Row0Based
+		Dim row() As Object = Data.Get(r)
+		If ColStart = 0 And ColSize = row.Length Then
+			ldata.Add(row)
+		Else
+			Dim NewRow(Max(0, Min(row.Length - ColStart, ColSize))) As Object
+			LOAUtils.ArrayCopy(row, ColStart, NewRow, 0, NewRow.Length)
+			ldata.Add(NewRow)
+		End If
+	Next
+	Dim res As ListOfArrays
+	If FirstRowIsHeader Then
+		res = LOAUtils.WrapWithHeader(ldata)
+	Else
+		res = LOAUtils.WrapWithoutHeader(ldata)
+	End If
+	res.VerifyRowsLengths
+	Return res
+End Sub

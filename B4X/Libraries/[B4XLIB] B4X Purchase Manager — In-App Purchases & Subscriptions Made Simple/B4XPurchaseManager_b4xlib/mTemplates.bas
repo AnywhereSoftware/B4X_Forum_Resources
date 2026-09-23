@@ -795,8 +795,9 @@ Public Sub PurchaseInapp As String
     <script>
         // B4X communication functions
         function purchase(productId) {
-            // Show processing overlay
-            showProcessing('Processing purchase...');
+            // No overlay on tap — the store's own purchase sheet/spinner takes over from here.
+            // The processing overlay only appears once a real purchase comes back and validation
+            // begins (B4X calls setProcessingMessage('Processing...')).
             
             // Call B4X with product ID
             window.location = 'b4x://purchase?product=' + encodeURIComponent(productId);
@@ -826,9 +827,25 @@ Public Sub PurchaseInapp As String
         // Show processing overlay
         function showProcessing(message) {
             const overlay = document.getElementById('processingOverlay');
-            const text = document.getElementById('processingText');
-            text.textContent = message;
+            setProcessingMessage(message);
             overlay.classList.add('active');
+        }
+
+        // Update the overlay label AND reveal the overlay. Called by B4X once a real purchase
+        // comes back from the store and validation begins. A non-empty message shows the overlay
+        // (spinner + text); an empty string hides it entirely.
+        function setProcessingMessage(message) {
+            const overlay = document.getElementById('processingOverlay');
+            const text = document.getElementById('processingText');
+            if (message && message.length > 0) {
+                text.textContent = message;
+                text.style.display = '';
+                overlay.classList.add('active');
+            } else {
+                text.textContent = '';
+                text.style.display = 'none';
+                overlay.classList.remove('active');
+            }
         }
 
         // Hide processing overlay
@@ -1334,8 +1351,9 @@ Public Sub PurchaseSubscription As String
     <script>
         // B4X communication functions
         function purchase(productId, basePlanId) {
-            // Show processing overlay
-            showProcessing('Processing subscription...');
+            // No overlay on tap — the store's own purchase sheet/spinner takes over from here.
+            // The processing overlay only appears once a real subscription comes back and validation
+            // begins (B4X calls setProcessingMessage('Processing...')).
             
             // Call B4X with product ID and base plan ID
             window.location = 'b4x://purchase?product=' + encodeURIComponent(productId) + '&plan=' + encodeURIComponent(basePlanId);
@@ -1377,9 +1395,25 @@ Public Sub PurchaseSubscription As String
         // Show processing overlay
         function showProcessing(message) {
             const overlay = document.getElementById('processingOverlay');
-            const text = document.getElementById('processingText');
-            text.textContent = message;
+            setProcessingMessage(message);
             overlay.classList.add('active');
+        }
+
+        // Update the overlay label AND reveal the overlay. Called by B4X once a real purchase
+        // comes back from the store and validation begins. A non-empty message shows the overlay
+        // (spinner + text); an empty string hides it entirely.
+        function setProcessingMessage(message) {
+            const overlay = document.getElementById('processingOverlay');
+            const text = document.getElementById('processingText');
+            if (message && message.length > 0) {
+                text.textContent = message;
+                text.style.display = '';
+                overlay.classList.add('active');
+            } else {
+                text.textContent = '';
+                text.style.display = 'none';
+                overlay.classList.remove('active');
+            }
         }
 
         // Hide processing overlay

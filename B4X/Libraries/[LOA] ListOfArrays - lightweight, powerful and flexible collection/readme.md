@@ -1,5 +1,5 @@
 ### [LOA] ListOfArrays - lightweight, powerful and flexible collection by Erel
-### 05/28/2026
+### 09/16/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/170543/)
 
 ListOfArrays (LOA) is a simple list where each item is an array of objects, and each array represents a row. As LOA stores tabular data, all rows have the same length.  
@@ -29,6 +29,7 @@ It packs all kinds of useful features, including:
 Current version is considered a beta version.  
   
 Updates:  
+v1.01 - New method: BinarySearch. And B4i sorting method is now stable. <https://www.b4x.com/android/forum/threads/b4x-loa-listofarrays-lightweight-powerful-and-flexible-collection.170543/post-1052265>  
 v0.97 - New method: LOAUtils.CreateFromMap - each key/value pair becomes a row.  
 v0.96 - New methods: LOAUtils.CreateFrom1DList and ListOfArrays.AddColumnWithValue.  
 v0.95 - B4A uses internally the new List.SubList method, instead of the slower B4XCollections.SubList.  

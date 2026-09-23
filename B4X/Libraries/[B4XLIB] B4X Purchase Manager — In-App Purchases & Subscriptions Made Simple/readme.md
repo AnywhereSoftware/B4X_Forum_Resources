@@ -1,5 +1,5 @@
 ###  [B4XLIB] B4X Purchase Manager — In-App Purchases & Subscriptions Made Simple by Segga
-### 07/10/2026
+### 09/17/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/171392/)
 
 Like many devs, I kept running into the same problem — monetizing my apps often felt like it took longer than building them.  
@@ -89,7 +89,7 @@ Private PurchaseManager As B4XPurchaseManager
 Private Sub B4XPage_Created (Root1 As B4XView)  
     Root = Root1  
     Root.LoadLayout("MainPage")  
-    
+   
     PurchaseManager.Initialize(Root, BILLING_KEY, APP_ID, API_KEY)  
     PurchaseManager.DisplayAppName = "My App"  
     PurchaseManager.AddFeature("🎨", "Premium Themes", "Access all premium themes")  
@@ -132,17 +132,17 @@ Private PurchaseManager As B4XPurchaseManager
 Private Sub B4XPage_Created (Root1 As B4XView)  
     Root = Root1  
     Root.LoadLayout("MainPage")  
-    
+   
     PurchaseManager.Initialize(Root, BILLING_KEY, APP_ID, API_KEY)  
     PurchaseManager.DisplayAppName = "My App"  
     PurchaseManager.AddFeature("⭐", "Premium Access", "Full access to all features")  
     PurchaseManager.AddFeature("🔄", "Cross-Platform", "Works on Android and iOS")  
-    
+   
     ' Required for subscriptions  
     PurchaseManager.PolicyCompanyName = "Your Company"  
     PurchaseManager.PolicyEmailAddress = "support@yourcompany.com"  
     PurchaseManager.PolicyEffectiveDate = "January 1, 2025"  
-    
+   
     ' BasePlanId must match Google Play Console (ignored on iOS)  
     PurchaseManager.AddSubscription("premium_monthly", "monthly-plan", _  
         "Monthly Premium", "Full access, billed monthly", "Monthly")  
@@ -480,6 +480,17 @@ ApiKey is required (starts with "bpm\_").[/TD]
 [TD]Boolean[/TD]  
 [TD]Faster revalidation intervals for testing (default: False)[/TD]  
 [/TR]  
+[TR]  
+[TD]AdvancedDebugMode[/TD]  
+[TD]Boolean[/TD]  
+[TD]Logs exactly what the store returned when products don't show up — the IDs requested, what came back, and what didn't. (default: False)[/TD]  
+[/TR]  
+[TR]  
+[TD]AutoInappValidation[/TD]  
+[TD]Boolean[/TD]  
+[TD]By default, in-app purchases only re-validate for the first 21 days (covering the refund window).  
+Turn on to keep auto-validating every 14 days indefinitely for extra coverage, or use ValidateNow when/if required. (default: False)[/TD]  
+[/TR]  
 [/TABLE]  
   
 Links  
@@ -488,4 +499,6 @@ Links
   
 Step-by-step guides for Android setup, iOS setup, Google Play service account, Apple Shared Secret, and more are available on the website — along with a detailed FAQ.  
   
-**v1.01 Added auto-restore:** automatically checks store for existing purchases on first launch (new device, reinstall, migration)
+**v1.01 Added auto-restore:** automatically checks store for existing purchases on first launch (new device, reinstall, migration)  
+**v1.02 Added AdvancedDebugMode:** logs exactly what the store returned when products don't show up — the IDs requested, what came back, and what didn't.  
+**Added AutoInappValidation:** by default, in-app purchases only re-validate for the first 21 days (covering the refund window), then stop — you re-validate later via ValidateNow. Turn this on to keep auto-validating every 14 days indefinitely for extra coverage.

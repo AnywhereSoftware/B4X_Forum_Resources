@@ -1,7 +1,24 @@
 ###  MiniHTML3 by aeric
-### 07/30/2026
+### 09/13/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/171326/)
 
+[TABLE]  
+[TR]  
+[TH]
+
+Update
+
+[/TH]  
+[/TR]  
+[TR]  
+[TD]
+
+Version 4: <https://www.b4x.com/android/forum/threads/b4x-minihtml4.172058/>
+
+[/TD]  
+[/TR]  
+[/TABLE]  
+  
 Version 3.31  
 MiniHTML library for B4X — a fluent HTML builder for B4J/B4A/B4i.  
   

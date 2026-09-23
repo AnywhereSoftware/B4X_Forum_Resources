@@ -57,6 +57,8 @@ Sub Class_Globals
 	' Backing fields for toggle properties
 	Private mDarkMode As Boolean = False
 	Private mDebugValidation As Boolean = False
+	Private mAdvancedDebugMode As Boolean = False
+	Private mAutoInappValidation As Boolean = False
 	
 	' Features (use AddFeature to configure)
 	Private mFeatures As List
@@ -206,6 +208,40 @@ Public Sub getDebugValidation As Boolean
 	Return mDebugValidation
 End Sub
 
+' Enable verbose diagnostic logging for troubleshooting product detection issues.
+' When True, the library logs the full raw data returned by the store (Apple/Google)
+' when fetching product information — including which of your product IDs were
+' recognized, which came back as invalid/unknown, and each product's title,
+' description, and price. Useful for diagnosing "products not showing" problems
+' (e.g. a first app on a fresh App Store Connect account where IDs have not yet
+' propagated or paid-apps agreements are not signed).
+' This is intended as a temporary development aid — leave it False in production.
+' Default is False.
+Public Sub setAdvancedDebugMode(Value As Boolean)
+	mAdvancedDebugMode = Value
+End Sub
+
+Public Sub getAdvancedDebugMode As Boolean
+	Return mAdvancedDebugMode
+End Sub
+
+' Keep automatically re-validating in-app purchases after the refund window.
+' When False (default), automatic in-app checks run only through the refund window (21 days).
+' Once it passes, automatic checks stop and you decide when to re-validate — call ValidateNow at
+' whatever cadence you like (e.g. quarterly, or before a gated action).
+' When True, the library keeps automatically re-validating unlocked in-app purchases every 14 days
+' even after the refund window has passed (indefinite background checks).
+' Checks DURING the refund window still run automatically either way, so early refunds are
+' still caught. Set this before calling Initialize.
+Public Sub setAutoInappValidation(Value As Boolean)
+	mAutoInappValidation = Value
+	If mIsInitialized Then UnlockManager.AutoInappValidation = Value
+End Sub
+
+Public Sub getAutoInappValidation As Boolean
+	Return mAutoInappValidation
+End Sub
+
 ' Set theme colors using standard B4X color values (e.g., xui.Color_Red, Colors.Blue, 0xFFA855F7)
 ' Primary: Main accent color (buttons, links)
 ' Secondary: Secondary accent (gradients)
@@ -246,6 +282,9 @@ Public Sub Initialize(Parent As B4XView, pBillingKey As String, pAppId As String
 	
 	' Initialize unlock manager internally with hardcoded backend URL
 	UnlockManager.Initialize(BACKEND_URL, pAppId, "", ApiKey)
+	
+	' Developer opt-in: keep auto-validating in-app purchases after the refund window (production feature)
+	UnlockManager.AutoInappValidation = mAutoInappValidation
 	
 	' Only allow DebugValidation in debug builds — ignored in release
 	#If DEBUG
@@ -355,13 +394,13 @@ End Sub
 Public Sub PurchaseProduct(pProductId As String) As ResumableSub
 	SyncPropertiesToBilling
 	
-	' Show processing overlay
-	Billing.ShowProcessingOverlay("Processing purchase...")
+	' No overlay on tap — the store's own purchase sheet/spinner covers the lead-up.
+	' The processing overlay appears only once a real purchase comes back and validation begins.
 	
 	' Do the purchase
 	Wait For (Billing.StartPurchaseFlow(pProductId)) Complete (result As Map)
 	
-	' Hide processing overlay
+	' Hide processing overlay (no-op if it was never shown)
 	Billing.HideProcessingOverlay
 	
 	Dim success As Boolean = result.Get("success")
@@ -376,13 +415,13 @@ End Sub
 Public Sub PurchaseSubscription(pProductId As String, pBasePlanId As String) As ResumableSub
 	SyncPropertiesToSubscriptions
 	
-	' Show processing overlay
-	Subscriptions.ShowProcessingOverlay("Processing subscription...")
+	' No overlay on tap — the store's own purchase sheet/spinner covers the lead-up.
+	' The processing overlay appears only once a real subscription comes back and validation begins.
 	
 	' Do the subscription
 	Wait For (Subscriptions.StartSubscriptionFlow(pProductId, pBasePlanId)) Complete (result As Map)
 	
-	' Hide processing overlay
+	' Hide processing overlay (no-op if it was never shown)
 	Subscriptions.HideProcessingOverlay
 	
 	Dim success As Boolean = result.Get("success")
@@ -742,6 +781,9 @@ Private Sub SyncPropertiesToBilling
 	End If
 	Billing.DarkMode = mDarkMode
 	
+	' Diagnostics
+	Billing.AdvancedDebugMode = mAdvancedDebugMode
+	
 	' Features - pass the entire list
 	Billing.Features = mFeatures
 End Sub
@@ -771,6 +813,9 @@ Private Sub SyncPropertiesToSubscriptions
 		Subscriptions.ColorBackground2 = ColorToHex(mThemeColors.Background2)
 	End If
 	Subscriptions.DarkMode = mDarkMode
+	
+	' Diagnostics
+	Subscriptions.AdvancedDebugMode = mAdvancedDebugMode
 	
 	' Features - pass the entire list
 	Subscriptions.Features = mFeatures

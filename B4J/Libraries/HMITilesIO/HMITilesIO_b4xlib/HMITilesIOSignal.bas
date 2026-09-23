@@ -50,6 +50,10 @@ Public Sub SetTile(Header As String, _
     
 	' Clean incoming raw string from any hidden returns
 	Dim CleanValue As String = Value.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "").Trim
+	' Check value, if empty set default 0
+	If CleanValue.Length = 0 Then
+		CleanValue = "0"
+	End If
     
 	' Save the original clean value text to display exactly what the micro sent (e.g. "20%", "-65 dBm")
 	Dim DisplayText As String = CleanValue
@@ -129,6 +133,7 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
+	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[Signal.UpdateTile][E] Can not update the tile."$)

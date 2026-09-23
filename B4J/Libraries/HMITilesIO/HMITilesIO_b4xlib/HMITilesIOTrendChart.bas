@@ -58,6 +58,10 @@ Public Sub SetTile(Header As String, _
 	' Thoroughly clean out any carriage returns or newlines from the raw incoming value string
 	Dim CleanValue As String = Value.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "").Trim
     
+	If CleanValue.Length = 0 Then
+		' Log($"[TrendChart.SetTile[E] Missing items. Check value."$)
+		Return
+	End If
 	Dim items() As String = Regex.Split(";", CleanValue)
 	If items.Length = 0 Then 
 		Log($"[TrendChart.SetTile[E] Missing items. Check value."$)
@@ -141,6 +145,7 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
+	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[TrendChart.UpdateTile][E] Can not update the tile."$)

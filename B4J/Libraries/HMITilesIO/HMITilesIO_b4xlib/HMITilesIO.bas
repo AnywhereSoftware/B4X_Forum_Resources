@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File: 		HMITilesIO.bas
 ' Brief:		CustomView Human Machine Interface tile showing assets from a SVG image.
-' Date:			2026-09-05
+' Date:			2026-09-15
 ' Author:		Robert W.B. Linn (c) 2026 MIT
 ' Description:	HMITilesIO brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.
 '				Target has been to combine highly optimized vector graphics with native input tracking For microcontrollers And IoT applications.
@@ -41,8 +41,8 @@ Version=10.5
 
 ' Designer properties (ensure to define the key in lowercase)
 #DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Battery|Button|ByteStatus|DualReadOut|Gauge|IconIndicator|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|Timer|TrendChart|VerticalMeter|, DefaultValue: Switch.
-#DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: Header, Description: Header for all tiles.
-#DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: Footer, Description: Footer for all tiles.
+#DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: , Description: Header for all tiles.
+#DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: , Description: Footer for all tiles.
 #DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
 #DesignerProperty: Key: minvalue, DisplayName: Min Value, FieldType: Float, DefaultValue: 0, Description: Min value for all tiles.
 #DesignerProperty: Key: maxvalue, DisplayName: Max Value, FieldType: Float, DefaultValue: 100, Description: Max value for all tiles.
@@ -176,8 +176,8 @@ Private Sub AfterLoadLayout(Props As Map)	'ignore
 	' Store designer properties
 	mTileType 			= Props.GetDefault("tiletype", "noasset")
 	mTileType			= mTileType.ToUpperCase
-	mHeader 			= Props.GetDefault("header", "Header")
-	mFooter 			= Props.GetDefault("footer", "Footer")
+	mHeader 			= Props.GetDefault("header", "")
+	mFooter 			= Props.GetDefault("footer", "")
 	mValue 				= Props.GetDefault("value", 0)
 	mMinValue 			= Props.GetDefault("minvalue", 0)
 	mMaxValue 			= Props.GetDefault("maxvalue", 100)
@@ -189,12 +189,12 @@ Private Sub AfterLoadLayout(Props As Map)	'ignore
 	' Convert the B4X Int color to a standard web CSS hex string (#RRGGBB)
 	mBackgroundColor	= $"#${Bit.ToHexString(clr).SubString(2)}"$
 
-	' Init the instance depending tiletype
-	InitInstance
-	
 	' Load the HTML
 	ImageMarkup = File.ReadString(File.DirAssets, IMAGE_MARKUP_FILE)
 
+	' Init the instance depending tiletype
+	InitInstance
+	
 	' Style and resize
 	ApplyStyle
 	Base_Resize(BasePane.Width, BasePane.Height)
@@ -216,42 +216,63 @@ Private Sub InitInstance
 	Select mTileType
 		Case TILE_BATTERY
 			InstanceBattery.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceBattery.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BUTTON
 			InstanceButton.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceButton.SetTile(mHeader, mFooter, mState)
 		Case TILE_BYTESTATUS
 			InstanceByteStatus.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			Dim pins() As Byte = Array As Byte(1,1,1,1,1,1,1,1)
+			InstanceByteStatus.SetTile(mHeader, mFooter, pins, mValue)
 		Case TILE_DUALREADOUT
 			InstanceDualReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceDualReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_GAUGE
 			InstanceGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
 		Case TILE_ICONINDICATOR
 			InstanceIconIndicator.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceIconIndicator.SetTile(mHeader, mFooter, mValue)
 		Case TILE_IOPANEL
 			InstanceIOPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceIOPanel.SetTile(mHeader, mFooter, mValue)
 		Case TILE_LEDPANEL
 			InstanceLEDPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
 		Case TILE_MULTISTATE
 			InstanceMultiState.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			Dim states() As Byte = Array As Byte(0,0,0,0,0,0,0,0)
+			InstanceMultiState.SetTile(mHeader, mFooter, states, mValue)
 		Case TILE_READOUT
 			InstanceReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SELECTOR
 			InstanceSelector.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSelector.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SEVENSEGMENT
 			InstanceSevenSegment.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSevenSegment.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SIGNAL
 			InstanceSignal.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSignal.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SLIDER
 			InstanceSlider.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SPINNER
 			InstanceSpinner.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SWITCH
 			InstanceSwitch.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceSwitch.SetTile(mHeader, mFooter, mState)
 		Case TILE_TRENDCHART
 			InstanceTrendChart.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceTrendChart.SetTile(mHeader, mFooter, mValue)
 		Case TILE_TIMER
 			InstanceTimer.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceTimer.SetTile(mHeader, mFooter, mValue)
 		Case TILE_VERTICALMETER
 			InstanceVerticalMeter.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceVerticalMeter.SetTile(mHeader, mFooter, "#22c55e", mMinValue, mMaxValue, mValue)
 		Case Else
 			Return
 	End Select

@@ -34,7 +34,7 @@ Sub Class_Globals
 	Private mSubscriptionExpiredAt As Long = 0  ' When subscription expiry was first detected (0 = not expired)
 	
 	' Cache TTL constants (production)
-	Private Const CACHE_TTL_UNLOCKED_NEW As Long = 24 * 60 * 60 * 1000  ' 24 hours (first 14 days - refund window)
+	Private Const CACHE_TTL_UNLOCKED_NEW As Long = 24 * 60 * 60 * 1000  ' 24 hours (first 21 days - refund window)
 	Private Const CACHE_TTL_UNLOCKED_OLD As Long = 14 * 24 * 60 * 60 * 1000  ' 14 days (after refund window)
 	Private Const CACHE_TTL_SUBSCRIPTION As Long = 24 * 60 * 60 * 1000  ' 24 hours (active subscriptions + grace period)
 	
@@ -43,7 +43,7 @@ Sub Class_Globals
 	Private Const CACHE_TTL_UNLOCKED_OLD_DEBUG As Long = 5 * 60 * 1000  ' 5 minutes
 	Private Const CACHE_TTL_SUBSCRIPTION_DEBUG As Long = 2 * 60 * 1000  ' 2 minutes
 	
-	Private Const REFUND_WINDOW_DAYS As Int = 14  ' Apple's refund window
+	Private Const REFUND_WINDOW_DAYS As Int = 21  ' Refund window (safety margin over the typical 14-day window)
 	Private Const SUBSCRIPTION_GRACE_PERIOD As Long = 7 * 24 * 60 * 60 * 1000  ' 7 days grace after expiry
 	Private Const SUBSCRIPTION_GRACE_PERIOD_DEBUG As Long = 3 * 60 * 1000  ' 3 minutes (debug)
 	
@@ -62,6 +62,15 @@ Sub Class_Globals
 	' Uses LIVE server validation — API credits will be consumed.
 	' Default is False (production intervals: 24 hours / 14 days).
 	Public DebugValidation As Boolean = False
+	
+	' When True, the library keeps AUTOMATICALLY re-validating in-app purchases every 14 days even
+	' after the refund window has passed (indefinite background checks).
+	' When False (default), automatic checks run only through the refund window; once it passes the
+	' cached unlock status is kept until the developer triggers a check themselves via ValidateNow
+	' (or CheckStatus with an expired cache) — e.g. on their own cadence or before a gated action.
+	' Checks DURING the refund window run automatically either way, so early refunds are still caught.
+	' Default is False (no automatic checks after the refund window).
+	Public AutoInappValidation As Boolean = False
 	
 	' Validation state tracking
 	Private mValidationInProgress As Boolean = False
@@ -662,6 +671,9 @@ Public Sub IsCacheValidInapp As Boolean
 			If daysSincePurchase < REFUND_WINDOW_DAYS Then
 				Return age < CACHE_TTL_UNLOCKED_NEW_DEBUG
 			Else
+				' Past refund window — auto-checks only continue if the developer opted in.
+				' Otherwise treat cache as always valid (dev drives revalidation via ValidateNow).
+				If AutoInappValidation = False Then Return True
 				Return age < CACHE_TTL_UNLOCKED_OLD_DEBUG
 			End If
 		Else
@@ -676,6 +688,9 @@ Public Sub IsCacheValidInapp As Boolean
 			If daysSincePurchase < REFUND_WINDOW_DAYS Then
 				Return age < CACHE_TTL_UNLOCKED_NEW
 			Else
+				' Past refund window — auto-checks only continue if the developer opted in.
+				' Otherwise treat cache as always valid (dev drives revalidation via ValidateNow).
+				If AutoInappValidation = False Then Return True
 				Return age < CACHE_TTL_UNLOCKED_OLD
 			End If
 		Else

@@ -9,7 +9,7 @@ Sub Process_Globals
 End Sub
 
 'Creates an empty LOA with optional headers. Pass Null if header isn't needed.
-Public Sub CreateEmpty(Header() As Object) As ListOfArrays
+Public Sub CreateEmpty(Header() As Object = Null) As ListOfArrays
 	Dim loa As ListOfArrays
 	loa.Initialize(Null)
 	If Initialized(Header) And Header.Length > 0 Then
@@ -26,7 +26,7 @@ End Sub
 '1. Sets the headers order (important in B4i where maps do not preserve order).
 '2. Allows excluding columns.
 'Note that the headers-keys matching is case sensitive.
-Public Sub CreateFromListOfMaps(Maps As List, OverrideHeaders() As Object) As ListOfArrays
+Public Sub CreateFromListOfMaps(Maps As List, OverrideHeaders() As Object = Null) As ListOfArrays
 	Dim loa As ListOfArrays = CreateEmpty(OverrideHeaders)
 	If Maps.Size = 0 Then Return loa
 	If loa.Header.Length = 0 Then

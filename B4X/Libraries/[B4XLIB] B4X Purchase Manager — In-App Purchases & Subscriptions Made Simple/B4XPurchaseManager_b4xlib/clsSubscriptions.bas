@@ -50,6 +50,9 @@ Sub Class_Globals
 	' Dark mode toggle
 	Public DarkMode As Boolean = False  ' Set to True for dark theme (overrides color properties)
 	
+	' Diagnostics: verbose store-response logging for troubleshooting product detection
+	Public AdvancedDebugMode As Boolean = False
+	
 	' Feature customization (dynamic list)
 	Public Features As List
 	
@@ -236,7 +239,7 @@ body {
 <body>
     <div class="processing-content">
         <div class="processing-spinner"></div>
-        <div class="processing-text">${message}</div>
+        ${IIf(message = "", "", "<div class=" & Chr(34) & "processing-text" & Chr(34) & ">" & message & "</div>")}
     </div>
 </body>
 </html>"$
@@ -249,6 +252,7 @@ End Sub
 
 ' Hide processing overlay
 Public Sub HideProcessingOverlay
+	If mWebViewInitialized = False Then Return
 	wvPurchase.Visible = False
 End Sub
 
@@ -467,6 +471,8 @@ Public Sub StartSubscriptionFlow(pProductId As String, pBasePlanId As String) As
 			Next
 			
 			If matchesSubscription Then
+				' Store returned a subscription — now we're actually validating it
+				SetProcessingMessageInWebView("Processing...")
 				' Validate subscription with backend
 				Wait For (HandleIOSSubscription(Product)) Complete (active As Boolean)
 				
@@ -531,6 +537,8 @@ Sub billing_PurchasesUpdated (Result As BillingResult, Purchases As List)
 		For Each p As Purchase In Purchases
 			' Only process if we're in a purchase flow
 			If mPurchaseInProgress Then
+				' Store returned a subscription — now we're actually validating it
+				SetProcessingMessageInWebView("Processing...")
 				Wait For (HandleSubscription(p)) Complete (Success As Boolean)
 				
 				' Store result for StartSubscriptionFlow
@@ -720,11 +728,20 @@ Private Sub FetchAllSubscriptionPrices As ResumableSub
 		i = i + 1
 	Next
 	
+	If AdvancedDebugMode Then
+		LogColor("🛡  [AdvancedDebug] Requesting subscription product info from Google Play...", UnlockManager.LOG_COLOR_LIB_PURPLE)
+		LogColor("🛡  [AdvancedDebug] Requested product IDs (" & productIds.Length & "): " & productIds, UnlockManager.LOG_COLOR_LIB)
+	End If
+	
 	' Query all subscriptions at once
 	Wait For (billing.ConnectIfNeeded) Billing_Connected (BillingResult As BillingResult)
-	If BillingResult.IsSuccess Then
+	If BillingResult.IsSuccess = False Then
+		If AdvancedDebugMode Then LogFetchedProductInfoAndroid(False, Null, "subscription")
+	Else
 		Dim sf As Object = billing.QuerySkuDetails("subs", productIds)
 		Wait For (sf) Billing_SkuQueryCompleted (BillingResult As BillingResult, SkuDetails As List)
+		
+		If AdvancedDebugMode Then LogFetchedProductInfoAndroid(BillingResult.IsSuccess, SkuDetails, "subscription")
 		
 		If BillingResult.IsSuccess And SkuDetails.Size > 0 Then
 			
@@ -767,6 +784,11 @@ Private Sub FetchAllSubscriptionPrices As ResumableSub
 		productIds.Add(subscription.Get("product_id"))
 	Next
 	
+	If AdvancedDebugMode Then
+		LogColor("🛡  [AdvancedDebug] Requesting subscription product info from App Store...", UnlockManager.LOG_COLOR_LIB_PURPLE)
+		LogColor("🛡  [AdvancedDebug] Requested product IDs (" & productIds.Size & "): " & productIds, UnlockManager.LOG_COLOR_LIB)
+	End If
+	
 	' Request product information from App Store
 	iStore.RequestProductsInformation(productIds)
 	
@@ -777,9 +799,83 @@ Private Sub FetchAllSubscriptionPrices As ResumableSub
 	Return True
 End Sub
 
+#if B4A
+' Diagnostics: dump the product details returned by Google Play and flag any requested
+' subscription IDs that were NOT returned. Only called when AdvancedDebugMode is True.
+' Success = the BillingResult success flag; SkuDetails = list of returned ProductDetails (may be Null).
+Private Sub LogFetchedProductInfoAndroid(Success As Boolean, SkuDetails As List, pType As String)
+	LogColor("🛡  [AdvancedDebug] Google Play response for " & pType & " products — Success=" & Success, UnlockManager.LOG_COLOR_LIB_PURPLE)
+	
+	If Success = False Then
+		LogColor("🛡  [AdvancedDebug] The billing query FAILED (could not connect to / query Google Play).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡  [AdvancedDebug] Typical causes:", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Device has no Google account / Play Store not available or signed out.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Network connectivity.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • App not installed via a Google Play track (see the missing-IDs notes below).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		Return
+	End If
+	
+	' Collect the IDs Google Play actually returned
+	Dim returnedIds As List
+	returnedIds.Initialize
+	If SkuDetails <> Null And SkuDetails.IsInitialized Then
+		For Each sku As JavaObject In SkuDetails
+			Try
+				Dim prodId As String = sku.RunMethod("getProductId", Null)
+				returnedIds.Add(prodId)
+				LogColor("🛡  [AdvancedDebug] Product found:", UnlockManager.LOG_COLOR_LIB)
+				LogColor("🛡      id    = " & prodId, UnlockManager.LOG_COLOR_LIB)
+				LogColor("🛡      title = " & sku.RunMethod("getTitle", Null), UnlockManager.LOG_COLOR_LIB)
+				Dim offers As List = sku.RunMethod("getSubscriptionOfferDetails", Null)
+				If offers <> Null And offers.IsInitialized And offers.Size > 0 Then
+					Dim offer As JavaObject = offers.Get(0)
+					Dim pricingPhases As JavaObject = offer.RunMethod("getPricingPhases", Null)
+					Dim phaseList As List = pricingPhases.RunMethod("getPricingPhaseList", Null)
+					If phaseList.Size > 0 Then
+						Dim phase As JavaObject = phaseList.Get(0)
+						LogColor("🛡      price = " & phase.RunMethod("getFormattedPrice", Null), UnlockManager.LOG_COLOR_LIB)
+					End If
+				End If
+			Catch
+				LogColor("🛡      (could not read product details: " & LastException & ")", UnlockManager.LOG_COLOR_LIB)
+			End Try
+		Next
+	End If
+	
+	LogColor("🛡  [AdvancedDebug] " & returnedIds.Size & " of " & Subscriptions.Size & " requested product(s) were returned by Google Play.", UnlockManager.LOG_COLOR_LIB)
+	
+	' Any requested ID not returned is treated as unavailable
+	Dim missingIds As List
+	missingIds.Initialize
+	For Each subscription As Map In Subscriptions
+		Dim reqId As String = subscription.Get("product_id")
+		If returnedIds.IndexOf(reqId) = -1 Then
+			missingIds.Add(reqId)
+		End If
+	Next
+	
+	If missingIds.Size > 0 Then
+		LogColor("🛡  [AdvancedDebug] Product IDs NOT returned by Google Play (" & missingIds.Size & "): " & missingIds, UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡  [AdvancedDebug] Google Play treated these identifiers as unavailable. Things to verify:", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Product ID matches the Play Console exactly (case-sensitive).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Package name of the build matches the Play Console app exactly.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • The subscription is Active (not draft/inactive) in the Play Console.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Product type matches: subscriptions vs in-app products are queried separately.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • The app was installed from a Google Play track (internal/closed/open testing or production),", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡        signed with the same key Play expects — sideloaded debug builds cannot fetch products.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • The signed-in account is a licensed tester for a testing track.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Recently created/changed products can take a few hours to propagate.", UnlockManager.LOG_COLOR_LIB_WARNING)
+	Else
+		LogColor("🛡  [AdvancedDebug] All requested product IDs were returned by Google Play.", UnlockManager.LOG_COLOR_LIB)
+	End If
+End Sub
+#End If
+
 #if B4i
 ' iOS Store: Product information received
 Sub iStore_InformationAvailable (Success As Boolean, ProductsList As List)
+	If AdvancedDebugMode Then LogFetchedProductInfo(Success, ProductsList, "subscription")
+	
 	If Success Then
 		For Each p As ProductInformation In ProductsList
 			UpdateSubscriptionPriceInWebView(p.ProductIdentifier, p.LocalizedPrice)
@@ -788,6 +884,73 @@ Sub iStore_InformationAvailable (Success As Boolean, ProductsList As List)
 	
 	' Signal completion for Wait For pattern
 	CallSubDelayed(Me, "iStore_SubscriptionInformationAvailable_Complete")
+End Sub
+
+' Diagnostics: dump the raw product info returned by the App Store and flag any
+' requested subscription IDs that Apple did NOT recognize (the classic "invalid
+' product identifier" case). Only called when AdvancedDebugMode is True.
+Private Sub LogFetchedProductInfo(Success As Boolean, ProductsList As List, pType As String)
+	LogColor("🛡  [AdvancedDebug] App Store response for " & pType & " products — Success=" & Success, UnlockManager.LOG_COLOR_LIB_PURPLE)
+	
+	If Success = False Then
+		LogColor("🛡  [AdvancedDebug] The StoreKit product REQUEST itself failed (Success=false).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡  [AdvancedDebug] This is a request-level failure — the store did not complete the lookup.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡  [AdvancedDebug] Typical causes:", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Product ID typo — must match App Store Connect exactly (case-sensitive).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Build's Bundle ID does not match the App Store Connect app.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Network connectivity / App Store service reachability.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • App Store Connect propagation — recently created products can take time to become available.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		Return
+	End If
+	
+	' Collect the IDs Apple actually recognized
+	Dim returnedIds As List
+	returnedIds.Initialize
+	If ProductsList.IsInitialized Then
+		For Each p As ProductInformation In ProductsList
+			returnedIds.Add(p.ProductIdentifier)
+			LogColor("🛡  [AdvancedDebug] Product found:", UnlockManager.LOG_COLOR_LIB)
+			LogColor("🛡      id          = " & p.ProductIdentifier, UnlockManager.LOG_COLOR_LIB)
+			LogColor("🛡      price       = " & p.LocalizedPrice, UnlockManager.LOG_COLOR_LIB)
+			' Title / description / raw price come from the underlying SKProduct.
+			' Read defensively so a missing/renamed property never breaks the build or the log dump.
+			Try
+				Dim sk As NativeObject = p
+				LogColor("🛡      title       = " & sk.GetField("localizedTitle").AsString, UnlockManager.LOG_COLOR_LIB)
+				LogColor("🛡      description = " & sk.GetField("localizedDescription").AsString, UnlockManager.LOG_COLOR_LIB)
+				LogColor("🛡      raw price   = " & sk.GetField("price").AsString, UnlockManager.LOG_COLOR_LIB)
+			Catch
+				LogColor("🛡      (title/description unavailable: " & LastException & ")", UnlockManager.LOG_COLOR_LIB)
+			End Try
+		Next
+	End If
+	
+	LogColor("🛡  [AdvancedDebug] " & returnedIds.Size & " of " & Subscriptions.Size & " requested product(s) were recognized by Apple.", UnlockManager.LOG_COLOR_LIB)
+	
+	' Any requested ID not returned is effectively an "invalid identifier"
+	Dim missingIds As List
+	missingIds.Initialize
+	For Each subscription As Map In Subscriptions
+		Dim reqId As String = subscription.Get("product_id")
+		If returnedIds.IndexOf(reqId) = -1 Then
+			missingIds.Add(reqId)
+		End If
+	Next
+	
+	If missingIds.Size > 0 Then
+		LogColor("🛡  [AdvancedDebug] The request COMPLETED (Success=true) but these IDs were NOT returned (" & missingIds.Size & "): " & missingIds, UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡  [AdvancedDebug] The store treated these identifiers as unavailable. Things to verify:", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Product ID matches App Store Connect exactly (case-sensitive).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Build's Bundle ID matches the App Store Connect app exactly.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Subscription has pricing set and is available in the current storefront/region.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • The subscription has at least one localization with a Display Name AND Description in App Store Connect.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡        Apple requires this on every subscription — without it the product is silently omitted (no error, just missing).", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Required product metadata is complete.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Paid Applications Agreement status is active.", UnlockManager.LOG_COLOR_LIB_WARNING)
+		LogColor("🛡      • Recently created/changed products may still be propagating in App Store Connect.", UnlockManager.LOG_COLOR_LIB_WARNING)
+	Else
+		LogColor("🛡  [AdvancedDebug] All requested product IDs were returned by the store.", UnlockManager.LOG_COLOR_LIB)
+	End If
 End Sub
 
 ' Internal sub for Wait For pattern
@@ -808,6 +971,28 @@ Private Sub UpdateSubscriptionPriceInWebView(pProductId As String, price As Stri
 		Dim js As String = "updateProductPrice('" & pProductId & "', '" & price & "');"
 		wvPurchase.EvaluateJavaScript(js)
 		#End If
+	End If
+End Sub
+
+' Reveal the processing overlay with a message (e.g. "Processing...") once a real subscription
+' comes back from the store and validation begins. Nothing is shown before this point — the
+' store's own purchase sheet/spinner covers the lead-up.
+'  - Subscription screen path: the screen is already loaded, so push the label via JS. The
+'    template's setProcessingMessage() reveals the overlay div itself.
+'  - Direct/custom-UI path: no screen is loaded, so bring up the minimal processing overlay now.
+Private Sub SetProcessingMessageInWebView(message As String)
+	If mSubscriptionScreenActive Then
+		If mWebViewInitialized = False Then Return
+		If wvPurchase.Visible = False Then Return
+		Dim js As String = "if (typeof setProcessingMessage === 'function') setProcessingMessage('" & message & "');"
+		#if B4A
+		wvPurchase.As(JavaObject).RunMethod("evaluateJavascript", Array As Object(js, Null))
+		#Else If B4i
+		wvPurchase.EvaluateJavaScript(js)
+		#End If
+	Else
+		' Direct subscription path — show the overlay only now that a real subscription is processing
+		ShowProcessingOverlay(message)
 	End If
 End Sub
 
@@ -1146,6 +1331,8 @@ Sub iStore_PurchaseCompleted (Success As Boolean, Product As Purchase)
 				mSubscriptionActive = True
 				mActiveSubscriptionId = Product.ProductIdentifier
 			Else
+				' Store returned a subscription — now we're actually validating it
+				SetProcessingMessageInWebView("Processing...")
 				' Validate subscription with backend during purchase
 				Wait For (HandleIOSSubscription(Product)) Complete (active As Boolean)
 				
