@@ -1,5 +1,5 @@
 ### rOpen62541 (OPC UA Server) by rwblinn
-### 09/18/2026
+### 09/19/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/172071/)
 
 **B4R Library rOpen62541**  
@@ -13,7 +13,9 @@
 rOpen62541** is an open-source library wrapper for the industrial **open62541 OPC UA protocol stack**, specifically optimized for the **ESP32-S3 Dual-Core architecture**.  
 It provides thread-safe cross-core communication, dynamic string-node creation, and type-agnostic runtime write diagnostics.  
   
-**Important Notice:** This project is actively hosted and maintained on [GitHub](https://github.com/rwbl/rOpen62541). Not all minor version bumps, patch adjustments, or documentation extensions will be individually announced in this forum thread. For the absolute latest code baseline and active development branches, please bookmark and monitor the repository directly.  
+**Important Notice:** This project is actively hosted and maintained on GitHub. Not all minor version bumps, patch adjustments, or documentation extensions will be individually announced in this forum thread. For the absolute latest code baseline and active development branches, please bookmark and monitor the repository directly.  
+  
+👉 **Access the main repository and assets here: [GitHub](https://github.com/rwbl/rOpen62541)**  
   
 
 ---
@@ -123,237 +125,95 @@ To install the library:
 
   
   
-**Examples**  
-  
-[TABLE]  
-[TR]  
-[TH]Example / Folder[/TH]  
-[TH]Description[/TH]  
-[TH]Key Features[/TH]  
-[/TR]  
-[TR]  
-[TD][**EnvSim**](https://github.com)[/TD]  
-[TD]Environment simulation example using rOpen62541.  
-*Note: Uses the B4J library [SS\_OPCUAClient](https://www.b4x.com/android/forum/threads/opc-ua-industrial-client-library-connect-to-servers-devices.171977/)* developed by [USER=21400]@Peter Simpson[/USER].[/TD]  
-[TD]Simulates sensor data and process variables within the OPC UA address space.[/TD]  
-[/TR]  
-[TR]  
-[TD][**MethodCallback**](https://github.com)[/TD]  
-[TD]Demonstration of OPC UA method calls and callbacks.[/TD]  
-[TD]Implements custom server-side functions that clients can trigger remotely.[/TD]  
-[/TR]  
-[TR]  
-[TD][**InOutput**](https://github.com)[/TD]  
-[TD]Handling of Input (trigger Pushbutton) and Output (LED) arguments for nodes.[/TD]  
-[TD]Shows how to read, write, and map structured data types between client and server.[/TD]  
-[/TR]  
-[/TABLE]  
-  
-**Project Tutorials & Documentation**  
-  
-[TABLE]  
-[TR]  
-[TH]Guide / Document[/TH]  
-[TH]Description[/TH]  
-[TH]Key Highlights[/TH]  
-[/TR]  
-[TR]  
-[TD][**Tutorial: Callbacks**](https://github.com)[/TD]  
-[TD]Deep dive guide explaining cross-core event handling on the ESP32-S3 runtime engine.[/TD]  
-[TD]Covers Node Write Triggers and native RPC Method Nodes (*AddMethodNode / SetMethodReturnCode*).[/TD]  
-[/TR]  
-[TR]  
-[TD][**Tutorial: Node ID List**](https://github.com)[/TD]  
-[TD]Comprehensive overview of standard Namespace 0 system variables and memory profiles.[/TD]  
-[TD]Explains embedded memory trimming constraints, server time sync, and parsing complex *ExtensionObjects*.[/TD]  
-[/TR]  
-[/TABLE]  
-  
-*Note: Additional documentation modules and application examples are currently in progress and will be appended as they clear verification loops!*   
-  
-
----
-
-  
-  
-**Functions**  
-
-- **Initialize (Port As Int, LocalIP As String, Username As String, Password As String, MethodTriggerSub As Object)**
-Initializes the OPC UA Server core engine, establishes the listening network port, boots the underlying server background runtime loop on Core 0, and hooks your B4R callback.- **IsReady As Boolean (Property Getter)**
-Returns True if the background FreeRTOS network task on Core 0 has successfully initialized the minimal configurations, created root folder structures, and bound the TCP sockets.- **AddStringNode (NodeIdentifier As String, DisplayName As String, InitialValue As String)**
-Dynamically instantiates a unique string-identified OPC UA variable node in the main "Factory\_Floor" parent directory. If the NodeIdentifier string parameter matches exactly "Trigger", the library attaches a native C++ write-callback interceptor to capture network write payloads.- **AddMethodNode (MethodName As String, DisplayName As String, MethodCallSub As Object)**
-Dynamically instantiates a unique string-identified executable RPC Method node inside the main "Factory\_Floor" parent directory. It configures a single universal input argument parameter slot (*ByteString* layout) and a single *INT32* output verification parameter slot, safely anchoring your dedicated B4R execution callback subroutine entry pointer.- **SetMethodReturnCode (Code As Int)**
-Sets the integer execution status return token code for the currently processed network method invocation frame. This function must be executed inside your B4R method callback subroutine to send an atomic confirmation value (e.g., *100* for success or *400* for failure) back across the network socket layer to the client application.- **AddFloatNode (NodeIdentifier As String, DisplayName As String, InitialValue As Float)**
-Dynamically instantiates a unique string-identified floating-point variable node attached to the primary tree registry.- **AddIntNode (NodeIdentifier As String, DisplayName As String, InitialValue As Int)**
-Dynamically instantiates a unique string-identified 32-bit signed integer variable node attached to the primary tree registry.- **AddByteStringNode (NodeIdentifier As String, DisplayName As String, InitialBytes() As Byte)**
-Dynamically allocates a new raw ByteString variable node inside the Factory Floor folder. Perfect for transferring B4RSerializator binary buffers or plain byte sets.- **AddBooleanNode (NodeIdentifier As String, DisplayName As String, InitialValue As Boolean)**
-Dynamically instantiates a unique string-identified OPC UA variable node in the main "Factory\_Floor" parent directory. Configured using the native *UA\_TYPES\_BOOLEAN* primitive format, this node is ideal for publishing raw system states or driving hardware switching configurations like output relays.- **UpdateNodeValue (NodeIdentifier As String, NewValue As Boolean)**
-An overloaded variation of the thread-safe update engine. It intercepts your B4R boolean statuses, locks the cross-core FreeRTOS semaphore, verifies if the target node registry matches the boolean data signature, and pushes the binary update straight out to your connected SCADA monitors.- **UpdateNodeValue (NodeIdentifier As String, NewValue As Double)**
-A type-agnostic, thread-safe method using dynamic variant level checks to safely access server variables across cores.
-
----
-
-  
-  
 **Code Example (Snippet)**  
   
 
 ```B4X
 Sub Process_Globals  
-    Private VERSION As String = "rOpen62541 EnvSim v20260913"  
-  
-    ' Communication  
-    Public Serial1 As Serial  
-    Private WiFi As ESP8266WiFi ' Lib rESP8266WiFi  
-    Private SSID As String = "***"  
-    Private PW  As String = "***"  
-   
-    ' Open62541  
-    Private OpcServer As Open62541 ' Lib rOpen62541  
-    Private PORT As Int = 4840  
-  
-    Private AppTimer As Timer  
-    Private APPTIMER_INTERVAL As ULong = 2000  
-    ' Private BMP As B4RBMP280 ' Your physical sensor object  
-   
-    'Helper  
-    Private bc As ByteConverter    'ignore  
+	Private VERSION 			As String = "rOpen62541 EnvSim v20260913"  
+	Public Serial1 				As Serial  
+	Private WiFi 				As ESP8266WiFi						' Lib rESP8266WiFi  
+	Private SSID				As String = "***"  
+	Private PW 					As String = "***"  
+	Private OpcServer			As Open62541						' Lib rOpen62541  
+	Private PORT 				As Int = 4840  
+	Private NAMESPACE_INDEX 	As Int = 1  
+	Private AppTimer As Timer  
+	Private APPTIMER_INTERVAL As ULong = 2000  
+	Private bc As ByteConverter	'ignore  
 End Sub  
   
 Sub AppStart  
-    Serial1.Initialize(115200)  
-    Log(CRLF, "[AppStart] ", VERSION)  
-  
-    ' Init app timer to generate env data  
-    AppTimer.Initialize("AppTimer_Tick", APPTIMER_INTERVAL)  
-    ' Start after opc server has been initialized and nodes created  
-    AppTimer.Enabled = False  
-   
-    ' Connect to the network first  
-    If WiFi.Connect2(SSID, PW) Then  
-        Log("[AppStart] WiFi connected > local ip=", WiFi.LocalIP)  
-        ' [AppStart] WiFi connected. IP=NNN.NNN.NNN.NNN  
-  
-        ' Forces the ESP32-S3 Wi-Fi radio to stay 100% active, dropping latency  
-        ' from ~100ms+ down to an immediate 2ms, completely wiping out Bad_Timeout.  
-        RunNative("DisableWiFiSleep", Null)  
-   
-        Log("[AppStart] Init opc server")  
-        If InitOpcServer Then  
-            ' All good > start the app timer to update nodes  
-            AppTimer.Enabled = True  
-            Log("[AppStart] Opc server started")  
-        End If  
-    Else  
-        Log("[AppStart][E] WiFi Connection Failed")  
-    End If  
+	Serial1.Initialize(115200)  
+	AppTimer.Initialize("AppTimer_Tick", APPTIMER_INTERVAL)  
+	AppTimer.Enabled = False  
+	If WiFi.Connect2(SSID, PW) Then  
+		Log("[AppStart] WiFi connected > local ip=", WiFi.LocalIP)  
+		RunNative("DisableWiFiSleep", Null)  
+		RunNative("InitSystemClock", Null)  
+		If InitOpcServer Then  
+			AppTimer.Enabled = True  
+		End If  
+	Else  
+	End If  
 End Sub  
   
-' InitOpcServer  
-' Steps:  
-' Init the server with ip, port and client callback  
-' Wait till the opc server has been started successfully  
-' Add various nodes  
 Private Sub InitOpcServer As Boolean  
-    Dim TimeoutCounter As Int = 0  
-    Dim ServerBootFailed As Boolean = False  
-  
-    Log("[InitOpcServer] Initializing…")  
-    ' Spin up the Core 0 open62541 network engine with callback  
-    OpcServer.Initialize(WiFi.LocalIp, PORT, "", "", "OpcCallback")  
-   
-    ' Wait for the background thread layout initialization to complete!  
-    Log("[InitOpcServer] Awaiting background core network initialization…")  
-    Do While OpcServer.IsReady = False  
-        Delay(100) ' 100ms yield ticks for the cooperative scheduler  
-   
-        TimeoutCounter = TimeoutCounter + 1  
-        If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
-            ServerBootFailed = True  
-            Exit ' Break out of the endless loop safely!  
-        End If  
-    Loop  
-   
-    If ServerBootFailed Then  
-        Log("[InitOpcServer][E] OPC UA Server initialization TIMEOUT! Core 0 failed.")  
-        ' Optional: Run local emergency fallback routine or let local sensors run offline  
-    Else  
-        Log("[InitOpcServer] Core 0 online! Spawning dynamic address space nodes…")  
-        ' Add nodes holding data  
-        OpcServer.AddFloatNode("Temperature", "Room Temperature", 20.0)  
-        OpcServer.AddFloatNode("Humidity", "Room Humidity", 68.0)  
-        OpcServer.AddIntNode("Counter", "Total Shift Cycle Count", 0)  
-  
-        ' Allocate a local test array buffer: 0x19, 0x02, 0x03, 0x04, 0x58  
-        Dim RawBuffer() As Byte = Array As Byte(0x19, 0x02, 0x03, 0x04, 0x58)  
-   
-        ' Create the standardized ByteString variable node  
-        OpcServer.AddByteStringNode("RawTelemetry", "Atomic Hex Package", RawBuffer)  
-   
-        ' Add trigger received from the client and call OpcCallback  
-        OpcServer.AddStringNode("Trigger", "Remote Action Trigger", "0")  
-    End If  
-    Return Not(ServerBootFailed)  
+	Dim TimeoutCounter As Int = 0  
+	Dim ServerBootFailed As Boolean = False  
+	OpcServer.Initialize(WiFi.LocalIp, PORT, "", "", "OnDataWrite")  
+	Do While OpcServer.IsReady = False  
+		Delay(100) ' 100ms yield ticks for the cooperative scheduler  
+		TimeoutCounter = TimeoutCounter + 1  
+		If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
+			ServerBootFailed = True  
+			Exit ' Break out of the endless loop safely!  
+		End If  
+	Loop  
+	If ServerBootFailed Then  
+		Log("[InitOpcServer][E] OPC UA Server initialization TIMEOUT! Core 0 failed.")  
+	Else  
+		OpcServer.AddFloatNode("Temperature", "Room Temperature", 20.0)  
+		OpcServer.AddFloatNode("Humidity", "Room Humidity", 68.0)  
+		OpcServer.AddIntNode("Counter", "Total Shift Cycle Count", 0)  
+		OpcServer.AddByteStringNode("RawTelemetry", "Atomic Hex Package", RawBuffer)  
+		OpcServer.AddStringNode("Trigger", "Remote Action Trigger", "0")  
+	End If  
+	Return Not(ServerBootFailed)  
 End Sub  
   
 Sub AppTimer_Tick  
-    ' Only write data if the background server task on Core 0 is fully ready  
     If OpcServer.IsReady Then  
-   
-        ' Read real sensor here:  
-        ' Dim CurrentTemp As Float = BMP.ReadTemperature  
-        Dim CurrentTemp As Float = 24.5 + Rnd(-2.0, 3.0)  
-        Dim CurrentHum As Float = 68 + Rnd(-10.0, 11.0)  
-   
-        ' PUSH DATA INTO THE NODE CONTAINER  
-        ' This updates the internal open62541 memory using the C++ Mutex protection  
-        ' How the client accesses this data inside C++ code, register the temperature variable using this specific string name:  
-        ' "Temperature".  
-        ' Because of this, open62541 assigns it a standardized identifier (Node ID) inside Namespace 1:  
-        ' ns=1;s=Temperature (Namespace 1, String identifier).  
-        ' The client simply asks the server for that exact identifier.  
-        OpcServer.UpdateNodeValue("Temperature", CurrentTemp)  
-        ' Humidity following same as Temperature  
-        OpcServer.UpdateNodeValue("Humidity", CurrentHum)  
-  
-        ' Log update  
-        Log("[AppTimer] Sensor read complete. Updated Node memory with: t=", CurrentTemp, " h=", CurrentHum)  
+		Dim CurrentTemp As Float = 24.5 + Rnd(-2.0, 3.0)  
+		Dim CurrentHum As Float = 68 + Rnd(-10.0, 11.0)  
+		OpcServer.WriteNumeric(NAMESPACE_INDEX, "Temperature", CurrentTemp)  
+		OpcServer.WriteNumeric(NAMESPACE_INDEX, "Humidity", CurrentHum)  
     End If  
 End Sub  
   
-' OpcCallback  
-' Runs when client triggers the method over the network using namespace 1 and string identifier Trigger  
-' Example B4J where the client sends value 68: OpcClient.Write("ns=1;s=Trigger", 68)  
-Private Sub OpcCallback(buffer() As Byte)  
-    Log("[OpcCallback] SCADA/B4J Client clicked the trigger method. command=", bc.StringFromBytes(buffer))  
-    '[OpcCallback] SCADA/B4J Client clicked the trigger method. command=STOP  
-    '[OpcCallback] SCADA/B4J Client clicked the trigger method. command=68  
+Private Sub OnDataWrite(buffer() As Byte)  
+	Log("[OnDataWrite] Client invoked the trigger method. value=", bc.StringFromBytes(buffer))  
+	'[OnDataWrite] Client invoked the trigger method. value=68  
+	'[OnDataWrite] Client invoked the trigger method. value=START  
 End Sub  
   
 #if C  
 #include "esp_wifi.h"  
-  
+#include "time.h"  
 void DisableWiFiSleep(B4R::Object* o) {  
-    // Force Espressif lwIP stack to set Power Save to NONE  
     esp_wifi_set_ps(WIFI_PS_NONE);  
     ::Serial.println("[Hardware Engine] Wi-Fi Modem-Sleep forcefully disabled! Radio set to high-performance mode.");  
+}  
+  
+void InitSystemClock(B4R::Object* o) {  
+    configTime(3600, 0, "pool.ntp.org", "time.nist.gov");  
+    ::Serial.println("[Hardware Engine] SNTP Client started. Synchronizing baseline…");  
 }  
 #End If
 ```
 
   
   
-
----
-
-  
-  
-**Troubleshooting**  
-
-- B4J Client Node Errors (`Bad\_NodeIdUnknown`): Ensure your client calls use explicit string node formats using `s=` syntax (e.g., `ns=1;s=Temperature` or `ns=1;s=Trigger`). Do not look up auto-incrementing numerical configurations (`i=`).
-- Node-RED Link Timeout ("invalid endpoint"): The underlying `node-opcua` JavaScript module is very strict. Ensure your target URL incorporates the complete lowercase protocol structure along with a trailing forward slash, explicitly configured like this: `opc.tcp://NNN.NNN.NNN.NNN:4840/`.
-Set both Security Policy and Security Mode to `None` inside your server profile pane.- Missing Log Actions: If a client writes to the trigger node but B4R remains silent, ensure that your `AddStringNode` function block configures the callback mappings after the variable instantiation lines are executed, and verify that your B4R callback subroutine accepts a single `Buffer() As Byte` parameter.
-- Console Debug Silence: Core library logs are intentionally routed to `/dev/null` at the hardware level during task setup. This completely drops pre-compiled verbose `trace/channel` and `debug/session` stdout spam to maximize hardware efficiency while leaving your explicit B4R `Log()` actions functional.
 
 ---
 

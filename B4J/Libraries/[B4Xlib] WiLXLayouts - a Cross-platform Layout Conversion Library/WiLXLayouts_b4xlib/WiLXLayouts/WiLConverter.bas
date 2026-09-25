@@ -34,8 +34,6 @@ Sub Class_Globals
 	Private variantMaps, variantSpecs As List
 	Private txtLayoutsDir As String
 	Private writeJson As Boolean
-	Private toLists As Boolean
-	Private fromLists As Boolean
 End Sub
 
 'Initializes the class and prepares the resources needed - no argument needed
@@ -111,7 +109,7 @@ Public Sub toTextMap(fromDir As String, fromFile As String) As Map
 		End If
 		Dim textList As List: textList.initialize
 		For Each vwName As String In inputMap.Keys
-			If vwName <> "Main" And vwName <> "Activity" Then addViewToText(textList, inputMap.Get(vwName))
+			addViewToText(textList, inputMap.Get(vwName))
 		Next
 		outMap.Put(filex & id & "_" & currentPlatform, textList)
 	Next
@@ -158,7 +156,7 @@ Public Sub toTextFile(fromDir As String, fromFile As String, txtLayoutsDir_ As S
 		End If
 		Dim textList As List: textList.initialize
 		For Each vwName As String In inputMap.Keys
-			If vwName <> "Main" And vwName <> "Activity" Then addViewToText(textList, inputMap.Get(vwName))
+			addViewToText(textList, inputMap.Get(vwName))
 		Next
 		File.WriteList(txtLayoutsDir, filex & id & "_" & currentPlatform & ".txt", textList)
 		Dim dirfile As String = GetCanonicalPath(txtLayoutsDir, filex & id & "_" & currentPlatform & ".txt")
@@ -188,7 +186,7 @@ Private Sub addViewToText(textList As List, inputPropMap As Map)
 			
 			Dim vwType As String = inputPropMap.Get("csType")
 			vwType = vwType.SubString(vwType.LastIndexOf(".") + 5)
-			If vwType = "CustomView" Then vwType = inputPropMap.get("shortType")
+			If vwType = "CustomView" Then vwType = inputPropMap.get("shortType")			
 			Dim subName As String = grp & "Group"
 						
 			Dim result As String = CallSub3(Me, subName, vwType, inputPropMap)
@@ -205,19 +203,20 @@ Private Sub nameGroup(vwType As String, inputPropMap As Map) As String	'ignore
 		Dim value As String = "?"
 		Select prp
 			Case "name"
-				value = inputPropMap.Get("name")
+				If vwType <> "Main" And vwType <> "Activity" Then value = inputPropMap.Get("name")
 			Case "type"
-				If vwType = "EditText" Then 
-					Dim singleLine As String = inputPropMap.get("singleLine")
-					If singleLine = "false" Then vwType = "TextArea"  Else vwType = "TextField"
-				Else If vwType = "TextView" Then 
-					vwType = "TextArea"
-				Else If vwType = "ProgressView" Then 
-					vwType = "ProgressBar"
-				End If
-				If vwType = "SeekBar" Then vwType = "Slider"
-				If vwType = "Pane" Then vwType = "Panel"
-				If vwType = "ScrollPane" Then vwType = "ScrollView"
+				Select vwType
+					Case "Activity": vwType = "Main"
+					Case "EditText"
+						Dim singleLine As String = inputPropMap.get("singleLine")
+						If singleLine = "false" Then vwType = "TextArea"  Else vwType = "TextField"
+					Case "TextView": vwType = "TextArea"
+					Case "ProgressView": vwType = "ProgressBar"
+					Case "SeekBar": vwType = "Slider"
+					Case "Pane": vwType = "Panel"
+					Case "ScrollPane": vwType = "ScrollView"
+				End Select
+				
 				If currentPlatform = "bil" Then 
 					If vwType = "Switch" Then
 						Dim original As String = "CheckBox"
@@ -299,6 +298,7 @@ Private Sub refsGroup(vwType As String, inputPropMap As Map) As String	'ignore
 End Sub
 	
 Private Sub stateGroup(vwType As String, inputPropMap As Map) As String	'ignore
+	If vwType = "Main" or vwType = "Activity" Then Return ""
 	'state	enabled	visible	switch
 	Dim sb As StringBuilder: sb.Initialize
 	Dim lst As List = genGroups.Get("state")
@@ -367,25 +367,30 @@ End Sub
 Private Sub widthGroup(vwType As String, inputPropMap As Map) As String	'ignore
 	Dim vwName As String = inputPropMap.Get("name")
 	Dim sb As StringBuilder: sb.Initialize
-	Dim lst As List = genGroups.Get("width")
-	Dim hanchor As Int = inputPropMap.Get("variant" & currentVariant & ".hanchor")
-	For Each prp As String In lst
-		Dim value As String = "?"
-		Select prp
-			Case "width"
-				Dim widthA As Int = inputPropMap.Get("variant" & currentVariant & ".width")
-				If hanchor <> 2 Then value = widthA Else value = "*"
-			Case "fromLeft"
-				Dim leftA As Int = inputPropMap.Get("variant" & currentVariant & ".left")
-				If hanchor = 0 Or hanchor = 2 Then value = leftA
-			Case "fromRight"
-				Dim rightA As Int = inputPropMap.Get("variant" & currentVariant & ".left")
-				If hanchor = 1 Or hanchor = 2 Then value = rightA
-			Case "hcentered"
-				If hCenteredViews.get(0).As(Map).containsKey(vwName) Or hCenteredViews.get(currentVariant + 1).As(Map).containsKey(vwName) Then value = "ignoreFromLeft"
-		End Select
-		If value <> "?" Then sb.Append(prp).Append("=").Append(value).Append(TAB) 
-	Next
+	If vwType = "Main" or vwType = "Activity" Then
+		Dim thisVariant As Map = sourceVariants.Get(currentVariant)
+		sb.Append("width").Append("=").Append(thisVariant.Get("Width")).Append(TAB) 
+	Else
+		Dim lst As List = genGroups.Get("width")
+		Dim hanchor As Int = inputPropMap.Get("variant" & currentVariant & ".hanchor")
+		For Each prp As String In lst
+			Dim value As String = "?"
+			Select prp
+				Case "width"
+					Dim widthA As Int = inputPropMap.Get("variant" & currentVariant & ".width")
+					If hanchor <> 2 Then value = widthA Else value = "*"
+				Case "fromLeft"
+					Dim leftA As Int = inputPropMap.Get("variant" & currentVariant & ".left")
+					If hanchor = 0 Or hanchor = 2 Then value = leftA
+				Case "fromRight"
+					Dim rightA As Int = inputPropMap.Get("variant" & currentVariant & ".left")
+					If hanchor = 1 Or hanchor = 2 Then value = rightA
+				Case "hcentered"
+					If hCenteredViews.get(0).As(Map).containsKey(vwName) Or hCenteredViews.get(currentVariant + 1).As(Map).containsKey(vwName) Then value = "ignoreFromLeft"
+			End Select
+			If value <> "?" Then sb.Append(prp).Append("=").Append(value).Append(TAB) 
+		Next
+	End If
 	handled.Put("variant" & currentVariant & ".hanchor", "")
 	handled.Put("variant" & currentVariant & ".width", "")
 	handled.Put("variant" & currentVariant & ".left", "")
@@ -396,25 +401,30 @@ End Sub
 Private Sub heightGroup(vwType As String, inputPropMap As Map) As String	'ignore
 	Dim vwName As String = inputPropMap.Get("name")
 	Dim sb As StringBuilder: sb.Initialize
-	Dim lst As List = genGroups.Get("height")
-	Dim vanchor As Int = inputPropMap.Get("variant" & currentVariant & ".vanchor")
-	For Each prp As String In lst
-		Dim value As String = "?"
-		Select prp
-			Case "height"
-				Dim heightA As Int = inputPropMap.Get("variant" & currentVariant & ".height")
-				If vanchor <> 2 Then value = heightA Else value = "*"
-			Case "fromTop"
-				Dim topA As Int = inputPropMap.Get("variant" & currentVariant & ".top")
-				If vanchor = 0 Or vanchor = 2 Then value = topA
-			Case "fromBottom"
-				Dim bottomA As Int = inputPropMap.Get("variant" & currentVariant & ".top")
-				If vanchor = 1 Or vanchor = 2 Then value = bottomA
-			Case "vcentered"
-				If vCenteredViews.get(0).As(Map).containsKey(vwName) Or vCenteredViews.get(currentVariant + 1).As(Map).containsKey(vwName) Then value = "ignoreFromTop"
-		End Select
-		If value <> "?" Then sb.Append(prp).Append("=").Append(value).Append(TAB)
+	If vwType = "Main" Or vwType = "Activity" Then
+		Dim thisVariant As Map = sourceVariants.Get(currentVariant)
+		sb.Append("height").Append("=").Append(thisVariant.Get("Height")).Append(TAB) 
+	Else
+		Dim lst As List = genGroups.Get("height")
+		Dim vanchor As Int = inputPropMap.Get("variant" & currentVariant & ".vanchor")
+		For Each prp As String In lst
+			Dim value As String = "?"
+			Select prp
+				Case "height"
+					Dim heightA As Int = inputPropMap.Get("variant" & currentVariant & ".height")
+					If vanchor <> 2 Then value = heightA Else value = "*"
+				Case "fromTop"
+					Dim topA As Int = inputPropMap.Get("variant" & currentVariant & ".top")
+					If vanchor = 0 Or vanchor = 2 Then value = topA
+				Case "fromBottom"
+					Dim bottomA As Int = inputPropMap.Get("variant" & currentVariant & ".top")
+					If vanchor = 1 Or vanchor = 2 Then value = bottomA
+				Case "vcentered"
+					If vCenteredViews.get(0).As(Map).containsKey(vwName) Or vCenteredViews.get(currentVariant + 1).As(Map).containsKey(vwName) Then value = "ignoreFromTop"
+			End Select
+			If value <> "?" Then sb.Append(prp).Append("=").Append(value).Append(TAB)
 	Next
+	End If
 	handled.Put("variant" & currentVariant & ".vanchor", "")
 	handled.Put("variant" & currentVariant & ".height", "")
 	handled.Put("variant" & currentVariant & ".top", "")
@@ -852,6 +862,13 @@ Private Sub promptGroup(vwType As String, inputPropMap As Map) As String	'ignore
 	If prompt <> Null And prompt <> "" Then 
 		sb.Append("prompt").Append("=").Append(QUOTE).Append(prompt.as(String).replace(Chr(13) & Chr(10), "\n")).Append(QUOTE)
 	End If
+	If vwType = "Main" Or vwType = "Activity" Then
+		Dim title As Object = inputPropMap.GetDefault("title", Null)
+		If title <> Null And title <> "" Then 
+			sb.Append("title").Append("=").Append(QUOTE).Append(title.as(String).replace(Chr(13) & Chr(10), "\n")).Append(QUOTE)
+		End If
+		handled.Put("title", "")
+	End If
 	handled.Put("prompt", "")
 	handled.Put("hint", "")
 	handled.Put("hintText", "")
@@ -1199,7 +1216,7 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 		textLines = textList
 	End If
 	
-	Dim textViews As Map = text2Map(textLines)
+	Dim textViews As Map = parseVariant(textLines)
 
 	Dim bxlSchemas As Map = dictionary.Get(currentTarget)
 	Dim platformDrawableTypes As Map = drawableTypes.Get(currentTarget)
@@ -1214,8 +1231,6 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 	Dim mainMap As Map = bxlSchemas.GetDefault("Main", CreateMap())
 	If mainMap.size = 0 Then mainMap = bxlSchemas.GetDefault("Activity", CreateMap())
 	
-	'Dim mainMapDrawables As Map = bxlDrawables.GetDefault("Main", CreateMap())
-	'If mainMapDrawables.size = 0 Then mainMapDrawables = bxlDrawables.GetDefault("Activity", CreateMap())
 
 'This is needed for 3-level font props in bil
 	Dim fontGroupStr As String = $"
@@ -1233,9 +1248,26 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 	Dim mainProps As Map = CreateMap()
 	Dim mainTypes As Map = CreateMap()
 	For Each prp As String In mainMap.Keys
-		If currentTarget = "bil" And prp.EndsWith(".font") Then 
-			mainProps.Put(prp, fontGroupStr)
-			mainTypes.Put(prp, -1)
+		If currentTarget = "bil" Then 
+			If prp = "backgroundColor" Then
+				Dim thisViewProps As Map = textViews.GetDefault("", CreateMap())
+				Dim clr As String = thisViewProps.GetDefault("basecolor", "")
+				If clr <> "" Then 
+					mainProps.Put(prp, colors.GetDefault(clr.toLowerCase, clr))
+					mainTypes.Put(prp, 6)
+				Else
+					Dim mp As Map = mainMap.Get(prp)
+					mainProps.Put(prp, mp.Get("value"))
+					mainTypes.Put(prp, mp.Get("valueType"))
+				End If
+			Else if prp.EndsWith(".font") Then				
+				mainProps.Put(prp, fontGroupStr)
+				mainTypes.Put(prp, -1)
+			Else
+				Dim mp As Map = mainMap.Get(prp)
+				mainProps.Put(prp, mp.Get("value"))
+				mainTypes.Put(prp, mp.Get("valueType"))
+			End If
 		Else
 			Dim mp As Map = mainMap.Get(prp)
 			mainProps.Put(prp, mp.Get("value"))
@@ -1246,6 +1278,11 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 	For Each kw As String In thisMainDrawables.Keys  'there is only one ("Main" or "Activity")
 		Dim lst As List = thisMainDrawables.Get(kw)
 		For Each ar() As String In lst
+			If ar(0) = "drawable.color" Then 
+				Dim thisViewProps As Map = textViews.GetDefault("", CreateMap())
+				Dim clr As String = thisViewProps.GetDefault("basecolor", "")
+				If clr <> "" Then ar(1) = colors.GetDefault(clr.toLowerCase, clr)
+			End If
 			mainProps.Put(ar(0), ar(1))
 			Dim valueT As Int = 0
 			If ar(1).StartsWith("0x") Then valueT = 6
@@ -1253,7 +1290,12 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 			mainTypes.Put(ar(0), valueT)
 		Next
 	Next
-	
+
+	Dim thisViewProps As Map = textViews.GetDefault("", CreateMap())
+	If thisViewProps.ContainsKey("title") Then
+		mainProps.Put("title", thisViewProps.get("title").As(String).Replace(QUOTE, ""))
+	End If
+		
 	Dim reStructuredProps As Map = CreateMap()
 	restructure(reStructuredProps, mainProps, mainTypes)
 	Dim assembledMap As Map = CreateMap()
@@ -1281,6 +1323,7 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 		End If
 		viewMap.Put("type", txtType)
 		Dim txtType As String = viewMap.Get("type")
+		If currentPlatform = "bal" And txtType = "Main" Then txtType = "Activity"
 		
 		
 		Dim defaultProps As Map = CreateMap()
@@ -1378,6 +1421,7 @@ Private Sub processVariant(FromDir As String, fromFile As String, textList As Li
 		assembledMap.Put(vw, reStructuredProps)
 	Next
 	
+	assembledMap.Remove("")
 	Return assembledMap
 End Sub
 
@@ -1473,13 +1517,13 @@ Private Sub createFinalMap(assembledMap As Map) As Map
 	
 	If isHCAll Then
 		For Each vw As String In firstHCentered.Keys
-			collectedScripts(0).Add(vw & ".HorizontalCenter = 50%x")
+			collectedScripts(0).Add(vw & ".z_HorizontalCenter = 50%x")
 		Next
 	Else
 		For i = 1 To hCenteredViews.Size - 1
 			Dim mp As Map = hCenteredViews.Get(i)
 			For Each vw As String In mp.Keys
-				collectedScripts(i).Add(vw & ".HorizontalCenter = 50%x")
+				collectedScripts(i).Add(vw & ".z_HorizontalCenter = 50%x")
 			Next
 		Next
 	End If
@@ -1496,22 +1540,30 @@ Private Sub createFinalMap(assembledMap As Map) As Map
 			Next
 		Next
 	End If
+
 	
 	Dim lst As List = collectedScripts(0)
+	lst.Sort(True)
 	Dim sb As StringBuilder: sb.initialize
-	sb.append($"'All variants script"$)
-	If lst.Size > 0 Then sb.append(Chr(10))
+	If currentTarget = "bal" Or currentTarget = "bil" Then 
+		sb.append($"'All variants script${Chr(10)}AutoScaleAll${Chr(10)}"$)
+	Else
+		sb.append($"'All variants script"$).append(Chr(10))
+	End If
 	For Each s As String In lst
+		s = s.Replace(".z_", ".")
 		sb.Append($"${s}${Chr(10)}"$)
 	Next
+	If lst.Size > 0 Then sb.Remove(sb.Length - 1, sb.length)
 	usesDesignerScript.Add(sb.ToString)
 	For i = 1 To collectedScripts.length - 1
 		Dim lst As List = collectedScripts(i)
-		lst.Sort(False)
+		lst.Sort(True)
 		Dim sb As StringBuilder: sb.initialize
 		Dim vmp As Map = variants.Get(i - 1)
 		sb.append($"'Variant specific script: ${vmp.Get("Width")}x${vmp.Get("Height")},scale=${vmp.Get("Scale")}${Chr(10)}"$)
 		For Each s As String In lst
+			s = s.Replace(".z_", ".")
 			Dim vmp As Map = variants.Get(i - 1)
 			sb.Append($"${s}${Chr(10)}"$)
 		Next
@@ -1875,7 +1927,9 @@ Private Sub updatedProps(prp As String, viewMap As Map, targetProps As Map, defa
 	End Select
 End Sub
 
-Private Sub text2Map(lines As List) As Map
+'Turns a list of lines from a generic variant layout into a Map of Views, where each View is a Map of properties
+'Can access property "A" from view "X" as follows: resultMap.Get("X").As(Map).Get("A")
+Public Sub parseVariant(lines As List) As Map
 	Dim textViews As Map = CreateMap()
 	Dim tmp As Map = CreateMap()
 	Dim currentView As String
@@ -1884,7 +1938,7 @@ Private Sub text2Map(lines As List) As Map
 		s = s.Trim
 		If s.Length = 0 Then Continue
 		Dim w() As String = parseLine(s)
-		If w(0).StartsWith("name=") Then 
+		If w(0).StartsWith("name=") Then
 			If tmp.Size > 1 Then textViews.Put(currentView, tmp)
 			currentView = TwoParts("=", w(0))(1)
 			Dim tmp As Map = CreateMap()
@@ -1987,7 +2041,7 @@ End Sub
 #End Region
 
 #region CreateResources
-Private Sub analyze(dir As String, fname As String)
+Private Sub analyze(dir As String, fname As String)			'ignore
 	Dim target As String = fname.SubString(fname.LastIndexOf(".") + 1)
 	Dim source As String = fname.SubString2(0, 3)
 
@@ -2200,6 +2254,23 @@ Private Sub GetCanonicalPath(Dir As String, FileName As String) As String
 		Log("failed: " & LastException.Message)
 		Return ""
 	End Try
+End Sub
+
+'Uses the viewMap (essentially a list of views) to create a view tree (parent property is used to create linkeages)
+Public Sub mapToTree(viewMap As Map) As Map
+	Dim viewTree As Map = CreateMap()
+	For Each viewName As String In viewMap.Keys
+		Dim propMap As Map = viewMap.Get(viewName)
+		Dim parent As String = propMap.GetDefault("parent", "")
+		If parent = "" Then 
+			viewTree.Put(viewName, propMap)
+		Else
+			Dim parentView As Map = viewMap.Get(parent)
+			If Not(parentView.ContainsKey("children")) Then parentView.Put("children", CreateMap())
+			parentView.Get("children").As(Map).Put(viewName, propMap)
+		End If
+	Next
+	Return viewTree
 End Sub
 
 #End Region

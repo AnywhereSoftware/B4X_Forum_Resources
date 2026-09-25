@@ -1,8 +1,8 @@
 ### [Web] [Server] EndsMeet by aeric
-### 07/30/2026
+### 09/20/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/167395/)
 
-Version: 3.00  
+Version: 3.10  
 GitHub: <https://github.com/pyhoon/EndsMeet>  
   
 Create a server app with 4 lines of code:  

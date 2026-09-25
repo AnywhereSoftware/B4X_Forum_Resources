@@ -1,5 +1,5 @@
 ### MySteps - Step Counter App by aeric
-### 09/19/2026
+### 09/22/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/172093/)
 
 GitHub: <https://github.com/pyhoon/MySteps>  

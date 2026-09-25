@@ -28,13 +28,13 @@ Public Sub Initialize
 	inLayoutsDir = projectDir & "\Layouts\inLayouts"
 	txtLayoutsDir = projectDir & "\Layouts\txtLayouts"
 	outLayoutsDir = projectDir & "\Layouts\outLayouts"
-	convert.Initialize
 End Sub
 
 Private Sub B4XPage_Created (Root1 As B4XView)
 	Root = Root1
 	Root.LoadLayout("complex")
-
+	
+	convert.Initialize(True)	'True will copy the input and output json files to the input and output folders respectively
 	convert.toTextFile(inLayoutsDir, "complex.bjl", txtLayoutsDir)
-	convert.toLayoutFile(txtLayoutsDir, "complex_bjl.txt", outLayoutsDir, "complex.bjl")
+	convert.toLayoutFile(txtLayoutsDir, "complex_bjl.txt", outLayoutsDir, "complex_bjl.bjl")
 End Sub
