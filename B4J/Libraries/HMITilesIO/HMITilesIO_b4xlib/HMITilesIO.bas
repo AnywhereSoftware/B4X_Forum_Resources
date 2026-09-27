@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File: 		HMITilesIO.bas
 ' Brief:		CustomView Human Machine Interface tile showing assets from a SVG image.
-' Date:			2026-09-15
+' Date:			2026-09-25
 ' Author:		Robert W.B. Linn (c) 2026 MIT
 ' Description:	HMITilesIO brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.
 '				Target has been to combine highly optimized vector graphics with native input tracking For microcontrollers And IoT applications.
@@ -28,6 +28,9 @@ Version=10.5
 '				- update sub InitInstance with the new tile type
 '				- update subs setState or setValue depending type of tile
 '				- create new svg file in assets like newtiletype.svg (lowercase) and add to the files manager
+'
+' Raspberry Pi:	Running HMITilesIO tests on a Raspberry Pi from a Windows 11 device ensure to start the B4J-Bridge on the RPi with DISPLAY=:0.
+'				Example: DISPLAY=:0 /home/rwbl/prog/jdk21/bin/java -jar /home/rwbl/prog/b4jbridge/b4j-bridge.jar
 '					
 ' Layout:		Panel/Pane with WebView
 '				+------------------+
@@ -40,7 +43,7 @@ Version=10.5
 #End Region
 
 ' Designer properties (ensure to define the key in lowercase)
-#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Battery|Button|ByteStatus|DualReadOut|Gauge|IconIndicator|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|Timer|TrendChart|VerticalMeter|, DefaultValue: Switch.
+#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Battery|Button|ByteStatus|Compass|DualReadOut|Gauge|IconIndicator|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|TiltGauge|Timer|TrendChart|VerticalMeter|Watchdog|, DefaultValue: Switch.
 #DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: , Description: Header for all tiles.
 #DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: , Description: Footer for all tiles.
 #DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
@@ -56,11 +59,14 @@ Version=10.5
 
 Private Sub Class_Globals
 
+	Public Const VERSION As String ="HMITilesIO 0.8.0 (Build 2026-09-25)"
+
 	' Constants
 	' Tile type names (uppercase) aligned with the designerProperty tiletype
 	Private TILE_BATTERY As String 			= "BATTERY"
 	Private TILE_BUTTON As String 			= "BUTTON"
 	Private TILE_BYTESTATUS As String 		= "BYTESTATUS"
+	Private TILE_COMPASS As String 			= "COMPASS"
 	Private TILE_DUALREADOUT As String 		= "DUALREADOUT"
 	Private TILE_GAUGE As String 			= "GAUGE"
 	Private TILE_IOPANEL As String 			= "IOPANEL"
@@ -74,9 +80,11 @@ Private Sub Class_Globals
 	Private TILE_SIGNAL As String 			= "SIGNAL"
 	Private TILE_SLIDER As String 			= "SLIDER"
 	Private TILE_SWITCH As String 			= "SWITCH"
+	Private TILE_TILTGAUGE As String 		= "TILTGAUGE"
 	Private TILE_TIMER As String 			= "TIMER"
 	Private TILE_TRENDCHART As String 		= "TRENDCHART"
 	Private TILE_VERTICALMETER As String 	= "VERTICALMETER"
+	Private TILE_WATCHDOG As String 		= "WATCHDOG"
 
 	' Tile segment names and color HTML HEX format (used by tiles like Gauge)	
 	Public SEGMENT_GREEN			As String = "green"
@@ -123,6 +131,7 @@ Private Sub Class_Globals
 	Public InstanceBattery 			As HMITilesIOBattery
 	Public InstanceButton 			As HMITilesIOButton
 	Public InstanceByteStatus 		As HMITilesIOByteStatus
+	Public InstanceCompass 			As HMITilesIOCompass
 	Public InstanceDualReadOut 		As HMITilesIODualReadOut
 	Public InstanceGauge 			As HMITilesIOGauge
 	Public InstanceIOPanel 			As HMITilesIOPanel
@@ -136,9 +145,11 @@ Private Sub Class_Globals
 	Public InstanceSlider 			As HMITilesIOSlider
 	Public InstanceSpinner 			As HMITilesIOSpinner
 	Public InstanceSwitch 			As HMITilesIOSwitch
+	Public InstanceTiltGauge 		As HMITilesIOTiltGauge
 	Public InstanceTimer 			As HMITilesIOTimer
 	Public InstanceTrendChart 		As HMITilesIOTrendChart
 	Public InstanceVerticalMeter	As HMITilesIOVerticalMeter
+	Public InstanceWatchdog			As HMITilesIOWatchdog
 	
 	' Local for SVG image
 	Private IMAGE_MARKUP_PLACEHOLDER As String = "#IMAGE_PLACEHOLDER#"
@@ -154,6 +165,8 @@ Private Sub Class_Globals
 	Private mValueFontColor 		As String = "#0f172a"		
 	Private mFooterFontSize 		As Int = 10
 	Private mFooterFontColor 		As String = "64748b"		
+
+	Private mIsReady As Boolean = False
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -212,6 +225,7 @@ End Sub
 'InitInstance
 ' Init the selected instances from the tiletype
 Private Sub InitInstance
+	mIsReady = False
 
 	Select mTileType
 		Case TILE_BATTERY
@@ -224,11 +238,16 @@ Private Sub InitInstance
 			InstanceByteStatus.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			Dim pins() As Byte = Array As Byte(1,1,1,1,1,1,1,1)
 			InstanceByteStatus.SetTile(mHeader, mFooter, pins, mValue)
+		Case TILE_COMPASS
+			InstanceCompass.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
+			InstanceCompass.SetTile(mHeader, mFooter, mValue)
 		Case TILE_DUALREADOUT
 			InstanceDualReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceDualReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_GAUGE
 			InstanceGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
 		Case TILE_ICONINDICATOR
 			InstanceIconIndicator.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
@@ -254,29 +273,42 @@ Private Sub InitInstance
 			InstanceSevenSegment.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SIGNAL
 			InstanceSignal.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceSignal.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SLIDER
 			InstanceSlider.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SPINNER
 			InstanceSpinner.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SWITCH
 			InstanceSwitch.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceSwitch.SetTile(mHeader, mFooter, mState)
 		Case TILE_TRENDCHART
 			InstanceTrendChart.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceTrendChart.SetTile(mHeader, mFooter, mValue)
+		Case TILE_TILTGAUGE
+			InstanceTiltGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
+			InstanceTiltGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue, InstanceTiltGauge.Inverted)
 		Case TILE_TIMER
 			InstanceTimer.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceTimer.SetTile(mHeader, mFooter, mValue)
 		Case TILE_VERTICALMETER
 			InstanceVerticalMeter.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
 			InstanceVerticalMeter.SetTile(mHeader, mFooter, "#22c55e", mMinValue, mMaxValue, mValue)
+		Case TILE_WATCHDOG
+			InstanceWatchdog.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
+			InstanceWatchdog.SetTile(mHeader, mFooter, mValue)
 		Case Else
 			Return
 	End Select
-	Sleep(1)
 End Sub
 
 ' =========================
@@ -379,12 +411,18 @@ Public Sub setValue(value As String)
 	' Assign the state value as binary 0 or 1 to global class var
 	mValue = value
 
+	' GLOBAL RENDERING GUARD: If the WebView hasn't finished rendering the base SVG yet,
+	' exit early. The PageFinished event will automatically draw this mValue once it is ready.
+	If Not(mIsReady) Then Return
+
 	' Select the tile type and assign the value to global var with casting as required	
 	Select mTileType
 		Case TILE_BATTERY
 			InstanceBattery.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BYTESTATUS
 			InstanceByteStatus.SetTile(mHeader, mFooter, InstanceByteStatus.PinsAttached, mValue)
+		Case TILE_COMPASS
+			InstanceCompass.SetTile(mHeader, mFooter, mValue)
 		Case TILE_DUALREADOUT
 			InstanceDualReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_GAUGE
@@ -407,12 +445,16 @@ Public Sub setValue(value As String)
 			InstanceSlider.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
 		Case TILE_SPINNER
 			InstanceSpinner.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue)
+		Case TILE_TILTGAUGE
+			InstanceTiltGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mValue, InstanceTiltGauge.Inverted)
 		Case TILE_TIMER
 			InstanceTimer.SetTile(mHeader, mFooter, mValue)
 		Case TILE_TRENDCHART
 			InstanceTrendChart.SetTile(mHeader, mFooter, mValue)
 		Case TILE_VERTICALMETER
 			InstanceVerticalMeter.SetTile(mHeader, mFooter, InstanceVerticalMeter.COLOR_TRACK, mMinValue, mMaxValue, mValue)
+		Case TILE_WATCHDOG
+			InstanceWatchdog.SetTile(mHeader, mFooter, mValue)
 		Case Else
 			Return
 	End Select
@@ -682,6 +724,9 @@ Private Sub WebViewSVG_PageFinished (Url As String)
 			#End If
 	End Select
 
+	' Set global readiness flag to TRUE now that the DOM tree exists completely
+	mIsReady = True
+	
 	setValue(mValue)
 End Sub
 
@@ -741,6 +786,7 @@ Private Sub PanelWebViewSVG_Touch (Action As Int, X As Float, Y As Float)
 		Case TILE_BATTERY:			targetInstance = InstanceBattery
 		Case TILE_BUTTON:			targetInstance = InstanceButton
 		Case TILE_BYTESTATUS:		targetInstance = InstanceByteStatus
+		Case TILE_COMPASS:			targetInstance = InstanceCompass
 		Case TILE_DUALREADOUT:		targetInstance = InstanceDualReadOut
 		Case TILE_GAUGE:			targetInstance = InstanceGauge
 		Case TILE_ICONINDICATOR:	targetInstance = InstanceIconIndicator
@@ -756,8 +802,11 @@ Private Sub PanelWebViewSVG_Touch (Action As Int, X As Float, Y As Float)
 									InstanceSpinner.MaxValue = mMaxValue
 									targetInstance = InstanceSpinner
 		Case TILE_SWITCH:			targetInstance = InstanceSwitch
+		Case TILE_TILTGAUGE:		targetInstance = InstanceTiltGauge
+		Case TILE_TIMER:			targetInstance = InstanceTimer
 		Case TILE_TRENDCHART:		targetInstance = InstanceTrendChart
 		Case TILE_VERTICALMETER:	targetInstance = InstanceVerticalMeter
+		Case TILE_WATCHDOG:			targetInstance = InstanceWatchdog
 	End Select
 
 	' Process the touch handler for the assigned instance

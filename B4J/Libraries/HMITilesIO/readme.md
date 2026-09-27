@@ -1,5 +1,5 @@
 ### HMITilesIO by rwblinn
-### 09/15/2026
+### 09/25/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
@@ -99,6 +99,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Discrete Output: Real-time CAN-Bus frame analysis, GPIO expander debugging, or low-level register tracking.[/TD]  
 [/TR]  
 [TR]  
+[TD]**Compass**[/TD]  
+[TD]Compass: A simplified 360° directional tracking tool mapping singular degree vector variables straight to a sleek orientation wedge arrow layout.[/TD]  
+[TD]Process Lifecycles: Environmental weather wind tracking, factory ventilation flow vectors, automated guided vehicle (AGV) travel heading, or material mixer rotational paths.[/TD]  
+[/TR]  
+[TR]  
 [TD]**DualReadOut**[/TD]  
 [TD]Dual Read Out: High-density, twin-column telemetry layout with independent value nodes and dedicated unit frames for dense cluster environments (e.g., "23 °C" | "68 %").[/TD]  
 [TD]Dual Sensor Arrays: Simultaneous localized parameter tracking (Temperature/Humidity, Voltage/Current, or dual-zone status updates).[/TD]  
@@ -164,6 +169,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Discrete Input: Main system Power Toggles, isolated battery disconnects, or Cruise Control activation.[/TD]  
 [/TR]  
 [TR]  
+[TD]**TiltGauge**[/TD]  
+[TD]TiltGauge: A specialized quadrant-type gauge designed specifically for angular positions, tilt monitoring, incline tracking, or physical gate/valve status visualization (sweeping a tight 90° arc from vertical to horizontal).[/TD]  
+[TD]Process Lifecycles: Angular opening sequences for flap or sluice gates, heavy equipment boom-angle lifting phases, physical safety barrier deployment stages, or liquid flow diverting valve states.[/TD]  
+[/TR]  
+[TR]  
 [TD]**Timer**[/TD]  
 [TD]Timer: Production-cycle tracking interface rendering a sharp monospace duration string. Features an active vector progress ring that automatically scales and alters color profiles based on fractional runtime datasets ("CurrentSeconds;TotalSeconds").[/TD]  
 [TD]Process Lifecycles: Countdown metrics for valve flushing operations, automated irrigation windows, thermal dwell intervals, or hardware watchdog tracking loops.[/TD]  
@@ -178,16 +188,19 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Vertical Meter: Simplified scale column with an aligned reference tracking arrow.[/TD]  
 [TD]Analog Readout: Linear volumetric calculations like Fuel Tank Capacity, Water Levels, or Battery Charge (SoC).[/TD]  
 [/TR]  
+[TR]  
+[TD]**WatchdogTile**[/TD]  
+[TD]WatchdogTile: A rugged, instrumentation-bezel telemetry health monitor displaying real-time node latency diagnostics and connection safety timeouts.[/TD]  
+[TD]Process Lifecycles: MQTT broker heartbeat checks, remote field-transmitter polling loops, server network latency tracking, or hardware watchdog trip states.[/TD]  
+[/TR]  
 [/TABLE]  
-  
 
 ---
 
   
   
 **Screenshots**  
-  
-![](https://www.b4x.com/android/forum/attachments/173459)  
+![](https://www.b4x.com/android/forum/attachments/173766)  
   
 
 ---
@@ -206,11 +219,8 @@ Developing a single CustomView codebase that renders identically and handles rea
   
   
 **Examples Included**  
-  
 
 - Basic Layout: Easy-to-follow example demonstrating rendering configuration loops for every component type.
-
-  
 
 ---
 

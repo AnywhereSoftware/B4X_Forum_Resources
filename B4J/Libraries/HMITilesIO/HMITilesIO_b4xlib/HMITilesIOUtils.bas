@@ -42,12 +42,30 @@ Public Sub ExecuteJS(wv As WebView, js As String) As ResumableSub
 		Return False
 	End If
 
+	' Run script after document is ready
+	Dim js As String = $"
+		(() => {
+			const runScript = () => {
+				try {
+					${js}
+				} catch(e) {
+					console.error('HMITile DOM Error:', e);
+				}
+			};
+			if (document && document.readyState === 'complete') {
+				runScript();
+			} else {
+				window.addEventListener('load', runScript);
+			}
+		})();
+	"$
+
 	' Standard flattening to safeguard single-line delivery execution
 	js = js.Replace(CRLF, " ").Replace(Chr(10), " ").Replace(Chr(13), " ")
 	' Log($"[Utils.ExecuteJS] ${js}"$)
 
-	' Short sleep
-	Sleep(1)
+	' Mandatory short sleep
+	Sleep(50)
 
 	' Initialize a JavaObject pointing directly to the WebView instance wrapper
 	Dim joWebView As JavaObject = wv

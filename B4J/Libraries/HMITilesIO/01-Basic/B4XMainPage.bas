@@ -21,7 +21,7 @@ Version=9.85
 #End Region
 
 Private Sub Class_Globals
-	Private VERSION As String	= "HMITilesIO 0.7.0 - Build 20260906"
+	Private VERSION As String	= "HMITilesIO 0.8.0 - Build 20260925"
 	Private ABOUT As String 	= "HMITilesIO (c) 2026 Robert W.B. Linn - MIT"
 	
 	' UI
@@ -53,6 +53,9 @@ Private Sub Class_Globals
 	Private TileSignal As HMITilesIO
 	Private TileTimer As HMITilesIO
 	Private TileTimerClock As HMITilesIO
+	Private TileTiltGauge As HMITilesIO
+	Private TileWatchdog As HMITilesIO
+	Private TileCompass As HMITilesIO
 End Sub
 
 Public Sub Initialize
@@ -81,8 +84,9 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	LabelAbout.TextColor = 0xFF000000
 
 	' HMITiles
-	' Ensure to set sleep prior calling customviews
-	Sleep(1)
+	' Ensure to set sleep prior calling customviews 
+	' (set 100 or more depending completness of the tiles)
+	Sleep(50)
 
 	' ----------
 	' State
@@ -91,11 +95,11 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Button
 	TileButton.State = False
 
-	' LEDPanel
-	TileLEDPanel.State = True
+	' LEDPanel - state set in the designer
+	' TileLEDPanel.State = True
 
 	' Switch
-	TileSwitch.State = False
+	TileSwitch.State = True
 
 	' ----------
 	' Value
@@ -110,6 +114,10 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 '	TileByteStatus.Value = 103	' 0110 0111
 '	TileByteStatus.InstanceByteStatus.PinsAttached = Array As Byte(1,1,1,1,0,0,0,0)
 	' Log(HMITilesIOByteStatus.ByteToBin(TileByteStatus.Value.As(Byte)))
+
+	' Compass
+	TileCompass.Value = 165
+	TileCompass.Footer = $"${TileCompass.Value} | ${TileCompass.InstanceCompass.GetDirection(TileCompass.Value)}"$
 
 	' Dual
 	' TileDualReadOut.ValueFontColor = "#0000FF"
@@ -138,9 +146,16 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 
 	' Slider
 	TileSlider.Value = 68
+	
 	' SevenSegment
 	TileSevenSegment.Value = TileSlider.Value
 		
+	' TiltGauge
+	TileTiltGauge.Value = TileSlider.Value
+	TileTiltGauge.InstanceTiltGauge.SetPositionSegmentColor("#FF0000")
+	TileTiltGauge.InstanceTiltGauge.Inverted = False
+	TileTiltGauge.Footer = $"${NumberFormat(TileTiltGauge.Value, 0, 0)}"$
+
 	' VMeter
 	TileVerticalMeter.Value = TileSlider.Value
 
@@ -177,6 +192,9 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	'TileTimerClock.Value = TileTimerClock.InstanceTimer.GetTime
 	'TileTimerClock.Footer = TileTimerClock.InstanceTimer.GetDate
 	' CallSubDelayed(Me, "TileTimerTest")
+
+	' Watchdog
+	TileWatchdog.Value = TileWatchdog.InstanceWatchdog.STATUS_WARNING
 End Sub
 
 ' ================================================================
@@ -199,14 +217,23 @@ End Sub
 
 Private Sub TileSlider_Click(state As Boolean, value As String)
 	' Update several component values
-	TileGauge.Value = value.As(Float)
-	TileGauge.SetFooter($"${NumberFormat(TileGauge.Value, 0, 0)}"$)
-	TileGaugeReverse.Value = value.As(Float)
-	TileGaugeReverse.SetFooter($"${NumberFormat(TileGaugeReverse.Value, 0, 0)}"$)
-	TileVerticalMeter.Value = value.As(Float)
-	TileSevenSegment.Value = value.As(Float)
-	TileTrendChart.Value = $"${TileTrendChart.Value};${value.As(Int)}"$
+	TileGauge.Value = value
+	TileGauge.Footer = NumberFormat(TileGauge.Value, 0, 0)
+	
+	TileGaugeReverse.Value = value
+	TileGaugeReverse.Footer = NumberFormat(TileGaugeReverse.Value, 0, 0)
+
+	TileTiltGauge.Value = value
+	TileTiltGauge.Footer = NumberFormat(TileTiltGauge.Value, 0, 0)
+
+	TileVerticalMeter.Value = value
+
+	TileSevenSegment.Value = value
+
+	TileTrendChart.Value = $"${TileTrendChart.Value};${value}"$
+
 	TileBattery.Value = value
+
 	TileSignal.Value = value
 	
 	Log($"[TileSlider_Click] state=${TileSlider.state}, value=${TileSlider.value}"$)
@@ -252,11 +279,73 @@ End Sub
 ' TILE SPECIFIC
 ' ================================================================
 
+' Test the timer running from 40 to 60 seconds
 Private Sub TileTimerTest	'ignore
+	Dim TIMER_STEP_PAUSE As Int = 1000
 	Dim currenttime As Long = TileTimer.InstanceTimer.CurrentTime
 	Dim totaltime As Long = TileTimer.InstanceTimer.TotalTime
 	For i = currenttime To totaltime
 		TileTimer.Value = $"${i};${totaltime}"$
-		Sleep(1000)
+		TileTimer.Footer = TileTimer.Value
+		Sleep(TIMER_STEP_PAUSE)
 	Next
 End Sub
+
+Private Sub TileTimer_Click(State As Boolean, Value As String)
+	Log($"[TileTimer] Start"$)
+	TileTimer.Value = "40;60"
+	TileTimer.Footer = TileTimer.Value
+	CallSubDelayed(Me, "TileTimerTest")
+End Sub
+
+' ================================================================
+' HELPER
+' ================================================================
+
+' ================================================================
+' HELPER
+' ================================================================
+
+Private Sub TakeSnapShot
+	' Open an output stream to save the file locally on the Pi
+	Dim out As OutputStream
+	Dim imgname As String = "hmitilesio-snapshot.png"
+	Dim folder As String
+	#If B4J
+	folder = File.dirapp
+	#End If
+	#If B4A
+		folder = File.DirInternal	
+	#End If
+	
+	' Capture the RootPane as a B4XBitmap
+	Dim bmp As B4XBitmap = Root.Snapshot
+    
+	out = File.OpenOutput(folder, imgname, False)
+    
+	' Write the image as a PNG
+	bmp.WriteToStream(out, 100, "PNG")
+	out.Close
+    
+	Log("Screenshot saved: " & File.Combine(folder, imgname))
+	' RPi: Screenshot saved: /home/rwbl/data/b4j/tempjars/hmitilesio-snapshot.png
+	' Windows: Screenshot saved: C:\Daten\b4\b4j\projects\CUSTOM~1\HMITIL~2\src\B4J\Objects\hmitilesio-snapshot.png
+	' B4A: Screenshot saved: /data/user/0/com.rwbl.hmitilesio/files/hmitilesio-snapshot.png
+End Sub
+
+' Double click on the labelabout makes a snapshot of the mainpage
+' Saved as PNG image in the dir app folder.
+#If B4J
+Private Sub LabelAbout_MouseClicked (EventData As MouseEvent)
+	If EventData.ClickCount == 2 Then
+		TakeSnapShot
+	End If
+End Sub
+#End If
+
+#If B4A
+Private Sub LabelAbout_Click
+	TakeSnapShot
+End Sub
+#End If
+

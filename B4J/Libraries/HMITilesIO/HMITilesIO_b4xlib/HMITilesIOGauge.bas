@@ -96,27 +96,36 @@ Public Sub SetTile(Header As String, _
 	Dim greenOffset As Float = 113.1 - (113.1 * (GreenMaxPct / 100.0))
 	Dim yellowOffset As Float = 113.1 - (113.1 * (YellowMaxPct / 100.0))
     
+	' If DOM Is still loading, wait 20ms And Try again
 	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var needle = document.getElementById("gauge-needle");
-        var arcG = document.getElementById("arc-green");
-        var arcY = document.getElementById("arc-yellow");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        
-        if(arcG) { arcG.setAttribute("stroke-dashoffset", "${greenOffset}"); };
-        if(arcY) { arcY.setAttribute("stroke-dashoffset", "${yellowOffset}"); };
-        
-        if(needle) {
-            needle.style.transform = "";
-            needle.style.transformOrigin = "";
-            needle.style.transition = "";
-            var deg = ${targetDegrees};
-            needle.setAttribute("transform", "rotate(" + deg + ", 60, 80)");
-        };
+        function updateGaugeDOM() {
+            var head = document.getElementById("tile-header");
+            var foot = document.getElementById("tile-footer");
+            var needle = document.getElementById("gauge-needle");
+            var arcG = document.getElementById("arc-green");
+            var arcY = document.getElementById("arc-yellow");
+            
+            if (head || foot || needle || arcG || arcY) {
+                if(head) { head.textContent = "${Header}"; };
+                if(foot) { foot.textContent = "${Footer}"; };
+                
+                if(arcG) { arcG.setAttribute("stroke-dashoffset", "${greenOffset}"); };
+                if(arcY) { arcY.setAttribute("stroke-dashoffset", "${yellowOffset}"); };
+                
+                if(needle) {
+                    needle.style.transform = "";
+                    needle.style.transformOrigin = "";
+                    needle.style.transition = "";
+                    var deg = ${targetDegrees};
+                    needle.setAttribute("transform", "rotate(" + deg + ", 60, 80)");
+                };
+            } else {
+                setTimeout(updateGaugeDOM, 20);
+            }
+        }
+        updateGaugeDOM();
     "$
+
 	UpdateTile(js)
 End Sub
 
@@ -125,7 +134,6 @@ End Sub
 ' Parameters:
 '	js - JavaScript to update the tile elements.
 Private Sub UpdateTile(js As String)
-	Sleep(50)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
 		Log($"[Gauge.UpdateTile][E] Can not update the tile."$)
