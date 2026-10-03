@@ -1,0 +1,129 @@
+﻿Build1=Default,B4RDev,MEGA
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Module1=|relative|..\..\..\src\CommUart
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rCommUART
+' Brief:		Example Arduino MEGA to Arduino UNO communication.
+' Date:			2026-09-27
+' Author: 		Robert W.B. Linn (c) 2026 MIT
+' Description:	The Arduino MEGA sends in regular intervals a 3-byte frame over its hardware serial 1 line to the Arduino UNO.
+'				The Arduino UNO uses software serial to receive the 3-byte frame.
+' Hardware:		Arduino MEGA, Serial Port COM9, 115200
+' Software:		B4R 4.00 (64 bit), rRandomAccessFile 1.91, CommUart Module
+' Communication:3-byte array frame
+'				Frame(0) = CommUart.FRAME_HEADER	' Header byte 0
+'				Frame(1) = LedState 				' Data byte 1 - 0 for Arduino UNO LED OFF, 1 for ON 
+'				Frame(2) = CommUart.FRAME_FOOTER 	' Footer byte 2
+' Wiring:
+'				Inter-Board Communication (MEGA ➔ UNO)
+'				To preserve the primary `Serial` (Port 0) on both boards For programming And debugging via the USB Serial Monitor, 
+'				**`Serial1`** is used on the Mega, And **`SoftwareSerial`** is emulated on the Uno.
+'
+'				| Source Board (MEGA) | Direction | Target Board (UNO) | Wire Color |Pin Description                                           |
+'				| :------------------ | :-------: | :----------------- | :----------| :------------------------------------------------------- |
+'				| **GND**             | =         | **GND**            | Black      | **Common Ground** (Mandatory reference voltage).         |
+'				| **TX1 (Pin 18)**    | ->        | **Pin 10 (RX)**    | Blue       | Mega Hardware Transmit connects To Uno Emulated Receive. |
+'				| **RX1 (Pin 19)**    | <-        | **Pin 11 (TX)**    | Yellow     | Uno Emulated Transmit connects To Mega Hardware Receive. |
+'				**CRITICAL SAFETY RULES**
+'				1. **Isolated Power:** Power both microcontrollers independently via their own USB cables connected To your computer, Or through a properly regulated external shared Power supply.
+'				2. **Ground Unity:** **Never skip the GND-To-GND connection.** Without it, the electric circuit cannot close, floating voltages will occur, And your serial signals will become corrupted Or unreadable.
+'				3. **Power Separation:** **Do Not connect the 5V rail of the Mega directly To the 5V rail of the Uno** While both are simultaneously plugged into USB ports. Doing so creates cross-currents that can permanently damage your computer's USB host controller or destroy the microcontrollers.
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION 	As String = "rCommUART MEGA Sender v20260928"	'ignore
+
+	' Communication
+	Private Serial1 	As Serial      	' Hardware Serial 1 (Pins 18/19)
+
+	' Data Transfer	
+	Private FRAME_SIZE 	As Int = 3		' Important - must match frame used
+	
+	' Timer for sending test data
+	Private Timer1 		As Timer
+	
+	' Frame byte 1 holds ledstate
+	Private LedState	As Byte = 0
+	
+	' Helper
+	Private ByteConv	As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	' Log(CRLF, "[AppStart] ", VERSION)
+
+	CommUart.InitializeMEGAUart1(FRAME_SIZE)
+
+	Timer1.Initialize("Timer1_Tick", 2000) ' Send every 2 seconds
+    Timer1.Enabled = True
+End Sub
+
+'==============================================
+' TIMER
+'==============================================
+Private Sub Timer1_Tick
+	' Create a 3-byte frame payload
+	Dim Frame(FRAME_SIZE) As Byte
+	
+	' Set state byte used for frame byte 1
+	LedState = IIf(LedState = 0x0, 0x01, 0x00)
+	
+	Frame(0) = CommUart.FRAME_HEADER	' Header byte 0
+	Frame(1) = LedState 				' Data byte 1 - 0 for Arduino UNO LED OFF, 1 for ON 
+	Frame(2) = CommUart.FRAME_FOOTER 	' Footer byte 2
+    
+	' Send the array over Serial1
+	CommUart.Write(Frame)
+	Log("[Timer1_Tick] 3-byte frame sent:", ByteConv.HexFromBytes(Frame))
+End Sub
+
+'==============================================
+' EVENTS
+'==============================================
+#Region EVENTS
+'==============================================
+' Each code module can reference the comm events.
+' The code module callbacks are hardcoded and must exist.
+' The code module uses data passthru and does not perform any checks.
+'==============================================
+
+' CommUART_OnReceived
+' Handle new data from the client.
+Public Sub CommUART_OnReceived(buffer() As Byte)
+	Log("[Main.CommUART_OnReceived] buffer=", buffer.Length, " hex=", ByteConv.HexFromBytes(buffer))
+End Sub
+
+' CommUART_OnError
+Public Sub CommUART_OnError
+	Log("[Main.CommUART_OnError]")
+End Sub
+
+Private Sub CommUART_Write(data() As Byte)
+	If data.Length > 0 Then
+		CommUart.Write(data)		
+	End If
+End Sub
+
+' Test communication by calling OnReceived with 3 Bytes.
+Private Sub CommUARTTest(tag As Byte)	'ignore
+	Log("[Main.CommUARTTest] tag=", tag)
+	CommUart.OnReceived(Array As Byte(0x19, tag, 0x58))
+End Sub
+#End Region

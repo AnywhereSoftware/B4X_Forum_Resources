@@ -1,5 +1,5 @@
 ###  Material Design 3 Components by Mashiane
-### 09/10/2026
+### 09/27/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/171985/)
 
 Hi there  
@@ -8,6 +8,9 @@ Hi there
   
 I've been working on something that I think may be useful to other B4A developers: **bringing Google's Material Design 3 components to B4A through Java wrappers.**  
 This is indeed a challenging process and each component will come as individual jar + xml files for your [$25 certificate of appreciation.](https://paypal.me/anelembanga)  
+  
+  
+![](https://www.b4x.com/android/forum/attachments/173775) ![](https://www.b4x.com/android/forum/attachments/173776) ![](https://www.b4x.com/android/forum/attachments/173777) ![](https://www.b4x.com/android/forum/attachments/173778) ![](https://www.b4x.com/android/forum/attachments/173779) ![](https://www.b4x.com/android/forum/attachments/173780)  
   
 For anyone not familiar with it, **Material Design 3 (M3)** is Google's latest generation of Material Design. It provides a comprehensive design system for Android applications, including components, colour systems, typography, shapes, interaction patterns and theming.  
   

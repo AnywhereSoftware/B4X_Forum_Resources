@@ -1,5 +1,5 @@
 ### Embedding native android views or widgets in b4a by jkhazraji
-### 09/25/2026
+### 09/26/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/172154/)
 
 This is done by inflating xml files that are intended for native Android apps. Since the xml code contains the view, it will be shown (and can be manipulated) in b4a code.  
@@ -52,14 +52,14 @@ Sub InflateLayout(LayoutName As String, Parent As Panel) As View
     ' Get Resources and LayoutInflater  
     Dim resources As JavaObject  
     resources = context.RunMethod("getResources", Null)  
-      
+     
     Dim inflater As JavaObject  
     inflater = context.RunMethod("getSystemService", Array("layout_inflater"))  
   
     ' Get the resource ID (e.g., R.layout.my_layout)  
     Dim resName As String = LayoutName.Replace(".xml", "") ' Remove .xml extension  
     Dim resID As Int = resources.RunMethod("getIdentifier", Array(resName, "layout",Application.PackageName))  
-      
+     
     If resID = 0 Then  
         Log("Error: Layout file not found in resources - " & LayoutName)  
         Return Null  
@@ -141,7 +141,7 @@ Then:
 ```
 
   
-Next step is create event that fires when we refresh the view  
+Next step is to create event that fires when we refresh the view  
 
 ```B4X
 'Create listener  
@@ -155,13 +155,13 @@ Private Sub onRefreshing_Event(MethodName As String, Args() As Object)
     Log($"Refreshing:${MethodName}"$)  
 '    lottieAnimationView.RunMethod("playAnimation", Null)  
     Update  
-    
+   
 End Sub  
 Private Sub Update  
     ' When refresh is done:  
     swiperefresh.As(JavaObject).RunMethod("setRefreshing", Array(False))  
     Log("Refresh done")  
-      
+     
 End Sub
 ```
 
