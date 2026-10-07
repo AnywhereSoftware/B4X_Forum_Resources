@@ -1,0 +1,120 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcommuart
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rCommUART
+' Brief:        Example custom frame header & footer with state byte to set LED.
+' Date:         2026-09-30
+' Author:       Robert W.B. Linn (c) 2026 MIT
+' Description:  Set the state of an LED connected to the MCU using custom frame
+' 				Length = 3 bytes
+'               Byte 0 = Header - 0xFE
+'               Byte 1 = LED state - 0x00 (OFF) or 0x01 (ON)
+'               Byte 2 = Footer - 0xFF
+'               The client must ensure that exactly 3 bytes are transmitted for each frame.
+' Hardware:     Arduino UNO
+' Software:     B4R 4.00 (64 bit)
+' Wiring:		MCU = LED
+'               D4  = Signal - White (DFRobot); 5V  = VCC; GND = GND
+' Hints:		Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rCommUART Example LED State Custom Frame v20260930"	'ignore
+
+	' Communication
+	Public SerialLine 		As Serial		' UART0 (Port 0)
+
+	' Data Transfer	
+	Private FRAME_SIZE 		As Int = 3		' IMPORTANT must match frame used
+	Private FRAME_HEADER	As Int = 0xFE	
+	Private FRAME_FOOTER	As Int = 0xFF
+
+	' LED
+	Private Led 			As Pin			
+	Private LED_PINNR		As Byte = 4		' D4
+	Private LED_ON 			As Byte	= 0x01
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	' Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init LED
+	Led.Initialize(LED_PINNR, Led.MODE_OUTPUT)
+	Led.DigitalWrite(False)
+
+	' Init CommUart module	
+	CommUart.Initialize(SerialLine.Stream, FRAME_SIZE)
+	' Override the default frame header & footer
+	CommUart.FrameHeader = FRAME_HEADER
+	CommUart.FrameFooter = FRAME_FOOTER
+
+	' Tests turn LED on (0) and off (1)
+	' CallSubPlus("CommUartTest", 1000, 1)
+	' CallSubPlus("CommUartTest", 5000, 0)
+End Sub
+
+'==============================================
+' COMMUART EVENTS
+'==============================================
+
+#Region COMMUARTEVENTS
+'==============================================
+' Each code module can reference the comm events.
+' The code module callbacks are hardcoded and must exist.
+' The code module uses data passthru and does not perform any checks.
+'==============================================
+
+' CommUART_OnReceived
+' Handle new data from the client.
+' Parameter:
+'	buffer - 3-byte array received
+Public Sub CommUART_OnReceived(buffer() As Byte)
+	' Log("[Main.CommUART_OnReceived] buffer=", buffer.Length, " hex=", ByteConv.HexFromBytes(buffer))
+	
+	If buffer.Length = FRAME_SIZE Then
+		Dim newstate As Boolean = IIf(buffer(1) = LED_ON, True, False)
+		Led.DigitalWrite(newstate)
+		' Log("[Main.CommUART_OnReceived] LED state set to ", newstate)
+	End If
+End Sub
+
+' CommUART_OnError
+Public Sub CommUART_OnError
+	Log("[Main.CommUART_OnError]")
+End Sub
+
+' CommUART_Write
+' Write data to the connected client.
+' Parameter:
+'	data - Byte array with framesize length
+Private Sub CommUART_Write(data() As Byte)
+	If data.Length > 0 Then
+		CommUart.Write(data)		
+	End If
+End Sub
+
+' Test communication by calling OnReceived with 3 Bytes.
+' Parameter:
+'	tag - Byte setting the LED state 0=Off, 1=On
+Private Sub CommUARTTest(tag As Byte)	'ignore
+	Log("[Main.CommUARTTest] tag=", tag)
+	' Call the module CommUart OnReceived event
+	CommUart.OnReceived(Array As Byte(CommUart.FrameHeader, tag, CommUart.FrameFooter))
+End Sub
+#End Region

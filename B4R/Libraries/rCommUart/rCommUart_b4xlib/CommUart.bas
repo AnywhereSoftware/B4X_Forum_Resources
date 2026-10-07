@@ -8,7 +8,7 @@ Version=4
 '==============================================
 ' Project:       rCommUART
 ' Brief:         Generalized binary framed command transport over UART.
-' Date:          2026-09-29
+' Date:          2026-09-30
 ' Description:   Data is transmitted as raw data byte frames with a defined frame size
 '                set during initialization.
 '                AsyncStreams is used to handle received data using the events
@@ -35,8 +35,8 @@ Private Sub Process_Globals
 	Public Debug As Boolean = False
 
 	' Mandatory frame header & footer	
-	Public FRAME_HEADER As Byte = 0x19	' Example: STX
-	Public FRAME_FOOTER As Byte = 0x58	' Example: ETX
+	Private FRAME_HEADER As Byte = 0x19	' Example: STX
+	Private FRAME_FOOTER As Byte = 0x58	' Example: ETX
 
 	' Status Flags (Industry standard naming convention)
 	Private Const STATUS_OK   As Byte = 0x06 ' ASCII ACK (Acknowledge) - Operation succeeded
@@ -46,7 +46,10 @@ Private Sub Process_Globals
 	' Preallocated transmission frame to prevent heap fragmentation
 	Private StatusTXFrame(3) As Byte	' Frame used to reply the status as 3-bytes Header+Status+Footer to the client
 
-	Public FrameSize As Int = 5			' Default size 5 bytes
+	' Frame
+	Public FrameSize As Int = 5					' Default size 5 bytes
+	Public FrameHeader As Int = FRAME_HEADER	' Default 0x19
+	Public FrameFooter As Int = FRAME_FOOTER	' Default 0x20
 	
 	' Communication mechanics using conditional flags for addition ports.
 	#If MEGA
@@ -129,13 +132,13 @@ Public Sub OnReceived(buffer() As Byte)
 	Do While RXLen >= FrameSize
         
 		' ---------- FAST RESYNC (Header) ----------
-		If RXBuffer(0) <> FRAME_HEADER Then
+		If RXBuffer(0) <> FrameHeader Then
 			ShiftLeft(1)
 			Continue
 		End If
         
 		' ---------- FAST RESYNC (Footer) ----------
-		If RXBuffer(FrameSize - 1) <> FRAME_FOOTER Then
+		If RXBuffer(FrameSize - 1) <> FrameFooter Then
 			ShiftLeft(1)
 			Continue
 		End If
@@ -148,7 +151,7 @@ Public Sub OnReceived(buffer() As Byte)
 		ShiftLeft(FrameSize)
 
 		' ---------- Dispatch Valid Frame to Main ----------
-		' We slice a perfectly sized temporary view to pass to Main
+		' Slice a sized temporary view to pass to Main
 		' without initializing new heap arrays.
 		Dim framebuffer(FrameSize) As Byte
 		For i = 0 To FrameSize - 1
@@ -184,9 +187,9 @@ End Sub
 ' WriteStatusOk
 ' Dispatches a standardized success verification frame (ACK).
 Public Sub WriteStatusOk
-	StatusTXFrame(0) = FRAME_HEADER
+	StatusTXFrame(0) = FrameHeader
 	StatusTXFrame(1) = STATUS_OK
-	StatusTXFrame(2) = FRAME_FOOTER
+	StatusTXFrame(2) = FrameFooter
 	AStreamLine.Write(StatusTXFrame)
 	
 	If Debug Then Log("[CommUART.WriteStatusOk][I] ACK frame sent.")
@@ -195,9 +198,9 @@ End Sub
 ' WriteStatusErr
 ' Dispatches a standardized error fault frame (NAK).
 Public Sub WriteStatusErr
-	StatusTXFrame(0) = FRAME_HEADER
+	StatusTXFrame(0) = FrameHeader
 	StatusTXFrame(1) = STATUS_ERR
-	StatusTXFrame(2) = FRAME_FOOTER
+	StatusTXFrame(2) = FrameFooter
 	AStreamLine.Write(StatusTXFrame)
 	
 	If Debug Then Log("[CommUART.WriteStatusErr][E] ERR frame sent.")
@@ -206,9 +209,9 @@ End Sub
 ' WriteStatusBusy
 ' Dispatches a standardized processing delay frame.
 Public Sub WriteStatusBusy
-	StatusTXFrame(0) = FRAME_HEADER
+	StatusTXFrame(0) = FrameHeader
 	StatusTXFrame(1) = STATUS_BUSY
-	StatusTXFrame(2) = FRAME_FOOTER
+	StatusTXFrame(2) = FrameFooter
 	AStreamLine.Write(StatusTXFrame)
 	
 	If Debug Then Log("[CommUART.WriteStatusBusy][W] BUSY frame sent.")

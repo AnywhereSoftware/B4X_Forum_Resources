@@ -1,7 +1,24 @@
 ###  MyInvois SDK (for Malaysia e-Invoicing) by aeric
-### 07/01/2026
+### 10/01/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/171419/)
 
+[TABLE]  
+[TR]  
+[TH]
+
+Update
+
+[/TH]  
+[/TR]  
+[TR]  
+[TD]
+
+From AI chatbot advice, I have made the repo as private.
+
+[/TD]  
+[/TR]  
+[/TABLE]  
+  
 Version: 1.01  
   
 At last I make this library public.  

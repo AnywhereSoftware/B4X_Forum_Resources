@@ -1,5 +1,5 @@
 ### rCommUart by rwblinn
-### 09/29/2026
+### 09/30/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/172171/)
 
 **B4R Library rCommUart**  
@@ -10,8 +10,7 @@
   
   
 **Brief  
-rCommUart** is an open-source B4R library for generalized binary framed command transport over UART.   
-It provides fixed-length frame handling, asynchronous reception, frame validation, data transmission, and standardized status responses.  
+rCommUart** is an open-source B4R library for generalized binary framed command transport over UART. It provides fixed-length frame handling, asynchronous reception, frame validation, data transmission, and standardized status responses.  
   
 
 ---
@@ -61,29 +60,23 @@ This B4R library is:
   
 The development test program uses a simple LED control example.   
 A three-byte binary frame is transmitted to the B4R device:  
-  
 
 ```B4X
-Byte 0: Header    = 0x19 (fixed)  
-Byte 1: LED state = 0 or 1  
-Byte 2: Footer    = 0x58 (fixed)
+Byte 0: Header    = 0x19 (Default)  
+Byte 1: LED state = 0x00 (OFF) or 0x01 (ON)  
+Byte 2: Footer    = 0x58 (Default)
 ```
 
   
   
 The configured frame size is 3 bytes. The client must ensure that exactly 3 bytes are transmitted for each frame.  
   
-Example wiring:  
+Example wiring used for the example to set the state of the LED:  
   
 
 ```B4X
-MCU = LED  
-D4  = Signal - White (DFRobot)  
-5V  = VCC  
-GND = GND  
-  
-MCU = Button  
-D5  = Signal - Yellow (DFRobot)  
+MCU = LED ((DFRobot Digital Green LED Module V2)  
+D4  = Signal - White   
 5V  = VCC  
 GND = GND
 ```
@@ -108,7 +101,6 @@ GND = GND
   
 **Install**  
 Copy the *rCommUart.b4xlib* file into your B4R **Additional Libraries** folder.  
-  
 No external platform libraries are required.  
   
 
@@ -181,10 +173,29 @@ For the example application, the frame consists of three bytes:
   
   
 
-- **Byte 0 - Header:** Fixed value 0x19.
-- **Byte 1 - Data:** LED state, where 0 = OFF and 1 = ON.
-- **Byte 2 - Footer:** Fixed value 0x58.
+- **Byte 0 - Header:** Default value 0x19.
+- **Byte 1 - Data:** LED state, where 0x00 = OFF and 0x01 = ON.
+- **Byte 2 - Footer:** Default value 0x58.
 
+**Note**  
+The frame header and footer byte can be changed after initialization of the library:  
+
+```B4X
+Sub Process_Globals  
+    Private FRAME_SIZE As Int = 3        ' IMPORTANT must match frame used  
+    Private FRAME_HEADER As Int = 0xFE     
+    Private FRAME_FOOTER As Int = 0xFF  
+End Sub  
+  
+Private Sub AppStart  
+    ' Init CommUart module     
+    CommUart.Initialize(SerialLine.Stream, FRAME_SIZE)  
+    ' Override the default frame header & footer  
+    CommUart.FrameHeader = FRAME_HEADER  
+    CommUart.FrameFooter = FRAME_FOOTER
+```
+
+  
   
 The client is responsible for transmitting exactly the configured number of bytes for each frame.  
   
@@ -253,7 +264,6 @@ For an Arduino Mega, enable the *MEGA* conditional to provide access to:
 - **UART2:** TX2 / RX2
 - **UART3:** TX3 / RX3
 
-  
 For ESP32, enable the *ESP32* conditional to provide the additional UART functionality supported by the library.  
   
 **Important:** Arduino Mega uses 5 V logic levels, while ESP32 uses 3.3 V logic levels. Ensure that connected hardware is electrically compatible.  
