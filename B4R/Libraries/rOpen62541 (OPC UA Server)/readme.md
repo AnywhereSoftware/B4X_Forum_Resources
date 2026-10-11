@@ -1,5 +1,5 @@
 ### rOpen62541 (OPC UA Server) by rwblinn
-### 09/19/2026
+### 10/05/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/172071/)
 
 **B4R Library rOpen62541**  
@@ -56,6 +56,59 @@ It turns your microcontroller into a data provider but does not include client c
 
   
   
+**rOpen62541** uses a simple, flat node hierarchy.  
+[SPOILER="Node Hierarchy"]  
+All application nodes are added directly below the root object:  
+
+```B4X
+Objects (ns=0;i=85)  
+└── Factory_Floor (ns=1;s=Factory_Floor)  
+    ├── Temperature  
+    ├── Humidity  
+    ├── Pump1_Status  
+    ├── Pump1_Speed  
+    ├── Valve1_Status  
+    ├── Production_Count  
+    └── Trigger
+```
+
+  
+Folders and additional hierarchical levels are not supported by the current B4R wrapper.  
+This is an intentional design choice to keep the B4R API simple and to minimize RAM usage and processing overhead on ESP32-class microcontrollers.  
+  
+For applications requiring a logical structure, *prefix naming* can be used to organize nodes while retaining the flat hierarchy.   
+This is similar to the tag-naming approach commonly used in industrial automation systems:  
+  
+
+```B4X
+Factory_Floor  
+├── Tank1_Temperature  
+├── Tank1_Level  
+├── Tank1_Pressure  
+├── Pump1_Status  
+├── Pump1_Speed  
+├── Pump2_Status  
+└── Pump2_Speed
+```
+
+  
+For example:  
+
+```B4X
+OPCUAServer.AddFloatNode("Tank1_Temperature", "Tank 1 Temperature", 22.5)  
+OPCUAServer.AddFloatNode("Tank1_Level", "Tank 1 Level", 75.0)  
+OPCUAServer.AddBooleanNode("Pump1_Status", "Pump 1 Status", False)
+```
+
+  
+This approach provides a simple and predictable OPC UA address space while keeping the wrapper lightweight and well suited for embedded ESP32 applications.  
+[/SPOILER]  
+  
+
+---
+
+  
+  
 **Development Info**  
 This B4R library is:  
 
@@ -98,7 +151,6 @@ While modern versions introduce advanced enterprise desktop configurations, vers
 - Perfect Functional Match: The v1.2 branch provides 100% of the industrial protocol features required for this proof of concept (including dynamic float, integer, string, and raw binary ByteString node arrays) without any unnecessary software bloat.
 
 [/SPOILER]  
-  
 
 ---
 
@@ -130,71 +182,71 @@ To install the library:
 
 ```B4X
 Sub Process_Globals  
-	Private VERSION 			As String = "rOpen62541 EnvSim v20260913"  
-	Public Serial1 				As Serial  
-	Private WiFi 				As ESP8266WiFi						' Lib rESP8266WiFi  
-	Private SSID				As String = "***"  
-	Private PW 					As String = "***"  
-	Private OpcServer			As Open62541						' Lib rOpen62541  
-	Private PORT 				As Int = 4840  
-	Private NAMESPACE_INDEX 	As Int = 1  
-	Private AppTimer As Timer  
-	Private APPTIMER_INTERVAL As ULong = 2000  
-	Private bc As ByteConverter	'ignore  
+    Private VERSION             As String = "rOpen62541 EnvSim v20260913"  
+    Public Serial1                 As Serial  
+    Private WiFi                 As ESP8266WiFi                        ' Lib rESP8266WiFi  
+    Private SSID                As String = "***"  
+    Private PW                     As String = "***"  
+    Private OpcServer            As Open62541                        ' Lib rOpen62541  
+    Private PORT                 As Int = 4840  
+    Private NAMESPACE_INDEX     As Int = 1  
+    Private AppTimer As Timer  
+    Private APPTIMER_INTERVAL As ULong = 2000  
+    Private bc As ByteConverter    'ignore  
 End Sub  
   
 Sub AppStart  
-	Serial1.Initialize(115200)  
-	AppTimer.Initialize("AppTimer_Tick", APPTIMER_INTERVAL)  
-	AppTimer.Enabled = False  
-	If WiFi.Connect2(SSID, PW) Then  
-		Log("[AppStart] WiFi connected > local ip=", WiFi.LocalIP)  
-		RunNative("DisableWiFiSleep", Null)  
-		RunNative("InitSystemClock", Null)  
-		If InitOpcServer Then  
-			AppTimer.Enabled = True  
-		End If  
-	Else  
-	End If  
+    Serial1.Initialize(115200)  
+    AppTimer.Initialize("AppTimer_Tick", APPTIMER_INTERVAL)  
+    AppTimer.Enabled = False  
+    If WiFi.Connect2(SSID, PW) Then  
+        Log("[AppStart] WiFi connected > local ip=", WiFi.LocalIP)  
+        RunNative("DisableWiFiSleep", Null)  
+        RunNative("InitSystemClock", Null)  
+        If InitOpcServer Then  
+            AppTimer.Enabled = True  
+        End If  
+    Else  
+    End If  
 End Sub  
   
 Private Sub InitOpcServer As Boolean  
-	Dim TimeoutCounter As Int = 0  
-	Dim ServerBootFailed As Boolean = False  
-	OpcServer.Initialize(WiFi.LocalIp, PORT, "", "", "OnDataWrite")  
-	Do While OpcServer.IsReady = False  
-		Delay(100) ' 100ms yield ticks for the cooperative scheduler  
-		TimeoutCounter = TimeoutCounter + 1  
-		If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
-			ServerBootFailed = True  
-			Exit ' Break out of the endless loop safely!  
-		End If  
-	Loop  
-	If ServerBootFailed Then  
-		Log("[InitOpcServer][E] OPC UA Server initialization TIMEOUT! Core 0 failed.")  
-	Else  
-		OpcServer.AddFloatNode("Temperature", "Room Temperature", 20.0)  
-		OpcServer.AddFloatNode("Humidity", "Room Humidity", 68.0)  
-		OpcServer.AddIntNode("Counter", "Total Shift Cycle Count", 0)  
-		OpcServer.AddByteStringNode("RawTelemetry", "Atomic Hex Package", RawBuffer)  
-		OpcServer.AddStringNode("Trigger", "Remote Action Trigger", "0")  
-	End If  
-	Return Not(ServerBootFailed)  
+    Dim TimeoutCounter As Int = 0  
+    Dim ServerBootFailed As Boolean = False  
+    OpcServer.Initialize(WiFi.LocalIp, PORT, "", "", "OnDataWrite")  
+    Do While OpcServer.IsReady = False  
+        Delay(100) ' 100ms yield ticks for the cooperative scheduler  
+        TimeoutCounter = TimeoutCounter + 1  
+        If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
+            ServerBootFailed = True  
+            Exit ' Break out of the endless loop safely!  
+        End If  
+    Loop  
+    If ServerBootFailed Then  
+        Log("[InitOpcServer][E] OPC UA Server initialization TIMEOUT! Core 0 failed.")  
+    Else  
+        OpcServer.AddFloatNode("Temperature", "Room Temperature", 20.0)  
+        OpcServer.AddFloatNode("Humidity", "Room Humidity", 68.0)  
+        OpcServer.AddIntNode("Counter", "Total Shift Cycle Count", 0)  
+        OpcServer.AddByteStringNode("RawTelemetry", "Atomic Hex Package", RawBuffer)  
+        OpcServer.AddStringNode("Trigger", "Remote Action Trigger", "0")  
+    End If  
+    Return Not(ServerBootFailed)  
 End Sub  
   
 Sub AppTimer_Tick  
     If OpcServer.IsReady Then  
-		Dim CurrentTemp As Float = 24.5 + Rnd(-2.0, 3.0)  
-		Dim CurrentHum As Float = 68 + Rnd(-10.0, 11.0)  
-		OpcServer.WriteNumeric(NAMESPACE_INDEX, "Temperature", CurrentTemp)  
-		OpcServer.WriteNumeric(NAMESPACE_INDEX, "Humidity", CurrentHum)  
+        Dim CurrentTemp As Float = 24.5 + Rnd(-2.0, 3.0)  
+        Dim CurrentHum As Float = 68 + Rnd(-10.0, 11.0)  
+        OpcServer.WriteNumeric(NAMESPACE_INDEX, "Temperature", CurrentTemp)  
+        OpcServer.WriteNumeric(NAMESPACE_INDEX, "Humidity", CurrentHum)  
     End If  
 End Sub  
   
 Private Sub OnDataWrite(buffer() As Byte)  
-	Log("[OnDataWrite] Client invoked the trigger method. value=", bc.StringFromBytes(buffer))  
-	'[OnDataWrite] Client invoked the trigger method. value=68  
-	'[OnDataWrite] Client invoked the trigger method. value=START  
+    Log("[OnDataWrite] Client invoked the trigger method. value=", bc.StringFromBytes(buffer))  
+    '[OnDataWrite] Client invoked the trigger method. value=68  
+    '[OnDataWrite] Client invoked the trigger method. value=START  
 End Sub  
   
 #if C  

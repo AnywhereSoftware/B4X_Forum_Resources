@@ -1,5 +1,5 @@
 ### (b4j)[juuid] Get Unique hardware ID by behnam_tr
-### 09/02/2026
+### 10/08/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/132277/)
 
 Get Unique hardware ID in b4j  
@@ -88,8 +88,42 @@ updated v3.0 (2026/08)
 Code optimization and bug fixing with AI  
 Merged overloaded functions / functions with the same name have been merged  
 New functions have been added  
+[/SPOILER]  
+  
+  
+  
+How Use :  
 
 ```B4X
+    Private p As jUUID  
+    Log(p.Get_CPUID)  
+    Log(p.Get_MotherboardSN)  
+    Log(p.Get_MachineID)  
+    Log(p.Get_HddID)  
+    Log(p.Get_HddDriveletterID("C"))  
+    Log(p.Get_HddDriveletterID("D"))  
+    Log(p.Get_NumericHardwareID)  
+    Log(p.Linux_UUID)  
+    Log(p.Linux_MACID("eth0"))  
+    Log(p.Get_RandomUuid)  
+    Log(p.Get_HWID1)  
+    Log(p.Get_HWID2)  
+     
+    Dim macs As List = p.Get_AllMacIds  
+    For Each macm As Map In macs  
+        Log("Name = " & macm.Get("name"))  
+        Log("Display = " & macm.Get("displayname"))  
+        Log("MAC_ID = " & macm.Get("mac"))  
+    Next
+```
+
+  
+  
+  
+  
+
+```B4X
+    Private p As jUUID  
     Log("Windows : " & p.IsWindows)  
     Log("Linux   : " & p.IsLinux)  
     Log("macOS   : " & p.IsMacOS)  
@@ -105,38 +139,13 @@ New functions have been added
   
   
   
-[/SPOILER]  
-  
-  
-  
-How Use :  
-
-```B4X
-    Dim pdd As jUUID  
-  
-    Log(pdd.Get_CPUID )  
-    Log( pdd.Get_HddID1 )  
-    Log( pdd.Get_HddID2 )  
-    Log( pdd.Get_HddID3 )  
-    Log( pdd.Get_HddID4("C") )  //disk drive letter  
-    Log ( pdd.Get_MachineID )  
-    Log ( pdd.Get_MachineID2 )  
-    Log ( pdd.Get_MacId )  
-    Log ( pdd.Get_MotherboardSN )  
-    Log( pdd.Get_HWID1 )  'hardware + software > can change with changing windows or user  
-    Log( pdd.Get_HWID2 )  'hardware + software > can change with changing windows or user
-```
-
-  
-  
-  
 
 ```B4X
 'Hardware information  
 'Windows Only  
 'system information  
   
-    Dim p As jUUID  
+    Private p As jUUID  
     Log("OS_Name : "&p.OS_Name)  
     Log("OS_Version: "&p.OS_Version)  
     Log("OS_Arch : "&p.OS_Arch)  
@@ -149,7 +158,8 @@ How Use :
     Log("Total PhysicalMemory : "&Round(p.Get_TotalPhysicalMemory/1024/1024)&" MB")  
     Log("Free PhysicalMemory : "&Round(p.Get_AvailablePhysicalMemory/1024)&" MB")  
     Log("GPU Name: "&p.Get_GpuName)  
-    Log("Bios Version : "&p.Get_BiosVersion)
+    Log("Bios Version : "&p.Get_BiosVersion)  
+    Log("java Version : "&p.OS_JavaVersion)
 ```
 
   
