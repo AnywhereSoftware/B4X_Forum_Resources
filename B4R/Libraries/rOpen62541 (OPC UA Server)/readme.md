@@ -1,5 +1,5 @@
 ### rOpen62541 (OPC UA Server) by rwblinn
-### 10/05/2026
+### 10/12/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/172071/)
 
 **B4R Library rOpen62541**  
@@ -76,7 +76,7 @@ Objects (ns=0;i=85)
 Folders and additional hierarchical levels are not supported by the current B4R wrapper.  
 This is an intentional design choice to keep the B4R API simple and to minimize RAM usage and processing overhead on ESP32-class microcontrollers.  
   
-For applications requiring a logical structure, *prefix naming* can be used to organize nodes while retaining the flat hierarchy.   
+For applications requiring a logical structure, *prefix naming* can be used to organize nodes while retaining the flat hierarchy.  
 This is similar to the tag-naming approach commonly used in industrial automation systems:  
   
 
@@ -182,84 +182,102 @@ To install the library:
 
 ```B4X
 Sub Process_Globals  
-    Private VERSION             As String = "rOpen62541 EnvSim v20260913"  
+    Private VERSION             As String = "rOpen62541 EnvSim v20261012"  
+    ' Communication  
     Public Serial1                 As Serial  
     Private WiFi                 As ESP8266WiFi                        ' Lib rESP8266WiFi  
-    Private SSID                As String = "***"  
-    Private PW                     As String = "***"  
-    Private OpcServer            As Open62541                        ' Lib rOpen62541  
+    Private SSID                As String = "Zuse"  
+    Private PW                     As String = "83425399897672098612"  
+    ' Open62541  
+    Private OPCUAServer            As Open62541                        ' Lib rOpen62541  
     Private PORT                 As Int = 4840  
-    Private NAMESPACE_INDEX     As Int = 1  
+    ' Nodes  
+    Private NODEID_TEMPERATURE    As String = "ns=1;s=Temperature"  
+    Private NODEID_HUMIDITY        As String = "ns=1;s=Humidity"  
+    ' Timer simulating sensor data  
     Private AppTimer As Timer  
-    Private APPTIMER_INTERVAL As ULong = 2000  
+    Private APPTIMER_INTERVAL     As ULong = 5000  
+    'Helper  
     Private bc As ByteConverter    'ignore  
 End Sub  
   
 Sub AppStart  
     Serial1.Initialize(115200)  
+    Log(CRLF, "[AppStart] ", VERSION)  
+    ' Init app timer to generate env data  
     AppTimer.Initialize("AppTimer_Tick", APPTIMER_INTERVAL)  
+    ' Start after opc server has been initialized and nodes created  
     AppTimer.Enabled = False  
+    ' Connect to the network first  
     If WiFi.Connect2(SSID, PW) Then  
         Log("[AppStart] WiFi connected > local ip=", WiFi.LocalIP)  
+        ' [AppStart] WiFi connected. IP=192.168.1.68  
         RunNative("DisableWiFiSleep", Null)  
-        RunNative("InitSystemClock", Null)  
-        If InitOpcServer Then  
+        RunNative("SetSystemClock", Null)  
+        If InitOPCUAServer Then  
             AppTimer.Enabled = True  
+            Log("[AppStart] OPC UA server & simulation started every ", APPTIMER_INTERVAL, "ms")  
         End If  
     Else  
+        Log("[AppStart][E] WiFi Connection Failed")  
     End If  
 End Sub  
   
-Private Sub InitOpcServer As Boolean  
+Private Sub InitOPCUAServer As Boolean  
     Dim TimeoutCounter As Int = 0  
     Dim ServerBootFailed As Boolean = False  
-    OpcServer.Initialize(WiFi.LocalIp, PORT, "", "", "OnDataWrite")  
-    Do While OpcServer.IsReady = False  
-        Delay(100) ' 100ms yield ticks for the cooperative scheduler  
+    ' Init the OPC UA server no callbacks (set to null)  
+    OPCUAServer.Initialize(WiFi.LocalIp, PORT, _                ' See log after boot which IP:Port  
+                           "", "", _                             ' No auth  
+                           Null, _                               ' No Trigger callback  
+                           Null)                                ' No data write callback  
+    ' Wait for the background thread layout initialization to complete!  
+    Do While OPCUAServer.IsReady = False  
+        Delay(100) ' 100ms yield ticks for the cooperative scheduler        
         TimeoutCounter = TimeoutCounter + 1  
         If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
             ServerBootFailed = True  
             Exit ' Break out of the endless loop safely!  
         End If  
     Loop  
+    
     If ServerBootFailed Then  
-        Log("[InitOpcServer][E] OPC UA Server initialization TIMEOUT! Core 0 failed.")  
+        Log("[InitOPCUAServer][E] Failed with TIMEOUT! Core 0 failed.")  
+        ' Optional: Run local emergency fallback routine or let local sensors run offline  
     Else  
-        OpcServer.AddFloatNode("Temperature", "Room Temperature", 20.0)  
-        OpcServer.AddFloatNode("Humidity", "Room Humidity", 68.0)  
-        OpcServer.AddIntNode("Counter", "Total Shift Cycle Count", 0)  
-        OpcServer.AddByteStringNode("RawTelemetry", "Atomic Hex Package", RawBuffer)  
-        OpcServer.AddStringNode("Trigger", "Remote Action Trigger", "0")  
+        OPCUAServer.AddFloatNode(NODEID_TEMPERATURE, "Room Temperature", 20.0)  
+        OPCUAServer.AddFloatNode(NODEID_HUMIDITY, "Room Humidity", 68.0)  
     End If  
     Return Not(ServerBootFailed)  
 End Sub  
   
 Sub AppTimer_Tick  
-    If OpcServer.IsReady Then  
+    If OPCUAServer.IsReady Then  
         Dim CurrentTemp As Float = 24.5 + Rnd(-2.0, 3.0)  
         Dim CurrentHum As Float = 68 + Rnd(-10.0, 11.0)  
-        OpcServer.WriteNumeric(NAMESPACE_INDEX, "Temperature", CurrentTemp)  
-        OpcServer.WriteNumeric(NAMESPACE_INDEX, "Humidity", CurrentHum)  
+        OPCUAServer.WriteFloat(NODEID_TEMPERATURE, CurrentTemp)  
+        OPCUAServer.WriteFloat(NODEID_HUMIDITY, CurrentHum)  
+        Log("[AppTimer] Sensor read complete > t=", CurrentTemp, " h=", CurrentHum)  
     End If  
-End Sub  
-  
-Private Sub OnDataWrite(buffer() As Byte)  
-    Log("[OnDataWrite] Client invoked the trigger method. value=", bc.StringFromBytes(buffer))  
-    '[OnDataWrite] Client invoked the trigger method. value=68  
-    '[OnDataWrite] Client invoked the trigger method. value=START  
 End Sub  
   
 #if C  
 #include "esp_wifi.h"  
 #include "time.h"  
+  
+// RunNative("DisableWiFiSleep", Null)  
 void DisableWiFiSleep(B4R::Object* o) {  
+    // Force Espressif lwIP stack to set Power Save to NONE  
     esp_wifi_set_ps(WIFI_PS_NONE);  
     ::Serial.println("[Hardware Engine] Wi-Fi Modem-Sleep forcefully disabled! Radio set to high-performance mode.");  
 }  
   
-void InitSystemClock(B4R::Object* o) {  
+// RunNative("SetSystemClock", Null)  
+void SetSystemClock(B4R::Object* o) {  
+    // Configures the system to poll pool.ntp.org with a standard global UTC offset  
+    // Adjust the 3600 (seconds) based on your target local timezone offset (e.g. 3600 = UTC+1)  
     configTime(3600, 0, "pool.ntp.org", "time.nist.gov");  
-    ::Serial.println("[Hardware Engine] SNTP Client started. Synchronizing baseline…");  
+    ::Serial.println("[SetSystemClock] SNTP Client started. Synchronizing baseline…");  
 }  
 #End If
 ```
