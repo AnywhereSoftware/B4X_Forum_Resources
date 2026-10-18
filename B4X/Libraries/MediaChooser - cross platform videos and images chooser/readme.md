@@ -1,5 +1,5 @@
 ###  MediaChooser - cross platform videos and images chooser by Erel
-### 01/05/2025
+### 10/15/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/161093/)
 
 This library makes it simple to let the user choose or capture media.  
@@ -14,6 +14,7 @@ Features:
 - Detects images mime types. Jpeg and Gifs.
 - Works with a progress bar that shows when items need to be copied. This is currently only relevant to B4A.
 - B4A - no permissions needed.
+- B4J - Picking images and videos with a file chooser dialog.
 
 Usage instructions: see the example. It is quite simple.  
   

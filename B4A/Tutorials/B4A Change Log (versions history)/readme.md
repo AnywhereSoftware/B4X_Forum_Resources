@@ -1,7 +1,14 @@
 ### B4A Change Log (versions history) by Erel
-### 09/02/2026
+### 10/15/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/19332/)
 
+**v14.2** - October 15, 2026 - <https://www.b4x.com/android/forum/threads/b4a-v14-2-is-available-for-download-r8-optimizer.172285/>  
+
+- Intermittent "signature does not match…" error in debug mode.
+- Resources of implicit referenced libraries were missing in some cases.
+- R8 dexer and optimizer: <https://www.b4x.com/android/forum/threads/r8-dexer-optimizer.172284/>
+
+  
 **v14.0** - September 2, 2026 - <https://www.b4x.com/android/forum/threads/new-release-b4a-v14-0-with-optional-parameters.171962/>  
   
 
