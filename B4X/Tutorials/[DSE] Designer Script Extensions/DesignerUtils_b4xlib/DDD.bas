@@ -179,6 +179,7 @@ End Sub
 'Adds a class attribute to one or more views.
 'Parameters: ClassName, One or more views.
 Private Sub AddClass(DesignerArgs As DesignerArgs)
+	If DesignerArgs.FirstRun = False Then Return
 	Dim cls As String = DesignerArgs.Arguments.Get(0).As(String).ToLowerCase
 	Dim Data As DDDInternalViewsData = GetViewsData(DesignerArgs.Parent, True)
 	For i = 1 To DesignerArgs.Arguments.Size - 1
@@ -199,15 +200,23 @@ Private Sub AddClassImpl(cls As String, Data As DDDInternalViewsData, view As B4
 End Sub
 
 'Get all views with the given class attribute. The attribute is added in the designer script with DDD.AddClass.
-Public Sub GetViewsByClass(Class As String) As List
+'If LayoutParent is set then only views belonging to the layout parent will be returned.
+Public Sub GetViewsByClass(Class As String, LayoutParent As B4XView = Null) As List
 	Class = Class.ToLowerCase
 	Dim res As List
 	res.Initialize
-	For Each data As DDDInternalViewsData In LayoutsMap.Values
-		If data.ClassesMap.ContainsKey(Class) Then
-			res.AddAll(data.ClassesMap.Get(Class))
+	If Initialized(LayoutParent) Then
+		Dim d As DDDInternalViewsData = GetViewsData(LayoutParent, False)
+		If Initialized(d) And d.ClassesMap.ContainsKey(Class) Then
+			res.AddAll(d.ClassesMap.Get(Class))
 		End If
-	Next
+	Else
+		For Each data As DDDInternalViewsData In LayoutsMap.Values
+			If data.ClassesMap.ContainsKey(Class) Then
+				res.AddAll(data.ClassesMap.Get(Class))
+			End If
+		Next
+	End If
 	Return res
 End Sub
 

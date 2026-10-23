@@ -20,10 +20,6 @@ Version=10.5
 
 Private Sub Class_Globals
 	Private xui As XUI
-	
-	' Instance-specific configuration variables (completely isolated for each tile)
-'	Public TEXT_COLOR As String = "#0f172a"
-'	Public TEXT_SIZE As Int = 24
 
 	' Mandatory class globals private
 	Private mState						As Boolean

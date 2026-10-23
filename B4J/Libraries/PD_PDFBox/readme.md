@@ -1,5 +1,5 @@
 ### PD_PDFBox by behnam_tr
-### 10/16/2026
+### 10/20/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/172303/)
 
 A B4J wrapper for Apache PDFBox 2.0.37 to generate PDF documents.  
@@ -14,6 +14,18 @@ A B4J wrapper for Apache PDFBox 2.0.37 to generate PDF documents.
 - **Fonts:** System fonts (Windows) or custom .ttf files (e.g. Vazir)
 - **Printing:** Direct-to-printer support
 - **Chainable layout:** Every draw method returns the next Y position in %
+
+  
+v1.1  
+AddRowAligned(String[] values, String hAlign)  
+AddRowAlignedCells(String[] values, String[] hAligns)  
+AddRowImage(String[] texts, String imagePath, int imageCol, double rowHeightPct)  
+AutoWrap Text for AddText  
+AutoWrap Text in Tables  
+Fix AddParagraph Line Space  
+bug fix  
+Sample updated.  
+  
 
 ```B4X
 Dim pdf As PD_PDFBox  
@@ -30,4 +42,4 @@ pdf.Save(File.DirApp, "test.pdf")
   
 need jars - copy to b4j library folder : {"commons-logging-1.3.6.jar", "fontbox-2.0.37.jar", "icu4j-60.2.jar", "pdfbox-2.0.37.jar"}  
   
-Download Full Example : lib + jars + sample >> [**Download**](https://drive.google.com/file/d/18Fk8ORiHYIj7pkfeZ9GvzwhcChifG6qi/view?usp=drivesdk)
+Download jar files >> [**Download**](https://drive.google.com/file/d/1SyGqdvmI0ZSgZ2-Qa2qSATEqygBOLEX1/view?usp=sharing)

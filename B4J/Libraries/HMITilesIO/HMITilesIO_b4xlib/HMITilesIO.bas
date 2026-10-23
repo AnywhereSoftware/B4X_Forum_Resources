@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File: 		HMITilesIO.bas
 ' Brief:		CustomView Human Machine Interface tile showing assets from a SVG image.
-' Date:			2026-09-25
+' Date:			See class_globals VERSION.
 ' Author:		Robert W.B. Linn (c) 2026 MIT
 ' Description:	HMITilesIO brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.
 '				Target has been to combine highly optimized vector graphics with native input tracking For microcontrollers And IoT applications.
@@ -43,10 +43,10 @@ Version=10.5
 #End Region
 
 ' Designer properties (ensure to define the key in lowercase)
-#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Battery|Button|ByteStatus|Compass|DualReadOut|Gauge|IconIndicator|IOPanel|LEDPanel|MultiState|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|TiltGauge|Timer|TrendChart|VerticalMeter|Watchdog|, DefaultValue: Switch.
+#DesignerProperty: Key: tiletype, DisplayName: Tile Type, FieldType: String, List: |Alarm|Battery|Button|ByteStatus|Compass|DualReadOut|Gauge|Horizon|IconIndicator|IOPanel|LEDPanel|LoadingIndicator|MultiState|QuadReadOut|ReadOut|Selector|SevenSegment|Signal|Slider|Spinner|Switch|TiltGauge|Timer|TrendChart|VerticalMeter|Watchdog|, DefaultValue: Switch.
 #DesignerProperty: Key: header, DisplayName: Header, FieldType: String, DefaultValue: , Description: Header for all tiles.
 #DesignerProperty: Key: footer, DisplayName: Footer, FieldType: String, DefaultValue: , Description: Footer for all tiles.
-#DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: , Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
+#DesignerProperty: Key: value, DisplayName: Value, FieldType: String, DefaultValue: 0, Description: Value for tile Spinner Gauge ReadOut SevenSegment Slider VerticalMeter.
 #DesignerProperty: Key: minvalue, DisplayName: Min Value, FieldType: Float, DefaultValue: 0, Description: Min value for all tiles.
 #DesignerProperty: Key: maxvalue, DisplayName: Max Value, FieldType: Float, DefaultValue: 100, Description: Max value for all tiles.
 #DesignerProperty: Key: greenmaxpct, DisplayName: Green Max Pct, FieldType: Int, DefaultValue: 70, Description: Green segment for tile Gauge.
@@ -59,21 +59,25 @@ Version=10.5
 
 Private Sub Class_Globals
 
-	Public Const VERSION As String ="HMITilesIO 0.8.0 (Build 2026-09-25)"
+	Public Const VERSION As String ="HMITilesIO 1.0.0 (Build 20261018)"
 
 	' Constants
 	' Tile type names (uppercase) aligned with the designerProperty tiletype
+	Private TILE_ALARM As String 			= "ALARM"
 	Private TILE_BATTERY As String 			= "BATTERY"
 	Private TILE_BUTTON As String 			= "BUTTON"
 	Private TILE_BYTESTATUS As String 		= "BYTESTATUS"
 	Private TILE_COMPASS As String 			= "COMPASS"
 	Private TILE_DUALREADOUT As String 		= "DUALREADOUT"
 	Private TILE_GAUGE As String 			= "GAUGE"
+	Private TILE_HORIZON As String 			= "HORIZON"
 	Private TILE_IOPANEL As String 			= "IOPANEL"
 	Private TILE_ICONINDICATOR As String 	= "ICONINDICATOR"
 	Private TILE_SPINNER As String 			= "SPINNER"
 	Private TILE_LEDPANEL As String 		= "LEDPANEL"
+	Private TILE_LOADINGINDICATOR As String = "LOADINGINDICATOR"
 	Private TILE_MULTISTATE As String 		= "MULTISTATE"
+	Private TILE_QUADREADOUT As String 		= "QUADREADOUT"
 	Private TILE_READOUT As String 			= "READOUT"
 	Private TILE_SELECTOR As String 		= "SELECTOR"
 	Private TILE_SEVENSEGMENT As String 	= "SEVENSEGMENT"
@@ -94,7 +98,7 @@ Private Sub Class_Globals
 	Public SEGMENT_YELLOW_COLOR		As String = "#eab308"
 	Public SEGMENT_RED_COLOR 		As String = "#ef4444"
 
-	' Touch data
+	' Touch data - used by each hmitilesio class method ProcessTouchHandler()
 	Type HMITouchData (Action As Int, X As Float, Y As Float, State As Boolean, Value As String)
 	' Touch result state
 	Type HMITouchResult (State As Object, Value As String)
@@ -127,18 +131,22 @@ Private Sub Class_Globals
 	Private mEventName As String 'ignore
 	Private mCallBack As Object 'ignore
 
-	' Instances (from the class modules)
+	' Instances (from the class modules to access properties & methods)
+	Public InstanceAlarm 			As HMITilesIOAlarm
 	Public InstanceBattery 			As HMITilesIOBattery
 	Public InstanceButton 			As HMITilesIOButton
 	Public InstanceByteStatus 		As HMITilesIOByteStatus
 	Public InstanceCompass 			As HMITilesIOCompass
 	Public InstanceDualReadOut 		As HMITilesIODualReadOut
 	Public InstanceGauge 			As HMITilesIOGauge
+	Public InstanceHorizon 			As HMITilesIOHorizon
 	Public InstanceIOPanel 			As HMITilesIOPanel
 	Public InstanceIconIndicator 	As HMITilesIOIconIndicator
 	Public InstanceLEDPanel 		As HMITilesIOLEDPanel
+	Public InstanceLoadingIndicator As HMITilesIOLoadingindicator
 	Public InstanceMultiState 		As HMITilesIOMultiState
 	Public InstanceReadOut 			As HMITilesIOReadOut
+	Public InstanceQuadReadOut 		As HMITilesIOQuadReadOut
 	Public InstanceSelector 		As HMITilesIOSelector
 	Public InstanceSevenSegment		As HMITilesIOSevenSegment
 	Public InstanceSignal 			As HMITilesIOSignal
@@ -186,7 +194,7 @@ End Sub
 Private Sub AfterLoadLayout(Props As Map)	'ignore
 	BasePane.LoadLayout("hmitilesio")
 
-	' Store designer properties
+	' Store designer properties with defaults
 	mTileType 			= Props.GetDefault("tiletype", "noasset")
 	mTileType			= mTileType.ToUpperCase
 	mHeader 			= Props.GetDefault("header", "")
@@ -202,7 +210,7 @@ Private Sub AfterLoadLayout(Props As Map)	'ignore
 	' Convert the B4X Int color to a standard web CSS hex string (#RRGGBB)
 	mBackgroundColor	= $"#${Bit.ToHexString(clr).SubString(2)}"$
 
-	' Load the HTML
+	' Load the HTML to dispay the SVG image
 	ImageMarkup = File.ReadString(File.DirAssets, IMAGE_MARKUP_FILE)
 
 	' Init the instance depending tiletype
@@ -222,12 +230,16 @@ End Sub
 ' INSTANCES
 ' =========================
 
-'InitInstance
-' Init the selected instances from the tiletype
+' InitInstance
+' Init the selected instance based on its tiletype.
+' After initialization, the tile is set with defaults.
 Private Sub InitInstance
 	mIsReady = False
 
 	Select mTileType
+		Case TILE_ALARM
+			InstanceAlarm.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceAlarm.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BATTERY
 			InstanceBattery.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceBattery.SetTile(mHeader, mFooter, mValue)
@@ -249,6 +261,10 @@ Private Sub InitInstance
 			InstanceGauge.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			If mValue.Length = 0 Then mValue = 0
 			InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
+		Case TILE_HORIZON
+			InstanceHorizon.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			If mValue.Length = 0 Then mValue = 0
+			InstanceHorizon.SetTile(mHeader, mFooter, mValue)
 		Case TILE_ICONINDICATOR
 			InstanceIconIndicator.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceIconIndicator.SetTile(mHeader, mFooter, mValue)
@@ -258,6 +274,9 @@ Private Sub InitInstance
 		Case TILE_LEDPANEL
 			InstanceLEDPanel.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
+		Case TILE_LOADINGINDICATOR
+			InstanceLoadingIndicator.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceLoadingIndicator.SetTile(mHeader, mFooter, mState)
 		Case TILE_MULTISTATE
 			InstanceMultiState.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			Dim states() As Byte = Array As Byte(0,0,0,0,0,0,0,0)
@@ -265,6 +284,9 @@ Private Sub InitInstance
 		Case TILE_READOUT
 			InstanceReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceReadOut.SetTile(mHeader, mFooter, mValue)
+		Case TILE_QUADREADOUT
+			InstanceQuadReadOut.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
+			InstanceQuadReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SELECTOR
 			InstanceSelector.Initialize(PanelWebViewSVG, WebViewSVG, mEventName, mCallBack)
 			InstanceSelector.SetTile(mHeader, mFooter, mValue)
@@ -379,6 +401,7 @@ End Sub
 Public Sub setState(state As Boolean)
 	' Assign state as boolean to global class var
 	mState = state
+	
 	' Assign the state value as binary 0 or 1 to global class var 
 	mValue = IIf(state, 1, 0)
 
@@ -388,6 +411,8 @@ Public Sub setState(state As Boolean)
 			InstanceButton.SetTile(mHeader, mFooter, mState)
 		Case TILE_LEDPANEL
 			InstanceLEDPanel.SetTile(mHeader, mFooter, mState)
+		Case TILE_LOADINGINDICATOR
+			InstanceLoadingIndicator.SetTile(mHeader, mFooter, mState)
 		Case TILE_SWITCH
 			InstanceSwitch.SetTile(mHeader, mFooter, mState)
 		Case Else
@@ -417,6 +442,8 @@ Public Sub setValue(value As String)
 
 	' Select the tile type and assign the value to global var with casting as required	
 	Select mTileType
+		Case TILE_ALARM
+			InstanceAlarm.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BATTERY
 			InstanceBattery.SetTile(mHeader, mFooter, mValue)
 		Case TILE_BYTESTATUS
@@ -427,6 +454,8 @@ Public Sub setValue(value As String)
 			InstanceDualReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_GAUGE
 			InstanceGauge.SetTile(mHeader, mFooter, mMinValue, mMaxValue, mGreenMaxPct, mYellowMaxPct, mValue)
+		Case TILE_HORIZON
+			InstanceHorizon.SetTile(mHeader, mFooter, mValue)
 		Case TILE_ICONINDICATOR
 			InstanceIconIndicator.SetTile(mHeader, mFooter, mValue)
 		Case TILE_IOPANEL
@@ -435,6 +464,8 @@ Public Sub setValue(value As String)
 			InstanceMultiState.SetTile(mHeader, mFooter, InstanceMultiState.States, mValue)
 		Case TILE_READOUT
 			InstanceReadOut.SetTile(mHeader, mFooter, mValue)
+		Case TILE_QUADREADOUT
+			InstancequadReadOut.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SELECTOR
 			InstanceSelector.SetTile(mHeader, mFooter, mValue)
 		Case TILE_SEVENSEGMENT
@@ -504,7 +535,8 @@ Public Sub setValueFontColor(value As String)
 	Dim js As String
 	
 	mValueFontColor = value
- 
+
+	' Handle special cases 
  	Select mTileType
 		Case TILE_DUALREADOUT
 			js = $"
@@ -513,6 +545,10 @@ Public Sub setValueFontColor(value As String)
 					if(valueleft) { valueleft.style.fill = "${value}"; };
 					if(valueright) { valueright.style.fill = "${value}"; };
 				"$			
+		Case TILE_SEVENSEGMENT
+			InstanceSevenSegment.TextColor = value
+			' Leave here as the instance has been taken over
+			Return
 		Case Else
 			js = $"
         			var valuedisplay = document.getElementById("value-display");
@@ -789,11 +825,14 @@ Private Sub PanelWebViewSVG_Touch (Action As Int, X As Float, Y As Float)
 		Case TILE_COMPASS:			targetInstance = InstanceCompass
 		Case TILE_DUALREADOUT:		targetInstance = InstanceDualReadOut
 		Case TILE_GAUGE:			targetInstance = InstanceGauge
+		Case TILE_HORIZON:			targetInstance = InstanceHorizon
 		Case TILE_ICONINDICATOR:	targetInstance = InstanceIconIndicator
 		Case TILE_IOPANEL:			targetInstance = InstanceIOPanel
 		Case TILE_MULTISTATE:		targetInstance = InstanceMultiState
 		Case TILE_LEDPANEL:			targetInstance = InstanceLEDPanel
+		Case TILE_LOADINGINDICATOR:	targetInstance = InstanceLoadingIndicator
 		Case TILE_READOUT:			targetInstance = InstanceReadOut
+		Case TILE_QUADREADOUT:		targetInstance = InstanceQuadReadOut
 		Case TILE_SELECTOR:			targetInstance = InstanceSelector
 		Case TILE_SEVENSEGMENT:		targetInstance = InstanceSevenSegment
 		Case TILE_SIGNAL:			targetInstance = InstanceSignal

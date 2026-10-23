@@ -20,15 +20,18 @@ Private Sub Class_Globals
 	Private xui As XUI
 	
 	' Instance-specific configuration variables (completely isolated for each tile)
-	Public TEXT_COLOR As String = "#0f172a"
-	Public TEXT_SIZE As Int = 24
 
+	' Mandatory class globals
 	Private mState						As Boolean
 	Private mValue						As String
 	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+
+	' Private class globals
+	Private mTextColor 					As String
+	Private mTextSize					As String
 End Sub
 
 ' Initializes the instance
@@ -37,6 +40,8 @@ Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mTextColor = HMITilesIOUtils.COLOR_SOFT_TEXT
+	mTextSize = HMITilesIOUtils.TEXTSIZE_VALUE
 End Sub
 
 ' SetTile
@@ -48,6 +53,9 @@ End Sub
 Public Sub SetTile(Header As String, _
 				   Footer As String, _
 				   Value As String)
+
+	Dim textcolor As String = mTextColor
+	Dim textsize As Int = mTextSize
 
 	Dim js As String = $"
 		var head = document.getElementById("tile-header");
@@ -64,11 +72,25 @@ Public Sub SetTile(Header As String, _
 
 		if (txt) {
 			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${TEXT_SIZE}");
-			txt.setAttribute("fill", "${TEXT_COLOR}");
+			txt.setAttribute("font-size", "${textsize}");
+			txt.setAttribute("fill", "${textcolor}");
 		}
 	"$
 	UpdateTile(js)
+End Sub
+
+Public Sub setTextColor(value As String)
+	mTextColor = value
+End Sub
+Public Sub getTextColor As String
+	Return mTextColor
+End Sub
+
+Public Sub setTextSize(value As Int)
+	mTextSize = value
+End Sub
+Public Sub getTextSize As Int
+	Return mTextSize
 End Sub
 
 ' UpdateTile

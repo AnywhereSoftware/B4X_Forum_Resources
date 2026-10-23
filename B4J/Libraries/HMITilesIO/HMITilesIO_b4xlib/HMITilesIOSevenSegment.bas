@@ -8,7 +8,7 @@ Version=10.5
 ' ================================================================
 ' File:     	HMITilesIOSevenSegment.bas
 ' Brief:    	Display number 0-9999 in 4 digits, LED-Seven-Segment, format.
-' Date:			2026-09-06
+' Date:			2026-10-05
 ' Description:	This is a 40px local font that is completely self-contained, 
 '				offline-safe, and visually centered.
 '				Depends on digital.ttf font located in the assets (files) folder.
@@ -27,25 +27,24 @@ Private Sub Class_Globals
 
 	' XML markup font base64 placeholder
 	Private FONT_BASE64_PLACEHOLDER As String = "#FONT_BASE64_PLACEHOLDER#"
-
-	' Instance-specific configuration variables (completely isolated for each tile)
-	Public TEXT_COLOR 	As String = "#cbd5e1"
-	Public TEXT_SIZE 	As Int = 24
-
+	
 	' Error conditions
 	Private ERR_TEXT 	As String = "Err"
-	Private ERR_COLOR	As String = "#ef4444" ' Alarm Red for active faults
 
 	' Min and max values to display - 4 digits
 	Private MIN_VALUE 	As Int = 0
 	Private MAX_VALUE 	As Int = 9999
-	
+
+	' Mandatory class globals	
 	Private mState						As Boolean
 	Private mValue						As String
 	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+
+	' Private class globals
+	Private mTextColor 					As String
 End Sub
 
 ' Initializes the instance
@@ -54,6 +53,7 @@ Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mTextColor = HMITilesIOUtils.COLOR_NORMAL_STATE
 End Sub
 
 ' LoadTemplate
@@ -88,7 +88,7 @@ Public Sub SetTile(Header As String, _
 				   MaxValue As Float, _
 				   Value As String)
 	
-	Dim textcolor As String = TEXT_COLOR
+	Dim textcolor As String = mTextColor
 	
 	Header = Header.Replace("'", "\'")
 	Footer = Footer.Replace("'", "\'")
@@ -106,7 +106,7 @@ Public Sub SetTile(Header As String, _
 		' Validate value against min and max
 		If numValue < MinValue Or numValue > MaxValue Then
 			Value = ERR_TEXT
-			textcolor = ERR_COLOR
+			textcolor = HMITilesIOUtils.COLOR_ERROR_STATE
 		Else
 			Dim NumberOfDigits As Byte = 4
 			' Automatically calculate the required display digits based on MaxValue limits
@@ -161,6 +161,13 @@ Public Sub SetTile(Header As String, _
 		};
     "$
 	UpdateTile(js)
+End Sub
+
+Public Sub setTextColor(value As String)
+	mTextColor = value
+End Sub
+Public Sub getTextColor As String
+	Return mTextColor
 End Sub
 
 ' UpdateTile

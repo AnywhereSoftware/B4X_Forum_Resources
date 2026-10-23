@@ -38,8 +38,8 @@ Private Sub Class_Globals
 	Private mValue As Int
 	Private mParentPanel 				As B4XView		' Local panel holding the webview
 	Private mWebView					As WebView		' Local WebView reference handle container
-	Private mEventName 					As String 'ignore
-	Private mCallBack 					As Object 'ignore
+	Private mEventName 					As String 		'ignore
+	Private mCallBack 					As Object 		'ignore
 End Sub
 
 Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)

@@ -24,7 +24,15 @@ Sub Process_Globals
 	Public DISPLAY_STYLE_BLOCK	As String = "block"
 	Public DISPLAY_STYLE_NONE 	As String = "none"
 
+	' Text Colors for SevenSegment, ReadOut etc.
+	Public COLOR_NORMAL_STATE	As String = "#10B981" ' Crisp HMI Green for normal/safe operations
+	Public COLOR_WARNING_STATE 	As String = "#FFB900" ' Industrial Amber for warnings/active segments
+	Public COLOR_ERROR_STATE   	As String = "#EF4444" ' Alarm Red for critical active faults
+	Public COLOR_STATIC_TEXT	As String = "#FFFFFF" ' High-contrast White for fixed labels/readouts
+	Public COLOR_SOFT_TEXT		As String = "#0F172A" ' Low-contrast Gray for fixed labels/readouts
 
+	' Text size
+	Public TEXTSIZE_VALUE		As Int = 24
 End Sub
 
 ' ================================================================

@@ -1,0 +1,1094 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pd_pdfbox
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	#MergeLibraries:  true
+	
+	'with v1.1 
+	' https://www.b4x.com/android/forum/threads/pd_pdfbox.172303/
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	CreateFullDemoFarsi
+	
+'	CreateFullDemo
+End Sub
+
+Sub CreateFullDemoFarsi
+   
+    Dim pdf As PD_PDFBox
+    pdf.Initialize
+    
+    ' ─── تنظیم فونت فارسی ───
+	pdf.SetCustomFont(File.DirApp & "/Vazir-Light.ttf", File.DirApp & "/Vazir-Bold.ttf")
+    
+    ' ─── تنظیمات کلی ───
+    pdf.SetFooterReserve(6)
+    pdf.SetContinuationTop(5)
+    pdf.SetPageNumbering(True, "صفحه {page} از {total}", 9, "#888888", "CENTER", 2.5)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه ۱: صفحه جلد
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    
+    Dim y As Double = 5
+    
+    ' بنر پس‌زمینه
+    y = pdf.AddRectangle(0, 0, 100, 40, "", "#1A237E", 0)
+    
+    ' لوگوی شرکت
+    pdf.AddImage(File.DirApp & "/logo.png", 38, 5, 24, 15)
+    
+    ' عنوان روی بنر
+    pdf.AddText("شرکت آریا سیستم", 10, 22, 80, 6, 28, "#FFFFFF", "CENTER", "MIDDLE", True)
+    pdf.AddText("گزارش سالانه ۱۴۰۳", 10, 29, 80, 5, 18, "#B0BEC5", "CENTER", "MIDDLE", False)
+    
+    ' خط تزیینی
+    y = 45
+    y = pdf.AddLine(20, y, 80, y, "#1A237E", 2)
+    
+    ' زیرعنوان
+    y = y + 3
+    y = pdf.AddText("تهیه شده توسط واحد مالی", 10, y, 80, 4, 12, "#555555", "CENTER", "MIDDLE", False)
+    y = y + 2
+    y = pdf.AddText("تاریخ: ۲۵ دی ۱۴۰۳", 10, y, 80, 4, 12, "#555555", "CENTER", "MIDDLE", False)
+    
+    ' جعبه اطلاعات
+    y = y + 5
+    y = pdf.AddRectangle(15, y, 70, 20, "#1A237E", "#E8EAF6", 1)
+    pdf.AddText("محرمانه", 15, y - 20 + 3, 70, 5, 14, "#C62828", "CENTER", "MIDDLE", True)
+    pdf.AddText("این سند حاوی اطلاعات محرمانه سازمانی است.", 15, y - 20 + 8, 70, 4, 10, "#333333", "CENTER", "MIDDLE", False)
+    pdf.AddText("توزیع آن فقط برای افراد مجاز امکان‌پذیر است.", 15, y - 20 + 12, 70, 4, 10, "#333333", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه ۲: نمایش امکانات متن
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    ' سربرگ بخش
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۱. امکانات متن و تراز‌بندی", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' ─── تراز افقی ───
+    y = y + 3
+    y = pdf.AddText("تراز افقی:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("متن چپ‌چین", 5, y - 5, 90, 5, 11, "#333333", "LEFT", "MIDDLE", False)
+    
+    y = y + 1
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("متن وسط‌چین", 5, y - 5, 90, 5, 11, "#333333", "CENTER", "MIDDLE", False)
+    
+    y = y + 1
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("متن راست‌چین", 5, y - 5, 90, 5, 11, "#333333", "RIGHT", "MIDDLE", False)
+    
+    ' ─── تراز عمودی ───
+    y = y + 3
+    y = pdf.AddText("تراز عمودی:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    
+    y = pdf.AddRectangle(5, y, 28, 10, "#CCCCCC", "#FFF9C4", 0.5)
+    pdf.AddText("بالا", 5, y - 10, 28, 10, 11, "#333333", "CENTER", "TOP", False)
+    
+    pdf.AddRectangle(35, y - 10, 28, 10, "#CCCCCC", "#C8E6C9", 0.5)
+    pdf.AddText("وسط", 35, y - 10, 28, 10, 11, "#333333", "CENTER", "MIDDLE", False)
+    
+    pdf.AddRectangle(65, y - 10, 28, 10, "#CCCCCC", "#BBDEFB", 0.5)
+    pdf.AddText("پایین", 65, y - 10, 28, 10, 11, "#333333", "CENTER", "BOTTOM", False)
+    
+    ' ─── رنگ‌ها ───
+    y = y + 3
+    y = pdf.AddText("نمونه رنگ‌ها:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    
+    pdf.AddRectangle(5, y, 15, 5, "", "#F44336", 0)
+    pdf.AddText("قرمز", 5, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(22, y, 15, 5, "", "#4CAF50", 0)
+    pdf.AddText("سبز", 22, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(39, y, 15, 5, "", "#2196F3", 0)
+    pdf.AddText("آبی", 39, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(56, y, 15, 5, "", "#FF9800", 0)
+    pdf.AddText("نارنجی", 56, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(73, y, 15, 5, "", "#9C27B0", 0)
+    pdf.AddText("بنفش", 73, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' ─── بولد و معمولی ───
+    y = y + 3
+    y = pdf.AddText("بولد و معمولی:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddText("این متن بولد است", 5, y, 90, 4, 12, "#333333", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddText("این متن معمولی است", 5, y, 90, 4, 12, "#333333", "RIGHT", "MIDDLE", False)
+    
+    ' ─── شکست خودکار خط در متن ───
+    y = y + 3
+    y = pdf.AddText("شکست خودکار خط در متن:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddRectangle(5, y, 40, 15, "#1A237E", "#E8EAF6", 0.5)
+    pdf.AddText("این یک متن بسیار طولانی است که به صورت خودکار در محدوده جعبه شکسته می‌شود بدون اینکه نیاز به شکست خط دستی باشد. متن خودش تنظیم می‌شود.", _
+        5, y - 15, 40, 15, 10, "#333333", "RIGHT", "TOP", False)
+    
+    pdf.AddRectangle(50, y - 15, 40, 15, "#1A237E", "#FFF3E0", 0.5)
+    pdf.AddText("متن وسط‌چین شکسته‌شده نیز کاملا درست کار می‌کند. هر خط در مرکز جعبه قرار می‌گیرد همانطور که انتظار می‌رود.", _
+        50, y - 15, 40, 15, 10, "#333333", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه ۳: نمایش پاراگراف
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۲. پاراگراف با شکست خودکار صفحه", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    Dim longText As String
+    longText = "لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان " & _
+        "گرافیک است. چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است و برای " & _
+        "شرایط فعلی تکنولوژی مورد نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد. " & _
+        "کتابهای زیادی در شصت و سه درصد گذشته حال و آینده شناخت فراوان جامعه و متخصصان را می طلبد " & _
+        "تا با نرم افزارها شناخت بیشتری را برای طراحان رایانه ای علی الخصوص طراحان خلاقی و فرهنگ " & _
+        "پیشرو در زبان فارسی ایجاد کرد." & CRLF & CRLF & _
+        "در این صورت می توان امید داشت که تمام و دشواری موجود در ارائه راهکارها و شرایط سخت تایپ " & _
+        "به پایان رسد و زمان مورد نیاز شامل حروفچینی دستاوردهای اصلی و جوابگوی سوالات پیوسته " & _
+        "اهل دنیای موجود طراحی اساسا مورد استفاده قرار گیرد. لورم ایپسوم متن ساختگی با تولید " & _
+        "سادگی نامفهوم از صنعت چاپ و با استفاده از طراحان گرافیک است. چاپگرها و متون بلکه " & _
+        "روزنامه و مجله در ستون و سطرآنچنان که لازم است." & CRLF & CRLF & _
+        "کتابهای زیادی در شصت و سه درصد گذشته حال و آینده شناخت فراوان جامعه و متخصصان را " & _
+        "می طلبد تا با نرم افزارها شناخت بیشتری را برای طراحان رایانه ای علی الخصوص طراحان " & _
+        "خلاقی و فرهنگ پیشرو در زبان فارسی ایجاد کرد. در این صورت می توان امید داشت که تمام " & _
+        "و دشواری موجود در ارائه راهکارها و شرایط سخت تایپ به پایان رسد و زمان مورد نیاز شامل " & _
+        "حروفچینی دستاوردهای اصلی و جوابگوی سوالات پیوسته اهل دنیای موجود طراحی اساسا مورد " & _
+        "استفاده قرار گیرد. لورم ایپسوم متن ساختگی با تولید سادگی نامفهوم از صنعت چاپ و با " & _
+        "استفاده از طراحان گرافیک است." & CRLF & CRLF & _
+        "چاپگرها و متون بلکه روزنامه و مجله در ستون و سطرآنچنان که لازم است و برای شرایط فعلی " & _
+        "تکنولوژی مورد نیاز و کاربردهای متنوع با هدف بهبود ابزارهای کاربردی می باشد. کتابهای " & _
+        "زیادی در شصت و سه درصد گذشته حال و آینده شناخت فراوان جامعه و متخصصان را می طلبد."
+    
+    y = pdf.AddParagraph(longText, 5, y, 90, 10, 11, 2, "#333333", "RIGHT", "TOP", False)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: نمایش گرافیک
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۳. گرافیک: خط، مستطیل و تصویر", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' خطوط
+    y = y + 3
+    y = pdf.AddText("خطوط:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    pdf.AddLine(5, y, 95, y, "#F44336", 1)
+    y = y + 2
+    pdf.AddLine(5, y, 95, y, "#4CAF50", 2)
+    y = y + 2
+    pdf.AddLine(5, y, 95, y, "#2196F3", 3)
+    y = y + 2
+    ' خط مورب
+    pdf.AddLine(5, y, 40, y + 10, "#FF9800", 1.5)
+    pdf.AddLine(40, y, 5, y + 10, "#9C27B0", 1.5)
+    y = y + 12
+    
+    ' مستطیل‌ها
+    y = y + 2
+    y = pdf.AddText("مستطیل‌ها:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    
+    ' فقط حاشیه
+    pdf.AddRectangle(5, y, 18, 10, "#F44336", "", 1.5)
+    pdf.AddText("حاشیه", 5, y, 18, 10, 9, "#F44336", "CENTER", "MIDDLE", False)
+    
+    ' فقط پر
+    pdf.AddRectangle(26, y, 18, 10, "", "#4CAF50", 0)
+    pdf.AddText("پر", 26, y, 18, 10, 9, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' هر دو
+    pdf.AddRectangle(47, y, 18, 10, "#1A237E", "#BBDEFB", 2)
+    pdf.AddText("هر دو", 47, y, 18, 10, 9, "#1A237E", "CENTER", "MIDDLE", False)
+    
+    ' تو در تو
+    pdf.AddRectangle(68, y, 25, 10, "#FF9800", "#FFF3E0", 1)
+    pdf.AddRectangle(70, y + 1, 21, 8, "#FF9800", "#FFE0B2", 1)
+    pdf.AddText("تو در تو", 68, y, 25, 10, 9, "#E65100", "CENTER", "MIDDLE", True)
+    y = y + 10
+    
+    ' تصاویر
+    y = y + 3
+    y = pdf.AddText("تصاویر:", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddImage(File.DirApp & "/img1.jpg", 5, y, 40, 22)
+    pdf.AddImage(File.DirApp & "/img2.jpg", 50, y - 22, 40, 22)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: جدول پایه
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۴. جدول پایه با تراز پیش‌فرض", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("کد", "نام کارمند", "واحد", "حقوق"), _
+        Array As Double(10, 35, 25, 20), _
+        5, y, 90, 4, 10, _
+        "#1A237E", "#CCCCCC", "#000000", "RIGHT", "MIDDLE")
+    
+    pdf.AddRow(Array As String("۰۰۱", "علی احمدی", "مهندسی", "۹۵,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۲", "سارا محمدی", "بازاریابی", "۷۸,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۳", "محمد رضایی", "فروش", "۸۲,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۴", "فاطمه حسینی", "منابع انسانی", "۷۱,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۵", "رضا کریمی", "مهندسی", "۹۸,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۶", "مریم نوری", "مالی", "۸۸,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۷", "حسن موسوی", "عملیات", "۷۶,۰۰۰,۰۰۰"))
+    pdf.AddRow(Array As String("۰۰۸", "زهرا عباسی", "بازاریابی", "۸۱,۰۰۰,۰۰۰"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: جدول با تراز ردیفی
+    ' ═══════════════════════════════════════════
+    y = y + 5
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۵. جدول با تراز ردیفی و سلولی", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("محصول", "دسته‌بندی", "قیمت", "موجودی"), _
+        Array As Double(30, 25, 17, 18), _
+        5, y, 90, 4, 10, _
+        "#00695C", "#CCCCCC", "#000000", "RIGHT", "MIDDLE")
+    
+    ' تراز پیش‌فرض (راست‌چین)
+    pdf.AddRow(Array As String("لپ‌تاپ حرفه‌ای ۱۵", "الکترونیک", "۴۵,۰۰۰,۰۰۰", "۴۵"))
+    
+    ' همه سلول‌ها وسط‌چین
+    pdf.AddRowAligned(Array As String("ماوس بی‌سیم", "لوازم جانبی", "۱,۲۰۰,۰۰۰", "۳۲۰"), "CENTER")
+    
+    ' تراز سلولی مجزا
+    pdf.AddRowAlignedCells( _
+        Array As String("صندلی اداری", "مبلمان", "۱۸,۰۰۰,۰۰۰", "۱۲"), _
+        Array As String("RIGHT", "CENTER", "LEFT", "CENTER"))
+    
+    ' ردیف‌های بیشتر
+    pdf.AddRow(Array As String("هاب یو‌اس‌بی", "لوازم جانبی", "۲,۵۰۰,۰۰۰", "۱۸۰"))
+    pdf.AddRowAligned(Array As String("میز ایستاده", "مبلمان", "۳۵,۰۰۰,۰۰۰", "۸"), "LEFT")
+    pdf.AddRowAlignedCells( _
+        Array As String("مانیتور ۲۷ اینچ", "الکترونیک", "۲۲,۰۰۰,۰۰۰", "۶۷"), _
+        Array As String("RIGHT", "RIGHT", "LEFT", "CENTER"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: جدول با تصویر
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۶. جدول با تصویر و ارتفاع سفارشی ردیف", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("تصویر", "محصول", "توضیحات", "قیمت"), _
+        Array As Double(18, 22, 30, 20), _
+        5, y, 90, 4, 10, _
+        "#BF360C", "#CCCCCC", "#000000", "RIGHT", "MIDDLE")
+    
+    ' ردیف با عکس در ستون ۰ و ارتفاع ۱۵ درصد
+    pdf.AddRowImage( _
+        Array As String("", "لپ‌تاپ حرفه‌ای", "لپ‌تاپ با ۱۶ گیگ رم و پردازنده قوی", "۴۵,۰۰۰,۰۰۰"), _
+        File.DirApp & "/img1.jpg", 0, 15)
+    
+    ' ردیف با عکس و ارتفاع ۱۲ درصد
+    pdf.AddRowImage( _
+        Array As String("", "هدفون", "هدفون بی‌سیم با قابلیت حذف نویز", "۱۰,۰۰۰,۰۰۰"), _
+        File.DirApp & "/img2.jpg", 0, 12)
+    
+    ' ردیف متنی معمولی
+    pdf.AddRow(Array As String("ندارد", "کابل شارژ", "کابل تایپ سی به تایپ ای ۲ متری", "۳۵۰,۰۰۰"))
+    
+    ' ردیف با عکس و ارتفاع پیش‌فرض (۰ = پیش‌فرض)
+    pdf.AddRowImage( _
+        Array As String("", "کیبورد", "کیبورد مکانیکی نورپردازی", "۵,۲۰۰,۰۰۰"), _
+        File.DirApp & "/logo.png", 0, 15)
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' جدول با شکست خودکار متن سلول
+    ' ═══════════════════════════════════════════
+    y = y + 5
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۷. جدول با شکست خودکار متن سلول", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("کد", "عنوان", "توضیحات", "وضعیت"), _
+        Array As Double(8, 22, 42, 18), _
+        5, y, 90, 4, 9, _
+        "#4A148C", "#CCCCCC", "#000000", "RIGHT", "MIDDLE")
+    
+    pdf.AddRow(Array As String("۱", "رفع خطا", "توضیحات کوتاه", "انجام شد"))
+    
+    ' متن بلند در توضیحات → ارتفاع ردیف خودکار بیشتر می‌شود
+    pdf.AddRow(Array As String("۲", "ویژگی جدید", _
+        "این یک توضیح بسیار مفصل است که نیازمندی‌های فنی و معیارهای پذیرش کاربر را شامل می‌شود و باید قبل از انتشار نهایی تمام موارد بررسی و تایید شود.", _
+        "در حال انجام"))
+    
+    pdf.AddRow(Array As String("۳", "بروزرسانی", "توضیحات متوسط برای وظیفه بروزرسانی سیستم", "در انتظار"))
+    
+    pdf.AddRow(Array As String("۴", "بازنویسی", _
+        "بازنویسی کامل لایه دسترسی به داده‌ها برای بهبود عملکرد و نگهداری پذیری. این شامل بروزرسانی تمام کلاس‌های مخزن و تست‌های واحد می‌شود.", _
+        "بررسی"))
+    
+    pdf.AddRow(Array As String("۵", "استقرار", "استقرار روی سرور اصلی", "زمان‌بندی شده"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: جدول بزرگ (شکست صفحه + تکرار سرستون)
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۸. جدول بزرگ با شکست خودکار صفحه", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("ردیف", "مشتری", "شهر", "مبلغ سفارش", "تاریخ"), _
+        Array As Double(8, 25, 20, 20, 17), _
+        5, y, 90, 3.5, 9, _
+        "#0D47A1", "#CCCCCC", "#000000", "RIGHT", "MIDDLE")
+    
+    Dim cities() As String = Array As String("تهران", "اصفهان", "شیراز", "تبریز", "مشهد", _
+        "اهواز", "کرج", "قم", "کرمانشاه", "ارومیه", "رشت", "زاهدان", _
+        "همدان", "یزد", "اردبیل", "بندرعباس", "اراک", "کرمان", "ساری", "قزوین")
+    
+    Dim names() As String = Array As String("علی محمدی", "فاطمه احمدی", "حسن رضایی", _
+        "مریم حسینی", "رضا کریمی", "زهرا نوری", "محمد موسوی", "سارا عباسی", _
+        "امیر جعفری", "نرگس صادقی", "حسین قاسمی", "لیلا طاهری", _
+        "مهدی باقری", "آرش پورمحمدی", "شیما رحیمی", "کامران دهقان", _
+        "نازنین شریفی", "سعید امینی", "پریسا ملکی", "بهنام اکبری")
+    
+    For i = 0 To 39
+        Dim idx As Int = i Mod 20
+        Dim total As String = NumberFormat(Rnd(1000000, 99000000), 0, 0)
+        Dim month As Int = (i Mod 12) + 1
+        Dim dt As String = "۱۴۰۳/" & NumberFormat(month, 2, 0) & "/" & NumberFormat((i Mod 28) + 1, 2, 0)
+        pdf.AddRow(Array As String(NumberFormat(i + 1, 3, 0), names(idx), cities(idx), total, dt))
+    Next
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: نمایش افقی
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", True)  ' افقی!
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۹. نمایش صفحه افقی", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("فصل", "درآمد", "هزینه", "سود", "رشد", "کارکنان", "پروژه"), _
+        Array As Double(10, 13, 13, 13, 11, 13, 17), _
+        5, y, 90, 4, 10, _
+        "#1B5E20", "#CCCCCC", "#000000", "CENTER", "MIDDLE")
+    
+    pdf.AddRow(Array As String("بهار ۱۴۰۳", "۲,۴۵۰,۰۰۰", "۱,۸۹۰,۰۰۰", "۵۶۰,۰۰۰", "+۱۲%", "۲۴۵", "۱۸"))
+    pdf.AddRow(Array As String("تابستان ۱۴۰۳", "۲,۷۸۰,۰۰۰", "۲,۰۱۰,۰۰۰", "۷۷۰,۰۰۰", "+۱۵%", "۲۵۸", "۲۲"))
+    pdf.AddRow(Array As String("پاییز ۱۴۰۳", "۳,۱۲۰,۰۰۰", "۲,۲۵۰,۰۰۰", "۸۷۰,۰۰۰", "+۱۸%", "۲۷۱", "۲۵"))
+    pdf.AddRow(Array As String("زمستان ۱۴۰۳", "۳,۴۵۰,۰۰۰", "۲,۴۸۰,۰۰۰", "۹۷۰,۰۰۰", "+۲۱%", "۲۸۹", "۲۸"))
+    
+    ' ردیف جمع با تراز متفاوت
+    pdf.AddRowAlignedCells( _
+        Array As String("مجموع", "۱۱,۸۰۰,۰۰۰", "۸,۶۳۰,۰۰۰", "۳,۱۷۰,۰۰۰", "+۱۶.۵%", "۲۸۹", "۹۳"), _
+        Array As String("CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER"))
+    
+    y = pdf.EndTable
+    
+    ' نمودار میله‌ای تصویری
+    y = y + 5
+    pdf.AddText("درآمد فصلی (نمودار میله‌ای):", 5, y, 90, 4, 12, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 5
+    
+    ' بهار
+    pdf.AddRectangle(10, y, 15, 4, "", "#4CAF50", 0)
+    pdf.AddText("بهار: ۲.۴۵", 10, y, 15, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' تابستان
+    pdf.AddRectangle(10, y, 20, 4, "", "#2196F3", 0)
+    pdf.AddText("تابستان: ۲.۷۸", 10, y, 20, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' پاییز
+    pdf.AddRectangle(10, y, 25, 4, "", "#FF9800", 0)
+    pdf.AddText("پاییز: ۳.۱۲", 10, y, 25, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' زمستان
+    pdf.AddRectangle(10, y, 30, 4, "", "#F44336", 0)
+    pdf.AddText("زمستان: ۳.۴۵", 10, y, 30, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' ═══════════════════════════════════════════
+    ' صفحه: طرح‌بندی ترکیبی
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("۱۰. طرح‌بندی ترکیبی: متن + جدول + تصویر", 7, y - 6, 86, 6, 16, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    y = y + 3
+    y = pdf.AddText("خلاصه وضعیت پروژه", 5, y, 90, 5, 14, "#1A237E", "RIGHT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddLine(5, y, 95, y, "#1A237E", 1)
+    y = y + 2
+    
+    ' تصویر سمت چپ، متن سمت راست
+    pdf.AddImage(File.DirApp & "/img1.jpg", 5, y, 30, 20)
+    pdf.AddText("نکات کلیدی:", 38, y, 55, 4, 12, "#1A237E", "RIGHT", "TOP", True)
+    pdf.AddText("درآمد ۴۱ درصد نسبت به سال قبل افزایش یافت", 38, y + 5, 55, 3, 10, "#333333", "RIGHT", "MIDDLE", False)
+    pdf.AddText("امتیاز رضایت مشتری: ۹۴.۲ درصد", 38, y + 8, 55, 3, 10, "#333333", "RIGHT", "MIDDLE", False)
+    pdf.AddText("محصولات جدید عرضه شده: ۷ محصول", 38, y + 11, 55, 3, 10, "#333333", "RIGHT", "MIDDLE", False)
+    pdf.AddText("نرخ حفظ کارکنان: ۹۶.۸ درصد", 38, y + 14, 55, 3, 10, "#333333", "RIGHT", "MIDDLE", False)
+    pdf.AddText("گسترش بازار: ۴ منطقه جدید", 38, y + 17, 55, 3, 10, "#333333", "RIGHT", "MIDDLE", False)
+    y = y + 22
+    
+    ' جدول کوچک بعد از تصویر
+    y = y + 2
+    pdf.CreateTable( _
+        Array As String("شاخص", "هدف", "واقعی", "وضعیت"), _
+        Array As Double(25, 20, 20, 25), _
+        5, y, 90, 4, 10, _
+        "#37474F", "#CCCCCC", "#000000", "CENTER", "MIDDLE")
+    
+    pdf.AddRow(Array As String("درآمد", "۱۰ میلیارد", "۱۱.۸ میلیارد", "فراتر از هدف"))
+    pdf.AddRow(Array As String("مشتریان", "۵,۰۰۰", "۵,۸۴۷", "فراتر از هدف"))
+    pdf.AddRow(Array As String("امتیاز رضایت", "بالای ۹۰", "۹۴.۲", "فراتر از هدف"))
+    pdf.AddRow(Array As String("آپ‌تایم", "۹۹.۹%", "۹۹.۹۷%", "فراتر از هدف"))
+    pdf.AddRow(Array As String("زمان پاسخ", "کمتر از ۲۰۰ میلی‌ثانیه", "۱۴۵ میلی‌ثانیه", "فراتر از هدف"))
+    
+    y = pdf.EndTable
+    
+    ' یادداشت پاورقی
+    y = y + 3
+    y = pdf.AddLine(5, y, 95, y, "#CCCCCC", 0.5)
+    y = y + 1
+    y = pdf.AddText("* تمامی ارقام بر اساس صورت‌های مالی حسابرسی‌شده سال 1405 می‌باشد.", _
+        5, y, 90, 3, 8, "#999999", "RIGHT", "MIDDLE", False)
+    y = y + 1
+    y = pdf.AddText("تولید شده توسط PD_PDFBox نسخه 1.1 — شرکت آریا سیستم — محرمانه", _
+        5, y, 90, 3, 8, "#999999", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' ذخیره و چاپ
+    ' ═══════════════════════════════════════════
+    Dim outputPath As String = File.DirApp & "/FullDemo_Farsi.pdf"
+    
+    If pdf.Save(outputPath) Then
+        Log("فایل PDF با موفقیت ذخیره شد: " & outputPath)
+        
+        ' نمایش لیست پرینترها
+        Dim printers() As String = pdf.GetPrinterList
+        Log("پرینترهای موجود:")
+        For Each p As String In printers
+            Log("  - " & p)
+        Next
+        
+        ' گزینه ۱: چاپ با دیالوگ
+        ' pdf.PrintPDF
+        
+        ' گزینه ۲: چاپ با نام پرینتر
+        ' pdf.PrintPDFByName("HP LaserJet Pro")
+        
+        ' گزینه ۳: چاپ چندین نسخه
+        ' pdf.PrintPDFCopies("HP LaserJet Pro", 3)
+        
+        ' گزینه ۴: چاپ فایل از دیسک
+        ' pdf.PrintFile(outputPath)
+        
+        ' گزینه ۵: چاپ فایل با نام پرینتر
+        ' pdf.PrintFileByName(outputPath, "HP LaserJet Pro")
+        
+        ' گزینه ۶: چاپ فایل با تعداد نسخه
+        ' pdf.PrintFileCopies(outputPath, "HP LaserJet Pro", 2)
+		
+		fx.ShowExternalDocument(File.GetUri(File.DirApp,"FullDemo_Farsi.pdf"))
+    Else
+        Log("خطا در ذخیره فایل PDF!")
+    End If
+    
+    pdf.Close
+    
+    Log("دمو کامل شد!")
+End Sub
+
+
+'for english
+Sub CreateFullDemo
+    Dim pdf As PD_PDFBox
+    pdf.Initialize
+    
+    ' ─── Font Setup ───
+    pdf.SetFont("Tahoma")
+    
+    ' ─── Global Settings ───
+    pdf.SetFooterReserve(6)
+    pdf.SetContinuationTop(5)
+    pdf.SetPageNumbering(True, "{page} / {total}", 9, "#888888", "CENTER", 2.5)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE 1: Cover Page
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    
+    Dim y As Double = 5
+    
+    ' Background banner
+    y = pdf.AddRectangle(0, 0, 100, 40, "", "#1A237E", 0)
+    
+    ' Company logo (image)
+    pdf.AddImage(File.DirApp & "/logo.png", 38, 5, 24, 15)
+    
+    ' Title on banner
+    pdf.AddText("ACME Corporation", 10, 22, 80, 6, 28, "#FFFFFF", "CENTER", "MIDDLE", True)
+    pdf.AddText("Annual Report 2024", 10, 29, 80, 5, 18, "#B0BEC5", "CENTER", "MIDDLE", False)
+    
+    ' Decorative line
+    y = 45
+    y = pdf.AddLine(20, y, 80, y, "#1A237E", 2)
+    
+    ' Subtitle
+    y = y + 3
+    y = pdf.AddText("Prepared by the Finance Department", 10, y, 80, 4, 12, "#555555", "CENTER", "MIDDLE", False)
+    y = y + 2
+    y = pdf.AddText("Date: January 15, 2025", 10, y, 80, 4, 12, "#555555", "CENTER", "MIDDLE", False)
+    
+    ' Info box
+    y = y + 5
+    y = pdf.AddRectangle(15, y, 70, 20, "#1A237E", "#E8EAF6", 1)
+    pdf.AddText("CONFIDENTIAL", 15, y - 20 + 3, 70, 5, 14, "#C62828", "CENTER", "MIDDLE", True)
+    pdf.AddText("This document contains proprietary information.", 15, y - 20 + 8, 70, 4, 10, "#333333", "CENTER", "MIDDLE", False)
+    pdf.AddText("Distribution is limited to authorized personnel only.", 15, y - 20 + 12, 70, 4, 10, "#333333", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE 2: Text Features Demo
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    ' Section header
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("1. Text & Alignment Features", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    ' ─── Horizontal Alignment ───
+    y = y + 3
+    y = pdf.AddText("Horizontal Alignment:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("LEFT aligned text", 5, y - 5, 90, 5, 11, "#333333", "LEFT", "MIDDLE", False)
+    
+    y = y + 1
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("CENTER aligned text", 5, y - 5, 90, 5, 11, "#333333", "CENTER", "MIDDLE", False)
+    
+    y = y + 1
+    y = pdf.AddRectangle(5, y, 90, 5, "#CCCCCC", "#F5F5F5", 0.5)
+    pdf.AddText("RIGHT aligned text", 5, y - 5, 90, 5, 11, "#333333", "RIGHT", "MIDDLE", False)
+    
+    ' ─── Vertical Alignment ───
+    y = y + 3
+    y = pdf.AddText("Vertical Alignment:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    
+    y = pdf.AddRectangle(5, y, 28, 10, "#CCCCCC", "#FFF9C4", 0.5)
+    pdf.AddText("TOP", 5, y - 10, 28, 10, 11, "#333333", "CENTER", "TOP", False)
+    
+    pdf.AddRectangle(35, y - 10, 28, 10, "#CCCCCC", "#C8E6C9", 0.5)
+    pdf.AddText("MIDDLE", 35, y - 10, 28, 10, 11, "#333333", "CENTER", "MIDDLE", False)
+    
+    pdf.AddRectangle(65, y - 10, 28, 10, "#CCCCCC", "#BBDEFB", 0.5)
+    pdf.AddText("BOTTOM", 65, y - 10, 28, 10, 11, "#333333", "CENTER", "BOTTOM", False)
+    
+    ' ─── Colors ───
+    y = y + 3
+    y = pdf.AddText("Color Samples:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    
+    pdf.AddRectangle(5, y, 15, 5, "", "#F44336", 0)
+    pdf.AddText("Red", 5, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(22, y, 15, 5, "", "#4CAF50", 0)
+    pdf.AddText("Green", 22, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(39, y, 15, 5, "", "#2196F3", 0)
+    pdf.AddText("Blue", 39, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(56, y, 15, 5, "", "#FF9800", 0)
+    pdf.AddText("Orange", 56, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    pdf.AddRectangle(73, y, 15, 5, "", "#9C27B0", 0)
+    pdf.AddText("Purple", 73, y, 15, 5, 10, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' ─── Bold vs Regular ───
+    y = y + 3
+    y = pdf.AddText("Bold vs Regular:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+ 
+    y = pdf.AddText("This text is BOLD", 5, y, 90, 4, 12, "#333333", "LEFT", "MIDDLE", True)
+   
+    y = pdf.AddText("This text is Regular", 5, y, 90, 4, 12, "#333333", "LEFT", "MIDDLE", False)
+    
+    ' ─── Auto Wrap in AddText ───
+    y = y + 1
+    y = pdf.AddText("Auto-Wrap in AddText:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+ 
+    y = pdf.AddRectangle(5, y, 40, 15, "#1A237E", "#E8EAF6", 0.5)
+    pdf.AddText("This is a very long text that will automatically wrap inside the box boundaries without any manual line breaks needed. The text adjusts to fit within the specified width.", _
+        5, y - 15, 40, 15, 10, "#333333", "LEFT", "TOP", False)
+    
+    pdf.AddRectangle(50, y - 15, 40, 15, "#1A237E", "#FFF3E0", 0.5)
+    pdf.AddText("CENTER aligned wrapped text also works perfectly fine. Every line is centered within the box as expected.", _
+        50, y - 15, 40, 15, 10, "#333333", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE 3: Paragraph Demo
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("2. Paragraph with Auto Page-Break", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    Dim longText As String
+    longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor " & _
+        "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud " & _
+        "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure " & _
+        "dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " & _
+        "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit " & _
+        "anim id est laborum." & CRLF & CRLF & _
+        "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque " & _
+        "laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi " & _
+        "architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas " & _
+        "sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione " & _
+        "voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit " & _
+        "amet, consectetur, adipisci velit." & CRLF & CRLF & _
+        "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium " & _
+        "voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati " & _
+        "cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, " & _
+        "id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. " & _
+        "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id " & _
+        "quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus." & CRLF & CRLF & _
+        "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet " & _
+        "ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic " & _
+        "tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur " & _
+        "aut perferendis doloribus asperiores repellat."
+    
+    y = pdf.AddParagraph(longText, 5, y, 90, 10, 11, 2, "#333333", "LEFT", "TOP", False)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE (continues): Graphics Demo
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("3. Graphics: Lines, Rectangles & Images", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    ' Lines
+    y = y + 3
+    y = pdf.AddText("Lines:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    pdf.AddLine(5, y, 95, y, "#F44336", 1)
+    y = y + 2
+    pdf.AddLine(5, y, 95, y, "#4CAF50", 2)
+    y = y + 2
+    pdf.AddLine(5, y, 95, y, "#2196F3", 3)
+    y = y + 2
+    ' Diagonal line
+    pdf.AddLine(5, y, 40, y + 10, "#FF9800", 1.5)
+    pdf.AddLine(40, y, 5, y + 10, "#9C27B0", 1.5)
+    y = y + 12
+    
+    ' Rectangles
+    y = y + 2
+    y = pdf.AddText("Rectangles:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    
+    ' Stroke only
+    pdf.AddRectangle(5, y, 18, 10, "#F44336", "", 1.5)
+    pdf.AddText("Stroke", 5, y, 18, 10, 9, "#F44336", "CENTER", "MIDDLE", False)
+    
+    ' Fill only
+    pdf.AddRectangle(26, y, 18, 10, "", "#4CAF50", 0)
+    pdf.AddText("Fill", 26, y, 18, 10, 9, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' Both
+    pdf.AddRectangle(47, y, 18, 10, "#1A237E", "#BBDEFB", 2)
+    pdf.AddText("Both", 47, y, 18, 10, 9, "#1A237E", "CENTER", "MIDDLE", False)
+    
+    ' Nested
+    pdf.AddRectangle(68, y, 25, 10, "#FF9800", "#FFF3E0", 1)
+    pdf.AddRectangle(70, y + 1, 21, 8, "#FF9800", "#FFE0B2", 1)
+    pdf.AddText("Nested", 68, y, 25, 10, 9, "#E65100", "CENTER", "MIDDLE", True)
+    y = y + 10
+    
+    ' Images
+    y = y + 3
+    y = pdf.AddText("Images:", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddImage(File.DirApp & "/img2.jpg", 5, y, 25, 18)
+    pdf.AddImage(File.DirApp & "/logo.png", 35, y - 18, 25, 18)
+    pdf.AddImage(File.DirApp & "/img2.jpg", 65, y - 18, 25, 18)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Basic Table
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("4. Basic Table with Default Alignment", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("ID", "Employee Name", "Department", "Salary"), _
+        Array As Double(10, 35, 25, 20), _
+        5, y, 90, 4, 10, _
+        "#1A237E", "#CCCCCC", "#000000", "LEFT", "MIDDLE")
+    
+    pdf.AddRow(Array As String("001", "John Smith", "Engineering", "$95,000"))
+    pdf.AddRow(Array As String("002", "Sarah Johnson", "Marketing", "$78,000"))
+    pdf.AddRow(Array As String("003", "Mike Williams", "Sales", "$82,000"))
+    pdf.AddRow(Array As String("004", "Emily Brown", "Human Resources", "$71,000"))
+    pdf.AddRow(Array As String("005", "David Lee", "Engineering", "$98,000"))
+    pdf.AddRow(Array As String("006", "Lisa Anderson", "Finance", "$88,000"))
+    pdf.AddRow(Array As String("007", "Robert Taylor", "Operations", "$76,000"))
+    pdf.AddRow(Array As String("008", "Jennifer Martinez", "Marketing", "$81,000"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Table with Row Alignment
+    ' ═══════════════════════════════════════════
+    y = y + 5
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("5. Table with Row & Cell Alignment", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("Product", "Category", "Price", "Stock"), _
+        Array As Double(30, 25, 17, 18), _
+        5, y, 90, 4, 10, _
+        "#00695C", "#CCCCCC", "#000000", "LEFT", "MIDDLE")
+    
+    ' Default alignment (LEFT from CreateTable)
+    pdf.AddRow(Array As String("Laptop Pro 15", "Electronics", "$1,299", "45"))
+    
+    ' All cells CENTER aligned
+    pdf.AddRowAligned(Array As String("Wireless Mouse", "Accessories", "$29", "320"), "CENTER")
+    
+    ' Per-cell alignment
+    pdf.AddRowAlignedCells( _
+        Array As String("Office Chair", "Furniture", "$450", "12"), _
+        Array As String("LEFT", "CENTER", "RIGHT", "CENTER"))
+    
+    ' More rows
+    pdf.AddRow(Array As String("USB-C Hub", "Accessories", "$59", "180"))
+    pdf.AddRowAligned(Array As String("Standing Desk", "Furniture", "$899", "8"), "RIGHT")
+    pdf.AddRowAlignedCells( _
+        Array As String("Monitor 27 inch", "Electronics", "$549", "67"), _
+        Array As String("LEFT", "LEFT", "RIGHT", "CENTER"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Table with Images
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("6. Table with Images & Custom Row Height", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("Photo", "Product", "Description", "Price"), _
+        Array As Double(18, 22, 30, 20), _
+        5, y, 90, 4, 10, _
+        "#BF360C", "#CCCCCC", "#000000", "LEFT", "MIDDLE")
+    
+    ' Row with image in column 0, custom height 15%
+    pdf.AddRowImage( _
+        Array As String("", "Laptop Pro", "High performance laptop with 16GB RAM", "$1,299"), _
+        File.DirApp & "/logo.png", 0, 15)
+    
+    ' Row with image, custom height 12%
+    pdf.AddRowImage( _
+        Array As String("", "Headphones", "Wireless noise-canceling headphones", "$249"), _
+        File.DirApp & "/img2.jpg", 0, 12)
+    
+    ' Normal text row
+    pdf.AddRow(Array As String("N/A", "USB Cable", "Type-C to Type-A, 2m length", "$9"))
+    
+    ' Another image row with default height (pass 0)
+    pdf.AddRowImage( _
+        Array As String("", "Keyboard", "Mechanical RGB keyboard", "$129"), _
+        File.DirApp & "/keyboard.jpg", 0, 15)
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Table with Auto-Wrap
+    ' ═══════════════════════════════════════════
+    y = y + 5
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("7. Table with Auto-Wrap Text", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("ID", "Title", "Description", "Status"), _
+        Array As Double(8, 22, 42, 18), _
+        5, y, 90, 4, 9, _
+        "#4A148C", "#CCCCCC", "#000000", "LEFT", "MIDDLE")
+    
+    pdf.AddRow(Array As String("1", "Bug Fix", "Short description", "Done"))
+    
+    ' Long text in Description → row height auto-expands
+    pdf.AddRow(Array As String("2", "New Feature", _
+        "This is a very detailed description that explains the feature requirements including all the technical specifications and user acceptance criteria that need to be met before release.", _
+        "In Progress"))
+    
+    pdf.AddRow(Array As String("3", "Update", "Medium length description for the update task", "Pending"))
+    
+    pdf.AddRow(Array As String("4", "Refactor", _
+        "Complete refactoring of the data access layer to improve performance and maintainability. This includes updating all repository classes and unit tests.", _
+        "Review"))
+    
+    pdf.AddRow(Array As String("5", "Deploy", "Deploy to production", "Scheduled"))
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Large Table (auto page-break + header repeat)
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("8. Large Table with Auto Page-Break", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("#", "Customer", "City", "Order Total", "Date"), _
+        Array As Double(8, 25, 20, 20, 17), _
+        5, y, 90, 3.5, 9, _
+        "#0D47A1", "#CCCCCC", "#000000", "LEFT", "MIDDLE")
+    
+    Dim cities() As String = Array As String("New York", "London", "Tokyo", "Paris", "Berlin", _
+        "Sydney", "Toronto", "Dubai", "Singapore", "Mumbai", "Shanghai", "Rome", _
+        "Madrid", "Seoul", "Bangkok", "Istanbul", "Moscow", "Cairo", "Lagos", "Nairobi")
+    
+    Dim names() As String = Array As String("Alice Morgan", "Bob Chen", "Clara Fischer", _
+        "Daniel Rossi", "Eva Tanaka", "Frank DeSilva", "Grace Kim", "Henry Abbas", _
+        "Irene Volkov", "James Okafor", "Karen Lindberg", "Leo Marchand", _
+        "Maria Santos", "Nathan Wright", "Olivia Park", "Peter Mueller", _
+        "Quinn Dubois", "Rachel Stone", "Sam Nakamura", "Tina Johansson")
+    
+    For i = 0 To 39
+        Dim idx As Int = i Mod 20
+        Dim total As String = "$" & (Rnd(100, 9999))
+        Dim month As Int = (i Mod 12) + 1
+        Dim dt As String = "2024-" & NumberFormat(month, 2, 0) & "-" & NumberFormat((i Mod 28) + 1, 2, 0)
+        pdf.AddRow(Array As String(NumberFormat(i + 1, 3, 0), names(idx), cities(idx), total, dt))
+    Next
+    
+    y = pdf.EndTable
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Landscape Demo
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", True)  ' Landscape!
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("9. Landscape Page Demo", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    pdf.CreateTable( _
+        Array As String("Quarter", "Revenue", "Expenses", "Profit", "Growth", "Employees", "Projects"), _
+        Array As Double(10, 13, 13, 13, 11, 13, 17), _
+        5, y, 90, 4, 10, _
+        "#1B5E20", "#CCCCCC", "#000000", "CENTER", "MIDDLE")
+    
+    pdf.AddRow(Array As String("Q1 2024", "$2,450,000", "$1,890,000", "$560,000", "+12%", "245", "18"))
+    pdf.AddRow(Array As String("Q2 2024", "$2,780,000", "$2,010,000", "$770,000", "+15%", "258", "22"))
+    pdf.AddRow(Array As String("Q3 2024", "$3,120,000", "$2,250,000", "$870,000", "+18%", "271", "25"))
+    pdf.AddRow(Array As String("Q4 2024", "$3,450,000", "$2,480,000", "$970,000", "+21%", "289", "28"))
+    
+    ' Total row with different alignment
+    pdf.AddRowAlignedCells( _
+        Array As String("TOTAL", "$11,800,000", "$8,630,000", "$3,170,000", "+16.5%", "289", "93"), _
+        Array As String("CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER", "CENTER"))
+    
+    y = pdf.EndTable
+    
+    ' Chart-like visual
+    y = y + 5
+    pdf.AddText("Revenue by Quarter (Visual Bar Chart):", 5, y, 90, 4, 12, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 5
+    
+    ' Q1 bar
+    pdf.AddRectangle(10, y, 15, 4, "", "#4CAF50", 0)
+    pdf.AddText("Q1: $2.45M", 10, y, 15, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' Q2 bar
+    pdf.AddRectangle(10, y, 20, 4, "", "#2196F3", 0)
+    pdf.AddText("Q2: $2.78M", 10, y, 20, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' Q3 bar
+    pdf.AddRectangle(10, y, 25, 4, "", "#FF9800", 0)
+    pdf.AddText("Q3: $3.12M", 10, y, 25, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    y = y + 5
+    
+    ' Q4 bar
+    pdf.AddRectangle(10, y, 30, 4, "", "#F44336", 0)
+    pdf.AddText("Q4: $3.45M", 10, y, 30, 4, 8, "#FFFFFF", "CENTER", "MIDDLE", True)
+    
+    ' ═══════════════════════════════════════════
+    ' PAGE: Mixed Layout
+    ' ═══════════════════════════════════════════
+    pdf.AddPage("A4", False)
+    y = 5
+    
+    y = pdf.AddRectangle(5, y, 90, 6, "", "#1A237E", 0)
+    pdf.AddText("10. Mixed Layout: Text + Table + Image", 7, y - 6, 86, 6, 16, "#FFFFFF", "LEFT", "MIDDLE", True)
+    
+    y = y + 3
+    y = pdf.AddText("Project Status Summary", 5, y, 90, 5, 14, "#1A237E", "LEFT", "MIDDLE", True)
+    y = y + 1
+    y = pdf.AddLine(5, y, 95, y, "#1A237E", 1)
+    y = y + 2
+    
+    ' Side-by-side: Image on left, text on right
+    pdf.AddImage(File.DirApp & "/img2.jpg", 5, y, 30, 20)
+    pdf.AddText("Key Highlights:", 38, y, 55, 4, 12, "#1A237E", "LEFT", "TOP", True)
+    pdf.AddText("• Revenue increased by 41% year-over-year", 38, y + 5, 55, 3, 10, "#333333", "LEFT", "MIDDLE", False)
+    pdf.AddText("• Customer satisfaction score: 94.2%", 38, y + 8, 55, 3, 10, "#333333", "LEFT", "MIDDLE", False)
+    pdf.AddText("• New product launches: 7 products", 38, y + 11, 55, 3, 10, "#333333", "LEFT", "MIDDLE", False)
+    pdf.AddText("• Employee retention rate: 96.8%", 38, y + 14, 55, 3, 10, "#333333", "LEFT", "MIDDLE", False)
+    pdf.AddText("• Market expansion: 4 new regions", 38, y + 17, 55, 3, 10, "#333333", "LEFT", "MIDDLE", False)
+    y = y + 22
+    
+    ' Small table after image
+    y = y + 2
+    pdf.CreateTable( _
+        Array As String("Metric", "Target", "Actual", "Status"), _
+        Array As Double(25, 20, 20, 25), _
+        5, y, 90, 4, 10, _
+        "#37474F", "#CCCCCC", "#000000", "CENTER", "MIDDLE")
+    
+    pdf.AddRow(Array As String("Revenue", "$10M", "$11.8M", "Exceeded"))
+    pdf.AddRow(Array As String("Customers", "5,000", "5,847", "Exceeded"))
+    pdf.AddRow(Array As String("NPS Score", "90+", "94.2", "Exceeded"))
+    pdf.AddRow(Array As String("Uptime", "99.9%", "99.97%", "Exceeded"))
+    pdf.AddRow(Array As String("Response Time", "<200ms", "145ms", "Exceeded"))
+    
+    y = pdf.EndTable
+    
+    ' Footer note
+    y = y + 3
+    y = pdf.AddLine(5, y, 95, y, "#CCCCCC", 0.5)
+    y = y + 1
+    y = pdf.AddText("* All figures are based on audited financial statements for FY2026.", _
+        5, y, 90, 3, 8, "#999999", "LEFT", "MIDDLE", False)
+    y = y + 1
+    y = pdf.AddText("Generated by PD_PDFBox v1.1 — ACME Corporation Confidential", _
+        5, y, 90, 3, 8, "#999999", "CENTER", "MIDDLE", False)
+    
+    ' ═══════════════════════════════════════════
+    ' SAVE & PRINT
+    ' ═══════════════════════════════════════════
+    Dim outputPath As String = File.DirApp & "/FullDemo_Output.pdf"
+    
+    If pdf.Save(outputPath) Then
+        Log("PDF saved successfully: " & outputPath)
+        
+        ' Show available printers
+        Dim printers() As String = pdf.GetPrinterList
+        Log("Available printers:")
+        For Each p As String In printers
+            Log("  - " & p)
+        Next
+        
+        ' Option 1: Print with dialog
+        ' pdf.PrintPDF
+        
+        ' Option 2: Print by name
+        ' pdf.PrintPDFByName("HP LaserJet Pro")
+        
+        ' Option 3: Print copies
+        ' pdf.PrintPDFCopies("HP LaserJet Pro", 3)
+        
+        ' Option 4: Print existing file from disk
+        ' pdf.PrintFile(outputPath)
+        
+        ' Option 5: Print file by printer name
+        ' pdf.PrintFileByName(outputPath, "HP LaserJet Pro")
+        
+        ' Option 6: Print file with copies
+        ' pdf.PrintFileCopies(outputPath, "HP LaserJet Pro", 2)
+		
+		fx.ShowExternalDocument(File.GetUri(File.DirApp,"FullDemo_Output.pdf"))
+    Else
+        Log("Failed to save PDF!")
+    End If
+    
+    pdf.Close
+    
+    Log("Demo completed!")
+End Sub

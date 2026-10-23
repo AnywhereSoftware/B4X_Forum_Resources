@@ -1,12 +1,9 @@
 ### HMITilesIO by rwblinn
-### 09/25/2026
+### 10/19/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/171863/)
 
 **HMITilesIO**  
-An Open-Source HMI Tile Library for Small Industrial Dashboards  
-  
-⚠️ Project Status: Work in Progress  
-This library is actively being developed, refactored, and optimized. Features, properties, and core method signatures are subject to change as physical hardware integration tests expand.  
+An Open-Source HMI (Human-Machine Interface) Tile Library for Small IIoT (Industrial Internet of Things) Dashboards  
   
 
 ---
@@ -16,7 +13,7 @@ This library is actively being developed, refactored, and optimized. Features, p
 **Overview  
   
 HMITilesIO** brings structured, industry-inspired high-performance HMI design principles directly into the B4X ecosystem.  
-It combines highly optimized vector graphics with native input tracking for microcontrollers and IoT applications.  
+It combines highly optimized vector graphics with native input tracking for microcontrollers and IIoT applications.  
   
 
 ---
@@ -84,6 +81,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]**Primary IoT / HMI Use Case**[/TD]  
 [/TR]  
 [TR]  
+[TD]**Alarm**[/TD]  
+[TD]Alarm Tile - An annunciation component utilizing subtle outer border-stroke color signaling to isolate critical process alerts while preserving dashboard grid visual aesthetics.[/TD]  
+[TD]Discrete output: Status indicator, adhoc warnings.[/TD]  
+[/TR]  
+[TR]  
 [TD]**BatteryIndicator**[/TD]  
 [TD]Battery Indicator: Smart, low-footprint charge level layout displaying a responsive 4-segment vertical vector cell. Automatically transitions through visibility and warning color profiles based on raw 0-100% capacity data blocks.[/TD]  
 [TD]Power Supply Monitoring: Live tracking for remote battery nodes, solar charging configurations, UPS backup cells, or low-power ESP32/Pico field telemetry loops.[/TD]  
@@ -114,6 +116,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Analog Readout: High-visibility analog readouts like Engine RPM, Vehicle Speed, or active Pump Pressure.[/TD]  
 [/TR]  
 [TR]  
+[TD]**Horizon**[/TD]  
+[TD]Horizon: An avionics-grade flight attitude indicator translating combined pitch and roll vector metrics seamlessly onto a high-visibility, responsive gauge matrix layout.[/TD]  
+[TD]Basically bit-of-fun showing what can be done with SVG images.[/TD]  
+[/TR]  
+[TR]  
 [TD]**IconIndicator**[/TD]  
 [TD]Icon Indicator: High-visibility visual alert interface rendering a scalable 48x48px vector symbol frame. Dynamically handles inline status updates (e.g., "OK", "WARNING", "ERROR", "INFO") using low-latency embedded strings.[/TD]  
 [TD]System Health Diagnostics: State-machine fault monitoring, critical hardware overrides, connection status flags, or process validation warnings.[/TD]  
@@ -129,6 +136,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]Discrete Output: Passive system notifications such as Overheat Alerts, Connectivity Pings, or Safe Run indicators.[/TD]  
 [/TR]  
 [TR]  
+[TD]**LoadingIndicator**[/TD]  
+[TD]An progress layout component utilizing sub-pixel balanced vector geometries and strict layout symmetry to track active processes without adding visual distraction to the HMI grid matrix.[/TD]  
+[TD]Discrete Output: Indicator for task-in-progress.[/TD]  
+[/TR]  
+[TR]  
 [TD]**MultiState**[/TD]  
 [TD]Multi State: Up-to 8 rectangles to set a single state ON / OFF.[/TD]  
 [TD]Discrete Input: Interlocked control patterns like Fan Speeds (Low/Med/High) or Machine Mode options.[/TD]  
@@ -137,6 +149,11 @@ Developing a single CustomView codebase that renders identically and handles rea
 [TD]**ReadOut**[/TD]  
 [TD]Read Out: Crisp telemetry display that cleanly outputs dynamic process numbers or operational status string values (e.g., "23.5 °C", "1013 hPa", "RUNNING").[/TD]  
 [TD]Analog Readout: Environmental sensor arrays (DHT22/BME280) or text-based state machines.[/TD]  
+[/TR]  
+[TR]  
+[TD]**QuadReadOut**[/TD]  
+[TD]An ultra-high-density 2x2 variable monitoring component featuring dynamic grid geometry handling. Automatically hides unused quadrants and layout axis lines when strings are null, keeping high-performance light themes perfectly clear of empty artifact paths.[/TD]  
+[TD]Digital Output: Monitor state up-to 4 sensors.[/TD]  
 [/TR]  
 [TR]  
 [TD]**Selector**[/TD]  
@@ -200,8 +217,8 @@ Developing a single CustomView codebase that renders identically and handles rea
   
   
 **Screenshots**  
-![](https://www.b4x.com/android/forum/attachments/173766)  
   
+![](https://www.b4x.com/android/forum/attachments/174276)  
 
 ---
 
@@ -209,9 +226,9 @@ Developing a single CustomView codebase that renders identically and handles rea
   
 **Installation**  
   
- 1. Download the latest release (HMITilesIO.b4xlib) from the libs folder.  
- 2. Copy the file into your B4J Additional Libraries and/or B4A Additional Libraries folder.  
- 3. Open your project in the IDE and check the box next to HMITilesIO in the Libraries Manager tab.  
+ 1. Download the attached release HMITilesIO.b4xlib.  
+ 2. Copy the file into the B4J Additional Libraries and/or B4A Additional Libraries folder.  
+ 3. Open a project in the IDE and check the box next to HMITilesIO in the Libraries Manager tab.  
   
 
 ---
@@ -230,14 +247,13 @@ Developing a single CustomView codebase that renders identically and handles rea
 HMITilesIO is a standard B4X CustomView and can be added directly via the Visual Designer.  
   
 1. Configure the Visual Designer  
-  
 
 - Open the Visual Designer tool.
 - Add a CustomView to your layout pane canvas.
 - Set the Selected Type to: HMITilesIO
 - Name the view object variable: TileIOSwitch
 - Change the custom property drop-down Component Type to: Switch
-- Set base dimensions to a fixed bounding square layout: 120 x 120
+- Set base dimensions to a fixed bounding square layout: 120 x 120 px
 
 2. Implement the Control Logic  
   
@@ -257,7 +273,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
     Root = Root1  
     Root.LoadLayout("mainpage")  
     ' Establish default visual startup state parameters smoothly  
-    Sleep(1)  
+    Sleep(100)  
     TileIOSwitch.State = False  
 End Sub  
   
@@ -297,6 +313,7 @@ This project does not follow strict semantic versioning. Updates are published i
   
 This library was created primarily to explore vector-based HMI layouts for personal use, education, and open sharing within the developer community.  
 This is a hobby project and is provided entirely as-is.  
+  
 Intended Use  
 This library is not intended for deployment in production-critical or high-risk safety industrial systems.  
   
@@ -312,4 +329,7 @@ This software is provided "as is", without warranty of any kind, express or impl
 **License**  
   
 HMITilesIO – MIT License © 2026 Robert W. B. Linn  
-See the LICENSE file in the root repository folder for detailed terms.
+See the LICENSE file in the root repository folder for detailed terms.  
+  
+
+---

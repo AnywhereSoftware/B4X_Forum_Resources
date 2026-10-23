@@ -33,6 +33,7 @@ Private Sub Class_Globals
 
 	Private mMinValue					As Float
 	Private mMaxValue					As Float
+	Private mStepSize					As Int
 End Sub
 
 ' Initializes the instance
@@ -41,6 +42,8 @@ Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+
+	mStepSize = 1
 End Sub
 
 Public Sub setMinValue(value As Float)
@@ -55,6 +58,14 @@ Public Sub setMaxValue(value As Float)
 End Sub
 Public Sub getMaxValue As Float
 	Return mMaxValue
+End Sub
+
+Public Sub setStepSize(value As Int)
+	if mStepSize < 1 then mStepSize = 1
+	mStepSize = value
+End Sub
+Public Sub getStepSize As Int
+	Return mStepSize
 End Sub
 
 ' SetTile
@@ -145,11 +156,11 @@ Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult
 		' Check boundary conditions based on exact 120-unit canvas sizing layout
 		If svgTouchX <= 40 Then
 			' MINUS REGION CLICKED
-			mValue = mValue - 1
+			mValue = mValue - mStepSize
 			ValueChanged = True
 		Else If svgTouchX >= 80 Then
 			' PLUS REGION CLICKED
-			mValue = mValue + 1
+			mValue = mValue + mStepSize
 			ValueChanged = True
 		End If
 

@@ -10,8 +10,10 @@ Version=9.85
 ' Brief:		Development program for the B4X HMITilesIO library.
 ' Date:			See Class_Globals VERSION
 ' Author:		Robert W.B. Linn (c) 2026 MIT
-' Description:	This pages is used to develop .
-' DependsOn:	XUI Views, JavaObject
+' Description:	This page is used to develop & test the HMITilesIO library.
+'				The target is B4J first as main developement tool, then B4A.
+' DependsOn:	XUI Views, 
+'				jStringUtils - HMiTilesIOSevenSegment Base64 encoding
 ' ================================================================
 
 #Region Shared Files
@@ -21,7 +23,7 @@ Version=9.85
 #End Region
 
 Private Sub Class_Globals
-	Private VERSION As String	= "HMITilesIO 0.8.0 - Build 20260925"
+	Private VERSION As String	= "HMITilesIO 1.0.0 (Build 20261018)"
 	Private ABOUT As String 	= "HMITilesIO (c) 2026 Robert W.B. Linn - MIT"
 	
 	' UI
@@ -56,6 +58,11 @@ Private Sub Class_Globals
 	Private TileTiltGauge As HMITilesIO
 	Private TileWatchdog As HMITilesIO
 	Private TileCompass As HMITilesIO
+	Private TileHorizon As HMITilesIO
+	Private TileAlarm As HMITilesIO
+	Private TileLoadingIndicator As HMITilesIO
+	Private TileQuadReadOut As HMITilesIO
+	Private TileQuadReadOut2 As HMITilesIO
 End Sub
 
 Public Sub Initialize
@@ -86,11 +93,15 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' HMITiles
 	' Ensure to set sleep prior calling customviews 
 	' (set 100 or more depending completness of the tiles)
-	Sleep(50)
+	Sleep(100)
 
 	' ----------
 	' State
 	' ----------
+
+'	TileAlarm.Value = "0,OK"
+	TileAlarm.Value = "1,WARN"
+'	TileAlarm.Value = "2,ERROR"
 
 	' Button
 	TileButton.State = False
@@ -122,6 +133,10 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Dual
 	' TileDualReadOut.ValueFontColor = "#0000FF"
 
+	' Horizon (Pitch,Roll)
+	TileHorizon.Value = "5.5,-12.3"
+	TileHorizon.Footer = TileHorizon.InstanceHorizon.PitchRollDegreesString(TileHorizon.Value)
+
 	' Icon Indicator
 	TileIconIndicator.Value = "ok"	' "error"
 
@@ -133,6 +148,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Spinner
 	TileSpinner.Value = 99
 	TileSpinner.ValueFontSize = 18
+	TileSpinner.InstanceSpinner.StepSize = 10
 	
 	' ReadOut
 	TileReadOut.Value = "Value"
@@ -149,7 +165,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	
 	' SevenSegment
 	TileSevenSegment.Value = TileSlider.Value
-		
+	TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_STATIC_TEXT
+	
 	' TiltGauge
 	TileTiltGauge.Value = TileSlider.Value
 	TileTiltGauge.InstanceTiltGauge.SetPositionSegmentColor("#FF0000")
@@ -187,6 +204,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	TileTrendChart.Value = "10;20;30;25;20;68"
 
 	' Timer
+	TileTimer.State = False
 	TileTimer.Value = "40;60"
 	TileTimerClock.InstanceTimer.StartClock
 	'TileTimerClock.Value = TileTimerClock.InstanceTimer.GetTime
@@ -195,6 +213,17 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 
 	' Watchdog
 	TileWatchdog.Value = TileWatchdog.InstanceWatchdog.STATUS_WARNING
+	
+	' QuadReadOut
+	' Clear out default labels so the hidden logic triggers cleanly
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(1, "Left Var", "V", "#0f172a")
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(2, "Right Var", "A", "#0f172a")
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(3, "", "", "") ' Hides Bottom-Left
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(4, "", "", "") ' Hides Bottom-Right
+
+	' Push 2-digit array metric directly to the layout property binder
+	TileQuadReadOut2.InstanceQuadReadOut.SetTile("DUAL MONITOR", "Split Active", "19,58")
+
 End Sub
 
 ' ================================================================
@@ -229,12 +258,30 @@ Private Sub TileSlider_Click(state As Boolean, value As String)
 	TileVerticalMeter.Value = value
 
 	TileSevenSegment.Value = value
+	If value > 80 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_ERROR_STATE
+	Else if value > 75 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_WARNING_STATE
+	Else if value > 10 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_NORMAL_STATE
+	Else
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_STATIC_TEXT
+	End If
 
 	TileTrendChart.Value = $"${TileTrendChart.Value};${value}"$
 
 	TileBattery.Value = value
 
 	TileSignal.Value = value
+	
+	If value > 0 Then
+		Dim r As Float = 360 * (value / 100)			' 0-360
+		Dim p As Float = -30 + (60 * (value / 100))		' -30 - 30
+		TileHorizon.Value = $"${p},${r}"$
+		TileHorizon.Footer = TileHorizon.InstanceHorizon.PitchRollDegreesString(TileHorizon.Value)
+	End If
+	
+	TileQuadReadOut.InstanceQuadReadOut.UpdateSingleValue(3, value)
 	
 	Log($"[TileSlider_Click] state=${TileSlider.state}, value=${TileSlider.value}"$)
 End Sub
@@ -275,6 +322,15 @@ Private Sub TileButton_Click(state As Boolean, value As String)
 	Log($"[TileButton_Click] state=${TileButton.state}, value=${TileButton.value}"$)
 End Sub
 
+Private Sub TileLoadingIndicator_Click(State As Boolean, Value As String)
+	TileLoadingIndicator.State = IIf(State, False, True)
+	Log($"[TileLoadingIndicator_Click] state=${TileLoadingIndicator.state}, value=${TileLoadingIndicator.value}"$)
+End Sub
+
+Private Sub TileQuadReadOut_Click(State As Boolean, Value As String)
+	
+End Sub
+
 ' ================================================================
 ' TILE SPECIFIC
 ' ================================================================
@@ -289,18 +345,17 @@ Private Sub TileTimerTest	'ignore
 		TileTimer.Footer = TileTimer.Value
 		Sleep(TIMER_STEP_PAUSE)
 	Next
+	TileTimer.State = False
 End Sub
 
 Private Sub TileTimer_Click(State As Boolean, Value As String)
-	Log($"[TileTimer] Start"$)
+	If TileTimer.State = True Then Return
+	Log($"[TileTimer] State=${State}"$)
 	TileTimer.Value = "40;60"
 	TileTimer.Footer = TileTimer.Value
-	CallSubDelayed(Me, "TileTimerTest")
+	TileTimer.State = True
+	CallSubDelayed(Me, "TileTimerTest")		
 End Sub
-
-' ================================================================
-' HELPER
-' ================================================================
 
 ' ================================================================
 ' HELPER
@@ -330,7 +385,7 @@ Private Sub TakeSnapShot
 	Log("Screenshot saved: " & File.Combine(folder, imgname))
 	' RPi: Screenshot saved: /home/rwbl/data/b4j/tempjars/hmitilesio-snapshot.png
 	' Windows: Screenshot saved: C:\Daten\b4\b4j\projects\CUSTOM~1\HMITIL~2\src\B4J\Objects\hmitilesio-snapshot.png
-	' B4A: Screenshot saved: /data/user/0/com.rwbl.hmitilesio/files/hmitilesio-snapshot.png
+	' Screenshot saved: /data/user/0/com.rwbl.hmitilesio/files/hmitilesio-snapshot.png
 End Sub
 
 ' Double click on the labelabout makes a snapshot of the mainpage
@@ -348,4 +403,3 @@ Private Sub LabelAbout_Click
 	TakeSnapShot
 End Sub
 #End If
-

@@ -1,5 +1,5 @@
 ###  [DSE] Designer Script Extensions by Erel
-### 07/19/2022
+### 10/18/2026
 [B4X Forum - B4X - Tutorials](https://www.b4x.com/android/forum/threads/141312/)
 
 The soon to be released versions of B4A, B4i and B4J include a new feature named: designer script extensions. The new feature allows calling B4X code from the visual designer scripts.  
@@ -89,4 +89,5 @@ DDD.SetTextAndSize(Button8, TextSize, "Click here", "Click")
   
   
 Updates:  
+v1.05 - Fixes a bug with classes being added multiple times. New optional LayoutParent parameter in GetViewsByClass methods.  
 v1.04 - Fixes a bug with the classes feature. New Color method.
