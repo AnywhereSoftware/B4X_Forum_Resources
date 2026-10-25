@@ -1,0 +1,188 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4.15
+@EndOfDesignText@
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public Timer1 As Timer
+	Private Temperature As Float = 99 'ignore
+	Private Humidity As Float = 0 'ignore
+	Private Battery As Int = -1 'ignore
+	Public Text2Draw(100) As Byte
+	Public TextPos_X, TextPos_Y As Int
+	Dim bc As ByteConverter
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart - Govee Direct Matcher Active")
+	
+	RunNative("initBluetooth", Null)
+	RunNative("InitDisplay", Null)
+
+	' Clear screen and draw static title from B4R
+	RunNative("ClearScreen", Null)
+	DrawTextAt("Govee H5074 Monitor", 90, 10, 2)
+
+	Timer1.Initialize("Timer1_Tick", 15000)
+	Timer1.Enabled = True
+End Sub
+
+Sub DrawTextAt (Text As String, x As Int, y As Int, fontNum As Int)
+	TextPos_X = x
+	TextPos_Y = y
+	
+	Dim b() As Byte = bc.StringToBytes(Text)
+	For i = 0 To b.Length - 1
+		Text2Draw(i) = b(i)
+	Next
+	Text2Draw(b.Length) = 0
+	RunNative("DrawText", fontNum)
+End Sub
+
+Sub Timer1_Tick
+	RunNative("setSensorData", Null)
+	If Temperature <> -100 And Temperature <> 99 Then
+		Log("Tmp: ", Temperature, " degC    Hum: ", Humidity, "%    Bat: ", Battery, "%")
+		
+		' Construct the temperature string using clean text
+		Dim tempValStr As String = JoinStrings(Array As String("Temp: ", NumberFormat(Temperature, 0, 0), " degC"))
+		Dim humStr As String = JoinStrings(Array As String("Humidity: ", NumberFormat(Humidity, 0, 0), " %"))
+		Dim batStr As String = JoinStrings(Array As String("Battery: ", NumberFormat(Battery, 0, 0), " %"))
+		
+		DrawTextAt(tempValStr, 10, 50, 4)
+		DrawTextAt(humStr, 10, 95, 4)
+		DrawTextAt(batStr, 10, 140, 4)
+	Else
+		Log("Waiting for Govee H5074 data...")
+	End If
+End Sub
+
+#if C
+#include <sstream>
+#include <cctype>
+#include "NimBLEDevice.h"
+#include <TFT_eSPI.h>
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2
+#endif
+
+NimBLEScan *pBLEScan;
+volatile float current_temperature = -100;
+volatile float current_humidity = -100;
+volatile int current_battery = -1;
+TFT_eSPI tft = TFT_eSPI();
+
+portMUX_TYPE BLE_mux = portMUX_INITIALIZER_UNLOCKED;
+
+class MyScanCallbacks : public NimBLEScanCallbacks {
+    void onResult(const NimBLEAdvertisedDevice *advertisedDevice) override {
+        std::string addr = advertisedDevice->getAddress().toString();
+        for (auto &c : addr) c = std::toupper(c);
+        
+        if (addr.rfind("A4:C1:38", 0) == 0) {
+            if (advertisedDevice->haveManufacturerData()) {
+                std::string manufData = advertisedDevice->getManufacturerData();
+                const uint8_t* data = (const uint8_t*)manufData.data();
+                
+                if (manufData.length() >= 2 && data[0] == 0x4C && data[1] == 0x00) {
+                    return;
+                }
+
+                if (manufData.length() >= 8 && data[0] == 0x88 && data[1] == 0xEC) {
+                    int16_t raw_temp = (data[4] << 8) | data[3];
+                    float temp = (float)raw_temp / 100.0;
+                    
+                    if (temp > -40.0 && temp < 85.0) {
+                        float hum = (float)(((data[6] << 8) | data[5]) & 0x7FFF) / 100.0;
+                        int bat = data[7];
+                        
+                        portENTER_CRITICAL(&BLE_mux);
+                        current_temperature = temp;
+                        current_humidity = hum;
+                        current_battery = bat;
+                        portEXIT_CRITICAL(&BLE_mux);
+                    }
+                }
+                else if (manufData.length() >= 7) {
+                    int16_t raw_temp = (data[4] << 8) | data[3];
+                    float temp = (float)raw_temp / 100.0;
+                    
+                    if (temp > -40.0 && temp < 85.0) {
+                        float hum = (float)((data[6] << 8) | data[5]) / 100.0;
+                        int bat = manufData.length() >= 8 ? data[7] : 100;
+                        
+                        portENTER_CRITICAL(&BLE_mux);
+                        current_temperature = temp;
+                        current_humidity = hum;
+                        current_battery = bat;
+                        portEXIT_CRITICAL(&BLE_mux);
+                    }
+                }
+            }
+        }
+    }
+};
+
+MyScanCallbacks scanCallbacks;
+
+void setSensorData(B4R::Object* o) {
+    portENTER_CRITICAL(&BLE_mux);
+    b4r_main::_temperature = current_temperature;    
+    b4r_main::_humidity = current_humidity;    
+    b4r_main::_battery = current_battery;
+    portEXIT_CRITICAL(&BLE_mux);
+}
+
+
+void initBluetooth(B4R::Object* o) {
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+    
+    // Give the power rail and internal radios a moment to stabilize
+    delay(250); 
+    
+    NimBLEDevice::init("");
+    pBLEScan = NimBLEDevice::getScan(); 
+    pBLEScan->setScanCallbacks(&scanCallbacks, false);
+    pBLEScan->setActiveScan(true); 
+    pBLEScan->setInterval(100);
+    pBLEScan->setWindow(99);
+    
+    pBLEScan->start(0, false);
+}
+
+void InitDisplay (B4R::Object* o) {
+  tft.init();
+  tft.setRotation(1);
+  tft.fillScreen(TFT_NAVY);
+}
+
+void ClearScreen (B4R::Object* o) {
+  tft.fillScreen(TFT_NAVY);
+}
+
+void DrawText (B4R::Object* o) {
+  char *text2draw = (char*)b4r_main::_text2draw->data;
+  int x = b4r_main::_textpos_x;
+  int y = b4r_main::_textpos_y;
+  int fontNum = o->toLong();
+  
+  tft.setTextColor(TFT_WHITE, TFT_NAVY);
+  tft.drawString(text2draw, x, y, fontNum); 
+}
+
+#End If

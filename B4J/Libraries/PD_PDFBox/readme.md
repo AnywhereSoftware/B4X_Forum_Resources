@@ -1,5 +1,5 @@
 ### PD_PDFBox by behnam_tr
-### 10/20/2026
+### 10/23/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/172303/)
 
 A B4J wrapper for Apache PDFBox 2.0.37 to generate PDF documents.  
@@ -25,6 +25,11 @@ AutoWrap Text in Tables
 Fix AddParagraph Line Space  
 bug fix  
 Sample updated.  
+  
+v1.2  
+new AddRow method// AddRow(String[] values, String[] hAligns, String[] colors)  
+removed method : AddRowAligned,AddRowAlignedCells  
+added change color of the text in the columns  
   
 
 ```B4X

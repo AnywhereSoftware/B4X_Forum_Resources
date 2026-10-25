@@ -1,5 +1,5 @@
 ### [Web][SithasoDaisy5] - Create WebSites & WebApps with the power of the Abstract Designer (OpenSource) by Mashiane
-### 05/02/2025
+### 10/23/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/165095/)
 
 **DISCLAIMER - TO AVOID CONFUSION, THIS IS A NEW B4XLIB AND NOT SITHASODAISY 2, THIS IS OPEN-SOURCE, SITHASODAISY 2 IS NOT  
@@ -10,6 +10,10 @@ PLEASE NOTE THAT ALL REFERENCES TO THIS B4XLIB WILL BE [SithasoDaisy5] OR [SDV5]
 ![](https://www.b4x.com/android/forum/attachments/160797)  
   
 SithasoDaisy5 is a wrap of the MIT based [DaiyUI](https://daisyui.com) [TailwindCSS](https://tailwindcss.com/) Component library to be used on top of [BANano](https://www.b4x.com/android/forum/threads/web-banano-website-app-pwa-library-with-abstract-designer-support.99740/#content) to bring you the best of worlds when creating your websites and webapps.  
+  
+  
+**2026-10-23 - We release SithasoDaisy5-Skills**  
+<https://www.b4x.com/android/forum/threads/sithasodaisy5-skills-%E2%80%94-ai-development-skills-suite-for-sithasodaisy5.172352/>  
   
 **Why we chose DaisyUI…  
   
