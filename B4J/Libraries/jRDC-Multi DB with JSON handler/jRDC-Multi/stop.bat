@@ -1,1 +1,0 @@
-wmic Path win32_process Where "CommandLine Like '%%jRDC_Multi.jar%%'" Call Terminate
