@@ -1,0 +1,244 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example simple gauge.
+'Hardware:		Sunton ESP32 2.8" TFT, w320xh240, touch, driver ILI9341 
+'DefineExtra:	#define ESP32_2432S028
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Display
+'Set the display to use in the project attributes directive #DefineExtra. See below.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+
+	'Define the display driver
+	#DefineExtra: #define ESP32_2432S028
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx GAUGE v20250413"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Disply instance
+	Private lcd As LovyanGFXEx
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	lcd.DisplayRotation = 1
+	
+	' Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	lcd.FloodFill(50, lcd.Height - 2, lcd.COLOR_FIREBRICK)
+	
+	TestDrawGauge
+End Sub
+
+'Draw the 4 gauges on display 320 width x 240 height, radius 50
+Public Sub TestDrawGauge
+	Dim value As Double
+	Dim title As String
+	
+	'Show 4 small gauges
+	value = Rnd(20, 51)
+	title = NumberFormat(value,0,0)
+	DrawGauge(70, 70, 50, 0, 50, value, title, lcd.FONT_FONT0, lcd.COLOR_BLACK, lcd.COLOR_BLACK, lcd.COLOR_RED, 2, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLUE, 2)
+
+	value = Rnd(-10, 41)
+	title = JoinStrings(Array As String("T ", NumberFormat(value, 0, 0), "C"))
+	DrawGauge(250, 70, 50, -10, 40, value, title, lcd.FONT_FONT2, lcd.COLOR_BLACK, lcd.COLOR_BLACK, lcd.COLOR_BLACK, 1, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLUE, 2)
+	
+	value = Rnd(1, 101)
+	title = "Level %"
+	DrawGauge(70, 180, 50, 0, 100, value, title, lcd.FONT_FONT2, lcd.COLOR_BLACK, lcd.COLOR_BLACK, lcd.COLOR_RED, 2, lcd.COLOR_WHITE, lcd.COLOR_BLUE, 2)
+
+	value = Rnd(0, 1001) / 10
+	title = JoinStrings(Array As String("H ", NumberFormat(value, 0, 1), "%"))
+	DrawGauge(250, 180, 50, 0, 100, value, title, lcd.FONT_FONT2, lcd.COLOR_BLACK, lcd.COLOR_BLACK, lcd.COLOR_BLUE, 1, lcd.COLOR_WHITE, lcd.COLOR_BLUE, 2)
+
+	'Show single big gauge
+	Delay(10000)
+	lcd.Clear
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+	lcd.DrawHeader("Level V-1101", lcd.FONT_ORBITRON_LIGHT_24, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	value = Rnd(0, 1001) / 10
+	title = JoinStrings(Array As String(NumberFormat(value, 0, 1), "%"))
+	DrawGauge(lcd.CenterX, lcd.CenterY + 12, lcd.Height/2.5, 0, 100, value, title, lcd.FONT_FONT4, lcd.COLOR_BLACK, lcd.COLOR_BLACK, lcd.COLOR_RED, 2, lcd.COLOR_ILLUMINATING, lcd.COLOR_BLACK, 4)
+
+'	'Update timer counter and stop
+'	TimerCounter = TimerCounter + 1
+'	If TimerCounter == 5 Then
+'		TimerSimulator.Enabled = False
+'	End If
+End Sub
+
+#Region DrawGauge
+'Draw gauge.
+'The gauge has a fixed number of ticks (20) and major scale ticks (5).
+'The needle center square has fix size 8px.
+'textFont - set to -1 to use the default font FONT0
+Public Sub DrawGauge(x As Int, y As Int, radius As Int, _ 
+                     minValue As Double, maxValue As Double, currentValue As Double, _
+                     title As String, textFont As Byte, textColor As ULong, _
+					 scaleColor As ULong, _  
+					 needleColor As ULong, needleThickness As Int, _ 
+					 innerColor As ULong, _ 
+					 borderColor As ULong, borderWidth As Int)
+
+	' Set font. If value is -1 then set to default
+	If textFont = -1 Then
+		lcd.Font = lcd.FONT_FONT0
+	Else
+		lcd.Font = textFont
+	End If
+	
+	' Set the title & scale text size to default 1
+	Dim TextSize As Double = 1
+
+	' Draw gauge border which is a filled circle
+	lcd.FillCircle(x, y, radius, borderColor)
+
+	' Draw filled inner circle
+	lcd.FillCircle(x, y, radius - borderWidth, innerColor)
+
+	' Define total angle range and offset
+	Dim angleRange As Double = 240.0  ' Scale covers 240 degrees
+	Dim angleOffset As Double = 30.0  ' Scale starts at 30°
+
+	' Draw scale (ticks)
+	Dim majorTicks As Int = 0
+	Dim numberOfTicks As Int = 20
+	For i = 0 To numberOfTicks
+		' Calculate tick value
+		Dim tickValue As Double = minValue + i * (maxValue - minValue) / numberOfTicks
+
+		' Calculate tick angle from max value downward
+		Dim tickAngle As Double = angleOffset + (tickValue - maxValue) * angleRange / (maxValue - minValue)
+
+		' Convert tick angle to radians
+		Dim rad As Double = tickAngle * (cPI / 180.0)
+
+		' Draw tick marks
+		Dim r1 As Int = radius - 2
+		Dim tickLength As Int = IIf(i Mod 5 = 0, 10, 5)
+		Dim x1 As Int = x + Cos(rad) * (r1 - tickLength)
+		Dim y1 As Int = y + Sin(rad) * (r1 - tickLength)
+		Dim x2 As Int = x + Cos(rad) * r1
+		Dim y2 As Int = y + Sin(rad) * r1
+		lcd.DrawLine(x1, y1, x2, y2, scaleColor)
+
+		' Show scale values at major ticks
+		If i Mod 5 = 0 Then
+			majorTicks = majorTicks + 1
+			Dim tickValueString As String = Round(tickValue) ' Ensure it's an integer
+
+			Dim textX As ULong = x + Cos(rad) * (r1 - tickLength - 15)
+			Dim textY As ULong = y + Sin(rad) * (r1 - tickLength - 15)
+
+			' Force alignment to center for now
+			Dim align As Byte = lcd.TEXT_ALIGN_MIDDLE_CENTER
+			If (majorTicks < 3) Then
+				textX = textX - lcd.FONT_HEIGHT_DEFAULT
+				align = lcd.TEXT_ALIGN_MIDDLE_LEFT
+			End If
+			If (majorTicks == 3) Then
+				textX = textX - (lcd.FONT_HEIGHT_DEFAULT / 2)
+				align = lcd.TEXT_ALIGN_MIDDLE_CENTER
+			End If
+			If (majorTicks > 3) Then
+				textX = textX + lcd.FONT_HEIGHT_DEFAULT
+				align = lcd.TEXT_ALIGN_MIDDLE_RIGHT
+			End If
+			lcd.SetTextDatum(align)
+			lcd.SetTextSize(TextSize)
+			lcd.SetTextColor(scaleColor)
+
+			lcd.DrawString(tickValueString, textX, textY)
+		End If
+	Next
+
+	' Draw the needle
+	Dim valueAngle As Double = angleOffset + (currentValue - maxValue) * angleRange / (maxValue - minValue)
+	Dim radNeedle As Double = valueAngle * cPI / 180.0
+
+	Log("valueAngle=",valueAngle,",radNeedle=",radNeedle)
+
+	' Set the needle x,y end coordinates on the circle border
+	Dim needleX As Int = x + Cos(radNeedle) * (radius * 0.7)
+	Dim needleY As Int = y + Sin(radNeedle) * (radius * 0.7)
+
+	' Draw needle center rect
+	Dim needleCenterWidth As Int = 8	'needleThickness * 2
+	lcd.FillRect(x - needleCenterWidth / 2, y - needleCenterWidth / 2, needleCenterWidth, needleCenterWidth, needleColor)
+
+	' Draw needle center circle
+	'Dim needleCenterWidth As Int = needleThickness * 2
+	' lcd.FillCircle(x, y, needleCenterWidth, needleColor)
+
+	' Draw the needle as 1 line with 1px thickness
+	'lcd.DrawLine(x, y, needleX, needleY, needleColor)
+
+	' Draw the needle as 3 lines
+'	lcd.DrawLine(x, y-1, needleX, needleY-1, needleColor)
+'	lcd.DrawLine(x, y, needleX, needleY, needleColor)
+'	lcd.DrawLine(x, y+1, needleX, needleY+1, needleColor)
+
+	' Draw the needle as wide line
+	lcd.drawWideLine(x, y, needleX, needleY, needleThickness, needleColor)
+
+	' Draw the needle as triangle
+	'Dim needleW As Int = needleThickness / 2
+	'lcd.FillTriangle(x-needleW, y-needleW, x+needleW, y+needleW, needleX, needleY, needleColor)
+
+	' Display the title below the needle
+	lcd.SetTextDatum(lcd.TEXT_ALIGN_MIDDLE_CENTER)
+	lcd.SetTextSize(TextSize)
+	lcd.SetTextColor(textColor)
+	lcd.DrawString(title, x, y + radius * 0.6)
+End Sub
+#End Region

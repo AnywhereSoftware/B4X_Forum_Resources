@@ -1,0 +1,114 @@
+﻿Build1=Default,b4a.example
+File1=file.htdigest
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=httpserver
+Library3=xui
+Library4=digestserverdemo
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim Server As SecurityServer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Server.Initialize(Me,"Server")
+	'.digset etxt list of: User:realm:Password
+	File.Copy(File.DirAssets,"file.htdigest",File.DirInternalCache,"file.htdigest")
+	Server.htdigestlist=File.ReadList(File.DirInternalCache,"file.htdigest")
+	Server.Start(51051)
+	Server.DigestPath="/dir/"
+	Server.IgnoreNC=True
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+Private Sub Server_HandleRequest (Request As ServletRequest, Response As ServletResponse)
+	' Insecure connection - normal http
+	If Request.Method="POST" Then
+		Log(Request.GetParameter("fname"))
+		Log(Request.GetParameter("lname"))
+	Else
+		Dim Body As String = $"
+		<a href="/dir/index.httl">Click here for Digest</a>
+		<br><br>
+		<form action="/action_page.php" method="post">
+		<label for="fname">First name:</label>
+		<input type="text" id="fname" name="fname"><br><br>
+		<label for="lname">Last name:</label>
+		<input type="text" id="lname" name="lname"><br><br>
+		<input type="submit" value="Submit">
+		</form>"$
+		Response.SetContentType("text/html")
+		Response.SendString(Body)
+	End If
+End Sub
+
+Private Sub Server_HandleDigestRequest (Request As ServletRequest, Response As ServletResponse)
+	' Secure
+	Log("Not raise in demo version")
+End Sub
+
+Private Sub Server_LogIn(UserName As String, Address As String)
+	Log("LogIn: " & UserName & " " & Address)
+End Sub
+
+Private Sub Server_RefusedWrongCredential(UserName As String, Address As String)
+	Log("Refused: " & UserName & " " & Address)
+End Sub
+
+Private Sub Server_RefusedNoCredential (Address As String)
+	Log("Refused first access: " & Address)
+End Sub
+
+Private Sub Server_RefusedWrongNC (UserName As String, Address As String)
+	Log("Refused wrong seq. nc: " & Address)
+End Sub
+
+
+Public Sub SendMessage(Response As ServletResponse, Message As String)
+	Server.SetHeaderDigestSecurity(Response)
+	Response.SetContentType("text/html")
+	Response.SendString(Message)
+End Sub

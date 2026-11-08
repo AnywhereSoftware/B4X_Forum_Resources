@@ -1,0 +1,86 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=androidviewanimations
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private AndroidViewAnimations1 As AndroidViewAnimations
+	Private Label1 As Label
+	Private cmdIsRunning As Button
+	Private cmdStop As Button
+	Private cmdStart As Button
+	Private cmdIsStarted As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	AndroidViewAnimations1.Initialize("AndroidViewAnimations1")
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Private Sub cmdStart_Click
+	AndroidViewAnimations1.Interpolator = AndroidViewAnimations1.INTERPOLATOR_ACCELERATE_DECELERATE
+	AndroidViewAnimations1.RepeatTimes = 3
+	AndroidViewAnimations1.Duration = 1200
+	AndroidViewAnimations1.Delay = 0
+	AndroidViewAnimations1.RepeatMode = AndroidViewAnimations1.REPEAT_MODE_REVERSE
+	AndroidViewAnimations1.PivotX = 500
+	AndroidViewAnimations1.PivotY = -100
+	AndroidViewAnimations1.Techniques = AndroidViewAnimations1.TECHNIQUES_FLIP_IN_X
+	AndroidViewAnimations1.Animate(Label1)
+End Sub
+
+Sub cmdIsStarted_Click
+	ToastMessageShow(AndroidViewAnimations1.IsStarted, False)
+End Sub
+
+Sub cmdIsRunning_Click
+	ToastMessageShow(AndroidViewAnimations1.IsRunning, False)
+End Sub
+
+Sub cmdStop_Click
+	AndroidViewAnimations1.Stop(True)
+End Sub
+
+Sub AndroidViewAnimations1_AnimationStart
+	Log("Animation Start")
+End Sub
+
+Sub AndroidViewAnimations1_AnimationEnd
+	Log("Animation End")
+End Sub
+
+Sub AndroidViewAnimations1_AnimationCancel
+	Log("Animation Cancel")
+End Sub

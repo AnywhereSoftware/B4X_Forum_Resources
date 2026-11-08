@@ -1,0 +1,74 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example touch showing red dot and x,y coordinates at touch position.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx TOUCH v20250409"
+
+	'Communication
+	Public Serial1 As Serial
+	
+	'Display Instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display
+	lcd.Initialize("LCD_Touch")
+
+	' Callsub to let the display initialize
+	CallSubPlus("SetUp", 1000, 5)
+End Sub
+
+Private Sub SetUp(tag As Byte)
+	' Set rotation to top left
+	lcd.DisplayRotation = 1
+	
+	' Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	' Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_WHITE, lcd.COLOR_NAVY, lcd.COLOR_RED)
+End Sub
+
+'LCD touched event with x,y coordinates. Show red dot and x,y coordinates.
+Private Sub LCD_Touch(x As ULong, y As ULong)
+	'[Touch LCD_Touch Event] x=188,y=104
+	Log("[LCD_Touch] x=", X, ",y=", Y)
+	lcd.FillCircle(x, y, 5, lcd.COLOR_RED)
+	lcd.DrawText(x, y - 10, JoinStrings(Array As String(NumberFormat(x,0,0),",",NumberFormat(y,0,0))), lcd.TEXT_ALIGN_MIDDLE_CENTER, 1, lcd.COLOR_BLACK, lcd.BackgroundColor)
+End Sub

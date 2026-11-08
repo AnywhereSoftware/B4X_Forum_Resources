@@ -1,0 +1,86 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rasynctcp
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private Client As AsyncClient
+	Private Server As AsyncServer
+'	Private Clients(5) As ULong
+'	Private CurrClientID As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart Server")
+	'example of connecting to a local network
+	If Not(wifi.Connect2("xxxxx", "xxxxx")) Then
+		Log("Failed to connect to network")
+		
+	Else
+		Log("Connected to network : ",wifi.LocalIp)
+		Server.Initialize1(80,"OnNewClient")
+		Client.initialize
+	End If
+End Sub
+
+Sub OnNewClient(clientID As ULong)
+	Log("request from client : ",clientID)
+'	If Client.ClientEqual(clientID,)=True Then Log(" == ","--IP remote:",Client.remoteIP1) Else Log(" <> ","--IP remote:",Client.remoteIP1)
+'	If Client.ClientDiff(clientID)=True Then Log("Confirmed: <> ") Else Log("Confirmed: == )")
+
+    Log("start init CB")
+	Client.InitOnConnect(clientID, clientID, "OnConnect")
+	Client.InitOnDisconnect(clientID, clientID, "OnDisconnect")
+'	Client.InitOnPoll(clientID, clientID, "OnPoll")
+'	Client.InitOnAck(clientID, clientID, "OnAck")
+	Client.InitOnError(clientID, clientID, "OnError")
+	Client.InitOnData(clientID, clientID, "OnData")
+	Client.InitOnTimeOut(clientID, clientID, "OnTimeOut")
+    Log("end init CB")
+End Sub
+
+Sub OnConnect(argID As ULong, clientID As ULong)
+	Log( "Client connected :",argID," / ClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID) )
+End Sub
+Sub OnDisconnect(argID As ULong, clientID As ULong)
+	Log( "Client disconnected :",argID," / ClientID : ",clientID)
+End Sub
+Sub OnPoll(argID As ULong, clientID As ULong)
+	Log( "OnPoll Client :",argID," / ClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID) )
+End Sub
+Sub OnAck(argID As ULong, clientID As ULong, len As UInt, time As ULong)
+	Log( "OnAck Client :",argID," / ClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID), " -length=",len," -time=",time)
+End Sub
+Sub OnError(argID As ULong, clientID As ULong, error As Byte)
+	Log("connection error from client: ",argID," /CurrentClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID), " -error : ", Client.errorToString(clientID,error))
+End Sub
+Sub OnData(argID As ULong, clientID As ULong, Payload() As Byte)
+	Log("New Data from client: ",argID," / ClientID : ",clientID, " -data = ","--IP remote:",Client.getremoteIP1(clientID)," Payload=",Payload)
+	If (Client.space(clientID) > 32) And (Client.canSend(clientID)) Then
+		Dim replay(32) As Byte
+		replay= "this message is from SERVER: esp_server".GetBytes
+		Client.add(clientID,replay, replay.length)
+		Client.send(clientID)
+		Log("replay sent")
+	End If	
+End Sub
+Sub OnTimeOut(argID As ULong, clientID As ULong, Time As ULong)
+	Log(" ACK Time Out from client: ",argID," / ClientID : ",clientID,"--IP remote=",Client.getremoteIP1(clientID) ," -time = ",Time)
+End Sub
+

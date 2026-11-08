@@ -1,0 +1,131 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IRReceiverSenderSONY - simulate remote control SONY send & receive.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The default pins as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'				KEYES IR-Sender KY-005 (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+
+'Hints:			Set low stackbuffer size, i.e. 100. If larger value, the timer hangs. Do not know why?
+
+'Log Example
+'[AppStart] rRemoteEx IRRECEIVERSENDERSONY v20250429
+'[rIRRemoteEx irreceiver Initialize] IrReceiverPin=2
+'[rIRRemoteEx irreceiver Initialize] IrDecodedDataSub added
+'[rIRRemoteEx irreceiver Initialize] Ready To receive IR signals of protocols: NEC/NEC2/Onkyo/Apple, Panasonic/Kaseikyo, Denon/Sharp, Sony, RC5, RC6, LG, JVC, Samsung, FAST, Whynter, Lego Power Functions, Bosewave, MagiQuest, Universal Pulse Distance Width, Hash 
+'[rIRRemoteEx irsender Initialize] IrSenderPin=3
+'[AppStart] timersimulator started. interval=2000
+'[>>> timersimulator_Tick] counter=1
+'[NewData] +++
+'[NewData] protocol=24,name=Sony,address=26,command=58,commandhex=3A,flags=0,initialgapticks=40193,flags_is_repeat=1
+'[NewData] rawdata len=26,decoded=3386,rawdata hex=3A0D0000
+'[NewData] ---
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=Sony Address=0x1A Command=0x3A Raw-Data=0xD3A 12 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: irsender.sendSony(0x1A, 0x3A, 2, 12);
+'[>>> timersimulator_Tick] counter=2
+'[>>> timersimulator_Tick] timersimulator stopped
+'[NewData] +++
+'[NewData] protocol=24,name=Sony,address=26,command=58,commandhex=3A,flags=0,initialgapticks=37407,flags_is_repeat=1
+'[NewData] rawdata len=26,decoded=3386,rawdata hex=3A0D0000
+'[NewData] ---
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=Sony Address=0x1A Command=0x3A Raw-Data=0xD3A 12 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: irsender.sendSony(0x1A, 0x3A, 2, 12);
+#End Region
+
+#Region Wiring
+'IR-Receiver = Arduino UNO
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+
+'IR-Sender = Arduino UNO
+'VCC = 5V (RED)
+'TX = 3 (YELLOW) - use resistor 3V3=120Ohm,5V=220Ohm
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	'IMPORTANT: SET LOW VALUE
+	#StackBufferSize: 100		
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVERSENDERSONY v20250429"
+
+	Private SerialLine As Serial
+
+	Private irreceiver As IrReceiver
+	Private irsender As IrSender
+
+	Private timersimulator As Timer
+	Private timersimulatorinterval As ULong = 2000	'ms, less then 2s irreceiver stops
+	Private timersimulatorcounter As UInt = 0
+	
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+	
+	'Init ir receiver and sender using the default pins 2 and 3
+	irreceiver.Initialize("NewData")
+	irsender.Initialize()
+
+	'Define and init the simulator
+	timersimulator.Initialize("timersimulator_Tick", timersimulatorinterval)
+	timersimulator.Enabled = True
+	Log(CRLF, "[AppStart] timersimulator started. interval=", timersimulatorinterval)
+End Sub
+
+Sub timersimulator_Tick
+	timersimulatorcounter = timersimulatorcounter + 1
+	Log(CRLF, "[>>> timersimulator_Tick] counter=", timersimulatorcounter)
+
+	'Send SONY command 2 repeats & 12 bits
+	irsender.SendSony(0x1C5A, 0x3A, 2, irsender.SIRCS_12_PROTOCOL)
+		
+	If timersimulatorcounter == 2 Then
+		timersimulator.enabled = False
+		Log(CRLF, "[>>> timersimulator_Tick] timersimulator stopped")
+	End If
+End Sub
+
+Private Sub NewData(data As IrDecodedData)
+	'Do not listen to newdata if the timer is not active
+	'If Not(timersimulator.enabled) Then Return
+	
+	'Do not handle unknown protocol
+	'If data.protocol <> irreceiver.UNKNOWN Then
+		Log("[NewData] +++")
+		Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", bc.HexFromBytes(Array As Byte( data.Command)), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+		Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",rawdata hex=",HexFromULong(data.RawDataDecoded))
+		Log("[NewData] ---")
+	'End If
+
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal
+	Delay(irreceiver.DELAY_SHORT_AFTER_RECEIVE)
+End Sub
+
+
+'Get the HEX value from an ULong.
+'Depends on: ByteConverter
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub

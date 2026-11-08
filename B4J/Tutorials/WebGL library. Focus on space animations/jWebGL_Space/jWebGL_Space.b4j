@@ -1,0 +1,889 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jwebgl
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 200
+#End Region
+
+'CREDITS:
+'Starship Model "D.S.S. Harbinger battle cruiser" (https://skfb.ly/YXLW) by Comrade1280 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+'Background music by our community friend Ivano Monti https://www.youtube.com/channel/UCS4OIcwNYLRMWVAhz4xsJ6A
+'Spacescape tool by Alex Peterson: http://alexcpeterson.com/spacescape/
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private Button1 As Button
+	
+	Private GL As WebGL
+	Private Port As Int = 8888
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	' You can initialize here the library or by pressing a button.
+End Sub
+
+Sub Button1_Click
+	Button1.Enabled = False
+	
+	' Put here the library event name, current project name, your local timezone string, path of THREEJS distribution and server port for this project.
+	' More concurrent projects can run at same time, just use different port for each if you need that.
+	GL.Initialize(Me, "WebGL", "WebGL_Space", "GMT+2", File.DirData("B4XWebGL"), Port)
+	
+	' You can copy resources needed for your project, like textures, models, sounds and more.
+	' Use CopyResourceFile, CopyResourcesFromZipFile, CopyResourcesFromZipFileToSingleFolder
+	' to copy files from asset folder, single or zipped files, to a single or multiple folders inside ProjectFolder.
+	
+	' This do not only set the SOURCE files inside a specified resorces Zip file, but even set the DEST folder
+	' inside the threejs distribution (in ProjectFolder) where the specified files will be copied. If a folder do not
+	' already exists, it will be created and then the file placed inside. You can even create new sub folders,
+	' Eg. textures/cubeMaps/Nebula_right.jpg, will copy the Nebula_right.jpg from resource Zip file to the folder
+	' (and subfolder) /textures/cubeMaps/ inside ProjectFolder.
+	
+	If GL.GetEngine Then
+		
+		LogColor("COPYING FILES ...", xui.Color_Blue)
+	
+		Dim files As List
+		files.Initialize
+		files.AddAll(Array As String("models/gltf/harbinger_battle_cruiser_hires.glb", _
+	                                "sounds/TibetianBowl.mp3", _
+		                             "textures/cubeMaps/Nebula_right.jpg", _
+										     "textures/cubeMaps/Nebula_up.jpg", _
+										     "textures/cubeMaps/Nebula_down.jpg", _
+										     "textures/cubeMaps/Nebula_front.jpg", _											  
+										     "textures/cubeMaps/Nebula_back.jpg", _
+										     "textures/cubeMaps/Nebula_left.jpg")) 
+		
+		Wait For (GL.CopyResourcesFromZipFile(files, "resources.zip", 8192, False)) Complete (Success As Boolean)
+		If Success Then
+			LogColor("GENERIC RESOURCES DONE", xui.Color_Blue)
+		Else
+			LogColor("SOMETHING WENT WRONG WHILE GET RESOURCES", xui.Color_Red)
+		End If
+		
+'		GL.SetLocalServer  ' Will force the server to be local only on same machine. Not exposed to other devices over network (Use local IP Address 127.0.0.1)
+      
+		' UNCOMMENT JUST ONE TO LOAD THE DESIRED SCENE
+		GL.StartEngine3(StarShip) ' UNCOMMENT THIS ONE AND COMMENT OTHERS
+'		GL.StartEngine3(Starfields)
+'		GL.StartEngine3(Galaxy)
+		GL.Update	            
+	Else
+		LogError("Unable to initialize WebGL library")
+	End If
+End Sub
+
+'------------------- WebGL library Events -------------------
+
+' Called if error occours
+Sub WebGL_Error(Error As String)
+	LogColor(Error, xui.Color_Red)
+End Sub
+
+' Called just one time when the scene is updated
+Private Sub WebGL_Updated(Url As String)
+	Log(" ") : LogColor("Server static folder: " & GL.MainFolder, xui.Color_Magenta)
+	Log(" ") : Log("To access the scene:")
+	LogColor(Url, xui.Color_Magenta)
+	Log("To access the library main page:")
+	LogColor(GL.ServerMainPage, xui.Color_Magenta) : Log(" ")
+	
+'	LogColor(GL.HtmlString, xui.Color_Blue) : Log(" ")  ' Show the final html string
+'	LogColor(GL.HtmlStringDebug, xui.Color_Blue) : Log(" ")  ' Show the final html string in debug mode with line numbers. With this we can track JavaScript console errors.
+End Sub
+
+' Called when there are library server logs
+Private Sub WebGL_ServerLog(Text As String)
+	If Text.Contains(".html") Or Text.ToLowerCase.Contains("mainpage") Then
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Magenta)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	Else
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Blue)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	End If
+End Sub
+
+'------------------- End of WebGL library Events -------------------
+
+ ' Use this sub only with StartEngine3 if you want to pass the full HTML string.
+ ' I used the SpaceScape tool from 
+Sub StarShip As String
+	
+	Dim html As String = $"<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>ThreeJs</title>
+		<!-- This is important to get the correct canvas size on mobile devices -->
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'/>
+		<style>
+			/* Set margin To 0 and overflow to hidden, to go fullscreen */
+			body { margin: 0; overflow: hidden; }
+		</style>
+	</head>
+	<body>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
+
+		<script type="module">
+		
+			import * as THREE from 'three'
+
+		   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+         //import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';  // Needed only for compressed GLTF
+         //import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'; // Used to optimize meshes
+
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+	      import Stats from 'three/addons/libs/stats.module.js';
+			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+			import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+			import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+			import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+			import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+			// Global variables
+			var camera, scene, renderer, ambientLight, pointLight, stats, controls, gui;
+			var star, stars=[], soundIsPlaying=false, sound, model, envMap;		
+         var composer, starShipGroup, thrusters = [];
+			var forward= false, back = false;
+			
+			const clock = new THREE.Clock();
+					
+			// === BLOOM SETUP ===
+			const ENTIRE_SCENE = 0, BLOOM_SCENE = 1;
+			const bloomLayer = new THREE.Layers();
+			bloomLayer.set(BLOOM_SCENE);
+
+			let bloomPass;
+
+			let params;  // GUI parameters
+
+			const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' });
+			const materials = {};
+
+			// === Random explosion effect ===
+			let flashTimer = 0;
+			let flashing = false;
+			let flashDurationMs = 0;
+			let nextFlashMs = 0;
+
+			const baseThreshold = 0.26;
+			let lowThreshold;
+			
+		   // MAIN ---------------------------------------------
+						
+			init();			
+			addStars();
+			addShip();
+			animate();
+
+         // END OF MAIN --------------------------------------
+
+			// Assign three.js objects to each variable
+			function init(){
+				// Camera
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				camera.position.z = 5;	 
+            //camera.position.y = -1;
+
+				envMap = new THREE.CubeTextureLoader()
+					.setPath( 'textures/cubeMaps/Nebula1/' )
+					.load([
+					'Nebula_left.jpg', 'Nebula_right.jpg',
+					'Nebula_up.jpg', 'Nebula_down.jpg',
+					'Nebula_front.jpg', 'Nebula_back.jpg',
+				]);
+				 
+				envMap.mapping = THREE.EquirectangunarReflectionMapping;
+				envMap.encoding = THREE.sRGBEncoding;
+
+				// Scene
+				scene = new THREE.Scene();
+				//scene.background = new THREE.Color(0xcce0ff);
+				scene.background = envMap;
+				scene.environment = envMap;
+
+				// RENDERER
+				renderer = new THREE.WebGLRenderer({ antialias: false }); // Antialias is not applied when use EffectComposer
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				document.body.appendChild(renderer.domElement);
+
+				// POST-PROCESSING (composer + bloom)
+				const renderPass = new RenderPass(scene, camera);
+
+	         bloomPass = new UnrealBloomPass(
+					new THREE.Vector2(window.innerWidth, window.innerHeight),
+					2.0, // intensity
+					0.1, // radius
+					0.22 // threshold
+				);
+
+				composer = new EffectComposer(renderer);
+				composer.addPass(renderPass);
+							
+				composer.addPass(bloomPass);
+				
+				// === GUI per controllare il bloom ===
+				params = {
+				  bloomStrength: bloomPass.strength,
+				  bloomRadius: bloomPass.radius,
+				  bloomThreshold: bloomPass.threshold
+				};
+
+			   gui = new GUI();
+			   gui.add(params, 'bloomStrength', 0.0, 3.0).onChange(v => bloomPass.strength = v);
+			   gui.add(params, 'bloomRadius', 0.0, 1.0).onChange(v => bloomPass.radius = v);
+			   gui.add(params, 'bloomThreshold', 0.0, 1.0).onChange(v => bloomPass.threshold = v);
+			   gui.close();
+  
+				// Ambient light
+				const ambientLight = new THREE.AmbientLight(0x404040, 28);
+				scene.add(ambientLight);
+
+				// Starship group
+				starShipGroup = new THREE.Group();
+				scene.add(starShipGroup);
+
+				// Sun light attached to a starship
+				pointLight = new THREE.PointLight(0xffefac, 5400, 0);
+				pointLight.position.set(30, 30, -30);
+				starShipGroup.add(pointLight);
+
+				// Light Helper
+				const sphereSize = 0.5;
+				const pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
+				starShipGroup.add(pointLightHelper);
+
+				addOrbit();
+				addStats();
+						
+				const listener = new THREE.AudioListener();  // Create an AudioListener 
+				camera.add( listener );                      // Add it to the camera
+				sound = new THREE.Audio( listener );	      // Create a global audio source
+
+				// Load a sound and set it as the Audio object's buffer
+				const audioLoader = new THREE.AudioLoader();
+				audioLoader.load( 'sounds/TibetianBowl.mp3', function( buffer ) {
+					sound.setLoop( true );
+					sound.setVolume( 1.0 );
+					sound.setBuffer( buffer );		
+				});
+				
+		      window.addEventListener( 'resize', onWindowResize, false)
+				
+				window.addEventListener( 'keydown', onKeyDown );
+				window.addEventListener( 'keyup', onKeyUp );
+				
+				window.addEventListener("click", function (e) {
+				  if(!soundIsPlaying) {
+				     console.log('Play sound');
+					  sound.play();
+					  soundIsPlaying = true;
+				  }
+				});
+			}
+
+		   function onKeyDown( event ) {
+				const key = controls.key;
+				switch ( event.code ) {
+					case 'ArrowUp': 					
+						forward = true;
+						break;
+					case 'ArrowDown':
+						back = true;
+						break; 
+				}
+			}
+			
+			function onKeyUp( event ) {
+				const key = controls.key;
+				switch ( event.code ) {
+					case 'ArrowUp': 
+						forward = false;
+						break;
+					case 'ArrowDown':
+						back = false;
+						break; 
+				}
+			}
+					
+	      function onWindowResize() {
+	          camera.aspect = window.innerWidth / window.innerHeight;
+	          camera.updateProjectionMatrix();
+	          renderer.setSize(window.innerWidth, window.innerHeight);
+				 composer.setSize(window.innerWidth, window.innerHeight);
+	      }
+						
+			function addStars() {
+				// The loop will move from z position of -1000 to z position 1000, adding a random particle at each position. 
+				for ( var z= -1000; z < 1000; z += 0.5 ) {
+
+					// Make a sphere (exactly the same as before). 
+					var geometry = new THREE.SphereGeometry(Math.random() * 0.3 + 0.1, 8, 8)
+					var material = new THREE.MeshLambertMaterial( {color: 0xffffff} );
+					var sphere = new THREE.Mesh(geometry, material)
+
+					// This time we give the sphere random x and y positions between -500 and 500
+					sphere.position.x = Math.random() * 1000 - 500;
+					sphere.position.y = Math.random() * 1000 - 500;		
+					sphere.position.z = z;	              // Then set the z position to where it is in the loop (distance of camera)
+					sphere.scale.x = sphere.scale.y = 2;  // Scale it up a bit	
+					scene.add( sphere );		              // Add the sphere to the scene
+		
+					stars.push(sphere); 	// Finally push it to the stars array 
+				}
+			}
+
+			function animateStars() { 			
+				// Loop through each star
+				for(var i = 0; i < stars.length; i++) {
+					star = stars[i]; 			
+					star.position.z += i * 0.0020; //0.0025;	// 0.005 And move it forward dependent on the mouseY position		
+					if(star.position.z > 1000) star.position.z -= 2000; 	// If the particle is too close move it to the back			
+				}
+			}
+
+         function addShip() {
+			   console.log('addShip');
+				
+				const loader = new GLTFLoader(); 
+		      //   loader.setMeshoptDecoder( MeshoptDecoder ); // To optimize mesh 
+           
+			   // For compressed GLTF only
+		      // const dracoLoader = new DRACOLoader();
+		      // dracoLoader.setDecoderPath( '/examples/jsm/libs/draco/' );
+		      // loader.setDRACOLoader(dracoLoader);
+
+		      loader.load (  // Load a glTF resource for pool table        
+				'./models/gltf/d.s.s._harbinger_battle_cruiser_hires.glb',  // Resource URL
+				//'./models/gltf/d.s.s._harbinger_battle_cruiser.glb',  // Resource URL
+		         gltf => {  // Called when the resource is loaded
+		                        
+		             gltf.scene.traverse(child => {
+		                 //if (child.name == 'xxx') {}
+		                 //console.log("Object: " + child.name)
+		                 
+		                 if (child.isMesh) {
+							    //child.material.envMap = scene.environment;
+							    child.material.envMap = envMap;
+					          child.material.envMapIntensity = 0.5;
+					          //child.material.metalness = 1.0;
+								 //child.material.shininess = 2.0;
+                			 child.receiveShadow = true;
+                			 child.castShadow = true;
+					 		 }				 
+		             })
+	             
+						model = gltf.scene;
+						console.log(model.rotation);
+						model.scale.set(0.02, 0.02, 0.02);
+						model.rotation.y = Math.PI / 2;
+						
+						starShipGroup.add(model); 
+												 
+						// Create and add thrusters
+						const t1 = createThruster( 0.93,  0.2,  2.4);
+						const t2 = createThruster(-0.93,  0.2,  2.4);
+						const t3 = createThruster( 0.45,  0.2,  2.5);
+						const t4 = createThruster(-0.45,  0.2,  2.5);
+						const t5 = createThruster( 0,     0.2,  2.6);
+
+						thrusters.push(t1, t2, t3, t4, t5);
+						thrusters.forEach(t => starShipGroup.add(t));
+				 
+		         }, xhr => {   // Called while loading is progressing
+		             //console.log(xhr.loaded / xhr.total * 100, "%");
+		         }, err => {   // Called when loading has errors
+		             console.error(err);
+		         }
+		      );
+			}
+
+			function createThruster(x, y, z, color = 0xffaa55) {
+			    const particleCount = 6000;
+			    const positions = new Float32Array(particleCount * 3);
+			    const speeds = new Float32Array(particleCount);
+
+				for (let i = 0; i < particleCount; i++) {
+					positions[i * 3 + 0] = (Math.random() - 0.5) ; // X più piccolo
+					positions[i * 3 + 1] = (Math.random() - 0.5) ; // Y più piccolo
+					positions[i * 3 + 2] = 0; // punto di uscita
+					speeds[i] = 0.015 + Math.random() * 0.015;
+			   }
+
+				const geometry = new THREE.BufferGeometry();
+				geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+				geometry.setAttribute('speed', new THREE.BufferAttribute(speeds, 1));
+
+				// Radial particle
+				const size = 64;
+				const canvas = document.createElement('canvas');
+				canvas.width = canvas.height = size;
+				const ctx = canvas.getContext('2d');
+
+				const gradient = ctx.createRadialGradient(size / 2, size / 2, 5, size / 2, size / 2, size / 2);
+				gradient.addColorStop(0.1, 'white');
+				gradient.addColorStop(0.2, 'blue');
+				gradient.addColorStop(0.4, 'orange');
+				//gradient.addColorStop(0.6, 'blue');
+				gradient.addColorStop(1, 'transparent');
+
+				ctx.fillStyle = gradient;
+				ctx.fillRect(0, 0, size, size);
+
+				const texture = new THREE.CanvasTexture(canvas);
+
+				const material = new THREE.PointsMaterial({
+					map: texture,
+					transparent: true,
+					blending: THREE.AdditiveBlending,
+					depthWrite: false,
+					size: 0.045,
+					sizeAttenuation: true,
+					color: color
+				});
+
+				const thruster = new THREE.Points(geometry, material);
+				thruster.position.set(x, y, z);
+
+				// Update all particles
+				thruster.updateParticles = function () {
+					const pos = geometry.attributes.position.array;
+					const speed = geometry.attributes.speed.array;
+
+					for (let i = 0; i < pos.length; i += 3) {
+						pos[i + 2] += speed[i / 3]; // <-- verso +Z
+						pos[i + 0] *= 1.02;
+						pos[i + 1] *= 1.02;
+
+						if (pos[i + 2] > 2) { // reset vicino alla bocca del motore
+							pos[i + 0] = (Math.random() - 0.5) * 0.05;  //0.05
+							pos[i + 1] = (Math.random() - 0.5) * 0.05;//0.05
+							pos[i + 2] = 0;
+						}
+					}
+			      geometry.attributes.position.needsUpdate = true;
+				};
+
+				return thruster;
+			}
+
+         //////////////////////////////
+			
+			function animate() {		
+					
+				animateStars();
+				
+				if (forward) {
+				  starShipGroup.position.z -= 0.0018;	
+				} else if (back) {
+				  starShipGroup.position.z += 0.0018;	
+				}
+
+				controls.update();
+				stats.update();
+							
+				thrusters.forEach(t => t.updateParticles());	 // Update all particles
+
+				// Lamps by changing the bloom threshold	
+
+				// delta in millisecondi
+				const delta = clock.getDelta() * 1000;
+				flashTimer += delta;
+																
+				  if (!flashing) {
+				    if (flashTimer >= nextFlashMs) {
+				      // attiva flash improvviso
+				      flashing = true;
+				      flashDurationMs = 10 + Math.random() * 500; // flash 30–130 ms
+				      flashTimer = 0;
+						lowThreshold = Math.random() / 30;
+						console.log(lowThreshold);
+				      bloomPass.threshold = lowThreshold;
+				      params.bloomThreshold = bloomPass.threshold; // aggiorna GUI
+				    }
+				  } else {
+				    if (flashTimer >= flashDurationMs) {
+				      // termina flash
+				      flashing = false;
+				      bloomPass.threshold = baseThreshold;
+				      params.bloomThreshold = bloomPass.threshold; // aggiorna GUI
+				      flashTimer = 0;
+				      nextFlashMs = 10 + Math.random() * 2000; // prossimo flash 50–200 ms
+				    }
+				  }				
+							
+				// Refresh GUI
+				params.bloomThreshold = bloomPass.threshold;
+				Object.values(gui.controllersRecursive()).forEach(c => c.updateDisplay());	
+						
+				composer.render();	// Render the scene in the composer
+				
+				requestAnimationFrame( animate );	 // Get the frame
+			}
+
+			function addStats() {
+				console.log("ADD STATS");		
+				stats = new Stats();	// See: https://github.com/mrdoob/stats.js
+				document.body.appendChild(stats.domElement);
+				//stats.showPanel(0);	// 0: fps, 1: ms, 2: mb, 3+: custom
+			}
+
+			function addOrbit() {
+				console.log("ADD CONTROLS");
+				controls = new OrbitControls(camera, renderer.domElement);
+				//controls.maxPolarAngle = Math.PI * 0.5;
+			
+				// Optionals adjustments
+				controls.rotateSpeed = 0.3;  // By default 1.0
+				controls.zoomSpeed = 0.4;    // By default 1.0
+				controls.panSpeed = 0.8;     // By default 1.0
+				controls.enableDamping = true;  // By default false
+				controls.dampingFactor = .002;   // By default 0.05
+			}
+		</script>
+	</body>
+</html>"$
+
+	Return html
+End Sub
+
+Sub Starfields As String
+	
+	Dim html As String = $"<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>ThreeJs</title>
+		<!-- This is important to get the correct canvas size on mobile devices -->
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'/>
+		<style>
+			/* Set margin To 0 and overflow to hidden, to go fullscreen */
+			body { margin: 0; overflow: hidden; }
+		</style>
+	</head>
+	<body>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
+
+		<script type="module">
+		
+			import * as THREE from 'three'
+
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+	      import Stats from 'three/addons/libs/stats.module.js';
+			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+			// Global variables
+			var camera, scene, renderer, stats, controls, star, stars=[];
+				 
+			init();
+			addSpheres();
+			animate();
+
+			// Assign three.js objects to each variable
+			function init(){
+				// Camera
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				camera.position.z = 5;	 
+
+				// Scene
+				scene = new THREE.Scene();
+
+				// Renderer
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );	// Add the renderer to the html document body
+
+				addOrbit();
+				addStats();
+				
+		      window.addEventListener('resize', onWindowResize, false)
+			}
+
+	      function onWindowResize() {
+	          camera.aspect = window.innerWidth / window.innerHeight
+	          camera.updateProjectionMatrix()
+	          renderer.setSize(window.innerWidth, window.innerHeight)
+	          animate()
+	      }
+			
+			function addSpheres() {
+				// The loop will move from z position of -1000 to z position 1000, adding a random particle at each position. 
+				for ( var z= -1000; z < 1000; z += 1 ) {
+
+					// Make a sphere (exactly the same as before). 
+					var geometry = new THREE.SphereGeometry(Math.random() * 0.5 + 0.1, 10, 10)
+					var material = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+					var sphere = new THREE.Mesh(geometry, material)
+
+					// This time we give the sphere random x and y positions between -500 and 500
+					sphere.position.x = Math.random() * 1000 - 500;
+					sphere.position.y = Math.random() * 1000 - 500;		
+					sphere.position.z = z;	// Then set the z position to where it is in the loop (distance of camera)
+					sphere.scale.x = sphere.scale.y = 2;	// Scale it up a bit	
+					scene.add( sphere );		// Add the sphere to the scene
+		
+					stars.push(sphere); 	// Finally push it to the stars array 
+				}
+			}
+
+			function animateStars() { 			
+				// Loop through each star
+				for(var i = 0; i < stars.length; i++) {
+					star = stars[i]; 			
+					star.position.z +=  i * 0.005;	// And move it forward dependent on the mouseY position		
+					if(star.position.z > 1000) star.position.z -= 2000; 	// If the particle is too close move it to the back			
+				}
+			}
+
+			function animate() {		
+				requestAnimationFrame( animate );	 // Get the frame
+		
+				animateStars();
+
+				controls.update();
+				stats.update();
+				
+				renderer.render( scene, camera );	// Render the scene
+			}
+
+			function addStats() {
+				console.log("ADD STATS");		
+				stats = new Stats();	// See: https://github.com/mrdoob/stats.js
+				document.body.appendChild(stats.domElement);
+				//stats.showPanel(0);	// 0: fps, 1: ms, 2: mb, 3+: custom
+			}
+
+			function addOrbit() {
+				console.log("ADD CONTROLS");
+				controls = new OrbitControls(camera, renderer.domElement);
+				//controls.maxPolarAngle = Math.PI * 0.5;
+			
+				// Optionals adjustments
+				controls.rotateSpeed = 0.4;  // By default 1.0
+				controls.zoomSpeed = 0.4;    // By default 1.0
+				controls.panSpeed = 0.4;     // By default 1.0
+				controls.enableDamping = true;  // By default false
+				controls.dampingFactor = .04;   // By default 0.05
+			}
+		</script>
+	</body>
+</html>"$
+
+	Return html
+End Sub
+
+' Taken from https://codepen.io/solygambas/pen/abBVMZp
+' Other animated on https://threejs.org/examples/#webgpu_tsl_galaxy
+Sub Galaxy As String
+	
+	Dim html As String = $"<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>WebGL Galaxy</title>
+		<!-- This is important to get the correct canvas size on mobile devices -->
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'/>
+		<style>
+			/* Set margin To 0 and overflow to hidden, to go fullscreen */
+			body { margin: 0; padding: 0; overflow: hidden; }
+		</style>
+	</head>
+	<body>
+	
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
+		
+		<script type="module">
+			
+			import * as THREE from 'three';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+         import Stats from 'three/addons/libs/stats.module.js'
+ 
+			let camera, scene, renderer, stats, controls;
+
+			// Parameters
+			const parameters = {};
+			parameters.count = 50000;
+			parameters.size = 0.005; //0.01
+			parameters.radius = 5;
+			parameters.branches = 3;
+			parameters.spin = 1;
+			parameters.randomness = 0.6;
+			parameters.randomnessPower = 3;  
+			parameters.insideColor = '#ed124f';
+			parameters.outsideColor = '#025fdd';
+
+			// Sizes
+			const sizes = { width: window.innerWidth, height: window.innerHeight };
+
+			// Galaxy
+			const generateGalaxy = () => {
+			  // Destroy old galaxy and create new one.
+			  const geometry = new THREE.BufferGeometry();
+			  const positions = new Float32Array(parameters.count * 3);
+
+			  const colors = new Float32Array(parameters.count * 3);
+			  const colorInside = new THREE.Color(parameters.insideColor);
+			  const colorOutside = new THREE.Color(parameters.outsideColor);
+
+			  for (let i = 0; i < parameters.count; i++) {
+			    const i3 = i * 3;
+			    const radius = Math.random() * parameters.radius;
+			    const spinAngle = radius * parameters.spin;
+			    const branchAngle = ((i % parameters.branches) / parameters.branches) * Math.PI * 2;
+
+			    const randomX = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+			    const randomY = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+			    const randomZ = Math.pow(Math.random(), parameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * parameters.randomness * radius;
+
+			    positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+			    positions[i3 + 1] = randomY;
+			    positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+			    const mixedColor = colorInside.clone();
+			    mixedColor.lerp(colorOutside, radius / parameters.radius);
+			    colors[i3] = mixedColor.r;
+			    colors[i3 + 1] = mixedColor.g;
+			    colors[i3 + 2] = mixedColor.b;
+			  }
+			  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+			  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+			  // Material
+			  const material = new THREE.PointsMaterial({
+			    size: parameters.size,
+			    sizeAttenuation: true,
+			    depthWrite: false,
+			    blending: THREE.AdditiveBlending,
+			    vertexColors: true,
+			  });
+
+			  // Points
+			  const points = new THREE.Points(geometry, material);
+			  scene.add(points);
+			};
+
+			init();
+			generateGalaxy();
+			animate();
+
+			function init() {
+			  scene = new THREE.Scene();
+
+			  camera = new THREE.PerspectiveCamera(
+			    75,
+			    sizes.width / sizes.height,
+			    0.1,
+			    100
+			  );
+			  camera.position.x = -5;
+			  camera.position.y = 2;
+			  camera.position.z = 3; // move backward
+			  scene.add(camera);
+
+			  /*
+			  const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+			  const material = new THREE.MeshNormalMaterial();
+
+			  const mesh = new THREE.Mesh(geometry, material);
+			  scene.add(mesh);
+			  */
+
+			  renderer = new THREE.WebGLRenderer({ antialias: true });
+			  renderer.setSize(sizes.width, sizes.height);
+			  renderer.setPixelRatio(window.devicePixelRatio);
+			  document.body.appendChild(renderer.domElement);
+
+			  controls = new OrbitControls(camera, renderer.domElement);
+			  controls.minDistance = 0.5;
+			  //controls.maxDistance = 5;
+			  controls.enableDamping = true;
+			  controls.dampingFactor = 0.001;
+
+			  // Add stats to page.
+			  stats = new Stats();	// See: https://github.com/mrdoob/stats.js
+			  stats.showPanel(0);	// 0: fps, 1: ms, 2: mb, 3+: custom
+			  document.body.appendChild(stats.dom);
+
+			  window.addEventListener('resize', () => {
+			    // Update sizes
+			    sizes.width = window.innerWidth;
+			    sizes.height = window.innerHeight;
+			    // Update camera
+			    camera.aspect = sizes.width / sizes.height;
+			    camera.updateProjectionMatrix();
+			    // Update renderer
+			    renderer.setSize(sizes.width, sizes.height);
+			    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // if better screen is used
+			  });
+			}
+
+			function animate() {
+			  controls.update();
+           stats.update();
+			  renderer.render(scene, camera);
+			  requestAnimationFrame(animate);
+			}
+		
+		</script>
+	</body>
+</html>
+	"$
+
+	Return html
+End Sub

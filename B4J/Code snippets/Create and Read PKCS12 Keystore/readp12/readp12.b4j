@@ -1,0 +1,96 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jshell
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True
+#End Region
+#VirtualMachineArgs: --add-exports java.base/sun.security.x509=ALL-UNNAMED
+#PackagerProperty: VMArgs = --add-opens java.base/sun.security.x509=b4j
+
+Sub Process_Globals
+	Private keytool As String = "C:/Java/jdk-14.0.1/bin/keytool.exe" ' You can use other version of JDK e.g JDK 19
+End Sub
+
+Sub AppStart (Args() As String)
+	' Set default arguments if none provided
+	If Args.Length <> 2 Then
+		Dim Args(2) As String
+		Args(0) = "MyPassword"
+		Args(1) = File.Combine(File.DirApp, "keystore.p12")
+	End If
+	CheckCert(Args(0), Args(1))
+	StartMessageLoop
+End Sub
+
+Sub CheckCert (password As String, filepath As String)
+	If File.Exists(filepath, "") = False Then
+		Dim FileDir As String = File.GetFileParent(filepath)
+		Dim FileName As String = File.GetName(filepath)
+		Log($"Creating ${filepath}..."$)
+		Wait For (WriteCert(password, FileDir, FileName)) Complete (res As Boolean)
+		If res Then
+			ReadCert(password, filepath)
+		End If
+	Else
+		ReadCert(password, filepath)
+	End If
+End Sub
+
+Sub WriteCert (password As String, directory As String, certname As String) As ResumableSub
+	Dim shl As Shell
+	shl.Initialize("shl", keytool, _
+     Array As String("-genkeypair", _
+	 "-keystore", certname, _
+	 "-storetype", "PKCS12", _
+	 "-storepass", password, _
+	 "-alias", "b4x", _
+	 "-keyalg", "RSA", _
+	 "-keysize", "2048", _
+	 "-validity", "30", _
+	 "-dname", $""CN=Aeric Poon, OU=Dev, O=Computerise, L=Cheras, ST=Selangor, C=MY""$))
+	shl.WorkingDirectory = directory
+	shl.Run(-1)
+	Wait For shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		Log("Success")
+		Log(StdOut)
+	Else
+		Log("Error: " & StdErr)
+	End If
+	Return Success
+End Sub
+
+Sub ReadCert (password As String, filepath As String)
+	Log($"Reading ${filepath}..."$)
+	Dim keystore As JavaObject
+	keystore.InitializeStatic("java.security.KeyStore")
+	Dim key As Object = password.As(JavaObject).RunMethod("toCharArray", Null)
+	Dim store As JavaObject = keystore.RunMethod("getInstance", Array("PKCS12"))
+	Dim in As InputStream = File.OpenInput(filepath, "")
+	store.RunMethod("load", Array(in, key))
+	
+	Dim aliases As JavaObject = store.RunMethod("aliases", Null)
+	Do While aliases.RunMethod("hasMoreElements", Null)
+		Dim alias As String = aliases.RunMethod("nextElement", Null)
+		Log("Alias: " & alias)
+		
+		Dim certificate As JavaObject
+		certificate.InitializeStatic("java.security.cert.X509Certificate")
+		certificate = store.RunMethod("getCertificate", Array(alias))
+	
+		Dim serialNumber As JavaObject
+		serialNumber.InitializeStatic("java.math.BigInteger")
+		serialNumber = certificate.RunMethod("getSerialNumber", Null)
+		Log("Serial Number: " & serialNumber.RunMethod("toString", Null))
+	Loop
+End Sub

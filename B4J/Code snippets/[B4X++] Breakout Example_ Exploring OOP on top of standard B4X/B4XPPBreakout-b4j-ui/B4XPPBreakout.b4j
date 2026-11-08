@@ -1,0 +1,85 @@
+﻿AppType=JavaFX
+Build1=Default,b4xpp.examples.breakout
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=Ball
+Module2=BreakoutGame
+Module3=BreakoutMath
+Module4=Brick
+Module5=BrickGrid
+Module6=GameEntity
+Module7=Paddle
+Module8=ScoreBoard
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=8
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes
+    #MainFormWidth: 600
+    #MainFormHeight: 600
+#End Region
+
+' B4X++ include begin: src-b4xpp/contracts/IRenderable.bx
+
+' B4X++ include end: src-b4xpp/contracts/IRenderable.bx
+' B4X++ include begin: src-b4xpp/core/BreakoutMath.bx
+
+' B4X++ include end: src-b4xpp/core/BreakoutMath.bx
+' B4X++ include begin: src-b4xpp/entities/GameEntity.bx
+
+' B4X++ include end: src-b4xpp/entities/GameEntity.bx
+' B4X++ include begin: src-b4xpp/entities/Paddle.bx
+
+' B4X++ include end: src-b4xpp/entities/Paddle.bx
+' B4X++ include begin: src-b4xpp/entities/Ball.bx
+
+' B4X++ include end: src-b4xpp/entities/Ball.bx
+' B4X++ include begin: src-b4xpp/entities/Brick.bx
+
+' B4X++ include end: src-b4xpp/entities/Brick.bx
+' B4X++ include begin: src-b4xpp/services/BrickGrid.bx
+
+' B4X++ include end: src-b4xpp/services/BrickGrid.bx
+' B4X++ include begin: src-b4xpp/services/ScoreBoard.bx
+
+' B4X++ include end: src-b4xpp/services/ScoreBoard.bx
+' B4X++ include begin: src-b4xpp/services/BreakoutGame.bx
+
+' B4X++ include end: src-b4xpp/services/BreakoutGame.bx
+
+Sub Process_Globals
+    Private fx As JFX
+    Private MainForm As Form
+    Private breakoutApp As BreakoutGame
+    Private gameClock As Timer
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+    MainForm = Form1
+    MainForm.Title = "B4X++ XUI Breakout"
+    MainForm.Resizable = False
+    MainForm.WindowWidth = 660dip
+    MainForm.WindowHeight = 540dip
+
+    Dim rootView As B4XView = MainForm.RootPane
+
+    breakoutApp.Initialize(rootView)
+    breakoutApp.StartPlay
+
+    gameClock.Initialize("GameClock", 16)
+    gameClock.Enabled = True
+
+    MainForm.Show
+End Sub
+
+Sub GameClock_Tick
+    breakoutApp.UpdateFrame
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+    Return True
+End Sub

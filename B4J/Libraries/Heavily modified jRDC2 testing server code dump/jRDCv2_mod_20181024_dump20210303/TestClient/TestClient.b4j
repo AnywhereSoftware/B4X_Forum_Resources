@@ -1,0 +1,338 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=pexels-photo-220453.jpg
+File2=pexels-photo-415829.jpg
+File3=pexels-photo-432722.jpg
+File4=pexels-photo-462680.jpg
+File5=pexels-photo-818819.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jokhttputils2_nonui
+Library3=jrandomaccessfile
+Library4=jxui
+Library5=jfx
+Module1=DBRequestManager
+Module2=jRDC2Utils
+NumberOfFiles=5
+NumberOfLibraries=5
+NumberOfModules=2
+Version=6.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+	Type DBCommand (Name As String, Parameters() As Object)
+	Private serverUrl As String = "http://localhost:17178"
+	Private dumpFiles As Boolean = False
+	Private testGroupID As String = "Default"
+	Private testClientID As Int = 1
+	Private runTime As Int = 60
+	Private sleepTime As Int = 100
+	Private batchSize As Int = 10
+	Private restartServer As Boolean = False
+	Private shutdownServer As Boolean = False
+	Private withPictures As Boolean = False
+	Private countRecords As Boolean = False
+	Private fixedBatches As Boolean = False
+	Private syncTests As Boolean = False
+	Private imgArray(5) As B4XBitmap
+	Private tryErrors As List
+	Dim xui As XUI
+	Private fx As JFX
+
+End Sub
+
+Sub AppStart (Args() As String)
+	tryErrors.Initialize
+	For Each arg As String In Args
+		If arg.ToLowerCase.StartsWith("http://") Then
+			serverUrl = arg
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("restart") Then
+			restartServer = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("shutdown") Then
+			shutdownServer = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("sync") Then
+			syncTests = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("dump") Then
+			dumpFiles = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("pictures") Then
+			withPictures = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("count") Then
+			countRecords = True
+			Continue
+		End If
+		If arg.EqualsIgnoreCase("fixed") Then
+			fixedBatches = True
+			Continue
+		End If
+		If IsNumber(arg) Then
+			testClientID = arg
+			Continue
+		End If
+		If arg.ToLowerCase.StartsWith("t:") Then
+			Dim tmp As String = arg.SubString(2)
+			If IsNumber(tmp) Then
+				Dim tmpInt As Int = tmp
+				If tmpInt > 0 Then runTime = tmpInt
+			End If
+			Continue
+		End If
+		If arg.ToLowerCase.StartsWith("s:") Then
+			Dim tmp As String = arg.SubString(2)
+			If IsNumber(tmp) Then
+				Dim tmpInt As Int = tmp
+				If tmpInt > -1 Then sleepTime = tmp
+			End If
+			Continue
+		End If
+		If arg.ToLowerCase.StartsWith("b:") Then
+			Dim tmp As String = arg.SubString(2)
+			If IsNumber(tmp) Then
+				Dim tmpInt As Int = tmp
+				If tmpInt > 0 Then batchSize = tmp
+			End If
+			Continue
+		End If
+		If arg.ToLowerCase.StartsWith("id:") Then
+			Dim tmp As String = arg.SubString(3)
+			If tmp.Length > 0 Then testGroupID = tmp
+			Continue
+		End If
+		Log($"Unknown command line argument: ${arg}"$)
+	Next
+	
+	Log($"Server URL: ${serverUrl}"$)
+	jRDC2Utils.Intitialize($"${serverUrl}/rdc"$)
+	
+	If restartServer Then
+		Restart
+	Else If shutdownServer Then
+		Shutdown
+	Else If syncTests Then
+'		Sync
+	Else
+
+		If dumpFiles Then
+			Dump
+		Else If countRecords Then
+			Count
+		Else
+			DBTesting
+		End If
+	End If
+
+	'Fishing for something strange
+	Try
+		StartMessageLoop
+	Catch
+		Log(LastException)
+		Log("ERROR: StartMessageLoop aborted!!!!")
+	End Try
+
+	If tryErrors.Size > 0 Then
+		Log($"There have been ${tryErrors.Size} DB exceptions:"$)
+		Dim x As Int
+		Dim e As Exception
+		For x = 0 To tryErrors.Size
+			e = tryErrors.Get(x)
+			Log($"${x}: ${e}"$)
+		Next
+	End If
+End Sub
+
+Sub Restart
+	Log("Restarting server")
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download($"${serverUrl}/restart"$)
+	Wait For (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log("Server retarted")
+	Else
+		Log("Error restarting server")
+		Log(j.ErrorMessage)
+	End If
+	j.Release
+	StopMessageLoop
+End Sub
+
+Sub Shutdown
+	Log("Shutting down server")
+	Dim j As HttpJob
+	j.Initialize("", Me)
+	j.Download($"${serverUrl}/shutdown"$)
+	Wait For (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log("Server shut down")
+	Else
+		Log("Error shutting server down")
+		Log(j.ErrorMessage)
+	End If
+	j.Release
+	StopMessageLoop	
+End Sub
+
+'Sub Sync
+'	'Get sync info
+'	'If time is in the future
+'	'  if client# is <= maxclients
+'	'    set variables
+'	'    wait till time
+'	'    execute process
+'	'  else
+'	'    wait till time + runTime + a couple of seconds
+'	'  end if
+'	'end if
+'	'wait for 10 seconds
+'	'rinse/repeat unless time is a negative #
+'	'
+'End Sub
+'
+'Sub GetSyncTime
+'	Log("Getting sync time")
+'	Dim j As HttpJob
+'	j.Initialize("", Me)
+'	j.Download($"${serverUrl}/sync"$)
+'	Wait For (j) JobDone(j As HttpJob)
+'	If j.Success Then
+'		'
+'	Else
+'		Log("Error getting sync time")
+'		Log(j.ErrorMessage)
+'	End If
+'	j.Release
+'	
+'End Sub
+
+Sub Dump
+	Log($"Dump files: ${dumpFiles}"$)
+	Dim cmdList As List
+	cmdList.Initialize
+	jRDC2Utils.AddCommand(cmdList, "drop_students2", Array())
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	cmdList.Initialize
+	jRDC2Utils.AddCommand(cmdList, "create_table_students2", Array())
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	StopMessageLoop
+End Sub
+
+Sub Count
+	Log($"Counting records: ${countRecords}"$)
+	Dim cmd As DBCommand
+	cmd = jRDC2Utils.CreateCommand("count_students2", Array())
+	Wait For (jRDC2Utils.ExecuteQuery(cmd)) complete (res As DBResult)
+	If res <> Null Then
+		Dim row() As Object = res.Rows.Get(0)
+		Log("Number of students in table: " & row(0))
+	Else
+		Log("Counting records returned null")
+	End If
+	StopMessageLoop
+End Sub
+
+Sub DBTesting
+
+	Log($"Test group ID: ${testGroupID}"$)
+	Log($"Test client ID: ${testClientID}"$)
+	Log($"Run time: ${runTime}"$)
+	Log($"Sleep time: ${sleepTime}"$)
+	Log($"Batch size: ${batchSize}"$)
+	Log($"Fixed batches: ${fixedBatches}"$)
+	Log($"Pictures: ${withPictures}"$)
+
+	If withPictures Then
+		imgArray(0) = xui.LoadBitmap(File.DirAssets, "pexels-photo-220453.jpg")
+		imgArray(1) = xui.LoadBitmap(File.DirAssets, "pexels-photo-415829.jpg")
+		imgArray(2) = xui.LoadBitmap(File.DirAssets, "pexels-photo-432722.jpg")
+		imgArray(3) = xui.LoadBitmap(File.DirAssets, "pexels-photo-462680.jpg")
+		imgArray(4) = xui.LoadBitmap(File.DirAssets, "pexels-photo-818819.jpg")
+	End If
+
+	Dim entryCount As Int
+	Dim startTime As Long = DateTime.Now
+	
+	Do While ((DateTime.Now - startTime)/1000) < runTime
+		If fixedBatches Or batchSize = 1 Then
+			entryCount = batchSize
+		Else
+			entryCount = Rnd(1,batchSize+1)
+		End If
+		'Going fisshing for something strange
+		Try
+			wait for (AddStudents(entryCount)) complete (Result As Int)
+			Sleep(sleepTime)
+		Catch
+			Dim e As Exception = LastException
+			tryErrors.Add(e)
+		End Try
+	Loop
+
+	StopMessageLoop
+End Sub
+
+Sub AddStudents(records As Int) As ResumableSub
+	'Generate data for the Students table
+	Dim cmdList As List
+	cmdList.Initialize
+	Dim id As Int
+	Dim blob() As Byte = Null
+	For i = 1 To records
+		id = Rnd(1, 1000001)
+
+		If withPictures Then blob = ImageToBytes(imgArray(i Mod imgArray.Length))
+		
+'		jRDC2Utils.AddCommand(	cmdList, _
+'							"insert_students2", _
+'							Array(	$"${testGroupID}:${testClientID}:${Count}:${NumberFormat2(id, 12, 0, 0, False)}"$, _
+'									"John", _
+'									$"Smith ${i}"$, _
+'									DateTime.Add(DateTime.Now, Rnd(-100, 0), Rnd(-12, 0), Rnd(-30, 0)), _
+'									blob))
+		jRDC2Utils.AddCommand(	cmdList, _
+							"insert_students2", _
+							Array(	$"${testGroupID}:${testClientID}:${Count}:${NumberFormat2(id, 12, 0, 0, False)}"$, _
+									"John", _
+									$"Smith ${i}"$, _
+									DateTime.Add(DateTime.Now, Rnd(-100, 0), Rnd(-12, 0), Rnd(-30, 0)), _
+									blob))
+	Next
+
+	Wait For (jRDC2Utils.ExecuteCommands(cmdList)) complete (Result As Int)
+	Return Result
+End Sub
+
+'https://www.b4x.com/android/forum/threads/b4x-bytes-to-file.70111/#post-445167
+Public Sub ImageToBytes(Image As B4XBitmap) As Byte()
+	Dim out As OutputStream
+	out.InitializeToBytesArray(0)
+	Image.WriteToStream(out, 100, "JPEG")
+	out.Close
+	Return out.ToBytesArray
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

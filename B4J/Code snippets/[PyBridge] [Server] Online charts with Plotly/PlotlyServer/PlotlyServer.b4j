@@ -1,0 +1,36 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=countries.json
+FileGroup1=New Group
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=pybridge
+Library4=json
+Module1=Plotly
+Module2=PyBridgeWorker
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Public srvr As Server
+	Public PyWorker As PyBridgeWorker
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddWebSocket("/plotly/ws", "Plotly")
+	srvr.AddBackgroundWorker("PyBridgeWorker")
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:51042/
+End Sub

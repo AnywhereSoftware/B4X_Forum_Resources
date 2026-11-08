@@ -1,0 +1,142 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jnet
+Library4=jnetwork
+Library5=jrandomaccessfile
+Library6=jstringutils
+Module1=AsyncStreamsText
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=1
+Version=9.1
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#PackagerProperty: VMArgs = --add-opens java.base/sun.security.ssl=b4j
+#VirtualMachineArgs: --add-opens java.base/sun.security.ssl=ALL-UNNAMED
+Sub Process_Globals
+	Private host As String = "mail.host.com"
+	Private port As Int = 587
+	Private username As String = "user@host.com"
+	Private password As String = "password"
+	Private Recipient As String = "someoneelse@gmail.com"
+	Private Const EndOfLine As String = Chr(13) & Chr(10)
+	Private Socket1 As Socket
+	Private ServerSocket As ServerSocket 'ignore
+	Private AST As AsyncStreamsText
+	Private OutgoingMessages As List
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Log("Hello world!!!")
+	
+	Dim body As String = $"From: "Bob Example" <${username}>
+To: Alice Example <${Recipient}>
+Date: Tue, 15 Jan 2008 16:02:43 -0500
+Subject: Test StartTLS
+ 
+Hello Alice.
+This is a test message with 5 header fields and 4 lines in the message body.
+Your friend,
+Bob"$
+	SendMessage(Array(Recipient), body)
+	StartMessageLoop
+End Sub
+
+Sub SendMessage (Recipients As List, Body As String)
+	Socket1.Initialize("socket")
+	Socket1.Connect(host, port, 30000)
+	Wait For Socket_Connected (Successful As Boolean)
+	Log("Socket connected: " & Successful)
+	If Successful Then
+		'we need to set a read timeout to the socket, this is required to be able to stop AStream without closing the socket.
+	Socket1.As(JavaObject).GetFieldJO("socket").RunMethod("setSoTimeout", Array(1000))
+	AST.Initialize(Me, "AST", Socket1.InputStream, Socket1.OutputStream)
+	AST.astreams.ContinueAfterTimeout = True
+		OutgoingMessages.Initialize
+		OutgoingMessages.Add("EHLO " & ServerSocket.GetMyIP)
+		OutgoingMessages.Add("STARTTLS")
+		OutgoingMessages.Add("tls")
+		OutgoingMessages.Add("EHLO " & ServerSocket.GetMyIP)
+		Dim su As StringUtils
+		OutgoingMessages.Add("AUTH PLAIN " & su.EncodeBase64((Chr(0) & username & Chr(0) & password).As(String).GetBytes("utf8")))
+		OutgoingMessages.Add($"MAIL FROM:<${username}>"$)
+		For Each Recipient As String In Recipients
+			OutgoingMessages.Add($"RCPT TO:<${Recipient}>"$)
+		Next
+		OutgoingMessages.Add("DATA")
+		Body = Body & CRLF & "."
+		OutgoingMessages.Add(Body.Replace(CRLF, EndOfLine))
+		OutgoingMessages.Add("QUIT")
+	End If
+End Sub
+
+Private Sub AST_NewText (ServerMessage As String)
+	Log("S: " & ServerMessage)
+	Dim m As Matcher = Regex.Matcher("(\d\d\d).*", ServerMessage)
+	
+	If m.Find = False Then
+		Log("invalid message")
+	Else
+		Dim NextClientMessage As String = IIf(OutgoingMessages.Size > 0, OutgoingMessages.Get(0), "")
+		Dim MessageHeader As String = m.Group(1)
+		Select MessageHeader
+			Case "220"
+				If NextClientMessage = "tls" Then
+					Wait For (SwitchToTLS(Socket1)) Complete (unused As Boolean)
+					OutgoingMessages.RemoveAt(0)
+					WriteNextMessage
+				End If
+				If NextClientMessage.StartsWith("EHLO") Then
+					WriteNextMessage
+				End If
+			Case Else
+				If NextClientMessage = "tls" Then Return
+				If NextClientMessage.StartsWith("AUTH") And ServerMessage.Contains("AUTH") = False Then Return
+				If NextClientMessage.StartsWith("STARTTLS") And ServerMessage.Contains("STARTTLS") = False Then Return
+				WriteNextMessage
+		End Select
+	End If
+End Sub
+
+Private Sub SwitchToTLS (Socket As Socket) As ResumableSub
+	Dim SSLSocketFactory As JavaObject
+	SSLSocketFactory = SSLSocketFactory.InitializeStatic("javax.net.ssl.SSLSocketFactory").RunMethod("getDefault", Null)
+	Dim jSocket As JavaObject = Socket.As(JavaObject).GetField("socket")
+	Dim sslsocket As JavaObject = SSLSocketFactory.RunMethod("createSocket", Array(jSocket, jSocket.RunMethodJO("getInetAddress", Null).RunMethod("getHostAddress", Null), _
+		jSocket.RunMethod("getPort", Null), True))
+	Socket.As(JavaObject).SetField("socket", sslsocket)
+	sslsocket.RunMethod("setEnableSessionCreation", Array(True))
+	sslsocket.RunMethod("setUseClientMode", Array(True)) 'might need to change to False for server sockets.
+	AST.astreams.StopWithoutClosingStreams
+	Sleep(2000) 'must be larger than the socket timeout.
+	sslsocket.RunMethod("startHandshake", Null)
+	
+	'create a new AST
+	Dim AST As AsyncStreamsText
+	AST.Initialize(Me, "ast", Socket.InputStream, Socket.OutputStream)
+	AST.astreams.ContinueAfterTimeout = True
+	Log("new socket streams: " & Socket.InputStream & ", " & Socket.OutputStream)
+	Return True
+End Sub
+
+Private Sub WriteNextMessage
+	If OutgoingMessages.Size = 0 Then
+		Log("queue is empty")
+		Return
+	End If
+	Log("C: " & OutgoingMessages.Get(0))
+	AST.Write(OutgoingMessages.Get(0) & EndOfLine)
+	OutgoingMessages.RemoveAt(0)
+End Sub
+
+Private Sub AST_Terminated
+	Log("terminated")
+End Sub

@@ -1,0 +1,122 @@
+﻿AppType=JavaFX
+Build1=Default,com.stevel05
+File1=About.bjl
+File10=b4seditorpane5.bjl
+File11=cmmlibrary.vbs
+File12=scr.png
+File13=splitpanebottom.bjl
+File14=splitpanetop.bjl
+File15=template.b4s
+File16=TitleCase.wsf
+File17=toLowerCase.wsf
+File18=toUpperCase.wsf
+File2=appdark.css
+File3=b4script.chm
+File4=b4seditor.bjl
+File5=b4seditorlayout.bjl
+File6=b4seditorpane1.bjl
+File7=b4seditorpane2.bjl
+File8=b4seditorpane3.bjl
+File9=b4seditorpane4.bjl
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=bctextengine
+Library10=cssutils
+Library2=byteconverter
+Library3=jbasiclib
+Library4=jcore
+Library5=jfx
+Library6=jrandomaccessfile
+Library7=jxui
+Library8=recentfilesmanager
+Library9=slcodeeditor
+Module1=B4sEditor
+Module2=B4sEditor_Static
+NumberOfFiles=18
+NumberOfLibraries=10
+NumberOfModules=2
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+
+Sub Process_Globals
+	
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private B4sEditor1 As B4sEditor
+	Private Dialog As B4XDialog
+	Public appName As String = "B4s Editor"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	Dim FileName As String
+	xui.SetDataFolder("B4sEditor")
+	
+	MainForm = Form1
+	
+	MainForm.RootPane.LoadLayout("b4seditorlayout")
+	
+	'Update for dark theme
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets,"appdark.css"))
+	
+	
+	MainForm.Title = appName
+
+	B4sEditor1.LoadOptions
+
+	MainForm.Show
+	
+	Dialog.Initialize(MainForm.RootPane)
+
+	If Args.Length = 1 Then
+		Dim SU As StringUtils
+		FileName = SU.DecodeUrl(Args(0),"UTF8")
+		B4sEditor1.SetFile(File.GetFileParent(FileName),File.GetName(FileName))
+	End If
+	
+	'Update for dark theme
+	If MainForm.Stylesheets.IndexOf(File.GetUri(File.DirAssets,"appdark.css")) > -1 Then
+		B4sEditor1.CodeEditor1.CodeMirrorWrapper1.WebE.SetUserStyleSheetLocation($"data:,
+:root { 
+    background-color: black;
+} "$)
+	End If
+	
+	
+	B4sEditor1.AllowedThemes = CMW_Utils.GetThemes
+	B4sEditor1.Theme = "3024-night"
+	B4sEditor1.Code = ""
+End Sub
+
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	EventData.Consume
+	If B4sEditor1.CheckSaveRequired Then
+		Wait For (Dialog.Show("Changes not saved","Exit","","Cancel")) Complete (Resp As Int)
+		If Resp = xui.DialogResponse_Cancel Then Return
+	End If
+	B4sEditor1.CloseForm
+End Sub
+

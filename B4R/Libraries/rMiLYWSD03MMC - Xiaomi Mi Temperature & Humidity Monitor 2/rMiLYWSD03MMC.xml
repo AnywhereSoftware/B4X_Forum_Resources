@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RMITHM</name>
+        <shortname>MiLYWSD03MMC</shortname>
+        <comment>UUID for characteristic of the remote service holding the temp+hum+battery data.</comment>
+        <event>ScanCompleted</event>
+        <property>
+            <name>Temperature</name>
+            <comment>Get the temperature in Degree C.
+ Example: &lt;code&gt;
+ Dim t as Double = miSensor.Temperature
+ &lt;/code&gt;</comment>
+            <returntype>float</returntype>
+        </property>
+        <property>
+            <name>Humidity</name>
+            <comment>Get the Humidity in %RH.
+ Example: &lt;code&gt;
+ Dim h as Double = miSensor.Humidity
+ &lt;/code&gt;</comment>
+            <returntype>float</returntype>
+        </property>
+        <property>
+            <name>Battery</name>
+            <comment>Get the Battery Voltage between 2.1 and 3.1 V.
+ Example: &lt;code&gt;
+ Dim b as Double = miSensor.Battery
+ &lt;/code&gt;</comment>
+            <returntype>float</returntype>
+        </property>
+        <property>
+            <name>StatusCode</name>
+            <comment>Get the status of the sensor scan: OK=1 else error (see STATUS constants).
+ Example: &lt;code&gt;
+ Dim statusCode as Byte = miSensor.StatusCode
+ If (miSensor.StatusCode = miSensor.STATUS_OK) Then
+   'OK
+ Else
+   'Error
+ End
+ &lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initializes the object.
+ ScanCompletedSub - The sub to call when the scan for data is completed.
+ Addr - Device MAC address - a4:c1:38:38:a9:0c.
+ Debug - Set to true to log the various steps from init to getting data.
+ Example: &lt;code&gt;
+ Private miSensor As MiLYWSD03MMC
+ miSensor.Initialize("miSensor_ScanCompleted", "a4:c1:38:38:a9:0c", False)
+ Sub miSensor_ScanCompleted
+	If (miSensor.StatusCode = miSensor.STATUS_OK) Then
+		Log("T: ", miSensor.Temperature, " C, H: ", miSensor.Humidity, " %, B: ", miSensor.Battery, " V")
+	Else
+		Log("Error scanning BLE device.")
+	End If
+ End Sub
+ &lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>ScanCompletedSub</name>
+                <type>SubVoidVoid</type>
+            </parameter>
+            <parameter>
+                <name>Addr</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Debug</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Scan">Scan</name>
+            <comment>Scan for the sensor data. This is done once. Use B4R timer to scan frequent.
+ Lookup sub _ScanCompleted for the result.
+ Example: &lt;code&gt;
+ miSensor.Scan
+ &lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="STATUS_OK">B4RMITHM_STATUS_OK</name>
+            <comment>Defines for the status code returned from the scan method.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="STATUS_UNKNOWN">B4RMITHM_STATUS_UNKNOWN</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="STATUS_ERR_CONNECT">B4RMITHM_STATUS_ERR_CONNECT</name>
+            <comment>Error can not connect to the device</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="STATUS_ERR_SERVICEUUID">B4RMITHM_STATUS_ERR_SERVICEUUID</name>
+            <comment>Error can not find the service UUID (see define SERVICE_UUID)</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="STATUS_ERR_CHARUUID">B4RMITHM_STATUS_ERR_CHARUUID</name>
+            <comment>Error can not find the characteristics UUID (see define CHAR_UUID)</comment>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+    <author>Robert W.B. Linn</author>
+</root>

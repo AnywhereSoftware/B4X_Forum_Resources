@@ -1,0 +1,102 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rsht20
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rSHT20
+'Description:	Timer example for the B4R Library rSHT20.
+'				Measure every 15 s. the temperature t & humidity h once and log t (°C), h (%RH) and the dewpoint (°C).
+'				The SHT20 is a Humidity and Temperature Sensor I2C.
+'Source:		TimerExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+'License:		MIT
+'Hardware:		ESP32 Wrover Kit, SHT20 Module ELV PAD4
+'Software:		B4R 4.00 (64 bit), Arduino CLI 1.22, ESP32 Board Manager 3.2.0 
+'Wiring
+'SHT20	= ESP32 (wirecolor)
+'VCC	= 3V3 (red)
+'SDA	= GPIO21 (D21) (blue)
+'SCL	= GPIO22 (D22) (green)
+'GND	= GND (black)
+'I2C Address = 0x40
+
+'Log Output Example:
+'[AppStart] rSHT20 TimerExample v20250626
+'[AppStart] SHT20 initialized.
+'[AppStart] MeasurementTimer started For 4 cycles
+'[MeasurementTimer_Tick] t=22.3,h=68,d=16.2
+'[MeasurementTimer_Tick] t=22.3,h=68,d=16.0
+'[MeasurementTimer_Tick] t=22.2,h=68,d=15.9
+'[MeasurementTimer_Tick] t=22.2,h=68,d=16.0
+'[MeasurementTimer_Tick] Timer stopped.
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rSHT20 TimerExample v20250626"
+
+	' Communication
+	Public Serial1 As Serial
+
+	' SHT20
+	Private sht As SHT20
+	
+	' Timer
+	Private MeasurementTimer As Timer
+	Private MEASUREMENTTIMER_INTERVAL As ULong = 15000
+	Private MeasurementTimer_Cycle As UInt = 0
+	Private MEASUREMENTTIMER_CYCLES As UInt = 4
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init the module
+	Dim result As Boolean = sht.Initialize()
+	If Not(result) Then
+		Log("[AppStart][ERROR] SHT20 NOT initialized. Check the wiring.")
+		Return
+	End If
+	Log("[AppStart] SHT20 initialized.")
+	
+	MeasurementTimer.Initialize("MeasurementTimer_Tick", MEASUREMENTTIMER_INTERVAL)
+	MeasurementTimer.Enabled = True
+	Log("[AppStart] MeasurementTimer started for ", MEASUREMENTTIMER_CYCLES, " cycles")
+	MeasurementTimer_Tick
+End Sub
+
+Private Sub MeasurementTimer_Tick
+
+	MeasurementTimer_Cycle = MeasurementTimer_Cycle + 1
+	If MeasurementTimer_Cycle > MEASUREMENTTIMER_CYCLES Then
+		MeasurementTimer.Enabled = False
+		Log("[MeasurementTimer_Tick] Timer stopped.")
+		Return
+	End If
+
+	Dim result As Boolean = sht.Measure
+	If result Then
+		Log("[MeasurementTimer_Tick]", _
+		    " t=", NumberFormat(sht.Temperature,0,1), _ 
+			",h=", NumberFormat(sht.Humidity,0,0), _ 
+			",d=", NumberFormat(sht.Dewpoint(sht.Temperature,sht.Humidity),0,1))
+	Else
+		Log("[MeasurementTimer_Tick][ERROR] Can not measure. Check the module. Timer stops.")
+		MeasurementTimer.Enabled = False
+	End If
+End Sub

@@ -1,0 +1,114 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rdhtex
+Library3=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterDHT22.b4r - Sample project for the B4R Library rRFXMeter
+'The Arduino sends dht22 sensor data (temperature, humidity) via the 433Mhz Transmitter To the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+'The data is received by a RFXMeter device, parsed into temperature & humidity values And a Temp+humidity device is updated.
+'Hardware:
+'Arduino UNO with connected modules 433Mhz Transmitter And dht22 sensor.
+'Domoticz Configuration:
+'Device RFXMeter (name RFXMeter) connected To the hardware RFXCOM RFXtrx433e:
+'IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMeter, Type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+'Device Temp + humidity (name RFXMeterTempHum) connected To the Dummy (Virtual Sensors) hardware:
+'IDX=385, Hardware=VirtualSensors, ID=141D1, Unit=1, Name=RFXMeterTempHum, Type=Temp + humidity, SubType=THGN122/123/132, THGR122/228/238/268, Data=17.0 C, 49 %
+'Steps:
+'From the values t & h, create an Array As Byte(ts, t, h), convert the byte array to hex string with length 6 with 3 (HexFromBytes), parse the HEX string to Long (Bit.ParseInt(hex, 16)), sent the long value via the RFXMeter to Domoticz.
+'Random t=-3, h=49 > set sign ts=2 (02, t is neg), set t pos t=3 (03), h=49 (31) > hex=020331 > long=131889 > sent to Domoticz
+'Domoticz parses the value in an Automation Event dzVents.
+'
+'Additional Libraries: rRFXMeter, rDHTEX
+'20220404 rwbl
+#End Region
+
+#Region TODO
+'Add checks for valuzes prior sensing. Example humidity must be in range 0-100.
+#End Region
+
+#Region Wiring
+'RX 433 Transmitter = Arduino UNO
+'VCC = 5v
+'Signal = #7
+'GND = GND
+'
+'DHT22 (AM2302) = Arduino UNO
+'VCC = 5v
+'Data = #8
+'GND = GND
+'Note: This DHT22 module has 3 pins, but there are also DHT22 modules with 4 pins (1=VCC, 2=Data, 3=NC, 4=GND)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	'RFXMeter & 433 TX Module
+	Private RFX_DEVADDR As Byte	= 0x09				'RFXMeter address which is used as Domoticz ID
+	Private RFX_PINTX As Byte 	= 7					'Transmi pin
+	Private RFX_PINLED As Byte	= 13				'Internal Arduino UNO LED
+	'DHT22 Module
+	Private dht22 As DHTEx							'Lib rDHTEx
+	Private DHT22_PINNR As UInt = 0x08				'DHT22 signal connected pin#8
+	Private humidity As Float
+	Private temperature As Float
+	'Timer for data sampling
+	Private timerDataSampling As Timer
+	Private DATASAMPLING_INTERVAL As ULong = 60000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log("DHT22 Temperature + Humidity to Domoticz every ", DATASAMPLING_INTERVAL, "ms")
+	'B4XLib rRFXMeter contains the code module RFXMeter which does not need to be declared in Process_Globals.
+	RFXMeter.Initialize(RFX_PINTX, RFX_PINLED)
+	RFXMeter.Logging = False
+	'DHT22
+	dht22.Initialize
+	'Timer
+	timerDataSampling.Initialize("TimerDataSampling_Tick", DATASAMPLING_INTERVAL)
+	timerDataSampling.Enabled = True
+	TimerDataSampling_Tick
+End Sub
+
+Sub TimerDataSampling_Tick
+	If Not(ReadDHT22) Then
+		timerDataSampling.Enabled = False
+	End If
+End Sub
+
+'Read data from the DHT22 sensor, check the read result and sent the data (without digits) to Domoticz.
+Private Sub ReadDHT22 As Boolean
+	Dim result As Boolean
+	Dim readReturn As Int = dht22.Read22(DHT22_PINNR)
+	If readReturn == dht22.READ_OK Then
+		temperature	= dht22.GetTemperature
+		humidity	= dht22.GetHumidity
+		'Temperature=18 C, Humidity=45 %RH
+		Log("DHT22 Temperature=", NumberFormat(temperature,0,0) , " C", ", Humidity=", NumberFormat(humidity,0,0), " %RH")
+		'Correct the temperature for neg values as can only sent positive values
+		Dim temperaturesign As Byte = RFXMeter.SIGN_POS
+		If temperature < 0 Then
+			temperaturesign = RFXMeter.SIGN_NEG
+			temperature = temperature * -1
+		End If
+		RFXMeter.SendBytes(RFX_DEVADDR, Array As Byte(temperaturesign, temperature , humidity))
+		result = True
+	Else
+		'ERROR Reading DHT22 Module (code=-2). Note: -2 is timeout (see RFXMeter defines)
+		Log("[ERROR] Can not read the DHT22 Module (code=", readReturn, ").")
+		result = False
+	End If
+	Return result
+End Sub

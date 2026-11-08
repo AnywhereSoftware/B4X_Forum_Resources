@@ -1,0 +1,459 @@
+﻿Build1=Default,anywheresoftware.b4a.b4abridge
+File1=1.bal
+File2=icon.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Bridge
+Library1=byteconverter
+Library2=core
+Library3=javaobject
+Library4=network
+Library5=phone
+Library6=randomaccessfile
+Library7=runtimepermissions
+Library8=xui views
+Library9=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~AddManifestText(~\n~<queries>~\n~        <package android:name="anywheresoftware.b4a.designer" />~\n~    </queries>~\n~)~\n~~\n~'CreateResourceFromFile(Macro, Themes.LightTheme)~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">~\n~    </style>~\n~</resources>~\n~)~\n~~\n~AddApplicationText(~\n~  <provider~\n~  android:name="android.support.v4.content.FileProvider"~\n~  android:authorities="$PACKAGE$.provider"~\n~  android:exported="false"~\n~  android:grantUriPermissions="true">~\n~  <meta-data~\n~  android:name="android.support.FILE_PROVIDER_PATHS"~\n~  android:resource="@xml/provider_paths"/>~\n~  </provider>~\n~)~\n~CreateResource(xml, provider_paths,~\n~   <external-files-path name="name" path="" />~\n~)~\n~AddPermission(android.permission.REQUEST_INSTALL_PACKAGES)~\n~~\n~SetApplicationAttribute(android:icon, "@mipmap/ic_launcher")~\n~CreateResource(mipmap-anydpi-v26, ic_launcher.xml,~\n~<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">~\n~    <background android:drawable="@mipmap/background"/>~\n~    <foreground android:drawable="@mipmap/foreground"/>~\n~</adaptive-icon>~\n~)~\n~~\n~AddPermission(android.permission.CHANGE_WIFI_MULTICAST_STATE)~\n~AddPermission(android.permission.SYSTEM_ALERT_WINDOW)~\n~AddPermission(android.permission.CHANGE_NETWORK_STATE)~\n~AddPermission(android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE)~\n~SetServiceAttribute(Service1, android:foregroundServiceType, connectedDevice)~\n~
+Module1=AsyncStreamsText
+Module2=DTS
+Module3=FTPClient
+Module4=FTPDataConnection
+Module5=FTPServer
+Module6=Service1
+Module7=Starter
+Module8=Utils
+NumberOfFiles=2
+NumberOfLibraries=9
+NumberOfModules=8
+Version=13
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: B4A-Bridge
+	#VersionCode: 34
+	#VersionName: 2.67  Find IP Address
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#MultiDex: true
+	#IgnoreWarnings: 32
+'	#BridgeLogger: true
+'	to enable logs in Release mode.
+#End Region
+
+	#additionaljar: com.android.support:support-v4
+	#Extends: android.support.v7.app.AppCompatActivity
+	#AdditionalRes: ../icon
+
+'Activity module
+Sub Process_Globals
+	Private server As ServerSocket 'ignore - Only used to show the device IP.
+	Private firstTimeEnabledAutomaticatlly As Boolean
+	Private const SETTINGS_FILE As String = "settings.txt"
+	Private CurrentIp As String
+	Public FTPServerEnabled As Boolean
+	Private phone As Phone
+	Private ion As Object
+	Private DrawOverRequested As Boolean
+	
+	Private TM As Timer
+End Sub
+
+Sub Globals
+	Private lblIp As Label
+	Private lblId As Label
+	Private lblIs As Label
+	Private lblStatus As Label
+	Private lblVersion As Label
+	Private btnStartWireless As Button
+	Private chkFTPServer As CheckBox
+	Private lblPing As Label
+	Private AnotherProgressBar1 As AnotherProgressBar
+	Private btnStop As Button
+	Private btsFind As Button
+	Private btsStop As Button
+	Private btnNotification As Button
+	Private dtc As DTS
+	Private bmp As Bitmap
+	Private it As Float
+	Private IsConnected As Int
+End Sub
+
+Sub Activity_Create(firstTime As Boolean)
+	Activity.LoadLayout("1")
+	dtc.Initialize("Double click to close")
+	AnotherProgressBar1.BrushOffsetDelta = 6
+	AnotherProgressBar1.ValueChangePerSecond = 100
+	lblVersion.Text = "B4A-Bridge v" & Application.VersionName
+	bmp = LoadBitmapResize(File.DirAssets,"icon.png",48dip,48dip,True)
+	
+	it = 0
+	IsConnected = 0
+	TM.Initialize ("TM",1000)
+	TM.Enabled = True
+	
+	Try
+		Dim ftp As Boolean
+		If phone.SdkVersion < 29 Then
+			If File.Exists(File.DirInternal, SETTINGS_FILE) Then
+				Dim m As Map = File.ReadMap(File.DirInternal, SETTINGS_FILE)
+				ftp = m.Get("ftpserver")
+			Else if phone.SdkVersion <= 23 Then
+				ftp = True
+			End If
+		Else
+			ftp = False
+			chkFTPServer.Visible = False
+		End If
+		chkFTPServer.Checked = ftp
+		chkFTPServer_CheckedChange(chkFTPServer.Checked)
+	Catch
+		Log(LastException)
+	End Try
+	lblId.BringToFront
+	lblPing.Visible = False
+	DrawOverRequested = False
+End Sub
+
+Sub Activity_Resume
+	UpdateIp
+	UpdateStatus
+	AnotherProgressBar1.Visible = AnotherProgressBar1.Visible
+	UpdateFileProgress
+	If File.ExternalWritable = False Then
+		btnStartWireless.Enabled = False
+		Msgbox2Async("Storage card not available. Make sure that your device is not connected in USB storage mode.", "B4A-Bridge","OK","","",bmp, True)
+		Wait For Msgbox_Result(Result As Int)
+	Else If phone.SdkVersion >= 26 And CanRequestPackageInstalls = False Then
+		Msgbox2Async("Please allow B4A-Bridge to install applications.", "B4A-Bridge","Continue","Exit Application","",bmp, False)
+		Wait For Msgbox_Result(Result As Int)
+		If Result = DialogResponse.POSITIVE Then
+			Dim in As Intent
+			in.Initialize("android.settings.MANAGE_UNKNOWN_APP_SOURCES", "package:" & Application.PackageName)
+			StartActivity(in)
+		Else
+			If FTPServerEnabled Or Service1.ConnectedStatus = True Then
+				If Service1.FTP.IsInitialized And Service1.FTP.Running = True Then
+					CallSubDelayed(Service1, "Service_Destroy")
+					Sleep(700)
+					StopService(Service1)
+					Sleep(700)
+				End If
+			End If
+			ExitApplication
+		End If
+	Else If phone.SdkVersion < 26 And CheckNonMarketAppsEnabled = False Then
+		Msgbox2Async("Please enable installation of non-market applications." & CRLF & "Under Settings - Security - Unknown sources" _
+		& CRLF & "Or Settings - Applications - Unknown sources", "B4A-Bridge","OK","","",bmp, True)
+		Wait For Msgbox_Result(Result As Int)
+	Else
+		If phone.SdkVersion >= 29 And DrawOverRequested = False Then
+			DrawOverRequested = True
+			Wait For (GetDrawOverPermission) Complete (Success As Boolean)
+		End If
+		btnStartWireless.Enabled = True
+		If firstTimeEnabledAutomaticatlly = False Then
+			firstTimeEnabledAutomaticatlly = True
+			btnStartWireless_Click
+		End If
+	End If
+	UpdateThemeColors
+End Sub
+
+'	We capture the menu and back keys
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+'	Pressing the menu key will open/close the slidemenu
+	If KeyCode = KeyCodes.KEYCODE_MENU Then
+		Activity.OpenMenu :	Return True
+	End If
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		dtc.TapToClose : Return True
+	End If
+	Return False
+End Sub
+
+Private Sub TM_Tick
+	If it > 0 Then
+		it = it-0.49
+	End If
+End Sub
+
+Sub UpdateThemeColors
+	If IsNightMode Then
+		btnStartWireless.TextColor = 0xFF00D254
+		If btnStop.Visible = True Then btnStop.TextColor = 0xFFDC143C Else btnStop.TextColor = 0xFF39800B
+	Else
+		btnStartWireless.TextColor = 0xFF39800B
+		If btnStop.Visible = True Then btnStop.TextColor = 0xFFDC143C Else btnStop.TextColor = 0xFF39800B
+	End If
+End Sub
+
+Sub IsConnectedUpdateColors (up As Int)
+	IsConnected = up
+	If up = 1 Then btnStop.TextColor = 0xFFDC143C Else btnStop.TextColor = 0xFF39800B '1=red
+End Sub
+
+Sub IsNightMode As Boolean
+	Try
+		Dim ctxt As JavaObject
+		ctxt.InitializeContext
+		Return Bit.And(ctxt.RunMethodJO("getResources", Null).RunMethodJO("getConfiguration", Null).GetField("uiMode"), 0x30) = 0x20
+	Catch
+		Log(LastException)
+	End Try
+	Return False
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Try
+		File.WriteMap(File.DirInternal, SETTINGS_FILE, CreateMap("ftpserver": chkFTPServer.Checked))
+	Catch
+		Log("Failed to write settings.")
+		Log(LastException)
+	End Try
+End Sub
+
+Private Sub CanRequestPackageInstalls As Boolean
+	Dim ctxt As JavaObject
+	ctxt.InitializeContext
+	Dim PackageManager As JavaObject = ctxt.RunMethod("getPackageManager", Null)
+	Return PackageManager.RunMethod("canRequestPackageInstalls", Null)
+End Sub
+
+Private Sub CheckNonMarketAppsEnabled As Boolean
+	If phone.SdkVersion < 17 Or phone.SdkVersion >= 21 Then
+		Return phone.GetSettings("install_non_market_apps") = "1"
+	Else
+		Dim context As JavaObject
+		context.InitializeStatic("anywheresoftware.b4a.BA")
+		context = context.GetField("applicationContext")
+		Dim resolver As JavaObject = context.RunMethod("getContentResolver", Null)
+		Dim global As JavaObject
+		global.InitializeStatic("android.provider.Settings.Global")
+		Return global.RunMethod("getString", Array As Object(resolver, "install_non_market_apps")) = "1"
+	End If
+End Sub
+
+Sub UpdateIp
+	CurrentIp = server.GetMyWifiIP
+	If CurrentIp = "127.0.0.1" Or CurrentIp.Contains(":") Then
+		CurrentIp = "Not connected to wireless network."
+	End If
+	FTP_StateChanged
+	lblIp.Text = "My IP: " & CurrentIp
+	lblId.Text = GetIpAddress
+End Sub
+
+Sub UpdateStatus
+	If Service1.ConnectedStatus Then
+		lblStatus.Text = "Status: " & Chr(0xF0C1)
+		btnStop.Visible = True
+		btnStartWireless.Visible = False
+	Else
+		If BridgeStarted Then
+			lblStatus.Text = "Status: " & Chr(0xF127) & CRLF & "Waiting For connections ..."
+			btnStop.Visible = True
+			btnStartWireless.Visible = False
+		Else
+			lblStatus.Text = "Status: " & Chr(0xF127) & CRLF & "Press on Start to listen for connections"
+			btnStartWireless.Visible = True
+			btnStop.Visible = False
+		End If
+	End If
+	FTP_StateChanged
+End Sub
+
+Public Sub FTP_StateChanged
+	
+End Sub
+
+Private Sub BridgeStarted As Boolean
+	Return IsPaused(Service1) = False
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	'Can only be the WRITE_EXTERNAL_STORAGE permission.
+	chkFTPServer.Checked = Result
+	If Result = False Then
+		ToastMessageShow("Cannot start FTP Server without WRITE_EXTERNAL permission.", True)
+	End If
+	StartService(Service1)
+End Sub
+
+Private Sub chkFTPServer_CheckedChange(Checked As Boolean)
+	FTPServerEnabled = Checked
+	If Checked And BridgeStarted And (Service1.FTP.IsInitialized = False Or Service1.FTP.Running = False) Then
+		btnStartWireless_Click
+	Else if Checked = False And BridgeStarted Then
+		CallSub(Service1, "SetFTPServerState")
+	End If
+End Sub
+
+Public Sub UdpPing
+	lblPing.SetVisibleAnimated(500, True)
+	Sleep(700)
+	lblPing.SetVisibleAnimated(200, False)
+End Sub
+
+Public Sub UpdateFileProgress
+	If Service1.currentAPKTotal = 0 Then
+		AnotherProgressBar1.Visible = False
+		AnotherProgressBar1.SetValueNoAnimation(0)
+	Else
+		If AnotherProgressBar1.Visible = False Then
+			 AnotherProgressBar1.Visible = True
+			 AnotherProgressBar1.SetValueNoAnimation(0)
+		End If
+		AnotherProgressBar1.Value = Round(Service1.currentAPKWritten  / Service1.currentAPKTotal * 100)
+	End If
+End Sub
+
+Public Sub GetDrawOverPermission As ResumableSub
+	Try
+		Dim settings As JavaObject
+		settings.InitializeStatic("android.provider.Settings")
+		Dim ctxt As JavaObject
+		ctxt.InitializeContext
+		If settings.RunMethod("canDrawOverlays", Array(ctxt)) = True Then
+			Return True
+		End If
+		Msgbox2Async($"The "display over other apps" permission is required on Android Q+ devices in order to allow B4A-Bridge to start other apps while in the background."$, "B4A-Bridge", "OK", "", "", bmp, True)
+		Wait For Msgbox_Result (Result As Int)
+		Dim i As Intent
+		i.Initialize("android.settings.action.MANAGE_OVERLAY_PERMISSION", "package:" & Application.PackageName)
+		StartActivityForResult(i)
+		Wait For ion_Event (MethodName As String, Args() As Object)
+	Catch
+		Log(LastException)
+	End Try
+	Return True
+End Sub
+
+Private Sub StartActivityForResult(i As Intent)
+	Dim jo As JavaObject = GetBA
+	ion = jo.CreateEvent("anywheresoftware.b4a.IOnActivityResult", "ion", Null)
+	jo.RunMethod("startActivityForResult", Array As Object(ion, i))
+End Sub
+
+Sub GetBA As Object
+	Dim jo As JavaObject
+	Dim cls As String = Me
+	cls = cls.SubString("class ".Length)
+	jo.InitializeStatic(cls)
+	Return jo.GetField("processBA")
+End Sub
+
+Sub btnStop_Click
+	Try
+		StopService(Service1)
+		IsConnected = 0
+	Catch
+		Return
+	End Try
+End Sub
+
+Sub btnStartWireless_Click
+	StopService(Service1)
+	IsConnected = 0
+	If chkFTPServer.Checked Then
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Else
+		StartService(Service1)
+	End If
+End Sub
+
+Sub btsFind_Click
+	If lblId.Text <> "127.0.0.1" And lblId.Visible = True Then 
+		If it < 0.71 Then 
+			If IsConnected = 1 Then ToastMessageShow("Active.", False) Else ToastMessageShow("Not connected.", False)
+			it = it+1.3
+		Else
+			it = 1.49
+		End If
+	End If
+	lblId.BringToFront
+	lblId.Visible = True
+	lblIs.Visible = False
+End Sub
+
+Sub btsStop_Click
+	If lblId.Text = "IP: not connected" And lblId.Visible = True Then
+		If it < 0.71 Then
+			ToastMessageShow("Not connected.", False)
+			it = it+1.3
+		Else
+			it = 1.49
+		End If
+	End If
+	lblId.BringToFront
+	lblId.Visible = True
+	lblIs.Visible = False
+	lblId.Text = GetIpAddress
+End Sub
+
+Sub btnNotification_Click
+	lblId.Visible = Not(lblId.Visible)
+	If lblId.Visible = True Then
+		lblId.BringToFront
+		lblIs.Visible = False
+	Else
+		lblIs.BringToFront
+		lblIs.Visible = True
+	End If
+End Sub
+
+Sub btnNotification_LongClick
+	If phone.SdkVersion >= 26 And CanRequestPackageInstalls = True Then
+		Msgbox2Async("Please remove permission B4A-Bridge to install applications.", "B4A-Bridge","Continue","Cancel","",bmp, True)
+		Wait For Msgbox_Result(Result As Int)
+		If Result = DialogResponse.POSITIVE Then
+			Dim in As Intent
+			in.Initialize("android.settings.MANAGE_UNKNOWN_APP_SOURCES", "package:" & Application.PackageName)
+			StartActivity(in)
+		End If
+	End If
+End Sub
+
+Sub GetIpAddress As String
+	Dim jo As JavaObject
+	jo.InitializeContext
+	Dim ip As String = jo.RunMethod("getIpAddress", Null).As(String)
+	If ip.Length > 0 Then
+		btsFind.Visible = True
+		btsStop.Visible = False
+		btsFind.BringToFront
+		Return "New IP: " & ip
+	Else
+		btsStop.Visible = True
+		btsFind.Visible = False
+		btsStop.BringToFront
+		Return "IP: not connected"
+	End If
+End Sub
+
+#if java
+
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+import java.net.InetAddress;
+
+public String getIpAddress() {
+     String ip = "";
+    try {
+        Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces();
+        while (enumNetworkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = enumNetworkInterfaces.nextElement();
+            Enumeration<InetAddress> enumInetAddress = networkInterface.getInetAddresses();
+            while (enumInetAddress.hasMoreElements()) {
+                InetAddress inetAddress = enumInetAddress.nextElement();
+                if (inetAddress.isSiteLocalAddress()) {
+                    ip += inetAddress.getHostAddress() + "\n";
+                }
+            }
+        }
+    } catch (Exception e) {
+        ip += "Something Wrong! " + e.toString() + "\n";
+    }
+    return ip;
+}
+#End If

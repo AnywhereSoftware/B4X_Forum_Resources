@@ -1,0 +1,51 @@
+type: vertical-stack
+title: CO Sensor - Living Room
+cards:
+  - type: entities
+    entities:
+      - entity: sensor.hawe_cosensor_co
+        secondary_info: last-updated
+        name: CO Concentration
+      - entity: sensor.hawe_cosensor_voltage
+        name: Voltage Probe
+      - entity: sensor.hawe_cosensor_temperature
+        secondary_info: last-updated
+        name: Temperature Onboard
+    state_color: true
+  - type: button
+    show_name: true
+    show_icon: true
+    name: Refresh Data
+    icon: mdi:refresh
+    icon_height: 48px
+    tap_action:
+      action: call-service
+      service: mqtt.publish
+      data:
+        topic: hawe/cosensor/command/refresh
+        payload: refresh
+  - type: markdown
+    content: |
+      ### LED Status
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: "On"
+        icon: mdi:lightbulb-on
+        icon_height: 24px
+        tap_action:
+          action: call-service
+          service: mqtt.publish
+          data:
+            topic: hawe/cosensor/command/led_status
+            payload: "1"
+      - type: button
+        name: "Off"
+        icon: mdi:lightbulb-off
+        icon_height: 24px
+        tap_action:
+          action: call-service
+          service: mqtt.publish
+          data:
+            topic: hawe/cosensor/command/led_status
+            payload: "0"

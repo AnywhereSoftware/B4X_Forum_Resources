@@ -1,0 +1,69 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=cmdtwain-b4xlib
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private ST As CmdTwain
+	Private OutputFullPath As String = "D:\\test2.jpg"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	MainForm.Title = "CmdTwain - Wrapper"
+	
+	ST.Initialize
+End Sub
+
+Sub btnSelectScanner_Click
+	Wait For (ST.SelectScanner) Complete (Success As Boolean)
+	'Testing
+	Log("Success " & Success)
+	Log(ST.GetLastCommandLineArgs)
+End Sub
+
+Sub btnScan_Click
+	ST.Initialize
+'	ST.ScanTwainPath = "C:\Program Files (x86)\GssEziSoft\CmdTwain"
+	ST.OpenAfterScan = True
+	ST.OutputFullPath = OutputFullPath
+'	ST.DPI = 300
+'	ST.Output = ST.OUTPUT_JPG_75
+'	ST.PaperAutoMatchPDF = True
+'	ST.Quiet = True
+'	ST.ScanPartialPage(ST.UNIT_IN,0,0,5,4)
+'	ST.ScanWidthAndHeight(ST.UNIT_IN,3,5)
+'	ST.Duplex = True
+'	ST.Color = ST.COLOR_GRAYSCALE
+'	ST.Film = True
+'	ST.BitsPerPixel = 1
+	
+	'Delete an existing file if it exists and it won't be shown after the scan (if requested) if the scan fails
+	File.Delete(ST.OutputFullPath,"")
+	
+	Wait For (ST.Scan) Complete (Success As Boolean)
+	'Testing
+	Log("Success " & Success)
+	Log(ST.GetLastCommandLineArgs)
+End Sub

@@ -1,0 +1,117 @@
+﻿AppType=StandardJava
+Build1=Default,com.tummosoft
+Group=Default Group
+Library1=jcore
+Library2=jfilesupport
+Library3=jserver
+Library4=jsql
+Library5=xsocket
+Module1=GuessMyNumber
+Module2=MySQLDB
+Module3=palidictionary
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=3
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+#AdditionalJar: mysql-connector-j-8.0.31.jar
+#AdditionalJar: sqlite-jdbc-3.41.2.2.jar
+#AdditionalJar: jackson-core-2.15.2.jar
+#AdditionalJar: cpdetector-1.0.10.jar
+#AdditionalJar: jackson-databind-2.15.2.jar
+#AdditionalJar: annotations-23.0.0.jar
+#AdditionalJar: json.simple.jar
+#AdditionalJar: lzstring4java-0.1.jar
+#AdditionalJar: jackson-annotations-2.17.2.jar
+#AdditionalJar: socketd-2.4.6.jar
+#AdditionalJar: socketd-transport-java-kcp-2.4.6.jar
+#AdditionalJar: socketd-transport-java-tcp-2.4.6.jar
+#AdditionalJar: socketd-transport-java-udp-2.4.6.jar
+#AdditionalJar: socketd-transport-java-websocket-2.4.6.jar
+#AdditionalJar: socketd-transport-neta-2.4.6.jar
+#AdditionalJar: socketd-transport-netty-2.4.6.jar
+#AdditionalJar: socketd-transport-smartsocket-2.4.6.jar
+#AdditionalJar: slf4j-simple-2.0.11.jar
+#AdditionalJar: slf4j-api-2.0.11.jar
+#AdditionalJar: Java-WebSocket-1.5.5.jar
+#AdditionalJar: jtransc-rt-0.6.8.jar
+#AdditionalJar: wetool-1.6.0
+#AdditionalJar: aio-core-1.5.42.jar
+#AdditionalJar: aio-pro-1.5.41.jar
+
+Sub Process_Globals
+	Dim server As xServerSockets
+	Public config As Map
+	Dim mysql As MySQLDB
+End Sub
+
+Sub AppStart (Args() As String)
+	'config.Initialize
+	'config = File.ReadMap(File.DirApp, "config.txt")
+	'mysql.Initialize
+	
+	server.Initialize("server", "ws")
+	server.SetCharset("UTF-8")	
+	server.EnablePahtListener(True)
+	server.RequestTimeout(5000)
+	server.Start(51042)
+	StartMessageLoop	
+	
+	'open browser and navigate to: http://127.0.0.1:51042/
+End Sub
+
+
+Sub server_OnConnected(session As xSession)
+	Log("Server connected: " & session.localAddress)
+		
+End Sub
+
+Sub server_OnMessage(session As xSession, message As xMessage)
+	Log("OnMessage.....")
+	Log("Enent: " & message.event)
+		If (message.event = "/palidict") Then
+			Dim word As String = message.meta("WORD")
+			Dim json As String = $"
+			<h1>${word}</h1>
+			<p>The first line in your HTML code should be the doctype declaration. A doctype tells the browser what version of HTML the page is written in.</p>"$
+			Dim entry As xStringEntity
+			entry.Initialize(json)
+			session.reply(message, entry)
+		else if (message.event = "/palidigital") Then
+		Log("Reply ready: OK")
+			Dim word As String = message.meta("WORD").trim
+			Log(word)
+		If word.Contains("test") Then
+			Dim json As String = $"
+			<h1>${word}</h1>
+			<p>The first line in your HTML code should be the doctype declaration. A doctype tells the browser what version of HTML the page is written in.</p>"$
+			Dim entry As xStringEntity
+			entry.Initialize(json)
+			session.replyEnd(message, entry)
+		Else
+			Dim entry As xStringEntity
+			entry.Initialize("Wrong word!")
+			session.replyEnd(message, entry)
+		End If
+			
+			
+		else if (message.event = "/sanskrit") Then
+			Dim word As String = message.meta("WORD")			
+			Dim json As String = $"
+			<h1>${word}</h1>
+			<p>The first line in your HTML code should be the doctype declaration. A doctype tells the browser what version of HTML the page is written in.</p>"$
+			Dim entry As xStringEntity
+			entry.Initialize(json)
+			session.reply(message, entry)
+		End If
+	
+End Sub
+
+Sub server_OnError(session As xSession, error As String)
+	
+End Sub

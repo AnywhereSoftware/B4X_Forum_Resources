@@ -1,0 +1,108 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jsqlsupport
+Module1=Person
+Module2=Test
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#AdditionalJar: opencsv-5.8.jar
+#AdditionalJar: commons-collections4-4.4.jar
+#AdditionalJar: commons-lang3-3.12.0.jar
+#AdditionalJar: commons-beanutils-1.9.4.jar
+#AdditionalJar: commons-logging-1.1.3.jar
+#AdditionalJar: h2-2.1.214.jar
+
+Public Type infodata(id As Int, name As String, age As Int)
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView	
+	Dim h2server As jH2Server
+	Dim h2database As jSQLSupport
+	Private Button2 As Button
+	Private Button3 As Button
+	Private Button4 As Button
+	Private Button5 As Button
+	Private Button6 As Button
+	Dim url As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Dim hpathdata As String = File.Combine(File.DirApp,"")
+	h2server.InitializeServer("3005", "sa", hpathdata)
+	Log(h2server.URL)
+	url = h2server.URL
+	
+End Sub
+
+Sub Button1_Click
+	Dim hpathdata As String = File.Combine(File.DirApp,"")
+	Dim jdbc As String = "jdbc:h2:file:"
+	h2database.InitializeH2("org.h2.Driver", jdbc, "tummosoft", "sa", "sa", 8192)
+	h2database.HikariEnable(True)
+	
+	
+End Sub
+
+Private Sub Button2_Click
+	h2database.ExecNonQuery("CREATE TABLE table1 (col1 TEXT , col2 INTEGER, col3 INTEGER)")
+	For i=0 To 10
+		h2database.ExecNonQuery2("INSERT INTO table1 VALUES(?,?,?)", Array As Object(i, i*2, i*3))
+	Next
+	
+End Sub
+
+Private Sub Button3_Click
+	Dim Cursor As ResultSet
+	Cursor = h2database.ExecQuery2("SELECT * FROM table1 WHERE col1 = ?", Array As String(2))
+	
+	Do While Cursor.NextRow
+		Log(Cursor.GetString("col1"))
+		Log(Cursor.GetInt("col2"))
+	Loop
+End Sub
+
+Private Sub Button4_Click
+	Dim hpathdata As String = File.Combine(File.DirApp,"")
+	hpathdata = hpathdata.Replace("\", "/")
+	Dim jdbc As String = "jdbc:h2:" & url & "/" & hpathdata
+	
+	h2database.InitializeH2("org.h2.Driver", jdbc, "tummosoft", "sa", "sa", 8192)
+	h2database.HikariEnable(True)
+End Sub
+
+Private Sub Button5_Click
+	h2database.ExecNonQuery("CREATE TABLE table3 (col1 TEXT , col2 INTEGER, col3 INTEGER)")
+	For i=0 To 10
+		h2database.ExecNonQuery2("INSERT INTO table3 VALUES(?,?,?)", Array As Object(i, i*2, i*3))
+	Next
+	
+End Sub
+
+Private Sub Button6_Click
+	Dim Cursor As ResultSet
+	Cursor = h2database.ExecQuery2("SELECT * FROM table3 WHERE col1 = ?", Array As String(2))
+	
+	Do While Cursor.NextRow
+		Log(Cursor.GetString("col1"))
+		Log(Cursor.GetInt("col2"))
+	Loop
+End Sub

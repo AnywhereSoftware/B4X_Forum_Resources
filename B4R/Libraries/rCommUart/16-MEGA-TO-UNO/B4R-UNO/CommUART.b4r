@@ -1,0 +1,162 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rsoftwareserial
+Module1=|relative|..\..\..\src\CommUart
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rCommUART
+' Brief:		Example Arduino MEGA to Arduino UNO communication. This is the Arduino UNO receiver.
+' Date:			2026-09-28
+' Author: 		Robert W.B. Linn (c) 2026 MIT
+' Description:	The Arduino MEGA sends in regular intervals a 3-byte frame over its hardware serial 1 line to the Arduino UNO.
+'				The Arduino UNO uses software serial to receive the 3-byte frame.
+'				Byte 1 of the received frame is used to set the state of the LED.
+' Hardware:		Arduino UNO, Serial Port COM10, 115200
+' Software:		B4R 4.00 (64 bit), rRandomAccessFile 1.91, rSoftwareSerial 1.00, CommUart Module
+' Communication:3-byte array frame
+'				Frame(0) = CommUart.FRAME_HEADER	' Header byte 0
+'				Frame(1) = LedState 				' Data byte 1 - 0 for Arduino UNO LED OFF, 1 for ON 
+'				Frame(2) = CommUart.FRAME_FOOTER 	' Footer byte 2
+' Wiring:		
+'				Inter-Board Communication (MEGA ➔ UNO)
+'				To preserve the primary `Serial` (Port 0) on both boards For programming And debugging via the USB Serial Monitor, 
+'				**`Serial1`** is used on the Mega, And **`SoftwareSerial`** is emulated on the Uno.
+'
+'				| Source Board (MEGA) | Direction | Target Board (UNO) | Wire Color |Pin Description                                           |
+'				| :------------------ | :-------: | :----------------- | :----------| :------------------------------------------------------- |
+'				| **GND**             | ───       | **GND**            | Black      | **Common Ground** (Mandatory reference voltage).         |
+'				| **TX1 (Pin 18)**    | ──►       | **Pin 10 (RX)**    | Blue       | Mega Hardware Transmit connects To Uno Emulated Receive. |
+'				| **RX1 (Pin 19)**    | ◄──       | **Pin 11 (TX)**    | Yellow     | Uno Emulated Transmit connects To Mega Hardware Receive. |
+'				**CRITICAL SAFETY RULES**
+'				1. **Isolated Power:** Power both microcontrollers independently via their own USB cables connected To your computer, Or through a properly regulated external shared Power supply.
+'				2. **Ground Unity:** **Never skip the GND-To-GND connection.** Without it, the electric circuit cannot close, floating voltages will occur, And your serial signals will become corrupted Or unreadable.
+'				3. **Power Separation:** **Do Not connect the 5V rail of the Mega directly To the 5V rail of the Uno** While both are simultaneously plugged into USB ports. Doing so creates cross-currents that can permanently damage your computer's USB host controller or destroy the microcontrollers.
+'
+'				UNO Peripherals (DFRobot Components)
+'				| Periphery Component | MCU Signal Pin | VCC Rail | GND Rail | Wire Color Mapping |
+'				| :------------------ | :------------- | :------- | :------- | :---               |
+'				| **Led Indicator**   | **D4**         | **5V**   | **GND**  | Signal = White     |
+'				| **Button Switch**   | **D5**         | **5V**   | **GND**  | Signal = Yellow    |
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rCommUART UNO Receiver v20260927"	'ignore
+
+	' Communication
+	Public Serial0			As Serial			' UART
+	Private SoftSerial 		As SoftwareSerial	'Lib rSoftwareSerial
+
+	' Data Transfer	
+	Private FRAME_SIZE 		As Int = 3			' Important must match frame used
+	
+	' LED
+	Private Led 			As Pin			
+	Private LED_PINNR		As Byte = 4			' D4
+	Private LedState 		As Boolean
+	
+	' Button
+	Private Button			As Pin
+	Private BUTTON_PINNR	As Byte = 5			' D5
+	
+	' Helper
+	Private ByteConv		As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial0.Initialize(115200)
+	' Log(CRLF, "[AppStart] ", VERSION)
+
+	' Init Led and Button
+	Led.Initialize(LED_PINNR, Led.MODE_OUTPUT)
+	Button.Initialize(BUTTON_PINNR, Button.MODE_INPUT)
+	Button.AddListener("Button_StateChanged")
+	
+	' Initialize SoftwareSerial on Pin 10 (RX) and Pin 11 (TX) at 9600 baud
+	SoftSerial.Initialize(115200, 10, 11)
+	
+	CommUart.Initialize(SoftSerial.Stream, FRAME_SIZE)
+
+	' Tests turn LED on (0) and off (1)
+	' CallSubPlus("CommUartTest", 1000, 1)
+	' CallSubPlus("CommUartTest", 5000, 0)
+End Sub
+
+'
+' BUTTON EVENT
+'
+
+Private Sub Button_StateChanged(state As Boolean)
+	Log("[Button_StateChanged] state=", state)
+	
+	If state Then
+		LedState = Not(LedState)
+		Led.DigitalWrite(LedState)
+		If LedState Then
+			CommUART_Write(Array As Byte(0x19, 0x01, 0x58))
+		Else
+			CommUART_Write(Array As Byte(0x19, 0x00, 0x58))
+		End If
+	End If
+End Sub
+
+'==============================================
+' EVENTS
+'==============================================
+#Region EVENTS
+'==============================================
+' Each code module can reference the comm events.
+' The code module callbacks are hardcoded and must exist.
+' The code module uses data passthru and does not perform any checks.
+'==============================================
+
+' CommUART_OnReceived
+' Handle new data from the client.
+' Frame Protocol:
+' Length: 3 Bytes
+' Byte 0: 0x19
+' Byte 1: 0x00 or 0x01
+' Byte 2: 0x58
+Public Sub CommUART_OnReceived(buffer() As Byte)
+	Log("[Main.CommUART_OnReceived] buffer=", buffer.Length, " hex=", ByteConv.HexFromBytes(buffer))
+	
+	If buffer.Length = 3 Then
+		Dim bufstate As Byte = buffer(1)
+		Dim newstate As Boolean = IIf(bufstate = 0x01, True, False)
+		Log("[Main.CommUART_OnReceived] led newstate", bufstate, " ", newstate)
+		Led.DigitalWrite(newstate)
+		Log("[Main.CommUART_OnReceived] LED state set to ", newstate)
+	End If
+End Sub
+
+' CommUART_OnError
+Public Sub CommUART_OnError
+	Log("[Main.CommUART_OnError]")
+End Sub
+
+Private Sub CommUART_Write(data() As Byte)
+	If data.Length > 0 Then
+		CommUart.Write(data)		
+	End If
+End Sub
+
+' Test communication by calling OnReceived with 3 Bytes.
+Private Sub CommUARTTest(tag As Byte)	'ignore
+	Log("[Main.CommUARTTest] tag=", tag)
+	CommUart.OnReceived(Array As Byte(0x19, tag, 0x58))
+End Sub
+#End Region

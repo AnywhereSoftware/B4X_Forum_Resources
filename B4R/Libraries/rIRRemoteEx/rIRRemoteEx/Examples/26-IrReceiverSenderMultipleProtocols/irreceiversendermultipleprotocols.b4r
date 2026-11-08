@@ -1,0 +1,135 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR sender multiple protocols with receiver: NEC, SONY, SAMSUNG.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The TX (GPIO 3) & RX (GPIO 2) pins are used as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'				KEYES IR-Sender KY-005 (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+'Hints:			Set LONG DELAY after receive to avoid noise or multiple receives.
+
+'Log Example
+#End Region
+
+#Region Wiring
+'IR-Receiver = Arduino UNO
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+
+'IR-Sender = Arduino UNO
+'VCC = 5V (RED)
+'TX = 3 (YELLOW)
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 200
+#End Region
+
+Sub Process_Globals
+	Private SerialLine As Serial
+
+	Private irreceiver As IrReceiver
+	Private irsender As IrSender
+
+	Private PROTOCOL_SAMSUNG = 1, PROTOCOL_NEC = 2, PROTOCOL_SONY = 3 As Byte
+	Private MAX_PROTOCOLS As Byte = 3
+	Private protocol As Byte = 1
+	
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	SerialLine.Stream.Flush
+
+	Log(CRLF, "[AppStart]")
+	
+	irreceiver.Initialize("NewData")	
+	irsender.Initialize()
+
+	Delay(100)
+
+	'Start sending protocol - NEC first
+	IRSendProtocol(protocol)
+End Sub
+
+'IR sender with protocol
+Private Sub IRSendProtocol(tag As Byte)
+	Log("[IRSendProtocol] protocol=", tag)
+	Delay(1000)
+	Select tag
+		Case PROTOCOL_SAMSUNG
+			CallSubPlus("SendSAMSUNG", 100,protocol)
+		Case PROTOCOL_NEC
+			CallSubPlus("SendNEC", 100,protocol)
+		Case PROTOCOL_SONY
+			CallSubPlus("SendSONY", 100,protocol)
+	End Select
+End Sub
+
+Sub SendSAMSUNG(tag As Byte)
+	Log("[SendSAMSUNG]")
+	irsender.SendSamsung(0x7, 0x5, 1)
+End Sub
+
+Sub SendNEC(tag As Byte)
+	Log("[SendNEC]")
+	irsender.SendNEC(0, 0x76, 0)
+End Sub
+
+Sub SendSONY(tag As Byte)
+	Log("[SendSONY]")
+	irsender.SendSony(0x1C5A, 0x3A, 2, 20)
+End Sub
+
+'Handle new IR data received
+Private Sub NewData(data As IrDecodedData)
+	'Do not handle unknown protocol
+	'If data.protocol == 0 Then Return
+
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", HexFromByte(data.Command), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",rawdata hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+	
+	protocol = protocol + 1
+	If protocol <= MAX_PROTOCOLS Then
+		IRSendProtocol(protocol)
+	Else
+		Log("[NewData] DONE")
+	End If
+End Sub
+
+#Region HELPER
+'Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+'Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+'Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region

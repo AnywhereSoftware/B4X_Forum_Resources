@@ -1,0 +1,120 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=resp8266wifi
+Library4=rm5stickcplus2
+Module1=WiFiMod
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		RTCNTP
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Real Time Clock test with time set from NTP server and display showing time & date updated every second.
+'				The battery indicator top right is updated every minute.
+'				Note: The NTP sync has to be done prior initialize the M5 (because the M5 reinits the RTC after M5.begin).
+'				Note: NTP timezone set 'CET-1CEST,M3.5.0,M10.5.0/3'. List of timezones http://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv.
+'				Note: Restart the M5 after upload by pressing BtnPwr for 6 seconds.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+'				Additional B4R: rESP8266WiFi 1.60
+' Secrets:		WiFiMod.
+' Author:		Robert W.B. Linn
+' Date:			20251021
+' Wiring:		None.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+
+	' M5
+	Private m5 As M5StickCPlus2
+
+	' Timer
+	Private RTCTimer As Timer
+	Private RTCTIMER_INTERVAL As ULong = 1000	' Every second
+
+	' Store the prev date & time to only update if current date & time has changed
+	Private prevDate As ULong
+	Private prevTime As ULong
+	
+	' Battery update interval every minute
+	Private BATTERY_UPDATE_INTERVAL As ULong = 60
+	Private batteryUpdateCounter As ULong = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart][I] RTCNTP")
+	Delay(100)
+	
+	' Connect to the WiFi network
+	WiFiMod.Connected = WiFiMod.Connect
+	' Wifi connected
+	If WiFiMod.Connected Then
+		' Init the M5 with RTC
+		If m5.InitializeWithRTC("CET-1CEST,M3.5.0,M10.5.0/3") Then
+			Delay(100)
+			Log("[Main.AppStart][I] M5 core and RTC initialized")
+
+			' Display
+			m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+			m5.Clear
+
+			m5.SetHeader("RTCNTP Demo", 2, m5.UI_ALIGN_LEFT, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+			m5.SetHorLine((m5.GetFontHeight * 2) + 5, m5.COLOR_WHITE, 2)
+			m5.DrawBattery(m5.BatteryVoltage, True)
+
+			' Initialize & start the rtc timer every second
+			RTCTimer.Initialize("RTCTimer_Tick", RTCTIMER_INTERVAL)
+			RTCTimer.Enabled = True
+			Log("[Main.AppStart][I] RTC Timer started. interval=", RTCTIMER_INTERVAL/1000, "s, Battery state update=", BATTERY_UPDATE_INTERVAL,"s")
+		Else
+			Log("[Main.AppStart][E] Can not initialize the M5 with RTC - NTP sync failed.")
+		End If
+	Else
+		Log("[Main.AppStart][E] Can not connect to the WiFi network.")
+	End If
+End Sub
+
+' Handle timer tick to update the date and time
+Private Sub RTCTimer_Tick
+	
+	' Get the now time
+	m5.RTC_UpdateDateTime
+	Dim nowDate As ULong = m5.RTC_Year * 10000 + m5.RTC_Month * 100 + m5.RTC_Date
+	Dim nowTime As ULong = m5.RTC_Hour * 10000 + m5.RTC_Minute * 100 + m5.RTC_Second
+	'Log("[RTCTimer_Tick][I] ", m5.RTC_Date, "-", m5.RTC_Month, "-", m5.RTC_Year, " - ", m5.RTC_Hour, ":", m5.RTC_Minute, ":", m5.RTC_Second)
+
+	' Update time only if changed
+	If prevTime <> nowTime Then
+		'Log("[RTCTimer_Tick][I] Update time")
+		m5.PrintCentered(m5.GetCenterX, m5.GetCenterY - (m5.GetFontHeight * 1), m5.RTC_GetTimeString, 3, m5.COLOR_WHITE, m5.COLOR_BLACK)
+		prevTime = nowTime
+	End If
+
+	' Update date only if changed
+	If prevDate <> nowDate Then
+		'Log("[RTCTimer_Tick][I] Update date")
+		m5.PrintCentered(m5.GetCenterX, m5.GetHeight - (m5.GetFontHeight * 2), m5.RTC_GetDateString, 2, m5.COLOR_WHITE, m5.COLOR_BLACK)
+		prevDate = nowDate
+	End If
+
+	' Battery Indicator - low battery handled by the M5
+	batteryUpdateCounter = batteryUpdateCounter + 1
+	If batteryUpdateCounter == BATTERY_UPDATE_INTERVAL Then
+		m5.DrawBattery(m5.BatteryVoltage, True)
+		batteryUpdateCounter = 0
+	End If
+
+End Sub

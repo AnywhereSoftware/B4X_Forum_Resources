@@ -1,0 +1,226 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example touch buttons using the library function drawbutton.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 900
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx BUTTON v20250406"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display Instance
+	Private lcd As LovyanGFXEx
+
+	'Button state
+	'Private BUTTON_STATE_ON As Boolean = True
+	'Private BUTTON_STATE_OFF As Boolean = False
+	'Button default width and height
+	Private BUTTON_WIDTH As ULong = 120
+	Private BUTTON_HEIGHT As ULong = 50
+
+	'Button structure without label
+	Type TButton(id As Int, x As ULong, y As ULong, w As ULong, h As ULong, textcolor As ULong, coloron As ULong, coloroff As ULong, state As Boolean)
+
+	'Button array with 2 buttons
+	Private Buttons(2) As TButton
+
+	'Button labels are defined as constants with fixed text to avoid ESP32 crash when assigning text in a sub (Modifying constant strings is problematic)
+	Private ButtonID0Label As String = "Button 0"
+	Private ButtonID1Label As String = "Button 1"
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display with mandatory touch event
+	lcd.Initialize("LCD_Touch")
+
+	' Callsub to let the display initialize
+	CallSubPlus("SetUp", 500, 5)
+End Sub
+
+Private Sub SetUp(tag As Byte)
+	lcd.DisplayRotation = 1
+
+	'lcd.FillScreen(lcd.COLOR_WHITE)
+	lcd.BackgroundColor = lcd.color_white
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FREESANSBOLD_9, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_RED, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLUE)
+
+	'Draw b4x
+	lcd.DrawFooter("B4X", lcd.FONT_FREESERIFBOLD_24, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLUE, lcd.COLOR_CYAN, lcd.COLOR_RED)
+
+	'Init the buttons
+	InitButtons
+End Sub
+
+#Region Touch Event
+'LCD touched event with x,y coordinates.
+Private Sub LCD_Touch(x As ULong, y As ULong)
+	Dim msg As String
+
+	'Get the button id of the button touched
+	Dim buttonid As Int = TouchedButton(x, y)
+
+	'Check the buttonid
+	If buttonid < 0 Then
+		Log("[LCD_Touch] x=", x, ",y=", y, ",button touched=NO")
+		Return
+	End If
+
+	'Get the button data from the buttons array
+	Dim btn As TButton = Buttons(buttonid)
+	Log("[LCD_Touch] x=", x, ",y=", y, ",id=", btn.id, ",state=", btn.state)
+	
+	'Reverse the button state
+	btn.state = Not(btn.state)
+	Log("[LCD_Touch] x=", x, ",y=", y, ",id=", btn.id, ",state=", btn.state)
+	
+	Select buttonid
+		'Do something
+		Case 0
+			Log("[LCD_Touch] Touched Button ID 0")
+		Case 1
+			Log("[LCD_Touch] Touched Button ID 1")
+	End Select
+
+	'Redraw the button based on state
+	DrawButton(btn)
+
+	'Show msg at screen middle
+	lcd.Font = lcd.FONT_DEFAULT
+	msg = JoinStrings(Array As String("Touched Button ID ", btn.id))
+	lcd.DrawText(lcd.CenterX, lcd.CenterY, msg, lcd.TEXT_ALIGN_MIDDLE_CENTER, 2, lcd.COLOR_RED, lcd.BackgroundColor)
+End Sub
+#End Region
+
+#Region Buttons
+'Initialize the buttons.
+'The id must be the button array index starting with 0.
+Private Sub InitButtons
+	'Set the button index
+	Dim idx As Byte 
+	
+	'Define the buttons
+	idx = 0
+	Buttons(idx).id = idx
+	Buttons(idx).x = 20
+	Buttons(idx).y = 40
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_BLACK
+	Buttons(idx).coloron = lcd.COLOR_LIME
+	Buttons(idx).coloroff = lcd.COLOR_LIGHTGRAY
+	Buttons(idx).state = False
+
+	idx = 1
+	Buttons(idx).id = idx
+	Buttons(idx).x = lcd.Width - BUTTON_WIDTH - 20
+	Buttons(idx).y = 40
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_BLACK
+	Buttons(idx).coloron = lcd.COLOR_GREEN
+	Buttons(idx).coloroff = lcd.COLOR_RED
+	Buttons(idx).state = False
+
+	'Draw the buttons
+	For Each btn As TButton In Buttons
+		DrawButton(btn)
+	Next
+End Sub
+
+'Draw button using the button properties and the label constants
+Private Sub DrawButton(btn As TButton)
+	Log("[DrawButton] id=", btn.id)
+
+	'Default textsize
+	Dim textsize As Byte = 1
+
+	'Set the background color based on the button state
+	Dim clr As ULong = IIf(btn.state, btn.coloron, btn.coloroff)
+
+	'Set bold font
+	lcd.Font = lcd.FONT_FREEMONOBOLD_12
+
+	'Set the label using fix constants to avoid esp32 panic crash
+	Dim label As String
+	Select btn.id
+		Case 0
+			label = ButtonID0Label
+		Case 1
+			label = ButtonID1Label
+	End Select
+
+	'Draw the button
+	lcd.DrawButton(btn.id, btn.x, btn.y, btn.w, btn.h, clr, btn.textcolor, label, textsize, textsize, False)
+
+	'Set font back to default
+	lcd.Font = lcd.FONT_DEFAULT
+End Sub
+
+'Check if a button is touched.
+'Used in the LCD touched event with x,y coordinates.
+'Returns button id or -1 if no button touched
+Private Sub TouchedButton(touchx As ULong, touchy As ULong) As Int
+	' Log("[TouchedButton] touchx=", touchx, ",touchy=", touchy)
+
+	For Each btn As TButton In Buttons
+		' Log("[TouchedButton] id=", btn.id, ",btn.x=", btn.x, ", btn.y=", btn.y)
+		If (touchx >= btn.x And touchx <= btn.x + btn.w) And (touchy >= btn.y And touchy <= btn.y + btn.h) Then
+			Log("[TouchedButton] id=", btn.id, ",touchx=", touchx, ",touchy=", touchy)
+			Return btn.id
+		End If
+	Next
+
+	' Button id not found
+	Return -1
+End Sub
+#End Region
+
+'Other example drawing a button
+Private Sub TestDrawButton	'ignore
+	'Test set button width based on textlength and textsize
+	Dim label As String = "START GENERATOR"
+	Dim textsize As Int = 2
+	Dim textwidth As UInt = lcd.TextWidth(label) * textsize
+
+	'Set x pos centered
+	Dim x As Int = (lcd.Width / 2) - (textwidth / 2)
+	Dim y As Int = 120
+	lcd.DrawButton(2, x, y, textwidth + 10, 50, lcd.COLOR_NAVY, lcd.COLOR_WHITE, label, textsize, textsize, False)
+End Sub

@@ -1,0 +1,133 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=keyvaluestore
+Library3=runtimepermissions
+Library4=xui
+Library5=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=|relative|..\svcAutoCount
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AutoCount
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Dim kvs As KeyValueStore
+	Dim SafeDir As String
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim count As Int
+	Dim auto As Boolean
+	Private Label1 As Label
+	Private Button3 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+
+	Dim rp As RuntimePermissions
+	SafeDir=rp.GetSafeDirDefaultExternal("")
+
+	If File.Exists(SafeDir,"KVSDir")=False Then
+		kvs.Initialize(SafeDir,"KVSDir")
+		kvs.Put("count",0)
+		kvs.Put("auto",False)
+		kvs.close
+	End If
+	
+	kvs.Initialize(SafeDir,"KVSDir")
+	count=kvs.Get("count")
+	auto=kvs.Get("auto")
+	kvs.Close
+	
+	Label1.Text=count
+	
+	If auto=True Then 
+		Button3.Text="Stop AUTO"
+		Label1.TextColor=Colors.Green
+		StartService(svcAutoCount)
+	Else
+		Button3.Text="Start AUTO"
+		Label1.TextColor=Colors.Black
+	End If
+
+End Sub
+
+Sub Activity_Resume
+
+	kvs.Initialize(SafeDir,"KVSDir")
+	count=kvs.Get("count")
+	kvs.close
+	
+	Label1.Text=count
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+
+	count=count+1
+	Label1.Text=count
+	kvs.Initialize(SafeDir,"KVSDir")
+	kvs.Put("count",count)
+	kvs.Close
+
+End Sub
+
+Sub Button2_Click
+	
+	count=0
+	Label1.Text=count
+	kvs.Initialize(SafeDir,"KVSDir")
+	kvs.Put("count",count)
+	kvs.Close
+	
+End Sub
+
+Private Sub Button3_Click
+
+	If auto=False Then
+		auto=True
+		Button3.Text="Stop AUTO"
+		Label1.TextColor=Colors.Green
+		StartService(svcAutoCount)
+	Else
+		auto=False
+		Button3.Text="Start AUTO"
+		Label1.TextColor=Colors.Black
+		CancelScheduledService(svcAutoCount)
+		StopService(svcAutoCount)
+	End If
+
+	kvs.Initialize(SafeDir,"KVSDir")
+	kvs.Put("auto",auto)
+	kvs.Close
+	
+End Sub

@@ -1,0 +1,68 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32watchdog
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Purpose:	rESP32Watchdog Basic Example for ESP32 with Arduino board library 3.x.
+'Hardware:	ESP32 Dev Module
+'Author:	Robert W.B. Linn
+'Version:	See globals VERSION
+'Wiring:	Built-in LED=GPIO2
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rESP32Watchdog BASIC v20250420"
+    Public Serial1 As Serial
+    Public timer As Timer
+    Public watchdog As ESP32Watchdog
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]")
+	Log(CRLF, VERSION)
+	Log("[AppStart] ESP32 Watchdog Crash Test")
+
+    ' Optional: small delay to read boot logs
+    Delay(1000)
+
+    ' Show reset reason
+	Dim reasoncode As Int = watchdog.ResetReason
+	Log("[AppStart] Reset reason code: ", reasoncode)
+	Log("[AppStart] Reset reason name: ", watchdog.ReasonName(reasoncode))
+	If reasoncode == watchdog.ESP_RST_TASK_WDT Then
+		Log("[AppStart] ESP_RST_TASK_WDT")
+	End If
+    
+    ' Start the watchdog (2 seconds timeout)
+    watchdog.Initialize(2000, "ResetReason")
+    
+    ' Simulate a crash after 5 seconds
+    timer.Initialize("TriggerCrash_Tick", 5000)
+    timer.Enabled = True
+End Sub
+
+' Timer sumulating crash
+Sub TriggerCrash_Tick
+	Log("[TriggerCrash_Tick] Simulating crash: no more feeding watchdog...")
+    timer.Enabled = False
+    
+    ' Infinite loop to simulate freeze (no Feed call!)
+    Do While True
+        ' Busy loop, no Feed()
+    Loop
+End Sub
+
+Sub ResetReason(reasoncode As Int)
+	Log("[B4R][ResetReason] triggered reason=", reasoncode, ",=",watchdog.ReasonName(reasoncode))
+End Sub

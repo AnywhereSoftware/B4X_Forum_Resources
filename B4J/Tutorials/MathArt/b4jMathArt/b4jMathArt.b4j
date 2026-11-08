@@ -1,0 +1,190 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private cv1 As Canvas
+	Dim centerX As Int
+	Dim centerY As Int
+	Type Vector(beginX As Double, beginY As Double, endX As Double, endY As Double, length As Double)
+	
+	Dim vec(4) As Vector                  'number of arms rotating to make the drawing
+	
+	Dim t As Timer
+	Dim rot As Double
+	
+	Dim coord As List                    'List to hold all the vec(3) coordinates i.e, startX, StartY, endX, endY, Length
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(50)                          'allow the layout to load so that we can then get the canvas width and height
+	
+	coord.Initialize
+	centerX = cv1.Width / 2
+	centerY = cv1.Height / 2
+	rot = 0                           'the starting angle of all the arms = 3 o'clock position
+	
+	
+	vec(0).Initialize
+	vec(0).length = 80                'lenght of the first arm
+	
+	vec(0).beginX = centerX
+	vec(0).beginY = centerY
+	
+	vec(0).endX = vec(0).beginX + vec(0).length
+	vec(0).endY = vec(0).beginY
+	
+	vec(1).Initialize
+	vec(1).length = 60                'length of the second arm
+	
+	vec(1).beginX = vec(0).endX
+	vec(1).beginY = vec(0).endY
+	
+	vec(1).endX = vec(1).beginX + vec(1).length
+	vec(1).endY = vec(1).beginY
+	
+	vec(2).Initialize
+	vec(2).length = 40                'length of the 3rd arm
+	
+	vec(2).beginX = vec(1).endX
+	vec(2).beginY = vec(1).endY
+	
+	vec(2).endX = vec(2).beginX + vec(2).length
+	vec(2).endY = vec(2).beginY
+	
+	vec(3).Initialize
+	vec(3).length = 55                'length of the 4th arm
+	
+	vec(3).beginX = vec(2).endX
+	vec(3).beginY = vec(2).endY
+	
+	vec(3).endX = vec(3).beginX + vec(3).length
+	vec(3).endY = vec(3).beginY
+	
+	
+	cv1.DrawLine(vec(0).beginX, vec(0).beginY, vec(0).endX, vec(0).endY, fx.Colors.Red, 1)     'draw arm 1
+	cv1.DrawLine(vec(1).beginX, vec(1).beginY, vec(1).endX, vec(1).endY, fx.Colors.Blue, 1)    'draw arm 2
+	cv1.DrawLine(vec(2).beginX, vec(2).beginY, vec(2).endX, vec(2).endY, fx.Colors.Magenta, 1) 'draw arm 3
+	cv1.DrawLine(vec(3).beginX, vec(3).beginY, vec(3).endX, vec(3).endY, fx.Colors.Green, 1)   'draw arm 4
+
+	Dim myvec As Vector
+	myvec.Initialize
+	myvec.beginX = vec(3).beginX
+	myvec.beginY = vec(3).beginY
+	myvec.endX = vec(3).endX
+	myvec.endY = vec(3).endY
+	myvec.length = vec(3).length
+	coord.Add(myvec)                      'add the 4th vector to the List
+
+	
+	t.Initialize("t", 50)
+	
+	t.Enabled = True
+	
+End Sub
+
+Sub t_tick
+	
+	rot = rot + 0.5                           'rotate arm 1 by 0.5 degrees - clockwise
+	
+	Dim x(4) As Double
+	Dim y(4) As Double
+	
+	
+	x(0) = CosD(rot) * vec(0).length
+	y(0) = SinD(rot) * vec(0).length
+
+	vec(0).endX = vec(0).beginX + x(0)
+	vec(0).endY = vec(0).beginY + y(0)
+	
+	'**********************************************************************
+	
+	x(1) = CosD(rot * 25) * vec(1).length             'rotate arm 2 this much faster than arm 1; + is clockwise, - is counter clockwise
+	y(1) = SinD(rot * 25) * vec(1).length
+	
+	vec(1).beginX = vec(0).endX
+	vec(1).beginY = vec(0).endY
+	
+	vec(1).endX = vec(1).beginX + x(1)
+	vec(1).endY = vec(1).beginY + y(1)
+	
+	'**********************************************************************
+	
+	x(2) = CosD(rot * -17) * vec(2).length             'rotate are 3 this much faster than arm 1; + is clockwise, - is counter clockwise      '
+	y(2) = SinD(rot * -17) * vec(2).length
+	
+	vec(2).beginX = vec(1).endX
+	vec(2).beginY = vec(1).endY
+	
+	vec(2).endX = vec(2).beginX + x(2)
+	vec(2).endY = vec(2).beginY + y(2)
+	
+	'**********************************************************************
+	
+	
+	x(3) = CosD(rot * 25) * vec(3).length             'rotate are 4 this much faster than arm 1; + is clockwise, - is counter clockwise      '
+	y(3) = SinD(rot * 25) * vec(3).length
+	
+	vec(3).beginX = vec(2).endX
+	vec(3).beginY = vec(2).endY
+	
+	vec(3).endX = vec(3).beginX + x(3)
+	vec(3).endY = vec(3).beginY + y(3)
+	
+	'**********************************************************************
+	
+	cv1.ClearRect(0, 0, cv1.Width, cv1.height)           'clear the canvas
+	
+	cv1.DrawLine(vec(0).beginX, vec(0).beginY, vec(0).endX , vec(0).endY , fx.Colors.Red, 1)        'draw new position of arm 1
+	cv1.DrawLine(vec(1).beginX, vec(1).beginY , vec(1).endX , vec(1).endY , fx.Colors.Blue, 1)      'draw new position of arm 2
+	cv1.DrawLine(vec(2).beginX, vec(2).beginY , vec(2).endX , vec(2).endY , fx.Colors.Magenta, 1)   'draw new position of arm 3
+	cv1.DrawLine(vec(3).beginX, vec(3).beginY , vec(3).endX , vec(3).endY , fx.Colors.Green, 1)     'draw new position of arm 4
+	
+	Dim myvec As Vector
+	myvec.Initialize
+	myvec.beginX = vec(3).beginX
+	myvec.beginY = vec(3).beginY
+	myvec.endX = vec(3).endX
+	myvec.endY = vec(3).endY
+	myvec.length = vec(3).length
+	coord.Add(myvec)                          'add new position of arm 4 to the list
+
+	For i = 0 To coord.Size - 2               'run through the list and draw the path by joining the x and y positions of arm 4 entries in the list
+		Dim vec0 As Vector
+		vec0.Initialize
+		vec0 = coord.Get(i)
+		Dim vec1 As Vector
+		vec1.Initialize
+		vec1 = coord.Get(i+1)
+		cv1.DrawLine(vec0.endX, vec0.endY, vec1.endX, vec1.endY, fx.Colors.black, 0.5)   'draw the path
+	Next
+	If rot >= 360 Then                       'the end of the drawing when arm 1 has rotated through 360 degrees
+		t.Enabled = False
+	End If
+	
+End Sub
+
+
+

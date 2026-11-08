@@ -1,0 +1,131 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rdhtesp
+Library3=rrandomaccessfile
+Library4=rblebeacon
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEBeacon
+'Description:	TempHum Example for the B4R Library rBLEServer.
+'				Advertise from a DHT22 Temp+Hum sensor, the temperature & humidity.
+'BLE:			Device name: BLEBeacon, MAC: 30:C9:22:D1:80:2E
+'Source:		TempHum.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rDHTESP 1.01 - DHT22 reader for ESP
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Wrover Kit
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'DHT22 = ESP32 (wirecolor)
+'VCC = 5V (red)
+'Signal = D4 (brown)
+'GND = GND (black)
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEBeacon TempHum Example v20250212"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEBeacon As BLEBeacon
+	Private SerData As B4RSerializator	'ignore
+
+	'DHT22
+	Private DHT As DHTESP
+	Private DHTPinNumber As UInt = 0x04
+	Private Humidity As Int
+	Private Temperature As Int
+	
+	'Timer
+	Private TimerDataAdvertising As Timer
+	Private TimerDataAdvertisingInterval As ULong = 5000	'Milliseconds
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init the ble beacon with name and error event
+	BLEBeacon.Initialize("BLEBeacon", "BLEBeacon_Error")
+
+	'Init DHT22
+	DHT.Setup22(DHTPinNumber)
+
+	'Init Timer Data Advertising
+	TimerDataAdvertising.Initialize("TimerDataAdvertising_Tick", TimerDataAdvertisingInterval)
+	TimerDataAdvertising.Enabled = True
+	TimerDataAdvertising_Tick
+End Sub
+
+#Region Timer
+'Read the DHT22 data and advertise 'as serialized data.
+Sub TimerDataAdvertising_Tick
+	Temperature = DHT.GetTemperature * 100  ' convert float to int 19.30 → 1930
+	Humidity = DHT.GetHumidity * 100		' convert float to int 92.40 → 9240
+
+	'[TimerDataAdvertising_Tick] 
+	Log("[TimerDataAdvertising_Tick] t=", NumberFormat(Temperature,0,0), ", h=", NumberFormat(Humidity,0,0))
+
+	'Advertise ints as 2 bytes each to save data space
+	BLEBeacon_Advertise(bc.IntsToBytes(Array As Int(Temperature, Humidity)))
+
+	'BLE advertise as serialized data; marker start 7E, end 7F
+	'Dim data() As Byte = SerData.ConvertArrayToBytes(Array As Object(Temperature, Humidity))
+	'BLEBeacon_WriteAdvertisement(data)
+End Sub
+#End Region
+
+'Write data advertised
+'data - Byte array containing data fo the connected client
+Private Sub BLEBeacon_Advertise(data() As Byte)
+	If data == Null Then
+		Log("[ERROR][BLEBeacon_Advertise] No data.")
+		Return
+	End If
+	Log("[BLEBeacon_Advertise]data=", bc.HexFromBytes(data), ",size=", data.Length)
+	BLEBeacon.Advertise(data)
+End Sub
+
+'Handle BLE Beacon error.
+'Log the error to the B4R IDE, but could also use an LED.
+Private Sub BLEBeacon_Error(code As Byte)
+	Log("[BLEBeacon_Error]code=",code)
+	Select code
+		Case BLEBeacon.ERROR_ADV_DATA_SIZE_TOO_LARGE
+			Log("[ERROR][Advertise] Data size exceeds maximum ", BLEBeacon.MAX_ADV_DATA_SIZE, " bytes.")
+	End Select
+End Sub
+
+'Helper
+'Get HEX code for a single byte.
+'b - Single byte
+'Returns HEX code as string
+Public Sub HexFromByte(b As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(b))
+End Sub

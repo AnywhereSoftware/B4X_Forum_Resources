@@ -1,0 +1,139 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rfauxmoesp
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private pin As Pin
+	Private fauxmo As fauxmoESP
+	Private pin_YELLOW As Byte = 4
+	Private pin_GREEN As Byte = 5
+	Private pin_BLUE As Byte = 0
+	Private pin_PINK As Byte = 2
+	Private pin_WHITE As Byte = 15
+	Private LED_YELLOW As Pin
+	Private LED_GREEN As Pin
+	Private LED_BLUE As Pin
+	Private LED_PINK As Pin
+	Private LED_WHITE As Pin
+	Private ID_YELLOW As String = "yellow lamp"
+	Private ID_GREEN As String = "green lamp"
+	Private ID_BLUE As String = "blue lamp"
+	Private ID_PINK As String = "pink lamp"
+	Private ID_WHITE As String = "white lamp"
+	Private last As ULong = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("SSID", "PASSWORD") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+
+    '// LEDs
+	LED_YELLOW.initialize(pin_YELLOW, LED_YELLOW.MODE_OUTPUT)
+	LED_GREEN.initialize(pin_GREEN, LED_GREEN.MODE_OUTPUT)
+	LED_BLUE.initialize(pin_BLUE, LED_BLUE.MODE_OUTPUT)
+	LED_PINK.initialize(pin_PINK, LED_PINK.MODE_OUTPUT)
+	LED_WHITE.initialize(pin_WHITE, LED_WHITE.MODE_OUTPUT)
+	LED_YELLOW.digitalWrite( False)
+	LED_GREEN.digitalWrite( False)
+	LED_BLUE.digitalWrite( False)
+	LED_PINK.digitalWrite( False)
+	LED_WHITE.digitalWrite( False)
+
+	fauxmo.Initialize("fauxmo_onSetState", "fauxmo_onSetStateColor")
+    '// By default, fauxmoESP creates it's own webserver on the defined port
+    '// The TCP port must be 80 For gen3 devices (default is 1901)
+    '// This has To be done before the call To enable()
+    fauxmo.createServer(True)  '// Not needed, this is the default value
+    fauxmo.setPort(80)    '// This is required For gen3 devices
+
+    '// You have To call enable(True) once you have a wifi connection
+    '// You can enable Or disable the library at any moment
+    '// Disabling it will prevent the devices from being discovered And switched
+    fauxmo.enable(True)
+
+    '// You can use different ways To invoke alexa To modify the devices state:
+    '// "Alexa, turn yellow lamp on"
+    '// "Alexa, turn on yellow lamp
+    '// "Alexa, set yellow lamp to fifty" (50 means 50% of brightness, note, this example does Not use this functionality)
+
+    '// Add virtual devices
+    fauxmo.addDevice(ID_YELLOW)
+    fauxmo.addDevice(ID_GREEN)
+    fauxmo.addDevice(ID_BLUE)
+    fauxmo.addDevice(ID_PINK)
+	fauxmo.addDevice(ID_WHITE)
+
+	AddLooper("localLoop")
+End Sub
+
+Sub fauxmo_onSetStateColor(device_id As Byte, device_name As String, state As Boolean, value As Byte, rgb()As Byte)
+	Log("[MAIN] Device_ID:", device_id,"  device_name:",device_name,"  state:", state, "  value:",value, " rgb:",rgb(0),"-",rgb(1),"_",rgb(2) )
+End Sub
+
+Sub fauxmo_onSetState(device_id As Byte, device_name As String, state As Boolean, value As Byte)
+        '// Callback when a command from Alexa is received. 
+        '// You can use device_id Or device_name To choose the element To perform an action onto (relay, LED,...)
+        '// state is a boolean (ON/OFF) And value a number from 0 To 255 (If you say "set kitchen light to 50%" you will receive a 128 here).
+        '// Just remember Not To Delay too much here, this is a callback, Exit As soon As possible.
+        '// If you have To Do something more involved here set a flag And process it in your main Loop.
+        
+     Log("[MAIN] Device_ID:", device_id," device_name:",device_name," state:", state, " value:",value )
+
+        '// Checking For device_id is simpler If you are certain about the order they are loaded And it does Not change.
+        '// Otherwise comparing the device_name is safer.
+
+        If device_name = ID_YELLOW Then
+			LED_YELLOW.digitalWrite( state)
+        else if device_name= ID_GREEN Then
+			LED_GREEN.digitalWrite( state)
+        else if device_name=ID_BLUE Then
+			LED_BLUE.digitalWrite( state)
+        else if device_name=ID_PINK Then
+			LED_PINK.digitalWrite( state)
+        else if device_name=ID_WHITE Then
+			LED_WHITE.digitalWrite( state)
+        End If
+End Sub
+
+Sub localLoop
+
+    '// fauxmoESP uses an async TCP server but a sync UDP server
+    '// Therefore, we have To manually poll For UDP packets
+    fauxmo.handle
+
+    '// This is a sample code To output free heap every 5 seconds
+    '// This is a cheap way To detect memory leaks
+
+    If Millis - last > 5000 Then
+        last = Millis
+		Log("Stack: ",StackBufferUsage,"   Memory:", AvailableRAM)
+    End If
+
+    '// If your device state is changed by any other means (MQTT, physical button,...)
+    '// you can instruct the library To report the new state To Alexa on Next request:
+    '// fauxmo.setState(ID_YELLOW, True, 255);
+
+End Sub
+

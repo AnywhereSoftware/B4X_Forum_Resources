@@ -1,0 +1,98 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=MainPage.bjl
+File2=MediaView.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=jcore
+Library3=jfx
+Library4=jmediaview
+Module1=|relative|..\B4XMainPage
+Module2=B4XPage1
+Module3=DarkTitleBar
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=3
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+#End Region
+
+#AdditionalJar: jna-5.0.0
+#AdditionalJar: jna-platform-5.0.0
+
+Sub Process_Globals
+	Dim xu As XUI
+	Dim fx As JFX
+	Public MainForm As Form
+	Public AppName,Videos As String = "B4XPages"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("MainPage")
+	MainForm.Title = AppName
+	
+	Videos = File.DirData(AppName)
+	Videos = Videos.SubString2(0,File.DirData(AppName).IndexOf("\AppData\")+1) & "Videos\Captures\"
+	
+	MainForm.Show
+	DarkTitleBar.SetDarkMode(MainForm, True, xu.Color_Black) '----------------------------------------------------------------------------------------------------------------- >>>>>>> ADD!
+	
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+	
+End Sub
+
+Private Sub Button1_Click
+	If B4XPages.MainPage.pg.IsInitialized Then
+		If B4XPages.MainPage.pg.MediaView1.IsInitialized Then B4XPages.MainPage.pg.MediaView1.Stop
+		B4XPages.GetManager.ClosePage(B4XPages.MainPage.pg)
+	End If
+	
+	Dim ffplay As String = ""
+	Private fc As FileChooser
+
+	fc.Initialize
+	fc.Title = "Open in the internal media player"
+
+	fc.InitialDirectory = File.GetFileParent(Videos)
+	fc.setExtensionFilter("Multimedia Files", Array As String("*.acc","*.mp3","*.pcm","*.avc","*.aif","*.aiff","*.fxm","*.flv","*.mp4","*.m4a","*.m4v","*.wav"))
+	ffplay = fc.ShowOpen(MainForm)
+
+	If ffplay = "" Then
+		Return
+	Else
+		B4XPages.MainPage.pg.pth = File.GetFileParent(ffplay)
+		B4XPages.MainPage.pg.filename = File.GetName(ffplay)
+		B4XPages.ShowPage("PageMediaView")
+		DarkTitleBar.SetDarkMode(B4XPages.GetNativeParent(B4XPages.GetPage("PageMediaView")),True, xu.Color_Black) '---------------------------------------------------------- >>>>>>> ADD!
+	End If
+End Sub
+
+'Template version: B4J-1.0
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region

@@ -1,0 +1,91 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rasynctcp
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private Client As AsyncClient
+	Private client_ID As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart Client")
+	'example of connecting to a local network
+	If Not(wifi.Connect2("xxxxx", "xxxxx")) Then
+		Log("Failed to connect to network")
+	Else
+		Log("Connected to network : ",wifi.LocalIp)
+		Client.initialize
+		Dim newclientID As ULong = Client.newClient           'newclientID is Ulong eqivalent at AsyncClient pointer in library
+		Log("client created : ",newclientID)
+
+		Client.InitOnConnect(newclientID, newclientID, "OnConnect")
+		Client.InitOnDisconnect(newclientID, newclientID, "OnDisconnect")
+'	    Client.InitOnPoll(newclientID, newclientID, "OnPoll")
+'	    Client.InitOnAck(newclientID, newclientID, "OnAck")
+		Client.InitOnError(newclientID, newclientID, "OnError")
+		Client.InitOnData(newclientID, newclientID, "OnData")
+		Client.InitOnTimeOut(newclientID, newclientID, "OnTimeOut")
+		
+    	Client.connect1(newclientID,"192.168.1.25",80)
+	End If	
+End Sub
+
+Sub OnConnect(argID As ULong, clientID As ULong)
+	Log( "Server connection accepted :",argID," /ClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID), "--Port remote: ",Client.getremotePort1(clientID) )
+
+
+	Log(" Org ClientID : ",argID," ClientID : ",clientID, "--IP remote:",Client.getremoteIP1(clientID))
+	Log(" ")
+ 	ReplyToServer(clientID)
+End Sub
+Sub OnDisconnect(argID As ULong, clientID As ULong)
+	Log( "Client disconnected :",argID," /CurrentClientID : ",clientID)
+End Sub
+Sub OnPoll(argID As ULong, clientID As ULong)
+	Log( "OnPoll Client :",argID," /CurrentClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID) )
+End Sub
+Sub OnAck(argID As ULong, clientID As ULong, len As UInt, time As ULong)
+	Log( "OnAck Client :",argID," /CurrentClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID), " -length=",len," -time=",time)
+End Sub
+Sub OnError(argID As ULong, clientID As ULong, error As Byte)
+	Log("connection error from client: ",argID," /CurrentClientID : ",clientID,"--IP remote:",Client.getremoteIP1(clientID), " -error : ", Client.errorToString(clientID,error))
+End Sub
+Sub OnData(argID As ULong, clientID As ULong, Payload() As Byte)
+	Log("New Data from client: ",argID," /CurrentClientID : ",clientID, " -data = ","--IP remote:",Client.getremoteIP1(clientID),Payload)
+	client_ID = clientID
+    CallSubPlus("timerReply",2000,0)
+End Sub
+Sub OnTimeOut(argID As ULong, clientID As ULong, Time As ULong)
+	Log(" ACK Time Out from client: ",argID," /CurrentClientID : ",clientID,"--IP remote=",Client.getremoteIP1(clientID) ," -time = ",Time)
+End Sub
+
+Sub TimerReply(tag As Byte)
+	ReplyToServer(client_ID)
+End Sub
+
+Sub ReplyToServer(clientID As ULong)
+	Log( "Reply-to Server : clientID : ",clientID )
+	  If (Client.space(clientID) > 32) And Client.canSend(clientID) Then
+	    Dim message() As Byte = JoinBytes(Array ("this is message from Client TCP based on Async library. Client IP = ".getbytes   , wifi.localIP.getbytes))
+	    Client.add(clientID,message, message.length)
+	    Client.send(clientID)
+		Log("message Reply sent")
+	End If		
+End Sub

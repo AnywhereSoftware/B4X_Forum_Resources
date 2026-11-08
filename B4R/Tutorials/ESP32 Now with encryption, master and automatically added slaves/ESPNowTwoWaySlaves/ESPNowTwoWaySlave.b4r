@@ -1,0 +1,224 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.7
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 5000
+	#DefineExtra: #include "rCore.h"
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	Public bc As ByteConverter
+	
+	Public receivermac(6) As Byte
+	Public mymac(6) As Byte
+	Public mess(32) As Byte
+	Public messreceived(32) As Byte
+	Public key(16) As Byte
+	
+	Private Timer1 As Timer
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	bc.ArrayCopy2(bc.HexToBytes("2462ABFFCB30"),0,receivermac,0,6) 'Change The MAC address to the master's MAC
+
+	
+	Dim KeyText() As Byte = "1234567890123456"
+	bc.ArrayCopy2(KeyText,0,key,0,KeyText.Length)
+	
+	RunNative("StartESPNow", Null)
+	Log("My Mac is: ",bc.HexFromBytes(mymac))
+	
+	Timer1.Initialize("Timer1_Tick", 3000)
+	Timer1.Enabled = True 
+	
+End Sub
+
+
+
+Private Sub Timer1_Tick
+	Dim MessText() As Byte = JoinStrings(Array As String("ESP32@",bc.HexFromBytes(mymac)))
+	bc.ArrayCopy2(MessText,0,mess,0,MessText.Length)
+	RunNative("SendMessage", Null)
+End Sub
+
+private Sub messagesent(res As Int)
+	If res=0 Then
+		Log("Sent...")
+	Else
+		Log("Not sent...")
+	End If
+End Sub
+
+private Sub delivery(res As Int)
+	If res=0 Then 
+	   Log("Delivered...")
+	Else
+	   Log("Not delivered...")
+	End If	
+End Sub
+
+private Sub newmessage
+	Log("New message arrived...")
+End Sub
+
+
+#if C
+
+
+#include <esp_now.h>
+#include <WiFi.h>
+
+
+
+// REPLACE WITH YOUR RECEIVER MAC Address
+uint8_t broadcastAddress[6];
+
+esp_now_peer_info_t peerInfo;
+
+
+// Structure example to send data
+// Must match the receiver structure
+typedef struct struct_message {
+  char a[32];
+  int b;
+  float c;
+  String d;
+  bool e;
+} struct_message;
+
+// Create a struct_message called myData
+struct_message myData;
+
+
+// callback when data is sent
+  void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  //Serial.print("\r\nLast Packet Send Status:\t");
+  //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+  b4r_main::_delivery(status);
+}
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+ 
+  Serial.println("Data received....");
+  memcpy(&myData, incomingData, sizeof(myData));
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("Char: ");
+  Serial.println(myData.a);
+  Serial.print("Int: ");
+  Serial.println(myData.b);
+  Serial.print("Float: ");
+  Serial.println(myData.c);
+  Serial.print("String: ");
+  Serial.println(myData.d);
+  Serial.print("Bool: ");
+  Serial.println(myData.e);
+  Serial.println();
+  
+   b4r_main::_newmessage();
+}
+
+
+void StartESPNow(B4R::Object* o) {
+   
+  
+   
+   WiFi.mode(WIFI_STA);
+  
+   String Prefix = "ESP32SL:";
+   String Mac = WiFi.macAddress();
+   
+   
+   String SSID = Prefix + Mac;
+   Serial.print("SSID: ");
+   Serial.println(SSID.c_str());
+   
+   String Password = "123456789";
+   WiFi.softAP(SSID.c_str(), Password.c_str());
+  
+   WiFi.begin();
+   Serial.println(WiFi.macAddress());
+   Serial.print("Wifi Channel: ");
+   Serial.println(WiFi.channel());
+  
+  byte mymac[6]; 
+  WiFi.macAddress(mymac); 
+  memcpy(b4r_main::_mymac->data, mymac,6);
+   
+   
+uint8_t key[16];
+   memcpy(key, b4r_main::_key->data, 16);
+   int i;
+   for( i = 0; i < 16; i++ )
+	{
+		printf( "%02x[%c]%c", key[i], (key[i]>31)?key[i]:' ', ((i&0xf)!=0xf)?' ':'\n' );
+	}
+	printf( "\n" );
+
+
+
+// Init ESP-NOW
+   if (esp_now_init() != ESP_OK) {
+      Serial.println("Error initializing ESP-NOW");
+      return;
+      }
+	  
+  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
+     
+  memcpy(broadcastAddress, b4r_main::_receivermac->data, 6);
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+    
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = true;
+  memcpy(peerInfo.lmk, key, 16);
+  
+  esp_now_set_pmk(key);
+ 
+
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+  
+  
+   
+}
+
+
+void SendMessage(B4R::Object* o) {
+   
+  memcpy(myData.a, b4r_main::_mess->data, 32);
+  myData.b = random(1,20);
+  myData.c = 1.2;
+  myData.d = "Hello";
+  myData.e = false;
+  
+  Serial.println(myData.b);
+ 
+ // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
+  
+  b4r_main::_messagesent(result);
+}
+
+
+
+#End If

@@ -1,0 +1,100 @@
+[B4X]Cloning Class Instances, Semi-Automatic Self-Replication, and a Trick
+
+Disclaimer:
+None of the techniques used here are new to our community and you've seen the 'trick' used by me before.
+
+The problem:
+We are using classes more frequently, especially with B4XPages. After labouriously creating an instance
+of a class, we often need another one just like it (except prehaps for some small differences).
+
+We kow we can create a Clone Sub in the Class that will spawn another instance.
+
+'In use:	Dim Instance2 as ClassName = Instance1.Clone
+Public Sub Clone As ClassName
+	Dim newInstance as ClassName
+	newInstance.Initialize
+	newInstance.propertyX = propertyX
+	'etc.
+	return NewInstance
+End Sub
+
+If the class has few properties we can do this manually.
+However, our Classes can become complex with numerous properties and variables.
+These can be arrays, and other structures that can be difficult to copy.
+
+The Trick:
+In the IDE we copy the properties section and paste it into a Smart String
+
+Sub Class_Globals
+	Private fx As JFX
+	Private xui As XUI
+	Private ser As B4XSerializator
+
+	'Properties	and variables for cloning
+	Private mNames() As String
+	Private mAge, mHeight As Int
+	Private mChildren As List
+	Private mBox As B4XView
+	Public OnState As Boolean
+
+	'Smart string version
+	Private propsToClone As String = $"
+	Private mNames() As String
+	Private mAge, mHeight As Int
+	Private mChildren As List
+	Private mBox As B4XView
+	Public OnState As Boolean
+	"$
+End Sub
+
+By parsing and processing propsToClone we can generate copying code for the Clone Sub
+This code is put on the Clipboard, available for pasting in the Clone Sub.
+
+Public Sub Initialize(FirstName As String, LastName As String)
+	mChildren.Initialize
+	mNames = Array As String(FirstName, LastName)
+	OnState = True
+	CloningCodeToClipboard	'propsToClone is parsed and code is generated and placed on the clipboard.
+End Sub
+
+Public Sub Clone As classA
+	Dim newInstance As classA
+	newInstance.Initialize(mNames(0), mNames(1))
+	
+	'After 1st instance is initiated, paste clipboard contents below. 
+	'_____________________________
+	newInstance.mNames = copyStringArray(mNames)
+	newInstance.mAge = mAge
+	newInstance.mHeight = mHeight
+	newInstance.mChildren = copyStructure(mChildren)
+	newInstance.mBox = copyPanel(mBox)
+	newInstance.OnState = OnState
+	'_____________________________
+	Return newInstance
+End Sub
+
+You'll see that the generated code relies on a number of helper functions.  One requires the RandomAccessFile library.
+The Example with CloningCodeToClipboard, and Helper Subs is attached as a .zip file.
+
+The use of the example above...
+Private Sub demonstrate
+	Dim InstanceA As classA
+	InstanceA.Initialize("Alpha", "Beta")
+	InstanceA.Age = 45
+	InstanceA.Height = 181
+	InstanceA.MakeBox
+	
+	Dim InstanceB As classA = InstanceA.Clone		
+	'If the class is a B4XPage then you need to register it with B4XPages.AddPage now.
+	InstanceB.Age = 75
+	InstanceB.AddChild("William")
+	InstanceB.AddChild("Suzanna")
+	
+	Log(InstanceA.Names(0) & TAB & InstanceA.Names(1) & TAB & InstanceA.Age & TAB & InstanceA.Height & TAB & InstanceA.Children.Size)
+	Log(InstanceB.Names(0) & TAB & InstanceB.Names(1) & TAB & InstanceB.Age & TAB & InstanceA.Height & TAB & InstanceB.Children.Size)
+	Log(InstanceB.Box.Width)
+	
+	'Alpha	Beta	45	45	0
+	'Alpha	Beta	75	45	2
+	'300
+End Sub

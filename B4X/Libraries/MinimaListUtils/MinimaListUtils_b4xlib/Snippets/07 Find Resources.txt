@@ -1,0 +1,44 @@
+Private Sub GetFind$Resource$ (keyword As String, value As String)
+	' #Desc = Find $Resource$ by id, cid, code or name
+	' #Elements = ["$resource$", ":keyword", ":value"]
+
+	Dim L1 As List
+	L1.Initialize
+	Select keyword
+		Case "id"
+			If IsNumber(value) Then
+				Dim id As Long = value
+				Dim M1 As Map = Main.$Resource$List.Find(id)
+				If M1.IsInitialized And M1.Size > 0 Then L1.Add(M1)
+				HRM.ResponseCode = 200
+			Else
+				ReturnErrorUnprocessableEntity
+			End If
+		Case "category_id", "cid", "catid"
+			If IsNumber(value) Then
+				Dim cid As Long = value
+				L1 = Main.$Resource$List.FindAll(Array("category_id"), Array As Long(cid))
+				HRM.ResponseCode = 200
+			Else
+				ReturnErrorUnprocessableEntity
+			End If
+		Case "$resource$_code", "code"
+			L1 = Main.$Resource$List.FindAll(Array("$resource$_code"), Array As String(value))
+			HRM.ResponseCode = 200
+		Case "category_name", "category"
+			Dim C1 As Map = Main.CategoryList.FindFirst(Array("category_name"), Array As String(value))
+			If C1.IsInitialized And C1.Size > 0 Then
+				Dim cid As Long = C1.Get("id")
+				L1 = Main.$Resource$List.FindAll(Array("category_id"), Array As Long(cid))
+			End If
+			HRM.ResponseCode = 200
+		Case "$resource$_name", "name"
+			L1 = Main.$Resource$List.FindAnyLike(Array("$resource$_name"), Array As String(value))
+			HRM.ResponseCode = 200
+		Case Else
+			HRM.ResponseCode = 400
+			HRM.ResponseError = "Invalid keyword value"
+	End Select
+	HRM.ResponseData = L1
+	ReturnApiResponse
+End Sub

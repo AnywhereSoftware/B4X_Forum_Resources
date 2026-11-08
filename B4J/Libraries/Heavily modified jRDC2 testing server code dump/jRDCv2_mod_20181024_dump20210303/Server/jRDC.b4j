@@ -1,0 +1,352 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=config.properties
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=jsql
+Library4=jrandomaccessfile
+Library5=javaobject
+Module1=RDCConnector
+Module10=ShutdownHandler
+Module11=TestHandler
+Module12=SyncHandler
+Module13=SyncData
+Module14=RestartHandler
+Module2=RDCHandler
+Module3=ConnectionPoolManager
+Module4=H2ConnectionPool
+Module5=HSQLDBConnectionPool
+Module6=HikariConnectionPool
+Module7=C3P0ConnectionPool
+Module8=TomcatConnectionPool
+Module9=ViburConnectionPool
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=14
+Version=7.32
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+#Region Update Information
+
+'******
+'2018/10/xx Update
+'******
+'More research into driver (datasource) properties. Tomcat supports them too, but must create semi-colon
+' separated string (https://tomcat.apache.org/tomcat-7.0-doc/jdbc-pool.html#Common_Attributes).
+'Created generic sub to extract maps from config.properties file depending on entry's prefix.
+'
+
+'******
+'2018/05/15 Update
+'******
+'Added request handler for shutting down (ShutdownHandler) server, accessible via /sutdown
+'Added request handler for restarting (RestartHandler) server, accessible via /restart
+
+'******
+'2018/05/15 Update
+'******
+'Using DBUtil's modified client to access jRDC. Adapt SQL syntax to various DB's tested.
+
+'******
+'2018/05/15 Update
+'******
+'In RDCConnector:
+'Added LoadDriverProperties to to load driver specific properties.
+'Modifield LoadSQLCommands and added LoadDriverSQLCommands to allow for driver specific SQL
+'Start working on a test client
+
+'******
+'2018/05/13 Update
+'******
+'Pondering using .config files for pool properties (instead of hard coding into class initialization
+'routine). May take this route with driver properties (that sparked it - the configuration file
+'option).
+
+'******
+'2018/05/12 Update
+'******
+'Research setting driver propterties. These properties would be set during a pool's getConnection method.
+'HSQLDB, Hikari and Vibur connection pools support this. H2, C3P0 do not
+
+'******
+'2018/05/11 Update
+'******
+'Flesh out C3P0 connection pool properties
+'Flesh out Tomacat JDBC connection pool properties
+'Add Vibur connection pool (with connection pool properties)
+
+'******
+'2018/05/10 Update
+'******
+'Added ability to set connection pool properties via config file.
+'Started with a limited set of properties for C3P0 connection pool.
+
+'******
+'2018/05/09 Update
+'******
+'Added Tomcat JDBC Connection Pool
+
+'******
+'2018/05/08 Update
+'******
+'Added ConnectionPoolManager
+'Added C3P0ConnectionPool (included in jServer)
+
+'******
+'2018/05/07 Update
+'******
+'Added HSQLDBConnectionPool class module to handle HSQLDB database
+'Added HikariConnectionPool class module to handle Hikari connection pooling
+
+'******
+'2018/05/05 Update
+'******
+'Added H2ConnectionPool class module to handle H2 database
+
+'******
+'2017/10/30 Update
+'******
+'Main module changes:
+'-------------------
+'Added the logging of one of the IP addresses that the server is bound to. The method.
+' to retrieve the IP address is similar to ServerSocket's GetMyIP method. It was adapted
+' from https://issues.apache.org/jira/browse/JCS-40.
+'Added ability to assign server to a specific IP address.
+
+'RDCConnector changes:
+'--------------------
+'Added IPAddress configuration option. Allows to set the jRDC server's IP address. An un-bindable
+' address will crash the server.
+'Added HasIPAddress and GetIPAddress to access IPAddress configuration.
+'Added support for SQLite. If the DriverClass contains SQLite (case insensitive), then jRDC
+' is configured for SQLite usage. SQLite does not use pools. Pool/non-pool handling gleaned
+' from DBM.bas module of ABMaterial.
+'Added CreateFile configuration option. This option is used for the SQLite backend
+' (if used). If set to True or set to 1, then the SQLite database will be created in
+' case it does not exist yet. Any other settings are interpreted as False.
+'Added PoolSize configuration option. This is the size of the pool that should be used
+' for pooled JDBC databases. This option was gleaned from the DBM.bas module of ABMaterial.
+'Modified GetCommand to return empty string ("") when no command found.
+'Modified GetConnection to handle non-pool SQL connections (SQLite).
+
+'RDCHandler changes:
+'Modified Handler to not close the databas connection in case a pool is not used, else SQLite
+' will not function properly
+'Modified ExecuteQuery2 and ExecuteBatch2 to check cmd.Parameters for Null. This removed a
+' Null pointer exception error message in case cmd.Parameters was Null. Also call
+' ExecQuery/ExecNonQuery when no cmd.Parameters are given.
+'Modified ExecuteQuery2 and ExecuteBatch2 to check for valid command. If no valid command found,
+' return 500 error with proper response. This takes care of a syntax exception error for the DB.
+' in case of MySQL it looks something like this:
+'  com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: You have an error in your SQL syntax;
+'   check the manual that corresponds to your MySQL server version for the right syntax to use near 'null' at line 1
+'Modified Try/Catch block in ExecuteBatch2. Moved the code below the End Try that dealt with
+' converting the DBResult object and sending it to the client into end of the Try block. This
+' took care of an java.lang.IllegalStateException: WRITER exception caused by OutputStream when
+' called after the Catch's SendError.
+'Added Try/Catch block to ExecuteQuery2. This should prevent the following on the B4X client
+' side: java.io.EOFException: Unexpected end of ZLIB input stream
+'Removed all jRDC v1 functionality.
+
+'Miscellaneous notes:
+'The config.properties contains sql. directives that pertain to a jRDC version of the DBUtils
+' demo.
+'Per usual, please ensure you have the proper #AdditionalJar set for the database backend
+' of your choice (even for SQLite).
+
+' Resources
+' Pool sizing: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
+#End Region
+
+'change as required
+#AdditionalJar: mysql-connector-java-5.1.40-bin
+'https://bitbucket.org/xerial/sqlite-jdbc/downloads/
+#AdditionalJar: sqlite-jdbc-3.21.0
+'http://www.h2database.com/html/download.html
+#AdditionalJar: h2-1.4.197
+'https://sourceforge.net/projects/hsqldb/files/hsqldb/
+#AdditionalJar: hsqldb
+'https://search.maven.org/#search%7Cga%7C1%7Ccom.zaxxer.hikaricp
+#AdditionalJar: HikariCP-3.1.0
+'https://www.slf4j.org/download.html
+' Needed for HikariCP
+#AdditionalJar: slf4j-api-1.7.25
+#AdditionalJar: slf4j-simple-1.7.25
+'https://db.apache.org/derby/derby_downloads.html
+'Currently 10.14.2.0
+#AdditionalJar: derby
+'The Tomcat JDBC Connection Pool
+'https://mvnrepository.com/artifact/org.apache.tomcat/tomcat-jdbc
+#AdditionalJar: tomcat-jdbc-8.5.31
+'https://mvnrepository.com/artifact/org.apache.tomcat/tomcat-juli
+#AdditionalJar: tomcat-juli-8.5.31
+'Vibur Database Connections Pool
+'https://mvnrepository.com/artifact/org.vibur/vibur-dbcp
+#AdditionalJar: vibur-dbcp-22.2
+'https://mvnrepository.com/artifact/org.vibur/vibur-object-pool
+#AdditionalJar: vibur-object-pool-22.2
+
+Sub Process_Globals
+	Public srvr As Server
+	Public rdcConnector1 As RDCConnector
+	Public syncData1 As SyncData
+	Public const VERSION As Float = 2.21
+	Public IPAddress As String
+	Public runServer As Boolean = True
+	Type DBCommand (Name As String, Parameters() As Object)
+	Type DBResult (Tag As Object, Columns As Map, Rows As List)
+End Sub
+
+Sub AppStart (Args() As String)
+	syncData1.Initialize
+	Do While runServer
+		runServer = False
+		StartServer
+		StartMessageLoop
+		Log("Message loop stopped.")
+		rdcConnector1.ClosePool
+		Log("Shutting down server.")
+		'https://www.b4x.com/android/forum/threads/additional-jserver-web-server-setting-snippets.72625/#post-461796
+		Dim jo As JavaObject = srvr
+		jo.GetFieldJO("server").RunMethod("stop", Null)
+		Log("Server shut down.")
+		If runServer Then Log("Restarting server...")
+	Loop
+		
+End Sub
+
+Sub StartServer
+	Dim aServer As Server
+	Dim aRDCConnector As RDCConnector
+	aServer.Initialize("")
+	aRDCConnector.Initialize(File.DirApp)
+	aServer.Port = aRDCConnector.serverPort
+	aServer.AddHandler("/test", "TestHandler", False)
+	aServer.AddHandler("/rdc", "RDCHandler", False)
+	aServer.AddHandler("/shutdown", "ShutdownHandler",False)
+	aServer.AddHandler("/restart", "RestartHandler", False)
+	
+	' https://www.b4x.com/android/forum/threads/could-jetty-listen-on-an-explicit-ip.67270/#post-426004
+	Dim jo As JavaObject = srvr
+	If aRDCConnector.HasIPAddress Then
+		'This try catch will not keep server from "crashing" with an IP address that cannot be
+		' bound. As of yet...
+		Try
+			jo.SetField("host", aRDCConnector.GetIPAddress)
+		Catch
+			Log($"jRDC ERROR: Failed setting IP address: ${aRDCConnector.GetIPAddress}"$)
+		End Try
+	End If
+	'Get server's IP address
+	IPAddress = jo.GetField("host")
+	If IPAddress.EqualsIgnoreCase("null") Then
+		'We have multiple network interfaces, fetch an IP address
+		Log("Fetching IP address via getLocalHostLANAddress")
+		Dim jMe As JavaObject = Me
+		IPAddress = jMe.RunMethod("getLocalHostLANAddress", Null)
+	End If
+	aServer.Start
+	Log($"jRDC is running (version = $1.2{VERSION})"$)
+	Log("jRDC is running without V1 support")
+	Log($"Bound to: ${IPAddress}:${aServer.Port}"$)
+	srvr = aServer
+	rdcConnector1 = aRDCConnector
+End Sub
+
+Sub Shutdown
+	Log("Stopping message loop")
+	StopMessageLoop
+End Sub
+
+Sub Restart
+	runServer = True
+	Log("Stopping message loop")
+	StopMessageLoop
+End Sub
+
+#if java
+/**
+ * Adapted from: https://issues.apache.org/jira/browse/JCS-40
+ */
+import java.io.IOException;
+//import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+/**
+ * Returns an <code>InetAddress</code> object encapsulating what is most likely the machine's LAN IP address.
+ * <p/>
+ * This method is intended for use as a replacement of JDK method <code>InetAddress.getLocalHost</code>, because
+ * that method is ambiguous on Linux systems. Linux systems enumerate the loopback network interface the same
+ * way as regular LAN network interfaces, but the JDK <code>InetAddress.getLocalHost</code> method does not
+ * specify the algorithm used to select the address returned under such circumstances, and will often return the
+ * loopback address, which is not valid for network communication. Details
+ * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4665037">here</a>.
+ * <p/>
+ * This method will scan all IP addresses on all network interfaces on the host machine to determine the IP address
+ * most likely to be the machine's LAN address. If the machine has multiple IP addresses, this method will prefer
+ * a site-local IP address (e.g. 192.168.x.x or 10.10.x.x, usually IPv4) if the machine has one (and will return the
+ * first site-local address if the machine has more than one), but if the machine does not hold a site-local
+ * address, this method will return simply the first non-loopback address found (IPv4 or IPv6).
+ * <p/>
+ * If this method cannot find a non-loopback address using this selection algorithm, it will fall back to
+ * calling and returning the result of JDK method <code>InetAddress.getLocalHost</code>.
+ * <p/>
+ *
+ * @throws UnknownHostException If the LAN address of the machine cannot be found.
+ */
+public static String getLocalHostLANAddress() throws UnknownHostException {
+    try {
+        InetAddress candidateAddress = null;
+        // Iterate all NICs (network interface cards)...
+        for (Enumeration ifaces = NetworkInterface.getNetworkInterfaces(); ifaces.hasMoreElements();) {
+            NetworkInterface iface = (NetworkInterface) ifaces.nextElement();
+            // Iterate all IP addresses assigned to each card...
+            for (Enumeration inetAddrs = iface.getInetAddresses(); inetAddrs.hasMoreElements();) {
+                InetAddress inetAddr = (InetAddress) inetAddrs.nextElement();
+                if (!inetAddr.isLoopbackAddress()) {
+
+                    if (inetAddr.isSiteLocalAddress()) {
+                        // Found non-loopback site-local address. Return it immediately...
+                        return inetAddr.getHostAddress();
+                    }
+                    else if (candidateAddress == null) {
+                        // Found non-loopback address, but not necessarily site-local.
+                        // Store it as a candidate to be returned if site-local address is not subsequently found...
+                        candidateAddress = inetAddr;
+                        // Note that we don't repeatedly assign non-loopback non-site-local addresses as candidates,
+                        // only the first. For subsequent iterations, candidate will be non-null.
+                    }
+                }
+            }
+        }
+        if (candidateAddress != null) {
+            // We did not find a site-local address, but we found some other non-loopback address.
+            // Server might have a non-site-local address assigned to its NIC (or it might be running
+            // IPv6 which deprecates the "site-local" concept).
+            // Return this non-loopback candidate address...
+            return candidateAddress.getHostAddress();
+        }
+        // At this point, we did not find a non-loopback address.
+        // Fall back to returning whatever InetAddress.getLocalHost() returns...
+        InetAddress jdkSuppliedAddress = InetAddress.getLocalHost();
+        if (jdkSuppliedAddress == null) {
+            throw new UnknownHostException("The JDK InetAddress.getLocalHost() method unexpectedly returned null.");
+        }
+        return jdkSuppliedAddress.getHostAddress();
+    }
+    catch (Exception e) {
+        UnknownHostException unknownHostException = new UnknownHostException("Failed to determine LAN address: " + e);
+        unknownHostException.initCause(e);
+        throw unknownHostException;
+    }
+}
+#End If

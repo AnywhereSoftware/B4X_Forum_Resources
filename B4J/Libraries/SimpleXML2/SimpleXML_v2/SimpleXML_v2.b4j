@@ -1,0 +1,81 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=simplexml2
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim doc As SimpleXMLWrapper
+	doc.Initialize("animals")
+	
+	Dim root As XmlNode
+	root = doc.RootNode
+	
+	Dim dog As XmlNode = root.appendChild("dog")
+	dog.SetAttribute("name","Ginger")
+	
+	Dim dog As XmlNode = root.appendChild("dog")
+	dog.SetAttribute("name","Cheyenne")
+	
+	Dim cat As XmlNode = root.appendChild("cat")
+	cat.SetAttribute("name","Polly")
+	
+	Dim kitten As XmlNode = cat.appendChild("kitten")
+	kitten.SetAttribute("name","Snowball 1")
+	
+	Dim kitten As XmlNode = cat.appendChild("kitten")
+	kitten.SetAttribute("name","Snowball 2")
+	
+	Dim kitten As XmlNode = cat.appendChild("kitten")
+	kitten.SetAttribute("name","Snowball 3")
+	
+	Dim hamster As XmlNode = root.appendChild("hamster")
+	hamster.SetAttribute("name","Gizmo")
+	hamster.Value = "Fur Ball"
+	
+	Log(doc.toString)
+	
+	doc.SaveDocument(File.DirApp&"\animals.xml")
+	
+	Dim doc2 As SimpleXMLWrapper
+	doc2.Initialize2(File.DirApp&"\animals.xml")
+	
+	Dim root As XmlNode
+	root = doc2.RootNode	
+	
+	Dim nodes As List
+	nodes = root.GetNodes("cat/kitten")
+	
+	For Each kitten As XmlNode In nodes
+		Log(kitten.GetAttribute("name"))
+	Next
+	
+	Dim nodes As List
+	nodes = root.GetNodes("hamster")
+	
+	Dim hamster As XmlNode = nodes.Get(0)
+	
+	Log(hamster.Value)
+	Log(hamster.GetAttribute("name"))
+	
+	'Update value
+	hamster.Value = "Furzilla"
+	
+	Log(doc2.toString)
+	
+	doc2.SaveDocument(File.DirApp&"\animals2.xml")	
+End Sub

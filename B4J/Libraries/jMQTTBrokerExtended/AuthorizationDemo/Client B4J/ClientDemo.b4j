@@ -1,0 +1,173 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private etLog As TextArea
+	Private btnConnectGuest As Button
+	Private btnConnectFred As Button
+	Private btnConnectReader As Button
+	Private btnConnectInvalidUser As Button
+	Private btnConnectInvalidPwd As Button
+	Private btnPublish As Button
+	Private btnDisconnect As Button
+
+	Dim Client As MqttClient
+	Dim ClientID As String
+	Dim SBLog As StringBuilder
+
+	Dim Const IPAddress As String = "127.0.0.1"
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+
+	Dim Serializator As B4XSerializator
+	Type typData(Publisher As String, Msg As String)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+	etLog.Editable = False
+	etLog.WrapText = True
+	SBLog.Initialize
+	MainForm.Show
+
+	ClientID = "User" & Rnd(0, 100000)
+End Sub
+
+Sub AddToLog(Text As String)
+	Log(Text)
+	SBLog.Append(Text).Append(CRLF)
+	etLog.Text = SBLog.ToString
+	etLog.SetSelection(etLog.Text.Length, etLog.Text.Length)
+End Sub
+
+Sub NewConnection
+	etLog.Text = ""
+	AddToLog("Connection to " & ServerURI & " with ID " & ClientID)
+	Client.Initialize("Monitor", ServerURI, ClientID)
+End Sub
+
+Sub btnConnectGuest_Click
+	NewConnection
+	AddToLog("Connecting anonymously...")
+	Client.Connect
+End Sub
+
+Sub btnConnectFred_Click
+	NewConnection
+	AddToLog("Connecting as Fred/1234...")
+	Dim MCO As MqttConnectOptions
+	MCO.Initialize("Fred", "1234")
+	Client.Connect2(MCO)
+End Sub
+
+Sub btnConnectReader_Click
+	NewConnection
+	AddToLog("Connecting as Reader/testPWD...")
+	Dim MCO As MqttConnectOptions
+	MCO.Initialize("Reader", "testPWD")
+	Client.Connect2(MCO)
+End Sub
+
+Sub btnConnectInvalidUser_Click
+	NewConnection
+	AddToLog("Connecting as John/12345678...")
+	Dim MCO As MqttConnectOptions
+	MCO.Initialize("John", "12345678")
+	Client.Connect2(MCO)
+End Sub
+
+Sub btnConnectInvalidPwd_Click
+	NewConnection
+	AddToLog("Connecting as Fred/12345678...")
+	Dim MCO As MqttConnectOptions
+	MCO.Initialize("Fred", "12345678")
+	Client.Connect2(MCO)
+End Sub
+
+Sub CreatePayload(Msg As String) As Byte()
+	Dim Data As typData
+	Data.Initialize
+	Data.Publisher = ClientID
+	Data.Msg = Msg
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub btnPublish_Click
+	AddToLog("Trying to publish to the public topic...")
+	Dim Bytes() As Byte = CreatePayload("Hello public world!")
+	Client.Publish2("PublicTopic", Bytes, Client.QOS_2_EXACTLY_ONCE, False)
+	AddToLog("Trying to publish to the private topic...")
+	Dim Bytes() As Byte = CreatePayload("Hello private world!")
+	Client.Publish2("PrivateTopic", Bytes, Client.QOS_2_EXACTLY_ONCE, False)
+End Sub
+
+Sub btnDisconnect_Click
+	Client.Close
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	AddToLog("Connected=" & Success)
+	If Success = True Then
+		btnConnectGuest.Enabled = False
+		btnConnectFred.Enabled = False
+		btnConnectReader.Enabled = False
+		btnConnectInvalidUser.Enabled = False
+		btnConnectInvalidPwd.Enabled = False
+		btnPublish.Enabled = True
+		btnDisconnect.Enabled = True
+
+		AddToLog("Subscribing to a public topic...")
+		Client.Subscribe("PublicTopic", Client.QOS_2_EXACTLY_ONCE)
+		AddToLog("Subscribing to a private topic...")
+		Client.Subscribe("PrivateTopic", Client.QOS_2_EXACTLY_ONCE)
+	End If
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	Dim Data As typData = Serializator.ConvertBytesToObject(Payload)
+	AddToLog("Message from " & Data.Publisher & " / " & Topic & ":" & CRLF & """" & Data.Msg & """")
+End Sub
+
+Sub Monitor_Disconnected
+	AddToLog("Disconnected")
+	btnConnectGuest.Enabled = True
+	btnConnectFred.Enabled = True
+	btnConnectReader.Enabled = True
+	btnConnectInvalidUser.Enabled = True
+	btnConnectInvalidPwd.Enabled = True
+	btnPublish.Enabled = False
+	btnDisconnect.Enabled = False
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_Closed
+	AddToLog("Exiting")
+	Client.Close
+End Sub

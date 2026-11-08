@@ -1,0 +1,162 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtm1637ex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+' segments.b4r
+' Sample project for the B4R Library rTM1637Ex - Seven Segment Display.
+' Set 7-segment defined chars & symbols in the 4 digits.
+' The global constants define various chars&symbols just to show the bit patterns.
+
+' NOTE:
+' This example is just to show how to create own bit patterns.
+' BUT the character and te symbol it patterns are included in the library as from v1.50.
+
+' Additional Libraries: rTM1637Ex
+' 20210523 rwbl
+#End Region
+
+#Region Wiring
+'TM1637 = Arduino
+'CLK = D2 
+'DIO = D3 
+'GND = GND
+'VCC = 3.3v Or 5v
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rTM1637Ex - SetSegmentsEx v20210523"
+	Public serialLine As Serial
+	Private tmDisplay As TM1637Display
+	Private PINCLK As Byte = 2
+	Private PINDIO As Byte = 3
+
+	' TODO: Check if better to integrate the chars & symbols in the library header	
+	' Each char/symbol has 7 bits but defined as 8 bits
+	Private Const S_0() As Byte = Array As Byte(0,1,1,1,1,1,1,0)	'ignore
+	Private Const S_1() As Byte = Array As Byte(0,0,1,1,0,0,0,0)	'ignore
+	Private Const S_2() As Byte = Array As Byte(0,1,1,0,1,1,0,1)	'ignore
+	Private Const S_3() As Byte = Array As Byte(0,1,1,1,1,0,0,1)	'ignore
+	Private Const S_4() As Byte = Array As Byte(0,0,1,1,0,0,1,1)	'ignore
+	Private Const S_5() As Byte = Array As Byte(0,1,0,1,1,0,1,1)	'ignore
+	Private Const S_6() As Byte = Array As Byte(0,1,0,1,1,1,1,1)	'ignore
+	Private Const S_7() As Byte = Array As Byte(0,1,1,1,0,0,0,0)	'ignore
+	Private Const S_8() As Byte = Array As Byte(0,1,1,1,1,1,1,1)	'ignore
+	Private Const S_9() As Byte = Array As Byte(0,1,1,1,1,0,1,1)	'ignore
+	Private Const S_A() As Byte = Array As Byte(0,1,1,1,0,1,1,1)	'ignore 119
+	Private Const S_B() As Byte = Array As Byte(0,0,0,1,1,1,1,1)	'ignore
+	Private Const S_C() As Byte = Array As Byte(0,1,0,0,1,1,1,0) 	'ignore
+	Private Const S_D() As Byte = Array As Byte(0,0,1,1,1,1,0,1)	'ignore
+	Private Const S_E() As Byte = Array As Byte(0,1,0,0,1,1,1,1)	'ignore
+	Private Const S_F() As Byte = Array As Byte(0,1,0,0,0,1,1,1)	'ignore
+	Private Const S_G() As Byte = Array As Byte(0,1,0,1,1,1,1,0)	'ignore
+	Private Const S_H() As Byte = Array As Byte(0,0,1,1,0,1,1,1)	'ignore
+	Private Const S_I() As Byte = Array As Byte(0,0,0,0,0,1,1,0)	'ignore 6
+	Private Const S_J() As Byte = Array As Byte(0,0,1,1,1,1,0,0)	'ignore
+	Private Const S_K() As Byte = Array As Byte(0,1,0,1,0,1,1,1)	'ignore
+	Private Const S_L() As Byte = Array As Byte(0,0,0,0,1,1,1,0)	'ignore 14
+	Private Const S_M() As Byte = Array As Byte(0,1,0,1,0,1,0,0)	'ignore
+	Private Const S_N() As Byte = Array As Byte(0,1,1,1,0,1,1,0)	'ignore 118
+	Private Const S_O() As Byte = Array As Byte(0,1,1,1,1,1,1,0)	'ignore
+	Private Const S_P() As Byte = Array As Byte(0,1,1,0,0,1,1,1)	'ignore
+	Private Const S_Q() As Byte = Array As Byte(0,1,1,0,1,0,1,1)	'ignore
+	Private Const S_R() As Byte = Array As Byte(0,1,1,0,0,1,1,0)	'ignore
+	Private Const S_S() As Byte = Array As Byte(0,1,0,1,1,0,1,1)	'ignore
+	Private Const S_T() As Byte = Array As Byte(0,0,0,0,1,1,1,1)	'ignore
+	Private Const S_U() As Byte = Array As Byte(0,0,1,1,1,1,1,0)	'ignore
+	Private Const S_V() As Byte = Array As Byte(0,0,1,1,1,1,1,0)	'ignore
+	Private Const S_W() As Byte = Array As Byte(0,0,1,0,1,0,1,0)	'ignore
+	Private Const S_X() As Byte = Array As Byte(0,0,1,1,0,1,1,1)	'ignore
+	Private Const S_Y() As Byte = Array As Byte(0,0,1,1,1,0,1,1)	'ignore
+	Private Const S_Z() As Byte = Array As Byte(0,1,1,0,1,1,0,1)	'ignore
+	Private Const S_SPACE() As Byte = Array As Byte(0,0,0,0,0,0,0,0)	'ignore
+	Private Const S_MINUS() As Byte = Array As Byte(0,0,0,0,0,0,0,1)	'ignore
+	Private Const S_DEGREE() As Byte = Array As Byte(0,1,1,0,0,0,1,1)	'ignore
+	Private Const S_EQUAL() As Byte = Array As Byte(0,0,0,0,1,0,0,1)	'ignore
+	Private Const S_TRIPPLE() As Byte = Array As Byte(0,1,0,0,1,0,0,1)	'ignore
+	Private Const S_UNDERSCORE() As Byte = Array As Byte(0,0,0,0,1,0,0,0)	'ignore
+	' NEXT is experimental
+	Private Const S_PCT() As Byte = Array As Byte(0,0,0,1,0,0,1,0)	'ignore percent "%"
+	Private Const S_AT() As Byte = Array As Byte(0,1,1,1,0,1,0,0)	'ignore at "@"
+	Private Const S_PERIOD() As Byte = Array As Byte(0,0,0,0,0,1,0,0)	'ignore period "."
+	Private Const S_COMMA() As Byte = Array As Byte(0,0,0,1,1,0,0,0)	'ignore comma ","
+	Private Const S_SEMICOLON() As Byte = Array As Byte(0,0,1,0,1,0,0,0)	'ignore semicolon ";"
+	Private Const S_COLON() As Byte = Array As Byte(0,1,0,0,1,0,0,0)	'ignore colon ":"
+	Private Const S_PLUS() As Byte = Array As Byte(0,0,1,1,0,0,0,1)	'ignore plus "+"
+	Private Const S_ASTERISK() As Byte = Array As Byte(0,1,0,0,1,0,0,1)	'ignore asterisk "*"
+	Private Const S_HASH() As Byte = Array As Byte(0,0,1,1,0,1,1,0)	'ignore hash "#"
+	Private Const S_EXMARK() As Byte = Array As Byte(0,1,1,0,1,0,1,1)	'ignore exclamation mark "!"
+	Private Const S_QMARK() As Byte = Array As Byte(0,1,1,0,1,0,0,1)	'ignore question mark "?"
+	Private Const S_SQUOTE() As Byte = Array As Byte(0,0,0,0,0,0,1,0)	'ignore single quote "'"
+	Private Const S_DQUOTE() As Byte = Array As Byte(0,0,1,0,0,0,1,0)	'ignore double quote '"'
+	Private Const S_LSBRACKET() As Byte = Array As Byte(0,1,0,0,0,0,1,0)	'ignore left sharp bracket "<"
+	Private Const S_RSBRACKET() As Byte = Array As Byte(0,1,1,0,0,0,0,0)	'ignore right sharp bracket ">"
+	Private Const S_BACKSLASH() As Byte = Array As Byte(0,0,0,1,0,0,1,1)	'ignore backslash "\"
+	Private Const S_LROUNDBRACKET() As Byte = Array As Byte(0,1,0,0,1,1,1,0)	'ignore left round bracket "("
+	Private Const S_RROUNDBRACKET() As Byte = Array As Byte(0,1,1,1,1,0,0,0)	'ignore right round bracket ")"
+	Private Const S_OVERSCORE() As Byte = Array As Byte(0,1,0,0,0,0,0,0)	'ignore overscore "|" (the top-most line)
+	Private Const S_UC() As Byte = Array As Byte(0,1,0,0,1,1,1,0)	'ignore uppercase C "C" (optionally enabled)
+	Private Const S_UH() As Byte = Array As Byte(0,0,1,1,0,1,1,1)	'ignore uppercase H "H"
+	Private Const S_UN() As Byte = Array As Byte(0,1,1,1,0,1,1,0)	'ignore uppercase N "N"
+	Private Const S_UO() As Byte = Array As Byte(0,1,1,1,1,1,1,0)	'ignore uppercase O "O"
+	Private Const S_UR() As Byte = Array As Byte(0,1,1,0,0,1,1,0)	'ignore uppercase R "R"
+	Private Const S_UU() As Byte = Array As Byte(0,0,1,1,1,1,1,0)	'ignore uppercase U "U"
+	Private Const S_UX() As Byte = Array As Byte(0,0,1,1,0,1,1,1)	'ignore uppercase X "X"
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	tmDisplay.Initialize(PINCLK, PINDIO)
+	
+	'Clear the display first
+	tmDisplay.Clear
+	
+	tmDisplay.SetSegments(Array As Byte(GetSegment(S_L),GetSegment(S_I),GetSegment(S_N),GetSegment(S_N)), 0)
+
+	Delay(2000)
+	tmDisplay.SetSegments(Array As Byte(GetSegment(S_MINUS),GetSegment(S_DEGREE),GetSegment(S_TRIPPLE),GetSegment(S_UNDERSCORE)), 0)
+
+	Delay(2000)
+	tmDisplay.SetSegments(Array As Byte(GetSegment(S_HASH),GetSegment(S_SEMICOLON),GetSegment(S_LSBRACKET),GetSegment(S_ASTERISK)), 0)
+End Sub
+
+' Set a segment for a 8-bit from which 7-bits are used.
+' Each char has 7 (0123456) bits according the segment: ABCDEFG
+' Examples: Number 9 = 01111011 = DEC 111, Number A = 01110111 = DEC 119
+' tm - TM1637 display
+' pattern - array as byte with 7 bits defining the segment pattern ABCDEFG
+' position - digit position 0-3 for the segment
+Sub SetSegment(tm As TM1637Display, pattern() As Byte, position As Byte)	'ignore
+	Dim b As Byte = 0
+	Dim i As Int
+	For i = 1 To pattern.Length - 1
+		If pattern(i) = 1 Then b = Bit.Set(b,i-1)
+	Next
+	tm.SetSegments(Array As Byte(0,GetSegment(pattern)), position)
+End Sub
+
+' Get the segment configuration from the 7-bit pattern defined as 8-bit (the first bit 0 is not used)
+' Each char has 7 (0123456) bits according the segment: ABCDEFG
+' Examples: Number 9 = 01111011 = DEC 111, Number A = 01110111 = DEC 119
+Sub GetSegment(pattern() As Byte) As Byte
+	Dim b As Byte = 0
+	Dim i As Int
+	' Dim patternb() As Byte = bc.StringToBytes(pattern)
+	For i = 1 To pattern.Length - 1
+		If pattern(i) = 1 Then b = Bit.Set(b,i-1)
+	Next
+	Return b
+End Sub

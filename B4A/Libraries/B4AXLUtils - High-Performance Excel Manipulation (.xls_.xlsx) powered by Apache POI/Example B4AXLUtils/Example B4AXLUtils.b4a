@@ -1,0 +1,177 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4axlutils
+Library2=core
+Library3=xui
+Library4=permissionsmanager
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~AddPermission("android.permission.MANAGE_EXTERNAL_STORAGE")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=13.5
+@EndOfDesignText@
+#Region  Project Attributes 
+    #ApplicationLabel: ExcelUtils
+    #VersionCode: 1
+    #VersionName: 1.0.0
+    #SupportedOrientations: portrait
+    #CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+    #FullScreen: false
+    #IncludeTitle: false
+#End Region
+
+Sub Process_Globals
+	Private const FILE_NAME As String = "InventoryReport.xlsx"
+End Sub
+
+Sub Globals
+	Private xlm As ExcelManager
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	xlm.Initialize(Me, "ExcelEvents")
+    
+	Activity.LoadLayout("Layout")
+	Dim PM As PermissionsManager
+	PM.CheckAndRequestPermission(PermissionsManager.SPECIAL_MANAGE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		Log("Storage permission granted")
+	Else
+		Log("Storage permission denied")
+	End If
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+' 1. CREATE AN EXCEL WORKBOOK WITH BORDERS, BOLD & CENTERED HEADERS
+Sub CreateExcelFile
+	Log("--- Creating Excel File ---")
+	xlm.CreateWorkbook
+    
+	' Create a section named "Products"
+	Dim sheet As ExcelSheet = xlm.CreateSheet("Products")
+    
+	' Create the Header Row (Row 0)
+	Dim headerRow As ExcelRow = sheet.GetRow(0)
+	headerRow.SetValues(Array("ID", "Product Name", "Stock Quantity", "Unit Price"))
+    
+	' Apply Bold and Centered styling explicitly to each header cell
+	For col = 0 To 3
+		Dim cell As ExcelCell = headerRow.GetCell(col)
+		cell.setBold(True)
+		cell.TextColor = xlm.PASTEL_CORAL
+		cell.setAlignmentCenter
+	Next
+  
+	' Populate sample items
+	Dim row1 As ExcelRow = sheet.GetRow(1)
+	row1.SetValues(Array(101, "Wireless Mouse", 45, 19.99))
+    
+	Dim row2 As ExcelRow = sheet.GetRow(2)
+	row2.SetValues(Array(102, "Mechanical Keyboard", 15, 89.50))
+    
+	Dim row3 As ExcelRow = sheet.GetRow(3)
+	row3.SetValues(Array(103, "Gaming Monitor 27'", 8, 249.99))
+    
+	' Apply borders to all filled rows (0 to 3) and columns (0 to 3)
+	For r = 0 To 3
+		Dim currentRow As ExcelRow = sheet.GetRow(r)
+		For c = 0 To 3
+			currentRow.GetCell(c).setBorders
+			
+		Next
+	Next
+    
+	' Auto-adjust column widths dynamically to fit text
+	sheet.AutoSizeColumns(0, 3)
+    
+	' Save the generated file to internal storage
+	xlm.Save(File.DirRootExternal, FILE_NAME)
+End Sub
+
+' 2. READ AN EXCEL WORKBOOK
+Sub ReadExcelFile
+	Log("--- Reading Excel File ---")
+	Dim reader As ExcelManager
+	reader.Initialize(Me, "ExcelReader")
+	reader.ReadWorkbook(File.DirRootExternal, FILE_NAME)
+    
+	Dim sheet As ExcelSheet = reader.GetSheet("Products")
+	Dim lastRow As Int = sheet.LastRowWithData
+    
+	For i = 1 To lastRow
+		Dim rowObj As ExcelRow = sheet.GetRow(i)
+        
+		Dim idVal As Object = rowObj.GetCell(0).getValue
+		Dim nameVal As Object = rowObj.GetCell(1).getValue
+		Dim stockVal As Object = rowObj.GetCell(2).getValue
+		Dim priceVal As Object = rowObj.GetCell(3).getValue
+        
+		Log($"Row ${i} -> ID: ${idVal} | Name: ${nameVal} | Stock: ${stockVal} | Price: ${priceVal}"$)
+	Next
+    
+	reader.Close
+End Sub
+
+' 3. EDIT AN EXCEL WORKBOOK AND ENSURE NEW ENTRY HAS BORDERS
+Sub EditExcelFile
+	Log("--- Editing Excel File ---")
+	Dim editor As ExcelManager
+	editor.Initialize(Me, "ExcelEditor")
+	editor.ReadWorkbook(File.DirRootExternal, FILE_NAME)
+    
+	Dim sheet As ExcelSheet = editor.GetSheet("Products")
+    
+	' Example A: Update an existing resource value (Change Mechanical Keyboard stock)
+	Dim rowToEdit As ExcelRow = sheet.GetRow(2) ' Row 2 is the Keyboard
+	Dim stockCell As ExcelCell = rowToEdit.GetCell(2)
+	stockCell.setValue(20) ' Updated stock from 15 to 20
+    
+	' Example B: Add a completely new product item row
+	Dim targetIndex As Int = sheet.LastRowWithData + 1
+	Dim newRow As ExcelRow = sheet.GetRow(targetIndex)
+	newRow.SetValues(Array(104, "USB-C Hub Adapter", 120, 34.95))
+    
+	' Apply borders to the newly created editing row
+	For c = 0 To 3
+		newRow.GetCell(c).setBorders
+	Next
+    
+	' Recalculate column widths to fit new entries
+	sheet.AutoSizeColumns(0, 3)
+	sheet.Freeze(0,0)
+	sheet.SetRangeDataFormat(1, sheet.LastRowWithData, 3, 3, "$#,##0.00")
+	' Save changes back to the file
+	editor.Save(File.DirRootExternal, FILE_NAME)
+End Sub
+
+' --- Event Listeners ---
+Sub ExcelEvents_SaveCompleted(Success As Boolean)
+	If Success Then
+		Log("✅ Workbook saved successfully!")
+	Else
+		Log("❌ Failed to save workbook.")
+	End If
+End Sub
+
+Private Sub ExcelEditor_SaveCompleted(Success As Boolean)
+	Log(Success)
+End Sub
+
+Private Sub Button1_Click
+	CreateExcelFile
+	ReadExcelFile
+	EditExcelFile
+	ReadExcelFile ' Read again to verify the modifications
+End Sub

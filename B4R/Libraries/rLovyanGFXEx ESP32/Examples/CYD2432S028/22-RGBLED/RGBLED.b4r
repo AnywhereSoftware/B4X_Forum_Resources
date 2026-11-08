@@ -1,0 +1,107 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example RGBLED control.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx RGBLED v20250511"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	lcd.DisplayRotation = 1
+	
+	'Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_GREEN
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_WHITE, lcd.COLOR_BLACK, lcd.COLOR_RED)
+
+	'Draw text bottom left using drawtext
+	lcd.DrawFooter("B4X is great... enjoy", lcd.FONT_FONT0, lcd.TEXT_ALIGN_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	Log("[Demo] START=SetRGBLEDOff")
+	lcd.SetRGBLEDOff
+	Delay(2000)
+
+	Log("[Demo] setrgbledcolor=255,255,255=white")
+	lcd.SetRGBLEDColor(255, 255, 255)
+	lcd.DrawText(10, 30, "LED color White 255,255,255", lcd.TEXT_ALIGN_MIDDLE_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_DEFAULT)
+	Delay(2000)
+
+	Log("[Demo] setrgbledcolor=255,255,0=yellow")
+	lcd.SetRGBLEDColor(255, 255, 0)
+	lcd.DrawText(10, 30, "LED color Yellow 255,255,0", lcd.TEXT_ALIGN_MIDDLE_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_DEFAULT)
+	Delay(2000)
+
+	Log("[Demo] RGBLEDBlue=255")
+	lcd.RGBLEDBlue = 255
+	lcd.DrawText(10, 60, "LED color Blue 255", lcd.TEXT_ALIGN_MIDDLE_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_DEFAULT)
+	Delay(2000)
+
+	'Brightness 0-100 for color white
+	Dim value As Double	'ignore
+	For i = 0 To 100 Step 10
+		lcd.SetRGBLEDColorBrightness(255, 255, 255, i)
+		Log("[Demo] SetRGBLEDColorBrightness white brightness=",i,"%")
+
+		'Solution to set brightness value direct
+		'value = 0
+		'If i > 0 Then value = 255 * (i/100)
+		'lcd.SetRGBLEDColor(value, value, value)
+		'Log("[Demo] SetRGBLEDColor value=",value)
+
+		Delay(1000)
+	Next
+
+	Log("[Demo] DONE=SetRGBLEDOff")
+	lcd.SetRGBLEDOff
+	lcd.DrawText(10, 90, "LED OFF", lcd.TEXT_ALIGN_MIDDLE_LEFT, 1, lcd.COLOR_BLACK, lcd.COLOR_DEFAULT)
+
+End Sub

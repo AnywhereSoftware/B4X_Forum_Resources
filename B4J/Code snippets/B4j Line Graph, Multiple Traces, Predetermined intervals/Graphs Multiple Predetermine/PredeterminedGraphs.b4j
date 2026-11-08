@@ -1,0 +1,477 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=GraphPage.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Module1=AuxSubs
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=7.8
+@EndOfDesignText@
+'Three Plots - Predetermined Intervals, Auto Ranging for max data value
+'==================================================================================
+
+' This  program has been set up to only show 3 curves but can be easily extended by
+' adding more data lists and providing more space for the Y axis labels
+
+' The BestTraceFit subroutine looks for the max value in each data list and applies a predetermined
+' interval for the graph plot depending on the max value. 
+' Each plot and the X axis uses this routine (clever eh)
+' This is limited to values <=50,000 but can be extented 
+
+' The objective of this is to have X and Y axis that are meaninful with whole number intervals
+' As there are multiple plots on one graph the number of divsions has to be the same
+' NOTE
+	 'The intervals are based on 20 divisions per axis and the intervals are whole numbers
+	 'If you wish to change the number of divsions than you will need to change the interval
+	 ' ie No of Divisons = 15  Interval for a 300 graph max = 20, a 200 max wouldn't work with this interval
+
+' The OperatePage can be sized as required. The actual graphheight is determined by the X and Y offset sizes
+' The topOffset leaves some space at the top of the graph, and the botOffset room for the X axis information
+' The X offset allows drawing of the Y axis. There are three, one to the left and two to the right of the graph
+' so the graph width is the OperatePage width - 3 offsets
+ 
+' If your graph area is going to be small then you may need to reduce the offsets and text sizes. 
+
+' The cursor displays the values for each axis selected.
+
+' While I have saved the min data value the program only plots from 0 to the maximum value
+' This is because I have yet to work out a general algorithm to set sensible divisions for any min to max range
+'(see Aux subs for more info)
+
+' The position of the Y axis is set for the three traces 1,2,and 3 with 1 on the far left, 
+' 2 and 3 to the right of the graph
+
+' Four(4) lists must be provided
+' List 0 is the x axis value
+' Lists 1 to 3 are the trace values of the three variables, one for each of the 0 axis readings
+' There is a crude check on the data, all of the lists must be same size
+
+'For this example the lists are intialised with the test data, but would normally be with the data collection system
+
+' In B4J it is not possible to overwrite a line with a transparent line, thus I have had to clear the plot area and
+' reset each time a graph is drawn. This can be made simpler in B4a by just deleteing the line and axis when the plot
+' is deselected
+
+'Rod McMahon
+'November 2020
+
+
+#Region Project Attributes 
+	#MainFormWidth: 1270
+	#MainFormHeight: 800
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+    ' MaxVal and MinVal is max and min in data, DivInterval is interval size, GraphMaxVal is maximum value of Y axis
+	Type GraphData(Name As String, MaxVal As Double, MinVal As Double, DivInterval As Int, GraphMaxVal As Double)
+	Public GraphTrace(4) As GraphData    	'0 always X axis
+	
+	' Graph Trace Information
+	Dim NoTraces As Int=3
+	Dim TraceSelectArray(NoTraces ) As Boolean    'Holds whether trace is to be displayed, three traces
+	Dim Traces(NoTraces+1) As List		          'four lists 0 for x axis 1,2,3 for data
+	'GraphInformation
+	Private OperateGraph As Canvas
+	Dim GridCount As Int = 20		  'Number of divisions on graph
+	Dim GraphWidth As Int       	
+	Dim GraphHeight As Int
+	Dim sf As Font 
+	Dim bF As Font
+	Dim YTopOffset As Int  = 15dip	 ' Distance from top graph actually starts, allows room for top Y axis labels
+	Dim YBotOffset As Int  = 40dip   ' Distance from Bot to start of graph   Allows room for X labels
+	Dim XOffset As Int     = 60dip	 ' Distance from left plot actually starts, allows room for Y axis labels, 1 to left 2 to right
+
+	'buttons
+	Private tbtnTrace1 As ToggleButton  ' Decides if data is plotted or not
+	Private tbtnTrace2 As ToggleButton
+	Private tbtnTrace3 As ToggleButton
+	
+	'Cursor
+	Private cvcCursor As Canvas                ' sets up cursor
+	Private tbtnCursor As ToggleButton
+	Private CursorControl As Boolean = False
+End Sub
+
+' Just some data for testing.
+' Max of 50,000 for any one data point (see BestFit)
+Sub InitTestData
+	For i = 0 To 3
+		Traces(i).Initialize
+	Next
+	For i = 0 To 100
+		Traces(0).Add(i*50)		    ' X axis				
+		Traces(1).Add(i*17)		    ' Trace 1
+		Traces(2).Add(i*6)			' Trace 2
+	Next
+	For i = 0 To 100				' change to show error checking
+		Traces(3).Add(i*10+35)      ' Trace 3 
+	Next
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("GraphPage")
+	FullScreen(MainForm)
+	MainForm.Show
+	
+	InitTestData
+		
+	If DataErrorCheck = False Then                                       ' check that all of the lists are the same size
+		OperateGraph.DrawRect(0,0,OperateGraph.Width,OperateGraph.Height,fx.Colors.LightGray,True,1)         ' Backgound colour	
+		'Note 0 is X axis  
+		GraphTrace(0).Name = "X Val"                                  ' change as required
+		GraphTrace(1).Name = "Trace 1"
+		GraphTrace(2).Name = "Trace 2"
+		GraphTrace(3).Name = "Trace 3"
+		tbtnTrace1.Text = GraphTrace(1).Name                             'Trace names onto buttons
+		tbtnTrace2.Text = GraphTrace(2).Name
+		tbtnTrace3.Text = GraphTrace(3).Name
+	    'Set up cursor
+		cvcCursor.DrawRect(0,0,cvcCursor.Width,cvcCursor.Height,fx.Colors.Transparent,True,1)
+		tbtnCursor.Selected=False
+		tbtnCursor.Text = "Cursor Off"
+		'Decide which traces are shown on startup
+		tbtnTrace1.Selected=True                           ' Starts First Trace
+		tbtnTrace2.Selected=True                           ' Starts Second Trace
+		tbtnTrace3.Selected=True                           ' Starts Third Trace
+	End If
+End Sub
+
+' sets tp full screen
+Sub FullScreen(form1 As Form)
+	Dim joForm As JavaObject = form1
+	Dim joStage As JavaObject = joForm.GetField("stage")
+	joStage.RunMethod("setMaximized", Array(True))
+End Sub
+
+
+'Sets up the graph area, X and Y axis for each graph selected, plot
+'Called each time a trace is selected. 
+'Have to do it this way as you cannot delete a trace by writing over it in B4j
+ '-----------------------------------------------------------
+Sub CreateOperateGraph
+	'Set up the graph size based on the operate graph size and the offsets
+	OperateGraph.ClearRect(0,0,OperateGraph.Width,OperateGraph.Height)
+	OperateGraph.DrawRect(0,0,OperateGraph.Width,OperateGraph.Height,fx.Colors.LightGray,True,1)         ' Backgound colour
+	
+	'Determine the actual graph dimensions
+	GraphWidth = OperateGraph.Width-NoTraces*XOffset-20dip       'Determines the total graph size, allow 40dip space for each axis
+	GraphHeight = OperateGraph.Height-YTopOffset-YBotOffset
+	sf = fx.DefaultFont(10)
+	bF = fx.DefaultFont(12)
+	
+	'Set up the cursor area to cover only the graph
+	cvcCursor.Left=OperateGraph.Left+XOffset
+	cvcCursor.Top =OperateGraph.Top+YTopOffset
+	cvcCursor.Height = GraphHeight
+	cvcCursor.Width = GraphWidth
+	cvcCursor.ClearRect(0,0,cvcCursor.Width,cvcCursor.Height)
+	DrawGrid(GridCount)
+	
+   'Set up X axis,graph Y axis, and plot for each of the three plots as selected
+	BestTraceFit(0)					'X Axis information
+	SetXAxis(0)						'Set up X axis
+	For i = 1 To NoTraces
+	  If TraceSelectArray(i-1) = True Then
+		BestTraceFit(i)				    'Y axis Information
+		SetYAxis(i)						'Set up Y axis
+		Plot(i)							'Plot each
+	 End If
+	Next	
+End Sub
+ 
+ ' Crude error check.. All lists must be of same size
+ Sub DataErrorCheck As Boolean
+	If Traces(1).size = Traces(0).Size And Traces(2).size = Traces(0).Size And Traces(3).size = Traces(0).Size Then
+		Return False
+	Else
+		fx.Msgbox(MainForm,"Problem with Data Lists, they are not of same size", "DATA PROBLEM")
+		Return True	
+	End If
+
+End Sub
+ 
+
+ ' Draws the X and Y grids based on the GridCount
+Sub DrawGrid(Count As Int)
+	'Draw X Grid
+	Dim XInt As Float = GraphWidth/Count                'Sets spatial division between columns
+	For i = 0 To Count			           			   ' Draws the verticals
+		OperateGraph.DrawLine(i*XInt+XOffset,YTopOffset,i*XInt+XOffset,YTopOffset+GraphHeight,fx.Colors.DarkGray,1)
+	Next
+	'Draw Y Grid
+	Dim YInt As Float = (GraphHeight)/Count 										'draws the horizontals from Top to Bottom
+	For i=0 To Count
+		OperateGraph.DrawLine(XOffset,i*YInt+YTopOffset,GraphWidth+XOffset,i*YInt+YTopOffset,fx.Colors.DarkGray,1)
+	Next
+End Sub
+
+'This is used for all four traces
+' Calculates
+' A) Maximum and min value for any axis
+' B) The interval according to the maximum value
+
+'The intervals have been predetermined up to a max of 50,000
+Sub BestTraceFit(TraceNo As Int)						
+	Traces(TraceNo).Sort(True)						'Sorts X and Y	
+	GraphTrace(TraceNo).MaxVal = Traces(TraceNo).Get(Traces(TraceNo).Size-1)      ' Stores Max Value
+	Dim TopVal As Int = GraphTrace(TraceNo).MaxVal
+	GraphTrace(TraceNo).MinVal = Traces(TraceNo).Get(0)
+
+	Dim DivInt As Int
+	Select True
+		Case TopVal>0 And TopVal<=20
+			DivInt = 1
+
+		Case TopVal>20 And TopVal<=100
+			DivInt = 5
+			
+		Case TopVal>100 And TopVal<=200
+			DivInt = 10
+			
+		Case TopVal>200 And TopVal<=500
+			DivInt = 25
+			
+		Case TopVal>500 And TopVal<=1000
+			DivInt = 50
+
+		Case TopVal>1000 And TopVal<=2000
+			DivInt = 100
+			
+		Case TopVal>2000 And TopVal<=5000
+			DivInt = 250
+
+		Case TopVal>1500 And TopVal<=2000
+			DivInt = 200
+			
+		Case TopVal>2000 And TopVal<=5000
+			DivInt = 250
+			
+		Case TopVal>5000 And TopVal<=10000
+			DivInt = 500
+			
+		Case TopVal>10000 And TopVal<=20000
+			DivInt = 1000
+			
+		Case TopVal>15000 And TopVal<=20000
+			DivInt = 1000
+			
+		Case TopVal>20000 And TopVal<=50000
+			DivInt = 2500
+
+	End Select	
+	GraphTrace(TraceNo).DivInterval=DivInt					' stores the number of intervals per division
+	GraphTrace(TraceNo).GraphMaxVal= GridCount*DivInt
+End Sub
+
+
+'Plots the X axis values
+'Sets the multiplier label for the X values as well
+Sub SetXAxis(TraceNo As Int)
+	Dim XExp As Int = 1
+	Dim NbCols As Int = GridCount    'Number of counts
+	Dim XInt As Float = GraphWidth/(NbCols)               'Sets spatial division between columns
+	Dim ColString As String
+	Dim XAxisName As String
+	If GraphTrace(TraceNo).MaxVal>=10000 Then
+		XExp = 1000
+	End If
+	For i = 0 To NbCols			           			   ' Draws the verticals
+		ColString=(i*GraphTrace(TraceNo).DivInterval)/XExp
+		OperateGraph.DrawText(ColString,i * XInt+XOffset, OperateGraph.Height-YBotOffset+15dip,sf,fx.colors.Black,"CENTER")
+	Next
+	'Draw X Axis Title  Name and multiplier
+	XAxisName = GraphTrace(0).Name & " x" & XExp
+	OperateGraph.DrawText(XAxisName,OperateGraph.Width-250dip, OperateGraph.Height-YBotOffset+30dip,bF,fx.colors.Black,"LEFT")
+End Sub
+
+
+'Draws Label according to traceNo and to Trace Data
+'Trace 1 = LHS and Red
+'Trace 2 = RHS And Blue
+'Trace 3 = RHS And Magenta
+Sub  SetYAxis (TraceNo As Int)
+	Dim YInt As Float = (GraphHeight)/GridCount									'draws the horizontals from Top to Bottom
+	Dim XPosn As Int
+	Dim XExp As Int=1
+	Dim RowString As String
+	Dim YAxisName As String
+	If GraphTrace(TraceNo).MaxVal>=10000 Then
+		XExp = 1000
+	End If
+	'Draws Axis division labels at the known offset positions
+	For Row = 0 To GridCount
+		RowString =(Row*GraphTrace(TraceNo).DivInterval)/XExp
+		Select TraceNo
+			Case 1
+				XPosn = 40dip									'LHS of Graph
+				OperateGraph.DrawText(RowString,15dip,GraphHeight-Row * YInt+YTopOffset,sf,fx.colors.Red,"CENTER")
+			Case 2
+				XPosn = XOffset+GraphWidth+20Dip									'LHS of Graph
+				OperateGraph.DrawText(RowString,XPosn+20dip,GraphHeight-Row * YInt+YTopOffset,sf,fx.colors.Blue,"CENTER")
+			Case 3
+				XPosn = 2* XOffset+GraphWidth+20Dip
+				OperateGraph.DrawText(RowString,XPosn+20dip,GraphHeight-Row * YInt+YTopOffset,sf,fx.colors.Magenta,"CENTER")
+		End Select		
+		
+		'Draws the vertical axis line and ticks at intervals
+		OperateGraph.DrawLine(XPosn,YTopOffset,XPosn,GraphHeight+YTopOffset,fx.Colors.black,1.5)                 '      Vertical Line
+		If TraceNo= 1 Then
+			OperateGraph.DrawLine(XPosn,Row*YInt+YTopOffset,XPosn+10dip,Row*YInt+YTopOffset,fx.Colors.black,2) 			'Horizontal Ticks to Right
+		Else
+			OperateGraph.DrawLine(XPosn-10dip,Row*YInt+YTopOffset,XPosn,Row*YInt+YTopOffset,fx.Colors.black,2) 			'Horizontal Ticks to left
+		End If
+		' Draws the axis name and multiplication factor 
+		'YAxisName = GraphTrace(TraceNo).Name & " x" & XExp
+	Next
+	' Draws the axis multiplication factor only
+	YAxisName= " x" & XExp
+	Select TraceNo
+		Case 1
+			OperateGraph.DrawText(YAxisName,5dip, OperateGraph.Height-YBotOffset+30dip,bF,fx.colors.Red,"LEFT")
+		Case 2
+			OperateGraph.DrawText(YAxisName,OperateGraph.Width-2*XOffset+10dip, OperateGraph.Height-YBotOffset+30dip,bF,fx.colors.Blue,"LEFT")
+		Case 3
+			OperateGraph.DrawText(YAxisName,OperateGraph.Width-5dip, OperateGraph.Height-YBotOffset+30dip,bF,fx.colors.Magenta,"RIGHT")
+	End Select
+
+End Sub
+
+' Draws coloured straight line graphs betweem (Xold,Yold) to (Xnew,Ynew)
+Sub Plot(TraceNo As Int)
+	Dim XOld,XNew,YOld,YNew As Int
+	For i = 0 To Traces(TraceNo).Size-2										
+		XOld = XOffset + GraphWidth*Traces(0).Get(i)/(GridCount*GraphTrace(0).DivInterval)            ' Ratios the X value
+		XNew = XOffset + GraphWidth*Traces(0).Get(i+1)/(GridCount*GraphTrace(0).DivInterval)
+		
+		YOld =(YTopOffset+GraphHeight)-GraphHeight*Traces(TraceNo).Get(i)/(GridCount*GraphTrace(TraceNo).DivInterval)      ' Counts down y = 0 at top
+		YNew =(YTopOffset+GraphHeight)-GraphHeight*Traces(TraceNo).Get(i+1)/(GridCount*GraphTrace(TraceNo).DivInterval)
+		
+		Select TraceNo
+		Case 1
+			OperateGraph.DrawLine(XOld,YOld,XNew,YNew,fx.Colors.Red,1)
+			'OperateGraph.DrawCircle(XNew,YNew,3,fx.Colors.Red,True,0.05)
+		Case 2
+			OperateGraph.DrawLine(XOld,YOld,XNew,YNew,fx.Colors.Blue,1)
+			'OperateGraph.DrawCircle(XNew,YNew,3,fx.Colors.Blue,True,0.05)
+		Case 3
+			OperateGraph.DrawLine(XOld,YOld,XNew,YNew,fx.Colors.Magenta,1)
+			'OperateGraph.DrawCircle(XNew,YNew,3,fx.Colors.Magenta,True,0.05)
+	End Select
+	Next
+End Sub
+
+
+'Toggle buttons select whether graph is plotted or not
+Sub tbtnTrace1_SelectedChange(Selected As Boolean)
+	If Selected = True Then
+		tbtnTrace1.TextColor=fx.Colors.Red
+		TraceSelectArray(0) = True
+		CursorAction(True)
+	Else
+		tbtnTrace1.TextColor=fx.Colors.Black
+		TraceSelectArray(0) = False
+	End If
+	CreateOperateGraph
+End Sub
+
+
+Sub tbtnTrace2_SelectedChange(Selected As Boolean)
+	If Selected = True Then
+		tbtnTrace2.TextColor=fx.Colors.Blue
+		TraceSelectArray(1) = True
+		CursorAction(True)
+	Else
+		tbtnTrace2.TextColor=fx.Colors.Black
+		TraceSelectArray(1) = False
+	End If
+	CreateOperateGraph
+End Sub
+
+Sub tbtnTrace3_SelectedChange(Selected As Boolean)
+	If Selected = True Then
+		tbtnTrace3.TextColor=fx.Colors.Magenta
+		TraceSelectArray(2) = True
+		CursorAction(True)
+	Else
+		tbtnTrace3.TextColor=fx.Colors.Black
+		TraceSelectArray(2) = False
+	End If
+	CreateOperateGraph
+End Sub
+
+
+' Displays the x and Y axis values at the cursor position if the trace is visible
+Sub DisplayCursorValues(NewX As Double, NewY As Double)		
+	Dim Ans As Float = NewX*GraphTrace(0).GraphMaxVal/cvcCursor.Width
+	Dim XVals As String = Round(Ans)
+	cvcCursor.DrawText(XVals,NewX+5dip,cvcCursor.height-5dip,bF,fx.colors.Black,"LEFT")
+	
+	' Display Y axis values
+	For i = 1 To NoTraces			
+		Dim Ans As Float = (cvcCursor.Height-NewY)*GraphTrace(i).GraphMaxVal/cvcCursor.Height
+		Dim YVals As String = Round(Ans)
+		Dim XPosn As Double
+		Dim p As Paint
+		Select i
+			Case 1		
+					XPosn = 5dip
+					p = fx.colors.Red
+			Case 2		
+					XPosn = cvcCursor.Width - 80Dip
+					p = fx.colors.Blue
+			Case 3		
+					XPosn = cvcCursor.Width - 40Dip
+					p = fx.colors.Magenta	
+		End Select
+		If TraceSelectArray(i-1) = True Then
+			cvcCursor.DrawText(YVals,XPosn,NewY-5dip,bF,p,"LEFT")  ' Only prints if trace selected
+		End If
+	Next
+End Sub
+
+Sub cvcCursor_MouseMoved (EventData As MouseEvent)
+	If CursorControl= True Then
+		Dim NewX As Double = EventData.x
+		Dim NewY As Double = EventData.Y
+		cvcCursor.ClearRect(0,0,cvcCursor.Width,cvcCursor.Height)            ' drawing a transparent line doesnot work in B4j
+		cvcCursor.DrawLine(NewX,0,NewX,cvcCursor.Height,fx.Colors.yellow,2)
+		cvcCursor.DrawLine(0,NewY,cvcCursor.Width,NewY,fx.Colors.yellow,2)
+		DisplayCursorValues(NewX,NewY)
+	End If
+End Sub
+
+' Cursor Control accessed from selection buttons
+Sub CursorAction(Selected As Boolean)
+	If Selected = True Then
+		tbtnCursor.TextColor=fx.Colors.Red
+		tbtnCursor.Text = "Cursor On"
+		tbtnCursor.Selected=True
+		CursorControl=True
+	Else
+		tbtnCursor.TextColor=fx.Colors.Black
+		tbtnCursor.Text = "Cursor Off"
+		tbtnCursor.Selected=False
+		cvcCursor.ClearRect(0,0,cvcCursor.Width,cvcCursor.Height)
+		CursorControl=False
+	End If
+End Sub
+
+
+Sub tbtnCursor_SelectedChange(Selected As Boolean)
+	CursorAction(Selected)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

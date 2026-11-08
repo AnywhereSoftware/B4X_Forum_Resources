@@ -1,0 +1,28 @@
+'Create a line chart with 3 lines
+Private Sub CreateLineChart
+	' clear previous data
+	$xChart1$.ClearData
+	
+	' initialize the line data
+	$xChart1$.AddLine("Random", xui.Color_Blue)
+	$xChart1$.AddLine("Cos", xui.Color_Red)
+	$xChart1$.AddLine("Sin", xui.Color_Magenta)
+	
+	' set the max and min scale values
+	$xChart1$.YScaleMaxValue = 10
+	$xChart1$.YScaleMinValue = 0
+	
+	' Add the line points.
+	Dim Val1, Val2, Val3 As Double
+	For i = 0 To 720 Step 15
+		' In the case of 2 lines or more we are adding an array of values.
+		' One for each line.
+		Val1 = Rnd(-100, 101) / 50 + 5
+		Val2 = 3 * CosD(i) + 5
+		Val3 = 4 * SinD(i) + 5
+		$xChart1$.AddLineMultiplePoints(i, Array As Double(Val1, Val2, Val3), i Mod 90 = 0)
+	Next
+
+	' draw the chart
+	$xChart1$.DrawChart
+End Sub

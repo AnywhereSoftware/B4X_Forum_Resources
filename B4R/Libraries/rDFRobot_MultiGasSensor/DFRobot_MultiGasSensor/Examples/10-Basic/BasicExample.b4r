@@ -1,0 +1,91 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rdfrobot_multigassensor
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rDFRobot_MultiGasSensor
+' Brief:		Example reading CO concentration ppm, voltage V and temperature C from sensor DFRobot SEN0466 via I2C.
+' Reference:	http:// wiki.dfrobot.com/SKU_SEN0465toSEN0476_Gravity_Gas_Sensor_Calibrated_I2C_UART
+' Author: 		Robert W.B. Linn
+' Created: 		2025-10-06
+' License:		MIT — see LICENSE file.
+'
+' Hardware
+' MCU:			Arduino UNO
+' Sensor:		DFRobot Gravity CO Gas Sensor SEN0466
+'
+' Wiring:
+' SEN0466	= Arduino UNO / ESP32
+' VCC 		= 3V3 / 3V3
+' GND 		= GND / GND
+' D/T SDA 	= A4 / GPIO21 (Green)
+' C/R SCL 	= A5 / GPIO22 (Blue)
+' I2C 		= 0x74
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+    Public Serial1 As Serial
+	
+	Private Sensor As DFRobot_MultiGasSensor
+	
+	Private TimerSampler As Timer
+	Private TIMERSAMPLER_INTERVAL As ULong = 15000	' Every 15 seconds
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "==========================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the sensor with default I2C address
+	If Not(Sensor.Initialize) Then
+		Log(CRLF, "[Main.AppStart] Sensor initialize Error. Check device connected or I2C address set to 0x74")		
+		Return
+	Else
+		Log(CRLF, "[Main.AppStart] Sensor initialize OK")
+	End If
+
+	' Init the timer
+	TimerSampler.Initialize("TimerSampler_Tick", TIMERSAMPLER_INTERVAL)
+	TimerSampler.Enabled = True
+
+	CallSubPlus("ReadData", 0, 5)
+	
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+Private Sub TimerSampler_Tick
+	ReadData(0)
+End Sub
+
+Private Sub ReadData(Tag As Byte)
+	' Get the type of gas to be obtained - CO
+	Dim gastype As String = Sensor.ReadGasType
+	Dim gastypeid As Byte = Sensor.ReadGasTypeID
+	
+	' Read the gas concentration
+	Dim concentration As Float = Sensor.ReadConcentrationPPM
+	
+	' Read the sensor voltage
+	Dim voltage As Float = Sensor.ReadVoltage
+	
+	' Read the on-board temperature
+	Dim temperature As Float = Sensor.ReadTemperatureC
+	
+	' Log to the IDE
+	Log("[ReadData] ReadGasType=", gastype, " (", gastypeid, "), ReadConcentrationPPM=", concentration, ", ReadVoltage=", voltage, ", ReadTemperatureC=", temperature)
+	' [ReadData] ReadGasType=CO (4), ReadConcentrationPPM=0, ReadVoltage=0.5566, ReadTemperatureC=21.3411
+End Sub

@@ -1,0 +1,117 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.CALL_PHONE)~\n~AddPermission(android.permission.READ_CONTACTS)~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private rp As RuntimePermissions
+	Private WhatsApID As Long = 0
+End Sub
+
+Sub Globals
+	Private cmdCall As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	rp.CheckAndRequest(rp.PERMISSION_CALL_PHONE) ' Dangerous permission, check manifest
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result Then
+		rp.CheckAndRequest(rp.PERMISSION_READ_CONTACTS) ' Dangerous permission, check manifest
+		Wait For Activity_PermissionResult (Permission As String, Result1 As Boolean)
+		If Result1 Then
+			Dim jo As JavaObject
+			jo.InitializeContext
+			jo.RunMethod("GetId", Null)
+		Else
+			Log("No permission -> PERMISSION_READ_CONTACTS")
+			ToastMessageShow ("No permission -> PERMISSION_READ_CONTACTS", True)
+		End If
+	Else
+		Log("No permission -> PERMISSION_CALL_PHONE")
+		ToastMessageShow ("No permission -> PERMISSION_CALL_PHONE", True)
+	End If
+
+End Sub
+
+Sub Activity_Resume
+
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub cmdCall_Click
+	
+	If WhatsApID >0 Then
+		Dim Intent1 As Intent
+		Intent1.Initialize(Intent1.ACTION_VIEW, "content://com.android.contacts/data/" + WhatsApID)
+		Intent1.SetType("vnd.android.cursor.item/vnd.com.whatsapp.voip.call")
+		Intent1.SetPackage("com.whatsapp")
+		StartActivity(Intent1)
+	Else
+		ToastMessageShow("WhatsApID not found", True)
+	End If
+	
+	
+	
+End Sub
+
+Sub ContactsId_Found (Id As Long, DisplayName As String, MimeType As String)
+	If MimeType ="vnd.android.cursor.item/vnd.com.whatsapp.voip.call" Then ' Mime Type that allowe WhatsApp phone call
+		'You can call these contacts
+		Log(Id & " - " & DisplayName & " - " & MimeType)
+	If DisplayName = "SomeNameFromYourContactsThanYouWantToCall" Then ' change SomeNameFromYourContactsThanYouWantToCall with a propper name from contacts
+			WhatsApID = Id
+		End If
+	Else
+		'You cannot call these Contacts (WhatsApp call MimeType not found)
+		LogColor(Id & " - " & DisplayName & " - " & MimeType, Colors.Magenta)
+	End If
+
+End Sub
+
+#If Java
+import android.content.Context;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.provider.ContactsContract;
+import android.util.Log;
+
+public static void GetId() {
+	Context context = BA.applicationContext;
+	ContentResolver resolver = context.getContentResolver();  
+	Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, null, null, null, ContactsContract.Contacts.DISPLAY_NAME);
+	while (cursor.moveToNext()) {
+	      long _id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID));
+	      String displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+	      String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));	    
+		  processBA.raiseEventFromDifferentThread(null, null, 0, "contactsid_found", false, new Object[] {_id, displayName, mimeType});
+	}
+}
+#End If

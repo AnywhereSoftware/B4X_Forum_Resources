@@ -1,0 +1,102 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp3228cyd
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP3228CYD
+'Description:	B4R Library rESP3228CYD example showing some fonts.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rESP3228CYD Fonts v20250318"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'CYD
+	Private lcd As ESP3228CYD
+
+	'Helper
+	Dim x,y As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	
+	Log("[Demo] display w=", lcd.Width,",h=",lcd.Height, ",default font h=", lcd.FontHeight(1),",w=",lcd.FontWidth(1))
+
+	'Set screen rotation to power top left.
+	lcd.DisplayRotation = 1
+	Log("[Demo] displayrotation=", lcd.DisplayRotation)
+	
+	'Set screen background color
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	' Draw version text at top middle center
+	'lcd.Font = lcd.FONT_FREESANSBOLD_9
+	lcd.Font = lcd.FONT_FREEMONOBOLD_9
+	lcd.DrawText(lcd.Width / 2, 10, VERSION, lcd.TEXT_ALIGN_MIDDLE_CENTER, 1, lcd.COLOR_BLACK, lcd.BackgroundColor)
+	lcd.DrawLine(0, 20, lcd.Width, 20, lcd.COLOR_RED)
+
+	'Set starting coordinates
+	x = lcd.Width / 2
+	y = 30
+
+	'Show some fonts
+	ShowFont(lcd.FONT_DEFAULT, "F0, size 2", 2, lcd.color_blue)
+	ShowFont(lcd.FONT_FREEMONO_12, "FM12, size 1", 1, lcd.color_magenta)
+	ShowFont(lcd.FONT_FREEMONOBOLD_12, "FMB12, size 1", 1, lcd.color_red)
+	ShowFont(lcd.FONT_FREESANS_12, "FSS12, size 1", 1, lcd.color_black)
+	ShowFont(lcd.FONT_FREESANSBOLD_12, "FSSB12, size 1", 1, lcd.color_green)
+	ShowFont(lcd.FONT_TOMTHUMB_1, "TT1, size 2", 2, lcd.COLOR_NAVY)
+	ShowFont(lcd.FONT_FREESERIF_12, "FS12, size 1", 1, lcd.COLOR_ORANGE)
+	ShowFont(lcd.FONT_FREESERIFBOLD_12, "FSB12, size 1", 1, lcd.COLOR_BROWN)
+
+	'Set default font
+	lcd.Font = lcd.FONT_DEFAULT
+End Sub
+
+Private Sub ShowFont(fonttype As Byte, fontinfo As String, fontsize As Double, color As ULong)
+	lcd.Font = fonttype
+	Log("[ShowFont]",fontinfo)
+	lcd.DrawText(x, y, fontinfo, lcd.TEXT_ALIGN_MIDDLE_CENTER, fontsize, color, lcd.BackgroundColor)
+	y = y + 28
+End Sub

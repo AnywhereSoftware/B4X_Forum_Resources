@@ -1,0 +1,28 @@
+#Class Brick Extends GameEntity Final
+
+#Property Points As Int = 10
+#Property Broken As Boolean = False
+
+#Constructor(aX As Float, aY As Float, aWidth As Float, aHeight As Float, aColor As Int, aPoints As Int)
+    ' Brick is an entity with a score value and a broken state.
+    Super.Initialize(aX, aY, aWidth, aHeight, aColor)
+    Points = aPoints
+    Broken = False
+#End Constructor
+
+Public Sub Hit As Int
+    ' Breaks the brick once and returns the gained score.
+    If getBroken Then Return 0
+    Broken = True
+    Visible = False
+    Return getPoints
+End Sub
+
+Override Sub Render(aCvs As B4XCanvas)
+    ' Draws a brick with a thin white border.
+    If getBroken Then Return
+    aCvs.DrawRect(EntityRect, getColor, True, 0)
+    aCvs.DrawRect(EntityRect, 0xFFFFFFFF, False, 1dip)
+End Sub
+
+#End Class

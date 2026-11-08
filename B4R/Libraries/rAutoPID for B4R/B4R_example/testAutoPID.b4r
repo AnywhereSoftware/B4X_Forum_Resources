@@ -1,0 +1,52 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rautopid
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private t As Timer
+	Private AutoPID As AutoPID	
+	Public input(1) As Double 
+	Public setpoint(1) As Double
+	Public output(1) As Double 
+	Private outputMin, outputMax, Kp, Ki, Kd As Double
+	Private temp As ULong = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+    outputMin=0 : outputMax=20000
+	Kp=0: Ki=5: Kd=50
+	input(0)=20.1  :setpoint(0)=12.2  :output(0)=0.25
+	AutoPID.Initialize(input,setpoint,output,outputMin,outputMax,Kp,Ki,Kd) 
+	AutoPID.setTimeStep(200)
+
+	AutoPID.setBangBang(02,100.12)
+	
+	
+	AddLooper("looper")
+End Sub
+
+Sub looper	
+	AutoPID.run
+	If Millis > temp+1000 Then 
+      Log("input: ",input(0)," setpoint: ",setpoint(0)," output: ",output(0))
+	  setpoint(0) = setpoint(0) + input(0)
+	  temp = Millis
+	End If  
+End Sub
+

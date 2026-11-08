@@ -1,0 +1,228 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266filesystem
+Library3=rrandomaccessfile
+Library4=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+	'/*
+	'This sketch is the same As the Font_Demo_3 example, except the fonts in this
+	'example are in a FLASH (program memory) Array. This means that processors
+	'such As the STM32 series that are Not supported by a SPIFFS library can use
+	'smooth (anti-aliased) fonts.
+	'*/
+
+	'/*
+	'There are four different methods of plotting anti-aliased fonts To the screen.
+
+	'This sketch uses method 3, the font characters are first plotted in a Sprite, Then the
+	'Sprite is pushed To the screen. This method is very flexible And the Sprite can be
+	'created, deleted, resized As needed. To render anti-aliased fonts well the Sprite
+	'needs To be 16-Bit.  The fonts will render in 1 Bit per pixel sprites but there
+	'will Then be no anti-aliasing. Using 1 Bit per pixel Sprites is however useful
+	'To use the extended Unicode range in fonts on mono displays like ePaper.
+
+	'A single Sprite can be re-used For plotting different values And graphics To
+	'	different positions on the screen. This makes this method a very powerful display tool,
+	'	For example Round buttons can be created, making use of transparent colour plotting.
+	'	*/
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private SPR As TFT_eSprite
+'	Private CENTRE As UInt =240
+	Private wait As UInt = 0
+	Private runtime As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	TFT.begin(0xFF)
+	SPR.Initialize(TFTid)
+
+	TFT.begin(0xFF)
+
+	TFT.setRotation(0)
+
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+		
+TFT.fillScreen(TFT.TFT_BLACK)
+
+TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False) ' // Set the font colour And the background colour
+'// so the anti-aliasing works
+
+TFT.setCursor(0, 0)  ' // Set cursor at top left of screen
+
+
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+'// Small font
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Log("Loading font")
+
+TFT.loadFontH(0)   ' // Must load the font first
+
+TFT.println("Small 15pt font") ' // println moves cursor down For a new line
+
+TFT.println("")  ' // New line
+
+TFT.print("ABC")  ' // print leaves cursor at end of line
+
+TFT.setTextColor1(TFT.TFT_CYAN, TFT.TFT_BLACK,False)
+TFT.println("1234") ' // Added To line after ABC
+
+TFT.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_BLACK,False)
+'// print stream formatting can be used,see:
+'// https://www.arduino.cc/en/Serial/Print
+Dim ivalue As UInt = 1234
+TFT.println(ivalue)   ' // print As an ASCII-encoded decimal
+TFT.println(ivalue)  ' // print As an ASCII-encoded decimal
+TFT.println(bc.StringFromBytes(UinttoHexa(ivalue)))   '  // print As an ASCII-encoded hexadecimal
+'//TFT.println(ivalue, OCT);  // print As an ASCII-encoded octal
+TFT.println(bc.StringFromBytes(UIntToBinary(ivalue)))   ' // print As an ASCII-encoded binary
+
+TFT.println("")  ' // New line
+TFT.setTextColor1(TFT.TFT_MAGENTA,TFT. TFT_BLACK,False)
+Dim fvalue As Double = 1.23456
+TFT.println(NumberFormat(fvalue, 4,4))  ' // no decimal places
+TFT.println(NumberFormat(fvalue, 4,1))  ' // 1 decimal place
+TFT.println(NumberFormat(fvalue, 4,2))  ' // 2 decimal places
+TFT.println(NumberFormat(fvalue, 4,5))  ' // 5 decimal places
+
+Delay(5000)
+
+'// Get ready For the Next demo While we have this font loaded
+TFT.fillScreen(TFT.TFT_BLACK)
+TFT.setCursor(0, 0) ' // Set cursor at top left of screen
+TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False)
+TFT.println("Wrong and right ways to")
+TFT.println("print changing values...")
+
+TFT.unloadFont()   ' // Remove the font To recover memory used
+
+
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+'// Large font
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+TFT.loadFontH(1)  ' // Load another different font
+
+'//TFT.fillScreen(TFT_BLACK);
+  
+'// Draw changing numbers - does Not work unless a filled rectangle is drawn over the old text
+For  i = 0 To 99
+   TFT.setCursor(50, 50)
+   TFT.setTextColor1(TFT.TFT_GREEN, TFT.TFT_BLACK,False)  ' // TFT_BLACK is used For anti-aliasing only
+   '// By default background fill is off
+   TFT.print("      ")  ' // Overprinting old number with spaces DOES Not WORK!
+   TFT.setCursor(50, 50)  
+   TFT.print(NumberFormat(i / 10.0, 5,5))
+
+   '// Adding a parameter "true" To the setTextColor() function fills character background
+   '// This extra parameter is only For smooth fonts!
+   TFT.setTextColor1(TFT.TFT_GREEN, TFT.TFT_BLACK, True)
+   TFT.setCursor(50, 90)
+   TFT.print(NumberFormat(i / 10.0, 4,1))
+    
+   Delay (200)
+Next
+
+Delay(5000)
+
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+'// Large font text wrapping
+'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+TFT.fillScreen(TFT.TFT_BLACK)
+  
+TFT.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_BLACK,False)  ' // Change the font colour And the background colour
+
+TFT.setCursor(0, 0)  ' // Set cursor at top left of screen
+
+TFT.println("Large font!")
+
+TFT.setTextWrap(True, False)  ' // Wrap on width
+TFT.setTextColor1(TFT.TFT_CYAN, TFT.TFT_BLACK,False)
+TFT.println("Long lines wrap to the next line")
+
+TFT.setTextWrap(False, False)  ' // Wrap on width And height switched off
+TFT.setTextColor1(TFT.TFT_MAGENTA, TFT.TFT_BLACK,False)
+TFT.println("Unless text wrap is switched off")
+
+TFT.unloadFont()  ' // Remove the font To recover memory used
+
+Delay(8000)
+
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt) As Byte()
+	Dim Result(16) As Byte
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+    Next
+	Return Result
+End Sub
+
+#if C
+//************************
+//VLW fonts management:
+//************************
+//  definition of fonts in h files and loaded by loadfont(VLWfont)
+//  8 VLW fonts can be added by <#define VLW0 font0> to  <#define VLW7 font7>:
+//  fonts must be in directory with rTFT_eSPI or TFT_eSPI
+#include "NotoSansBold15.h"
+#include "NotoSansBold36.h"
+  #undef VLW0
+  #define VLW0 NotoSansBold15			// => loadFont(00)
+  #undef VLW1
+  #define VLW1 NotoSansBold36			// => loadFont(01)
+//***********************
+
+#End If

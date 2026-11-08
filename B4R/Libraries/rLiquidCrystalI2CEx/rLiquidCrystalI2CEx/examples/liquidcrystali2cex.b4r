@@ -1,0 +1,65 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rliquidcrystali2cex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+#Region Project Notes
+'B4R Library Example rLiquidCrystalI2CEx for DFRobot I2C LCD displays
+'Tested with Arduino UNO, MEGA and I2C LCD Display 20x4
+'Based on Anywhere Software B4R forum entry (https://www.b4x.com/android/forum/threads/liquidcrystal_i2c.66425/)
+'Additional Libraries: rLiquidCrystalI2CEx
+'Hint: Create custom chars with B4J Application lcd-custom-char-maker (https://github.com/rwbl/lcd-custom-char-maker)
+'20210206 rwbl
+#End Region
+
+#Region Wiring
+'Arduino = LCD I2C
+'GND = GND (Black)
+'5v = VCC (Red)
+'SDA = SDA (Blue)
+'SCL = SCL (Green)
+#End Region
+
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public serialLine As Serial
+    Private lcd As LiquidCrystalI2CEX
+	' Special characters with location index 0,1...
+	Private CharArrowUp As Byte = 0
+	Private CharArrowDown As Byte = 1
+	Private CharBell As Byte = 2
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+   	Log("AppStart")
+	
+	'Init the LCD: Address (1602 = 0x3F,2004 = 0x27), Columns, Rows
+	lcd.Initialize(0x27, 20, 4)
+	'lcd.Initialize(0x3F, 16, 2)
+
+	'Turn the backlight on (default is turned off), set cursor 0,0, write some text
+   	lcd.Backlight = True
+	lcd.SetCursor(0,0)
+	lcd.Write("Hello World")
+	lcd.WriteAt(0,3,"B4X is great")
+	
+	'Define Special Chars
+	lcd.CreateChar(CharArrowUp, Array As Byte (0x00,0x04,0x0E,0x1F,0x04,0x04,0x04,0x00))
+	lcd.CreateChar(CharArrowDown, Array As Byte (0x00,0x04,0x04,0x04,0x1F,0x0E,0x04,0x00))
+	lcd.CreateChar(CharBell, Array As Byte (0x04,0x0E,0x0E,0x0E,0x1F,0x00,0x04,0x00))
+	'Write Special Chars at row 1
+	lcd.WriteCharAt(0,1,CharArrowUp)
+	lcd.WriteCharAt(5,1,CharArrowDown)
+	lcd.WriteCharAt(10,1,CharBell)
+End Sub
+

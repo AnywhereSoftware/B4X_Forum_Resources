@@ -1,0 +1,29 @@
+' Base Router (if either Web or Api is used)
+Public Sub Route
+	Method = Request.Method.ToUpperCase
+	Elements = WebApiUtils.GetUriElements(Request.RequestURI)
+	ApiVersionIndex = Main.Element.ApiVersionIndex
+	ControllerIndex = Main.Element.ApiControllerIndex
+	Version = Elements(ApiVersionIndex)
+	ElementLastIndex = Elements.Length - 1
+	If ElementLastIndex > ControllerIndex Then
+		FirstIndex = ControllerIndex + 1
+		FirstElement = Elements(FirstIndex)
+	End If
+	'If ElementLastIndex > ControllerIndex + 1 Then
+	'	SecondIndex = ControllerIndex + 2
+	'	SecondElement = Elements(SecondIndex)
+	'End If	
+	
+	Select Method
+		Case "GET"
+			' Snippet: Code_WebApiUtils_03 GET Route
+			'RouteGet
+		Case "POST"
+			' Snippet: Code_WebApiUtils_04 POST Route
+			'RoutePost
+		Case Else
+			Log("Unsupported method: " & Method)
+			ReturnMethodNotAllow
+	End Select
+End Sub

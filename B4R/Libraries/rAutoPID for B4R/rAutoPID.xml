@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RAutoPID</name>
+        <shortname>AutoPID</shortname>
+<comment>
+A simple PID library featuring time scaling, bang-bang control, and PWM relay control.
+</comment>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+<comment>
+ Constructor - takes pointer inputs for control variales, so they are updated automatically
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>input</name>
+                <type>Double[]</type>
+            </parameter>
+            <parameter>
+                <name>setpoint</name>
+                <type>Double[]</type>
+            </parameter>
+            <parameter>
+                <name>output</name>
+                <type>Double[]</type>
+            </parameter>
+            <parameter>
+                <name>outputMin</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>outputMax</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kp</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Ki</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kd</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setGains">setGains</name>
+<comment>
+ This function allows for manual tuning of the PID controller gains. By adjusting the proportional,
+ integral, and derivative gains, the behavior of the PID controller can be modified to better
+ suit the specific control requirements.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Kp</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Ki</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kd</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setBangBang">setBangBang</name>
+<comment>
+ This function sets the thresholds for bang-bang control, which is a simple on/off control mechanism.
+ When the input is below `(setpoint - bangOn)`, the PID will set `output` to `outputMax`. When the input
+ is above `(setpoint + bangOff)`, the PID will set `output` to `outputMin`.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>bangOn</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>bangOff</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setBangBang1">setBangBang1</name>
+<comment>
+ This function sets the threshold for bang-bang control with a single range value. When the input
+ is below `(setpoint - bangRange)`, the PID will set `output` to `outputMax`. When the input is above
+ (setpoint + bangRange)`, the PID will set `output` to `outputMin`.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>bangRange</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setOutputRange">setOutputRange</name>
+<comment>
+ This function allows for manual adjustment of the output range. The `outputMin` and `outputMax` values
+ define the allowable range for the output variable.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>outputMin</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>outputMax</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setTimeStep">setTimeStep</name>
+<comment>
+ This function sets the time interval (in milliseconds) at which the PID calculations are allowed to run.
+ By default, this interval is set to 1000 milliseconds.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>timeStep</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="atSetPoint">atSetPoint</name>
+<comment>
+ This function checks whether the input value is within a specified threshold of the setpoint.
+ It returns `true` if the input is within ±(threshold) of the setpoint.
+</comment>
+                 <returntype>Bool</returntype>
+            <parameter>
+                <name>threshold</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="run">run</name>
+<comment>
+ This function should be called repeatedly from the main loop. It will only perform PID calculations
+ when the specified time interval has passed. The function reads the input and setpoint values, updates
+ the output, and performs necessary calculations.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="stop">stop</name>
+<comment>
+ This function stops the PID calculations and resets the internal values used in the calculations,
+ such as the integral and derivative terms. The PID controller can be resumed by calling the `run()` function.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="reset">reset</name>
+<comment>
+ This function resets the internal values used in PID calculations, such as the integral and derivative terms.
+ It only clears the current calculations and does not stop the PID controller from running.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="isStopped">isStopped</name>
+<comment>
+ This function checks whether the PID calculations have been stopped.
+ @return true if the PID calculations have been stopped, otherwise false.
+</comment>
+                 <returntype>Bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="getIntegral">getIntegral</name>
+<comment>
+ This function returns the current value of the error integral. It is useful for storing the state
+ of the PID controller after a power cycle.
+ @return The current value of the error integral.
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="setIntegral">setIntegral</name>
+<comment>
+ This function allows for overriding the current value of the error integral. It is useful for resuming
+ the state of the PID controller after a power cycle. This function should be called after `run()` is called
+ for the first time, otherwise the value will be reset.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>integral</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+    </class>
+    <class>
+        <name>B4R::B4RAutoPIDRelay</name>
+        <shortname>AutoPIDRelay</shortname>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+<comment>
+ This constructor initializes a new AutoPIDRelay object with the provided parameters. The PID controller will
+ use the pointers to the input, setpoint, and relayState variables to update the PID calculations dynamically.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>input</name>
+                <type>Double[]</type>
+            </parameter>
+            <parameter>
+                <name>setpoint</name>
+                <type>Double[]</type>
+            </parameter>
+            <parameter>
+                <name>relayState</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>pulseWidth</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kp</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Ki</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kd</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="run">run</name>
+<comment>
+ This function should be called repeatedly from the main loop. It will only perform PID calculations
+ when the specified time interval has passed. The function reads the input and setpoint values, updates
+ the output, and performs necessary calculations.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="getPulseValue">getPulseValue</name>
+<comment>
+ This function allows for overriding the current value of the error integral. It is useful for resuming
+ the state of the PID controller after a power cycle. This function should be called after `run()` is called
+ for the first time, otherwise the value will be reset.
+ @param[in] integral The value of the error integral to be used.
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="setGains">setGains</name>
+<comment>
+ This function allows for manual tuning of the PID controller gains. By adjusting the proportional,
+ integral, and derivative gains, the behavior of the PID controller can be modified to better
+ suit the specific control requirements.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Kp</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Ki</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>Kd</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setBangBang">setBangBang</name>
+<comment>
+ This function sets the thresholds for bang-bang control, which is a simple on/off control mechanism.
+ When the input is below `(setpoint - bangOn)`, the PID will set `output` to `outputMax`. When the input
+ is above `(setpoint + bangOff)`, the PID will set `output` to `outputMin`.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>bangOn</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>bangOff</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setBangBang1">setBangBang1</name>
+<comment>
+ This function sets the threshold for bang-bang control with a single range value. When the input
+ is below `(setpoint - bangRange)`, the PID will set `output` to `outputMax`. When the input is above
+ (setpoint + bangRange)`, the PID will set `output` to `outputMin`.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>bangRange</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setOutputRange">setOutputRange</name>
+<comment>
+ Allows manual readjustment of output range
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>outputMin</name>
+                <type>Double</type>
+            </parameter>
+            <parameter>
+                <name>outputMax</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setTimeStep">setTimeStep</name>
+<comment>
+ This function sets the time interval (in milliseconds) at which the PID calculations are allowed to run.
+ By default, this interval is set to 1000 milliseconds.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>timeStep</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="atSetPoint">atSetPoint</name>
+<comment>
+ This function checks whether the input value is within a specified threshold of the setpoint.
+ It returns `true` if the input is within ±(threshold) of the setpoint.
+</comment>
+                 <returntype>Bool</returntype>
+            <parameter>
+                <name>threshold</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="stop">stop</name>
+<comment>
+ This function stops the PID calculations and resets the internal values used in the calculations,
+ such as the integral and derivative terms. The PID controller can be resumed by calling the `run()` function.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="reset">reset</name>
+<comment>
+ This function resets the internal values used in PID calculations, such as the integral and derivative terms.
+ It only clears the current calculations and does not stop the PID controller from running.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="isStopped">isStopped</name>
+<comment>
+ This function checks whether the PID calculations have been stopped.
+ @return true if the PID calculations have been stopped, otherwise false.
+</comment>
+                 <returntype>Bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="getIntegral">getIntegral</name>
+<comment>
+ This function returns the current value of the error integral. It is useful for storing the state
+ of the PID controller after a power cycle.
+ @return The current value of the error integral.
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="setIntegral">setIntegral</name>
+<comment>
+ This function allows for overriding the current value of the error integral. It is useful for resuming
+ the state of the PID controller after a power cycle. This function should be called after `run()` is called
+ for the first time, otherwise the value will be reset.
+ @param[in] integral The value of the error integral to be used.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>integral</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1</version>
+</root>

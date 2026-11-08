@@ -1,0 +1,108 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitmcp23017_i2c
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rAdafruitMCP23017
+' Brief:	Example blinking all expander pins.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-09-09
+' License:	MIT - see LICENSE file.
+' Wiring:
+' MCP23017 = Arduino UNO
+' VCC = 5V (red)
+' GND = GND (black)
+' SDA = A4 (blue)
+' SCL = A5 (yellow)
+'
+' MCP23017 = ESP-32
+' VCC = 3V3 (red)
+' GND = GND (black)
+' SDA = GPIO21 [D21] (blue)
+' SCL = GPIO22 [D22] (yellow)
+'
+' MCP23017 = LED
+' PB7 = + (yellow) with 330Ohm resistor
+' GND = GND (black)
+'
+' MCP23017 I2C = 0x27 
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+    Public Serial1 As Serial
+    Public mcp As AdafruitMCP23017_I2C
+	Private MCP_ADDRESS_I2C As Byte = 0x27
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the expander with address 0x27
+	If Not(mcp.Initialize2(MCP_ADDRESS_I2C)) Then
+		Log("[Main.AppStart][ERROR] Initialize expander.")
+		Return
+	Else
+		Log("[Main.AppStart] Initialize expander: OK, address=0x", mcp.ByteToHex(MCP_ADDRESS_I2C))
+	End If
+		
+	' Set all pins to mode output
+	Dim i As Byte
+	For i = 0 To mcp.pins - 1
+		mcp.SetPinMode(i, mcp.MODE_OUTPUT)
+	Next
+
+	' Set the LED ready and initiate blinking
+	CallSubPlus("LEDReady", 0, 5)
+	
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+Private Sub LEDReady(Tag As Byte)
+	' Turn Pin PB7 on / off
+	mcp.digitalWrite(mcp.PIN_PB7, mcp.STATE_HIGH)
+
+	' Let connected LEDs blink after 2 seconds
+	CallSubPlus("TestBlink", 2000, 5)
+End Sub
+
+' Let all LEDs blink
+Private Sub TestBlink(Tag As Byte)	'ignore
+	Dim i As Byte
+	Log("[TestBlink] Start")
+
+	' Turn all LEDs off
+	For i = 0 To mcp.PINS - 1
+		mcp.digitalWrite(i, mcp.STATE_LOW)
+	Next
+
+	' Blink loop
+	For j = 0 To 2
+		For i = 0 To mcp.PINS - 1
+			mcp.digitalWrite(i, mcp.STATE_HIGH)
+		Next
+		Delay(500)
+
+		For i = 0 To mcp.PINS - 1
+			mcp.digitalWrite(i, mcp.STATE_LOW)
+		Next
+		Delay(500)		
+	Next
+
+	Log("[TestBlink] Done")
+End Sub

@@ -1,0 +1,1618 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RCONTROLLINO</name>
+        <shortname>CONTROLLINO</shortname>
+        <comment>A library for the Controllino Mega RTC
+ Changelog
+ 20240321: NEW
+20240328: Added more RTC functions, RTC Alarm Functions, RS485 functions, and defined Controllino Pin names
+java -jar B4Rh2xml.jar rControllino.h rControllino.xml</comment>
+        <method>
+            <name DesignerName="Init">Init</name>
+            <comment>Initialize the RTC</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetTimeDate">SetTimeDate</name>
+            <comment>Set the RTC Date and Time</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>aDay</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aWeekDay</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aMonth</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aYear</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aHour</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aMinute</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>aSecond</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetDay">GetDay</name>
+            <comment>Get the Day
+Returns day 01 - 31, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetWeekDay">GetWeekDay</name>
+            <comment>Get the Weekday
+Returns weekday 00 - 06, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetMonth">GetMonth</name>
+            <comment>Get the Month
+Returns month 01 - 12, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetYear">GetYear</name>
+            <comment>Get the Year
+Returns year 00 - 99, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetHour">GetHour</name>
+            <comment>Get the Hour
+Returns hours 01 - 12, or 00 - 23 (depending of 12H/24H mode), or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetMinute">GetMinute</name>
+            <comment>Get the Minutes
+Returns minutes 00 - 59, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetSecond">GetSecond</name>
+            <comment>Get the Seconds
+Returns seconds 00 - 59, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetTimeDateStrings">SetTimeDateStrings</name>
+            <comment>Set the Date and Time by defining the time and date by strings, e.g. "Nov 15 2018", "11:41:02"</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>aDate</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>aTime</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RTC_SPI_SLAVE_PIN_INIT">RTC_SPI_SLAVE_PIN_INIT</name>
+            <comment>Initialization of the SPI slave select pin for the RTC chip (RV-2123)
+For experienced users only.
+Returns 0 when succeeded, or -2 if there is not selected proper CONTROLLINO board</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="RTC_SPI_SLAVE_PIN_CONTROL">RTC_SPI_SLAVE_PIN_CONTROL</name>
+            <comment>Control of SPI slave select pin for the RTC chip (RV-2123)
+mode 0 for RTC chip SPI bus disable, 1 for RTC SPI bus enable
+Returns 0 when succeeded, -1 for unsupported mode, or -2 if there is not selected proper CONTROLLINO board</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RS485Init">RS485Init</name>
+            <comment>Initialization of the RS485 bus
+Serial3 still needs to be initialized separately. This only inits RE and DE pins.
+Always returns 0</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="RS485Init_with_BaudRate">RS485Init_with_BaudRate</name>
+            <comment>Initialization of the RS485 bus with baudrate
+Always returns 0</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>aBaudrate</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RS485TxEnable">RS485TxEnable</name>
+            <comment>Enable RS485 bus trasmission</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="RS485RxEnable">RS485RxEnable</name>
+            <comment>Enable RS485 bus reception</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="SwitchRS485RE">SwitchRS485RE</name>
+            <comment>Control of RS485 bus RE signal
+mode 0 for RS485 Receive Enable Active, 1 for Receive Enable Inactive
+Returns 0 when succeeded, -1 for unsupported mode</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SwitchRS485DE">SwitchRS485DE</name>
+            <comment>Control of RS485 bus DE signal
+mode 0 for RS485 Data transmission Enable Inactive, 1 for Data transmission Enable Active
+Returns 0 when succeeded, -1 for unsupported mode</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PrintTimeAndDate">PrintTimeAndDate</name>
+            <comment>Reads time and date from RTC chip and prints it on serial line
+This function expects that the serial line was initialized before calling it.
+Format is DD/MM/YY   HH:MM:SS
+Returns seconds 0, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="ClearRTCAlarm">ClearRTCAlarm</name>
+            <comment>Clears alarm interrupt on the RTC chip (RV-2123)
+Returns 0 when succeeded, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetRTCAlarm">SetRTCAlarm</name>
+            <comment>Configures an alarm on the RTC chip (RV-2123)
+aHour: 01 - 12, or 00 - 23 (depending of 12H/24H mode)
+aMinute:  minutes 00 - 59
+Returns 0 when succeeded, or -1 if the RTC library was not initialized before</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>hour</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>minute</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRA">initDDRA</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRB">initDDRB</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRC">initDDRC</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRD">initDDRD</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRE">initDDRE</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRF">initDDRF</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRG">initDDRG</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRH">initDDRH</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRJ">initDDRJ</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRK">initDDRK</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="initDDRL">initDDRL</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortA">ClearPortA</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortA">SetPortA</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortB">ClearPortB</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortB">SetPortB</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortC">ClearPortC</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortC">SetPortC</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortD">ClearPortD</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortD">SetPortD</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortE">ClearPortE</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortE">SetPortE</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortF">ClearPortF</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortF">SetPortF</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortG">ClearPortG</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortG">SetPortG</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortH">ClearPortH</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortH">SetPortH</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortJ">ClearPortJ</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortJ">SetPortJ</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortK">ClearPortK</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortK">SetPortK</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ClearPortL">ClearPortL</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPortL">SetPortL</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>o</name>
+                <type>B4R::Object*</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="CONTROLLINO_ETHERNET_CHIP_SELECT">CONTROLLINO_ETHERNET_CHIP_SELECT</name>
+            <comment>Pin = 70</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_ETHERNET_INTERRUPT">CONTROLLINO_ETHERNET_INTERRUPT</name>
+            <comment>Pin = 71</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RTC_CHIP_SELECT">CONTROLLINO_RTC_CHIP_SELECT</name>
+            <comment>Pin = 71</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RTC_INTERRUPT">CONTROLLINO_RTC_INTERRUPT</name>
+            <comment>Pin = 73</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_OVERLOAD">CONTROLLINO_OVERLOAD</name>
+            <comment>Pin = 74</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RS485_DE">CONTROLLINO_RS485_DE</name>
+            <comment>Pin = 75</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RS485_nRE">CONTROLLINO_RS485_nRE</name>
+            <comment>Pin = 76</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_00">CONTROLLINO_PIN_HEADER_PWM_00</name>
+            <comment>Pin = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_00">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_00</name>
+            <comment>Pin = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_00">CONTROLLINO_SCREW_TERMINAL_PWM_00</name>
+            <comment>Pin = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_00">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_00</name>
+            <comment>Pin = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_01">CONTROLLINO_PIN_HEADER_PWM_01</name>
+            <comment>Pin = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_01">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_01</name>
+            <comment>Pin = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_01">CONTROLLINO_SCREW_TERMINAL_PWM_01</name>
+            <comment>Pin = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_01">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_01</name>
+            <comment>Pin = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_02">CONTROLLINO_PIN_HEADER_PWM_02</name>
+            <comment>Pin = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_02">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_02</name>
+            <comment>Pin = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_02">CONTROLLINO_SCREW_TERMINAL_PWM_02</name>
+            <comment>Pin = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_02">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_02</name>
+            <comment>Pin = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_03">CONTROLLINO_PIN_HEADER_PWM_03</name>
+            <comment>Pin = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_03">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_03</name>
+            <comment>Pin = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_03">CONTROLLINO_SCREW_TERMINAL_PWM_03</name>
+            <comment>Pin = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_03">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_03</name>
+            <comment>Pin = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_04">CONTROLLINO_PIN_HEADER_PWM_04</name>
+            <comment>Pin = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_04">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_04</name>
+            <comment>Pin = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_04">CONTROLLINO_SCREW_TERMINAL_PWM_04</name>
+            <comment>Pin = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_04">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_04</name>
+            <comment>Pin = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_05">CONTROLLINO_PIN_HEADER_PWM_05</name>
+            <comment>Pin = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_05">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_05</name>
+            <comment>Pin = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_05">CONTROLLINO_SCREW_TERMINAL_PWM_05</name>
+            <comment>Pin = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_05">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_05</name>
+            <comment>Pin = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_06">CONTROLLINO_PIN_HEADER_PWM_06</name>
+            <comment>Pin = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_06">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_06</name>
+            <comment>Pin = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_06">CONTROLLINO_SCREW_TERMINAL_PWM_06</name>
+            <comment>Pin = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_06">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_06</name>
+            <comment>Pin = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_07">CONTROLLINO_PIN_HEADER_PWM_07</name>
+            <comment>Pin = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_07">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_07</name>
+            <comment>Pin = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_07">CONTROLLINO_SCREW_TERMINAL_PWM_07</name>
+            <comment>Pin = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_07">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_07</name>
+            <comment>Pin = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_08">CONTROLLINO_PIN_HEADER_PWM_08</name>
+            <comment>Pin = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_08">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_08</name>
+            <comment>Pin = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_08">CONTROLLINO_SCREW_TERMINAL_PWM_08</name>
+            <comment>Pin = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_08">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_08</name>
+            <comment>Pin = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_09">CONTROLLINO_PIN_HEADER_PWM_09</name>
+            <comment>Pin = 11</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_09">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_09</name>
+            <comment>Pin = 11</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_09">CONTROLLINO_SCREW_TERMINAL_PWM_09</name>
+            <comment>Pin = 11</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_09">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_09</name>
+            <comment>Pin = 11</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_10">CONTROLLINO_PIN_HEADER_PWM_10</name>
+            <comment>Pin = 12</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_10">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_10</name>
+            <comment>Pin = 12</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_10">CONTROLLINO_SCREW_TERMINAL_PWM_10</name>
+            <comment>Pin = 12</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_10">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_10</name>
+            <comment>Pin = 12</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_11">CONTROLLINO_PIN_HEADER_PWM_11</name>
+            <comment>Pin = 13</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_11">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_11</name>
+            <comment>Pin = 13</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_PWM_11">CONTROLLINO_SCREW_TERMINAL_PWM_11</name>
+            <comment>Pin = 13</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_11">CONTROLLINO_SCREW_TERMINAL_DIGITAL_OUT_11</name>
+            <comment>Pin = 13</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RS485_TX">CONTROLLINO_RS485_TX</name>
+            <comment>Pin = 14</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RS485_RX">CONTROLLINO_RS485_RX</name>
+            <comment>Pin = 15</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_UART_TX">CONTROLLINO_UART_TX</name>
+            <comment>Pin = 16</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_UART_RX">CONTROLLINO_UART_RX</name>
+            <comment>Pin = 17</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_16">CONTROLLINO_PIN_HEADER_DIGITAL_IN_16</name>
+            <comment>Pin = 18</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_INT_00">CONTROLLINO_PIN_HEADER_INT_00</name>
+            <comment>Pin = 18</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_16">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_16</name>
+            <comment>Pin = 18</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_INT_00">CONTROLLINO_SCREW_TERMINAL_INT_00</name>
+            <comment>Pin = 18</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_17">CONTROLLINO_PIN_HEADER_DIGITAL_IN_17</name>
+            <comment>Pin = 19</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_INT_01">CONTROLLINO_PIN_HEADER_INT_01</name>
+            <comment>Pin = 19</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_17">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_17</name>
+            <comment>Pin = 19</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_INT_01">CONTROLLINO_SCREW_TERMINAL_INT_01</name>
+            <comment>Pin = 19</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_SDA">CONTROLLINO_PIN_HEADER_SDA</name>
+            <comment>Pin = 20</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_25">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_25</name>
+            <comment>Pin = 20</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_SCL">CONTROLLINO_PIN_HEADER_SCL</name>
+            <comment>Pin = 21</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_24">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_24</name>
+            <comment>Pin = 21</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_00">CONTROLLINO_RELAY_00</name>
+            <comment>Pin = 22</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_01">CONTROLLINO_RELAY_01</name>
+            <comment>Pin = 23</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_02">CONTROLLINO_RELAY_02</name>
+            <comment>Pin = 24</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_03">CONTROLLINO_RELAY_03</name>
+            <comment>Pin = 25</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_04">CONTROLLINO_RELAY_04</name>
+            <comment>Pin = 26</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_05">CONTROLLINO_RELAY_05</name>
+            <comment>Pin = 27</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_06">CONTROLLINO_RELAY_06</name>
+            <comment>Pin = 28</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_07">CONTROLLINO_RELAY_07</name>
+            <comment>Pin = 29</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_08">CONTROLLINO_RELAY_08</name>
+            <comment>Pin = 30</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_RELAY_09">CONTROLLINO_RELAY_09</name>
+            <comment>Pin = 31</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_12">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_12</name>
+            <comment>Pin = 42</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_13">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_13</name>
+            <comment>Pin = 43</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_12">CONTROLLINO_PIN_HEADER_PWM_12</name>
+            <comment>Pin = 44</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_14">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_14</name>
+            <comment>Pin = 44</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_PWM_13">CONTROLLINO_PIN_HEADER_PWM_13</name>
+            <comment>Pin = 45</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_15">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_15</name>
+            <comment>Pin = 45</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_MISO">CONTROLLINO_PIN_HEADER_MISO</name>
+            <comment>Pin = 50</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_29">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_29</name>
+            <comment>Pin = 50</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_MOSI">CONTROLLINO_PIN_HEADER_MOSI</name>
+            <comment>Pin = 51</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_28">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_28</name>
+            <comment>Pin = 51</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_SCK">CONTROLLINO_PIN_HEADER_SCK</name>
+            <comment>Pin = 52</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_27">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_27</name>
+            <comment>Pin = 52</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_SS">CONTROLLINO_PIN_HEADER_SS</name>
+            <comment>Pin = 53</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_OUT_26">CONTROLLINO_PIN_HEADER_DIGITAL_OUT_26</name>
+            <comment>Pin = 53</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_00">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_00">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_00">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_00">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_00">CONTROLLINO_PIN_HEADER_DIGITAL_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_00">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_00</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_01">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_01">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_01">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_01">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_01">CONTROLLINO_PIN_HEADER_DIGITAL_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_01">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_01</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_02">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_02">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_02">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_02">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_02">CONTROLLINO_PIN_HEADER_DIGITAL_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_02">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_02</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_03">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_03">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_03">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_03">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_03">CONTROLLINO_PIN_HEADER_DIGITAL_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_03">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_03</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_04">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_04">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_04">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_04">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_04">CONTROLLINO_PIN_HEADER_DIGITAL_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_04">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_04</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_05">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_05">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_05">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_05">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_05">CONTROLLINO_PIN_HEADER_DIGITAL_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_05">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_05</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_06">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_06">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_06">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_06">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_06">CONTROLLINO_PIN_HEADER_DIGITAL_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_06">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_06</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_07">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_07">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_07">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_07">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_07">CONTROLLINO_PIN_HEADER_DIGITAL_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_07">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_07</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_08">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_08">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_08">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_08">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_08">CONTROLLINO_PIN_HEADER_DIGITAL_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_08">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_08</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_09">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_09">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_09">CONTROLLINO_SCREW_TERMINAL_DIGITAL_ADC_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_09">CONTROLLINO_SCREW_TERMINAL_ANALOG_ADC_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_09">CONTROLLINO_PIN_HEADER_DIGITAL_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_09">CONTROLLINO_SCREW_TERMINAL_DIGITAL_IN_09</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_10">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_10</name>
+            <comment>Pin = 64</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_10">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_10</name>
+            <comment>Pin = 64</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_10">CONTROLLINO_PIN_HEADER_DIGITAL_IN_10</name>
+            <comment>Pin = 64</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_11">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_11</name>
+            <comment>Pin = 65</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_11">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_11</name>
+            <comment>Pin = 65</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_11">CONTROLLINO_PIN_HEADER_DIGITAL_IN_11</name>
+            <comment>Pin = 65</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_12">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_12</name>
+            <comment>Pin = 66</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_12">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_12</name>
+            <comment>Pin = 66</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_12">CONTROLLINO_PIN_HEADER_DIGITAL_IN_12</name>
+            <comment>Pin = 66</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_13">CONTROLLINO_PIN_HEADER_ANALOG_ADC_IN_13</name>
+            <comment>Pin = 67</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_13">CONTROLLINO_PIN_HEADER_DIGITAL_ADC_IN_13</name>
+            <comment>Pin = 67</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PIN_HEADER_DIGITAL_IN_13">CONTROLLINO_PIN_HEADER_DIGITAL_IN_13</name>
+            <comment>Pin = 67</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D0">CONTROLLINO_D0</name>
+            <comment>Pin = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D1">CONTROLLINO_D1</name>
+            <comment>Pin = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D2">CONTROLLINO_D2</name>
+            <comment>Pin = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D3">CONTROLLINO_D3</name>
+            <comment>Pin = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D4">CONTROLLINO_D4</name>
+            <comment>Pin = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D5">CONTROLLINO_D5</name>
+            <comment>Pin = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D6">CONTROLLINO_D6</name>
+            <comment>Pin = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D7">CONTROLLINO_D7</name>
+            <comment>Pin = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D8">CONTROLLINO_D8</name>
+            <comment>Pin = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D9">CONTROLLINO_D9</name>
+            <comment>Pin = 11</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D10">CONTROLLINO_D10</name>
+            <comment>Pin = 12</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D11">CONTROLLINO_D11</name>
+            <comment>Pin = 13</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D12">CONTROLLINO_D12</name>
+            <comment>Pin = 42</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D13">CONTROLLINO_D13</name>
+            <comment>Pin = 43</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D14">CONTROLLINO_D14</name>
+            <comment>Pin = 44</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D15">CONTROLLINO_D15</name>
+            <comment>Pin = 45</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D16">CONTROLLINO_D16</name>
+            <comment>Pin = 46</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D17">CONTROLLINO_D17</name>
+            <comment>Pin = 47</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D18">CONTROLLINO_D18</name>
+            <comment>Pin = 48</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D19">CONTROLLINO_D19</name>
+            <comment>Pin = 49</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D20">CONTROLLINO_D20</name>
+            <comment>Pin = 77</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D21">CONTROLLINO_D21</name>
+            <comment>Pin = 78</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D22">CONTROLLINO_D22</name>
+            <comment>Pin = 79</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_D23">CONTROLLINO_D23</name>
+            <comment>Pin = 80</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A0">CONTROLLINO_A0</name>
+            <comment>Pin = 54</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A1">CONTROLLINO_A1</name>
+            <comment>Pin = 55</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A2">CONTROLLINO_A2</name>
+            <comment>Pin = 56</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A3">CONTROLLINO_A3</name>
+            <comment>Pin = 57</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A4">CONTROLLINO_A4</name>
+            <comment>Pin = 58</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A5">CONTROLLINO_A5</name>
+            <comment>Pin = 59</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A6">CONTROLLINO_A6</name>
+            <comment>Pin = 60</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A7">CONTROLLINO_A7</name>
+            <comment>Pin = 61</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A8">CONTROLLINO_A8</name>
+            <comment>Pin = 62</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A9">CONTROLLINO_A9</name>
+            <comment>Pin = 63</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A10">CONTROLLINO_A10</name>
+            <comment>Pin = 64</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A11">CONTROLLINO_A11</name>
+            <comment>Pin = 65</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A12">CONTROLLINO_A12</name>
+            <comment>Pin = 66</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A13">CONTROLLINO_A13</name>
+            <comment>Pin = 67</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A14">CONTROLLINO_A14</name>
+            <comment>Pin = 68</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_A15">CONTROLLINO_A15</name>
+            <comment>Pin = 69</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_I16">CONTROLLINO_I16</name>
+            <comment>Pin = 38</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_I17">CONTROLLINO_I17</name>
+            <comment>Pin = 39</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_I18">CONTROLLINO_I18</name>
+            <comment>Pin = 40</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_IN0">CONTROLLINO_IN0</name>
+            <comment>Pin = 18</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_IN1">CONTROLLINO_IN1</name>
+            <comment>Pin = 19</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_MINUS">CONTROLLINO_MINUS</name>
+            <comment>Pin = 14</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_PLUS">CONTROLLINO_PLUS</name>
+            <comment>Pin = 15</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R0">CONTROLLINO_R0</name>
+            <comment>Pin = 22</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R1">CONTROLLINO_R1</name>
+            <comment>Pin = 23</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R2">CONTROLLINO_R2</name>
+            <comment>Pin = 24</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R3">CONTROLLINO_R3</name>
+            <comment>Pin = 25</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R4">CONTROLLINO_R4</name>
+            <comment>Pin = 26</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R5">CONTROLLINO_R5</name>
+            <comment>Pin = 27</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R6">CONTROLLINO_R6</name>
+            <comment>Pin = 28</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R7">CONTROLLINO_R7</name>
+            <comment>Pin = 29</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R8">CONTROLLINO_R8</name>
+            <comment>Pin = 30</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R9">CONTROLLINO_R9</name>
+            <comment>Pin = 31</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R10">CONTROLLINO_R10</name>
+            <comment>Pin = 32</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R11">CONTROLLINO_R11</name>
+            <comment>Pin = 33</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R12">CONTROLLINO_R12</name>
+            <comment>Pin = 34</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R13">CONTROLLINO_R13</name>
+            <comment>Pin = 35</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R14">CONTROLLINO_R14</name>
+            <comment>Pin = 36</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="CONTROLLINO_R15">CONTROLLINO_R15</name>
+            <comment>Pin = 37</comment>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

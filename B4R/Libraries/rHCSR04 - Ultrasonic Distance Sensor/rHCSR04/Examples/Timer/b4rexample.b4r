@@ -1,0 +1,60 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rhcsr04
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Notes
+' B4R Library rHCSR04 - Timer Example reading the distance in cm & inch in regular intervals.
+' Additional Libraries: rHCSR04
+' 20210728 rwbl
+#End Region
+
+#Region Wiring
+' HC-SR04 = Arduino UNO
+' VCC = 5V (RED)
+' Trig = 13 (GPIO13) (YELLOW)
+' Echo = 12 (GPIO12) (GREEN)
+' GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public SerialLine As Serial
+	Public DistanceSensor As HCSR04
+	Public TriggerPinNr As Byte = 13
+	Public EchoPinNr As Byte  = 12
+	Public DistanceTimer As Timer
+	Public DistanceTimerInterval As Long = 2000
+	Public DistanceCm, DistanceInch As Double
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Log("AppStart")
+	DistanceSensor.Initialize(TriggerPinNr, EchoPinNr)
+	DistanceTimer.Initialize("DistanceTimer_Tick", DistanceTimerInterval)
+	DistanceTimer.Enabled = True
+End Sub
+
+Private Sub DistanceTimer_Tick
+	'Get the distance for the first pin (there is only 1 pins for this example)
+	DistanceCm = DistanceSensor.Distance
+	DistanceInch = DistanceSensor.DistanceInch
+
+	'Log the distance without handling innaccurate values
+	Log("Distance: ",DistanceCm, " cm, ", DistanceInch, " Inch")
+	
+	'Get the distance with handling inaccurate distance values between 2 and 100 cm
+	If (DistanceCm > 100) Or (DistanceCm < 2) Then
+		Log("Inaccurate Distance")
+	End If
+End Sub

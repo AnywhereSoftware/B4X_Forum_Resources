@@ -1,0 +1,74 @@
+#Class GameEntity Abstract Implements IRenderable
+
+#Property X As Float = 0
+#Property Y As Float = 0
+#Property Width As Float = 10
+#Property Height As Float = 10
+#Property Color As Int = 0
+#Property Visible As Boolean = True
+
+#Constructor(aX As Float, aY As Float, aWidth As Float, aHeight As Float, aColor As Int)
+    ' Shared entity setup: B4X++ property assignment calls the generated setters.
+    X = aX
+    Y = aY
+    Width = aWidth
+    Height = aHeight
+    Color = aColor
+    Visible = True
+#End Constructor
+
+Public Sub Left As Float
+    ' Left edge of the entity rectangle.
+    Return getX
+End Sub
+
+Public Sub Top As Float
+    ' Top edge of the entity rectangle.
+    Return getY
+End Sub
+
+Public Sub Right As Float
+    ' Right edge of the entity rectangle.
+    Return getX + getWidth
+End Sub
+
+Public Sub Bottom As Float
+    ' Bottom edge of the entity rectangle.
+    Return getY + getHeight
+End Sub
+
+Public Sub CenterX As Float
+    ' Horizontal center used by the ball and paddle logic.
+    Return BreakoutMath.CenterOf(getX, getWidth)
+End Sub
+
+Public Sub CenterY As Float
+    ' Vertical center used by the ball rendering.
+    Return BreakoutMath.CenterOf(getY, getHeight)
+End Sub
+
+Public Sub SetPosition(aNewX As Float, aNewY As Float)
+    ' Moves the entity without changing its size.
+    X = aNewX
+    Y = aNewY
+End Sub
+
+Public Sub CollidesWithBox(aOtherLeft As Float, aOtherTop As Float, aOtherRight As Float, aOtherBottom As Float) As Boolean
+    ' Rectangle collision helper. Safer than Intersects(GameEntity) after B4X++ flattening.
+    Return BreakoutMath.Overlaps(Left, Top, Right, Bottom, aOtherLeft, aOtherTop, aOtherRight, aOtherBottom)
+End Sub
+
+Protected Sub EntityRect As B4XRect
+    ' Reusable rectangle for B4XCanvas drawing.
+    Dim entityArea As B4XRect
+    entityArea.Initialize(Left, Top, Right, Bottom)
+    Return entityArea
+End Sub
+
+Virtual Sub Render(aCvs As B4XCanvas)
+    ' Default renderer for rectangular entities.
+    If getVisible = False Then Return
+    aCvs.DrawRect(EntityRect, getColor, True, 0)
+End Sub
+
+#End Class

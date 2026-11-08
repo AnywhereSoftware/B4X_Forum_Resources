@@ -1,0 +1,110 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Draw random coloured smooth (anti-aliased) rounded rectangles on the TFT
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	Log("TFT Booting...")
+	
+	TFTid = TFT.Initialize(-1,-1)	
+  '// Initialise the screen
+	TFT.begin(0xFF)
+	TFT.setRotation(1)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	Log("\r\nInitialisation done.")
+
+    AddLooper("LocalLoop")
+End Sub
+
+'// =========================================================================
+'// Loop
+'// =========================================================================
+Sub LocalLoop
+	Dim count As ULong
+	Dim fg_color, bg_color, x, y, start_angle, end_angle As UInt
+	Dim radius, thickness, inner_radius As Byte 
+	Dim arc_end As bool
+	fg_color = random(0, 0x10000)
+    bg_color = TFT.TFT_BLACK       '// This is the background colour used For smoothing (anti-aliasing)
+
+    x = random(0,TFT.width)   '// Position of centre of arc
+    y = random(0, TFT.height)
+
+    radius       = random(20, TFT.width()/4)   '// Outer arc radius
+    thickness    = random(1, radius / 4)       '// thickness
+    inner_radius = radius - thickness          '// Calculate inner radius (can be 0 For circle segment)
+
+  '// 0 degrees is at 6 o'clock position
+  '// Arcs are drawn clockwise from start_angle To end_angle
+     start_angle = random(0,361)    '// Start angle must be in range 0 To 360
+     end_angle   = random(0,361)    '// End angle must be in range 0 To 360
+
+     If random(0, 2)=1 Then arc_end = True Else arc_end =False       '// True = Round ends, False = square ends (arc_end parameter can be omitted, ends will Then be square)
+
+  	TFT.drawSmoothArc(x, y, radius, inner_radius, start_angle, end_angle, fg_color, bg_color, arc_end)
+
+  	count = count +1
+  	If count < 30 Then Delay(500)   '// After 15s draw As fast As possible!
+End Sub
+
+Sub random(Mini As ULong,Maxi As ULong) As ULong
+	Dim tmp() As ULong = Array As ULong(Mini, Maxi)
+	Return RunNative("getRandom",tmp)
+End Sub
+Sub randomSeed As ULong
+	Return RunNative("setRandomSeed",0)
+End Sub
+#if C
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  uint32_t* a = (uint32_t*) b->data;
+	  uint32_t rand = random(a[0],a[1]); 
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      uint32_t ran =  (uint32_t) millis();
+	  uint8_t * rand = (uint8_t*) &ran;
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,rand[0]);
+	  randomSeed(rand[0]); 
+	  return returnvalue.wrapNumber(rand[0]);
+ }; 
+#End If

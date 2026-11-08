@@ -1,0 +1,93 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitmcp23017_i2c
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rAdafruitMCP23017
+' Brief:	Example listening to button state pressed using an B4R looper with DigitalRead(BUTTON_PIN).
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-09-04
+' License:	MIT - see LICENSE file.
+' Wiring:
+' MCP23017 = Arduino UNO
+' VCC = 5V (red)
+' GND = GND (black)
+' SDA = A4 (blue)
+' SCL = A5 (yellow)
+'
+' MCP23017 = Button
+' PA0 (yellow) = Signal
+' GND = GND (black)
+'
+' MCP23017 I2C = 0x27 
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private mcp As AdafruitMCP23017_I2C
+	
+	' Button attached to MCP23017 PA0
+	Private BUTTON_PIN As Byte = 0
+
+	' debounce handling
+	Private ButtonState As Boolean = True        ' current stable state, default HIGH (not pressed)
+	Private LastReading As Boolean = True        ' last raw reading
+	Private LastDebounceTime As ULong = 0
+	Private Const DEBOUNCE_DELAY As ULong = 50   ' ms
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the expander with default address 0x27
+	If Not(mcp.Initialize2(0x27)) Then
+		Log("[Main.AppStart][ERROR] Initialize expander.")
+		Return
+	End If
+	
+	' Configure pin input with pull up
+	mcp.SetPinMode(BUTTON_PIN, mcp.MODE_INPUT_PULLUP)
+
+	AddLooper("ButtonLooper")
+
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+' Debounced button looper
+Private Sub ButtonLooper
+	Dim reading As Boolean = (mcp.DigitalRead(BUTTON_PIN) = mcp.STATE_LOW)
+	Dim now As ULong = Millis
+
+	If reading <> LastReading Then
+		' input changed, reset timer
+		LastDebounceTime = now
+	End If
+	LastReading = reading
+
+	If (now - LastDebounceTime) > DEBOUNCE_DELAY Then
+		If reading <> ButtonState Then
+			ButtonState = reading
+
+			' Detect only falling edge (button press)
+			If ButtonState = True Then
+				Log("[ButtonLooper] Button Pressed!")
+			End If
+		End If
+	End If
+End Sub

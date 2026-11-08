@@ -1,0 +1,76 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=radafruitmcp23017_i2c
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rAdafruitMCP23017
+' Brief:	Example listening to button state pressed using an interrupt handler attached to the button pin.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-09-04
+' License:	MIT — see LICENSE file.
+
+' Wiring:
+' MCP23017 = Arduino UNO
+' VCC = 5V (red)
+' GND = GND (black)
+' SDA = A4 (blue)
+' SCL = A5 (yellow)
+'
+' MCP23017 = Button
+' PA0 (yellow) = Signal
+' GND = GND (black)
+'
+' MCP23017 I2C = 0x27 
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+    Public Serial1 As Serial
+    Private mcp As AdafruitMCP23017_I2C
+	
+	' MCP23017 INT pin
+	Private INTA_PIN As Byte = 7	' GPIO7
+	
+	' MCP23017 button pin
+	Private BUTTON_PIN As Byte = 0	' PA0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "=======================================")    
+	Log(CRLF, "[Main.AppStart] Initialize")
+
+	' Init the expander with address 0x27
+	If Not(mcp.Initialize2(0x27)) Then
+		Log("[Main.AppStart][ERROR] Initialize expander.")
+		Return
+	End If
+	
+	' Setup global interrupt system:
+	' mirror INT A/B, active drive, active-low (LOW when fired)
+	mcp.SetupInterrupts(True, False, mcp.STATE_LOW)
+		
+	' Add the interrupthandler for the interrupt pins
+	mcp.AttachInterrupt(INTA_PIN, BUTTON_PIN, "Input_StateChanged")
+
+	Log("[Main.AppStart] Done", CRLF)
+End Sub
+
+' Handle button pressed state 0.
+' Note the released state is not handled.
+Sub Input_StateChanged (InputPin As Byte, State As Boolean)
+	Log("[Input_StateChanged ] inputpin=", InputPin, ",state=", State)
+End Sub

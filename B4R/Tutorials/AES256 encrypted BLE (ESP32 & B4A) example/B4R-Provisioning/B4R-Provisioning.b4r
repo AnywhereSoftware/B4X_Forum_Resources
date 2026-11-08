@@ -1,0 +1,281 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2000
+	#DefineExtra: #define SKIP_B4RNEW
+
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	'
+	Private bc As ByteConverter
+	
+	Private ser As B4RSerializator
+	
+	Public BLEName(17) As Byte '16 plus zero termination for inline c
+	Public BLEMessage(256) As Byte 
+	Public BLEMessage_Length As Int
+	
+	
+	'AES
+	Public plaintext_buffer(256) As Byte 'Must be a multiple of 16 as PKCSNoPadding is used
+	Public aesencrypted_buffer(256) As  Byte 'the encrypted message
+	Public plaintext_buffer(256) As Byte 'Must be a multiple of 16 as PKCSNoPadding is used
+	Public aesencrypted_buffer(256) As  Byte 'the encrypted message
+	
+	
+	Public iv(16) As Byte 'initialization vector. Must be the same for enc- and decryption
+	Public salt(32) As Byte 'Salt -> 32 random bytes
+	Public pw(32) As  Byte 'pw/key (will be hashed to 32 bytes)
+	
+	Public encrypted_length,plaintext_length,aesencrypted_length As Int
+	
+	
+	Private SenderID(16) As Byte
+	
+	
+	
+End Sub
+
+Private Sub AppStart
+	
+	Serial1.Initialize(115200)
+	
+	Log("AppStart")
+	Log("Starting BLE-Server")
+	StartBLEServer
+	
+	
+		
+End Sub
+
+Sub StartBLEServer
+	GenBLEName
+	RunNative("StartBLEServer", Null)
+End Sub
+
+
+
+
+Sub NewBLEMessage 'called from inline C
+	
+	Log("New BLE message...")
+	Log("From ID: ",SenderID)
+	bc.ArrayCopy2(BLEName,0,pw,0,BLEName.Length)
+	
+	Dim mc(BLEMessage_Length) As Byte
+	bc.ArrayCopy2(BLEMessage,0,mc,0,BLEMessage_Length)
+	
+	Dim ct() As Byte=AESDecrypt(mc)
+		
+	Dim be(10) As Object
+	Dim DataSer() As Object = ser.ConvertBytesToArray(ct, be)
+	Log("Received:")
+	For Each o As Object In DataSer
+		Log(o)
+	Next
+	
+		
+	
+End Sub
+
+Private Sub SplitIDIVMessage (IDIvMessage() As Byte)
+	
+	bc.ArrayCopy2(IDIvMessage,0,SenderID,0,SenderID.Length)
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length,salt,0,salt.Length)
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length+salt.length,iv,0,iv.Length)
+	
+	Dim Mess(IDIvMessage.Length-SenderID.Length-salt.Length-iv.Length) As Byte
+	'Init Mess
+	For i=0 To Mess.Length-1
+		Mess(i)=0
+	Next
+	For I=0 To aesencrypted_buffer.Length-1
+		aesencrypted_buffer(I)=0
+	Next
+	For I=0 To plaintext_buffer.Length-1
+		plaintext_buffer(I)=0
+	Next
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length+salt.Length+iv.Length,Mess,0,IDIvMessage.Length-SenderID.Length-salt.Length-iv.Length)
+	bc.ArrayCopy2(Mess,0,aesencrypted_buffer,0,Mess.Length)
+	aesencrypted_length=Mess.Length
+
+End Sub
+
+
+
+
+
+
+Sub Unpad (PaddedMess() As Byte) As Byte()
+	Dim OrigMess(PaddedMess.Length-PaddedMess(PaddedMess.Length-1)) As Byte
+	bc.ArrayCopy2(PaddedMess,0,OrigMess,0,OrigMess.Length)
+	Return OrigMess
+End Sub
+
+
+
+Private Sub AESDecrypt(enc() As Byte) As Byte()
+	SplitIDIVMessage(enc)
+	
+	RunNative("AESDecrypt", Null)
+	Dim decmess(aesencrypted_length) As Byte
+	
+	bc.ArrayCopy2(plaintext_buffer,0,decmess,0,aesencrypted_length)
+	
+	Return Unpad(decmess)
+	
+End Sub
+
+Sub GenBLEName
+	
+	bc.ArrayCopy2("ESP",0,BLEName,0,3)
+	Dim s() As Byte ="abcdefghijklmnopqrstuvwxyz1234567890"
+	
+	For i=3 To 15
+		BLEName(i)=s(Rnd(0,s.Length))
+	Next
+	BLEName(16)=0
+	Log("My BLE name: ",BLEName)
+	
+End Sub
+
+
+#if c
+
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLE2902.h>
+
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic = NULL;
+bool deviceConnected = false;
+bool oldDeviceConnected = false;
+
+
+void StartBLEServer (B4R::Object* o) {
+
+
+
+
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+      		std::string value = pCharacteristic->getValue();
+	 		
+      		if (value.length() > 0) {
+        		memcpy((char*)b4r_main::_blemessage->data, value.c_str(), value.length());
+	  			b4r_main::_blemessage_length = value.length();
+		 		b4r_main::_newblemessage();
+      		}
+		}
+   
+};
+
+class MyServerCallbacks: public BLEServerCallbacks {
+   
+	void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+	  printf("Connected...");
+      //BLEDevice::startAdvertising();
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+	  printf("Connected...");
+	  delay(500); // give the bluetooth stack the chance to get things ready
+      BLEDevice::startAdvertising();
+    }
+};
+
+
+
+  char *bn = (char*)b4r_main::_blename->data;
+  BLEDevice::init(bn);
+  BLEServer *pServer = BLEDevice::createServer();
+    
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC_UUID,
+                                       //  BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+										 BLECharacteristic::PROPERTY_NOTIFY
+                                       );
+  pCharacteristic->addDescriptor(new BLE2902());
+  pCharacteristic->setCallbacks(new MyCallbacks());
+  pCharacteristic->setValue("Hello World");
+  pService->start();
+
+  
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(false);
+  pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+  BLEDevice::startAdvertising();
+  Serial.println("Waiting for a client connection...");
+ 
+}
+#End If
+
+#if C
+
+#include <mbedtls/aes.h>
+#include "mbedtls/md.h"
+
+//char ivc[16];
+
+void AESDecrypt (B4R::Object* o) {
+
+char *pw = (char*)b4r_main::_pw->data;
+
+//256Hash the pw (32 Bytes)
+  byte shaResult[32];
+  mbedtls_md_context_t hash;
+  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+  const size_t pwLength = strlen(pw);         
+  mbedtls_md_init(&hash);
+  mbedtls_md_setup(&hash, mbedtls_md_info_from_type(md_type), 0);
+  mbedtls_md_starts(&hash);
+  mbedtls_md_update(&hash, (const unsigned char *) pw, pwLength);
+  mbedtls_md_finish(&hash, shaResult);
+  mbedtls_md_free(&hash);
+  uint8_t key[32];
+  memcpy(key, shaResult, 32);  
+
+esp_aes_context ctx;
+esp_aes_init( &ctx );
+esp_aes_setkey( &ctx, key, 256 );
+//esp_aes_crypt_cbc( &ctx, ESP_AES_DECRYPT, b4r_main::_aesencrypted_length, ivu, (uint8_t*)b4r_main::_aesencrypted_buffer->data, (uint8_t*)b4r_main::_plaintext_buffer->data );
+esp_aes_crypt_cbc( &ctx, ESP_AES_DECRYPT, b4r_main::_aesencrypted_length, (uint8_t*)b4r_main::_iv->data, (uint8_t*)b4r_main::_aesencrypted_buffer->data, (uint8_t*)b4r_main::_plaintext_buffer->data );
+
+
+esp_aes_free( &ctx );
+
+}
+
+#End If
+
+
+
+
+
+

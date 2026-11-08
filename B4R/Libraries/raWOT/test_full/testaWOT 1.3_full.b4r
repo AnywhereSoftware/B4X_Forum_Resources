@@ -1,0 +1,862 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rlittlefs
+Library4=rrandomaccessfile
+Library5=rawot
+Module1=|absolute|D:\B4R\B4R_Modules\GlobalStore
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 4000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private bc As ByteConverter
+	Private lfs As LittleFS
+	Private aWOT As aWOT
+	Private User As String ="USER"
+	Private Passw As String = "user"
+    Private myLed As Boolean = True
+	Private mypin1 As Boolean = True
+	Private mypin2 As Boolean = True
+	Dim identFirst As Boolean = True
+	Dim buff(256) As Byte
+	Private text() As Byte
+	Dim Debug As Boolean = False
+	Private autho_Nb As Byte = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	'example of connecting to a local network
+	If wifi.Connect2( "xxxxx", "xxxxxxxxxx") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+'	aWOT.initialize
+	aWOT.initialize1("finally","notfound")
+    Log("end init aWOT")
+	If Not(lfs.Initialize()) Then Log("FS initialization error") Else Log("init lfs OK")
+    Log(wifi.LocalIp)
+	GlobalStore.put(0,"/")
+	AddLooper("process")
+	'**************************************
+	'** first, routers added  ********************
+	'**************************************
+	'2) management "getvar" with router 2
+	aWOT.rout_get(2,"/save", "m10_getvar_save")   ' Router 2 -> middleware 10 to handle button Save click
+	aWOT.rout_get(2,"/_abort", "m11_getvar_abort")  ' Router 2 -> middleware 11 to handle button Abort click
+	
+	'3) management "postvar" with router 3
+	aWOT.rout_post(3,"/postplain", "m12_postvar_postplain")   ' Router 3 -> middleware 11 to handle button ON click
+	aWOT.rout_post(3,"/postform", "m13_postvar_postform")  ' Router 3 -> middleware 12 to handle button OFF click
+
+	'4) management "redirection1" with router 4
+	aWOT.rout_get(4,"/on", "m14_redirection1_on")   ' Router 4 -> middleware 14 to handle button ON click
+	aWOT.rout_get(4,"/off", "m15_redirection1_off")  ' Router 4 -> middleware 15 to handle button OFF click
+	aWOT.rout_get(4,"/exit", "m16_redirection1_exit")  ' Router 4 -> middleware 16 to handle button EXIT click
+	aWOT.rout_get(4,"/redirection2", "m5_redirection2") ' Router5 -> middleware 5 to show redirection2 html
+	aWOT.rout_useR(4,"/redirection2",5) ' Router5 -> Router 5 to handle redirection2 interface
+	
+	'4) management "redirection2" with router 5
+	aWOT.rout_get(5,"/on1", "m17_redirection2_on1")   ' Router 5 -> middleware 17 to handle button ON click
+	aWOT.rout_get(5,"/on2", "m18_redirection2_on2")  ' Router 5 -> middleware 18 to handle button OFF click
+	aWOT.rout_get(5,"/exit", "m19_redirection2_exit")  ' Router 5 -> middleware 19 to handle button EXIT click
+	
+	'5) management "redirection2" with router 6
+	aWOT.rout_post(6,"/submit", "m20_authorization_submit")   ' Router 6 -> middleware 20 to handle authorization check
+	
+	'6) file management with rLittleFS
+	aWOT.rout_post(7,"/action", "m21_filebrowser_action")   ' Router 7 -> middleware 21 to handle webserver post <file transfert to esp>
+	aWOT.rout_post(7,"/upload", "m22_FileUpload")   ' Router 7 -> middleware 21 to handle webserver post <file upload to esp>
+
+'1) managemant "/" with "app"	
+	aWOT.app_setTimeout(3000)
+	aWOT.app_get("/", "m0_keepAlive")			'keep alive
+	aWOT.app_get("/", "m1_basemenu")       ' app_Router -> middleware 1 to show basic_menu html
+	
+	aWOT.app_get("/getvar", "m2_getvar")  ' app_Router -> middleware 2 to show getvar html
+	aWOT.app_useR("/getvar",2) ' app_Router -> Router 2 to handle getvar interface
+    '      	aWOT.app_post("/post",25)
+	
+	aWOT.app_get("/postvar", "m3_postvar") ' app_Router -> middleware 3 to show postvar html
+	aWOT.app_useR("/postvar",3)' app_Router -> Router 3 to handle postvar interface
+	
+	aWOT.app_get("/redirection1", "m4_redirection1") ' app_Router -> middleware 4 to show redirection1 html
+	aWOT.app_useR("/redirection1",4) ' app_Router -> Router 4 to handle redirection1 interface
+
+	aWOT.app_get("/authorization", "m6_authorization") ' app_Router -> middleware 6 to show authorization html
+	aWOT.app_useR("/authorization",6) ' app_Router -> Router 6 to handle authorization interface
+
+	aWOT.app_get("/filebrowser", "m7_filebrowser") ' app_Router -> middleware 7 to show LittleFS html
+	aWOT.app_useR("/filebrowser",7) ' app_Router -> Router 7 to handle LittleFS interface	
+
+	aWOT.app_put("/filebrowser/upload/:filename","m22_FileUpload")   ' Router 7 -> middleware 21 to handle webserver post <file upload to esp>
+
+    ' start server
+'	aWOT.serverBegin
+End Sub 
+
+ Sub process()	  
+   aWOT.process
+End Sub
+
+'*********************************************
+Sub m0_keepAlive() {
+	Log("start keepAlive")
+  aWOT.res_set("Connection", "keep-alive")
+'    Log("end keepAlive")
+'	Log("status sent keepalive: ",aWOT.res_statusSent)
+End Sub
+ 
+'*********************************************
+Sub m6_authorization()
+'	<!-- importer le fichier de style -->") _
+'	aWOT.res_println("<link rel=""stylesheet"" href=""style.css"" media=""screen"" Type=""text/css"" />") _	
+	Log("start m6")
+	RunNative("gethtml", 0)	
+	aWOT.res_write1(text,text.length)
+	If autho_Nb > 0 Then aWOT.res_println("<script>  document.getElementById(""id-of-element"").innerHTML = ""Utilisateur ou mot de passe incorrect"";</script>	")
+	Log("status sent avm6: ",aWOT.res_statusSent)  
+	Log("end m6")
+'	Log("status sent apm6: ",aWOT.res_statusSent)
+End Sub
+Sub m20_authorization_submit()
+	Log("authorization -> submit")
+	identFirst = False
+	Dim name(10) As Byte
+	Dim value(10) As Byte
+	aWOT.req_form(name, value)
+	Dim use As String = bc.StringFromBytes(value)
+	Log("Post name: ",name," Post value: [",value,"]")
+	aWOT.req_form(name, value)
+	Dim Pass As String = bc.StringFromBytes(value)
+	Log("Post name: ",name," Post value: [",value,"]")
+	If bc.ArrayCompare(bc.trim(use.getbytes),User)=0 And bc.ArrayCompare(bc.Trim(Pass.getbytes),Passw)=0 Then 
+		Log("[",use,"|",User,"|",Pass,"|",Passw,"]")
+		Log("identOK=True")
+		aWOT.res_set("Location", "/")
+		autho_Nb = 0
+		aWOT.res_sendStatus(302)
+	Else
+		Log("[",use.getbytes,"|",User,"|",Pass.getbytes,"|",Passw,"]")
+		Log("identOK = False")
+'		aWOT.res_set("Location", "/")    'only for tests
+		aWOT.res_set("Location", "/authorization")
+		autho_Nb = 1
+		aWOT.res_sendStatus(302)		
+	End If	
+End Sub
+
+'*********************************************
+Sub m1_basemenu()
+	
+	Log("start m1")
+	Log("basemenu :")
+	Log("status sent avm1: ",aWOT.res_statusSent)
+	If identFirst = True Then
+		aWOT.res_set("Location", "/authorization")
+		aWOT.res_sendStatus(302)
+	End If
+	RunNative("gethtml", 1)
+	aWOT.res_write1(text,text.length)
+	Log("end m1")
+'	Log("status sent apm1: ",aWOT.res_statusSent)
+End Sub
+
+'*********************************************
+Sub m2_getvar()
+	RunNative("gethtml", 2)
+	aWOT.res_write1(text,text.length)
+End Sub
+Sub m10_getvar_save()
+	'http://192.168.1.19/getvar/save?_nwk=1&_key=2&_rf1=3&_rf2=3&_rf3=4&_rf4=5&_rf5=6&_rf6=7&_rf7=8&_rf8=9&_save=
+	Log("get -> save")
+'	Dim name(10) As Byte
+	Dim value(30) As Byte
+	Log(" req_query :",aWOT.req_query):Log(" ")
+	aWOT.req_query1("_nwk",value):	Log("get_nwk :",(value))
+	aWOT.req_query1("_key",value):	Log("get_key :",(value))
+	aWOT.req_query1("_rf1",value):	Log("get_rf1 :",(value))
+	aWOT.req_query1("_rf2",value):	Log("get_rf2 :",(value))
+	aWOT.req_query1("_rf3",value):	Log("get_rf3 :",(value))
+	aWOT.req_query1("_rf4",value):	Log("get_rf4 :",(value))
+	aWOT.req_query1("_rf5",value):	Log("get_rf5 :",(value))
+	aWOT.req_query1("_rf6",value):	Log("get_rf6 :",(value))
+	aWOT.req_query1("_rf7",value):	Log("get_rf7 :",(value))
+	aWOT.req_query1("_rf8",value):	Log("get_rf8 :",(value))
+	aWOT.req_query1("_rf9",value):	Log("get_rf9 :",(value))
+	aWOT.res_set("Location", "/getvar")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m11_getvar_abort()
+	Log("get -> abort")
+	aWOT.res_set("Location", "/")
+	aWOT.res_sendStatus(302)
+End Sub
+
+'**********************************************************************************
+Sub m3_postvar()
+	RunNative("gethtml", 3)
+	aWOT.res_write1(text,text.length)
+End Sub
+Sub m12_postvar_postplain()
+	Log("postvar -> postplain")
+	Dim name(10) As Byte
+	Dim value(10) As Byte
+	  aWOT.req_form(name, value)
+	  Log("Post name: ",name," Post value: ",value)
+	aWOT.res_set("Location", "/postvar")
+	aWOT.res_sendStatus(302)	
+End Sub
+Sub m13_postvar_postform()
+	Log("postvar -> postform")
+	Dim name(10) As Byte
+	Dim value(10) As Byte
+	  aWOT.req_form(name, value)
+	  Log("Post name: ",name," Post value: ",value)
+	aWOT.res_set("Location", "/postvar")
+	aWOT.res_sendStatus(302)
+End Sub
+
+
+'**********************************************************************************
+Sub m4_redirection1()
+	RunNative("gethtml", 4)
+	aWOT.res_write1(text,text.length)	
+	If myLed=False Then aWOT.res_println("<script>  document.getElementById('id_state').innerHTML = 'ETAT LED: OFF';</script>")
+End Sub
+Sub m14_redirection1_on()
+	Log("true")
+	myLed = True
+	aWOT.res_set("Location", "/redirection1")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m15_redirection1_off()
+	Log("false")
+	myLed = False
+	aWOT.res_set("Location", "/redirection1")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m16_redirection1_exit()
+	Log("exit")
+	aWOT.res_set("Location", "/")
+	aWOT.res_sendStatus(302)
+End Sub
+
+
+'**********************************************************************************
+Sub m5_redirection2()
+
+	RunNative("gethtml", 5)
+	aWOT.res_write1(text,text.length)
+	If mypin1=False Then aWOT.res_println("<script>  document.getElementById('mypin1').innerHTML = 'OFF';</script>")
+	If mypin2=False Then aWOT.res_println("<script>  document.getElementById('mypin2').innerHTML = 'OFF';</script>")
+	
+End Sub
+Sub m17_redirection2_on1()
+	Log("true")
+	mypin1 = Not(mypin1)
+	  aWOT.res_set("Location", "/redirection1/redirection2")
+	  aWOT.res_sendStatus(302)
+End Sub
+Sub m18_redirection2_on2()
+	Log("false")
+	mypin2 = Not(mypin2)
+	aWOT.res_set("Location", "/redirection1/redirection2")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m19_redirection2_exit()
+	aWOT.res_set("Location", "/redirection1")
+	aWOT.res_sendStatus(302)
+End Sub
+
+'**********************************************************************************
+Sub m7_filebrowser()
+'	Log("fs_Total size: ", NumberFormat(lfs.TotalSize / 1024, 0, 0), " KB")
+'	Log("fs_Used size: ", NumberFormat(lfs.UsedSize / 1024, 0, 0), " KB")
+'	Log("stack:",StackBufferUsage)
+	filebrowser1
+	filebrowser2
+	filebrowser3
+	filebrowser4
+
+End Sub	
+
+Sub filebrowser1	
+	RunNative("gethtml", 6)
+	aWOT.res_write1(text,text.length)
+End Sub
+
+Sub filebrowser2	
+	RunNative("gethtml", 7)
+	aWOT.res_write1(text,text.length)
+	
+	'print all file in directory open
+	Dim point As Int=0
+	For Each f As File In lfs.ListFiles(bc.StringFromBytes(GlobalStore.Slot0)) 
+		aWOT.res_println("        <tr onclick='runMe(this.innerHTML)'; class='classfiles' >")
+		aWOT.res_print(  "         <td >"):aWOT.res_print(f.name):aWOT.res_println("</td>")
+  	    point = bc.LastIndexOf(f.Name.getbytes,".".getbytes)+1	
+	    If f.IsDirectory Then  
+		  Dim Type2 As String ="Dir"	 
+	    Else	 	
+	      Dim Type2 As String = bc.StringFromBytes(bc.SubString(f.Name.getbytes,point))
+	    End If		 
+		aWOT.res_print("         <td >"):aWOT.res_print(Type2): aWOT.res_println("</td>") 
+		aWOT.res_print("         <td >"):aWOT.res_print(NumberFormat(f.size,0,0)): aWOT.res_println("</td>")
+		aWOT.res_print("         <td >"):aWOT.res_print("01-Jan-2001 01-01"): aWOT.res_println("</td>")
+	    aWOT.res_println("         </tr> ")
+	Next
+	aWOT.res_println("    </thead> ")
+	aWOT.res_println("    </table> ")
+End Sub
+
+Sub filebrowser3		
+	RunNative("gethtml", 8)
+	aWOT.res_write1(text,text.length)
+End Sub
+
+Sub filebrowser4	
+	RunNative("gethtml", 9)
+	aWOT.res_write1(text,text.length)
+	
+	aWOT.res_println( JoinStrings(Array As String("<script>  document.getElementById('name0').value = '", bc.StringFromBytes(GlobalStore.slot0),"' </script>")))	
+	aWOT.res_println( JoinStrings(Array As String("<script>  document.getElementById('label1').innerHTML = '",NumberFormat(lfs.TotalSize,0,0),"' </script>")))
+	aWOT.res_println( JoinStrings(Array As String("<script>  document.getElementById('label2').innerHTML = '",NumberFormat(lfs.UsedSize,0,0),"' </script>")))
+End Sub
+		
+Sub m21_filebrowser_action()
+	If Debug Then Log("filebrowser -> action")
+	identFirst = False
+	Dim name(32) As Byte
+	Dim value(32) As Byte
+	aWOT.req_form(name, value)
+'	Dim nam1 As String = bc.StringFromBytes(name)
+	Dim act As String = bc.StringFromBytes(bc.Trim(value))
+	If Debug Then Log("act -> ",act,";")
+	aWOT.req_form(name, value)
+'	Dim nam2 As String = bc.StringFromBytes(name)
+	Dim nam1 As String = bc.StringFromBytes(bc.Trim(value))
+	If Debug Then Log("nam1 -> ",nam1,";")
+	aWOT.req_form(name, value)
+	Dim nam2 As String = bc.StringFromBytes(bc.Trim(value))
+	If Debug Then Log("nam2 -> ",nam2,";")
+	aWOT.req_form(name, value)
+	Dim typ As String = bc.StringFromBytes(bc.Trim(value))
+	If Debug Then Log("typ -> ",typ,";")
+	Select act
+		Case "DCreate"
+			If typ = "Dir" Then m21_DirCreate(nam1)
+		Case "DOpen"
+			If typ = "Dir" Then m21_DirOpen(nam1)
+		Case "DClose"	
+			m21_DirClose(nam1)
+		Case "DDelete"
+			If typ = "Dir" Then m21_DirDelete(nam1)
+		Case "Delete"
+			If typ = "File" Then m21_FileDelete(nam1)			
+		Case "Rename"
+			If typ <> "Dir" Then m21_FileRename(nam1,nam2)
+		Case "Format"
+			m21_Format		
+		Case "Download"
+			m21_FileDownload(nam1)
+	End Select
+	    If Debug Then Log("stack :",StackBufferUsage," Ram :", AvailableRAM)
+		aWOT.res_set("Location", "/filebrowser")
+		aWOT.res_sendStatus(302)
+End Sub
+Sub m21_Format
+	Log ("Eeprom Format")
+	
+	lfs.Format
+End Sub
+Sub m21_DirDelete(nam1 As String)
+	Log ("DirDelete")
+	If nam1 <> "" Then 
+	  Dim fullnam As String = JoinStrings(Array As String(bc.StringFromBytes(GlobalStore.Slot0),"/",nam1))
+		If Debug Then Log("fullnam=",fullnam)
+		If  lfs.Exists( fullnam) Then lfs.RMDir(fullnam)		
+	End If
+End Sub
+Sub m21_DirCreate(nam1 As String)
+	Log ("DirCreate")
+	If nam1 <> "" Then
+		Dim fullnam As String = getfullnam(nam1.GetBytes)
+		If  Not(lfs.Exists(fullnam)) Then lfs.MKDir(fullnam)
+	End If
+End Sub
+Sub m21_DirOpen(nam1 As String)
+	Log ("DirOpen")
+	If nam1 <> "" Then 
+	  Dim fullnam As String = getfullnam(nam1.GetBytes)
+	  If  lfs.Exists( fullnam) Then GlobalStore.Put(0,fullnam.getbytes)Else GlobalStore.Put(0,"/")
+	End If
+End Sub
+Sub m21_DirClose(nam1 As String)
+	Log("DirClose")
+	Dim i As Int = bc.LastIndexOf(GlobalStore.Slot0,"/".GetBytes)
+    If i > 0 Then GlobalStore.put(0,bc.SubString2(GlobalStore.slot0,0,i)) Else GlobalStore.put(0,"/")
+End Sub
+Sub m21_FileDelete(nam1 As String)
+	Log("FileDelete")
+	Dim fullnam As String = getfullnam(nam1.GetBytes)
+	If  lfs.Exists(fullnam) Then lfs.Remove(fullnam)
+End Sub
+Sub m21_FileRename(nam1 As String,nam2 As String)
+	Log("FileRename")
+	If (nam1 <> "") And (nam2<>"") Then
+		Dim fullnam1 As String = getfullnam(nam1.GetBytes)
+		Dim fullnam2 As String = getfullnam(nam2.GetBytes)
+		If  lfs.Exists( fullnam1) Then lfs.Rename(fullnam1,fullnam2)		
+	End If
+End Sub
+
+
+'**********************************************************************************
+Sub m21_FileDownload(filename As String)
+	If (lfs.CurrentFile.IsFile) Then lfs.close
+
+	Dim fullnam As String = getfullnam(filename.getbytes)
+	Dim nbR As UInt
+	If lfs.OpenRead(fullnam) Then 'file exist
+ 	  Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0	
+
+	  aWOT.res_set("Content-Transfer-Encoding", "binary")
+	  aWOT.res_set("Accept-Ranges","bytes")
+	  aWOT.res_set("Content-Length", filesize)
+	  aWOT.res_set("Content-Encoding","none")
+	  Dim attach As String =JoinStrings(Array As String("application/",getext(filename.getbytes)))
+	  aWOT.res_set("Content-Type",attach)
+	  attach = JoinStrings(Array As String("attachment; filename=",filename))
+	  aWOT.res_set("Content-Disposition",attach )
+
+		If Debug Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+	  Do While filesize > filecurrent 
+		  nbR = Min(filesize-filecurrent,buff.Length) 
+		  If Debug Then Log("nb byte max to read : ", nbR, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbR)) Else lfs.Stream.ReadBytes(buff,0,nbR)
+		  writestream(nbR)
+		  aWOT.req_flush
+		  filecurrent = lfs.Position
+		  Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+	  Loop	  
+	End If
+	lfs.Close
+	aWOT.res_end
+	Log("Download Done")
+End Sub
+Sub writestream(nbW As UInt)
+	If aWOT.req_availableForWrite < buff.Length Then 
+		If Debug Then Log("=> flush")
+		aWOT.req_flush
+	End If
+	If Debug=True Then Log("written to aWOT stream:",aWOT.res_write1(buff,nbW)) Else aWOT.res_write1(buff,nbW)
+End Sub
+Sub getext(filename() As Byte) As String
+	Dim point() As Byte = Array As Byte(46)
+	Dim ext() As Byte = bc.SubString(filename,bc.LastIndexOf(filename,point))
+	Return bc.StringFromBytes(ext)
+End Sub
+Sub getfullnam(filename() As Byte) As String
+	Dim dir() As Byte = GlobalStore.slot0
+	If dir = "/" Then
+		Dim fullnam() As Byte = JoinBytes(Array(dir,filename))
+	Else
+		Dim fullnam() As Byte = JoinBytes(Array(dir,"/".getbytes,filename))
+	End If
+'	Log("full name1 :",fullnam)
+	fullnam = bc.SubString2(fullnam,0,Min(31,fullnam.length))
+'	Log("full name2 :",fullnam)
+	If Debug Then Log("===> Fname=",filename," fullname = ",fullnam)
+	Return bc.StringFromBytes(fullnam)
+End Sub	
+
+
+'**********************************************************************************
+Sub m22_FileUpload()
+	Log("File Upload"):	
+	If (lfs.CurrentFile.IsFile) Then lfs.close
+	
+	'header read to find file name and file size
+	Dim endheader As UInt = 0
+	If Debug Then Log("=> req_left Start:",aWOT.req_left, " req_available Start:",aWOT.req_available)
+	Dim nbR As UInt =aWOT.req_read1(buff)
+	Dim endheader As UInt = cutheader
+	If Debug Then Log("first nb read=stream",nbR, " endheader size=",endheader)
+	
+	Dim fsize As ULong = Bit.ParseInt(bc.StringFromBytes(GlobalStore.Slot2),10): Log(" Fsize=",fsize)
+	Dim fullnam As String = getfullnam(GlobalStore.Slot1)
+    If fsize < (lfs.TotalSize-lfs.UsedSize) Then 
+    'now we have to read the file from the streamand to write it on the file	
+	  If (lfs.OpenReadWrite(bc.StringFromBytes(fullnam))= False) Then
+		Log("error openning ", fullnam)
+		Log("error Update")
+	  Else
+	  	Log("file open :",lfs.CurrentFile.Name)	  
+      	Dim nbW As UInt = lfs.Stream.WriteBytes(buff,endheader,Min(nbR-endheader,fsize))
+			If Debug Then Log("aWOT read :",nbR,"  file write :",nbW)
+	  
+      	Dim tag As UInt =0
+      	Do While (aWOT.req_left > 0)And (tag <10) 
+		  tag = aWOTreq_read(fsize,tag)
+	  	Loop
+	  	If tag =10 Then Log("timeout reading aWOT stream") 
+			If Debug Then Log("Write End")
+	  	lfs.Close
+	  	Log("file Closed")
+			If Debug Then Log("=> req_left End:",aWOT.req_left, " req_available End:",aWOT.req_available)
+'	  aWOT.res_sendStatus(204)
+
+	  	aWOT.res_set("Location", "/filebrowser")
+	  	aWOT.res_sendStatus(302)
+	  	Log("Update End")
+	  End If
+	 Else
+	 	Log("file too large, update abort") 
+	 End If  
+End Sub
+Sub aWOTreq_read(fsize As ULong,tag As Byte) As Byte
+	Dim nbR,nbW As UInt = 0
+	If aWOT.req_available > 0 Then 
+	  nbR=aWOT.req_read1(buff)
+	  Dim ToWrite As ULong = fsize - lfs.Position 	  
+	  If ToWrite > 0 Then
+	  	nbW=lfs.Stream.WriteBytes(buff,0,Min(nbR,ToWrite))
+	  Else 
+	  	nbW = 0
+		tag = tag+1
+	  End If
+		If Debug Then Log("aWOT read :",nbR,"  file write :",nbW)
+		If Debug Then Log(" => req_left :",aWOT.req_left, " req_available :",aWOT.req_available, "fileposition :",lfs.Position)
+	Else
+	  nbR = 0
+	  tag = tag + 1
+	  Log("Delay...",tag)
+	  Dim temp As ULong = Millis
+	  Do While (temp+250)> Millis
+	    Delay(1)
+	  Loop
+	End If
+	Return tag
+End Sub
+Sub cutheader() As UInt
+	Dim LF() As Byte = Array As Byte(13,10): Dim chr34() As Byte = Array As Byte(34)
+	Dim endline1 As UInt =bc.IndexOf(buff, LF)
+	Dim line1() As Byte = bc.SubString2(buff,0,endline1)           'Log("line1=",line1)
+	Dim endline2 As UInt =bc.IndexOf2(buff, LF,endline1+2)
+	Dim line2() As Byte = bc.SubString2(buff,endline1+2,endline2)  'Log("line2=",line2)
+	Dim findex As UInt =  bc.IndexOf(line2,"filename=".getbytes)
+	Dim findex2 As UInt =  bc.IndexOf2(line2,Array As Byte(34),findex+10 )
+	Dim fsize1 As UInt = bc.IndexOf(line2,"name=".getbytes)
+	Dim fsize2 As UInt = bc.IndexOf2(line2,chr34, fsize1+6)
+	Dim fname() As Byte = bc.SubString2(line2,findex+10,findex2): GlobalStore.put(1,fname) ': Log("filenam found =",fname)
+	Dim fsize() As Byte = bc.SubString2(line2,fsize1+6,fsize2): GlobalStore.put(2,fsize) ': Log("file size =",fsize)
+'	Log( "int value ===> ",Bit.ParseInt(bc.StringFromBytes(fsize),10))
+	Dim endline3 As UInt =bc.IndexOf2(buff, LF,endline2+2)
+	Dim line3() As Byte = bc.SubString2(buff,endline2+2,endline3)  'Log("line3=",line3)
+	Dim endline4 As UInt =bc.IndexOf2(buff, LF,endline3+2)
+	Dim line4() As Byte = bc.SubString2(buff,endline3+2,endline4)  'Log("line4=",line4)
+	Return endline4+2
+End Sub
+
+'**********************************************************************************
+Sub finally()
+	Log("Client Closed")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+'**********************************************************************************
+Sub notfound()	
+	Log("Middleware not found - Call Back 404")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+#if c
+
+#include <pgmspace.h>
+
+const char auth[]  PROGMEM = R"=====(
+	<!DOCTYPE html>
+	<html>
+	<head>
+	<meta charset="utf-8">
+	<style>
+	body{ background: #67BE4B; }
+	#container{ width:400px; margin:0 auto; margin-top:10%; }
+	form { width:100%; padding: 30px; border: 1px solid #f1f1f1; background: #fff; box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24); }
+	#container h1{ width: 38%; margin: 0 auto; padding-bottom: 10px; }
+	input[type=submit] { background-color: #53af57; color: white; padding: 14px 20px; margin: 8px 0; border: none; cursor: pointer; width: 100%; }
+	input[type=submit]:hover { background-color: white; color: #53af57; border: 1px solid #53af57; }
+	input[type=text], input[type=password] { width: 100%; padding: 12px 20px; margin: 8px 0; display: inline-block; border: 1px solid #ccc; box-sizing: border-box; }
+	</style>
+	</head>
+	<body>
+	<div id="container">
+	<form action='/authorization/submit' method='POST'>
+	<h1>Connexion</h1>
+	<label><b>Nom d'utilisateur</b></label>
+	<input Type='text' placeholder='Entrer le nom d utilisateur' name='username' required>
+	<label><b>Mot de passe</b></label>
+	<input Type='password' placeholder='Entrer le mot de passe' name='password' required>
+	<input Type='submit' id='submit' value='LOGIN' >
+	<p id="id-of-element" style='color:red'>"Utilisateur and password mandatory" </p>
+	</form>
+	</div>
+	
+	</body>
+	</html>
+	)=====";
+
+const char base[]  PROGMEM = R"=====(
+	<!DOCTYPE html>
+	<html lang='en'> 
+	<head>
+	    <meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'/>
+	    <style>div,fieldset,input,select{padding:5px;font-size:1em;}fieldset{background:#4f4f4f;}p{margin:0.5em 0;}input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#dddddd;color:#000000;}input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}input[type=range]{width:99%;}select{width:100%;background:#dddddd;color:#000000;}textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;background:#1f1f1f;color:#65c115;}body{text-align:center;font-family:verdana,sans-serif;background:#252525;}td{padding:0px;}button{border:0;border-radius:0.3rem;background:#1fa3ec;color:#faffff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}button:hover{background:#0e70a4;}.bred{background:#d43535;}.bred:hover{background:#931f1f;}.bgrn{background:#47c266;}.bgrn:hover{background:#5aaf6f;}a{color:#1fa3ec;text-decoration:none;}.p{float:left;text-align:left;}.q{float:right;text-align:right;}.r{border-radius:0.3em;padding:2px;margin:6px 2px;}</style>
+	  </head> 
+	  <body>
+	    <div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+	    <div style='text-align:center;color:#eaeaea;'>
+	    <h3>aWOT WEB Serveur on ESP8266 ESP-12F Module</h3>
+	    </div>
+	  <fieldset>
+	<div><button onclick="location.href = '/authorization';" id="myButton" class="float-left submit-button" >Authorization</button></div>
+	<div><button onclick="location.href = '/getvar';" id="myButton" class="float-left submit-button" >GetVar</button></div>
+	<div><button onclick="location.href = '/postvar';" id="myButton" class="float-left submit-button" >PostVar</button></div>
+	<div><button onclick="location.href = '/redirection1';" id="myButton" class="float-left submit-button" >Redirection1</button></div>
+	<div><button onclick="location.href = '/filebrowser';" id="myButton" class="float-left submit-button" >FileTransfert</button></div>
+	</fieldset> </div>
+	</body>
+	</html>
+	)=====";
+
+const char getvar[]  PROGMEM = R"=====(
+	<!DOCTYPE html>
+	<html lang='en'>
+	<head>
+	  <meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'/>
+	  <style>div,fieldset,input,select{padding:5px;font-size:1em;}fieldset{background:#4f4f4f;}p{margin:0.5em 0;}input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#dddddd;color:#000000;}input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}input[type=range]{width:99%;}select{width:100%;background:#dddddd;color:#000000;}textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;background:#1f1f1f;color:#65c115;}body{text-align:center;font-family:verdana,sans-serif;background:#252525;}td{padding:0px;}button{border:0;border-radius:0.3rem;background:#1fa3ec;color:#faffff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}button:hover{background:#0e70a4;}.bred{background:#d43535;}.bred:hover{background:#931f1f;}.bgrn{background:#47c266;}.bgrn:hover{background:#5aaf6f;}a{color:#1fa3ec;text-decoration:none;}.p{float:left;text-align:left;}.q{float:right;text-align:right;}.r{border-radius:0.3em;padding:2px;margin:6px 2px;}</style>
+	</head>
+	<body>
+	  <div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+	  <div style='text-align:center;color:#eaeaea;'>
+	    <h3>aWOT Web Server: get with variables</h3>
+	  </div>
+	  <fieldset>
+      <form action='/getvar/save' method='get'>
+	    <div><label For='_nwk'>SSID</label><br><input name='_nwk' id='_nwk' value='1'></div>
+	    <div><label For='_key'>SSID Key</label><br><input name='_key' id='_key' value='2'></div>
+	    <div><label For='_rf1'>Key1 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf1' id='_rf1' value='3'></div>
+	    <div><label For='_rf2'>Key2 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf2' id='_rf2' value='3'></div>
+	    <div><label For='_rf3'>Key3 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf3' id='_rf3' value='4'></div>
+	    <div><label For='_rf4'>Key4 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf4' id='_rf4' value='5'></div>
+	    <div><label For='_rf5'>Key5 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf5' id='_rf5' value='6'></div>
+	    <div><label For='_rf6'>Key6 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf6' id='_rf6' value='7'></div>
+	    <div><label For='_rf7'>Key7 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf7' id='_rf7' value='8'></div>
+	    <div><label For='_rf8'>Key8 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf8' id='_rf8' value='9'></div>
+		<div><br><button name='_save'>Save</button></div>
+	  </form>
+	  <div><button onclick="location.href = '/';" id="myButton" class="float-left submit-button" >Abort</button></div>
+	  </fieldset></div>
+	</body>
+	</html>	
+	)=====";
+
+const char postvar[]  PROGMEM = R"=====(		
+	<!DOCTYPE html><html>
+	  <head>
+	    <title>ESP8266 Web Server POST handling</title>
+	    <style>
+	      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }
+	    </style>
+	  </head>
+	  <body>
+	    <div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+	    <div style='text-align:center;color:#eaeaea;'>
+	      <h3>aWOT Web Server: get with variables</h3>
+	    </div>
+	     <h1>POST plain text to /postvar/postplain/</h1><br>
+	    <form method='post' enctype='text/plain' action='/postvar/postplain'>
+	      <input type='text' name='value1' value='variable1'><br>
+	      <input Type='submit' value='Submit'>
+	    </form>
+	    <h1>POST form data To /postvar/postform/</h1><br>
+	   <form method='post' enctype='application/x-www-form-urlencoded' action='/postvar/postform'>
+	      <input Type='text' name='value2' value='variable2'><br>
+	      <input Type='submit' value='Submit'>
+	   </form>
+	<div><div><button onclick="location.href = '/';" id="myButton" class="float-left submit-button" >Exit</button></div></div>
+	  </body>
+	</html>
+	)=====";
+
+const char redirect1[]  PROGMEM = R"=====(		
+	<!DOCTYPE html>
+	<html lang='fr'>
+	<head>
+	    <title>Serveur ESP32</title>
+	    <meta http-equiv='refresh' name='viewport' content='60, width=device-width, initial-scale=1' charset='UTF-8'/>
+	    <link rel='stylesheet' href='https://www.w3schools.com/w3css/4/w3.css'>
+	</head>
+	<body>
+	    <div class='w3-card w3-blue w3-padding-small w3-jumbo w3-center'>
+	        <p id="id_state" >ETAT LED: ON </p>
+	    </div>
+	    <div class='w3-bar'>
+	        <a href='/redirection1/on' class='w3-bar-item w3-button w3-border w3-jumbo' style='width:50%; height:50%;'>ON</a>
+	        <a href='/redirection1/off' class='w3-bar-item w3-button w3-border w3-jumbo' style='width:50%; height:50%;'>OFF</a>
+	    </div>
+	    <div class='w3-center w3-padding-16'>
+	        <p>Ce serveur est hébergé sur un ESP32</p>
+	        <i>Créé par Tommy Desrochers</i>
+	    </div>
+	<div><button onclick="location.href = '/redirection1/redirection2';" id="myButton" class="float-left submit-button" >Redirection2</button></div>
+	<div><button onclick="location.href = '/';" id="myButton" class="float-left submit-button" >Exit</button></div>
+	</body>
+	</html>
+	)=====";
+
+const char redirect2[]  PROGMEM = R"=====(	
+	<!DOCTYPE html><html>
+	<head>
+	<head><meta http-equiv='refresh' content='60' name=\'viewport\' content=\'width=device-width, initial-scale=1\'>
+	<link rel=\'icon\' href=\'data:,\'>
+	<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}
+	.button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;
+	text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
+	.button2 {background-color: #555555;}</style></head>
+	<body><h1>ESP32 Web Server with automatic refresh</h1>
+	  <p>GPIO 26 - State ' + output26State : '</p>
+	  <p><a href='/redirection1/redirection2/on1'><button id="mypin1" class='button'> ON </button></a></p>
+	  <p>GPIO 27 - State ' + output27State : '</p>
+	  <p><a href='/redirection1/redirection2/on2'><button id="mypin2" class='button'> ON </button></a></p>
+	  <p><a href='/redirection1/redirection2/exit'><button class='button'> Exit </button></a></p>
+	</body></html>
+	)=====";
+
+const char browser1[]  PROGMEM = R"=====(	
+	<!doctype html>
+	<html>
+	<head> <meta charset='UTF-8'> <title>Directory Contents</title> 	
+		<style>
+		* { padding:0; margin:0; }
+		body { color: #333; font: 14px Sans-Serif; padding: 50px; background: #eee; }
+		h1 { text-align: center; padding: 20px 0 12px 0; margin: 0; }
+		h2 { font-size: 16px; text-align: center; padding: 0 0 12px 0; }
+		#container { box-shadow: 0 5px 10px -5px rgba(0,0,0,0.5); position: relative; background: white; }
+		table { background-color: #F3F3F3; border-collapse: collapse; width: 100%; margin: 15px 0; }
+		th { background-color: #FE4902; color: #FFF; padding: 5px 10px; }
+		th small { font-size: 9px; }
+		td, th { text-align: left; }
+		td {cursor: pointer; }
+		a { text-decoration: none; }
+		td a { color: #663300; display: block; padding: 5px 10px;  }
+		th a { padding-left: 0 }
+		th:first-of-Type { padding-left: 35px; }
+		td:Not(:first-of-Type) a { background-image: none !important; }
+		tr:nth-of-Type(odd) { background-color: #E6E6E6; }
+		tr:hover td { background-color:#CACACA; }
+		tr:hover td a { color: #000; }	
+		</style>	
+	</head>
+	)=====";
+	
+const char browser2[]  PROGMEM = R"=====(	
+    <body>
+	  <div id='container'>
+	    <h1>Directory Contents</h1>
+  	  <div> <label><b>Current Directory : </b></label> <input Type='text' id='name0' name='name0' value=' - ' size='40' >
+	  &nbsp;&nbsp;&nbsp;<label>fs Total size:</label> <label id='label1'> </label>
+	  &nbsp;&nbsp;&nbsp;<label>fs Used size:</label> <label id='label2'> </label><div>
+	<table class='sortable' id='position'>
+	<thead> <tr> <th>Filename</th> <th>Type</th> <th>Size <small>(bytes)</small></th> <th>Date Modified</th> </tr>
+	)=====";
+
+const char browser3[]  PROGMEM = R"=====(
+	<label>NameOrg  </label> <input type="text" id="name1" name="name1" size="30">
+	<label>  NameNew  </label> <input type="text" id="name2" name="name2" size="30">
+	<label>  Type  </label> <input Type='text' id="name3" name="name3" size="4"> 
+	<label>  Dir/File  </label>		
+	<table class='DirActions'>
+	<thead>
+	  <tr>
+	    <td><button onclick="mypost('DOpen')  ;" id="myButton6" style="height:30px;width:100px" class="float-left submit-button" > Dir Open  </button></td>
+	    <td><button onclick="mypost('DClose')  ;" id="myButton6" style="height:30px;width:100px" class="float-left submit-button" > Dir Close  </button></td>
+	    <td><button onclick="mypost('DCreate');" id="myButton5" style="height:30px;width:100px" class="float-left submit-button" > Dir Create  </button></td>
+	    <td><button onclick="mypost('DDelete');" id="myButton4" style="height:30px;width:100px" class="float-left submit-button" > Dir Delete </button></td>
+	    <td><button onclick="mypost('Format');" id="myButton3" style="height:30px;width:100px" class="float-left submit-button" > Eprom Format </button></td>
+	  <tr>
+	</thead>
+	</table>
+	<table class='FileActions'>
+	<thead>	
+      <tr>
+	<form method="post" action = '/filebrowser/upload' enctype="multipart/form-data">
+	<td><input onchange="myupload();" Type="file" id="file1" name="file1"/> <button style="height:30px;width:100px">File Update</button></td>
+	</form>
+	    <td><button onclick="mypost('Download');" id="myButton2" style="height:30px;width:100px" class="float-left submit-button" >File Download</button></td>
+	    <td><button onclick="mypost('Rename');"   id="myButton3" style="height:30px;width:100px" class="float-left submit-button" >File Rename </button></td>
+	    <td><button onclick="mypost('Delete');"   id="myButton4" style="height:30px;width:100px" class="float-left submit-button" >File Delete </button></td>
+	  <tr>
+	</thead>
+	</table>	
+	</body>
+	</html>
+	)=====";
+	
+const char browser4[]  PROGMEM = R"=====(
+	<script>
+	function myFunction(txt) { var r = confirm(txt+" ?"); return r;  }
+	function myupload() {
+	  const ffile = document.getElementById("file1").files[0];
+	  const ffsize= (ffile.size).toString();
+	  file1.name= ffsize;
+	  }
+	function runMe(text) {
+	  var result = text.replace(/ /g, "");  var result1 = result.replace(/<td>/g, ""); var values = result1.split("</td>");
+	  name1.value =values[0];
+	  name3.value =values[1];
+	  if (name3.value !== 'Dir'){name3.value = 'File';}
+	  }
+	function mypost(text) {
+      var form = document.createElement('form'); form.action = '/filebrowser/action'; form.method = 'POST';
+	  var input = document.createElement('input');input.type = 'hidden'; input.name = 'action'; input.value = text; form.appendChild(input);
+	  var input = document.createElement('input');input.type = 'hidden'; input.name = name1.name; input.value = name1.value; form.appendChild(input);
+	  var input = document.createElement('input');input.type = 'hidden'; input.name = name2.name; input.value = name2.value; form.appendChild(input);
+	  var input = document.createElement('input');input.type = 'hidden'; input.name = name3.name; input.value = name3.value; form.appendChild(input);
+	  document.body.appendChild(form); form.submit(); 
+	  }	  
+	</script>
+	)=====";		
+								
+const char *const msg_table[] PROGMEM = {auth, base, getvar, postvar, redirect1, redirect2, browser1, browser2, browser3, browser4};
+const uint16_t msg_len[] =  {sizeof(auth), sizeof(base), sizeof(getvar), sizeof(postvar), sizeof(redirect1), sizeof(redirect2), sizeof(browser1), sizeof(browser2), sizeof(browser3), sizeof(browser4)};
+	
+char strx[3000];
+  
+B4R::Object* gethtml(B4R::Object* o) {
+	strcpy_P(strx, (char*)pgm_read_dword(&(msg_table[o->toLong()])));
+//	Serial.print("length_msg[");Serial.print(o->toLong());Serial.print("]= ");Serial.println(msg_len[o->toLong()]);		
+    b4r_main::_text->data = strx;
+    b4r_main::_text->length = msg_len[o->toLong()]-1; 
+    return 0; 
+}
+#end if
+

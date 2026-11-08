@@ -1,0 +1,112 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=MainPage.bjl
+File2=test.bjl
+FileGroup1=New Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=bctoast
+Library3=javaobject
+Library4=jcore
+Library5=jfx
+Library6=jreflection
+Library7=jshell
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\b4xVectEdit_component
+Module3=|relative|..\b4xVectEdit_pin
+Module4=|relative|..\b4xVectEdit_rect
+Module5=|relative|..\others
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=5
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Public KEY_CTRL_PRESSED As Boolean = False
+	Public KEY_SHIFT_PRESSED As Boolean = False
+	Dim toast As BCToast
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Show
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+	
+	AddKeyPressedListener(MainForm)
+	toast.Initialize(MainForm.RootPane)
+	toast.MaxHeight = 50
+End Sub
+
+'Template version: B4J-1.0
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region
+
+Sub AddKeyPressedListener(myf As Form)
+	Dim r As Reflector
+	r.Target = myf.RootPane
+	r.AddEventHandler("Main_KeyPressed", "javafx.scene.input.KeyEvent.KEY_PRESSED")
+	r.AddEventHandler("Main_KeyPressed", "javafx.scene.input.KeyEvent.KEY_RELEASED")
+End Sub
+
+Private Sub Main_KeyPressed_Event(e As Event)
+	Dim KE As Reflector
+	KE.Target = e 'e is a KeyEvent instance
+	'    Dim KeyChar As String = KE.RunMethod("getCharacter")
+	Dim KeyCode As String = KE.RunMethod("getCode")
+	'    Dim KeyText As String = KE.RunMethod("getText")
+	Dim EventType As String = KE.RunMethod("getEventType")
+	KEY_SHIFT_PRESSED = KE.RunMethod("isShiftDown")
+    
+'	Log(EventType)
+   
+	Select EventType
+        
+		Case "KEY_PRESSED"
+			Select KeyCode
+				Case "ESCAPE"
+					Log("ESC")
+'					If B4XPages.MainPage.menu.isOpen Then
+'						B4XPages.MainPage.menu.CloseMenu
+'					End If
+				Case "CONTROL"
+					KEY_CTRL_PRESSED = True
+			End Select
+        
+    
+		Case "KEY_RELEASED"
+			If KeyCode = "CONTROL" Then
+				KEY_CTRL_PRESSED = False
+			End If
+            
+            
+	End Select
+	e.Consume
+End Sub

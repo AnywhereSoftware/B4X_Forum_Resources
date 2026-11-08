@@ -1,0 +1,119 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=calendarcontent.bjl
+File2=calendarlayout.bjl
+File3=Layout1.bjl
+File4=popuplist.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+Module1=calendarlayout
+Module2=calendarlayout_Utils
+Module3=Popup
+NumberOfFiles=4
+NumberOfLibraries=5
+NumberOfModules=3
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1000
+	#MainFormHeight: 800 
+#End Region
+
+#if todo
+	Write resize in utils.
+#End If
+'https://www.b4x.com/android/forum/threads/b4x-set-date-format-with-locale.138604/#content
+
+#If ReleaseVersion
+	V1.00 initial version
+	V1.01
+		Update to change internal date parsing from text to numbers.
+	V1.02
+		Added LineColor to allow for dark mode
+		Added Today button (Displays current month)
+#End If
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+
+	Private CalendarLayout1 As calendarlayout
+	Private Data As Map
+	Type CalendarEntry(Time As String,Content As String)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.BackColor = fx.Colors.Red
+	Data.Initialize
+
+	Dim Now As Long = DateTime.Now
+	Dim Year As Int = DateTime.GetYear(Now)
+	Dim StartMonth  As Int = DateTime.GetMonth(Now)
+
+	Dim Format As String = DateTime.DateFormat
+	DateTime.DateFormat = "dd/MM/yyyyy"
+	Dim Text As String = "Appointment"
+	For i = 0 To 100
+		Dim Day As Int =  Rnd(1,29)
+		Dim Month As Int = Rnd(StartMonth,StartMonth + 3)
+		Dim Key As Long = DateTime.DateParse(Day & "/" & Month & "/" & Year)
+		
+		Dim Time As String =  NumberFormat2(Rnd(8,18),2,0,0,False) & ":" & NumberFormat2(Rnd(0,61),2,0,0,False)
+		
+		Dim L As List = Data.GetDefault(Key,NewList)
+		L.Add(CreateCalendarEntry(Time,Text))
+		Data.Put(Key,L)
+		
+	Next
+	
+	DateTime.DateFormat = Format
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+End Sub
+
+Public Sub CreateCalendarEntry (Time As String, Content As String) As CalendarEntry
+	Dim t1 As CalendarEntry
+	t1.Initialize
+	t1.Time = Time
+	t1.Content = Content
+	Return t1
+End Sub
+
+Private Sub NewList As List
+	Dim L As List
+	L.Initialize
+	Return L
+End Sub
+
+
+
+
+
+Private Sub CalendarLayout1_RequestData(Date As Long) As String
+	If Data.IsInitialized = False Then Return ""
+	Dim L As List  =  Data.GetDefault(Date,NewList)
+	L.SortType("Time",True)
+	Dim SB As StringBuilder
+	SB.Initialize
+	
+	For Each Cal As CalendarEntry In L
+		SB.Append(CRLF)
+		SB.Append(Cal.Time & " - " & Cal.Content)
+	Next
+	
+	If SB.ToString = "" Then Return ""
+	
+	Return SB.ToString.SubString((CRLF).As(String).Length)
+End Sub

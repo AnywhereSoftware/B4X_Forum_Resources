@@ -1,0 +1,91 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR Receiver to test dumping the output of a received remote controls (RC) signal.
+'				Tested NEC (KEYES 17-keys), Sony, Samsung, Philips RC6.
+'				Because the serial line is used, ensure to avoid logging any other info to the serial line as this will be received by the application connected.
+'				If want to log, then check for valid JSON string in the application connected.
+'				Do not connect the B4R IDE to the serial line if an application is connected.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The TX default pin is used as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+'Hints:			Set LONG DELAY after receive to avoid noise or multiple receives.
+
+'Log Example JSOn string for the NEC protocol pressing on the RC key 2 with HEX value 0x19 = JSON key command="19".
+'{"protocol":"NEC","address":"0","command":"19","repeatperiod":18059,"repeatcount":0,"repeat":0,"bits":32,"flags":0,"extra":0,"rawdata":3860463360,"pulses":[{"level":1,"duration":8850},{"level":0,"duration":4450},{"level":1,"duration":600},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":550},{"level":1,"duration":600},{"level":0,"duration":550},{"level":1,"duration":600},{"level":0,"duration":550},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":1700},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":1700},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":1700},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":600},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":600},{"level":0,"duration":550},{"level":1,"duration":600},{"level":0,"duration":550},{"level":1,"duration":550},{"level":0,"duration":1700},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":600},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":600},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550},{"level":0,"duration":1700},{"level":1,"duration":550},{"level":0,"duration":1650},{"level":1,"duration":550}],"pulsecount":67,"frameduration":67800,"rawticks":[177,89,12,12,11,12,11,12,11,11,12,11,12,11,11,12,11,12,11,34,11,33,11,34,11,33,11,34,11,33,11,33,12,33,11,33,12,11,12,11,11,34,11,33,11,12,11,12,11,12,11,12,11,33,12,33,11,12,11,12,11,33,11,34,11,33,11],"rawtickcount":67,"headermark":0,"headerspace":8850,"len":68}
+#End Region
+
+#Region Wiring
+'IR-Receiver KY-022 = Arduino UNO (wirecolor)
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVERDUMPTOSERIAL v20250520"
+
+	Private serialLine As Serial
+	Private irreceiver As IrReceiver
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+	
+	'Init the ireceiver with default pin 2 (see PinDefinitionsAndMore.h) and set the callback event NewData.
+	irreceiver.Initialize("NewData")
+	
+	'Set the dump to serial option
+	irreceiver.DumpToSerial = True
+
+	Log(CRLF, "[AppStart] waiting for commands from IR remote control...")
+End Sub
+
+'Handle new IR data received for all protocols including UNKNOWN.
+Private Sub NewData(data As IrDecodedData)
+	Log("[NewData] protocol=", data.Protocol)
+	
+'	Log("[NewData] +++")
+'	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", HexFromByte(data.Command), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+'	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",hex=",HexFromULong(data.RawDataDecoded))
+'	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal.
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+#Region HELPER
+'Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+'Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+'Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region

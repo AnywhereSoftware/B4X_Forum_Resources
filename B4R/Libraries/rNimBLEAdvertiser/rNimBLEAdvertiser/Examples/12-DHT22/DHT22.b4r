@@ -1,0 +1,177 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rnimbleadvertiser
+Library4=resp32dht
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+'==============================================
+' Project:		rNimBLEAdvertiser
+' Brief:		Advertise in regular intervals DHT22 data.
+' Date: 		2026-03-27
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Description:	Advertise the temperature & humidity data on every change.
+' DependsOn:	rESP32DHT, rConvert
+' Hardware:		ESP32
+' Wiring:		DHT22 = ESP32
+'				VCC(+) = 3V3
+'				Signal(out) = IO4
+'				GND(-) = GND
+' Packet:		EncodePayload
+' Data example:	58 19 01 01 07 58 29 00 00 00
+'				0  1  2  3  4  5  6  7  8  9
+' Data length:	10 bytes
+' Byte 0-1 (2):	Manufacturer Key 1958 as little endian
+' Byte 2 (1):	Protocol Header
+' Byte 3 (1):	Model Header
+' Byte 4-5 (2): Temperature (INT16, big endian, °C * 100)
+' Byte 6 (1):	Humidity
+' Byte 7 (1):	Padding
+' Byte 8 (1):	Padding
+' Byte 9 (1):	Padding
+
+' Example:
+' BLE Scanner Full Advertised Payload
+' 0x0201060BFF581901010758280000000A094234522D4448543232
+' 02 01 06: Flags (3 Bytes).
+' 0B FF 58 19 01 01 07 58 28 00 00 00: Manufacturer Data!
+' - 0B: Length (11 Bytes following)
+' - FF: Typ (Manufacturer Specific)
+' - 58 19: Deine Company ID 1958 (Little Endian)
+' - 01 01 07 58 28 00 00 00: DHT22-Sensordata
+' - 0A 09 42 34 52 2D 44 48 54 32 32: Device name.
+' - 0A: Length
+' - 09: Type (Complete Local Name)
+' - 42 34 52 ...: "B4R-DHT22" in ASCII.
+' HINT: Packet length 26 Bytes (3 Flags + 12 Manuf. + 11 Name), only 5 Bytes left! 31-Byte-Limit
+'
+' If the data is incorrect then payload like:
+' [EncodePayload][I] 58190101FFFFFF000000
+'==============================================
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rNimBLEAdvertiser DHT22 v20260326"
+	Public Serial1 As Serial
+	
+	' Sensor
+	Private DHT22 As ESP32DHT					'Lib rESP32DHT
+	Private DHT22_PIN_NUMBER As Byte = 4		'DHT22 signal connected ESP32 Plus pin#IO4
+	
+	' BLE
+	Private DEVICE_NAME As String = "B4R-DHT22"
+	Private Adv As NimBLEAdvertiser	
+	' Adv duration for NN MS, 0=forever
+	Private ADV_DURATION As ULong = 0
+End Sub
+
+Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart][I] ", VERSION)
+
+	' Sensor
+	DHT22.Initialize(DHT22.DHT22, DHT22_PIN_NUMBER, "OnStateChanged")
+
+	' BLE Advertiser
+	Adv.Initialize(DEVICE_NAME)
+	Adv.SetDebug(True)
+	Adv.Start(ADV_DURATION)
+	' OnStateChanged sets the manufacturer data
+
+	Log("[AppStart][I] BLE Advertiser started, duration=", ADV_DURATION, " (0=forever)")
+End Sub
+
+' Event DHT22 state changes either temperature or humidity change.
+' [OnStateChanged] t=18.8000 h=41.2000 h(int)=41
+' [EncodePayload][I] 58190101075829000000
+' [DecodePayload][I] Data=58190101075829000000
+' [DecodePayload][I] t=18.80 h=41
+Private Sub OnStateChanged(t As Float, h As Float)
+	Log("[OnStateChanged] t=",t, " h=",h, " h(int)=", h.As(Int))
+	
+	Dim payload() As Byte = EncodePayload(t, h.As(Int))
+
+	' [BuildPayload] [BuildPayload] 5819010100B750270000
+	Adv.SetManufacturerData(payload)
+	
+	' Check payload
+	DecodePayload(payload)
+End Sub
+
+' EncodePayload
+' Company: Reserved ID <1958>0x0101075829000000
+' Data example:	58 19 01 01 07 58 29 00 00 00
+'				0  1  2  3  4  5  6  7  8  9
+' Data length:	10 bytes
+' Byte 0-1 (2):	Manufacturer Key 1958 as little endian
+' Byte 2 (1):	Protocol Header
+' Byte 3 (1):	Model Header
+' Byte 4-5 (2): Temperature (INT16, big endian, °C * 100)
+' Byte 6 (1):	Humidity
+' Byte 7 (1):	Padding
+' Byte 8 (1):	Padding
+' Byte 9 (1):	Padding
+Private Sub EncodePayload(t As Float, h As Int) As Byte()
+
+    ' Temperature as INT16
+    Dim tempint As Int = Round(t * 100)
+
+    ' Extract bytes (big endian)
+    Dim t1 As Byte = Bit.And(Bit.ShiftRight(tempint,8),0xFF)
+    Dim t2 As Byte = Bit.And(tempint,0xFF)
+
+    Dim payload() As Byte = Array As Byte( _
+        0x58,0x19, _
+        0x01, _
+        0x01, _
+        t1,t2, _
+        h, _
+        0x00,0x00,0x00)
+
+    Log("[EncodePayload][I] ", Convert.BytesToHex(payload))
+    Return payload
+End Sub
+
+' DecodePayload
+' See BuildPayload header.
+Private Sub DecodePayload(payload() As Byte)
+	Log("[DecodePayload][I] Data=", Convert.BytesToHex(payload))
+
+	If payload.Length < 10 Then
+		Log("[DecodePayload][E] Payload too short!")
+		Return
+	End If
+
+	' Verify Company ID
+	If payload(0) <> 0x58 Or payload(1) <> 0x19 Then
+		Log("[DecodePayload][E] Wrong Company ID")
+		Return
+	End If
+
+	' rebuild signed INT16 temperature
+	Dim raw As Int = _
+        Bit.Or( _
+            Bit.ShiftLeft(Bit.And(payload(4),0xFF),8), _
+            Bit.And(payload(5),0xFF) _
+        )
+
+	' sign correction
+	If raw > 32767 Then raw = raw - 65536
+
+	Dim temp As Float = raw / 100.0
+
+	Dim hum As Int = Bit.And(payload(6),0xFF)
+
+	Log("[DecodePayload][I] t=", NumberFormat(temp,1,2), " h=", hum)
+End Sub
+

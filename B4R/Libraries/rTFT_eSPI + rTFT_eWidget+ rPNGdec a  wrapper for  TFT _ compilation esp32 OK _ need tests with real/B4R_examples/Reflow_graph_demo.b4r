@@ -1,0 +1,147 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rtft_espi
+Library4=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Monitors a thermocuple connected To SPI MAX31855 device
+
+'// Requires widget library here:
+'// https://github.com/Bodmer/TFT_eWidget
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+	Private GR As GraphWidget
+	Private GRid As ULong
+	Private TR As TraceWidget
+	Private thermocouple As LittleFS
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+ 	TFTid = TFT.Initialize(-1,-1)
+	GRid = GR.initialize(TFTid)
+	TR.initialize(GRid)
+	TFT.begin(0xFF)
+	TFT.setRotation(3)
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	TFT.setTextColor1(TFT.TFT_WHITE, TFT.color565(5, 5, 5),False)
+	TFT.setFreeFont(0) '(FF18 = FreeMonoBold18pt7b = FreeFont 0)
+	TFT.setTextPadding(TFT.textWidth1("888"))
+
+	GR.createGraph(200, 150, TFT.color565(5, 5, 5))
+	GR.setGraphGrid(0.0, 60.0, 25.0, 25.0, TFT.color565(15, 15, 15))
+	GR.setGraphScale(0.0, 300.0, 25.0, 225.0)
+	GR.drawGraph(40, 40)
+
+	'// Plot the solder melt temperature line (183 deg. C)
+	TR.startTrace(TFT.TFT_RED)
+	TR.addPoint(0.0, 183.0)
+	TR.addPoint(300.0, 183.0)
+
+	'// Plot the desired temperature profile
+	TR.startTrace(TFT.color565(100, 100, 100))
+	TR.addPoint(0.0, 25.0)
+	TR.addPoint(50.0, 120.0)
+	TR.addPoint(140.0, 170.0)
+	TR.addPoint(200.0, 225.0)
+	TR.addPoint(220.0, 225.0)
+	TR.addPoint(260.0, 150.0)
+
+	TR.startTrace(TFT.TFT_WHITE)
+
+	'// wait For Max chip To stabilize
+	Delay(500)
+
+	Log("Initializing sensor...")
+	If (Not(thermocouple.initialize)) Then
+		Log("thermocouple ERROR.")
+		Do While (True): Delay(10):Loop
+  	End If
+	Log("thermocouple init DONE.")
+
+	Dim c As Double = thermocouple.Position
+	If Not(IsNumber(c)) Then 
+		Log("Something wrong with thermocouple!")
+  	End If
+
+	AddLooper ("LocalLoop")
+End Sub
+
+Sub LocalLoop
+	Dim scanTime As ULong = Millis
+	Dim gx As Double = 0.0:Dim gy As Double= 25.0
+	Dim cool As bool= False
+	Dim cnt As UInt= 0
+	Dim c As Double
+
+	'// Sample periodically
+	If (Millis - scanTime >= 1000) Then
+		c = thermocouple.position  'readCelsius();
+		TFT.drawNumber1(c + 0.5, 40, 40)
+		TR.addPoint(gx, c)
+		gx = gx + 1.0
+
+		If (gy > 225.0) Then
+			gy = 224.0
+			cool = True
+			cnt = 0
+    	End If
+
+		If (cool) Then
+			If (cnt > 20) Then  gy = gy - 1.5
+			cnt = cnt + 1
+			If (gy < 25.0) Then
+				cool = False
+				GR.drawGraph(40, 40)
+				TR.startTrace(TFT.TFT_RED)
+				TR.addPoint(0.0, 183.0)
+				TR.addPoint(300.0, 183.0)
+
+				TR.startTrace(TFT.color565(100, 100, 100))
+				TR.addPoint(0.0, 25.0)
+				TR.addPoint(50.0, 120.0)
+				TR.addPoint(140.0, 170.0)
+				TR.addPoint(200.0, 225.0)
+				TR.addPoint(220.0, 225.0)
+				TR.addPoint(260.0, 150.0)
+
+				TR.startTrace(TFT.TFT_GREEN)
+				gx = 0.0
+     		End If
+		Else 
+			If (gy < 120) Or (gy > 170.0) Then gy = gy + 1.5 Else gy = gy + 0.40
+    	End If
+	scanTime = Millis
+  End If
+End Sub
+
+#if C
+   const GFXfont * B4R::B4RTFT_eSPI::GFXfonts[1]= { 
+      &FreeMonoBold18pt7b             // => setFreeFont(00)
+   };
+#End If

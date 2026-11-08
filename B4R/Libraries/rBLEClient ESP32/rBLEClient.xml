@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RBLEClient</name>
+        <shortname>BLEClient</shortname>
+        <comment>@file rBLEClient.h
+@brief ESP32 B4R library to connect or passively scan Bluetooth Low Energy (BLE) peripherals.
+
+@section author Author
+Created by Robert W.B. Linn on see Built below.
+
+@section license License
+Copyright © 2025 Robert W.B. Linn. All rights reserved.
+License: MIT — see LICENSE file.</comment>
+        <event>NewData (Buffer() As Byte)</event>
+        <event>Error (Code As Byte)</event>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>@brief Initializes the BLE client configuration.
+
+@param MAC           BLE peripheral MAC address.
+@param Service       Service UUID.
+@param TxChar        Characteristic UUID for writing (TX).
+@param RxChar        Characteristic UUID for notifications (RX). If NULL or empty, the TX characteristic is also used for RX.
+@param NewData       Callback when new data is received.
+@param OnError       Callback when an error occurs.
+@param Debug         Enable debug logging via Serial.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>MAC</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Service</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>TxChar</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>RxChar</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>NewData</name>
+                <type>SubVoidArray</type>
+            </parameter>
+            <parameter>
+                <name>OnError</name>
+                <type>SubVoidByte</type>
+            </parameter>
+            <parameter>
+                <name>Debug</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Connect">Connect</name>
+            <comment>@brief Connects to the BLE peripheral and discovers its service and characteristics.
+
+Scans for the device by MAC, creates a client, connects, and registers for notifications.
+
+@return true if connection succeeded, false otherwise.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="Disconnect">Disconnect</name>
+            <comment>@brief Disconnects from the connected BLE peripheral.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="IsConnected">IsConnected</name>
+            <comment>@brief Checks if the client is currently connected to the peripheral.
+
+@return true if connected, false otherwise.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="Write">Write</name>
+            <comment>@brief Writes a byte array to the TX characteristic of the connected peripheral.
+
+@param data Pointer to ArrayByte structure to send.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>data</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PassiveScan">PassiveScan</name>
+            <comment>@brief Performs a passive BLE scan with optional single-match mode.
+
+@param scanTimeSeconds Scan duration in seconds.
+@param onlyOnce        If true, scan exits when target device is found.
+@param timeoutSeconds  Max timeout in seconds for single-match mode.
+@return true if target found (onlyOnce mode), false otherwise.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>scanTimeSeconds</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>onlyOnce</name>
+                <type>bool</type>
+            </parameter>
+            <parameter>
+                <name>timeoutSeconds</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PassiveScanOnce">PassiveScanOnce</name>
+            <comment>@brief Convenience wrapper for single passive scan mode.
+
+@param timeoutSeconds Timeout in seconds.
+@return true if target found, false otherwise.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>timeoutSeconds</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="MAX_TIMEOUT_SECONDS">MAX_TIMEOUT_SECONDS</name>
+            <comment>Max timeout in seconds for passive scan</comment>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_NONE">ERROR_NONE</name>
+            <comment>Error codes</comment>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_ALREADY_CONNECTED">ERROR_ALREADY_CONNECTED</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_DEVICE_NOT_FOUND">ERROR_DEVICE_NOT_FOUND</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_CREATE_BLE_CLIENT">ERROR_CREATE_BLE_CLIENT</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_FAILED_TO_CONNECT">ERROR_FAILED_TO_CONNECT</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_SERVICE_NOT_FOUND">ERROR_SERVICE_NOT_FOUND</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_CHARACTERISTICS_NOT_FOUND">ERROR_CHARACTERISTICS_NOT_FOUND</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+        <field>
+            <name DesignerName="ERROR_CAN_NOT_WRITE_VALUE">ERROR_CAN_NOT_WRITE_VALUE</name>
+            <returntype>B4R::uint8_t</returntype>
+        </field>
+    </class>
+    <version>1.02</version>
+</root>

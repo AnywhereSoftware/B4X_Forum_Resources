@@ -1,0 +1,268 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xui views
+Library5=bctoast
+Module1=clsB4XSourceParser
+Module2=clsProjectScanner
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.5
+@EndOfDesignText@
+#Region VERSIONS
+' v. 1.00	09/03/2026
+#End Region
+
+#Region Project Attributes 
+    #MainFormWidth: 900
+    #MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+	Private ftfProjectFolder As B4XFloatTextField
+	Private btnSelectFolder As B4XView
+	Private taResult As TextArea
+	Private btnScan As B4XView
+	
+	Private mConfig As Map
+	Private Const CONFIG_FILE As String = "ProjScannerConfig.map"
+	
+	Private mToast As BCToast
+	Private btnToClipboard As B4XView
+	Private swtGrouped As B4XSwitch
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "Project scanner v. 1.00"
+	MainForm.Show
+	
+	mToast.Initialize(MainForm.RootPane)
+	
+	LoadConfig
+	RestoreLastFolder
+End Sub
+
+#Region VIEWS' EVENTS 
+
+Private Sub ftfProjectFolder_TextChanged (Old As String, New As String)
+	btnScan.Visible = (New <> "")
+End Sub
+
+' Opens a directory chooser dialog
+Private Sub btnSelectFolder_Click
+	Dim DirChooser As DirectoryChooser
+	DirChooser.Initialize
+	DirChooser.Title = "Select project folder"
+
+	Dim SelectedFolder As String = DirChooser.Show(MainForm)
+	If SelectedFolder <> Null And SelectedFolder.Trim <> "" Then
+		ftfProjectFolder.Text = SelectedFolder
+		mConfig.Put("LastProjectFolder", SelectedFolder)
+		SaveConfig
+	End If
+End Sub
+
+Private Sub taResult_TextChanged (Old As String, New As String)
+	btnToClipboard.Visible = (New.Length > 0)
+End Sub
+
+Private Sub btnToClipboard_Click
+	fx.Clipboard.SetString(taResult.Text)
+	mToast.Show("Copied to Clipboard.")
+End Sub
+
+#End Region
+
+' Loads configuration map from disk
+Private Sub LoadConfig
+	If File.Exists(File.DirApp, CONFIG_FILE) Then
+		mConfig = File.ReadMap(File.DirApp, CONFIG_FILE)
+	Else
+		mConfig.Initialize
+	End If
+End Sub
+
+' Saves configuration map to disk
+Private Sub SaveConfig
+	File.WriteMap(File.DirApp, CONFIG_FILE, mConfig)
+End Sub
+
+' Restores last scanned folder into the FloatTextField
+Private Sub RestoreLastFolder
+	If mConfig.ContainsKey("LastProjectFolder") Then
+		ftfProjectFolder.Text = mConfig.Get("LastProjectFolder")
+	End If
+End Sub
+
+' Executes project scan
+Private Sub btnScan_Click
+	Dim ProjectDir As String = ftfProjectFolder.Text.Trim
+	If Not(File.Exists(ProjectDir, "")) Then
+		mToast.Show("Folder does not exist.")
+		btnScan.Visible = False
+		Return
+	End If
+
+	Dim lstFiles As List = File.ListFiles(ProjectDir)
+
+	' --- Detect simple project (.b4a / .b4j / .b4i) ---
+	Dim IsSimple As Boolean
+	For Each FileName As String In lstFiles
+		Dim IndexOf As Int = FileName.LastIndexOf(".")
+		If IndexOf <> -1 Then
+			Dim FileExtn As String = FileName.ToLowerCase.SubString(IndexOf)
+			If FileExtn = ".b4a" Or FileExtn = ".b4j" Or FileExtn = ".b4i" Then
+				IsSimple = True
+				Exit
+			End If
+		End If
+	Next
+
+	' --- Detect B4XPages project (root contains B4XMainPage.bas) ---
+	Dim IsB4XPages As Boolean = File.Exists(ProjectDir, "B4XMainPage.bas")
+
+	' --- If neither, it's not a valid B4X project ---
+	If Not(IsSimple Or IsB4XPages) Then
+		mToast.Show("This folder does not contain a B4X project.")
+		btnScan.Visible = False
+		Return
+	End If
+
+	' --- Save last folder ---
+	mConfig.Put("LastProjectFolder", ProjectDir)
+	SaveConfig
+
+	taResult.Text = ""
+
+	' --- Run scan ---
+	If swtGrouped.Value Then
+		RunProjectScanGrouped(ProjectDir)
+	Else
+		RunProjectScan(ProjectDir)
+	End If
+End Sub
+
+Private Sub RunProjectScan(ProjectDir As String)
+	Dim ProjectScanner As clsProjectScanner
+	ProjectScanner.Initialize
+    
+	Dim sbResult As StringBuilder
+	sbResult.Initialize
+
+	' ScanProject ora restituisce direttamente List<tFileResult>
+	Dim ProjectResults As List = ProjectScanner.ScanProject(ProjectDir)
+
+	Dim ResultLine As String
+    
+	For Each FileResult As tFileResult In ProjectResults
+		ResultLine = $"--- File: ${FileResult.FileName}${CRLF}"$
+		sbResult.Append(ResultLine)
+
+		' Subs
+		ResultLine = $"${TAB}Declared Subs:${CRLF}"$
+		sbResult.Append(ResultLine)
+		For Each ParsedSub As tParsedSub In FileResult.Subs
+			ResultLine = $"${TAB}Sub: ${ParsedSub.Name}${TAB}Line: ${ParsedSub.Line}${CRLF}"$
+			sbResult.Append(ResultLine)
+		Next
+
+		' Constants (prima delle variabili)
+		ResultLine = $"${TAB}Declared Constants:${CRLF}"$
+		sbResult.Append(ResultLine)
+		For Each ParsedConst As tParsedConstant In FileResult.Consts
+			ResultLine = $"${TAB}Const: ${ParsedConst.Name}${TAB}Value: ${ParsedConst.Value}${TAB}Scope: ${ParsedConst.Scope}${TAB}Sub: ${ParsedConst.SubName}${TAB}Line: ${ParsedConst.Line}${CRLF}"$
+			sbResult.Append(ResultLine)
+		Next
+
+		' Variables
+		ResultLine = $"${TAB}Declared Variables:${CRLF}"$
+		sbResult.Append(ResultLine)
+		For Each ParsedVar As tParsedVariable In FileResult.Vars
+			ResultLine = $"${TAB}Var: ${ParsedVar.Name}${TAB}Type: ${ParsedVar.VarType}${TAB}Scope: ${ParsedVar.Scope}${TAB}Sub: ${ParsedVar.SubName}${TAB}Line: ${ParsedVar.Line}${CRLF}"$
+			sbResult.Append(ResultLine)
+		Next
+
+		sbResult.Append(CRLF)
+	Next
+    
+	taResult.Text = sbResult.ToString
+End Sub
+
+Private Sub RunProjectScanGrouped(ProjectDir As String)
+	Dim ProjectScanner As clsProjectScanner
+	ProjectScanner.Initialize
+
+	Dim sbResult As StringBuilder
+	sbResult.Initialize
+
+	' ScanProject ora restituisce direttamente List<tFileResult>
+	Dim ProjectResults As List = ProjectScanner.ScanProject(ProjectDir)
+
+	'===========================================================
+	' Rimuove duplicati basati sul percorso completo del file
+	'===========================================================
+	Dim Unique As Map
+	Unique.Initialize
+
+	For Each FR As tFileResult In ProjectResults
+		If Unique.ContainsKey(FR.FileName) = False Then
+			Unique.Put(FR.FileName, FR)
+		End If
+	Next
+
+	' Ora iteriamo solo sui file unici
+	For Each FileResult As tFileResult In Unique.Values
+		sbResult.Append($"--- File: ${FileResult.FileName}${CRLF}"$)
+
+		'===========================================================
+		' Subs + Constants + Variables grouped by Sub
+		'===========================================================
+		For Each ParsedSub As tParsedSub In FileResult.Subs
+			sbResult.Append($"${TAB}Sub: ${ParsedSub.Name}${TAB}Line: ${ParsedSub.Line}${CRLF}"$)
+
+			' Constants belonging to this Sub (PRIMA)
+			For Each ParsedConst As tParsedConstant In FileResult.Consts
+				If ParsedConst.SubName = ParsedSub.Name Then
+					sbResult.Append($"${TAB}${TAB}Const: ${ParsedConst.Name}${TAB}Value: ${ParsedConst.Value}${TAB}Scope: ${ParsedConst.Scope}${TAB}Line: ${ParsedConst.Line}${CRLF}"$)
+				End If
+			Next
+
+			' Variables belonging to this Sub (DOPO)
+			For Each ParsedVar As tParsedVariable In FileResult.Vars
+				If ParsedVar.SubName = ParsedSub.Name Then
+					sbResult.Append($"${TAB}${TAB}Var: ${ParsedVar.Name}${TAB}Type: ${ParsedVar.VarType}${TAB}Scope: ${ParsedVar.Scope}${TAB}Line: ${ParsedVar.Line}${CRLF}"$)
+				End If
+			Next
+		Next
+
+		'===========================================================
+		' Global Variables (SubName = "")
+		'===========================================================
+		Dim HasGlobalVars As Boolean
+		For Each ParsedVar As tParsedVariable In FileResult.Vars
+			If ParsedVar.SubName = "" Then
+				If HasGlobalVars = False Then
+					sbResult.Append($"${TAB}Global Variables:${CRLF}"$)
+					HasGlobalVars = True
+				End If
+				sbResult.Append($"${TAB}${TAB}Var: ${ParsedVar.Name}${TAB}Type: ${ParsedVar.VarType}${TAB}Scope: ${ParsedVar.Scope}${TAB}Line: ${ParsedVar.Line}${CRLF}"$)
+			End If
+		Next
+
+		sbResult.Append(CRLF)
+	Next
+
+	taResult.Text = sbResult.ToString
+End Sub

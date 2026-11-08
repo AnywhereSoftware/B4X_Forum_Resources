@@ -1,0 +1,74 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+File2=td_localize.xls
+File3=TDLocalize.db
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=core
+Library2=excel
+Library3=reflection
+Library4=xui
+Library5=sql
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+Module2=TD_Localize
+NumberOfFiles=3
+NumberOfLibraries=5
+NumberOfModules=2
+Version=12.8
+@EndOfDesignText@
+
+
+#Region  Project Attributes 
+	#ApplicationLabel: TD_Localize_Example
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	' #### Initialize localization
+	' use it with given locale
+	' leave Language empty to use device locale
+	'TD_Localize.readExcelToMap("en",True)
+	
+	' #### alternative Initialize localization From Database
+	' Transfer excel into database - manual Language
+	' leave Language empty to use device locale.
+	' Look if table has values and check used locale:
+	If TD_Localize.getLng = "" Then
+		' no vlaues for that locale found retrieve new values
+		TD_Localize.InitializeDB("")
+	End If
+		
+End Sub
+
+private Sub CustomPropertyExamples
+	
+	' ask for used locale of translated strings in the table
+	Log("Table contains strings for: " & TD_Localize.getLng)
+	
+	' retrive translated string of a given string key
+	Log(TD_Localize.getString("TD1"))
+End Sub

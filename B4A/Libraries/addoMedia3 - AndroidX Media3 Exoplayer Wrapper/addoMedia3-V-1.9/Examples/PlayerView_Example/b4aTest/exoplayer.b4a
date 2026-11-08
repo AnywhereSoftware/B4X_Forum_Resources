@@ -1,0 +1,292 @@
+﻿Build1=Default,com.addo.media3.cast
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=addomedia3
+Library2=core
+Library3=xui
+Library4=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>~\n~	)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~~\n~'End of default text.~\n~
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=12.96
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ExoPlayer Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#MultiDex: True
+#End Region
+
+#Region Additional libs
+
+#AdditionalJar: addoexo/media3-common-1.3.1.aar
+#AdditionalJar: addoexo/media3-container-1.3.1.aar
+#AdditionalJar: addoexo/media3-database-1.3.1.aar
+#AdditionalJar: addoexo/media3-datasource-1.3.1.aar
+#AdditionalJar: addoexo/media3-datasource-rtmp-1.3.1.aar
+#AdditionalJar: addoexo/media3-decoder-1.3.1.aar
+#AdditionalJar: addoexo/media3-exoplayer-1.3.1.aar
+#AdditionalJar: addoexo/media3-exoplayer-dash-1.3.1.aar
+#AdditionalJar: addoexo/media3-cast-1.3.1.aar
+#AdditionalJar: addoexo/media3-exoplayer-hls-1.3.1.aar
+#AdditionalJar: addoexo/media3-exoplayer-rtsp-1.3.1.aar
+#AdditionalJar: addoexo/media3-exoplayer-smoothstreaming-1.3.1.aar
+#AdditionalJar: addoexo/media3-extractor-1.3.1.aar
+#AdditionalJar: addoexo/media3-ui-1.3.1.aar
+#AdditionalJar: addoexo/rtmp-client-3.2.0.aar
+#AdditionalJar: addoexo/guava-31.1-android-without-listenable.jar
+#AdditionalJar: androidx.recyclerview:recyclerview
+#AdditionalJar: androidx.customview:customview-poolingcontainer
+#AdditionalJar: androidx.media:media
+#AdditionalJar: com.google.guava:listenablefuture
+
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Private addoPlayer As addoPlayer
+	Dim audiotracks_map As Map
+	Dim videoTracks_subtitles_map As Map
+	Private Timer1 As Timer
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+
+	Private SpeedBtn As Button
+
+
+	Private AudioLang As Spinner
+	Private TextLang As Spinner
+	Private Media3PlayerView1 As Media3PlayerView
+	Private screeenshotimage As ImageView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	
+	Activity.LoadLayout("Layout")
+	' set true if you want to enable cast
+	' important add the manifest code before running the app
+	addoPlayer.Initialize("player")
+	
+	audiotracks_map.Initialize
+	
+	videoTracks_subtitles_map.Initialize
+	
+	Dim sources As List
+	sources.Initialize
+	
+	sources.Add(addoPlayer.CreateHLSSource("https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"))
+		
+	' stream with multi audio languages test
+	sources.Add(addoPlayer.CreateUriSource("https://mirror.selfnet.de/CCC/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4"))
+	
+	' regular streams
+	sources.Add(addoPlayer.CreateUriSource("https://html5demos.com/assets/dizzy.mp4"))
+	sources.Add(addoPlayer.CreateDashSource("https://livesim.dashif.org/livesim/testpic_2s/Manifest.mpd"))
+	'sources.Add(addoPlayer.CreateRtspStreamingSource("Your Url"))
+	'sources.Add(addoPlayer.CreateRtmpStreamingSource("Your Url"))
+	
+	
+	addoPlayer.VideoScalingMode(2)
+	addoPlayer.CreateListSource(sources)
+	Media3PlayerView1.ResizeMode = "FILL"
+	Media3PlayerView1.Player = addoPlayer
+	
+	' Important to call this method Before Playing
+	addoPlayer.Prepare
+	addoPlayer.Play
+	
+	Timer1.Initialize("Timer1", 1000) ' 1-second interval
+	Timer1.Enabled = True
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+	If UserClosed = True Then
+		addoPlayer.Release
+	End If
+
+End Sub
+
+
+Private Sub SpeedBtn_Click
+	addoPlayer.PlaybackSpeed = 1.5
+End Sub
+
+
+' screen shot timer
+
+Sub Timer1_Tick
+	
+	If Not(Media3PlayerView1.IsInitialized) Then
+		Return
+	End If
+	Media3PlayerView1.takeScreenshot
+End Sub
+
+
+' Player events
+Sub Player_Ready
+	addoPlayer.TrackMetadata
+	Log("Ready")
+End Sub
+
+Sub Player_Error (Message As String)
+	Log("Error: " & Message)
+End Sub
+
+Sub Player_Complete
+	Log("complete")
+End Sub
+
+Sub Player_IDLE
+	Log("idle")
+
+End Sub
+
+Sub Player_Buffering
+	Log("buffering")
+End Sub
+
+Sub Player_TrackChanged
+	Log("TrackChanged")
+End Sub
+
+Sub Player_MetaData(metadataFields As Map)
+	addoPlayer.GetVideoTextLanguages2
+	addoPlayer.GetAudioTracksLanguages2
+End Sub
+
+
+Private Sub Player_GetVideoTextLanguages(Subtitles As Map)
+	Log("Video Text Languages " & Subtitles)
+End Sub
+
+Private Sub Player_GetVideoTextLanguages2(Subtitles As Map)
+	
+	videoTracks_subtitles_map.Clear
+	videoTracks_subtitles_map = Subtitles
+	
+	TextLang.Clear
+	
+	Log(videoTracks_subtitles_map)
+	
+	For Each langkey As String In videoTracks_subtitles_map.Keys
+		Try
+			TextLang.Add(langkey)
+		Catch
+			Log(LastException)
+		End Try
+			
+	Next
+	
+	
+End Sub
+
+Private Sub Player_Getaudiolanguages(audiotracks As Map)
+	Log("Video Audio Languages " & audiotracks)
+End Sub
+
+
+Sub Player_Getaudiolanguages2(audiotracks As Map)
+	audiotracks_map.Clear
+	
+	audiotracks_map = audiotracks
+	
+	AudioLang.Clear
+	
+	For Each langkey As String In audiotracks_map.Keys
+		Try
+			AudioLang.Add(langkey)
+			
+		Catch
+			Log(LastException)
+		End Try
+			
+	Next
+	
+	
+
+End Sub
+
+
+Private Sub TextLang_ItemClick (Position As Int, Value As Object)
+	
+	Dim langkey As String = Value
+	
+	If videoTracks_subtitles_map.ContainsKey(langkey) Then
+		
+		Dim subtitleslang As Map
+		subtitleslang = videoTracks_subtitles_map.Get(langkey)
+			
+		Dim label As String = subtitleslang.Get("Label")
+		Dim sampleMimeType As String = subtitleslang.Get("SampleMimeType")
+		Dim trackId As String = subtitleslang.Get("TrackId")
+		
+		Log(label)
+		Log(sampleMimeType)
+		
+		addoPlayer.SetTextLanguage2(trackId)
+		
+	End If
+	
+End Sub
+
+Private Sub AudioLang_ItemClick (Position As Int, Value As Object)
+	
+	Dim langkey As String = Value
+	
+	If audiotracks_map.ContainsKey(langkey) Then
+		
+		Dim audioLangMap As Map
+		audioLangMap = audiotracks_map.Get(langkey)
+			
+		Dim label As String = audioLangMap.Get("Label")
+		Dim sampleMimeType As String = audioLangMap.Get("SampleMimeType")
+		Dim trackId As String = audioLangMap.Get("TrackId")
+		
+		Log(label)
+		
+		Log(sampleMimeType)
+		
+		addoPlayer.SetAudioLanguage2(trackId)
+		
+	End If
+	
+End Sub
+
+
+
+Private Sub Media3PlayerView1_OnScreenShot(screensrc() As Byte)
+	Dim ImageBytes() As Byte = screensrc
+
+	' Convert byte array to B4XBitmap
+	Dim instream As InputStream
+	instream.InitializeFromBytesArray(ImageBytes, 0, ImageBytes.Length)
+    
+	Dim img As Bitmap
+	img.Initialize2(instream)
+
+	' Set the Bitmap to the ImageView
+	screeenshotimage.Bitmap = img
+	instream.Close
+End Sub

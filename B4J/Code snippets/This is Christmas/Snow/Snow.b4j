@@ -1,0 +1,69 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=landscape.jpg
+File2=Layout1.bjl
+File3=snowflake.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=New Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=3
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 450 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Public x(200) As Int, y(200) As Int, sizeofsnow(200), ptimer As Int=1
+	Public snowflake(200) As ImageView
+	Private aimg1 As Image
+	Private timer1 As Timer
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	For v = 0 To 100
+		x(v) = Rnd(0,MainForm.Height)
+		y(v) = Rnd(0,MainForm.Width)
+		aimg1.Initialize(File.DirAssets,"snowflake.png")
+		snowflake(v).Initialize("snow")
+		snowflake(v).SetImage(aimg1)
+		sizeofsnow(v)=10+Rnd(0,12)
+		MainForm.RootPane.AddNode(snowflake(v),y(v),x(v),sizeofsnow(v),sizeofsnow(v))
+	Next 
+	timer1.Initialize("timerr1",100)
+	timer1.Enabled=True
+End Sub
+
+Sub timerr1_tick
+	timer1.Enabled=False
+	MainForm.RootPane.RemoveAllNodes
+	Dim r As Int, s As Int
+	For v = 0 To 100
+		s = Rnd(1,10)
+		x(v) = (x(v) + s)
+		r = Rnd(1,10)
+		y(v) = y(v) + r
+		If x(v) > MainForm.Height Then
+			x(v) = -1
+		End If
+		If y(v) > MainForm.Width Then
+			y(v) = -1
+		End If
+		MainForm.RootPane.AddNode(snowflake(v),y(v),x(v),sizeofsnow(v),sizeofsnow(v))
+	Next
+	timer1.Enabled=True
+End Sub
+

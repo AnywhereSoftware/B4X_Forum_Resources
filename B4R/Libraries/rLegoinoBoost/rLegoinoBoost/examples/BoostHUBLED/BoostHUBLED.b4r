@@ -1,0 +1,137 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlegoinoboost
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+' BoostLED.b4r - Sample project for the B4R Library rLegoinoBoost.
+' Set the MoveHUB LED colors and set LED color depending batterylevel and voltagesensor.
+' 20211013 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "B4R Library rLegoinoBoost - BoostHUBLED v20211013"
+	Private DEBUG As Boolean = False	' True	
+	Public serialLine As Serial
+	Private moveHUB As LegoinoBoost
+	Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+	Private Const SHORT_DELAY As ULong = 2500
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init sensor with callback event, MAC adress 00:16:53:AE:9B:27 and debug flag
+	' The MAC address can be obtained using the hcitool or Android app Serial Bluetooth
+	moveHUB.Initialize("MoveHUB_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+	Log("Waiting for MoveHub Bluetooth connection: ", MOVEHUB_ADDRESS)
+End Sub
+
+' Handle the movehub bluetooth state changes for the proprty connected.
+' This event is triggered by the library rLegoinoBoost poller.
+Sub MoveHUB_StateChanged(Connected As Boolean)
+	If Connected Then
+		Log("MoveHUB StateChanged: Connected to ", moveHUB.Name)
+		' Log the LED colors
+		MoveHUB_LED_Colors
+		' Checks
+		BatteryLevel_Check(50)
+		Delay(SHORT_DELAY * 2)
+		VoltageSensor_Check(8.1)
+		Delay(SHORT_DELAY * 2)
+		' Shutdown
+		Log("HUB Shutting down...")
+		moveHUB.ShutDownHub
+		Log("Done")
+	Else
+		Log("MoveHUB StateChanged: Disconnected")
+	End If
+End Sub
+
+' List the moveHUB LED colors.
+Sub MoveHUB_LED_Colors
+	Log("MoveHUB LED Colors")
+	If moveHUB.Connected Then
+		'BLACK=0,PINK=1,PURPLE=2,BLUE=3,LIGHTBLUE=4,CYAN=5,GREEN=6,YELLOW=7,ORANGE=8,RED=9,WHITE=10,NONE=255
+		For i = 0 To 10
+			Select i
+				Case 0
+					Log("BLACK, ", i)
+				Case 1
+					Log("PINK, ", i)
+				Case 2
+					Log("PURPLE, ", i)
+				Case 3
+					Log("BLUE, ", i)
+				Case 4
+					Log("LIGHTBLUE, ", i)
+				Case 5
+					Log("CYAN, ", i)
+				Case 6
+					Log("GREEN, ", i)
+				Case 7
+					Log("YELLOW, ", i)
+				Case 8
+					Log("ORANGE, ", i)
+				Case 9
+					Log("RED, ", i)
+				Case 10
+					Log("WHITE, ", i)
+			End Select
+			moveHUB.SetLEDColor(i)
+			Delay(SHORT_DELAY)
+		Next
+		Log("NONE, 255")
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_NONE)
+		Delay(SHORT_DELAY * 2)
+		Log("RGB CYAN 0-255-255")
+		moveHUB.SetLEDRGBColor(0, 255, 255)
+		Delay(SHORT_DELAY * 2)
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_BLACK)
+		Delay(SHORT_DELAY * 2)
+		Log("HSV CYAN 180°, 100%, 50%")
+		moveHUB.SetLEDHSVColor(180, 1, 0.5)
+		Delay(SHORT_DELAY * 2)
+	End If
+End Sub
+
+' Check the battery level.
+' Example: If batterylevel < 20 then led=red else led=green.
+Sub BatteryLevel_Check(threshold As Int)
+	Log("Battery Level Check = ", NumberFormat(moveHUB.BatteryLevel,0,0), "%, Threshold = ", threshold, "%")
+	If moveHUB.BatteryLevel < threshold Then
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_RED)
+		Log("Battery LOW, MoveHUB LED RED")
+	Else
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_GREEN)
+		Log("Battery OK, MoveHUB LED GREEN")
+	End If
+End Sub
+
+' Check the voltage sensor level.
+' Example: If voltagesensor < 5.5 then led=red else led=green.
+Sub VoltageSensor_Check(threshold As Double)
+	Log("Voltage Sensor Check = ",NumberFormat(moveHUB.VoltageSensor,0,1),"V, Threshold = ", NumberFormat(threshold,0,1), "V")
+	If moveHUB.VoltageSensor < threshold Then
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_RED)
+		Log("Voltage LOW = LED RED")
+	Else
+		moveHUB.SetLEDColor(moveHUB.LED_COLOR_GREEN)
+		Log("Voltage OK = LED GREEN")
+	End If
+End Sub

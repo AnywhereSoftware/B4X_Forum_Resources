@@ -1,0 +1,82 @@
+﻿Build1=Default,com.expander.msn
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=lineutils
+Library3=xcustomlistview
+Library4=xui
+Library5=expander
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Expander Demo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#LibraryAuthor: epiCode
+	#LibraryName: Expander
+	#LibraryVersion: 2.0
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private clv1 As CustomListView
+'	Private lblTitle As B4XView
+'	Private pnlTitle As B4XView
+'	Private pnlExpanded As B4XView
+	Private xui As XUI
+	Private exp As Expander
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	
+	Dim b = $"Sed dignissim lacinia nunc. Curabitur tortor. Pellentesque nibh. Aenean quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem. Proin ut ligula vel nunc egestas porttitor. Morbi lectus risus, iaculis vel, suscipit quis, luctus non, massa. Fusce ac turpis quis ligula lacinia aliquet. Mauris ipsum. Nulla metus metus, ullamcorper vel, tincidunt sed, euismod in, nibh. Quisque volutpat condimentum velit. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. "$
+	
+	exp.Initialize(clv1)
+'	exp.ShowSingle = True
+Dim cs As CSBuilder
+cs.Initialize.Size(16).Color(Colors.Blue).Append("This is Item # ").PopAll
+exp.DesignerTitle.TextColor=Colors.Red
+	For i = 1 To 20
+		Dim k As CSBuilder
+		k.Initialize
+		exp.Additem( k.Append(cs).Append(i), b.SubString(Rnd(0,b.Length)),50dip,0)
+	Next
+	MsgboxAsync("Longpress any item to toggle ShowSingle Property","Info ")
+End Sub
+
+Sub clv1_ItemClick (Index As Int, Value As Object)
+	exp.ToggleItem(Index)
+End Sub
+
+Sub clv1_ItemLongClick (Index As Int, Value As Object)
+	exp.ShowSingle = Not(exp.ShowSingle)
+	ToastMessageShow("ShowSingle Toggled to " & exp.ShowSingle,True)
+End Sub
+
+
+Sub Activity_Resume
+	If False Then Log(Typeface.FONTAWESOME)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+

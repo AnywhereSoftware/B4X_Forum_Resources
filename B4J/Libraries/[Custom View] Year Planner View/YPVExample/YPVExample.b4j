@@ -1,0 +1,140 @@
+﻿AppType=JavaFX
+Build1=test,test.test.test
+File1=main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=jcore
+Library3=jfx
+Library4=xui views
+Library5=yearplannerview
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 440 
+	#PackagerProperty: ExeName = test
+
+#End Region
+
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+	Private YearPlanner1 As YearPlannerView
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+
+	MainForm.Show
+
+End Sub
+
+
+
+Private Sub MainForm_Resize(Width As Double, Height As Double)
+
+End Sub
+
+
+
+Private Sub YearPlanner1_DayLabelClick(EventData As MouseEvent, ClickedDate As String)
+	
+	Log("lastclicked: " & ClickedDate)
+	Dim m As Map = YearPlanner1.VisibleDayLabels
+	
+	Dim dld As DayLabelData = m.Get(ClickedDate)
+	Dim lbl As B4XView = dld.label
+	
+	Log("Date: " & dld.date)
+	Log("DayInYear:" & dld.dayInYear)
+	Log("Day Number: " & dld.dayNum)
+	Log("Month number: " & dld.row)
+	
+	If EventData.PrimaryButtonPressed Then
+		
+		lbl.Color = xui.Color_ARGB(120, 0, 0, 255)	'Color_Blue
+		
+	else if EventData.SecondaryButtonPressed Then
+		
+		lbl.Color = YearPlanner1.DayLabelColor
+		YearPlanner1.RemoveFromSelectedDays(ClickedDate)
+	End If		
+		
+End Sub
+
+
+
+Private Sub YearPlanner1_MonthLabelClick(EventData As MouseEvent, MonthNumber As Int)
+	
+	Log("month clicked: " & MonthNumber)
+	
+	For Each date As String In YearPlanner1.VisibleDayLabels.Keys	'date in yyyy-MM-dd as key, corresponding DayLabelData as value
+			
+		Dim dld As DayLabelData = YearPlanner1.VisibleDayLabels.Get(date)
+		If dld.row=MonthNumber Then
+			
+			Dim lbl As B4XView = dld.label
+			If EventData.PrimaryButtonPressed Then
+		
+				lbl.Color = xui.Color_ARGB(120, 0, 0, 255)	'Color_Blue
+		
+			else if EventData.SecondaryButtonPressed Then
+		
+				lbl.Color = YearPlanner1.DayLabelColor
+				YearPlanner1.RemoveFromSelectedDays(date)
+				
+			End If
+					
+		End If
+			
+	Next
+		
+End Sub
+
+
+
+Private Sub YearPlanner1_DaysHeaderLabelClick(EventData As MouseEvent, DayNumber As Int)
+	
+	Log("day clicked: " & DayNumber)
+	
+	For Each date As String In YearPlanner1.VisibleDayLabels.Keys	'date in yyyy-MM-dd as key, corresponding DayLabelData as value
+			
+		Dim dld As DayLabelData = YearPlanner1.VisibleDayLabels.Get(date)
+		If dld.dayNum=DayNumber Then
+			
+			Dim lbl As B4XView = dld.label
+			If EventData.PrimaryButtonPressed Then
+		
+				lbl.Color = xui.Color_ARGB(120, 0, 0, 255)	'Color_Blue
+		
+			else if EventData.SecondaryButtonPressed Then
+		
+				lbl.Color = YearPlanner1.DayLabelColor
+				YearPlanner1.RemoveFromSelectedDays(date)
+		
+			End If
+					
+			
+
+		End If
+			
+	Next
+		
+End Sub
+
+
+
+Private Sub YearPlanner1_YearChanged(year As Int)
+	Log(year)
+End Sub
+

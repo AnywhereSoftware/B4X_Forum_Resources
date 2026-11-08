@@ -1,0 +1,736 @@
+﻿Build1=Default,mp.webrtc
+Group=Default Group
+Library1=core
+Library2=mp_webrtc
+Library3=phone
+Library4=runtimepermissions
+Library5=websocket
+Library6=json
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~CreateResourceFromFile(Macro, MP_WebRTC.Manifest)
+Module1=Starter
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=1
+Version=13.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MP_WebRTC
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private WebRTC As MP_WebRTC
+	Private Socket As WebSocket
+	Private Phone As PhoneWakeState
+
+	Private pnlRemote As Panel
+	Private pnlLocal As Panel
+	Private pnlTop As Panel
+
+	Private lblUser As Label
+	Private lblStatus As Label
+
+	Private txtIP As EditText
+	Private lstUsers As ListView
+
+	Private btnCall As Button
+	Private btnHangup As Button
+	Private btnSwitchCamera As Button
+	Private btnMute As Button
+	Private btnSpeaker As Button
+
+	Private svExtra As ScrollView
+	Private btnScreenShare As Button
+	Private btnSendText As Button
+	Private txtMessage As EditText
+	
+	Private rp As RuntimePermissions
+
+	Private MyUser As String
+	Private SelectedUser As String = ""
+
+	Private PeerReady As Boolean = False
+	Private PeerCreating As Boolean = False
+	Private InCall As Boolean = False
+
+	Private ScreenSharing As Boolean = False
+	Private PendingCreateOffer As Boolean = False
+	Private PendingCreateAnswer As Boolean = False
+	Private PendingRemoteOffer As String = ""
+	Private PendingRemoteAnswer As String = ""
+	Private PendingCandidates As List
+
+	Private WS_URL As String = "ws://193.39.9.247:8443"
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	InitializeInterface
+	Wait For (AskForIP) Complete (IP As String)
+	WS_URL = $"ws://${IP}:8443"$
+	
+	MyUser = $"user_${Rnd(100,999)}"$
+	lblUser.Text = $"ID: ${MyUser}"$
+	lblStatus.Text = "Socket Connecting..."
+	PendingCandidates.Initialize
+
+	Wait For (RequestMediaPermissions) Complete (Result As Boolean)
+	If Not(Result) Then
+		lblStatus.Text = "Permissions denied"
+		ToastMessageShow("Permissions denied", True)
+		Return
+	End If
+	
+	WebRTC.Initialize("WebRTC", pnlLocal, pnlRemote)
+	WebRTC.AddIceServer("stun:stun.l.google.com:19302")
+	WebRTC.AddTurnServer("turn:193.39.9.247:3478","mpbyte","123456")
+	WebRTC.AddTurnServer("turn:193.39.9.247:3478?transport=udp","mpbyte","123456")
+	WebRTC.AudioManager.AudioMode = WebRTC.AudioManager.MODE_IN_CALL
+	WebRTC.AudioManager.AudioRoute = WebRTC.AudioManager.AUDIO_ROUTE_SPEAKER
+	WebRTC.AudioManager.IsMicrophoneEnabled = True
+	WebRTC.CameraManager.AutoQuality = True
+	WebRTC.LocalMirror(True)
+	If WebRTC.ScreenCapture.IsRunning Then WebRTC.ScreenCapture.StopCapture
+	
+	Socket.Initialize("Socket")
+	Socket.Connect(WS_URL)
+End Sub
+Sub Activity_Resume
+End Sub
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+#Region UI
+Private Sub InitializeInterface
+	Activity.Color = 0xFF101010
+	pnlRemote.Initialize("")
+	Activity.AddView(pnlRemote,0,0,100%x,64%y)
+
+	pnlTop.Initialize("")
+	pnlTop.Color = 0x77000000
+	Activity.AddView(pnlTop,3%x,2%y,64%x,9%y)
+	pnlTop.Background = CreateRoundRect(12dip,0x77000000,0,0)
+
+	lblUser.Initialize("")
+	lblUser.TextColor = Colors.White
+	lblUser.TextSize = 13
+	lblUser.Gravity = Gravity.CENTER_VERTICAL
+	pnlTop.AddView(lblUser,4%x,0,30%x,30dip)
+
+	lblStatus.Initialize("")
+	lblStatus.TextColor = 0xFF00E676
+	lblStatus.TextSize = 12
+	lblStatus.Gravity = Gravity.CENTER_VERTICAL + Gravity.LEFT
+	pnlTop.AddView(lblStatus,lblUser.Left,lblUser.Top+lblUser.Height,pnlTop.Width,30dip)
+
+	pnlLocal.Initialize("pnlLocal")
+	pnlLocal.Color = Colors.Black
+	pnlLocal.Elevation = 12dip
+	pnlLocal.Background = CreateRoundRect(10dip,Colors.Black,2dip,Colors.White)
+	Activity.AddView(pnlLocal,70%x,2%y,27%x,21%y)
+
+	svExtra.Initialize(0)
+	Activity.AddView(svExtra, 0, 66%y, 100%x, 30%y)
+	svExtra.Panel.Color = 0xFF101010
+	
+	lstUsers.Initialize("lstUsers")
+	lstUsers.Color = 0xFF181818
+	lstUsers.SingleLineLayout.Label.TextColor = Colors.White
+	svExtra.Panel.AddView(lstUsers, 3%x, 5dip, 94%x, 100dip)
+
+	Dim Row1_Top As Int = lstUsers.Top + lstUsers.Height + 10dip
+	Dim Btn_Height As Int = 8%y
+	
+	btnCall.Initialize("btnCall")
+	StyleButton(btnCall, 0xFF2E7D32)
+	btnCall.Text = "Call"
+	svExtra.Panel.AddView(btnCall, 3%x, Row1_Top, 17%x, Btn_Height)
+
+	btnHangup.Initialize("btnHangup")
+	StyleButton(btnHangup, 0xFFC62828)
+	btnHangup.Text="End"
+	svExtra.Panel.AddView(btnHangup, 22%x, Row1_Top, 17%x, Btn_Height)
+
+	btnSwitchCamera.Initialize("btnSwitchCamera")
+	StyleButton(btnSwitchCamera, 0xFF1565C0)
+	btnSwitchCamera.Text="Camera"
+	svExtra.Panel.AddView(btnSwitchCamera, 41%x, Row1_Top, 17%x, Btn_Height)
+
+	btnMute.Initialize("btnMute")
+	StyleButton(btnMute, 0xFF6A1B9A)
+	btnMute.Text="Mute"
+	svExtra.Panel.AddView(btnMute, 60%x, Row1_Top, 17%x, Btn_Height)
+
+	btnSpeaker.Initialize("btnSpeaker")
+	StyleButton(btnSpeaker, 0xFFEF6C00)
+	btnSpeaker.Text="Spk On"
+	svExtra.Panel.AddView(btnSpeaker, 79%x, Row1_Top, 18%x, Btn_Height)
+
+	Dim Row2_Top As Int = btnCall.Top + btnCall.Height + 10dip
+	
+	btnScreenShare.Initialize("btnScreenShare")
+	StyleButton(btnScreenShare, 0xFF00897B)
+	btnScreenShare.Text="Screen"
+	svExtra.Panel.AddView(btnScreenShare, 3%x, Row2_Top, 17%x, Btn_Height)
+
+	btnSendText.Initialize("btnSendText")
+	StyleButton(btnSendText, 0xFF3949AB)
+	btnSendText.Text="Send"
+	svExtra.Panel.AddView(btnSendText, btnSpeaker.Left, Row2_Top, 18%x, Btn_Height)
+
+	Dim editLeft As Int = btnScreenShare.Left + btnScreenShare.Width + 5dip
+	Dim editWidth As Int = btnSendText.Left - editLeft - 5dip
+
+	txtMessage.Initialize("")
+	txtMessage.TextColor = Colors.White
+	txtMessage.Color = 0xFF202020
+	txtMessage.HintColor = Colors.LightGray
+	txtMessage.Hint = "Message..."
+	svExtra.Panel.AddView(txtMessage, editLeft, Row2_Top, editWidth, Btn_Height)
+	svExtra.Panel.Height = btnSendText.Top + btnSendText.Height + 20dip
+
+End Sub
+Private Sub StyleButton(b As Button,color As Int)
+	b.Color = color
+	b.TextColor = Colors.White
+	b.TextSize = 12
+	b.Gravity = Gravity.CENTER
+	b.SingleLine = True
+	b.Background = CreateRoundRect(12dip,color,0,0)
+End Sub
+Private Sub CreateRoundRect(radius As Int,color As Int,stroke As Int,strokeColor As Int) As ColorDrawable
+	Dim cd As ColorDrawable
+	cd.Initialize2(color,radius,stroke,strokeColor)
+	Return cd
+End Sub
+Private Sub AskForIP As ResumableSub
+	Dim pnlIP As Panel
+	pnlIP.Initialize("pnlIP")
+	pnlIP.Color=0xCC000000
+	Activity.AddView(pnlIP,0,0,100%x,100%y)
+
+	Dim card As Panel
+	card.Initialize("")
+	card.Color=Colors.White
+	card.Background=CreateRoundRect(16dip,Colors.White,0,Colors.Transparent)
+	Dim CardWidth As Int=80%x
+	Dim CardHeight As Int=150dip
+	pnlIP.AddView(card,(100%x-CardWidth)/2,(100%y-CardHeight)/2,CardWidth,CardHeight)
+
+	txtIP.Initialize("")
+	txtIP.Text="193.39.9.247"
+	txtIP.Hint="Server IP"
+	txtIP.TextColor=Colors.Black
+	txtIP.HintColor=Colors.Gray
+	txtIP.Color=0xFFF5F5F5
+	txtIP.Background=CreateRoundRect(8dip,0xFFF5F5F5,1dip,0xFFD0D0D0)
+	card.AddView(txtIP,15dip,20dip,card.Width-30dip,45dip)
+
+	Dim btnOK As Button
+	btnOK.Initialize("btnOK")
+	btnOK.Text="Connect"
+	btnOK.TextColor=Colors.White
+	btnOK.Color=0xFF2196F3
+	btnOK.Background=CreateRoundRect(8dip,0xFF2196F3,0,Colors.Transparent)
+	card.AddView(btnOK,15dip,85dip,card.Width-30dip,45dip)
+
+	txtIP.RequestFocus
+	Wait For btnOK_Click
+	Dim mIP As String = txtIP.Text.Trim
+	pnlIP.RemoveView
+	Return mIP
+End Sub
+Private Sub RequestMediaPermissions As ResumableSub
+	rp.CheckAndRequest(rp.PERMISSION_CAMERA)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Not(Result) Then Return False
+
+	rp.CheckAndRequest(rp.PERMISSION_RECORD_AUDIO)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Not(Result) Then Return False
+	
+	rp.CheckAndRequest(rp.PERMISSION_POST_NOTIFICATIONS)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Not(Result) Then Return False
+
+	Return True
+End Sub
+#End Region
+
+#Region Clicks
+Private Sub pnlIP_Click
+End Sub
+Private Sub btnOK_Click
+	If txtIP.Text.Trim = "" Then
+		ToastMessageShow("Enter IP",False)
+		Return
+	End If
+End Sub
+Private Sub pnlLocal_Click
+	WebRTC.SwapLocalRemoteView(True)
+	If WebRTC.ViewsSwapped Then WebRTC.ClearLocalView Else WebRTC.ClearRemoteView
+	UpdateViewsState
+End Sub
+Private Sub lstUsers_ItemClick(Position As Int,Value As Object)
+	SelectedUser = Value
+	lblStatus.Text = $"Selected: ${SelectedUser}"$
+End Sub
+Private Sub btnCall_Click
+	If SelectedUser = "" Then
+		ToastMessageShow("اول یک کاربر را انتخاب کن",False)
+		Return
+	End If
+
+	If SelectedUser = MyUser Then
+		ToastMessageShow("نمی‌توانی به خودت زنگ بزنی",False)
+		Return
+	End If
+
+	If InCall Then
+		ToastMessageShow("الان داخل تماس هستی",False)
+		Return
+	End If
+
+	lblStatus.Text = $"Calling ${SelectedUser}..."$
+
+	Dim m As Map
+	m.Initialize
+	m.Put("type", "call_request")
+	m.Put("from", MyUser)
+	m.Put("to", SelectedUser)
+	SendSignal(m)
+End Sub
+Private Sub btnHangup_Click
+	If SelectedUser <> "" Then
+		Dim m As Map
+		m.Initialize
+		m.Put("type", "hangup")
+		m.Put("from", MyUser)
+		m.Put("to", SelectedUser)
+		SendSignal(m)
+	End If
+	WebRTC.Hangup
+	ResetPeerState
+	lblStatus.Text = "Call ended"
+End Sub
+Private Sub btnSwitchCamera_Click
+	If Not(WebRTC.ScreenCapture.IsRunning) Then
+		If WebRTC.CameraManager.IsFrontCamera Then
+			WebRTC.CameraManager.SwitchToLens(WebRTC.CameraManager.LENS_BACK)
+		Else
+			WebRTC.CameraManager.SwitchToLens(WebRTC.CameraManager.LENS_FRONT)
+		End If
+	Else
+		ToastMessageShow("Please stop screen sharing before switching the camera.", True)
+	End If
+End Sub
+Private Sub btnMute_Click
+	WebRTC.AudioManager.IsMicrophoneEnabled = Not(WebRTC.AudioManager.IsMicrophoneEnabled)
+End Sub
+Private Sub btnSpeaker_Click
+	If WebRTC.AudioManager.AudioRoute = WebRTC.AudioManager.AUDIO_ROUTE_EARPIECE Then
+		WebRTC.AudioManager.AudioRoute = WebRTC.AudioManager.AUDIO_ROUTE_SPEAKER
+	Else
+		WebRTC.AudioManager.AudioRoute = WebRTC.AudioManager.AUDIO_ROUTE_EARPIECE
+	End If
+End Sub
+Private Sub btnScreenShare_Click
+	If Not(InCall) Then Return
+	If ScreenSharing = False Then
+		WebRTC.ScreenCapture.RequestPermission
+	Else
+		WebRTC.ScreenCapture.StopCapture
+	End If
+End Sub
+Private Sub btnSendText_Click
+	If InCall = False Then Return
+	If txtMessage.Text = "" Then Return
+	WebRTC.DataChannelManager.SendText("chat", txtMessage.Text)
+	txtMessage.Text = ""
+End Sub
+#End Region
+
+#Region Socket
+Private Sub Socket_Connected
+	lblStatus.Text = "Socket connected"
+
+	Dim m As Map
+	m.Initialize
+	m.Put("type","join")
+	m.Put("username",MyUser)
+	SendSignal(m)
+End Sub
+Private Sub Socket_Closed (Reason As String)
+	lblStatus.Text = "Socket disconnected"
+End Sub
+Private Sub Socket_TextMessage (Message As String)
+	HandleSignal(Message)
+End Sub
+#End Region
+
+#Region WebRTC-Events
+Private Sub WebRTC_onPeerReady
+	PeerReady = True
+	PeerCreating = False
+	lblStatus.Text = "Peer ready"
+	WebRTC.DataChannelManager.Create("chat")
+'	WebRTC.SetVideoBitrate(WebRTC.VideoBitrateLevels.VIDEO_BITRATE_LOW_MIN, WebRTC.VideoBitrateLevels.VIDEO_BITRATE_HD_MAX)
+	FlushPendingAfterPeerReady
+End Sub
+Private Sub WebRTC_onOfferCreated(Sdp As String)
+	Dim m As Map
+	m.Initialize
+	m.Put("type","offer")
+	m.Put("from",MyUser)
+	m.Put("to",SelectedUser)
+	m.Put("sdp",Sdp)
+	SendSignal(m)
+	lblStatus.Text = "Offer created"
+End Sub
+Private Sub WebRTC_onAnswerCreated(Sdp As String)
+	Dim m As Map
+	m.Initialize
+	m.Put("type","answer")
+	m.Put("from",MyUser)
+	m.Put("to",SelectedUser)
+	m.Put("sdp",Sdp)
+	SendSignal(m)
+	lblStatus.Text = "Answer created"
+End Sub
+Private Sub WebRTC_onIceCandidate(SdpMid As String, SdpMLineIndex As Int, Candidate As String)
+	Dim m As Map
+	m.Initialize
+	m.Put("type","ice_candidate")
+	m.Put("from",MyUser)
+	m.Put("to",SelectedUser)
+	m.Put("sdpMid",SdpMid)
+	m.Put("sdpMLineIndex",SdpMLineIndex)
+	m.Put("candidate",Candidate)
+	SendSignal(m)
+End Sub
+Private Sub WebRTC_onIceGatheringStateChanged(State As String)
+	Log($"ICE Gathering ${State}"$)
+End Sub
+Private Sub WebRTC_onConnectionStateChanged(State As String)
+	Log($"Connection: ${State}"$)
+	If Not(State = WebRTC.STATE_READY) Then lblStatus.Text = $"Connection: ${State}"$
+	If State = WebRTC.STATE_READY Then WebRTC.StartLocalCapture
+	If State = WebRTC.STATE_CONNECTED Then
+		InCall = True
+		Phone.KeepAlive(True)
+	End If
+	If State = WebRTC.STATE_FAILED Or State = WebRTC.STATE_CLOSED Or State = WebRTC.STATE_DISCONNECTED Then
+		Phone.KeepAlive(False)
+	End If
+	If State = WebRTC.STATE_ENDED Then
+		If WebRTC.ScreenCapture.IsRunning Then WebRTC.ScreenCapture.StopCapture
+		If WebRTC.ViewsSwapped Then WebRTC.ClearLocalView Else WebRTC.ClearRemoteView
+		UpdateViewsState
+	End If
+End Sub
+Private Sub WebRTC_onRemoteVideoReady
+	lblStatus.Text = "Remote video ready"
+End Sub
+Private Sub WebRTC_Hangup
+	lblStatus.Text = "Call ended"
+	ResetPeerState
+End Sub
+Private Sub WebRTC_onReleased
+	lblStatus.Text = "Released"
+End Sub
+Private Sub WebRTC_onError(Message As String, Code As Int)
+	lblStatus.Text = $"Error: ${Message} | Code: ${Code}"$
+	ToastMessageShow(lblStatus.Text,True)
+	Log(lblStatus.Text)
+End Sub
+
+Private Sub WebRTC_onMicrophoneStateChanged(Enabled As Boolean)
+	btnMute.Text = IIf(Enabled, "Mute", "Unmute")
+End Sub
+Private Sub WebRTC_onAudioRouteChanged(Route As String)
+	btnSpeaker.Text = IIf(Route = WebRTC.AudioManager.AUDIO_ROUTE_SPEAKER, "Spk On", "Spk Off")
+End Sub
+
+Private Sub WebRTC_ScreenCapturePermission(Result As Boolean)
+	If Result Then
+		Dim n As Notification
+		n.Initialize
+		n.Icon = "icon"
+		n.AutoCancel = False
+		n.OnGoingEvent = True
+		n.SetInfo("Screen Sharing", "Your screen is being shared", Me)
+		WebRTC.ScreenCapture.SetCustomNotification(n)
+		WebRTC.ScreenCapture.StartCapture(1280, 720, 30)
+	End If
+End Sub
+Private Sub WebRTC_ScreenCaptureChanged(Enabled As Boolean)
+	ScreenSharing = Enabled
+	If Enabled Then
+		btnScreenShare.Text = "Camera"
+		lblStatus.Text = "Screen sharing"
+	Else
+		UpdateViewsState
+		btnScreenShare.Text = "Screen"
+		lblStatus.Text = "Camera sharing"
+	End If
+End Sub
+
+Private Sub WebRTC_onCameraLensChanged(IsFrontCamera As Boolean, LensType As String, CameraIndex As Int)
+	Log($"Camera Changed: Front: ${IsFrontCamera}, Lens: ${LensType}, Index: ${CameraIndex}"$)
+	UpdateViewsState
+End Sub
+
+Private Sub WebRTC_onDataChannelStateChanged(State As String)
+	If State = WebRTC.DataChannelManager.DATA_CHANNEL_OPEN Then ToastMessageShow("Chat Ready",False)
+End Sub
+Private Sub WebRTC_onTextReceived(Tag As String, Message As String)
+	ToastMessageShow($"Tag: ${Tag} | Message: ${Message}"$, True)
+	Log($"Tag: ${Tag} | Message: ${Message}"$)
+End Sub
+#End Region
+
+#Region Engine
+Public Sub UpdateViewsState
+	WebRTC.LocalMirror(Not(WebRTC.ViewsSwapped) And WebRTC.CameraManager.IsFrontCamera)
+	WebRTC.RemoteMirror(WebRTC.ViewsSwapped And WebRTC.CameraManager.IsFrontCamera)
+End Sub
+Private Sub HandleSignal(Text As String)
+	Dim Parser As JSONParser
+	Parser.Initialize(Text)
+	Dim Data As Map = Parser.NextObject
+
+	Dim msgType As String = ""
+	If Data.ContainsKey("type") Then msgType = Data.Get("type")
+
+	Dim fromUser As String = ""
+	If Data.ContainsKey("from") Then fromUser = Data.Get("from")
+
+	Select msgType
+		Case "users"
+			UpdateUserList(Data)
+
+		Case "incoming_call"
+			HandleIncomingCall(fromUser)
+
+		Case "call_response"
+			If Data.ContainsKey("accepted") Then
+				Dim accepted As Boolean = Data.Get("accepted")
+				If accepted Then
+					SelectedUser = fromUser
+					lblStatus.Text = "Call accepted by " & fromUser
+					InCall = True
+					Phone.KeepAlive(True)
+					StartOfferFlow
+				Else
+					lblStatus.Text = "Call rejected by " & fromUser
+					ResetPeerState
+				End If
+			End If
+
+		Case "offer"
+			If fromUser <> "" Then SelectedUser = fromUser
+			InCall = True
+			Phone.KeepAlive(True)
+			HandleRemoteOffer(Data.Get("sdp"))
+
+		Case "answer"
+			If fromUser <> "" Then SelectedUser = fromUser
+			HandleRemoteAnswer(Data.Get("sdp"))
+
+		Case "ice_candidate"
+			If fromUser <> "" Then SelectedUser = fromUser
+			HandleRemoteCandidate(Data)
+
+		Case "hangup"
+			lblStatus.Text = "Call ended by " & fromUser
+			WebRTC.Hangup
+			ResetPeerState
+
+	End Select
+End Sub
+Private Sub UpdateUserList(data As Map)
+	lstUsers.Clear
+
+	If data.ContainsKey("users") = False Then
+		lblStatus.Text = "Connected"
+		Return
+	End If
+
+	Dim users As List = data.Get("users")
+	If users.IsInitialized = False Then
+		lblStatus.Text = "Connected"
+		Return
+	End If
+
+	For Each u As String In users
+		If u <> MyUser Then
+			lstUsers.AddSingleLine(u)
+		End If
+	Next
+
+	If lstUsers.Size = 0 Then
+		lblStatus.Text = "Connected - no users"
+	Else
+		lblStatus.Text = "Users online : " & lstUsers.Size
+	End If
+End Sub
+Private Sub HandleIncomingCall(user As String)
+	If user = "" Then Return
+
+	Msgbox2Async("تماس از " & user,"Incoming Call","Accept","","Reject",Null,False)
+	Wait For Msgbox_Result(res As Int)
+
+	Dim m As Map
+	m.Initialize
+	m.Put("type","call_response")
+	m.Put("from",MyUser)
+	m.Put("to",user)
+
+	If res = DialogResponse.POSITIVE Then
+		SelectedUser = user
+		InCall = True
+		Phone.KeepAlive(True)
+		lblStatus.Text = "Accepted call from " & user
+		m.Put("accepted", True)
+		SendSignal(m)
+	Else
+		lblStatus.Text = "Rejected call from " & user
+		m.Put("accepted", False)
+		SendSignal(m)
+		ResetPeerState
+	End If
+End Sub
+Private Sub HandleRemoteCandidate(data As Map)
+	Dim c As Map
+	c.Initialize
+	c.Put("sdpMid", data.Get("sdpMid"))
+	c.Put("sdpMLineIndex", data.Get("sdpMLineIndex"))
+	c.Put("candidate", data.Get("candidate"))
+
+	If PeerReady Then
+		Dim sdpMid As String = c.Get("sdpMid")
+		Dim sdpMLineIndex As Int = c.Get("sdpMLineIndex")
+		Dim candidate As String = c.Get("candidate")
+		WebRTC.AddIceCandidate(sdpMid,sdpMLineIndex,candidate)
+	Else
+		PendingCandidates.Add(c)
+		CreatePeerIfNeeded
+	End If
+End Sub
+Private Sub StartOfferFlow
+	If PeerReady Then
+		WebRTC.CreateOffer
+	Else
+		PendingCreateOffer = True
+		CreatePeerIfNeeded
+	End If
+End Sub
+Private Sub HandleRemoteOffer(sdp As String)
+	If PeerReady Then
+		WebRTC.SetRemoteOffer(sdp)
+		WebRTC.CreateAnswer
+	Else
+		PendingRemoteOffer = sdp
+		PendingCreateAnswer = True
+		CreatePeerIfNeeded
+	End If
+End Sub
+Private Sub HandleRemoteAnswer(sdp As String)
+	If PeerReady Then
+		WebRTC.SetRemoteAnswer(sdp)
+	Else
+		PendingRemoteAnswer = sdp
+		CreatePeerIfNeeded
+	End If
+End Sub
+Private Sub CreatePeerIfNeeded
+	If PeerReady = False And PeerCreating = False Then
+		PeerCreating = True
+		WebRTC.CreatePeerConnection
+	End If
+End Sub
+Private Sub FlushPendingAfterPeerReady
+	If PendingRemoteOffer <> "" Then
+		Dim sdpOffer As String = PendingRemoteOffer
+		PendingRemoteOffer = ""
+		WebRTC.SetRemoteOffer(sdpOffer)
+		If PendingCreateAnswer Then
+			PendingCreateAnswer = False
+			WebRTC.CreateAnswer
+		End If
+	End If
+
+	If PendingRemoteAnswer <> "" Then
+		Dim sdpAnswer As String = PendingRemoteAnswer
+		PendingRemoteAnswer = ""
+		WebRTC.SetRemoteAnswer(sdpAnswer)
+	End If
+
+	If PendingCandidates.IsInitialized And PendingCandidates.Size > 0 Then
+		For Each c As Map In PendingCandidates
+			Dim sdpMid As String = c.Get("sdpMid")
+			Dim sdpMLineIndex As Int = c.Get("sdpMLineIndex")
+			Dim candidate As String = c.Get("candidate")
+			WebRTC.AddIceCandidate(sdpMid,sdpMLineIndex,candidate)
+		Next
+		PendingCandidates.Clear
+	End If
+
+	If PendingCreateOffer Then
+		PendingCreateOffer = False
+		WebRTC.CreateOffer
+	End If
+End Sub
+Private Sub SendSignal(m As Map)
+	Dim j As JSONGenerator
+	j.Initialize(m)
+	Socket.SendText(j.ToString)
+End Sub
+Private Sub ResetPeerState
+	InCall = False
+	PeerReady = False
+	PeerCreating = False
+	PendingCreateOffer = False
+	PendingCreateAnswer = False
+	PendingRemoteOffer = ""
+	PendingRemoteAnswer = ""
+	SelectedUser = ""
+	If PendingCandidates.IsInitialized Then PendingCandidates.Clear
+	Phone.KeepAlive(False)
+End Sub
+#End Region
+
+'------------------------------------------------------------------------------
+' MP_WebRTC Library
+' Professional WebRTC Library for B4A
+'
+' Version   : 1.0
+' Developer : Mohammad Reza Pirzadeh
+' Country   : Developed in the Islamic Republic of Iran 🇮🇷
+'
+' Telegram Channel : https://t.me/B4X_Room
+' Telegram Group   : https://t.me/B4X_Academy
+'
+' © 2026 MohammadReza Pirzadeh
+'
+' This library was created with passion to bring professional WebRTC
+' capabilities to the B4A ecosystem, including Voice Calls, Video Calls,
+' and Screen Sharing.
+'
+' Released FREE for the entire B4X community.
+' Knowledge grows when it is shared.
+'
+' Thank you for using MP_WebRTC ❤️
+'------------------------------------------------------------------------------

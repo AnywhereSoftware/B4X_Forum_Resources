@@ -1,0 +1,225 @@
+﻿Build1=Default,wbauer.Konaktverlinkung
+File1=1.bal
+File2=contacts_icon.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=contentresolver
+Library2=core
+Library3=javaobject
+Library4=runtimepermissions
+Library5=sql
+Library6=xcustomlistview
+Library7=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission("android.permission.READ_CONTACTS")~\n~AddPermission("com.android.launcher.permission.INSTALL_SHORTCUT")~\n~~\n~
+Module1=ContactsUtils
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=2
+Version=13
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: contact linking
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private cu As ContactsUtils
+	Private rp As RuntimePermissions
+End Sub
+
+Sub Globals
+	Private ImageView1 As B4XView
+	Private EditText1 As B4XView
+	Private CLV1 As CustomListView
+	Private SearchInput As EditText 	'Searchfield for contacts
+	Private allContacts As List 		'List with all contacts
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	If FirstTime Then
+		cu.Initialize
+	End If
+	Activity.LoadLayout("1")
+
+	Wait For (CheckPermissions) Complete (Success As Boolean)
+	If Success Then
+		allContacts = cu.FindAllContacts(True)
+		allContacts.SortType("DisplayName", True)
+		UpdateContactList("") 			'Show all contacts
+	Else
+		ToastMessageShow("No permission", True)
+	End If
+End Sub
+
+Sub UpdateContactList(filter As String)
+	' Filtering of contactlist by SearchInput
+	CLV1.Clear 
+    
+	' Add only the contacts to the list that contain the content of the field SearchInput
+	For Each c As cuContact In allContacts
+		If filter = "" Or c.DisplayName.ToLowerCase.Contains(filter.ToLowerCase) Then
+			CLV1.AddTextItem(c.DisplayName, c)
+		End If
+	Next
+End Sub
+
+' TextChanged event of SearchInput, which is automatically called when the text changes.
+Sub SearchInput_TextChanged (Old As String, New As String)
+	UpdateContactList(New) ' Updates the list based on the search text.
+End Sub
+
+
+Sub CheckPermissions As ResumableSub
+	For Each per In Array(rp.PERMISSION_READ_CONTACTS)			', rp.PERMISSION_WRITE_CONTACTS
+		rp.CheckAndRequest(per)
+		Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+		If Result = False Then Return False
+	Next
+	Return True
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub CLV1_ItemLongClick (Index As Int, Value As Object)
+	Dim c As cuContact = Value
+	CLV1_ItemClick(Index, Value)
+	CreateContactShortcut(c.DisplayName)
+End Sub
+
+Sub CLV1_ItemClick (Index As Int, Value As Object)
+	Dim c As cuContact = Value
+	Dim bmp As Bitmap = cu.GetPhoto(c.Id)
+	If bmp.IsInitialized Then ImageView1.SetBitmap(bmp) Else ImageView1.SetBitmap(Null)
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(c.Id).Append(CRLF)
+	sb.Append(c.DisplayName).Append(CRLF).Append("Note: ").Append(cu.GetNote(c.Id)).Append(CRLF)
+	sb.Append("Starred: ").Append(cu.GetStarred(c.Id)).Append(CRLF)
+	For Each phone As cuPhone In cu.GetPhones(c.Id)
+		sb.Append(phone.Number & ", " & phone.PhoneType).Append(CRLF)
+	Next
+	For Each email As cuEmail In cu.GetEmails(c.Id)
+		sb.Append(email.email).Append(", ").Append(email.EmailType).Append(CRLF)
+	Next
+	EditText1.Text = sb.ToString
+End Sub
+
+Sub CreateContactShortcut(contactName As String)
+	Dim cr As ContentResolver ' ContentResolver init
+	cr.Initialize("")
+
+	' Generate contact URI for contacts
+	Dim uri As JavaObject
+	uri.InitializeStatic("android.provider.ContactsContract.Contacts")
+	Dim contactUri As JavaObject = uri.GetField("CONTENT_URI") 
+
+	
+	Dim cursor As Cursor
+	cursor = cr.Query(contactUri, Array As String("_id", "display_name"), "display_name = ?", Array As String(contactName), "")
+
+	Dim contactID As String = ""
+	If cursor.RowCount > 0 Then
+		cursor.Position = 0
+		contactID = cursor.GetString("_id") 	' ID of the first found contact.
+	Else
+		Log("No contact found with this name.")
+		Return
+	End If
+
+	' Retrieve contact photo
+	Dim contactPhoto As Bitmap = cu.GetPhoto(contactID) 
+	
+	' Check if the image is initialized. If not, use the default image.
+	If Not (contactPhoto.IsInitialized) Then
+		contactPhoto.initialize(File.DirAssets, "contacts_icon.png")
+	End If
+	
+
+	If contactID <> "" Then
+		cursor = cr.Query(contactUri, Array As String("display_name"), "_id = ?", Array As String(contactID), "")
+		If cursor.RowCount > 0 Then
+			cursor.Position = 0
+		Else
+			Log("No contact found with ID: " & contactID)
+		End If
+	Else
+		Log("contactID is empty. Please check the previous query.")
+	End If
+
+	cursor.Close
+
+	Dim ctxt As JavaObject
+	ctxt = ctxt.InitializeContext
+
+	' Check if ShortcutManager is available.
+	Dim ShortcutManager As JavaObject = ctxt.RunMethod("getSystemService", Array("shortcut"))
+	If ShortcutManager.IsInitialized = False Then
+		Log("ShortcutManager not available.")
+		Return
+	End If
+	
+	
+	' Use JavaObject to reference the correct CONTENT_URI.
+	Dim uriBase As JavaObject
+	uriBase.InitializeStatic("android.provider.ContactsContract$Contacts")
+
+	' Retrieve the CONTENT_URI value using GetField.
+	Dim contactUriBase As JavaObject = uriBase.GetField("CONTENT_URI")
+
+	' Use ContentUris.withAppendedId to create the URI with the contactID.
+	Dim contentUris As JavaObject
+	contentUris.InitializeStatic("android.content.ContentUris")
+	
+	' Convert the contactID to Long if it is in string format.
+	Dim contactIDLong As Long = contactID
+	Dim uri As JavaObject = contentUris.RunMethod("withAppendedId", Array(contactUriBase, contactIDLong))
+
+
+	Log("Kontakt URI: " & uri) ' Checking the URI.
+
+	' Create intent and set URI
+	Dim intent As JavaObject
+	intent.InitializeNewInstance("android.content.Intent", Array("android.intent.action.VIEW", uri))
+	intent.RunMethod("addFlags", Array(0x10000000)) ' FLAG_ACTIVITY_NEW_TASK
+
+	' Create shortcut info.
+	Dim shortcutId As String = "contact_" & contactID
+	Dim shortcutBuilder As JavaObject
+	shortcutBuilder.InitializeNewInstance("android.content.pm.ShortcutInfo.Builder", Array(ctxt, shortcutId))
+	shortcutBuilder.RunMethod("setShortLabel", Array(contactName))
+	shortcutBuilder.RunMethod("setIntent", Array(intent))
+
+	' Add the contact photo (as an icon)
+	If contactPhoto.IsInitialized Then
+		Dim iconDrawable As JavaObject
+		iconDrawable.InitializeStatic("android.graphics.drawable.Icon")
+		Dim iconObject As JavaObject = iconDrawable.RunMethod("createWithBitmap", Array(contactPhoto)) 
+		shortcutBuilder.RunMethod("setIcon", Array(iconObject))
+	End If
+
+	' Add shortcut to the home screen.
+	Dim shortcutInfo As JavaObject = shortcutBuilder.RunMethod("build", Null)
+	If ShortcutManager.RunMethod("isRequestPinShortcutSupported", Null) Then
+		ShortcutManager.RunMethod("requestPinShortcut", Array(shortcutInfo, Null))
+	Else
+		Log("Pinnable shortcut is not supported")
+	End If
+End Sub
+

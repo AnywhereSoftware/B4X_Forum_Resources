@@ -1,0 +1,286 @@
+﻿AppType=JavaFX
+Build1=Default,ab.banano.com
+File1=Camera.bjl
+File2=DataTest.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=banano
+Library2=bananopeer
+Library3=bananoskeleton
+Library4=jcore
+Library5=jfx
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	#IgnoreWarnings: 16, 10, 14, 15	
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	Private Peer As Peer 'ignore
+		
+	Private SKButton1 As SKButton 'ignore
+	Private SKButton2 As SKButton 'ignore
+	Private SKButton3 As SKButton 'ignore
+	Private SKLabel1 As SKLabel 'ignore
+	Private SKTextBox1 As SKTextBox 'ignore
+	Private SKTextBox2 As SKTextBox 'ignore
+	Private SKColumn3 As SKColumn 'ignore
+	Private SKColumn4 As SKColumn 'ignore
+	Private SKContainer1 As SKContainer 'ignore
+	Private SKRow2 As SKRow 'ignore
+	Private SKRow4 As SKRow 'ignore
+	Private SKRow5 As SKRow 'ignore
+	Private SKRow6 As SKRow 'ignore
+	Private SKRow7 As SKRow 'ignore
+	
+	Private ChatConnection As PeerDataConnection
+	Private VideoConnection As PeerMediaConnection	
+	
+	Private ScreenConnection As PeerMediaConnection
+	
+	Private VideoOwn As BANanoElement
+	Private VideoRemote As BANanoElement	
+	Private ScreenRemote As BANanoElement
+	
+	Private counter As Long	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'Dim Publish as String = File.DirApp
+	Dim Publish As String = "C:\laragon\www"
+	
+	' you can change some output params here
+	BANano.Initialize("BANano", "BANanoPeer",1)
+	BANano.HTML_NAME = "index.html"
+	
+	BANano.Header.Title="BANano Peer"
+	
+	SKTools.SetBaseColor("#000000")
+	SKTools.WriteTheme
+				
+	' start the build
+	BANano.Build(Publish)
+	
+	#if release	
+		ExitApplication
+	#end if	
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	Dim options As PeerConnectOptions
+	options.Initialize
+	
+	Peer.Initialize(Me, "Peer", "", options)
+	
+	Log("Browser: " & Peer.Browser)
+	Log("Supports AudioVideo: " & Peer.SupportsAudioVideo)
+	Log("Supports Data: " & Peer.SupportsData)
+	Log("Supports Binary: " & Peer.SupportsBinary)
+	Log("Supports Reliable: " & Peer.SupportsReliable)
+	
+	BANano.LoadLayout("#body", "DataTest")
+	
+	VideoRemote = SKColumn3.Element.Append($"<video id="videoRemote" autoplay style="width:100%">"$).get("#videoRemote")
+	VideoOwn = SKColumn4.Element.Append($"<video id="video" autoplay style="width:100%">"$).get("#video")
+	ScreenRemote = SKRow7.Element.Append($"<video id="screenRemote" autoplay style="width:100%">"$).get("#screenRemote")
+End Sub
+
+' Make a new data connection with a remote peer
+Sub SKButton1_Click (event As BANanoEvent)
+	'IsCaller = True
+	
+	ChatConnection.Initialize(Me, "ChatConnection", Peer.Connect(SKTextBox1.Text,"Test",Null,"binary",True))
+	
+	' show the text chat row
+	SKRow4.Visible = True
+	SKRow5.Visible = True
+	SKRow6.Visible = True
+	SKRow7.Visible = True
+	
+	' start the video stream
+	Dim Stream As BANanoObject
+	Dim err As BANanoObject
+	
+	Dim videoProm As BANanoPromise
+	videoProm = BANano.Navigator.GetField("mediaDevices").RunMethod("getUserMedia", CreateMap("video": True, "audio": False)).Result 'audio false for my tests
+	videoProm.Then(Stream)
+		Log("got stream")
+		VideoConnection.Initialize(Me, "VideoConnection", Peer.Call(SKTextBox1.Text, Stream, Null, Null))
+		' our own stream
+		VideoOwn.ToObject.SetField("srcObject", Stream)
+	videoProm.else(err)
+		Log("getting stream failed")
+		Log(err)
+	videoProm.end
+End Sub
+'
+Sub SKButton2_Click (event As BANanoEvent)
+	Log("Sending: " & SKTextBox2.Text)
+	' add to our own log
+	Dim lbl As SKLabel
+	counter = counter + 1
+	lbl.Initialize(Me, "lbl" & counter, "")
+	lbl.Text = "[OUT] " & SKTextBox2.Text
+	lbl.AddToParent("SKContainer1")
+	lbl.Style = $"{"margin-bottom": "0px"}"$
+	
+	SKContainer1.Element.SetScrollTop(SKContainer1.Element.ScrollHeight)
+	
+	' sending the text
+	ChatConnection.Send(SKTextBox2.Text)
+End Sub
+
+Sub SKButton3_Click (event As BANanoEvent)
+	Dim Stream As BANanoObject
+	Dim err As BANanoObject
+	
+	Dim screenProm As BANanoPromise
+	screenProm = BANano.Navigator.GetField("mediaDevices").RunMethod("getDisplayMedia", CreateMap("video": CreateMap("frameRate": 5, "width": 1280, "height": 720))).Result
+	screenProm.Then(Stream)
+		Log("got stream")
+		ScreenConnection.Initialize(Me, "ScreenConnection", Peer.Call(SKTextBox1.Text, Stream, "Screen", Null))				
+	screenProm.else(err)
+		Log("getting stream failed")
+		Log(err)
+	screenProm.end
+End Sub
+
+#region Global Peer Events
+Sub Peer_Open(ID As String)
+	Log("Peer open")
+	Log(ID)
+	SKLabel1.Text = ID
+End Sub
+
+Sub Peer_Close()
+	Log("Peer Closed")
+End Sub
+
+Sub Peer_Disconnected()
+	Log("Peer Disconnected")
+End Sub
+
+Sub Peer_Error(Err As BANanoObject)
+	Log("Peer Error: " & Err)
+End Sub
+
+' Emitted when a new data connection is established from a remote peer.
+Sub Peer_Connection(Connection As BANanoObject)
+	' initialize the ChatConnection with the incoming connection
+	ChatConnection.Initialize(Me, "ChatConnection", Connection)
+	' set the callers ID in our text field
+	SKTextBox1.Text = ChatConnection.Peer
+	' show the text chat row
+	SKRow4.Visible = True
+	SKRow5.Visible = True
+	SKRow6.Visible = True
+	SKRow7.Visible = True	
+End Sub
+
+' someone called...
+Sub Peer_Call(Connection As BANanoObject)
+	If Connection.GetField("metadata").Result = "Screen" Then
+		ScreenConnection.Initialize(Me, "ScreenConnection", Connection)
+		ScreenConnection.Answer(Null, Null)
+	Else
+		' initialize the VideoConnection from the connection
+		VideoConnection.Initialize(Me, "VideoConnection", Connection)
+		
+		' get our own stream and send it back to the caller
+		Dim streamBack As BANanoObject
+		Dim err As BANanoObject
+			
+		Dim videoProm As BANanoPromise
+		videoProm = BANano.Navigator.GetField("mediaDevices").RunMethod("getUserMedia", CreateMap("video": True, "audio": False)).Result 'audio false for my tests
+		videoProm.Then(streamBack)
+			Log("got stream")
+			' answer with our own stream
+			VideoConnection.Answer(streamBack, Null)
+			' our own stream
+			VideoOwn.ToObject.SetField("srcObject", streamBack)
+		videoProm.else(err)
+			Log("getting stream failed")
+			Log(err)
+			VideoConnection.Answer(Null, Null)
+		videoProm.end	
+	End If	
+End Sub
+#End region
+
+#Region ChatConnection
+Sub ChatConnection_Open()
+	Log("Chat connection open")
+End Sub
+
+Sub ChatConnection_Close()
+	Log("Chat connection closed")
+End Sub
+
+Sub ChatConnection_Data(data As BANanoObject)
+	Log("Chat connection data")
+	Dim lbl As SKLabel
+	counter = counter + 1
+	lbl.Initialize(Me, "lbl" & counter, "")
+	lbl.Text = "[IN] " & data.Result
+	lbl.AddToParent("SKContainer1")
+	lbl.Style = $"{"margin-bottom": "0px"}"$
+	
+	SKContainer1.Element.SetScrollTop(SKContainer1.Element.ScrollHeight)
+End Sub
+
+Sub ChatConnection_Error(Err As BANanoObject)
+	Log("Chat connection error")
+	Log(Err.Result)
+End Sub
+#End Region
+
+#Region VideoConnection
+Sub VideoConnection_Close()
+	Log("VideoConnection closed")
+End Sub
+
+Sub VideoConnection_Error(Err As BANanoObject)
+	Log("VideoConnection error")
+End Sub
+
+Sub VideoConnection_Stream(stream As BANanoObject)
+	Log("Incoming Stream")
+	If stream <> Null Then
+		' set the stream to the videoRemote tag
+		VideoRemote.ToObject.SetField("srcObject", stream)	
+	End If		
+End Sub
+#End Region
+
+#Region ScreenConnection
+Sub ScreenConnection_Close()
+	Log("ScreenConnection closed")
+	ScreenRemote.ToObject.SetField("srcObject", Null)	
+End Sub
+
+Sub ScreenConnection_Error(Err As BANanoObject)
+	Log("ScreenConnection error")
+End Sub
+
+Sub ScreenConnection_Stream(stream As BANanoObject)
+	Log("Incoming Stream")
+	If stream <> Null Then
+		' set the stream to the videoRemote tag
+		ScreenRemote.ToObject.SetField("srcObject", stream)
+	End If		
+End Sub
+#End Region
+

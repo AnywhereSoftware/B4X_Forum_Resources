@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rlcdwiki_spi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'example from HELLO.ino
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public myLCD As LCDWIKI_SPI
+	Private wifi As ESP8266WiFi 
+	'//paramters define
+    Private MODEL As UInt = myLCD.SSD1283A
+	Private CS As Byte =   10
+	Private CD As Byte =   12 '// not connected
+	Private SDA As Byte =  11  '// A2   //if you use the hardware spi,this pin is no need to set - MOSI
+'	Private  MOSI As Byte = SDA
+'	Private  MISO As Byte = 8	'// unused
+'	Private  SCK  As Byte = 13   '// A1   //If you use the hardware spi,this pin is no need To set
+	Private  RST  As Byte = 9     '// Not connected
+	Private  LED As Byte =  -1   '//If you don't need to control the LED pin,you should set it to -1 and set it to 3.3V
+End Sub
+
+'//pin usage As follow:
+'//                 CS  A0/DC  RESET  SDA  SCK  LED    VCC     GND    
+'//ESP8266 D1 nimi  D1   D3     D2    D7   D5   D4   5V/3.3V   GND
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("SSID", "PASSWORD") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	myLCD.Initialize1(MODEL,CS,CD, RST, LED)
+	myLCD.Init_LCD
+	myLCD.Fill_Screen(myLCD.BLACK)
+	AddLooper("myloop")
+End Sub
+
+Sub myloop
+	myLCD.Set_Text_Mode(False)
+  
+	myLCD.Fill_Screen(0x0000)
+	myLCD.Set_Text_colour(myLCD.RED)
+	myLCD.Set_Text_Back_colour(myLCD.BLACK)
+	myLCD.Set_Text_Size(1)
+	myLCD.Print_String("Hello World!", 0, 0)
+	myLCD.Print_Number_Float(01234.56789, 2, 0, 8, ".", 0," ")
+	myLCD.Print_Number_Int(0xDEADBEF, 0, 16, 0, " ",16)
+
+	myLCD.Set_Text_colour(myLCD.GREEN)
+	myLCD.Set_Text_Size(2)
+	myLCD.Print_String("Hello", 0, 32)
+	myLCD.Print_Number_Float(01234.56789, 2, 0, 48, ".", 0, " ")
+	myLCD.Print_Number_Int(0xDEADBEF, 0, 64, 0, " ",16)
+
+	myLCD.Set_Text_colour(myLCD.BLUE)
+	myLCD.Set_Text_Size(3)
+	myLCD.Print_String("Hello", 0, 86)
+	myLCD.Print_Number_Float(01234.56789, 2, 0, 110, ".", 0, " ")
+	myLCD.Print_Number_Int(0xDEADBEF, 0, 134, 0, " ",16)
+
+	Delay(3000)
+	
+End Sub

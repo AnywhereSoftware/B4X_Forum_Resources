@@ -1,0 +1,185 @@
+﻿Build1=Default,b4a.example3
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Easing
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: EaseIn Functions
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private currentValue As Float
+	Private DurationFromZeroTo100 As Int
+	Private ProgressBar1 As B4XView
+	Private Button1 As B4XView
+	Private CustomListView1 As CustomListView
+	Private currentFn As Int
+	Private SeekBar1 As B4XView
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("1")
+	Dim fns() As String = Array As String("simple linear tweening - no easing, no acceleration", _
+"quadratic easing in - accelerating from zero velocity", _
+"quadratic easing out - decelerating To zero velocity", _
+"quadratic easing in/out - acceleration Until halfway, Then deceleration", _
+"cubic easing in - accelerating from zero velocity", _
+"cubic easing out - decelerating To zero velocity", _
+"cubic easing in/out - acceleration Until halfway, Then deceleration", _
+"quartic easing in - accelerating from zero velocity", _
+"quartic easing out - decelerating To zero velocity", _
+"quartic easing in/out - acceleration Until halfway, Then deceleration", _
+"quintic easing in - accelerating from zero velocity", _
+"quintic easing out - decelerating To zero velocity", _
+"quintic easing in/out - acceleration Until halfway, Then deceleration", _
+"sinusoidal easing in - accelerating from zero velocity", _
+"sinusoidal easing out - decelerating To zero velocity", _
+"sinusoidal easing in/out - accelerating Until halfway, Then decelerating", _
+"exponential easing in - accelerating from zero velocity", _
+"exponential easing out - decelerating To zero velocity", _
+"exponential easing in/out - accelerating Until halfway, Then decelerating", _
+"circular easing in - accelerating from zero velocity", _
+"circular easing out - decelerating To zero velocity", _
+"circular easing in/out - acceleration Until halfway, Then deceleration")
+
+
+For x = 0 To fns.Length -1
+	CustomListView1.AddTextItem(fns(x),x)
+Next
+
+End Sub
+
+
+Sub Activity_Click
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub AnimateValueTo(NewValue As Float)
+	Dim n As Long = DateTime.Now
+	Dim duration As Int = Abs(currentValue - NewValue) / 100 * (DurationFromZeroTo100*50) + 1000
+	Dim start As Float = currentValue
+	currentValue = NewValue
+	Dim tempValue As Float
+	Do While DateTime.Now < n + duration
+		
+		
+		Select Case currentFn
+			Case 0
+				tempValue = Easing.linearTween(DateTime.Now - n, start, NewValue - start, duration)
+			Case 1
+				tempValue = Easing.easeInQuad(DateTime.Now - n, start, NewValue - start, duration)
+			Case 2
+				tempValue = Easing.easeOutQuad(DateTime.Now - n, start, NewValue - start, duration)
+			Case 3
+				tempValue = Easing.easeInOutQuad(DateTime.Now - n, start, NewValue - start, duration)
+			Case 4
+				tempValue = Easing.easeInCubic(DateTime.Now - n, start, NewValue - start, duration)
+			Case 5
+				tempValue = Easing.easeOutCubic(DateTime.Now - n, start, NewValue - start, duration)
+			Case 6
+				tempValue = Easing.easeInOutCubic(DateTime.Now - n, start, NewValue - start, duration)
+			Case 7
+				tempValue = Easing.easeInQuart(DateTime.Now - n, start, NewValue - start, duration)
+			Case 8
+				tempValue = Easing.easeOutQuart(DateTime.Now - n, start, NewValue - start, duration)
+			Case 9
+				tempValue = Easing.easeInOutQuart(DateTime.Now - n, start, NewValue - start, duration)
+			Case 10
+				tempValue = Easing.easeInQuint(DateTime.Now - n, start, NewValue - start, duration)
+			Case 11
+				tempValue = Easing.easeOutQuint(DateTime.Now - n, start, NewValue - start, duration)
+			Case 12
+				tempValue = Easing.easeInOutQuint(DateTime.Now - n, start, NewValue - start, duration)
+			Case 13
+				tempValue = Easing.easeInSine(DateTime.Now - n, start, NewValue - start, duration)
+			Case 14
+				tempValue = Easing.easeOutSine(DateTime.Now - n, start, NewValue - start, duration)
+			Case 15
+				tempValue = Easing.easeInOutSine(DateTime.Now - n, start, NewValue - start, duration)
+			Case 16
+				tempValue = Easing.easeInExpo(DateTime.Now - n, start, NewValue - start, duration)
+			Case 17
+				tempValue = Easing.easeOutExpo(DateTime.Now - n, start, NewValue - start, duration)
+			Case 18
+				tempValue = Easing.easeInOutExpo(DateTime.Now - n, start, NewValue - start, duration)
+			Case 19
+				tempValue = Easing.easeInCirc(DateTime.Now - n, start, NewValue - start, duration)
+			Case 20
+				tempValue = Easing.easeOutCirc(DateTime.Now - n, start, NewValue - start, duration)
+			Case 21
+				tempValue = Easing.easeInOutCirc(DateTime.Now - n, start, NewValue - start, duration)
+		End Select
+		ProgressBar1.Progress =tempValue
+		
+		Sleep(10)
+		If NewValue <> currentValue Then Return 'will happen if another update has started
+	Loop
+	ProgressBar1.Progress = currentValue
+End Sub
+
+Private Sub Button1_Click
+	ProgressBar1.Progress=0
+	currentValue=0
+	Sleep(20)
+	AnimateValueTo(100)
+
+End Sub
+
+
+Private Sub CustomListView1_ItemClick (Index As Int, Value As Object)
+	currentFn = Index
+	ProgressBar1.Progress=0
+	Dim s() As String = Regex.Split("-",CustomListView1.GetPanel(Index).GetView(0).Text)
+	Button1.Text = s(0)
+	ProgressBar1.Progress=0
+	currentValue=0
+	Sleep(20)	
+	AnimateValueTo(100)
+	
+End Sub
+
+Private Sub SeekBar1_ValueChanged (Value As Int, UserChanged As Boolean)
+	DurationFromZeroTo100=Value
+End Sub
+
+
+
+

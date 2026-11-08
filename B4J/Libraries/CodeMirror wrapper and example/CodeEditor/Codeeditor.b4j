@@ -1,0 +1,84 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=codeeditorlayout.bjl
+File2=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=codemirrorwrapper
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jxui
+Library6=xui views
+Module1=CodeEditor
+Module2=WCE_Cast
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=2
+Version=8.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+'References
+'https://gist.github.com/jewelsea/1463485
+'https://codemirror.net/
+' see example for smartstring poss : https://marijnhaverbeke.nl/blog/codemirror-mode-system.html
+
+'Required Libraries
+'Archiver : https://www.b4x.com/android/forum/threads/lib-archiver.21688/post-125497
+'jScriptEngine : https://www.b4x.com/android/forum/threads/jscriptengine.35781/post-210025
+
+'CodeMirror Library patched as per - https://github.com/codemirror/CodeMirror/issues/5733
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private XUI As XUI
+	Private MainForm As Form
+	Private CodeEditor1 As CodeEditor
+	
+	
+End Sub
+
+Private Sub CodeEditor1_Loaded
+	Log("Loaded")
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	XUI.SetDataFolder("CodeEditor")
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+	MainForm.Title = "CodeEditor"
+	
+	CodeEditor1.AllowedThemes = CMW_Utils.GetThemes
+	CodeEditor1.Theme = "default"
+	CodeEditor1.Language = "B4X"
+	CodeEditor1.CodeMirrorWrapper1.SetCode("")				'Set empty code or load some code
+	
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Private Sub CodeEditor1_LoadFileRequest As ResumableSub
+	Log("Load File")
+	'Load button has been clicked, Load from file or elsewhere and pass to the Codeeditor via
+	'CodeEditor1.CodeMirrorWrapper1.SetCode("code") and Return True
+	'Both of Load and save subs are Resumable so that a dialog can be displayed if required.
+	Return False
+End Sub
+
+Private Sub CodeEditor1_SaveFileRequest(Code As String) As ResumableSub
+	Log("Save File")
+	'Save button has been clicked, Save the passed code as needed.
+	'Return True if saved so that the code revert point is updated.
+	Return True
+End Sub

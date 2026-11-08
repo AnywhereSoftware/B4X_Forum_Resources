@@ -1,0 +1,329 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.pkcolorpicker
+File1=01.png
+File2=icon.ico
+File3=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=cssutils
+Library3=javaobject
+Library4=jawtrobot
+Library5=jcore
+Library6=jfx
+Library7=xui views
+NumberOfFiles=3
+NumberOfLibraries=7
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 360
+	#MainFormHeight: 240 
+	#PackagerProperty: IconFile = ..\Files\icon.ico
+#End Region
+
+Sub Process_Globals
+	Public MainTitle = " PK ColorPicker" As String
+	Public MainVer = " (v1.0.5)" As String
+	Public sDeveloper = " Developed by: inddev2001@gmail.com" As String
+	Private MainForm As Form
+	Public currentMouseX As Int
+	Public currentMouseY As Int
+	Public rbt As AWTRobot
+	Public t As Timer
+	Private argb() As Int
+	Private fx As JFX
+	Private Hue, Sat, Lum As Float
+	Private hsb(3) As Float
+	Private cmyk(4) As Int
+
+	Private Btn_Start As Button
+	Private Chk_OnTop As CheckBox
+	Private Txt_Hex As TextField
+	Private Pane1 As Pane
+	Private Pane_Mouse As Pane
+	Private PaneHSB As Pane
+	Private Pane_point As Pane
+	Private Pane_Display As Pane
+	Private Pnl_Color As Pane
+	Private ColorPicker1 As ColorPicker
+	Private B4XImageView1 As B4XImageView
+
+	Private Label2 As Label
+	Private Lbl_Red As Label
+	Private Label5 As Label
+	Private Lbl_Green As Label
+	Private Label7 As Label
+	Private Lbl_Blue As Label
+	Private Label14 As Label
+	Private Label16 As Label
+	Private Lbl_HSB As Label
+	Private Lbl_Hue As Label
+	Private Lbl_Saturation As Label
+	Private Lbl_Brightness As Label
+	Private Label17 As Label
+	Private Label9 As Label
+	Private Label11 As Label
+	Private Lbl_X As Label
+	Private Lbl_Y As Label
+	Private Lbl_RGB As Label
+	Private Lbl_H As Label
+	Private Pane_CMYK As Pane
+	Private Lbl_CMYK As Label
+	Private Label3 As Label
+	Private Lbl_Cyan As Label
+	Private Label6 As Label
+	Private Lbl_Magenta As Label
+	Private Label8 As Label
+	Private Lbl_Yellow As Label
+	Private Label13 As Label
+	Private Lbl_Black As Label
+	Private Lbl_About As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Title = MainTitle & MainVer
+	MainForm.Icon = fx.LoadImage(File.DirAssets, "01.png")
+	MainForm.Resizable = False
+	MainForm.Show
+
+	t.Initialize("t", 100)
+	Chk_OnTop.Checked = True
+	ToolTipOnNode(Pane_Mouse, "Mouse coordinates", True)
+	Lbl_About.TooltipText = "About PK ColorPicker"
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+
+End Sub
+
+Sub t_Tick
+	Dim c As Int
+	Dim sHex As String
+	Dim m() As Int = rbt.RobotMouseCurrentLocation
+	
+	currentMouseX = m(0)
+	currentMouseY = m(1)
+	Lbl_X.Text = currentMouseX
+	Lbl_Y.Text = currentMouseY
+	
+	c = rbt.ScreenPixelColorGetAt(currentMouseX, currentMouseY)
+	argb = GetARGB(c)
+	sHex = ColorToHex(c)
+	
+	Txt_Hex.Text = "#" & sHex.SubString(2)
+	CSSUtils.SetStyleProperty(Pnl_Color, "-fx-background-color", "#" & sHex.SubString(2))
+	Lbl_Red.Text = argb(1)
+	Lbl_Green.Text = argb(2)
+	Lbl_Blue.Text = argb(3)
+
+	hsb = RGBtoHSB(argb(1), argb(2), argb(3))
+	Lbl_Hue.Text = Floor(hsb(0))
+	Lbl_Saturation.Text = Floor(hsb(1))
+	Lbl_Brightness.Text = Floor(hsb(2))
+	
+	cmyk = RGB2CMYK(argb(1), argb(2), argb(3))
+	Lbl_Cyan.Text = Floor(cmyk(0))
+	Lbl_Magenta.Text = Floor(cmyk(1))
+	Lbl_Yellow.Text = Floor(cmyk(2))
+	Lbl_Black.Text = Floor(cmyk(3))
+	
+	'### screen capture to B4XImageView
+	Dim sByteArray() As Byte = rbt.ScreenCurrentRectangleSetAsArbitrary(currentMouseX-10, currentMouseY-10, 20,20).ScreenCaptureAsByteArray
+	B4XImageView1.ResizeMode = "FILL_NO_DISTORTIONS"	'### "FIT", "FILL", "FILL_NO_DISTORTIONS", "FILL_WIDTH", "FILL_HEIGHT", "NONE"
+	B4XImageView1.Bitmap = BytesToImage(sByteArray)
+
+End Sub
+
+Public Sub BytesToImage(bytes() As Byte) As B4XBitmap
+	Dim In As InputStream
+	In.InitializeFromBytesArray(bytes, 0, bytes.Length)
+	Dim bmp As Image
+	bmp.Initialize2(In)
+	Return bmp
+End Sub
+
+Private Sub Btn_Start_Click
+	If Btn_Start.Text = "Start" Then
+		t.Enabled = True
+		Btn_Start.Text = "Stop"
+		ColorPicker1.Enabled = False
+	Else
+		t.Enabled = False
+		Btn_Start.Text = "Start"
+		ColorPicker1.Enabled = True
+	End If
+End Sub
+
+Private Sub Chk_OnTop_CheckedChange(Checked As Boolean)
+	If Checked Then
+		MainForm.AlwaysOnTop = True
+	Else
+		MainForm.AlwaysOnTop = False
+	End If
+	Btn_Start.RequestFocus
+End Sub
+
+Private Sub Txt_Hex_MouseClicked (EventData As MouseEvent)
+	If Txt_Hex.Text.Trim.Length > 0 Then
+		Txt_Hex.SelectAll
+		fx.Clipboard.SetString(Txt_Hex.Text)
+		fx.Msgbox(MainForm , "Value copied to clipboard", MainTitle)
+	End If
+	Btn_Start.RequestFocus
+End Sub
+
+Sub GetARGB(Color As Int) As Int()
+	Private res(4) As Int
+	res(0) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff000000), 24)
+	res(1) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff0000), 16)
+	res(2) = Bit.UnsignedShiftRight(Bit.And(Color, 0xff00), 8)
+	res(3) = Bit.And(Color, 0xff)
+	Return res
+End Sub
+
+Private Sub ColorToHex(clr As Int) As String
+	Dim bc As ByteConverter
+	Return bc.HexFromBytes(bc.IntsToBytes(Array As Int(clr)))
+End Sub
+
+'Returns a Int array with Lum,Sat,Hue (by that order) from a color.
+Public Sub COLORtoHSL(clr As Int) As Int()
+	Dim R,G ,B As Float
+	Dim maxcolor,mincolor, D, P As Float
+	Dim res(4) As Int
+
+	res(0) = Bit.UnsignedShiftRight(Bit.And(clr, 0xff000000), 24) ' alfa
+	res(1) = Bit.UnsignedShiftRight(Bit.And(clr, 0xff0000), 16)   ' R
+	res(2) = Bit.UnsignedShiftRight(Bit.And(clr, 0xff00), 8)      ' G
+	res(3) = Bit.And(clr, 0xff)                                   ' B
+
+	R = res(1)/255   ' between 0 to 1
+	G = res(2)/255
+	B = res(3)/255
+	maxcolor = Max(Max(R,G),B)
+	mincolor = Min(Min(R,G),B)
+	D = maxcolor - mincolor
+	P = maxcolor + mincolor
+	Lum = P/2
+	If maxcolor = mincolor Or Lum = 0  Then
+		Sat = 0
+	Else
+		If Lum < 0.5 Then
+			Sat = D/P
+		Else
+			Sat = D/(2.0 - P)
+		End If
+	End If
+	If maxcolor = mincolor Then
+		Hue = 0
+	Else
+		Select maxcolor
+			Case R
+				Hue = ((G-B)/D)/6
+			Case G
+				Hue = (2 + (B-R)/D)/6
+			Case B
+				Hue = (4 + (R-G)/D)/6
+		End Select
+		If Hue < 0 Then Hue = Hue + 1
+	End If
+
+	Lum = Lum * 240
+	Sat = Sat * 240
+	Hue = Hue * 240
+	res(0) = Lum
+	res(1) = Sat
+	res(2) = Hue
+	Return res
+End Sub
+
+Private Sub RGB2CMYK(R As Int, G As Int, B As Int) As Int()
+    
+	Dim PercentageR As Double = R / 255 * 100
+	Dim PercentageG As Double = G / 255 * 100
+	Dim PercentageB As Double = B / 255 * 100
+    
+	Dim K As Double = 100 - Max(Max(PercentageR,PercentageG),PercentageB)
+    
+	If k = 100 Then Return Array As Int(0,0,0,100)
+    
+	Dim C As Int = ((100 - PercentageR - K) / (100 - K) * 100)
+	Dim M As Int = ((100 - PercentageG - K) / (100 - K) * 100)
+	Dim Y As Int = ((100 - PercentageB - K) / (100 - K) * 100)
+    
+	Return Array As Int(C,M,Y,K)
+    
+End Sub
+
+Sub RGBtoHSB(red As Int,green As Int,blue As Int) As Float()
+	Dim hsb(3) As Float
+	Dim p As JavaObject = fx.Colors.RGB(red,green,blue)
+	hsb(0)=p.RunMethod("getHue",Null)  ' degree value
+	hsb(1)=p.RunMethod("getSaturation",Null)*100  ' to percentile value
+	hsb(2)=p.RunMethod("getBrightness",Null)*100  ' to percentile value
+	Return hsb
+End Sub
+
+Sub ToolTipOnNode(Nd As Node, msg As String, add As Boolean)
+	Dim joToolTip As JavaObject
+	Dim joToolTip2 As JavaObject = joToolTip.InitializeNewInstance("javafx.scene.control.Tooltip", Array(msg))
+	If add = True Then
+		joToolTip.RunMethod("install", Array(Nd, joToolTip2))
+	Else
+		joToolTip.RunMethod("uninstall", Array(Nd, joToolTip2))
+	End If
+End Sub
+
+Private Sub ColorPicker1_ValueChanged (Value As Paint)
+	Log(Value)
+	Log(CSSUtils.ColorToHex(Value))
+	Log(fx.Colors.To32Bit(Value))
+
+	Dim sHex As String = ColorToHex(fx.Colors.To32Bit(Value))
+	Txt_Hex.Text = "#" & sHex.SubString(2)
+	
+	argb = GetARGB(fx.Colors.To32Bit(Value))
+	Log(argb(1) & "," & argb(2) & "," & argb(3))
+	Lbl_Red.Text = argb(1)
+	Lbl_Green.Text = argb(2)
+	Lbl_Blue.Text = argb(3)
+	
+	hsb = RGBtoHSB(argb(1), argb(2), argb(3))
+	Lbl_Hue.Text = Floor(hsb(0))
+	Lbl_Saturation.Text = Floor(hsb(1))
+	Lbl_Brightness.Text = Floor(hsb(2))
+	
+	cmyk = RGB2CMYK(argb(1), argb(2), argb(3))
+	Lbl_Cyan.Text = Floor(cmyk(0))
+	Lbl_Magenta.Text = Floor(cmyk(1))
+	Lbl_Yellow.Text = Floor(cmyk(2))
+	Lbl_Black.Text = Floor(cmyk(3))
+
+	CSSUtils.SetBackgroundColor(Pnl_Color, Value)
+	
+	Btn_Start.RequestFocus
+
+End Sub
+
+Private Sub Lbl_About_MouseEntered (EventData As MouseEvent)
+	Lbl_About.MouseCursor = fx.Cursors.HAND
+End Sub
+
+Private Sub Lbl_About_MouseExited (EventData As MouseEvent)
+	Lbl_About.MouseCursor = fx.Cursors.DEFAULT
+End Sub
+
+Private Sub Lbl_About_MouseClicked (EventData As MouseEvent)
+	Dim sMessage As String = MainTitle & MainVer & CRLF & CRLF & _
+							sDeveloper & CRLF & CRLF & _
+								"Credits:" & CRLF & _
+								" » Thanks to the B4X forum members for various functional codes used in this app"
+	fx.Msgbox2(MainForm, sMessage, MainTitle, "OK", "", "", fx.MSGBOX_INFORMATION)
+End Sub

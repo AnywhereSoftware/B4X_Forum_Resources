@@ -1,0 +1,155 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rarduino_json
+Library2=rawot
+Library3=rcore
+Library4=resp8266wifi
+Library5=rlittlefs
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private aWOT As aWOT
+	Private lfs As LittleFS
+	Private json1 As JSONVar
+'	Private bc As ByteConverter
+	Private Network As String = "xxxxx"
+	Private Password As String = "xxxxxxxxxx"
+	Private analog0 As Int = 0
+	Private analog1 As Int = 0
+	Private up0 As bool = True
+	Private up1 As bool = True
+	Private timeANA As ULong
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	'example of connecting to a local network
+	If wifi.Connect2( Network, Password) Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	
+'	aWOT.initialize
+	aWOT.initialize1("finally","notfound")
+    Log("end init aWOT")
+	If lfs.Initialize Then Log("init lfs OK") Else Log("init lfs NOK")
+    Log(wifi.LocalIp)
+	timeANA = Millis
+	AddLooper("process")
+
+'1) start managemant at "/" 
+	aWOT.app_setTimeout(3000)	
+	aWOT.app_get("/", "handleRoot")  	      
+	aWOT.app_get("/index.html", "handlelfsfiles")
+	aWOT.app_get("/favicon.png", "handlelfsfiles")
+	aWOT.app_get("/script.js", "handlelfsfiles")
+	aWOT.app_get("/style.css", "handlelfsfiles")
+	
+	aWOT.app_get("/readings", "handleReading") 
+	aWOT.app_get("/events", "handleEvents")
+End Sub
+
+'//===============================================================
+'// This routine is executed when you open its IP in browser
+'//===============================================================
+private Sub handleRoot
+	aWOT.res_set("Location", "/index.html")
+	aWOT.res_sendStatus(302)
+End Sub
+ 
+Sub handlelfsfiles
+	Dim path As String
+	If aWOT.req_path = "/" Then path = "/index.html" Else path = aWOT.req_path
+	
+	If lfs.Exists(path) Then
+		Dim mimeType As String = aWOT.Mime_getType(path) : Log("mimeType :",mimeType)	
+		Dim nbr As UInt = 0	
+		lfs.OpenRead(path)
+		aWOT.res_set("Content-Type", mimeType)		
+		Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0
+		Dim buff(1024) As Byte : Log("file size :",buff.Length," ",lfs.CurrentFile.Size)
+		Do While filesize > filecurrent
+			nbr = Min(filesize-filecurrent,buff.Length)		
+			lfs.Stream.ReadBytes(buff,0,nbr)
+			aWOT.res_write1(buff,nbr)	
+			filecurrent = lfs.Position			
+'			Log("file read/awot_write :", filecurrent,"  on ", filesize )
+		Loop		
+		lfs.close	
+		Log("file ",path," sent to server")
+	Else
+		Log("no such file ",path)
+	End If	
+End Sub
+
+private Sub handleReading
+	json1.setString(Array(1,"temperature"),NumberFormat(analog0,0,0))
+	json1.setString(Array(1,"humidity"),NumberFormat(analog1,0,0))
+	Dim tosend As String = json1.stringify(Array (0))
+'	Log("json to send :",tosend)
+		
+	aWOT.res_println(tosend)
+End Sub
+
+Sub handleEvents
+
+End Sub
+
+Sub process()
+	aWOT.process
+	If Millis > timeANA+1000 Then 
+		If up0 = True Then analog0 = analog0 + 1 Else analog0 = analog0 - 1
+		If analog0 < 12 Then up0 = True
+		If analog0 > 35 Then up0 = False
+'		Log("Temperature value :",analog0)
+
+		If up1 = True Then analog1 = analog1 + 1 Else analog1 = analog1 - 1
+		If analog1 < 50 Then up1 = True
+		If analog1 > 95 Then up1 = False
+'		Log("Humidity value :",analog1)
+		timeANA = Millis
+	End If	
+
+End Sub
+
+'*********************************************
+'Sub m0_keepAlive()
+'	Log("start keepAlive")
+'	aWOT.res_set("Connection", "keep-alive")
+'	'    Log("end keepAlive")
+'	Log("status sent keepalive: ",aWOT.res_statusSent)
+'End Sub
+
+
+'**********************************************************************************
+Sub finally()
+	Log("Client Closed")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+'**********************************************************************************
+Sub notfound()	
+	Dim meth_type() As String = Array As String("UNKNOWN","GET","HEAD","POST","PUT","DELETE","OPTIONS","ALL")
+	Log("Middleware not found - Call Back 404")
+	Log("method = ",meth_type(aWOT.req_method))
+	Log("path = ",aWOT.req_path)
+End Sub
+

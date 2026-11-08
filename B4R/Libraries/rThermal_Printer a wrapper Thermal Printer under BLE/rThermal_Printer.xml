@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RThermal_Printer</name>
+        <shortname>Thermal_Printer</shortname>
+        <method>
+            <name DesignerName="GetWidth">GetWidth</name>
+<comment>
+
+ Return the printer width in pixels
+ The printer needs to be connected to get this info
+
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="GetName">GetName</name>
+<comment>
+
+ Returns the BLE name of the connected printer
+ as a zero terminated c-string
+ Returns NULL if not connected
+
+</comment>
+                 <returntype>B4R::B4RString*</returntype>
+        </method>
+        <method>
+            <name DesignerName="Feed">Feed</name>
+<comment>
+
+ Feed the paper in scanline increments
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>iLines</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetEnergy">SetEnergy</name>
+<comment>
+
+ tpSetEnergy Set Energy - switch between eco and nice images :)
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>iEnergy</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetStringBox">GetStringBox</name>
+<comment>
+
+ Return the measurements of a rectangle surrounding the given text string
+ rendered in the given font
+ ArrayInt* rectangle[3] needed / at return: rectangle[0] = width , rectange[1] = top , rectangle[2]= botton
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pFontNb</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>szMsg</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>rectangle</name>
+                <type>Int[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DrawCustomText">DrawCustomText</name>
+<comment>
+
+ Draw a string of characters in a custom font into the gfx buffer
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pFontNb</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>x</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>y</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>szMsg</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PrintCustomText">PrintCustomText</name>
+<comment>
+
+ Print a string of characters in a custom font to the connected printer
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pFontNb</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>x</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>szMsg</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="WriteRawData">WriteRawData</name>
+<comment>
+
+ Send raw data to printer
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pData</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>iLen</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetFont">SetFont</name>
+<comment>
+
+ Select one of 2 available text fonts along with attributes
+ FONT_12x24 or FONT_9x17
+ Each option is either 0 (disabled) or 1 (enabled)
+ These are the text attributes offered by the standard printer spec
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>iFont</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iUnderline</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iDoubleWide</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iDoubleTall</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iEmphasized</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetBackBuffer">SetBackBuffer</name>
+<comment>
+
+ Provide a back buffer for your printer graphics
+ This allows you to manage the RAM used on
+ embedded platforms like Arduinos
+ The memory is laid out horizontally (384 pixels across = 48 bytes)
+ So a 384x384 buffer would need to be 48x384 = 18432 bytes
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pBuffer</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>iWidth</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iHeight</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Print">Print</name>
+<comment>
+
+ Print plain text immediately
+
+ Pass a C-string (zero terminated char array)
+ If the text doesn't reach the end of the line
+ it will not be printed until the printer receives
+ a CR (carriage return) or new text which forces
+ it to wrap around
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pString</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PrintLine">PrintLine</name>
+<comment>
+
+ Print plain text immediately
+ Pass a C-string (zero terminated char array)
+ A CR (carriage return) will be added at the end
+ to cause the printer to print the text and advance
+ the paper one line
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pString</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetWriteMode">SetWriteMode</name>
+<comment>
+
+ Set the BLE write mode
+ MODE_WITH_RESPONSE asks the receiver to ack each packet
+ it will be slower, but might be necessary to successfully transmit
+ every packet. The default is to wait for a response for each write
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>bWriteMode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DrawText">DrawText</name>
+<comment>
+
+ Draw text into the graphics buffer
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>x</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>y</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>pString</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>iFontSize</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>bInvert</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="LoadBMP">LoadBMP</name>
+<comment>
+
+ Load a 1-bpp Windows bitmap into the back buffer
+ Pass the pointer to the beginning of the BMP file
+ along with a x and y offset (upper left corner)
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pBMP</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>bInvert</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iXOffset</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iYOffset</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Fill">Fill</name>
+<comment>
+
+ Fill the frame buffer with a byte pattern
+ e.g. all off (0x00) or all on (0xff)
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>ucData</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPixel">SetPixel</name>
+<comment>
+
+ Set (or clear) an individual pixel
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>x</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>y</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>ucColor</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PrintBuffer">PrintBuffer</name>
+<comment>
+
+ Send the graphics to the printer (must be connected over BLE first)
+
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="PrintBufferSide">PrintBufferSide</name>
+<comment>
+
+ Same as tpPrintBuffer, but output will be rotated by 90 degrees
+
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="DrawLine">DrawLine</name>
+<comment>
+
+ Draw a line between 2 points
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>x1</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>y1</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>x2</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>y2</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>ucColor</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Scan">Scan</name>
+<comment>
+
+ Scan for compatible printers
+ returns true if found
+ and stores the printer address internally
+ for use with the tpConnect() function
+ szName is the printer device name to match
+ iSeconds = how many seconds to scan for devices
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>szName</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>iSeconds</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Connect">Connect</name>
+<comment>
+
+ connect to a printer with a macaddress
+ returns 1 if successful, 0 for failure
+
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>szMacAddress</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Align">Align</name>
+<comment>
+
+ Set the text and barcode alignment
+ Use ALIGN_LEFT, ALIGN_CENTER or ALIGN_RIGHT
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>ucAlign</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="QRCode">QRCode</name>
+<comment>
+
+ Print a 2D (QR) barcode
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>szText</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="QRCode1">QRCode1</name>
+<comment>
+
+ Print a 2D (QR) barcode
+ iSize = starting from 1 / standard is 3
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>szText</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>iSize</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DBarcode">DBarcode</name>
+<comment>
+
+ Print a 1D barcode
+
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>iType</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>iHeight</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>szData</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>iTextPos</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Scan1">Scan1</name>
+<comment>
+
+ Parameterless version
+ finds supported printers automatically
+
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="Connect1">Connect1</name>
+<comment>
+
+ After a successful scan, connect to the printer
+ returns 1 if successful, 0 for failure
+
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="Disconnect">Disconnect</name>
+<comment>
+
+ Disconnect Printer
+
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="IsConnected">IsConnected</name>
+<comment>
+
+ check if printer is connected
+
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="MODE_WITH_RESPONSE">B4RMODE_WITH_RESPONSE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MODE_WITHOUT_RESPONSE">B4RMODE_WITH_RESPONSE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FONT_SMALL">B4RFONT_SMALL</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FONT_LARGE">B4RFONT_LARGE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FONT_12x24">B4RFONT_12x24</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="FONT_9x17">B4RFONT_9x17</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="ALIGN_LEFT">B4RALIGN_LEFT</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="ALIGN_CENTER">B4RALIGN_CENTER</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="ALIGN_RIGHT">B4RALIGN_RIGHT</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_TEXT_NONE">B4RBARCODE_TEXT_NONE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_TEXT_ABOVE">B4RBARCODE_TEXT_ABOVE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_TEXT_BELOW">B4RBARCODE_TEXT_BELOW</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_TEXT_BOTH">B4RBARCODE_TEXT_BOTH</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_UPCA">B4RBARCODE_UPCA</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_UPCE">B4RBARCODE_UPCE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_EAN13">B4RBARCODE_EAN13</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_EAN8">B4RBARCODE_EAN8</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_CODE39">B4RBARCODE_CODE39</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_ITF">B4RBARCODE_ITF</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_CODABAR">B4RBARCODE_CODABAR</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_CODE93">B4RBARCODE_CODE93</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_CODE128">B4RBARCODE_CODE128</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_GS1_128">B4RBARCODE_GS1_128</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_GS1_DATABAR_OMNI">B4RBARCODE_GS1_DATABAR_OMNI</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_GS1_DATABAR_TRUNCATED">B4RBARCODE_GS1_DATABAR_TRUNCATED</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_GS1_DATABAR_LIMITED">B4RBARCODE_GS1_DATABAR_LIMITED</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_GS1_DATABAR_EXPANDED">B4RBARCODE_GS1_DATABAR_EXPANDED</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BARCODE_CODE128_AUTO">B4RBARCODE_CODE128_AUTO</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_MTP2">B4RPRINTER_MTP2</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_MTP3">B4RPRINTER_MTP3</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_CAT">B4RPRINTER_CAT</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_PERIPAGEPLUS">B4RPRINTER_PERIPAGEPLUS</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_PERIPAGE">B4RPRINTER_PERIPAGE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_FOMEMO">B4RPRINTER_FOMEMO</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PRINTER_COUNT">B4RPRINTER_COUNT</name>
+            <returntype>byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

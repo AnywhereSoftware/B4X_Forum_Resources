@@ -1,0 +1,99 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterDevice.b4r
+'Example B4R B4XLib rRFXMeter. The B4XLib contains the code module RFXMeter which does not need to be declared in Process_Globals.
+'Send random generated value to the Domoticz RFXMeter device and assign the value to a device with given IDX.
+'Example: Update a Domoticz humidity device with IDX 385 and value 41.
+'This is a generic solution for updating Domoticz devices from a single RFXMeter device. The Domoticz Automation event handles updating the target devices accordingly.
+'The max value sent depends on the length of the IDX and the max length of the RFXMeter value (3 bytes from ULong = FFFFFF).
+'
+'Additional Libraries: rRFXMeter (rRFXMeter.b4xlib)
+'20220405 rwbl
+#End Region
+
+#Region Wiring
+'433Mhz Transmitter = Arduino
+'VCC = 5v
+'Signal = #7
+'GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	Private RFXMeter_Address As Byte = 0x09	'Address of the Domoticz RFXMeter used for the Send method (multiple addresses can be used)
+	Private TX_PINNR As Byte = 7			'433 Mhz transmitter data pin
+	Private LED_PINNR As Byte = 13			'LED to indicate data is transmitted
+	Private Timer_Test As Timer
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log("AppStart")
+	'Init the RFXMeter device with address 09, transmit pin 7, led pin 13, sent repeats 5.
+	RFXMeter.Initialize(TX_PINNR , LED_PINNR)
+	RFXMeter.Logging = True
+	Timer_Test.Initialize("Timer_Test_Tick", 15000)
+	Timer_Test.Enabled = True
+	Timer_Test_Tick
+End Sub
+
+Sub Timer_Test_Tick
+	'Generate RFXMeter value for Domoticz Humidity device IDX=385 and value between 0 - 100%.
+	Dim value As ULong = Rnd(0, 101)
+	'Sent the value
+	RFXMeter.SendValueToIDX(RFXMeter_Address, 385, value)
+	Log("***")
+End Sub
+
+'Domoticz Automation Event dzVents
+'--[[
+'    rfxmeterhumidity.dzvents - Explore Arduino_RFXCOM.
+'    20220405 rwbl
+']]--
+'
+'local RFXMeter = 384
+'local rfxmetertemphum = 385
+'
+'Return {
+'	on = { devices = { RFXMeter } },
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERHUMIDITY385', },
+'	execute = function(domoticz, device)
+'		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+'        -- Convert the value To a given idx And update the device sValue
+'        -- 385, VirtualSensors,	141D1, 1, RFXHumidity, Humidity, LaCrosse TX3, Humidity 50 %
+'        -- Method string.sub extracts a piece of the string s, from the i-th To the j-th character inclusive. In Lua, the first character of a string has index 1
+'        -- The humidity device is updated via HTTP: Processing device-adapter For RFXHumidity: Humidty device adapter
+'        -- RFXMeter: OpenURL: url = http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=385&nvalue=81&svalue=0&parsetrigger=False
+'        
+'        -- Get the length of the idx at pos 2
+'        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+'        -- Get the idx starting at pos 3 of the sValue
+'        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+'        -- The humidity is set As nValue. If the device is a Temp+Humidity Then the temperature is set As sValue.
+'        local nvalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+'        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+'        -- Update the device If idx Not 0. The humidity status is Not updated but set To 0 (=normal)
+'        If (idx ~= 0) Then 
+'            domoticz.devices(idx).setValues(nvalue, 0)
+'            domoticz.log(("%d: nValue=%d, sValue=%s"):format(idx, domoticz.devices(idx).nValue, domoticz.devices(idx).sValue))
+'        End
+'
+'    End
+'}
+

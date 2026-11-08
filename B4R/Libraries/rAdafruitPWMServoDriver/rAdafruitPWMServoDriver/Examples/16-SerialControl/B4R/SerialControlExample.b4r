@@ -1,0 +1,115 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=radafruitpwmservodriver
+Library2=rcore
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rAdafruitPWMServoDriver
+' Brief:		Example moving a servo between various angles using the Adafruit 16-Channel 12-bit PWM/Servo Driver (drive up to 16 servos over I2C with only 2 pins).
+'				The servo angle is set via serial communication. Ensure to disconnect the B4R IDE from the MCU. Use logging only in the asyncstream methods.
+'				The B4RSerializer is used to receive 2 objects Channel (PWM channel 0-15) & Angle (Servo 0-180).
+' DependsOn:	Library rAdafruitPWMServoDriver, rRandomAccessFile (for B4RSerializer)
+' Author: 		Robert W.B. Linn
+' Created: 		2025-10-04
+' License:		MIT
+
+' Hardware
+' MCU:			Arduino UNO
+' Servodriver:	Adafruit 16-Channel 12-bit PWM/Servo Driver (PCA9685).
+' Servo:		Tower Pro Micro Servo SG90.
+' Software:		B4R 4.00 (64 bit), arduino-cli 1.2.2.
+
+' Wiring
+' PCA9685 = MCU
+' SDA = A4 (green)
+' SCL = A5 (blue)
+' OE = Not used
+' GND = GND [common] (black)
+' VCC = 5V [logic] (orange)
+' V+ = External Power 5V (yellow)
+' 
+' PCA9685 = Servo 1
+' Channel 0 = VCC,GND,Signal
+
+' Communication
+' https://www.b4x.com/android/forum/threads/b4x-b4rserializator-send-and-receive-objects-instead-of-bytes.72404/
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	' Communication
+    Private Serial1 As Serial
+	Private AStream As AsyncStreams
+	Private Ser As B4RSerializator			' B4R serializer
+	Private SerBuffer(10) As Object 		' Serializer storage buffer with max 10 object
+	Private SER_OBJECTS As Byte = 2			' Number of serialized objects channel,angle
+	
+	' PWM Servo Driver
+	Private PWMServoDriver As AdafruitPWMServoDriver
+	Private ANGLE_MIN_POS As UInt = 0
+	Private ANGLE_MID_POS As UInt = 90		'ignore
+	Private ANGLE_MAX_POS As UInt = 180
+	Private SERVO_CHANNEL As Byte = 0		' Range 0-15 for 16 servos
+
+	' Helper
+	Private bc As ByteConverter				'ignore
+End Sub
+
+Private Sub AppStart
+	' Communication
+	Serial1.Initialize(115200)
+	AStream.Initialize(Serial1.Stream, "AStream_NewData", "AStream_Error")
+
+	' Init the servo driver
+	PWMServoDriver.Initialize
+	
+	' Set the pwm frequency - analog servos typically run at ~60 Hz
+	PWMServoDriver.SetPWMFreq(PWMServoDriver.PWM_FREQUENCY_DEFAULT)
+
+	' Set the servo angle pos limits
+	PWMServoDriver.SetLimits(SERVO_CHANNEL, ANGLE_MIN_POS, ANGLE_MAX_POS)
+
+	' Set initial position for the servo at min pos
+	PWMServoDriver.SetAngle(SERVO_CHANNEL, ANGLE_MIN_POS, True)
+End Sub
+
+' Event handling data received via the serial line.
+' Two objects:
+' 1 = Channel number 0-15
+' 2 = Servo angle 0-180
+Private Sub AStream_NewData(Buffer() As Byte)
+	' Log("[B4R][AStream_NewData] buffer=", bc.HexFromBytes(Buffer), ", length=", Buffer.Length, " bytes")
+	
+	' Get the serialized data received
+	Dim data() As Object = Ser.ConvertBytesToArray(Buffer, SerBuffer)
+
+	' Check number of objects
+	If data.Length <> SER_OBJECTS Then
+		Log("[B4R][AStream_NewData][ERROR] Wrong number of objects received: ", data.Length, " - expect ", SER_OBJECTS)
+		Return		
+	End If
+
+	' Assign objects to vars
+	Dim channel As Byte = data(0)
+	Dim angle As Byte = data(1)
+	' Log("[B4R][AStream_NewData] channel=", channel, ", angle=", angle)
+	
+	' Move & release servo
+	PWMServoDriver.SetAngle(channel, angle, True)
+End Sub
+
+Private Sub AStream_Error
+	Log("[B4R][AStream_Error] Can not handle data received.")
+End Sub

@@ -1,0 +1,70 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=eproper
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private ppr As Proper
+	Private tfword, tfAddedWords As TextField
+	Private taword As TextArea
+	Private MainForm As Form
+	Private Button1  As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	ppr.Initialize
+	ppr.Initialize2(File.Combine(File.DirApp & "\e-Files","")) 'Place for stored lists
+End Sub
+
+Sub Button1_Click
+	ppr.PlaceWords(tfAddedWords.Text)
+	tfword.Text = ppr.NameToProperCase(tfword.Text)
+End Sub
+
+Sub Button2_Click
+	taword.Text = ppr.NameToProperCase(taword.Text)
+End Sub
+
+Private Sub tfAddedWords_FocusChanged (HasFocus As Boolean)
+	Dim words As String = tfAddedWords.Text
+	If Not(HasFocus) Then
+		'Set the whole string to ToUpperCase
+		words = words.ToUpperCase
+		'Make sure there is no more than one space between words.
+		Do While words.Contains("  ")
+			words = words.Replace("  "," ")
+		Loop
+		words = words.Replace(", ",",")
+		words = words.Replace(" ,",",")
+		Do While words.Contains(" ")
+			words = words.Replace(" ",",")
+		Loop
+		Do While words.Contains(",,")
+			words = words.Replace(",,",",")
+		Loop
+		If words.Length > 1 Then
+			words = IIf(words.LastIndexOf(",") > 0, words.SubString2(0,words.Length-1), words)
+		Else
+			words = ""
+		End If
+		tfAddedWords.Text = words
+	End If
+End Sub

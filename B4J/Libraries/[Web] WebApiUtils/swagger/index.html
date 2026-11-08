@@ -1,0 +1,118 @@
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="./swagger-ui.css" />
+  <link rel="stylesheet" type="text/css" href="index.css" />
+  <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
+  <!-- Responsive CSS Styles Override Injector Rules -->
+  <style>
+    /* Mobile Breakpoint Media Engine rules targeting screens below 992px wide */
+    @media (max-width: 992px) {
+
+      /* Display the row container instead of single buttons */
+      #mobile-floating-actions {
+        display: flex !important;
+      }
+
+      #b4x-sidebar {
+        position: fixed !important;
+        right: 0 !important;
+        top: 0 !important;
+        height: 100vh !important;
+        width: 85vw !important;
+        min-width: 0 !important;
+        transform: translateX(105%);
+      }
+
+      #b4x-sidebar.active {
+        transform: translateX(0);
+      }
+
+      .hide-desktop-btn {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+      }
+
+      /* Hide the entire floating actions row when the drawer slides active/open */
+      #b4x-sidebar.active~#mobile-floating-actions {
+        display: none !important;
+      }
+
+      /* Clean mobile header constraints (Hides explore bar and desktop buttons) */
+      .topbar-wrapper button,
+      .topbar-wrapper .download-url-wrapper,
+      .topbar-wrapper .theme-toggle,
+      .topbar-wrapper .auth-wrapper {
+        display: none !important;
+      }
+
+      .topbar-wrapper {
+        display: flex !important;
+        justify-content: center !important;
+        /* Centers branding logo on mobile viewports */
+        width: 100% !important;
+      }
+    }
+
+    #b4x-sidebar.collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      transform: translateX(100%);
+    }
+  </style>
+</head>
+<body>
+  <!-- Floating Mobile Toggle Button (Visible only on small screens) -->
+  <div id="mobile-floating-actions"
+    style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: none; align-items: center; gap: 8px;">
+    <!-- Action 1: Mobile Dark Mode Class Toggle Button -->
+    <button id="mobile-theme-btn" onclick="toggleMobileTheme()"
+      style="background: #3e4451; color: #ffcb6b; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+      🌙
+    </button>
+    <!-- Action 2: Code Snippets Drawer Toggle Button -->
+    <button id="mobile-snippets-btn" onclick="toggleSidebar()"
+      style="background: #61afef; color: #1e222b; border: none; padding: 12px 18px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px; font-size: 13px;">
+      <span>⚡ Code Snippets</span>
+    </button>
+  </div>
+  <!-- Main Layout Workspace Container Grid -->
+  <div style="display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative;">
+    <!-- LEFT COLUMN: The Interactive Swagger Console -->
+    <div style="flex: 1; overflow-y: auto; padding-right: 5px; min-width: 0;">
+      <div id="swagger-ui"></div>
+    </div>
+    <!-- RIGHT COLUMN SIDEBAR: The Live B4X Snippet Container -->
+    <div id="b4x-sidebar"
+      style="width: 480px; min-width: 480px; background: #282c34; display: flex; flex-direction: column; box-shadow: -4px 0 15px rgba(0,0,0,0.25); transition: transform 0.3s ease, width 0.3s ease; position: relative; z-index: 999;">
+      <!-- Sidebar Navigation Header Configuration Banner Panel -->
+      <div
+        style="background: #1e222b; padding: 15px; color: #61afef; font-weight: bold; border-bottom: 2px solid #21252b; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>⚡ B4X Snippet Engine</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button onclick="refreshB4XCode()"
+            style="background: #3e4451; color: #abb2bf; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; transition: background 0.2s;">Sync</button>
+          <button onclick="copyAllCode()" id="copy-btn"
+            style="background: #61afef; color: #1e222b; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 4px;">📋
+            Copy All</button>
+          <button onclick="toggleSidebar()" class="hide-desktop-btn"
+            style="background: transparent; color: #e06c75; border: 1px solid #e06c75; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;">Hide</button>
+        </div>
+      </div>
+      <!-- Code text viewport display box -->
+      <pre
+        style="flex: 1; margin: 0; padding: 20px; overflow: auto; background: #282c34; color: #abb2bf; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; user-select: text; -webkit-user-select: text;"><code id="b4x-code-box">Syncing network templates with WebApiUtils maps...</code></pre>
+    </div>
+  </div>
+  <!-- Keep your standard Swagger dependencies links below -->
+  <script src="./swagger-ui-bundle.js" charset="UTF-8"> </script>
+  <script src="./swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+  <script src="./swagger-initializer.js" charset="UTF-8"> </script>
+</body>
+</html>

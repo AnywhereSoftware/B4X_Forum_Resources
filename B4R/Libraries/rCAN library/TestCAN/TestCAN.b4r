@@ -1,0 +1,56 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rcan
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.31
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private can As CAN
+	Private tim As Timer
+	Private pin As Pin
+	Private JustStarted As Boolean = True
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	pin.Initialize(8,pin.MODE_INPUT_PULLUP)
+	pin.AddListener("pin_StateChanged")
+	Log(can.Initialize("can_DataAvailable", 53, 0, can.SPEED_500KBPS))
+	tim.Initialize("tim_Tick",1000)
+	tim.Enabled=True
+End Sub
+
+Sub can_DataAvailable(Data() As Byte)
+	Log("ID: ", can.MessageId, " - Data: ",Data)
+End Sub
+
+Sub tim_Tick
+	If JustStarted Then
+		Dim m() As Byte = "Start"
+		can.SendMessageExtended(536870089, m)
+		JustStarted=False
+	Else
+		can.SendMessage(90, "Timer")
+	End If
+End Sub
+
+Sub pin_StateChanged(State As Boolean)
+	Delay(30)
+	If Not(State) Then
+		can.SendMessageExtended(536870091, "Hello")
+	End If
+End Sub
+
+

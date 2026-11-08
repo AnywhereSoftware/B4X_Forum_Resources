@@ -1,0 +1,146 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=star.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1024
+	#MainFormHeight: 768
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Public num As Int= 32
+	Public numr As Int= 16
+	Public x(num * numr) As Int, y(num * numr) As Int, w As Int, h As Int
+	Public xs(num * numr) As Int, ys(num * numr) As Int
+	Public count1(numr) As Int, exploding(numr) As Int
+	Public timer1 As Timer
+	Public timer2 As Timer
+	Public starimg(2000) As ImageView
+	Private aimg1 As Image
+	Public sizeofstar(2000) As Int
+	Public oura As Int
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	w = MainForm.width
+	h = MainForm.Height
+	aimg1.Initialize(File.DirAssets,"star.png")
+
+	For i = 0 To (num - 1) * (numr - 1)
+		x(i) = -1000
+		y(i) = -1000
+		xs(i) = 0
+		ys(i) = 0
+		sizeofstar(i)=Rnd(10,50)
+	Next
+	For i = 0 To numr - 1
+		count1(i) = 1 + i * numr
+		exploding(i) = 1
+	Next
+
+	
+	timer1.Initialize("timerr1",15)
+	timer1.Enabled = True
+
+End Sub
+
+Sub timerr1_tick
+	
+	timer1.Enabled=False
+	Dim i As Int, j As Int, index As Int, vv As Int
+	Dim x1 As Int, y1 As Int, xs1 As Int, ys1 As Int
+
+oura=oura+1
+If oura=1 Then
+		vv=0
+MainForm.RootPane.RemoveAllNodes
+oura=0
+End If
+
+
+	For i = 0 To numr - 1
+
+		If (exploding(i)=0) And ys(i * num) > 0 Then
+			exploding(i) = 1
+			For j = 0 To num - 1
+				index = i * num + j
+				ys(index) = Rnd(-5,5)
+				xs(index) = Rnd(-5,5)
+
+				If xs(index) >= 0 Then xs(index) = xs(index) + 1
+				
+			Next
+		End If
+		
+		For j = 0 To num - 1
+
+
+
+			index = i * num + j
+			
+
+			x1 = x(index) 
+			y1 = y(index)
+			vv=vv+1
+ 
+			
+			If x1 <= 0 Or x1 >= w Or y1 <= 0 Or y1 >= h Then
+
+			Else
+
+
+				starimg(vv).Initialize("star")
+				starimg(vv).SetImage(aimg1)
+				starimg(vv).Visible=True
+				MainForm.RootPane.AddNode(starimg(vv),x1, y1,sizeofstar(vv),sizeofstar(vv))
+				
+			End If
+			x(index) = x(index) + xs(index)
+			y(index) = y(index) + ys(index)
+			ys(index) = ys(index) + 1
+
+		Next
+		
+		count1(i) = count1(i) - 1
+		If count1(i) <= 0 Then
+			
+			count1(i) = 200
+			exploding(i) = 0
+			x1 = Rnd(-100,w+100)
+			y1 = Rnd(h+0,h+100)
+			ys1 = -Rnd(3,40)
+			xs1 = Rnd(-10,10)
+			If xs1 >= 0 Then xs1 = xs1 + 1
+			For j = 0 To num - 1
+
+				index = i * num + j
+				x(index) = x1
+				y(index) = y1
+				xs(index) = xs1
+				ys(index) = ys1
+				'Log(index & " " & x(index) & " " & y(index))
+			Next
+
+		End If
+
+	Next
+	timer1.Enabled=True
+End Sub

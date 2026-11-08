@@ -1,0 +1,144 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private cv As Canvas
+	Dim num_rays As Int
+	
+	Type PVector(x As Float, y As Float)
+	
+	Dim circle_center As PVector
+	Dim radius As Float
+	
+	Dim pos1(200) As PVector
+	Dim vel1(200) As PVector
+	
+	Dim nativeMe As JavaObject
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	num_rays = 200
+	circle_center.Initialize
+	
+	Sleep(10)                 'sleep a bit else the canvas width/heigth crashes
+	radius = (cv.Width - 100)/2
+
+	circle_center.x = 0
+	circle_center.y = 0
+	
+	For i = 0 To num_rays - 1
+		Dim y As Float = map(i, 0, num_rays, -radius+10, radius-10)
+		pos1(i).Initialize
+		pos1(i).x = 0
+		pos1(i).y = y
+		vel1(i).Initialize
+		vel1(i).x = 1
+		vel1(i).y = 0
+	Next
+	
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	nativeMe.InitializeStatic("javafx.scene.paint.Color")
+	
+	draw
+	
+End Sub
+
+Sub draw
+		
+'		cv.ClearRect(0, 0, cv.Width, cv.Height)
+'		cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+'		cv.DrawCircle(circle_center.x + cv.Width/2, circle_center.y + cv.Height/2, radius, fx.Colors.Red, False, 3dip)
+	    For i = 0 To num_rays-1
+			Dim col As JavaObject
+			Dim aa As Double = 1.0
+			Dim dub As Double = i
+			col = nativeMe.RunMethod("hsb", Array(dub, aa, aa))
+			
+	        cv.DrawCircle(pos1(i).x + cv.Width/2, pos1(i).y + cv.Height/2, 1, col, False, 1dip)
+			
+	        pos1(i).x = pos1(i).x + vel1(i).x   
+			pos1(i).y = pos1(i).y + vel1(i).y
+	        If collision(pos1(i)) Then
+	            Dim normal As PVector
+				normal = get_normal(pos1(i))
+	            vel1(i) = reflection(vel1(i), normal)
+	         End If
+			
+		Next
+		cv.DrawCircle(circle_center.x + cv.Width/2, circle_center.y + cv.Height/2, radius, fx.Colors.Red, False, 5dip)
+
+		Sleep(10)
+		CallSubDelayed(Me, "draw")
+
+End Sub
+
+Sub map(value As Float, istart As Float, istop As Float, ostart As Float, ostop As Float) As Float
+	
+	Return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
+	
+End Sub
+
+Sub get_normal(p As PVector) As PVector
+	
+		Dim normal As PVector
+		normal.Initialize
+		normal.x = circle_center.x - p.x
+		normal.y = circle_center.y - p.y
+		Dim magnitude As Float = Sqrt(Power(normal.x, 2) + Power(normal.y, 2))
+		normal.x = normal.x / magnitude
+		normal.y = normal.y / magnitude
+		Return normal
+	
+End Sub
+
+Sub collision(p As PVector) As Boolean
+	
+	    Dim distance As Float 
+		distance = Sqrt(Power(circle_center.x - p.x, 2) + Power(circle_center.y - p.y, 2))
+	    If(distance >= radius) Then
+	        Return True
+	    End If
+	    Return False
+	
+End Sub
+
+Sub reflection(v As PVector, n As PVector) As PVector
+	
+		Dim d As PVector
+		d.Initialize
+		Dim val As Float = (n.x * v.x + n.y * v.y) * 2
+		d.x = n.x * val
+		d.y = n.y * val
+	    v.x = v.x - d.x
+		v.y = v.y - d.y
+		Dim magnitude As Float = Sqrt(Power(v.x, 2) + Power(v.y, 2))
+	  	v.x = v.x / magnitude
+		v.y = v.y /magnitude
+	    Return v
+	
+End Sub

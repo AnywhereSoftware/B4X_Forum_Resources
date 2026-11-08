@@ -1,0 +1,129 @@
+﻿Build1=Default,b4a.example
+File1=fullscreenlayout.bal
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=appcompat
+Library2=core
+Library3=xui
+Library4=addoexo
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~CreateResourceFromFile(Macro, Core.NetworkClearText)~\n~'End of default text.~\n~SetActivityAttribute(FullScreen,~\n~    android:screenOrientation,~\n~    "landscape"~\n~)~\n~
+Module1=FullScreen
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=2
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#MultiDex: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Public player1 As SPlayer
+	Public SPlayerView1 As SPlayerView
+	Private VideoWidth As Int
+	Private VideoHeight As Int
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private lblFullscreen As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	lblFullscreen.Visible = False
+	player1.Initialize("player", True,True,False)
+	Log("Ffmpeg >>> " & player1.FFmpegavailabe)
+	Dim sources As List
+	sources.Initialize
+	sources.Add(player1.CreateUriSource("http://stand.netup.tv/downloads/T1515_SD.ts"))
+	sources.Add(player1.CreateSmoothStreamingSource("http://playready.directtaps.net/smoothstreaming/SSWSS720H264/SuperSpeedway_720.ism/Manifest"))
+	sources.Add(player1.CreateHLSSource("https://content.jwplatform.com/manifests/yp34SRmf.m3u8"))
+	sources.Add(player1.CreateDashSource("https://livesim.dashif.org/livesim/testpic_2s/Manifest.mpd"))
+	sources.Add(player1.CreateUriSource("https://html5demos.com/assets/dizzy.mp4"))
+	sources.Add(player1.CreateRtspStreamingSource("rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mp4"))
+	'sources.Add(player1.CreateRtmpStreamingSource("rtmp://Your URL"))
+	SPlayerView1.ResizeMode = "FILL"
+	player1.VideoScalingMode(2)
+	player1.Prepare(player1.CreateListSource(sources))
+	SPlayerView1.Player = player1
+	player1.Play
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed = True Then
+		player1.Release
+	End If
+
+End Sub
+
+
+Sub Player_Ready
+	'player1.GetAudioTracksLanguages
+	'player1.GetVideoTrackSubtitles
+	VideoWidth = player1.GetvideoFormatwidth
+	VideoHeight = player1.GetvideoFormatHeight
+	PutLabelInVideoTopRightCorner(SPlayerView1, lblFullscreen)
+	lblFullscreen.Visible = True
+	Log("Ready")
+End Sub
+
+Sub Player_Error (Message As String)
+	Log("Error: " & Message)
+End Sub
+
+Sub Player_Complete
+	Log("complete")
+End Sub
+
+Sub Player_getaudiolanguages(audiolang As Map)
+	If audiolang.IsInitialized Then
+		For Each Key As String In audiolang.Keys
+			Dim vlang As String = Key
+			Log(vlang)
+		Next
+	End If
+End Sub
+
+Sub Player_getvideosubtitles(subtitles As Map)
+	If subtitles.IsInitialized Then
+		For Each Key As String In subtitles.Keys
+			Dim slang As String = Key
+			Log(slang)
+		Next
+	End If
+End Sub
+
+
+Public Sub PutLabelInVideoTopRightCorner(PlayerView As SPlayerView, Label As B4XView)
+	Dim PlayerRatio As Float = PlayerView.Width / PlayerView.Height
+	Dim VideoRatio As Float = VideoWidth / VideoHeight
+	Dim scale As Float = IIf(PlayerRatio > VideoRatio, PlayerView.Height / VideoHeight, PlayerView.Width / VideoWidth)
+	Label.Top = PlayerView.Top + PlayerView.Height / 2 - VideoHeight / 2 * scale
+	Label.Left = PlayerView.Left + PlayerView.Width / 2 + VideoWidth / 2 * scale - Label.Width
+End Sub
+
+Private Sub lblFullscreen_Click
+	StartActivity(FullScreen)
+End Sub

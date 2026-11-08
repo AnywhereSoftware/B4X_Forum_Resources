@@ -1,0 +1,45 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=messages_de.properties
+File2=messages_en.properties
+File3=messages_es.properties
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=jcore
+Library2=javaobject
+NumberOfFiles=3
+NumberOfLibraries=2
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Dim b4xLocale As JavaObject
+	Dim b4xbundle As JavaObject
+	Dim rt As JavaObject
+End Sub
+
+Sub AppStart (Args() As String)
+	'setup javaobjects
+	rt = rt.InitializeStatic("java.lang.Runtime").RunMethod("getRuntime",Null)
+
+	b4xLocale.InitializeNewInstance("java.util.Locale",Array("en")) ' can be  en, de or es
+	b4xbundle = b4xbundle.InitializeStatic("java.util.ResourceBundle").RunMethod("getBundle",Array("Files/messages",b4xLocale))
+	
+	' calc used memory as percentage
+	Dim mem As Double = 100.0 - (rt.RunMethod("freeMemory",Null) / rt.RunMethod("totalMemory",Null))*100.0
+	
+	'log result
+	Log(translate("memory_usage") & " " & NumberFormat(mem,0,2) & "%")
+End Sub
+
+Sub translate (key As String) As String
+	Return b4xbundle.RunMethod("getString",Array(key))
+End Sub

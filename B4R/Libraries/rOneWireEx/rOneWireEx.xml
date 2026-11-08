@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4ROneWireEx</name>
+        <shortname>OneWireEx</shortname>
+        <comment>Installed using the Arduino IDE.</comment>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initializes the object. Sets the OneWire pin.
+@param WirePin</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>WirePin</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Search">Search</name>
+            <comment>Searches for the next device. Returns True if a device was found.
+The order of devices is deterministic.
+@param  Address - 8 bytes array. The address of the device found will be written to this array.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ResetSearch">ResetSearch</name>
+            <comment>Clears the search state. The next search will start from the beginning.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="CRC16">CRC16</name>
+            <comment>Computes a Dallas Semiconductor 16 bit CRC.
+@param Data - Array with the bytes to checksum.
+@param Length - Number of bytes to use.</comment>
+            <returntype>UInt</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Length</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="CRC8">CRC8</name>
+            <comment>Computes a Dallas Semiconductor 8 bit CRC.
+@param Data - Array with the bytes to checksum.
+@param Length - Number of bytes to use.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>Data</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Length</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Reset">Reset</name>
+            <comment>Performs a reset function. Returns True if the device asserted a presence pulse.</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="Select">Select</name>
+            <comment>Issues a select command. This is needed after each call to Reset.
+@param Address</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Write">Write</name>
+            <comment>Writes a byte.
+@param Value - Value to write.
+@param Power - Set to True if power after the write is needed.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Power</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="WriteBytes">WriteBytes</name>
+            <comment>Writes bytes.
+@param Bytes - Data to write.
+@param Power - Set to True if power after the write is needed.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Bytes</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Power</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadBytes">ReadBytes</name>
+            <comment>Reads data.
+@param Bytes - Data will be written to this array.
+@param Count - Number of bytes to read.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Bytes</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>Count</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Skip">Skip</name>
+            <comment>Skips the device selection. Useful when there is only a single device connected.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="ReadAddress">ReadAddress</name>
+            <comment>Scans the OneWire bus for the next available device address.
+
+This method wraps the native `search()` mechanism. If a device is
+discovered, its unique 8-byte ROM code is written directly into
+the provided address buffer array.
+
+@param address An ArrayByte pointer to a pre-allocated 8-byte buffer where the discovered address will be stored.
+@return True if a device address was successfully found and populated; False if no further devices responded.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadTemperature">ReadTemperature</name>
+            <comment>Reads the temperature from a specific DS18B20 sensor.
+
+This method executes a full 1-Wire transaction block, including
+bus reset, device selection, conversion triggering (0x44), a
+synchronous 750ms delay, and a scratchpad data read (0xBE).
+
+@param address An ArrayByte pointer containing the unique 8-byte ROM address of the target sensor.
+@return The calculated temperature value in degrees Celsius. Returns -127.0 if the CRC validation check fails.</comment>
+            <returntype>float</returntype>
+            <parameter>
+                <name>address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetResolution">SetResolution</name>
+            <comment>Sets the internal measurement resolution of a specific sensor.
+
+This method updates the configuration register inside the DS18B20
+scratchpad non-volatile memory. Lower resolutions convert temperature
+faster but with wider incremental steps.
+
+@param address An ArrayByte pointer containing the 8-byte ROM address of the target sensor.
+@param resolution The desired bit resolution. Accepted values are 9, 10, 11, or 12.
+		  bit 9 0.5°C 93.75ms, bit 10 0.25°C 187.5ms, bit 11 0.125°C 375.0ms, bit 12 0.0625°C (Default)750.0ms
+@return True if the resolution configuration was successfully updated on the sensor.</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>address</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>resolution</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetDeviceType">GetDeviceType</name>
+            <comment>Identifies the device type from its 8-byte ROM address.
+
+This method reads the first byte (Family Code) of the 1-Wire address.
+
+@param address An ArrayByte pointer containing the 8-byte ROM code.
+@return An integer representing the device type:
+        1 = DS18B20, 2 = DS18S20, 3 = DS1822, 4 = MAX31820, 0 = Unknown/Other.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetDeviceTypeName">GetDeviceTypeName</name>
+            <comment>Identifies the device type name from its 8-byte ROM address.
+
+This method reads the first byte (Family Code) of the 1-Wire address.
+
+@param address An ArrayByte pointer containing the 8-byte ROM code.
+@return string representing the device type name (model name):
+		   0x28 = DS18B20, 0x10 = DS18S20OLD, 0x22 = DS1822, 0x3B = MAX31820, 0x01 iButton Key, 0x24 = EEPROM Storage, else Unknown</comment>
+            <returntype>B4R::B4RString*</returntype>
+            <parameter>
+                <name>address</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="RESOLUTION_9">RESOLUTION_9</name>
+            <comment>@brief DS1820 Resolution 9 0.5°C</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_10">RESOLUTION_10</name>
+            <comment>@brief DS1820 Resolution 10 0.25°C</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_11">RESOLUTION_11</name>
+            <comment>@brief DS1820 Resolution 11 0.125°C</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_12">RESOLUTION_12</name>
+            <comment>@brief DS1820 Resolution 12 0.0625°C (default)</comment>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

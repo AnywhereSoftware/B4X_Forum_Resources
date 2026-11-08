@@ -1,0 +1,116 @@
+﻿Build1=Default,b4a.example.Intellvold_DatePicker
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=intellvold_datepicker
+Library3=xui
+Library4=appcompat
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~	~\n~	~\n~       ~\n~   ~\n~ <item name="colorAccent">#040925</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~		<item name="android:navigationBarColor">#FF000000</item>~\n~		~\n~ ~\n~      ~\n~    </style>~\n~</resources>~\n~)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Intellvold_DatePicker
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+#Extends : android.support.v4.app.FragmentActivity
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim Datepicker As Intellvold_DatePicker
+	Dim Mycalendar As Intellvold_Calendar
+	Dim Timepicker As Intellvold_TimePicker
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	
+End Sub
+
+ 
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+Sub Button1_Click
+	Datepicker.Initialize("Date",2022 ,DateTime.GetMonth(DateTime.Now) ,DateTime.GetDayOfMonth(DateTime.Now))
+	Mycalendar.Initialize("dd.mm.yyyy",Mycalendar.PRC,"2.02.1990") 'start date
+'	Datepicker.SetThemeDark
+	Datepicker.SetMinDate(Mycalendar)
+	Mycalendar.Initialize("dd.mm.yyyy",Mycalendar.PRC,"2.02.2030") 'end date
+	Datepicker.SetMaxDate(Mycalendar)
+	Datepicker.CancelColor = Colors.Red
+	Datepicker.OkColor = Colors.Green
+	Datepicker.Title = "IntellVold"
+	Datepicker.CancelText = "yox"
+	Datepicker.OkText = "bəli"
+'	Datepicker.SetThemeDark
+	Datepicker.SetOnCancel("can")
+'	Datepicker.show("bir")
+	Datepicker.show2("iki")
+	Datepicker.About
+	Sleep(10000)
+'	Datepicker.Dismiss_Dialog
+End Sub
+
+Sub Date_OnDateSet (year As Int ,monthOfYear As Int , dayOfMonth As Int)
+	ToastMessageShow(year&"/"&(NumberFormat(monthOfYear,2 ,0))&"/"&NumberFormat(dayOfMonth ,2 ,0) ,False)
+	Msgbox(year&"/"&(NumberFormat(monthOfYear,2 ,0))&"/"&NumberFormat(dayOfMonth ,2 ,0) ,"")
+End Sub
+
+Sub can_OnCancelDate ()
+	ToastMessageShow("cancel" ,False)
+End Sub
+
+Sub Activity_Click
+
+End Sub
+
+Private Sub Button2_Click
+	Timepicker.Initialize("Time" ,21 ,45 ,True)
+	Timepicker.CancelColor = Colors.Red
+	Timepicker.CancelText = "yox"
+	Timepicker.OkColor = Colors.Yellow
+	Timepicker.OkText = "bəli"
+	Timepicker.SetOnCancel("Time")
+'	Timepicker.SetThemeDark
+	Timepicker.show("bir")
+	Timepicker.Title = "TimeIntellvold"
+	Sleep(4000)
+'	Timepicker.Dismiss_Dialog
+End Sub
+
+Sub Time_OnCancelTime ()
+	Log("Time_OnCancelTime")
+End Sub
+
+Sub Time_OnTimeSet (hourOfDay As Int ,minute As Int , second As Int)
+	ToastMessageShow(hourOfDay&":"&minute&":"&second ,False)
+	Msgbox(hourOfDay&":"&minute&":"&second ,"")
+End Sub

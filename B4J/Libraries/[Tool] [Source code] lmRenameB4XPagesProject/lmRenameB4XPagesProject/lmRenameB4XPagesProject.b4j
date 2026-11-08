@@ -1,0 +1,314 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=bctoast
+Library2=jcore
+Library3=jfx
+Library4=jshell
+Library5=jxui
+Library6=xui views
+Library7=draganddrop2
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 265 
+#End Region
+
+#Region VERSIONS 
+'	V. 1.1.1		05/01/2021
+'		Fixed a bug on changing "main" folder name.
+'	V. 1.1.0		04/29/2021
+'		Added drag and drop feature.
+'		Filled ResetTo TextField with the dropped file name (as default, so you can change it).
+'		Fixed a small bug (it changed project extensions to capital letters)
+'	V. 1.0.0		04/26/2021
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+
+#Region VIEWS' DECL	
+	Private btnOpenExplorer As Button
+	Private tfProjDir As B4XView
+	Private tfProjDirSource As TextField
+	Private ftfRenameTo As B4XFloatTextField
+	Private btnRename As Button
+	Private chkFolderToo As CheckBox
+#End Region
+
+	Private Const DATA_FOLDER As String = "RenameB4XPagesProj"
+	Private Const PREFS_FILE_NAME As String = "Prefs"
+	Private mDataDir As String
+
+	Private mDirectoryChooser As DirectoryChooser
+	Private mInitialDirectory As String
+	Private mCheckingContainsProjFiles As Boolean 'To avoid loop on text changed.
+	
+	Private mmapPrefs As Map
+
+	Private DragDrop As DragAndDrop
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "lmRenameB4XPagesProject - v. 1.1.1"
+	tfProjDir.SetColorAndBorder(xui.Color_Blue, 0, xui.Color_Blue, tfProjDir.Height / 2)
+	tfProjDir.TextColor = xui.Color_White
+	MainForm.Show
+	
+	xui.SetDataFolder(DATA_FOLDER)
+	mDataDir = xui.DefaultFolder
+
+	ReadPref
+	
+	mDirectoryChooser.Initialize
+	mDirectoryChooser.InitialDirectory = mInitialDirectory
+	
+	DragDrop.Initialize(Me)
+	DragDrop.MakeDragSource(tfProjDirSource, "tfProjDirSource")
+	DragDrop.MakeDragTarget(tfProjDir, "tfProjDir")
+End Sub
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	WritePref
+End Sub
+
+#Region VIEWS' EVENTS 
+
+Private Sub btnSelectProj_Click
+	If Not(File.Exists(mInitialDirectory, "")) Then
+		Dim Dir As String = $"C:\Users\${GetSystemProperty("user.name", "default")}\Documents"$
+		mInitialDirectory = mmapPrefs.GetDefault("InitialDirectory", Dir)
+		mDirectoryChooser.InitialDirectory = mInitialDirectory
+	End If
+	Dim SelectedDir As String = mDirectoryChooser.Show(MainForm)
+	If SelectedDir.Length > 0 Then
+		tfProjDir.Text = SelectedDir
+	End If
+End Sub
+
+Private Sub ftfRenameTo_TextChanged (Old As String, New As String)
+	btnRename.Visible = (New.Length > 0)
+End Sub
+
+Private Sub btnRename_Click
+	Rename
+	mInitialDirectory = tfProjDir.Text
+	mmapPrefs.Put("InitialDirectory", mInitialDirectory)
+	WritePref
+	mDirectoryChooser.InitialDirectory = mInitialDirectory
+End Sub
+
+Private Sub btnOpenExplorer_Click
+	Dim sh As Shell
+	Dim Dir As String = $""${tfProjDir.Text}""$
+	Dir = Dir.Replace("/", "\")
+	sh.Initialize("sh", "explorer.exe", Array(Dir))
+	sh.Run(2000)
+End Sub
+
+Private Sub tfProjDir_TextChanged (Old As String, New As String)
+	If mCheckingContainsProjFiles Then 
+		mCheckingContainsProjFiles = False
+		Return
+	Else
+		mCheckingContainsProjFiles = True
+		If Not(ContainsAtLeastOneProjectFolder(New)) Then
+			tfProjDir.Text = Old
+			Return
+		Else
+			Dim FileName As String = File.GetName(tfProjDir.Text)
+			ftfRenameTo.Text = FileName
+			ftfRenameTo.mBase.Visible = True
+			chkFolderToo.Visible = True
+			btnOpenExplorer.Visible = True
+		End If
+	End If
+End Sub
+
+#End Region
+
+#Region PRIVATE METHODS 
+
+Private Sub Rename
+	Dim ProjDir, SpecProjDir As String
+	Dim ProjType As String = "b4*"
+	Dim ProjFileName As String
+	Dim ProjNewFileName As String = ftfRenameTo.Text
+	Dim ProjMetaFileName As String
+	Dim Renamed As Boolean
+
+	ProjDir = tfProjDir.Text
+	
+	For Each Letter As String In Array As String("a", "i", "j")
+		SpecProjDir = ProjDir & "\" & ProjType.Replace("*", Letter)
+		If File.Exists(SpecProjDir, "") Then
+			ProjFileName = GetProjFileName(SpecProjDir, Letter) ' with extension.
+			ProjMetaFileName = ProjFileName & ".meta"
+
+			RenameFile(SpecProjDir, ProjFileName, SpecProjDir, ProjNewFileName & "." & ProjType.Replace("*", Letter))
+			RenameFile(SpecProjDir, ProjMetaFileName, SpecProjDir, ProjNewFileName & "." & ProjType.Replace("*", Letter) & ".meta")
+			Renamed = True
+		Else
+			Log(SpecProjDir & " does not exist")
+		End If
+	Next
+	
+	If Renamed Then
+		If chkFolderToo.Enabled Then
+			Dim LastBackSlash As Int = ProjDir.LastIndexOf("/")
+			Dim NewProjDir As String = ProjDir.SubString2(0, LastBackSlash + 1) & ProjNewFileName
+			RenameFolder(ProjDir, NewProjDir)
+			tfProjDir.Text = NewProjDir
+			mInitialDirectory = NewProjDir
+			WritePref
+		End If
+
+		Dim toast As BCToast
+		toast.Initialize(MainForm.RootPane)
+		toast.Show("Renamed")
+		ftfRenameTo.mBase.Visible = False
+		ftfRenameTo.Text = ""
+		chkFolderToo.Visible = False
+		chkFolderToo.Checked = False
+	End If
+	
+End Sub
+
+Private Sub WritePref
+	File.WriteMap(mDataDir, PREFS_FILE_NAME, mmapPrefs)
+End Sub
+
+Private Sub ReadPref
+	If Not(File.Exists(mDataDir, PREFS_FILE_NAME)) Then
+		mmapPrefs.Initialize
+		WritePref
+	End If
+
+	mmapPrefs = File.ReadMap(mDataDir, PREFS_FILE_NAME)
+	
+	Dim Dir As String = $"C:\Users\${GetSystemProperty("user.name", "default")}\Documents"$
+	mInitialDirectory = mmapPrefs.GetDefault("InitialDirectory", Dir)
+	If mInitialDirectory <> Dir Then
+		If Not(File.Exists(mInitialDirectory, "")) Then
+			mInitialDirectory = Dir
+		End If
+	End If
+End Sub
+
+Private Sub ContainsAtLeastOneProjectFolder(Dir As String) As Boolean
+	Dim Result As Boolean = False
+	Dim lstFiles As List = ListDirsOnly(Dir)
+	For Each FileName As String In lstFiles
+		If FileName.ToUpperCase = "B4A" Or FileName.ToUpperCase = "B4J" Or FileName.ToUpperCase = "B4I" Then
+			Result = True
+			Exit
+		End If
+	Next
+	Return Result
+End Sub
+
+Public Sub ListDirsOnly(Dir As String) As List
+	Dim lstDir, lstRes As List
+	lstRes.Initialize
+    
+	If File.Exists(Dir, "") Then
+
+		lstDir = File.ListFiles(Dir)
+      
+		Dim FileName As String
+      
+		For i = 0 To lstDir.Size - 1
+			FileName = lstDir.Get(i)
+			If File.IsDirectory(Dir, FileName) Then
+				lstRes.Add(FileName)
+			End If
+		Next
+      
+	End If
+  
+	Return lstRes
+End Sub
+
+#Region DRAG AND DROP 
+
+Sub tfProjDirSource_DragDetected(e As MouseEvent)
+	DragDrop.SetDragModeAndData2(TransferMode.ANY, Array As String("B4JSource"), Array As Object(tfProjDirSource.text), tfProjDirSource.Snapshot)
+End Sub
+
+Sub tfProjDir_DragOver(e As DragEvent)
+	If e.GetDragboard.GetUrl.Length > 0 Then
+		e.AcceptTransferModes(TransferMode.COPY)
+	End If
+End Sub
+
+Sub tfProjDir_DragDropped(e As DragEvent)
+	Dim URIs As String
+	URIs = e.GetDataObjectForId("text/uri-list")
+	Dim arrURIs() As String = Regex.Split("file:/", URIs)
+	If File.IsDirectory(arrURIs(1), "") Then
+		tfProjDir.Text = arrURIs(1)
+	End If
+End Sub
+
+#End Region
+
+#End Region
+
+#Region PUBLIC METHODS 
+
+' ProjType - pass: "a" for B4A, "i" for B4i, "j" for B4J.
+Public Sub GetProjFileName(Dir As String, ProjType As String) As String
+	Dim Result As String = ""
+	
+	ProjType = ProjType.ToLowerCase
+	
+	Dim lstDir, lstRes As List
+	lstRes.Initialize
+    
+	If File.Exists(Dir, "") Then
+
+		lstDir = File.ListFiles(Dir)
+      
+		Dim FileName As String
+      
+		For i = 0 To lstDir.Size - 1
+			FileName = lstDir.Get(i)
+			If Not(File.IsDirectory(Dir, FileName)) Then
+				If FileName.EndsWith(".b4" & ProjType.ToLowerCase) Then
+					Result = FileName
+					Exit
+				End If
+			End If
+		Next
+      
+	End If
+  
+	Return Result
+End Sub
+
+Public Sub RenameFile(DirName As String, FileName As String, NewDirName As String, NewFileName As String) As Boolean
+	Dim Source As JavaObject
+	Source.InitializeNewInstance("java.io.File", Array(DirName, FileName))
+	Dim Dest As JavaObject
+	Dest.InitializeNewInstance("java.io.File", Array(NewDirName, NewFileName))
+	Return Source.RunMethod("renameTo", Array As Object(Dest))
+End Sub
+
+Private Sub RenameFolder(Path As String, NewPath As String) As Boolean
+	Dim jo1, jo2 As JavaObject
+	jo1.InitializeNewInstance("java.io.File", Array(Path))
+	jo2.InitializeNewInstance("java.io.File", Array(NewPath))
+	Return jo1.RunMethod("renameTo", Array(jo2))
+End Sub
+
+#End Region

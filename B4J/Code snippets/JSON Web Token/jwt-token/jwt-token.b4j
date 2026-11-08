@@ -1,0 +1,76 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jstringutils
+Module1=JSONWebToken
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#AdditionalJar: java-jwt-4.0.0
+#AdditionalJar: jackson-core-2.13.3
+#AdditionalJar: jackson-databind-2.13.3
+#AdditionalJar: jackson-annotations-2.13.3
+
+Sub Process_Globals
+	Dim jwt1 As JSONWebToken
+	Dim jwt2 As JSONWebToken
+End Sub
+
+Sub AppStart (Args() As String)
+	' Generate a token
+	Dim secret1 As String = "secret"
+	jwt1.Initialize("HMAC256", secret1, False)
+	If jwt1.IsInitialized Then
+		Dim generatedToken As String = CreateAndSignToken
+		Log( generatedToken )
+		Dim parts() As String
+		parts = Regex.Split("\.", generatedToken)
+		For Each part As String In parts
+			Log( part )
+		Next
+	End If
+	
+	' Verify the token
+	Dim secret2 As String = "secret" ' secret2 should be same as secret1 otherwise verification will failed
+	jwt2.Initialize("HMAC256", secret2, False)
+	VerifyAndGetClaims(generatedToken)
+	
+	StartMessageLoop
+End Sub
+
+Sub CreateAndSignToken As String
+	jwt1.withIssuer("Computerise")
+	jwt1.withClaim(CreateMap("user": "Aeric", "isAdmin": True))
+	jwt1.withExpiresAt(DateTime.Now + 180000)
+	jwt1.Sign
+	Return jwt1.Token
+End Sub
+
+Sub VerifyAndGetClaims (Token As String)
+	jwt2.Token = Token
+	jwt2.Verify
+	If jwt2.Verified Then
+		Dim ExpDate As String = jwt2.exp
+		Log( ExpDate )
+	
+		Dim claims As Object = jwt2.claims
+		Log( claims )
+	
+		Dim issuer As Object = jwt2.getClaimByKey("iss")
+		Log( issuer )
+		
+		Dim isAdmin As Object = jwt2.getClaimByKey("isAdmin")
+		Log( isAdmin )
+	Else
+		LogError( jwt2.Error )
+	End If
+End Sub

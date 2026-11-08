@@ -1,0 +1,112 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=pnd_selenium
+Library3=jstringutils
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: False 
+#End Region
+
+Sub Process_Globals
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+    ' *******************************************************************************
+	' In this example:
+	' Use Selenium library in Console (Non-UI) app
+    ' How to convert local HTML to PDF 
+	' How to convert online web page HTML to PDF
+	' *******************************************************************************
+
+
+Sub AppStart (Args() As String)
+	Selenium.AddArgument("--kiosk-print")  ' enable automatically pressing the print button in print preview
+	Selenium.AddArgument("--no-sandbox")   ' disables the sandbox for all process types that are normally sandboxed. Meant to be used as a browser-level switch for testing purposes only.
+	Selenium.AddArgument("--headless")     ' run in headless mode, i.e., without a UI or display server dependencies.
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+	Start
+	StartMessageLoop
+End Sub
+
+
+Sub Start
+	File.Copy(File.DirAssets, "local_file.html", File.DirApp, "local_file.html")
+	
+	Wait For (NavigateToLocalFileAndConvertHtmlToPdf) Complete (Done As Boolean)
+	Wait For (NavigateToB4xAndConvertHtmlToPdf) Complete (Done As Boolean)
+	
+	ExitApplication
+End Sub
+
+
+Sub NavigateToLocalFileAndConvertHtmlToPdf As ResumableSub
+	Selenium.NavigateTo(File.DirApp & "\local_file.html")
+	Wait For Selenium_NavigationFinished
+	Convert("local_file.pdf", 0.90)
+	Return True
+End Sub
+
+
+Sub NavigateToB4xAndConvertHtmlToPdf As ResumableSub
+	Selenium.NavigateTo("https://www.b4x.com")
+	Wait For Selenium_NavigationFinished
+	Convert("b4x.pdf", 0.50)
+	Return True
+End Sub
+
+
+Sub Convert(SaveAsFileName As String, Scale As Double)
+	' Possible parameters from: https://vanilla.aslushnikov.com/?Page.printToPDF
+		
+	' displayHeaderFooter - Boolean - Display header and footer. Defaults to false.
+	' footerTemplate - String - HTML template for the print footer. Should use the same format as the 'headerTemplate'.
+	' headerTemplate - String - HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them: - 'date': formatted print date - 'title': document title - 'url': document location - 'pageNumber': current page number - 'totalPages': total pages in the document For example, '<span class=title></span>' would generate span containing the title.
+	' landscape - Boolean - Paper orientation. Defaults to false.
+	' marginBottom - Double - Bottom margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginLeft - Double - Left margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginRight - Double - Right margin in inches. Defaults to 1cm (~0.4 inches).
+	' marginTop - Double - Top margin in inches. Defaults to 1cm (~0.4 inches).
+	' pageRanges - String - Paper ranges to print, one based, e.g., '1-5, 8, 11-13'. Pages are printed in the document order, not in the order specified, and no more than once. Defaults to empty string, which implies the entire document is printed. The page numbers are quietly capped to actual page count of the document, and ranges beyond the end of the document are ignored. If this results in no pages to print, an error is reported. It is an error to specify a range with start greater than end.
+	' paperHeight - Double - Paper height in inches. Defaults to 11 inches.
+	' paperWidth- Double - Paper width in inches. Defaults to 8.5 inches.
+	' preferCSSPageSize - Boolean - Whether or not to prefer page size as defined by css. Defaults to false, in which case the content will be scaled to fit the paper size.
+	' printBackground - Boolean - Print background graphics. Defaults to false.
+	' scale - Double - Scale of the webpage rendering. Defaults to 1.
+	
+	' EXPERIMENTAL:
+	' generateDocumentOutline - Boolean - Whether or not to embed the document outline into the PDF.
+	' generateTaggedPDF - Boolean - Whether or not to generate tagged (accessible) PDF. Defaults to embedder choice.
+	' transferMode - String- return as stream Allowed values: ReturnAsBase64, ReturnAsStream.
+	
+	Dim Parameters As Map
+	Parameters.Initialize
+	Parameters.Put("landscape", False)                ' Boolean
+	Parameters.Put("displayHeaderFooter", False)      ' Boolean
+	Parameters.Put("printBackground", True)           ' Boolean
+	Parameters.Put("scale", Scale)                    ' Double
+	Parameters.Put("paperWidth", 8.5)                 ' Double
+	Parameters.Put("paperHeight", 11.0)               ' Double
+	Parameters.Put("marginTop", 0.4)                  ' Double
+	Parameters.Put("marginBottom", 0.4)               ' Double
+	Parameters.Put("marginLeft", 0.4)                 ' Double
+	Parameters.Put("marginRight", 0.4)                ' Double
+	Parameters.Put("pageRanges", "")                  ' String
+	Parameters.Put("ignoreInvalidPageRanges", False)  ' Boolean
+	Parameters.Put("preferCSSPageSize", False)        ' Boolean
+		
+	Dim RetMap As Map = Selenium.ExecuteCdpCommand("Page.printToPDF", Parameters) ' ExecuteCdpCommand with parameters and get Map in return
+	'Log(RetMap)
+	Dim su As StringUtils
+	Dim DecodedBytes() As Byte = su.decodebase64(RetMap.Get("data"))              ' value of "data" key is Base64 encoded, we need to decode it
+	File.WriteBytes(File.DirApp, SaveAsFileName, DecodedBytes)                     ' write bytes to file
+	Log ("File saved: " & File.DirApp & "\" & SaveAsFileName)
+End Sub

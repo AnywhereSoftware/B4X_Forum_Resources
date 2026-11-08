@@ -1,0 +1,215 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=cereals.csv
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jstringutils
+Library5=jxui
+Library6=listofarrays
+Library7=jdateutils
+Module1=wLOAEval
+Module2=|relative|..\wLOAFunctions
+Module3=|relative|..\wLOAUtils
+NumberOfFiles=1
+NumberOfLibraries=7
+NumberOfModules=3
+Version=10.5
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region  Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub AppStart (Args() As String)
+	RndSeed(42)
+	
+	'Create a 5 x 3 table of random number with default column names
+	Dim LOA1 As ListOfArrays = wLOAUtils.randomInt(5, 3, Array(1, 10))	
+	
+	'Rename columns for demo
+	wLOAUtils.renameColumns(LOA1, CreateMap("c_1": "A", "c_2": "B", "c_3": "C"))
+	
+	'Display the table
+	wLOAUtils.display(LOA1, 0, 0)
+	
+	'Modify table by computing a new column based on an evaluated expression
+	wLOAUtils.eval(LOA1, "Result", "A + B * C")	
+	wLOAUtils.display(LOA1, 0, 0)
+	
+	'Handles parentheses well	
+	Dim LOA1 As ListOfArrays = wLOAUtils.sequence(5, 3, Array(1,3))
+	wLOAUtils.Eval(LOA1, "Sum", "c_1 + 10 * (c_2 - c_3)")
+	wLOAUtils.display(LOA1, 0, 0)
+
+	'An example reading a external .csv file
+	Dim su As StringUtils
+	Dim LOA2 As ListOfArrays = LOAUtils.WrapWithHeader(su.LoadCSV(File.DirAssets, "cereals.csv", TAB))
+	wLOAUtils.display(LOA2, 5, 0)
+	
+	wLOAUtils.Eval(LOA2, "badStuff", "fat + protein + sugars")
+	Dim LOA3 As ListOfArrays = wLOAUtils.selectCols(LOA2, Array("name", "fat", "protein", "sugars", "badStuff"))
+	wLOAUtils.display(LOA3, 5, -1)
+
+	'Calling functions inside the expression`
+	Dim LOA4 As ListOfArrays = wLOAUtils.randomInt(5, 3, Array(1,9))
+	wLOAUtils.Eval(LOA4, "Min", "min(c_1, c_2, c_3)")
+	wLOAUtils.Eval(LOA4, "Max", "max(c_1, c_2, c_3)")
+	wLOAUtils.display(LOA4, 0, 0)
+	
+	Dim LOA4 As ListOfArrays = wLOAUtils.randomDouble(5, 3, 5)
+	wLOAUtils.Eval(LOA4, "Sine_1", "sin(c_1)")
+	wLOAUtils.Eval(LOA4, "Cosine_1", "cos(c_1)")
+	wLOAUtils.Eval(LOA4, "Slope_1_2", "atan(c_2, c_1)")
+	wLOAUtils.display(LOA4, 0, 5)
+	
+	'Example using logic comparions
+	Dim LOA5 As ListOfArrays = wLOAUtils.collect(3, 3, Array("cat", "dog", "elephant", "A", "B", "C", "xx", "yy", "zz")) 
+	LOA5.SetValue(1, 2, "B")
+	wLOAUtils.Eval(LOA5, "Equal1_2", "c_2 = c_3)")
+	wLOAUtils.display(LOA5, 0, -1)
+	
+	Dim LOA6 As ListOfArrays = wLOAUtils.sequence(5, 3, Array(1,3))
+	wLOAUtils.Eval(LOA6, "c1 >= c2", "c_1 >= (c_2 + c_3)")
+	wLOAUtils.display(LOA6, 0, 0)
+	
+	Dim LOA7 As ListOfArrays = wLOAUtils.constants(5, 3, Array(True, False, True))
+	LOA7.SetRow(1, Array(False, False, False))
+	LOA7.SetRow(3, Array(True, True, True))
+	wLOAUtils.eval(LOA7, "AND1_2", "AND(c_1, c_2)")
+	wLOAUtils.eval(LOA7, "ORany", "OR(c_1, c_2, c_3)")
+	wLOAUtils.eval(LOA7, "NAND2_3", "NAND(c_2, c_3)")
+	wLOAUtils.eval(LOA7, "NOR2_3", "NOR(c_2, c_3)")
+	wLOAUtils.display(LOA7, 0, -1)
+
+	'String concatenation
+	Dim LOA8 As ListOfArrays = wLOAUtils.collect(3, 2, Array("cat", "dog", "AA", "BB", "xx", "yy")) 
+	Log(LOA8.toString(0))
+	
+	wLOAUtils.eval(LOA8, "Combine", "c_1 & ' and ' & c_2")
+	wLOAUtils.eval(LOA8, "Length", "length(Combine)")
+	wLOAUtils.display(LOA8, 0, -1)
+	
+	'More complex boolean arithmetic	
+	Dim LOA9 As ListOfArrays = wLOAUtils.collect(3, 2, Array("cat", "dog", "AA", "BB", "xx", "yy")) 
+	wLOAUtils.eval(LOA9, "IsTrue", "(c_1 <> c_2) = True")
+	
+	wLOAUtils.renameColumns(LOA9, CreateMap("isTrue": "Really Not Equal?"))
+	wLOAUtils.display(LOA9, 0, -1)
+	
+	'Selection by exclusion
+	Dim LOA10 As ListOfArrays = wLOAUtils.excludeCols(LOA9, "Really Not Equal?")
+	wLOAUtils.display(LOA10, 0, -1)
+
+	'Filling and shuffling data
+	Dim LOA11 As ListOfArrays = wLOAUtils.collect(3, 5, Array(1, 2, 3, 4, 5)) 
+	wLOAUtils.shuffleRows(LOA11)
+	wLOAUtils.display(LOA11, 0, 0)
+
+	Dim LOA11 As ListOfArrays = wLOAUtils.collect(5, 3, wLOAUtils.range(1, 15, 1)) 
+	wLOAUtils.shuffleCols(LOA11)
+	wLOAUtils.display(LOA11, 0, 0)
+
+	'Merging and enforcing row compatibility - short Lists are filled with Nulls
+	Dim LOAx As ListOfArrays = wLOAUtils.collect(5, 3, wLOAUtils.range(1, 15, 1)) 
+	Dim LOAy As ListOfArrays = wLOAUtils.Constants(4, 2, 999) 
+	wLOAUtils.renameColumns(LOAy, CreateMap("c_1": "c_4", "c_2": "c_5"))
+	wLOAUtils.mergeMatch(LOAx, LOAy)
+	wLOAUtils.display(LOAx, 0, 0)
+
+	'Logarithm and Power
+	Dim LOAz As ListOfArrays = wLOAUtils.randomDouble(5, 3, 5)
+	wLOAUtils.eval(LOAz, "Log_c2", "Logarithm(c_2, 10)")
+	wLOAUtils.eval(LOAz, "Exp_c2", "Power(10, Log_c2)")
+	wLOAUtils.display(LOAz, 0, 5)
+
+	'Recoding values
+	Dim LOAq As ListOfArrays = wLOAUtils.randomInt(5, 3, Array(1, 10))
+	Dim LOAr As ListOfArrays = wLOAFunctions.recode(LOAq, Array(), CreateMap(5: "Five", 3: "Three"))
+	wLOAUtils.mergeMatch(LOAq, LOAr)
+	wLOAUtils.display(LOAq, 0, 0)
+
+	'Random doubles with a given level of precision (# of decimals)
+	Dim LOA11 As ListOfArrays = wLOAUtils.randomDouble(50, 1, 5)
+	wLOAUtils.eval(LOA11, "Mult10", "10* c_1")
+	wLOAUtils.display(LOA11, 0, 5)
+
+	'Standardization used often in machine learning and AI	(result has mean=0.0 and stddev= 1.0)
+	Dim LOA11b As ListOfArrays = wLOAFunctions.standardize(LOA11, Array())
+	wLOAUtils.display(LOA11b, 0, 5)
+
+	'Normalization used often in machine learning and AI	(result has range between 0.0 and 1.0)
+	Dim LOA11b As ListOfArrays = wLOAFunctions.normalize(LOA11, Array())
+	wLOAUtils.display(LOA11b, 0, 5)
+
+	'One-hot encoding used often in machine learning and AI	(result has a 0/1 column for each unique value)
+	Dim LOA12 As ListOfArrays = wLOAUtils.randomInt(5, 3, Array(1, 10))
+	wLOAUtils.display(LOA12, 0, 0)
+	
+	Dim LOA12b As ListOfArrays = wLOAFunctions.one_hot(LOA12, Array())
+	wLOAUtils.display(LOA12b, 0, 0)
+	
+	'DateTime functions
+	DateTime.DateFormat = "dd-MM-yyyy"
+	Dim dtLOA As ListOfArrays = wLOAUtils.collect(2, 2, Array("10-02-1946", "23-03-2026", "12-07-2001", "23-03-2026")) 
+	wLOAUtils.display(dtLOA, 0, -1)
+	
+	Dim dtLOAb As ListOfArrays = wLOAFunctions.toDate(dtLOA, Array()) 
+	wLOAUtils.display(dtLOAb, 0, 0)
+
+	DateTime.DateFormat = "dd MMM yyyy E"
+	Dim dtLOAc As ListOfArrays = wLOAFunctions.asDate(dtLOAb, Array()) 
+	wLOAUtils.display(dtLOAc, 0, -1)
+
+	DateTime.DateFormat = "dd-MM-yyyy"
+	DateTime.TimeFormat = "hh:mm"
+	Dim LOADT As ListOfArrays = wLOAUtils.collect(1, 1, Array("02-10-1946T12:27"))
+	Dim LOADTb As ListOfArrays = wLOAFunctions.toDateTime(LOADT, Array())
+	wLOAUtils.display(LOADTb, 0, 0)
+
+	Dim LOADTc As ListOfArrays = wLOAFunctions.asDateTime(LOADTb, Array())
+	wLOAUtils.display(LOADTc, 0, 0)
+	Dim LOADTx As ListOfArrays = wLOAFunctions.monthname(LOADTb, Array())
+	wLOAUtils.display(LOADTx, 0, -1)
+
+	'String functions
+	Dim LOA100 As ListOfArrays = wLOAUtils.collect(3, 2, Array("cat", "dog", "AA", "A very long string abcdefghijklmnopqrst", "xx", "yy")) 
+	wLOAUtils.display(LOA100, 0, -1)
+	
+	Dim LOA100b As ListOfArrays = wLOAFunctions.replace(LOA100, Array(), "a", "?", False)
+	Dim LOA100b As ListOfArrays = wLOAFunctions.lastIndexOf(LOA100, Array(), "a", False)
+	wLOAUtils.display(LOA100b, 0, -1)
+
+	Dim LOA100b As ListOfArrays = wLOAFunctions.contains(LOA100, Array(), "A", False)
+	Dim LOA100b As ListOfArrays = wLOAFunctions.substring(LOA100, Array(), 2, -1)
+	wLOAUtils.display(LOA100b, 0, -1)
+
+	'Select rows if some condition is true
+	Dim LOA100 As ListOfArrays = wLOAUtils.collect(5, 2, Array("cat", "dog", "AA", "A very long string abcdefghijklmnopqrst", "cat", "dog2", "xx", "yy", "cat", "dog3")) 
+	wLOAUtils.display(LOA100, 0, -1)
+	
+	Dim selectRows As ListOfArrays = wLOAUtils.selectIfTrue(LOA100, "c_1 = 'cat'")
+	wLOAUtils.display(selectRows, 0, -1)
+
+	'Analyze columns and report info
+	Dim infoLOA As ListOfArrays = wLOAFunctions.info(LOA100, Array())
+	wLOAUtils.display(infoLOA, 0, -1)
+
+	Dim LOAq As ListOfArrays = wLOAUtils.randomInt(100, 3, Array(1, 10))
+	LOAq.SetValue(3, 1, Null)
+	LOAq.SetValue(50, 2, "This is unsual")
+	wLOAUtils.display(LOAq, 0, 0)
+	
+	Dim infoLOA As ListOfArrays = wLOAFunctions.info(LOAq, Array())
+	wLOAUtils.display(infoLOA, 0, -1)
+	Log(wLOAUtils.unusualValues)
+	
+End Sub
+
+

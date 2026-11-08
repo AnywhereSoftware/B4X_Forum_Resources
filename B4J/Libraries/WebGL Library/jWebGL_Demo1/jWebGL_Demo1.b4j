@@ -1,0 +1,398 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=crate.gif
+File2=Layout1.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jwebgl
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 200 
+#End Region
+
+' WELCOME to B4X WebGL Library.
+
+' This library is made on top of a very powerful THREEJS JavaScript library.
+' This library exposes completely THREEJS, just using a special way we have found very powerful to iteract with JavaScript.
+' This library internally use some parts of JSBridge library I still develop and will release next on the B4X forum.
+' Using this there's no need to wrap any threejs class and it is possible to access all the main
+' threejs core and any class without any limitation, even use external vanilla JavaScript libraries.
+
+' This library have generic commands to help iteract with JavaScript, write code, get values, variables, arrays, objects.
+' This library even have some simple but useful helper commands to convert B4X List to JS Array and viceversa and to convert
+' B4X Map to JS Object and viceversa, and other simple helper commands that helps to inject JS code to execute
+' and get values from JS in a simple way.
+
+'------------------
+' A textured cube
+'------------------
+
+' The purpose of follow code is to show you how this library can be used in more different ways.
+' All three follow examples on this project (DrawCube1, DrawCube2, DrawCube3) do exactly the same thing but using different code syntax.
+' The resulting JavaScript do not change, just change the way you use to write the code, so feel free to use the best way for you.
+
+' You can just uncomment one demo at time and test in your browser, you will obtain the same identical result, a textured cube
+' you can rotate, zoom and pan with mouse. The mouse control is provided by the OrbitControls class (included in threejs addons),
+' it permits a really good control of the scene using the mouse, touch and/or keyboards. You can use mouse left button to rotate, 
+' middle button + up/down or just mouse wheel (if you don't need smoothing) to zoom in-out, right button to translate.
+
+' This demo code will show you even how to use identifiers.
+' Identifiers are nothing of special, they are just a string name of an object, this help to manage JS object names on B4X IDE.
+' Please read comments below in the code to get more infos about identifies.
+' Using identifiers has much more sense on B4A WebGL library because B4A can render directly on a WebView and Android can iteract
+' with a page after it is loaded (not true on B4J because the page is static and just loaded on external browser).
+
+' Here we show you just 3 ways to work with the library, but you can get your best way:
+' - use identifiers and library helpers
+' - don't use identifiers but use library helpers
+' - use just a full plain javascript code without use identifiers and just inject it once (This is useful when you copy/paste code from the web to test it faster)
+' - same as previous, but a mix with inside identifiers
+' - use plain javascript code inside well defined B4X subs, so every sub will inject the required code
+' - same as previous, but use identifiers as sub arguments, so eg. suppose you have a sub called CreateSphere(X, Y, Z, Radius, Xres, Yres)
+'   you can pass to this sub the desired parameters and just use identifiers for values inside an Inject command that inject the JS code to execute using these parameters.
+
+' For convenience on next demos attached with library, we use a full JavaScript code, just because we previousely wrote demos in pure 
+' JavaScript, and adapting to B4X just required to copy/paste the full JS code to make it working in a very small time.
+
+' If you like, some IDE project custom templates can be created, here just you have to put where threejs library is placed, 
+' add imports and may just copy/paste JavaScript code or some subs that will create your 3D scene skeleton.
+' After this you can just start from your custom template on any project without write every time the WebGL library skeleton.
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	
+	Private Button1 As B4XView	
+	Private gl As WebGL
+	Private Port As Int = 8888
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "WebGL Demo 1"
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Button1.Enabled = False
+	
+	' Set here the path where THREEJS distribution was unzipped.
+	' More concurrent projects can run at same time, just use different port for each if you need this.
+	gl.Initialize(Me, "WebGL", "WebGL_Demo1", "GMT+1", File.DirData("B4XWebGL"), Port) ' Initialize the WebGL library
+	
+	'Wait For (gl.GetEngine) Complete (Success As Boolean)
+'	Dim Success As Boolean = gl.GetEngine
+	If gl.GetEngine Then
+'		gl.SetLocalServer
+		gl.StartEngine  ' Start the WebGL 3D engine. The _ReadyToCode will be raised when the engine is ready, you can write here your 3D scene code, copy needed files from assets and more.
+	Else
+		LogError("Unable to initialize WebGL Library")
+	End If
+End Sub
+
+'///////////// WebGL Library Events ////////////
+
+' Called if error occours
+Sub WebGL_Error(Error As String) 
+	LogColor(Error, xui.Color_Red)
+End Sub
+
+' Called when the library is fully initialized and user is ready to code
+Sub WebGL_ReadyToCode(Url As String)
+	Log(" ") : LogColor("WebGL ReadyToCode. Your WebGL code start here. URL: " & Url, 0xFF9A4EC0)
+					
+	gl.Alert("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")
+	gl.Console("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")	
+	gl.Console("'THREEJS REVISION: ' + THREE.REVISION")
+	
+	gl.Console($"'Point to ${gl.ServerProjectPath} to see library examples\n'"$)
+	gl.Console($"'Point to ${gl.ServerMainPage} to see library main page\n'"$)
+	
+	' Copy texture file to the library resources (and/or any other files to use in our projects).
+	' When a file is copied, we can use it on all projects, not only in the current project, just refer it's position inside threejs distribution.
+	'
+	' Resources are placed inside static folder in a consistent folder strucrure. Use gl.ProjectFolder to refer the main project folder,
+	' this folder contains subfolders for resources, eg. the folders /textures, /models and others. See threejs distribution /example
+	' folder as reference. Resources are permanent, you can remove these in various ways, by code using File.Delete or manually.
+	'
+	' IMPORTANT NOTE: You can copy files by code or you can just put files manually inside the appropriate folder structure and bthen refer to it when load.
+	'                 You can even add subfolders as you like, but please do not modify the main threejs folder structure.
+	'                 YOU NEED TO USE A CONSISTENT FOLDER WITH PERMISSION TO READ/WRITE FILES. A GOOD PLACE FOR THIS IS DirData FOLDER.
+	'                 To refer your ProjectFolder you can just Log(gl.ProjectFolder) and the log will show you where project folder is placed, you passed a
+	'                 root folder on the GetEngine command. On machine with Windows 11 it is something like this: 
+	'                 C:\Users\UserName\AppData\Roaming\FOLDER_WHERE_YOU_PLACED_THREEJS_DISTRIBUTION\examples\
+		
+	Wait For (gl.CopyResourceFile("textures/crate.gif", False)) Complete (Success As Boolean)
+	If Not(Success) Then
+		LogError("You should place crate.gif in DirAssets")
+		ExitApplication
+	End If
+	
+	' We import here threejs library and used classes, so they are common to all 3 demo scenes.
+	' If you use StartEngine3, you can just put imports inside the full JavaScript code. If this is a case, the imports should be regular JavaScript imports.
+	gl.Import("* as THREE from 'three'")
+	gl.Import("{ OrbitControls } from 'three/addons/controls/OrbitControls.js'")
+	
+	'JUST UNCOMMENT ONE ...
+	DrawCube1
+'	DrawCube2
+'	DrawCube3
+End Sub
+
+' Called just one time when the scene is updated
+Private Sub WebGL_Updated(Url As String)
+	Log(" ") : LogColor("Server static folder: " & gl.MainFolder, xui.Color_Magenta)
+	Log(" ") : Log("To access the scene:")
+	LogColor(Url, xui.Color_Magenta)
+	Log("To access the library main page:")
+	LogColor(gl.ServerMainPage, xui.Color_Magenta) : Log(" ")
+	
+'	' To avoid log truncation we can print it line by line
+'	Dim lines() As String = Regex.Split(CRLF, gl.HtmlStringDebug)
+'	For Each line As String In lines
+'		LogColor(line, xui.Color_Blue)
+'	Next
+	
+'	LogColor(gl.HtmlString, xui.Color_Blue) : Log(" ")  ' Show the final html string
+'	LogColor(gl.HtmlStringDebug, xui.Color_Blue) : Log(" ")  ' Show the final html string in debug mode with line numbers. With this we can track JavaScript console errors.
+End Sub
+
+' Called when there are library server logs
+Private Sub WebGL_ServerLog(Text As String)
+	If Text.Contains(".html") Or Text.ToLowerCase.Contains("mainpage") Then
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Magenta)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	Else
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Blue)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	End If
+End Sub
+
+'/////////////////////////// TEXTURED CUBE ///////////////////////////
+
+Sub DrawCube1
+	
+	Log(" ") : Log("Selected demo: DrawCube1")
+	
+	' Declaring identifiers as Strings or Objects makes no difference. You are not forced to use GetID and declare variables,
+	' but this actually seems like a better way of handling objects in the B4X IDE autocomplete, which is more convenient
+	' and less error-prone instead of using strings on all commands. Reference objects are instantiated only once and can then created.
+	' This has much more sense on B4A library that permits to iteract with html after load a page, so you can refer identifier to refer
+	' a precise object.
+	
+	Dim Scene As String = gl.GetID("Scene")
+	Dim Renderer As String = gl.GetID("Renderer")
+	Dim Camera As String = gl.GetID("Camera")
+	Dim Controls As String = gl.GetID("Controls")
+	Dim Geometry As String = gl.GetID("Geometry")
+	Dim Cube As String = gl.GetID("Cube1")
+	Dim Material As String = gl.GetID("Material")		
+	Dim Texture As String = gl.GetID("Texture")
+	
+	gl.New ("const", Scene, "THREE.Scene()") ' Create the scene
+	gl.New ("const", Camera, "THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100 )") ' Create camera
+	gl.PositionZ(Camera, 4.0)  ' Move the camera a bit back.
+					
+	gl.New ("const", Renderer, "THREE.WebGLRenderer( { antialias: true } )") ' Create a render
+	gl.Inject($"${Renderer}.setSize( window.innerWidth, window.innerHeight );"$) ' Set it's size
+	gl.Inject($"${Renderer}.setPixelRatio( window.devicePixelRatio );"$) ' Adjust device pixel ratio
+	gl.Inject($"document.body.appendChild( ${Renderer}.domElement );"$) ' And append to the DOM
+	
+	gl.New ("const", Controls, $"OrbitControls( ${Camera}, ${Renderer}.domElement )"$) ' Create orbit controls
+	gl.AdjustOrbitControls (Controls, 1.2, 0.8, 1.0, True, 0.05) ' Fine tune orbit controls
+	
+	gl.New ("const", Geometry, "THREE.BoxGeometry()")  ' Create a geometry. Here we use default constructor with default parameters, the box will be created with size 1.0, 1.0, 1.0
+	
+	gl.New ("const", Texture, "THREE.TextureLoader().load('textures/crate.gif')")
+'	gl.New ("const", Texture, "THREE.TextureLoader().load('textures/brick_diffuse.jpg')")
+	gl.Inject($"${Texture}.colorSpace = THREE.SRGBColorSpace;"$)
+	gl.New ("const", Material, $"THREE.MeshBasicMaterial( { map: ${Texture} } )"$)
+	
+	gl.New ("const", Cube, $"THREE.Mesh( ${Geometry}, ${Material} )"$)
+	gl.Add(Cube, Scene)
+	
+	Dim Code As String = $"
+	function animate() {
+	   requestAnimationFrame(animate);
+	   // ${Cube}.rotation.x += 0.01;  // Uncomment to auto rotate
+	   // ${Cube}.rotation.y += 0.01;  // Uncomment to auto rotate
+	   ${Controls}.update();
+	   ${Renderer}.render(${Scene}, ${Camera});
+	};
+	
+	window.addEventListener('resize', onWindowResize, false); // Handle resize. Update camera and renderer to new window size.
+	function onWindowResize() {
+	    ${Camera}.aspect = window.innerWidth / window.innerHeight;
+	    ${Camera}.updateProjectionMatrix();
+	    ${Renderer}.setSize(window.innerWidth, window.innerHeight);
+	    animate();
+	}; "$
+	
+	gl.Inject(Code)
+	gl.Inject("animate();") ' Remember to start animation loop
+	
+	gl.Update ' Finally always remember to update. This will create your html file that will be served over HTTP.
+End Sub
+
+Sub DrawCube2
+	
+	Log(" ") : Log("Selected demo: DrawCube2")
+	
+	' Here the same example with just vanilla javascript code we inject once. 
+	' This do not use identifiers, it is not bad, but you have a better control of objects using identifiers.
+  
+	Dim html As String = $"let camera, scene, renderer, mesh, controls;
+	
+init();
+animate();
+
+function init() {
+   scene = new THREE.Scene();
+	
+	camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100 );
+	camera.position.z = 4.0;
+
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	document.body.appendChild( renderer.domElement );
+	
+   controls = new OrbitControls( camera, renderer.domElement );
+	controls.rotateSpeed = 1.2;    // By default 1.0
+   controls.zoomSpeed = 0.8;      // By default 1.0
+   controls.panSpeed = 1.0;       // By default 1.0
+	controls.enableDamping = true; // By default false
+   controls.dampingFactor = 0.05; // By default 0.05
+
+   const geometry = new THREE.BoxGeometry();
+
+	const texture = new THREE.TextureLoader().load( 'textures/crate.gif' );
+	//const texture = new THREE.TextureLoader().load( 'textures/brick_diffuse.jpg' );
+	texture.colorSpace = THREE.SRGBColorSpace;
+		
+	const material = new THREE.MeshBasicMaterial( { map: texture } );
+
+	mesh = new THREE.Mesh( geometry, material );
+	scene.add( mesh );
+		
+	window.addEventListener('resize', onWindowResize, false); // Handle resize
+}
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	animate();
+}
+
+function animate() {
+	requestAnimationFrame(animate);
+	//mesh.rotation.x += 0.01;  // Uncomment to auto animate
+	//mesh.rotation.y += 0.01;  // Uncomment to auto animate
+	controls.update();
+	renderer.render( scene, camera );
+}"$
+	
+	gl.Inject(html)
+	gl.Update
+End Sub
+
+Sub DrawCube3
+	
+	Log(" ") : Log("Selected demo: DrawCube3")
+	
+	' A mix of both methods, using a full vanilla javascript code, but even using identifiers.
+	' This has much more sense on B4A WebGL library that permits to iteract with html after page load,
+	' so you can refer identifiers inside javascript to refer a precise object.
+	
+	Dim Scene As String = gl.GetID("Scene")
+	Dim Camera As String = gl.GetID("Camera")
+	Dim Renderer As String = gl.GetID("Renderer")
+	Dim Controls As String = gl.GetID("Controls")
+	Dim Mesh As String = gl.GetID("Mesh")
+	Dim Texture As String = gl.GetID("Texture")
+	Dim Geometry As String = gl.GetID("Geometry")
+	Dim Material As String = gl.GetID("Material")
+	
+	Dim html As String = $"
+let ${Camera}, ${Scene}, ${Renderer}, ${Mesh}, ${Controls};
+	
+init();
+animate();
+
+function init() {
+   ${Scene} = new THREE.Scene();
+	
+	${Camera} = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 100 );
+	${Camera}.position.z = 4.0;
+
+	${Renderer} = new THREE.WebGLRenderer( { antialias: true } );
+   ${Renderer}.setSize( window.innerWidth, window.innerHeight );
+	${Renderer}.setPixelRatio( window.devicePixelRatio );
+   document.body.appendChild( ${Renderer}.domElement );
+
+   ${Controls} = new OrbitControls( ${Camera}, ${Renderer}.domElement );
+	${Controls}.rotateSpeed = 1.2;    // By default 1.0
+   ${Controls}.zoomSpeed = 0.8;      // By default 1.0
+   ${Controls}.panSpeed = 1.0;       // By default 1.0
+	${Controls}.enableDamping = true; // By default false
+   ${Controls}.dampingFactor = 0.05; // By default 0.05
+
+   const ${Geometry} = new THREE.BoxGeometry();
+
+   const ${Texture} = new THREE.TextureLoader().load( 'textures/crate.gif' );
+	//const ${Texture} = new THREE.TextureLoader().load( 'textures/brick_diffuse.jpg' );
+   ${Texture}.colorSpace = THREE.SRGBColorSpace;
+	
+   const ${Material} = new THREE.MeshBasicMaterial( { map: ${Texture} } );
+
+	${Mesh} = new THREE.Mesh( ${Geometry}, ${Material} );
+	${Scene}.add( ${Mesh} );
+
+	window.addEventListener( 'resize', onWindowResize, false ); // Handle resize
+}
+
+function onWindowResize() {
+	${Camera}.aspect = window.innerWidth / window.innerHeight;
+   ${Camera}.updateProjectionMatrix();
+	${Renderer}.setSize( window.innerWidth, window.innerHeight );
+	//animate();
+}
+
+function animate() {
+	requestAnimationFrame(animate);
+	//${Mesh}.rotation.x += 0.01;  // Uncomment to auto animate
+   //${Mesh}.rotation.y += 0.01;  // Uncomment to auto animate
+	${Controls}.update();
+	${Renderer}.render( ${Scene}, ${Camera} );
+}
+"$
+	
+	gl.Inject(html)
+		
+	gl.Console($"'Mesh: ' + JSON.stringify(${Mesh}, null, 3)"$) ' You can log on the console
+	gl.Alert($"'Mesh: ' + JSON.stringify(${Mesh}, null, 3)"$)   ' You can alert a message. Note that on some browsers long messages will be truncated.
+	
+	gl.Update
+End Sub

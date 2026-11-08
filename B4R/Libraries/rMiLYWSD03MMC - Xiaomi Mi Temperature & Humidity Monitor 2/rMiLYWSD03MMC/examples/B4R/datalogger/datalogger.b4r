@@ -1,0 +1,72 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rmilywsd03mmc
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+' datalogger.b4r
+' Sample project for the B4R Library rMiLYWSD03MMC.
+' BLE Device: Xiaomi Mi Temperature And Humidity Monitor 2, Model LYWSD03MMC
+' Log the sensor temperature (C),humidity (%RH) and battery (Voltage).
+' Additional Libraries: rMiLYWSD03MMC.
+' Requires installation of the NimBLE-Arduino library in the Arduino IDE.
+' Hardware: ESP32 Dev Module WROOM
+' 20210619 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rMiLYWSD03MMC - Example Data Logger v20210619"
+	Public serialLine As Serial
+	Private miSensor1 As MiLYWSD03MMC
+	Private timerGetData As Timer
+	Private TIMER_INTERVAL As ULong = 15000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init sensor with callback event, MAC adress A4:C1:38:38:A9:0C and debug flag
+	miSensor1.Initialize("miSensor1_ScanCompleted", "A4:C1:38:38:A9:0C", True)
+	' First time scan for data - results handled by sub _ScanCompleted
+	miSensor1.Scan()
+	' Set the data gathering timer
+	timerGetData.Initialize("TimerGetData_Tick", TIMER_INTERVAL)
+	timerGetData.Enabled = True
+End Sub
+
+' Scan for data - the result is handled by the event sub _ScanCompleted
+Sub TimerGetData_Tick
+	miSensor1.Scan()
+End Sub
+
+Sub miSensor1_ScanCompleted
+	Log("Scan completed. Status: ", miSensor1.StatusCode)
+	Select miSensor1.StatusCode
+		Case miSensor1.STATUS_OK
+			Log("T: ", miSensor1.Temperature, " C, H: ", miSensor1.Humidity, " %, B: ", miSensor1.Battery, " V")
+		Case miSensor1.STATUS_ERR_CONNECT
+			Log("ERROR: Can not connect to the device.")
+		Case miSensor1.STATUS_ERR_SERVICEUUID
+			Log("ERROR: Can not find the device service UUID.")
+		Case miSensor1.STATUS_ERR_CHARUUID
+			Log("ERROR: Can not find the characteristics UUID from the service UUID.")
+		Case Else
+			Log("Unknown status code.")			
+	End Select
+	Log("*****")
+End Sub

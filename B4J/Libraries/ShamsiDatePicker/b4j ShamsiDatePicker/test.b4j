@@ -1,0 +1,58 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=javaobject
+Module1=ShamsiDatePickerV3
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+
+	Dim picker As ShamsiDatePickerV3
+	picker.Initialize
+'	picker.UsePersianDigits = True            'اختیاری: نمایش ارقام فارسی
+	'picker.SetDateFromTicks(DateTime.Now)     'اختیاری: تاریخ اولیه
+	
+'	picker.SetDate(1404,11,2)
+	If picker.Show(MainForm) Then
+'	If picker.ShowAt(MainForm,Button1) Then
+		Dim ticks As Long = picker.GetSelectedTicks       'با ساعت فعلی
+		
+		DateTime.DateFormat = "yyyy/MM/dd HH:mm:ss"
+		Log("تاریخ شمسی : " & picker.GetSelectedDateString)
+		Log("Tick        : " & ticks)
+		Log("میلادی      : " & DateTime.Date(ticks))
+		Log("بدون زمان   : " & DateTime.Date(picker.GetSelectedTicksNoTime))
+		Log("برگشت شمسی  : " & picker.TicksToShamsiString(ticks))
+		
+	Else
+		Log("بدون انتخاب")
+	End If
+	
+	
+End Sub

@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RLegoinoBoost</name>
+        <shortname>LegoinoBoost</shortname>
+        <comment>The Legoino includes - these are located in the Arduino IDE libraries folder.</comment>
+        <event>StateChanged (Connected As Boolean)</event>
+        <event>StateChangedEx (Connected As Boolean, Battery As Byte, Voltage As Double, Distance As Double, Color As Int)</event>
+        <property>
+            <name>Connected</name>
+            <comment>Hub connection state.
+Returns:
+Boolean True (Connected) or False (Disconnected).</comment>
+            <returntype>bool</returntype>
+        </property>
+        <property>
+            <name>Name</name>
+            <comment>Name of the hub.
+Returns:
+String with the hub name.</comment>
+            <returntype>B4R::B4RString*</returntype>
+        </property>
+        <property>
+            <name>Debug</name>
+            <comment>Debug.
+Set debug on or off.
+Returns:
+None</comment>
+            <parameter>
+                <name>debug</name>
+                <type>bool</type>
+            </parameter>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initializes the hub object.
+StateChangedSub - The sub to call when the hub connection has changed.
+Addr - Device MAC address - a4:c1:38:38:a9:0c.
+Debug - Set to true to log the various steps from init to getting data.
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+moveHub.Initialize("MoveHub_StateChangedSub", "00:16:53:AE:9B:27", False)
+Sub MoveHub_StateChanged(Connected As Boolean)
+  Log("MoveHUB StateChanged: Connected to ", moveHub.Name)
+End Sub
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>StateChangedSub</name>
+                <type>SubVoidBool</type>
+            </parameter>
+            <parameter>
+                <name>Addr</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Debug</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="InitializeEx">InitializeEx</name>
+            <comment>Initializes the hub object.
+StateChangedExSub - The sub to call when the hub connection or any of the sensor values has changed.
+Addr - Device MAC address - a4:c1:38:38:a9:0c.
+Debug - Set to true to log the various steps from init to getting data.
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private ConnectionStatePrev As Boolean = False
+moveHub.InitializeEx("MoveHub_StateChangedExSub", "00:16:53:AE:9B:27", False)
+Sub MoveHub_StateChangedEx(Connected As Boolean, Battery As Byte, Voltage As Double, Distance As Double, Color As Int)
+	If Connected &lt;&gt; ConnectionStatePrev Then
+		If Connected Then
+			Log("MoveHUB StateChanged: Connected to ", moveHub.Name)
+		Else
+			Log("MoveHUB StateChanged: Disconnected")
+		End If
+		ConnectionStatePrev = Connected
+	End If
+	If Connected And Distance &lt;= 0 Then Return
+	If Connected Then Log("Distance: ", Distance, "mm")
+End Sub
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>StateChangedExSub</name>
+                <type>SubVoidBoost</type>
+            </parameter>
+            <parameter>
+                <name>Addr</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>Debug</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="MoveForward">MoveForward</name>
+            <comment>Move forward (port AB) with the default speed and stop after the number of steps.
+steps - Number of steps (Boost grid).
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>steps</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="MoveBack">MoveBack</name>
+            <comment>Move back (port AB) with the default speed and stop after the number of steps.
+steps - Number of steps (Boost grid).
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>steps</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Rotate">Rotate</name>
+            <comment>Rotate (port AB) with the default speed and stop after the degrees.
+degrees - negative: left, positive: right.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RotateLeft">RotateLeft</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="RotateRight">RotateRight</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="MoveArc">MoveArc</name>
+            <comment>Move an arc (port AB) with the default speed and stop after degrees.
+degrees - negative: left, positive: right.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="MoveArcLeft">MoveArcLeft</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="MoveArcRight">MoveArcRight</name>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>degrees</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetLEDColor">SetLEDColor</name>
+            <comment>Set the color of the hub LED with predefined colors.
+color - one of the available hub colors.
+Color values if set direct:
+BLACK = 0,PINK = 1,PURPLE = 2,BLUE = 3,LIGHTBLUE = 4,CYAN = 5,
+GREEN = 6,YELLOW = 7,ORANGE = 8,RED = 9,WHITE = 10,NONE = 255
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DEBUG As Boolean = False
+Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+moveHub.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+If moveHUB.Connected Then
+	moveHub.SetLEDColor(moveHub.LED_COLOR_GREEN)
+End If
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>color</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetLEDRGBColor">SetLEDRGBColor</name>
+            <comment>Set the color of the hub LED with RGB values .
+red - 0..255.
+green - 0..255.
+blue - 0..255.
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DEBUG As Boolean = False
+Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+moveHub.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+If moveHUB.Connected Then
+	moveHub.SetLEDRGBColor(255, 125, 125)
+End If
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>red</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>green</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>blue</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetLEDHSVColor">SetLEDHSVColor</name>
+            <comment>Set the color of the hub LED with HSV values.
+hue - 0..360.
+saturation - 0..1.
+value - 0..1.
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DEBUG As Boolean = False
+Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+moveHub.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+Log("HSV CYAN 180°, 100%, 50%")
+If moveHUB.Connected Then
+	moveHub.SetLEDHSVColor(180, 1, 0.5)
+End If
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>hue</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>saturation</name>
+                <type>double</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="StopBasicMotor">StopBasicMotor</name>
+            <comment>Stop the motor on a defined port. Calls SetBasicMotorSpeed with speed 0.
+port - Port of the hub on which the motor will be stopped (A, B) or (0, 1).
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetBasicMotorSpeed">SetBasicMotorSpeed</name>
+            <comment>Set the motor speed on a defined port.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+speed - Speed of the motor -100..0..100 negative values will reverse the rotation.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>speed</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetAccelerationProfile">SetAccelerationProfile</name>
+            <comment>Set the acceleration profile.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+time - Time value in ms of the acceleration from 0-100% speed/Power.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>time</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetDecelerationProfile">SetDecelerationProfile</name>
+            <comment>Set the deceleration profile.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+time - Time value in ms of the deceleration from 100-0% speed/Power.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>time</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="StopTachoMotor">StopTachoMotor</name>
+            <comment>Stop the motor on a defined port.
+port - Port of the hub on which the motor will be stopped (A, B, AB, C, D).
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DEBUG As Boolean = False
+Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+moveHub.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+If moveHUB.Connected Then
+	moveHUB.StopTachoMotor(moveHUB.MOVEHUBPORT_A)
+End If
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetTachoMotorSpeed">SetTachoMotorSpeed</name>
+            <comment>Set the motor speed on a defined port.
+port - Port of the hub on which the speed of the motor will set.
+speed - Speed of the motor -100..0..100 negative values will reverse the rotation.
+maximum - Power of the motor 0..100.
+brakingStyle - Braking style how the motor will stop = Brake (default), Float, Hold.
+Returns:
+None
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DEBUG As Boolean = False
+Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+moveHub.Initialize("MoveHub_StateChanged", MOVEHUB_ADDRESS, DEBUG)
+If moveHUB.Connected Then
+	moveHUB.SetTachoMotorSpeed(moveHUB.MOVEHUBPORT_A, 20, 100, moveHUB.BRAKINGSTYLE_BRAKE)
+End If
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>speed</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>maxPower</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>brakingStyle</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetTachoMotorSpeedForTime">SetTachoMotorSpeedForTime</name>
+            <comment>Set the motor speed on a defined port.
+port - Port of the hub on which the speed of the motor will set.
+speed - Speed of the motor -100..0..100 negative values will reverse the rotation.
+time - Time in miliseconds for running the motor on the desired speed.
+maximum - Power of the motor 0..100.
+brakingStyle - Braking style how the motor will stop = Brake (default), Float, Hold.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>speed</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>time</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>maxPower</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>brakingStyle</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetTachoMotorSpeedForDegrees">SetTachoMotorSpeedForDegrees</name>
+            <comment>Set the motor speed on a defined port.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+speed - Speed of the motor -100..0..100 negative values will reverse the rotation.
+degrees - Till which rotation in degrees the motors should run.
+maximum - Power of the motor 0..100 (default value=100).
+brakingStyle - Braking style how the motor will stop. Brake (default), Float, Hold.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>speed</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>degrees</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>maxPower</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>brakingStyle</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetTachoMotorSpeedsForDegrees">SetTachoMotorSpeedsForDegrees</name>
+            <comment>Set the speed of the hub motors (port A and B).
+speedLeft - Speed of the left motor.
+speedRight - Speed of the right motor.
+degrees - Till which rotation in degrees the hub motors should run.
+maximum - Power of the motor 0..100 (default value = 100).
+brakingStyle - Braking style how the motor will stop = Brake (default), Float, Hold.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>speedLeft</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>speedRight</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>degrees</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>maxPower</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>brakingStyle</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetAbsoluteMotorPosition">SetAbsoluteMotorPosition</name>
+            <comment>Set the motor absolute position on a defined port.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+speed - Speed of the motor 0..100 = positive values only.
+position - Position in degrees (relative to zero point on power up, or encoder reset) -2,147,483,648..0..2,147,483,647.
+maximum - Power of the motor 0..100 (default value=100).
+brakingStyle - Braking style how the motor will stop = Brake (default), Float, Hold.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>speed</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>position</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>maxPower</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>brakingStyle</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetAbsoluteMotorEncoderPosition">SetAbsoluteMotorEncoderPosition</name>
+            <comment>Set the motor encoded position on a defined port.
+port - Port of the hub on which the speed of the motor will set (A, B, AB).
+position - Position in degrees to encode (0=Reset) -2,147,483,648..0..2,147,483,647.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>position</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetMotorCalibration">SetMotorCalibration</name>
+            <comment>Calibrate the motor on a defined port.
+This should be done once.
+During calibration, approx 5 seconds, the LED turns orange and to yellow if finished.
+port - Port of the hub the motor will calibrated (A, B, AB for Tacho motor; C or D for Basic motor).
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>port</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PlaySound">PlaySound</name>
+            <comment>Play a predefined sound on the Duplo train hub.
+sound - value. Could be set via the DuploTrainBaseSound enum.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>sound</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PlayTone">PlayTone</name>
+            <comment>Play a predefined tone on the Duplo train hub.
+tone - value. Different bieps on different number 0..10 Which number is which.
+beep is not really clear right now.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>number</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ShutDownHub">ShutDownHub</name>
+            <comment>Send shutdown command to the hub.
+Returns:
+None</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <field>
+            <name DesignerName="BatteryLevel">BatteryLevel</name>
+            <comment>Battery Level 0-100%.
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+moveHUB.Initialize("MoveHub_StateChanged", "00:16:53:AE:9B:27", False)
+Sub MoveHub_StateChanged(Connected As Boolean)
+If Connected Then
+	Log("BatteryLevel: ", moveHUB.BatteryLevel, "%")
+End If
+&lt;/code&gt;</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="VoltageSensor">VoltageSensor</name>
+            <comment>Voltage V from the sensor. Max voltage is 9.6 V.
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+moveHUB.Initialize("MoveHub_StateChanged", "00:16:53:AE:9B:27", False)
+Sub MoveHub_StateChanged(Connected As Boolean)
+If Connected Then
+	Log("VoltageSensor: ", moveHUB.VoltageSensor, "V")
+End If
+&lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name DesignerName="CurrentSensor">CurrentSensor</name>
+            <comment>Current mA from the sensor. Max current is 2444 mA.</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name DesignerName="DistanceSensor">DistanceSensor</name>
+            <comment>Distance sensor measuring in millimeter.
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private DistanceSensor As Double = -1
+moveHUB.Initialize("MoveHub_StateChanged", "00:16:53:AE:9B:27", False)
+Sub MoveHub_StateChanged(Connected As Boolean)
+If Connected Then
+	Log("DistanceSensor: ", moveHub.DistanceSensor, "mm")
+End If
+&lt;/code&gt;</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name DesignerName="ColorSensor">ColorSensor</name>
+            <comment>Color sensor with values: BLACK = 0, PINK = 1, PURPLE = 2, BLUE = 3, LIGHTBLUE = 4, CYAN = 5,
+GREEN = 6, YELLOW = 7, ORANGE = 8, RED = 9, WHITE = 10, NONE = 255
+Example:&lt;code&gt;
+Private moveHub As LegoinoBoost
+Private colorSensor As Int = -1
+moveHUB.Initialize("MoveHub_StateChanged", "00:16:53:AE:9B:27", False)
+If moveHUB.Connected Then
+	colorSensor = moveHub.ColorSensor
+	moveHub.SetLedColor(colorSensor)
+End If
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name DesignerName="TiltSensorX">TiltSensorX</name>
+            <comment>Tilt sensor degrees of rotation/tilt around the x axis.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name DesignerName="TiltSensorY">TiltSensorY</name>
+            <comment>Tilt sensor degrees of rotation/tilt around the y axis.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_BLACK">B4RLegoinoBoost_LED_COLOR_BLACK</name>
+            <comment>MoveHUB LED Color BLACK = 0</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_PINK">B4RLegoinoBoost_LED_COLOR_PINK</name>
+            <comment>MoveHUB LED Color PINK = 1</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_PURPLE">B4RLegoinoBoost_LED_COLOR_PURPLE</name>
+            <comment>MoveHUB LED Color PURPLE = 2</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_BLUE">B4RLegoinoBoost_LED_COLOR_BLUE</name>
+            <comment>MoveHUB LED Color BLUE = 3</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_LIGHTBLUE">B4RLegoinoBoost_LED_COLOR_LIGHTBLUE</name>
+            <comment>MoveHUB LED Color LIGHTBLUE = 4</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_CYAN">B4RLegoinoBoost_LED_COLOR_CYAN</name>
+            <comment>MoveHUB LED Color CYAN = 5</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_GREEN">B4RLegoinoBoost_LED_COLOR_GREEN</name>
+            <comment>MoveHUB LED Color GREEN = 6</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_YELLOW">B4RLegoinoBoost_LED_COLOR_YELLOW</name>
+            <comment>MoveHUB LED Color YELLOW = 7</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_ORANGE">B4RLegoinoBoost_LED_COLOR_ORANGE</name>
+            <comment>MoveHUB LED Color ORANGE = 8</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_RED">B4RLegoinoBoost_LED_COLOR_RED</name>
+            <comment>MoveHUB LED Color RED = 9</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_WHITE">B4RLegoinoBoost_LED_COLOR_WHITE</name>
+            <comment>MoveHUB LED Color WHITE = 10</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="LED_COLOR_NONE">B4RLegoinoBoost_LED_COLOR_NONE</name>
+            <comment>MoveHUB LED Color NONE = 255</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BRAKINGSTYLE_BRAKE">B4RLegoinoBoost_BRAKINGSTYLE_BRAKE</name>
+            <comment>Braking style BRAKE = 127</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BRAKINGSTYLE_HOLD">B4RLegoinoBoost_BRAKINGSTYLE_HOLD</name>
+            <comment>Braking style HOLD = 126</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="BRAKINGSTYLE_FLOAT">B4RLegoinoBoost_BRAKINGSTYLE_FLOAT</name>
+            <comment>Braking style FLOAT = 0</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_A">B4RLegoinoBoost_MOVEHUBPORT_A</name>
+            <comment>MoveHUB Port A = 0x00 = Tacho Motor A</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_B">B4RLegoinoBoost_MOVEHUBPORT_B</name>
+            <comment>MoveHUB Port B = 0x01 = Tacho Motor B</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_AB">B4RLegoinoBoost_MOVEHUBPORT_AB</name>
+            <comment>MoveHUB Port AB = 0x10 = Tacho Motors A and B</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_C">B4RLegoinoBoost_MOVEHUBPORT_C</name>
+            <comment>MoveHUB Port C = 0x02 = Basic Motor or Color Distance Sensor</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_D">B4RLegoinoBoost_MOVEHUBPORT_D</name>
+            <comment>MoveHUB Port D = 0x03 = Basic Motor or Color Distance Sensor</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_LED">B4RLegoinoBoost_MOVEHUBPORT_LED</name>
+            <comment>MoveHUB Port LED = 0x32 = Hub LED</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_TILT">B4RLegoinoBoost_MOVEHUBPORT_TILT</name>
+            <comment>MoveHUB Port TILT = 0x3A = Tilt X or Z Sensor</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_CURRENT">B4RLegoinoBoost_MOVEHUBPORT_CURRENT</name>
+            <comment>MoveHUB Port CURRENT = 0x3B = Hub Current - Max current is 2444 mA</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="MOVEHUBPORT_VOLTAGE">B4RLegoinoBoost_MOVEHUBPORT_VOLTAGE</name>
+            <comment>MoveHUB Port CURRENT = 0x3C = Hub Voltage - Max Voltage is 9.6V</comment>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+    <author>Robert W.B. Linn</author>
+</root>

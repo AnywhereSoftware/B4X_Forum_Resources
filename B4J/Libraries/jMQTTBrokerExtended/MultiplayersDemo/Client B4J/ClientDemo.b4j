@@ -1,0 +1,202 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+Module1=|relative|..\Shared code\clsMQTT
+Module2=|relative|..\Shared code\codConstants
+Module3=|relative|..\Shared code\codGameData
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=3
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 590
+	#MainFormHeight: 170 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Public MQTT As clsMQTT
+
+	Private txtName As TextField
+	Private btnConnect As Button
+	Private btnWait As Button
+	Private lblState As Label
+	Private btnStart As Button
+	Private btnPlay As Button
+	Private btnLeave As Button
+	Private lstWaiting As ListView
+	Private lstPlayers As ListView
+
+	Type typMsg(MsgType As Byte, Message As Object)
+	Type typWaiting(PlayerID As String, LastMatchID As String, LastUpdate As Long, EntryTime As Long)
+	Type typJoin(MatchID As String, Players As List, Data As typGameData)
+	Type typGameData(RoundNbr As Int, CurrentPlayer As Int, Data As Object, Timestamp As Long)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+
+	txtName.Text = "User" & Rnd(0, 100000)
+	lblState.WrapText = True
+	MQTT.Initialize
+
+	MainForm.Show
+End Sub
+
+Public Sub ChangeState(StateCode As Int)
+	Dim StateText As String
+	Select StateCode
+		Case codConstants.STATE_CONNECTING
+			StateText = codConstants.STATE_CONNECTING_TXT.Replace("@", MQTT.ServerURI)
+		Case codConstants.STATE_CONNECTED
+			StateText = codConstants.STATE_CONNECTED_TXT
+			txtName.Enabled = False
+			btnConnect.Enabled = False
+		Case codConstants.STATE_CONNECTION_FAILED
+			StateText = codConstants.STATE_CONNECTION_FAILED_TXT
+		Case codConstants.STATE_MUST_WAIT
+			StateText = codConstants.STATE_MUST_WAIT_TXT
+			btnWait.Enabled = True
+		Case codConstants.STATE_SUBSCRIBE_WAITING
+			StateText = codConstants.STATE_SUBSCRIBE_WAITING_TXT
+		Case codConstants.STATE_WAITING
+			StateText = codConstants.STATE_WAITING_TXT
+		Case codConstants.STATE_JOINING
+			StateText = codConstants.STATE_JOINING_TXT
+			lstWaiting.Visible = False
+		Case codConstants.STATE_SUBSCRIBE_GAMETOPIC
+			StateText = codConstants.STATE_SUBSCRIBE_GAMETOPIC_TXT
+		Case codConstants.STATE_PLAYING
+			StateText = codConstants.STATE_PLAYING_TXT
+			btnLeave.Enabled = True
+		Case codConstants.STATE_CANCELING
+			StateText = codConstants.STATE_CANCELING_TXT
+			lstWaiting.Visible = True
+			lstWaiting.Items.Clear
+			lstPlayers.Visible = False
+		Case codConstants.STATE_LEAVING
+			StateText = codConstants.STATE_LEAVING_TXT
+		Case codConstants.STATE_GAMEOVER
+			StateText = codConstants.STATE_GAMEOVER_TXT
+			btnPlay.Enabled = False
+			lstPlayers.Visible = False
+		Case codConstants.STATE_TOO_LATE
+			StateText = codConstants.STATE_TOO_LATE_TXT
+			btnLeave.Enabled = True
+		Case codConstants.STATE_DISCONNECTED
+			StateText = codConstants.STATE_DISCONNECTED_TXT
+			txtName.Enabled = True
+			btnConnect.Enabled = True
+			btnWait.Enabled = False
+			btnStart.Enabled = False
+			btnPlay.Enabled = False
+			btnLeave.Enabled = False
+			lstWaiting.Visible = False
+			lstPlayers.Visible = False
+	End Select
+	lblState.Text = StateText
+	Log(StateText)
+End Sub
+
+Private Sub btnConnect_Click
+	'Is the player name valid?
+	If txtName.Text.Trim = "" Then
+		fx.Msgbox(MainForm, "Please enter a valid name.", "Invalid name")
+		Return
+	End If
+
+	'Initializes all game data
+	codGameData.Initialize(txtName.Text.Trim)
+
+	'Connects the MQTT client to the broker with the chosen name
+	MQTT.Connect(codGameData.GetPlayerID)
+End Sub
+
+Private Sub btnWait_Click
+	'Enters the waiting room
+	MQTT.EnterWaitingRoom
+
+	'Updates the UI
+	btnWait.Enabled = False
+	lstWaiting.Visible = True
+	lstWaiting.Items.Clear
+End Sub
+
+Public Sub UpdateWaitingRoom(WPlayers As List)
+	'Updates the list of waiting players
+	lstWaiting.Visible = True
+	lstWaiting.Items.Clear
+	For Each WPlayer As typWaiting In WPlayers
+		lstWaiting.Items.Add(WPlayer.PlayerID)
+	Next
+End Sub
+
+Private Sub btnStart_Click
+	'Confirms that the player wants to play a game with the current participants
+	MQTT.JoinGame
+
+	'Updates the UI
+	btnStart.Enabled = False
+End Sub
+
+Public Sub UpdatePlayersList(EnableStartButton As Boolean)
+	'Updates the list of participants
+	lstPlayers.Visible = True
+	lstPlayers.Items.Clear
+	lstPlayers.Items.AddAll(codGameData.GetPlayers)
+
+	'Waits for a click on the START button?
+	btnStart.Enabled = EnableStartButton
+End Sub
+
+Private Sub btnPlay_Click
+	'Simulates a game action and hands over to the next player
+	codGameData.SimulGameTurn
+
+	'Updates the UI
+	btnPlay.Enabled = False
+End Sub
+
+Public Sub ShowTurnState(AdditionalMsg As String)
+	'Displays the number of the game round and the ID of the player whose turn it is
+	Dim CurrentPlayer As String = codGameData.GetCurrentPlayer
+	If CurrentPlayer <> "" Then
+		lblState.Text = "Round #" & codGameData.GetGameData.RoundNbr & ". Current player: " & CurrentPlayer & CRLF & AdditionalMsg
+		Log(lblState.Text)
+		btnPlay.Enabled = (CurrentPlayer = codGameData.GetPlayerID)
+	End If
+End Sub
+
+Private Sub btnLeave_Click
+	'Abandons the game in progress
+	codGameData.RemovePlayer(codGameData.GetPlayerID)
+	MQTT.LeaveGame
+
+	'Updates the UI
+	btnLeave.Enabled = False
+	btnPlay.Enabled = False
+	lstPlayers.Visible = False
+	lstPlayers.Items.Clear
+End Sub
+
+Sub MainForm_Closed
+	MQTT.Close
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

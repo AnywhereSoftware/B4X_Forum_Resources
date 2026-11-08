@@ -1,0 +1,114 @@
+﻿Build1=Default,b4a.nativead
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=core
+Library3=firebaseadmob2
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~'************ Google Play Services Base ************~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase)~\n~'************ Google Play Services Base (end) ************~\n~'************ Firebase Base ************~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.Firebase)~\n~'************ Firebase Base (end) ************'************ Firebase Ads ************~\n~CreateResourceFromFile(Macro, FirebaseAdMob.FirebaseAds)~\n~'************ Firebase Ads (end) ************~\n~~\n~'This is a sample AdMob app id. You need to change it to your id.~\n~AddReplacement($ADMOB_APP_ID$, ca-app-pub-0)
+Module1=|relative|..\B4XMainPage
+Module2=B4XNative2
+Module3=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=3
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Native Ad
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Public ActionBarHomeClicked As Boolean
+End Sub
+
+Sub Globals
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim pm As B4XPagesManager
+	pm.Initialize(Activity)
+End Sub
+
+'Template version: B4A-1.01
+#Region Delegates
+
+Sub Activity_ActionBarHomeClick
+	ActionBarHomeClicked = True
+	B4XPages.Delegate.Activity_ActionBarHomeClick
+	ActionBarHomeClicked = False
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+End Sub
+
+Sub Activity_Resume
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+End Sub
+
+Sub Create_Menu (Menu As Object)
+	B4XPages.Delegate.Create_Menu(Menu)
+End Sub
+
+#if Java
+public boolean _onCreateOptionsMenu(android.view.Menu menu) {
+	 processBA.raiseEvent(null, "create_menu", menu);
+	 return true;
+	
+}
+#End If
+#End Region
+
+#if Java
+import anywheresoftware.b4a.B4AClass;
+public static class MyAdListener extends com.google.android.gms.ads.AdListener {  
+   String eventName;
+   B4AClass target;
+
+   public MyAdListener(String s, B4AClass target) {
+       eventName = s.toLowerCase(BA.cul);
+       this.target = target;
+   }
+  
+   public void onAdClosed() {
+       target.getBA().raiseEventFromDifferentThread(null, null, 0, eventName + "_adclosed", false, null);
+   }
+  
+   public void onAdFailedToLoad(int arg0) {
+        target.getBA().raiseEventFromDifferentThread(null, null, 0, eventName + "_failedtoreceivead", false, new Object[] {String.valueOf(arg0)});
+   }
+  
+   public void onAdLeftApplication() {
+        target.getBA().raiseEventFromDifferentThread(null, null, 0, eventName + "_adleftapplication", false, null);
+   }
+  
+   public void onAdLoaded() {
+        target.getBA().raiseEventFromDifferentThread(null, null, 0, eventName + "_receivead", false, null);
+   }  
+  
+   public void onAdClicked() {
+        target.getBA().raiseEventFromDifferentThread(null, null, 0, eventName + "_clicked", false, null);
+   }
+}
+#End If
+

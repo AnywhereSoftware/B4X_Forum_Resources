@@ -1,0 +1,57 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jmqtt
+Library3=jmqttbroker2
+Library4=jserver
+Library5=json
+Module1=B4RSettings
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+	Public mqtt As MqttClient
+	Private mbrk As MqttBroker
+	Private sets As MqttConnectOptions
+End Sub
+
+Sub AppStart (Args() As String)
+	
+	mbrk.Initialize("mbrk", 51041)
+	mbrk.SetUserAndPassword("b4r", "webapp")
+	mbrk.Start
+	
+	sets.Initialize("b4r", "webapp")
+	mqtt.Initialize("mqtt", "tcp://127.0.0.1:51041", "b4jwebapp") 
+	mqtt.Connect2(sets)
+	
+	srvr.Initialize("srvr")
+	srvr.Port = 51042
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	srvr.AddWebSocket("/b4rws", "B4RSettings")
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:51042/
+End Sub
+
+
+Sub mqtt_Connected (Success As Boolean)
+	Log("MQTT Client Connected: " & Success)
+End Sub
+
+Sub mqtt_MessageArrived (Topic As String, Payload() As Byte)
+	
+End Sub
+
+Sub mqtt_Disconnected
+	Log("MQTT Client Disconnected")
+End Sub

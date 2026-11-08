@@ -1,0 +1,553 @@
+﻿Build1=Default,b4a.example2
+File1=maps.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=googlemaps
+Library3=gps
+Library4=ime
+Library5=json
+Library6=okhttputils2
+Library7=xui
+Library8=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true"~\n~    android:normalScreens="true"~\n~    android:smallScreens="true"~\n~    android:anyDensity="true"/>~\n~)~\n~~\n~AddApplicationText(<meta-data~\n~    android:name="com.google.android.gms.version"~\n~    android:value="@integer/google_play_services_version" />)~\n~~\n~AddApplicationText(~\n~    <meta-data android:name="com.google.android.geo.API_KEY"~\n~        android:value="REPLACE_WITH_YOUR_RESTRICTED_GOOGLE_MAPS_API_KEY"/>~\n~)~\n~~\n~AddProguardText(~\n~    -keep class com.google.android.gms.maps.UiSettings { *; }~\n~)~\n~~\n~~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=1
+Version=14.15
+@EndOfDesignText@
+#Region Project Attributes
+	#ApplicationLabel: Free Route Demo
+	#VersionCode: 1
+	#VersionName: 1.0
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	#EdgeToEdgeOldDevices: True
+	#R8Optimizer: true
+#End Region
+
+#Region Activity Attributes
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+' The GoogleMaps library uses the standard B4A Activity in this demo.
+' No AppCompat activity or theme is required.
+#AdditionalJar: androidx.interpolator:interpolator
+#AdditionalJar: androidx.tracing:tracing
+
+Sub Process_Globals
+	Private Const OPENROUTESERVICE_URL As String = "https://api.heigit.org/openrouteservice/v2/directions/driving-car/geojson"
+	Private GPS1 As GPS
+	'Add your own OpenRouteService key here. Do not commit a real key to a public repository.
+	
+	Private Const OPENROUTESERVICE_API_KEY As String = "REPLACE_WITH_YOUR_OPENROUTESERVICE_API_KEY"
+End Sub
+
+Sub Globals
+	Private ime As IME
+	Private xui As XUI
+	Private Root As B4XView
+	Private MapFragment1 As MapFragment
+	Private gmap As GoogleMap
+	Private rp As RuntimePermissions
+	Private mapReady As Boolean
+	Private requestInProgress As Boolean
+	Private navigationActive As Boolean
+	Private waitingForFirstFix As Boolean
+	Private gpsRunning As Boolean
+	Private locationLayerEnabled As Boolean
+	Private hasCurrentLocation As Boolean
+	Private currentLatitude As Double
+	Private currentLongitude As Double
+	Private selectedPlace As Marker
+	Private savedPlaces As List
+	Private nextPlaceNumber As Int
+	Private routePoints As List
+	Private currentRouteIndex As Int
+	Private routeDistanceMeters As Double
+	Private routeDurationSeconds As Double
+	Private routeLine As Polyline
+
+	Private bottomCard As Panel
+	Private lblResult As Label
+	Private lblAttribution As Label
+	Private btnNavigate As Button
+	Private btnClear As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	' Keep the map and controls inside the IME safe area with edge-to-edge enabled.
+	If FirstTime Then GPS1.Initialize("GPS")
+	ime.Initialize("ime")
+	Root = xui.CreatePanel("")
+	Dim Content As Rect = ime.GetContentRect
+	Activity.AddView(Root, Content.Left, Content.Top, Content.Width, Content.Height)
+	ime.UpdatePercentageReference(Root.Width, Root.Height)
+	Activity.Color = Colors.RGB(242, 246, 252)
+	Root.LoadLayout("maps")
+	savedPlaces.Initialize
+	routePoints.Initialize
+	CreateDemoControls
+
+	If MapFragment1.IsGooglePlayServicesAvailable = False Then
+		ToastMessageShow("Install or update Google Play Services to display the map.", True)
+	End If
+End Sub
+
+Private Sub CreateDemoControls
+	bottomCard.Initialize("")
+	Dim bottomView As B4XView = bottomCard
+	bottomView.SetColorAndBorder(Colors.White, 1dip, Colors.RGB(225, 232, 242), 18dip)
+	' Leave the map's Google logo and attribution visible below the floating controls.
+	Root.AddView(bottomCard, 10dip, Root.Height - 193dip, Root.Width - 20dip, 149dip)
+
+	lblResult.Initialize("")
+	lblResult.Text = "Long-press the map to add your first place."
+	lblResult.TextColor = Colors.RGB(50, 65, 87)
+	lblResult.TextSize = 13
+	lblResult.Gravity = Gravity.CENTER_VERTICAL
+	bottomCard.AddView(lblResult, 12dip, 5dip, bottomCard.Width - 24dip, 31dip)
+
+	btnNavigate.Initialize("btnNavigate")
+	btnNavigate.Text = "Start route"
+	btnNavigate.TextSize = 15
+	btnNavigate.TextColor = Colors.White
+	btnNavigate.Typeface = Typeface.DEFAULT_BOLD
+	btnNavigate.Color = Colors.RGB(30, 120, 255)
+	btnNavigate.Enabled = False
+	bottomCard.AddView(btnNavigate, 12dip, 41dip, bottomCard.Width * 0.66, 46dip)
+
+	btnClear.Initialize("btnClear")
+	btnClear.Text = "Clear places"
+	btnClear.TextSize = 14
+	btnClear.TextColor = Colors.RGB(35, 55, 82)
+	btnClear.Color = Colors.RGB(229, 236, 246)
+	bottomCard.AddView(btnClear, bottomCard.Width * 0.70, 41dip, bottomCard.Width * 0.27 - 12dip, 46dip)
+
+	lblAttribution.Initialize("")
+	lblAttribution.Text = "Route: OpenRouteService · Data: © OpenStreetMap contributors"
+	lblAttribution.TextColor = Colors.RGB(105, 117, 135)
+	lblAttribution.TextSize = 9
+	lblAttribution.Gravity = Gravity.CENTER_VERTICAL
+	bottomCard.AddView(lblAttribution, 12dip, 92dip, bottomCard.Width - 24dip, 42dip)
+	btnClear.Enabled = False
+	UpdateNavigationButton
+End Sub
+
+Private Sub UpdateNavigationButton
+	If navigationActive Then
+		btnNavigate.Text = "Finish route"
+		btnNavigate.Enabled = True
+		btnClear.Enabled = False
+	Else
+		btnNavigate.Text = "Start route"
+		btnNavigate.Enabled = selectedPlace.IsInitialized
+		btnClear.Enabled = savedPlaces.IsInitialized And savedPlaces.Size > 0
+	End If
+End Sub
+
+Private Sub MapFragment1_Ready
+	gmap = MapFragment1.GetMap
+	If gmap.IsInitialized = False Then
+		lblResult.Text = "Google Maps could not start. Check the API key and Google Play Services."
+		Return
+	End If
+
+	mapReady = True
+	gmap.MapType = gmap.MAP_TYPE_NORMAL
+	Dim camera As CameraPosition
+	camera.Initialize(-1.8312, -78.1834, 6)
+	gmap.AnimateCamera(camera)
+	lblResult.Text = "Add a place, select its pin, then start your route."
+End Sub
+
+Private Sub MapFragment1_LongClick(Point As LatLng)
+	If mapReady = False Then Return
+	If navigationActive Or requestInProgress Then
+		lblResult.Text = "Finish the current route before adding another place."
+		Return
+	End If
+	nextPlaceNumber = nextPlaceNumber + 1
+	Dim place As Marker = gmap.AddMarker(Point.Latitude, Point.Longitude, "Place " & nextPlaceNumber)
+	place.Snippet = "Tap Start route to navigate here."
+	savedPlaces.Add(place)
+	selectedPlace = place
+	lblResult.Text = CoordinateText(Point) & " · Saved"
+	UpdateNavigationButton
+End Sub
+
+Private Sub MapFragment1_MarkerClick(SelectedMarker As Marker) As Boolean
+	If navigationActive Or requestInProgress Then
+		lblResult.Text = "Finish the current route before selecting another place."
+		Return True
+	End If
+	selectedPlace = SelectedMarker
+	If routeLine.IsInitialized Then routeLine.Remove
+	routeLine = Null
+	routePoints.Initialize
+	lblResult.Text = CoordinateText(selectedPlace.Position)
+	UpdateNavigationButton
+	Return False
+End Sub
+
+Private Sub btnClear_Click
+	If navigationActive Or requestInProgress Then Return
+	For Each place As Marker In savedPlaces
+		place.Remove
+	Next
+	savedPlaces.Clear
+	selectedPlace = Null
+	nextPlaceNumber = 0
+	If routeLine.IsInitialized Then routeLine.Remove
+	routeLine = Null
+	routePoints.Initialize
+	lblResult.Text = "Long-press the map to add your first place."
+	UpdateNavigationButton
+End Sub
+
+Private Sub btnNavigate_Click
+	If requestInProgress Then Return
+	If navigationActive Then
+		FinishNavigation(False)
+		Return
+	End If
+	If mapReady = False Then
+		lblResult.Text = "Wait for Google Maps to finish loading."
+		Return
+	End If
+	If selectedPlace.IsInitialized = False Then
+		lblResult.Text = "Long-press the map to add a place, or tap a saved pin."
+		Return
+	End If
+	Wait For (RequestFineLocationPermission) Complete (Granted As Boolean)
+	If Granted = False Then
+		lblResult.Text = "Precise location permission is needed to start a route."
+		Return
+	End If
+	If GPS1.GPSEnabled = False Then
+		lblResult.Text = "Turn on device location, then tap Start route again."
+		StartActivity(GPS1.LocationSettingsIntent)
+		Return
+	End If
+	If OPENROUTESERVICE_API_KEY = "REPLACE_WITH_YOUR_OPENROUTESERVICE_API_KEY" Then
+		lblResult.Text = "Add your OpenRouteService API key in Rute.b4a before requesting a route."
+		Return
+	End If
+	navigationActive = True
+	waitingForFirstFix = True
+	locationLayerEnabled = False
+	If GPS1.IsInitialized Then GPS1.Start(1000, 3)
+	gpsRunning = True
+	btnNavigate.Text = "Finish route"
+	' Allow cancellation while the first GPS fix is being acquired.
+	btnNavigate.Enabled = True
+	btnClear.Enabled = False
+	lblResult.Text = "Getting your current location..."
+End Sub
+
+Private Sub RequestFineLocationPermission As ResumableSub
+	If rp.Check(rp.PERMISSION_ACCESS_FINE_LOCATION) Then Return True
+	rp.CheckAndRequest(rp.PERMISSION_ACCESS_FINE_LOCATION)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Permission <> rp.PERMISSION_ACCESS_FINE_LOCATION Or Result = False Then Return False
+	Return rp.Check(rp.PERMISSION_ACCESS_FINE_LOCATION)
+End Sub
+
+Private Sub RequestRouteFromCurrentLocation As ResumableSub
+	If selectedPlace.IsInitialized = False Or hasCurrentLocation = False Then Return False
+	If requestInProgress Then Return False
+	requestInProgress = True
+	btnNavigate.Enabled = False
+	lblResult.Text = "Calculating your route..."
+	Dim target As LatLng = selectedPlace.Position
+	Dim originCoordinates As List
+	originCoordinates.Initialize
+	originCoordinates.Add(currentLongitude)
+	originCoordinates.Add(currentLatitude)
+	Dim destinationCoordinates As List
+	destinationCoordinates.Initialize
+	destinationCoordinates.Add(target.Longitude)
+	destinationCoordinates.Add(target.Latitude)
+	Dim coordinates As List
+	coordinates.Initialize
+	coordinates.Add(originCoordinates)
+	coordinates.Add(destinationCoordinates)
+	Dim requestData As Map
+	requestData.Initialize
+	requestData.Put("coordinates", coordinates)
+	Dim generator As JSONGenerator
+	generator.Initialize(requestData)
+
+	Dim job As HttpJob
+	job.Initialize("RouteRequest", Me)
+	job.PostString(OPENROUTESERVICE_URL, generator.ToString)
+	job.GetRequest.SetContentType("application/json; charset=utf-8")
+	job.GetRequest.SetHeader("Accept", "application/geo+json")
+	job.GetRequest.SetHeader("Authorization", OPENROUTESERVICE_API_KEY)
+	Wait For (job) JobDone(job As HttpJob)
+
+	Dim routeCreated As Boolean
+	If job.Success Then
+		routeCreated = ProcessRouteResponse(job.GetString)
+	Else
+		lblResult.Text = "Could not calculate the route. Check your connection and try again."
+		Log("OpenRouteService route request failed: " & job.ErrorMessage)
+	End If
+	job.Release
+	requestInProgress = False
+	If routeCreated Then
+		btnNavigate.Text = "Finish route"
+		btnNavigate.Enabled = True
+	Else
+		navigationActive = False
+		waitingForFirstFix = False
+		If GPS1.IsInitialized Then GPS1.Stop
+		gpsRunning = False
+		UpdateNavigationButton
+	End If
+	Return routeCreated
+End Sub
+
+Private Sub ProcessRouteResponse(responseText As String) As Boolean
+	Try
+		Dim parser As JSONParser
+		parser.Initialize(responseText)
+		Dim response As Map = parser.NextObject
+		Dim features As List = response.Get("features")
+		If features.IsInitialized = False Or features.Size = 0 Then
+			If response.ContainsKey("error") Then
+				Dim errorData As Map = response.Get("error")
+				Dim errorMessage As String = errorData.Get("message")
+				If errorMessage <> "" Then
+					lblResult.Text = "No route found: " & errorMessage
+					Return False
+				End If
+			End If
+			lblResult.Text = "The routing service returned no route for these points."
+			Return False
+		End If
+
+		Dim feature As Map = features.Get(0)
+		Dim geometry As Map = feature.Get("geometry")
+		Dim coordinates As List = geometry.Get("coordinates")
+		routePoints.Initialize
+		For Each coordinate As List In coordinates
+			If coordinate.Size >= 2 Then
+				Dim point As LatLng
+				point.Initialize(coordinate.Get(1), coordinate.Get(0))
+				routePoints.Add(point)
+			End If
+		Next
+		If routePoints.Size < 2 Then
+			lblResult.Text = "The response does not contain enough points to draw the route."
+			Return False
+		End If
+
+		If routeLine.IsInitialized Then routeLine.Remove
+		routeLine = gmap.AddPolyline
+		routeLine.Color = Colors.RGB(30, 120, 255)
+		routeLine.Width = 6dip
+		routeLine.Visible = True
+		currentRouteIndex = 0
+
+		Dim properties As Map = feature.Get("properties")
+		Dim routeSummary As Map = properties.Get("summary")
+		routeDistanceMeters = routeSummary.Get("distance")
+		routeDurationSeconds = routeSummary.Get("duration")
+		RenderRemainingRoute
+		lblResult.Text = FormatDistance(routeDistanceMeters) & " · Follow the blue line."
+	FitCameraToRoute(routePoints)
+		Return True
+	Catch
+		lblResult.Text = "The route response could not be read."
+		Log("Error parsing OpenRouteService route: " & LastException & CRLF & responseText)
+		Return False
+	End Try
+End Sub
+
+Private Sub GPS_LocationChanged(Location1 As Location)
+	currentLatitude = Location1.Latitude
+	currentLongitude = Location1.Longitude
+	hasCurrentLocation = True
+
+	If mapReady And locationLayerEnabled = False And rp.Check(rp.PERMISSION_ACCESS_FINE_LOCATION) Then
+		gmap.MyLocationEnabled = True
+		locationLayerEnabled = True
+	End If
+
+	If waitingForFirstFix Then
+		waitingForFirstFix = False
+		Wait For (RequestRouteFromCurrentLocation) Complete (RouteCreated As Boolean)
+		Return
+	End If
+
+	If navigationActive And routePoints.IsInitialized And routePoints.Size > 1 Then
+		UpdateRouteProgress(Location1)
+	End If
+End Sub
+
+Private Sub UpdateRouteProgress(Location1 As Location)
+	If Location1.AccuracyValid And Location1.Accuracy > 80 Then
+		lblResult.Text = "GPS signal is weak · accuracy about " & Round(Location1.Accuracy) & " m"
+		Return
+	End If
+
+	Dim searchEnd As Int = currentRouteIndex + 120
+	If searchEnd >= routePoints.Size Then searchEnd = routePoints.Size - 1
+	Dim nearestIndex As Int = currentRouteIndex
+	Dim nearestDistance As Double = 1000000000
+	For i = currentRouteIndex To searchEnd
+		Dim routePoint As LatLng = routePoints.Get(i)
+		Dim distance As Double = DistanceMeters(Location1.Latitude, Location1.Longitude, routePoint.Latitude, routePoint.Longitude)
+		If distance < nearestDistance Then
+			nearestDistance = distance
+			nearestIndex = i
+		End If
+	Next
+
+	If nearestDistance > 100 Then
+		lblResult.Text = "Move closer to the blue route to continue."
+		Return
+	End If
+	If nearestIndex > currentRouteIndex Then currentRouteIndex = nearestIndex
+	RenderRemainingRoute
+
+	Dim remainingMeters As Double = RemainingRouteDistance(Location1)
+	Dim remainingSeconds As Double = routeDurationSeconds
+	If routeDistanceMeters > 0 Then remainingSeconds = routeDurationSeconds * remainingMeters / routeDistanceMeters
+	lblResult.Text = FormatDistance(remainingMeters) & " remaining · about " & FormatDuration(remainingSeconds)
+
+	Dim target As LatLng = selectedPlace.Position
+	If DistanceMeters(Location1.Latitude, Location1.Longitude, target.Latitude, target.Longitude) <= 30 Then
+		FinishNavigation(True)
+	End If
+End Sub
+
+Private Sub RenderRemainingRoute
+	If routePoints.IsInitialized = False Or routePoints.Size < 2 Then Return
+	Dim visiblePoints As List
+	visiblePoints.Initialize
+	Dim currentPoint As LatLng
+	currentPoint.Initialize(currentLatitude, currentLongitude)
+	visiblePoints.Add(currentPoint)
+	For i = currentRouteIndex To routePoints.Size - 1
+		visiblePoints.Add(routePoints.Get(i))
+	Next
+	If routeLine.IsInitialized = False Then routeLine = gmap.AddPolyline
+	routeLine.Points = visiblePoints
+	routeLine.Color = Colors.RGB(30, 120, 255)
+	routeLine.Width = 6dip
+	routeLine.Visible = True
+End Sub
+
+Private Sub RemainingRouteDistance(Location1 As Location) As Double
+	If routePoints.Size = 0 Then Return 0
+	Dim firstPoint As LatLng = routePoints.Get(currentRouteIndex)
+	Dim total As Double = DistanceMeters(Location1.Latitude, Location1.Longitude, firstPoint.Latitude, firstPoint.Longitude)
+	For i = currentRouteIndex To routePoints.Size - 2
+		Dim point1 As LatLng = routePoints.Get(i)
+		Dim point2 As LatLng = routePoints.Get(i + 1)
+		total = total + DistanceMeters(point1.Latitude, point1.Longitude, point2.Latitude, point2.Longitude)
+	Next
+	Return total
+End Sub
+
+Private Sub DistanceMeters(Lat1 As Double, Lon1 As Double, Lat2 As Double, Lon2 As Double) As Double
+	Dim meanLatitude As Double = (Lat1 + Lat2) / 2 * 0.0174532925199433
+	Dim deltaLatitude As Double = (Lat2 - Lat1) * 111320
+	Dim deltaLongitude As Double = (Lon2 - Lon1) * 111320 * Cos(meanLatitude)
+	Return Sqrt(deltaLatitude * deltaLatitude + deltaLongitude * deltaLongitude)
+End Sub
+
+Private Sub FinishNavigation(Arrived As Boolean)
+	If GPS1.IsInitialized Then GPS1.Stop
+	gpsRunning = False
+	navigationActive = False
+	waitingForFirstFix = False
+	If routeLine.IsInitialized Then routeLine.Remove
+	routeLine = Null
+	routePoints.Initialize
+	routeDistanceMeters = 0
+	routeDurationSeconds = 0
+	If Arrived Then
+		lblResult.Text = "Arrived at " & selectedPlace.Title & ". Route finished."
+	Else
+		lblResult.Text = "Route finished. Your saved places remain on the map."
+	End If
+	UpdateNavigationButton
+End Sub
+
+Private Sub FitCameraToRoute(points As List)
+	If points.Size = 0 Then Return
+	Dim firstPoint As LatLng = points.Get(0)
+	Dim minLat As Double = firstPoint.Latitude
+	Dim maxLat As Double = firstPoint.Latitude
+	Dim minLon As Double = firstPoint.Longitude
+	Dim maxLon As Double = firstPoint.Longitude
+	For Each point As LatLng In points
+		minLat = Min(minLat, point.Latitude)
+		maxLat = Max(maxLat, point.Latitude)
+		minLon = Min(minLon, point.Longitude)
+		maxLon = Max(maxLon, point.Longitude)
+	Next
+	Dim span As Double = Max(maxLat - minLat, maxLon - minLon)
+	Dim zoom As Float
+	If span > 8 Then
+		zoom = 4.5
+	Else If span > 4 Then
+		zoom = 5.5
+	Else If span > 2 Then
+		zoom = 6.5
+	Else If span > 1 Then
+		zoom = 7.5
+	Else If span > 0.5 Then
+		zoom = 8.5
+	Else If span > 0.25 Then
+		zoom = 9.5
+	Else If span > 0.12 Then
+		zoom = 10.5
+	Else If span > 0.06 Then
+		zoom = 11.5
+	Else If span > 0.03 Then
+		zoom = 12.5
+	Else If span > 0.015 Then
+		zoom = 13.5
+	Else
+		zoom = 14.5
+	End If
+	Dim camera As CameraPosition
+	camera.Initialize((minLat + maxLat) / 2, (minLon + maxLon) / 2, zoom)
+	gmap.AnimateCamera(camera)
+End Sub
+
+Private Sub CoordinateText(point As LatLng) As String
+	Return NumberFormat2(point.Latitude, 1, 5, 5, False) & ", " & NumberFormat2(point.Longitude, 1, 5, 5, False)
+End Sub
+
+Private Sub FormatDistance(meters As Double) As String
+	If meters >= 1000 Then Return NumberFormat2(meters / 1000, 1, 1, 1, False) & " km"
+	Return NumberFormat2(meters, 1, 0, 0, False) & " m"
+End Sub
+
+Private Sub FormatDuration(seconds As Double) As String
+	Dim totalMinutes As Int = Max(1, Round(seconds / 60))
+	If totalMinutes < 60 Then Return totalMinutes & " min"
+	Dim hours As Int = Floor(totalMinutes / 60)
+	Dim remainingMinutes As Int = totalMinutes Mod 60
+	If remainingMinutes = 0 Then Return hours & " h"
+	Return hours & " h " & remainingMinutes & " min"
+End Sub
+
+Sub Activity_Resume
+	If navigationActive And rp.Check(rp.PERMISSION_ACCESS_FINE_LOCATION) And GPS1.IsInitialized And GPS1.GPSEnabled Then
+		GPS1.Start(1000, 3)
+		gpsRunning = True
+	End If
+End Sub
+
+Sub Activity_Pause(UserClosed As Boolean)
+	If gpsRunning And GPS1.IsInitialized Then GPS1.Stop
+	gpsRunning = False
+End Sub

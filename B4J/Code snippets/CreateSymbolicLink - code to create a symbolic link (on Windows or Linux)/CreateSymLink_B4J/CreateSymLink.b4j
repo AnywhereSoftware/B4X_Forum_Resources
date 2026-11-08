@@ -1,0 +1,224 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example.createsymlink
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+	#LibraryVersion: 0.1
+	#LibraryName: CreateSymLink
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+
+	Private lineSeparator As String
+
+	' Designer Views
+	Private TextArea1 As TextArea
+	Private lblOutputDirectory As Label
+	Private btnSelectOutputDirectory As Button
+	Private lblFile As Label
+	Private btnSelectFile As Button
+	Private btnStart As Button
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	lineSeparator = GetSystemProperty("line.separator", CRLF)
+
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	Log("Application Error - Exception: " & Error.Message)
+	Log("")
+	Log("StackTrace: ")
+	Log("")
+	Log(StackTrace)
+	Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+	Return True
+
+End Sub
+
+Private Sub btnSelectFile_Click
+
+	Dim fileChooser1 As FileChooser
+	fileChooser1.Initialize
+	fileChooser1.Title = "Select the file to which to link"
+	fileChooser1.setExtensionFilter("All files", Array As String("*.*"))
+	lblFile.Text = fileChooser1.ShowOpen(MainForm)
+	CheckValues
+
+End Sub
+
+Private Sub btnSelectOutputDirectory_Click
+
+	' Note: this caused an exception when used in debug mode; works fine in release mode.
+	' This was also spotted by mw71: https://www.b4x.com/android/forum/threads/solved-trouble-with-directorychooser-b4xpages.127932
+
+	Dim directoryChooser1 As DirectoryChooser
+	directoryChooser1.Initialize
+	directoryChooser1.Title = "Select the output directory in which to place the symlink"
+	lblOutputDirectory.Text = directoryChooser1.Show(MainForm)
+	CheckValues
+
+End Sub
+
+Private Sub btnStart_Click
+
+	If CheckValues = False Then
+		AppendText("Please correct the red value(s)")
+		Return
+	End If
+
+	Dim outputFile As String = File.Combine(lblOutputDirectory.Text, File.GetName(lblFile.Text))
+
+	If File.Exists(outputFile, "") Then
+		Dim sf As Object = xui.Msgbox2Async(outputFile, "Output file exists, ok to delete?", "OK", "Cancel", "", Null)
+		Wait For (sf) Msgbox_Result (Result As Int)
+		If Result <> xui.DialogResponse_Positive Then Return
+		Try
+			File.Delete(outputFile, "")
+		Catch
+			AppendText("Could not delete the output file (" & outputFile & "): " & LastException)
+			Return
+		End Try
+	End If
+
+	Try
+		If CreateSymbolicLink(outputFile, lblFile.Text, True) Then
+			AppendText("The symlink has been created: " & outputFile)
+		Else
+			AppendText("Could not create the symlink (" & outputFile & "): " & LastException)
+		End If
+	Catch
+		AppendText("Couldn't create the symlink (" & outputFile & "): " & LastException)
+		Return
+	End Try
+
+End Sub
+
+Private Sub CheckValues As Boolean
+
+	Dim reslt1 As Boolean = True
+	Dim reslt2 As Boolean = True
+
+	lblOutputDirectory.TextColor = fx.Colors.Black
+	btnSelectOutputDirectory.TextColor = fx.Colors.Black
+	reslt1 = CheckOneValue(lblOutputDirectory, btnSelectOutputDirectory, True)
+
+	lblFile.TextColor = fx.Colors.Black
+	btnSelectFile.TextColor = fx.Colors.Black
+	reslt2 = CheckOneValue(lblFile, btnSelectFile, False)
+
+	Return reslt1 And reslt2
+
+End Sub
+
+Private Sub CheckOneValue(lbl As Label, btn As Button, needDirectory As Boolean) As Boolean
+
+	If lbl.Text = "" Then
+		lbl.TextColor = fx.Colors.Red
+		btn.TextColor = fx.Colors.Red
+		Return False
+	else If File.Exists(lbl.Text, "") = False Then
+		lbl.TextColor = fx.Colors.Red
+		btn.TextColor = fx.Colors.Red
+		Return False
+	else if needDirectory And (File.IsDirectory(lbl.Text, "") = False) Then
+		lbl.TextColor = fx.Colors.Red
+		btn.TextColor = fx.Colors.Red
+		Return False
+	End If
+
+	Return True
+
+End Sub
+
+Private Sub AppendText(txt As String)
+
+	If TextArea1.Text <> "" Then TextArea1.Text = TextArea1.Text & lineSeparator
+	TextArea1.Text = TextArea1.Text & txt
+
+End Sub
+
+' Creates a symbolic link
+'
+' IMPORTANT: must be run as Administrator on Windows (or Files.createSymbolicLink in the Java code will fail)
+'
+' Dependencies: the JavaObject library
+'
+' Parms:
+' - linkPath: String: the path of the symbolic link
+' - realFilePath: String: the path of the target file to which 'linkPath' will point
+' - overwriteExisting: True to first delete 'linkPath' if it already exists; if False and 'linkPath' exists, an error occurs
+'
+' Returns: True if the operation succeeded, False if an error occurred (or if runnin on Windows without Administrator privilege)
+'
+' Example:
+' Dim link As String = "C:\Users\me\Downloads\linktoreal.txt"
+' Dim realfile As String = "C:\Users\me\Downloads\realfilehere.txt"
+' xui.MsgboxAsync("Done; success: " & CreateSymbolicLink(link, realfile, True), "Result")
+'
+' Derived from:
+' - https://www.b4x.com/android/forum/threads/retrieving-file-types.98782/#post-622169
+' - https://www.baeldung.com/java-symlink
+Sub CreateSymbolicLink(linkPath As String, realFilePath As String, overwriteExisting As Boolean) As Boolean
+
+	' Must run as Administrator on Windows; assumption: drive C: exists
+	Try
+		If File.Exists("c:\", "") Then
+			File.WriteString("c:\", "runasadmin.test", "test")
+			File.Delete("c:\", "runasadmin.test")
+		End If
+	Catch
+		Return False
+	End Try
+
+	Return Me.As(JavaObject).RunMethod("createSymbolicLink", Array(linkPath, realFilePath, overwriteExisting))
+
+End Sub
+
+#if java
+import java.nio.file.*;
+import java.io.*;
+public static Boolean createSymbolicLink(String linkPath, String realFilePath, Boolean overwriteExisting) throws IOException {
+	try {
+		Path target = Paths.get("", realFilePath);
+		Path link = Paths.get("", linkPath);
+		if (overwriteExisting) {
+			if (Files.exists(link)) {
+			    Files.delete(link);
+			}
+		}
+		Files.createSymbolicLink(link, target);
+		return true;
+	}
+	catch(Exception e) {
+	  return false;
+	}
+}
+#End If

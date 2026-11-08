@@ -1,0 +1,104 @@
+﻿Build1=Default,b4a.example
+File1=junk.jpg
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=phone
+Library4=runtimepermissions
+Library5=xui
+Library6=contentresolver
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="20" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=1
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+'	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	AddToGallery(File.OpenInput(File.DirAssets, "junk.jpg"), "XYZalbum", "junk.jpg", "image/jpeg")
+	Wait For AddToGallery_Complete_jpeg
+	AddToGallery(File.OpenInput(File.DirAssets, "junk.mp4"), "XYZalbum", "junk.mp4", "video/mp4")
+	Wait For AddToGallery_Complete_mp4
+End Sub
+
+Sub AddToGallery (In As InputStream, AlbumName As String, TargetName As String, MimeType As String)
+	Dim p As Phone
+	Log(p.SdkVersion)
+	Dim ctxt As JavaObject
+	ctxt.InitializeContext
+	If p.SdkVersion >= 29 Then
+		Dim cr As ContentResolver
+		cr.Initialize("cr")
+		Dim values As ContentValues
+		values.Initialize
+		values.PutString("relative_path", "Pictures/" & AlbumName)
+		values.PutString("_display_name", TargetName)
+		values.PutString("mime_type", MimeType)
+		Dim MediaStore As JavaObject
+		If MimeType = "image/jpeg" Then
+			MediaStore.InitializeStatic("android.provider.MediaStore.Images$Media")
+		Else
+			MediaStore.InitializeStatic("android.provider.MediaStore.Video$Media")
+		End If
+		Dim EXTERNAL_CONTENT_URI As Uri = MediaStore.GetField("EXTERNAL_CONTENT_URI")
+		cr.Delete(EXTERNAL_CONTENT_URI, "_display_name = ?", Array As String(TargetName))
+		Dim imageuri As JavaObject = cr.Insert(EXTERNAL_CONTENT_URI, values)
+		Dim out As OutputStream = ctxt.RunMethodJO("getContentResolver", Null).RunMethod("openOutputStream", Array(imageuri))
+		File.Copy2(In, out)
+		out.Close
+		Log("finito SDK >=29")
+	Else
+		Dim rp As RuntimePermissions
+		rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean) 'change to Activity if not using B4XPages
+		If Result Then
+			File.MakeDir(File.DirRootExternal, AlbumName)
+			Dim out As OutputStream = File.OpenOutput(File.DirRootExternal, AlbumName & "/" & TargetName, False)
+			File.Copy2(In, out)
+			out.Close
+			Dim FilePath As String = File.Combine(File.DirRootExternal, AlbumName & "/" & TargetName)
+			Dim MediaScannerConnection As JavaObject
+			MediaScannerConnection.InitializeStatic("android.media.MediaScannerConnection")
+			Dim interface As Object = MediaScannerConnection.CreateEventFromUI("android.media.MediaScannerConnection.OnScanCompletedListener", "ScanCompleted", _
+                   Null)
+			MediaScannerConnection.RunMethod("scanFile", Array(ctxt, Array As String(FilePath), Array As String(MimeType), interface))
+			Wait For ScanCompleted_Event (MethodName As String, Args() As Object)
+			Log(Args(0))
+			Log(Args(1))
+			Log("finito SDK < 29")
+		End If
+	End If
+	If MimeType = "image/jpeg" Then
+		CallSubDelayed(Me, "AddToGallery_Complete_jpeg")
+	Else
+		CallSubDelayed(Me, "AddToGallery_Complete_mp4")
+	End If
+End Sub

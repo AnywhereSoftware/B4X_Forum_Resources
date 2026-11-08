@@ -1,0 +1,123 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Example For drawSmoothCircle function. Which draws anti-aliased circles
+'// The circle periphery has a "thickness" of ~3 pixles To minimise the
+'// "braiding" effect present in narrow anti-aliased lines.
+
+'// For thicker Or thinner circle outlines use the drawArc function.
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	Log("TFT Booting...")
+	
+	TFTid = TFT.Initialize(-1,-1)	
+  '// Initialise the screen
+	TFT.begin(0xFF)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	Log("\r\nInitialisation done.")
+
+    AddLooper("LocalLoop")
+End Sub
+
+'// =========================================================================
+'// Loop
+'// =========================================================================
+Sub LocalLoop
+	Dim radius As ULong = 2
+	Dim index As ULong= 0
+
+	Dim fg_color As UInt = rainbow(index)
+	Dim bg_color As UInt = TFT.TFT_BLACK        '// This is the background colour used For smoothing (anti-aliasing)
+
+	Dim x As UInt = TFT.width / 2     '// Position of centre of arc
+	Dim y As UInt = TFT.height / 2
+
+	TFT.drawSmoothCircle(x, y, radius, fg_color, bg_color)
+
+	radius = radius + 11
+	index = index+ 5
+	index = index Mod 192
+
+	If radius > TFT.height/2 Then
+	   Delay (1000)
+	   radius = 2
+    End If
+End Sub
+
+'// -------------------------------------------------------------------------
+'// Return a 16-Bit rainbow colour
+'// -------------------------------------------------------------------------
+Sub rainbow(value As Byte) As UInt
+
+  '// If 'value' is in the range 0-159 it is converted to a spectrum colour
+  '// from 0 = red through To 127 = blue To 159 = violet
+  '// Extending the range To 0-191 adds a further violet To red band
+ 
+  value = value Mod 192
+  
+  Dim red As Byte   = 0  '// red is the top 5 bits of a 16-Bit colour value
+  Dim green As Byte = 0  '// green is the middle 6 bits, but only top 5 bits used here
+  Dim blue As Byte  = 0  '// blue is the bottom 5 bits
+
+  Dim sector As Byte =  Bit.ShiftRight(value, 5)
+  Dim amplit As Byte = Bit.And(value, 0x1F)
+
+  Select sector
+    Case 0:
+      red   = 0x1F
+      green = amplit  ' // green ramps up
+      blue  = 0
+    Case 1:
+      red   = 0x1F - amplit ' // red ramps down
+      green = 0x1F
+      blue  = 0
+    Case 2:
+      red   = 0
+      green = 0x1F
+      blue  = amplit  ' // blue ramps up
+    Case 3:
+      red   = 0
+      green = 0x1F - amplit  ' // green ramps down
+      blue  = 0x1F
+    Case 4:
+      red   = amplit  ' // red ramps up
+      green = 0
+      blue  = 0x1F
+    Case 5:
+      red   = 0x1F
+      green = 0
+      blue  = 0x1F - amplit  ' // blue ramps down
+  End Select
+
+  Return Bit.Or(Bit.Or(Bit.ShiftLeft(red, 11), Bit.ShiftLeft(green, 6)), blue)
+End Sub

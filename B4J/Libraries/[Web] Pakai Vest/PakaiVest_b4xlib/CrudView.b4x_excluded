@@ -1,0 +1,404 @@
+' Crud View Template
+' Customize this template to modify the UI layout of your CRUD forms.
+Sub Class_Globals
+	Private App As EndsMeet
+	Private mShowLogout As Boolean
+	
+	' Customize prefix routes and container selectors if needed
+	Private Const ROUTE_PREFIX As String = "/hx/items"
+	Private Const CONTAINER_ID As String = "items-container"
+End Sub
+
+Public Sub Initialize
+	App = Main.App
+End Sub
+
+Public Sub setShowLogout (Value As Boolean)
+	mShowLogout = Value
+End Sub
+
+Private Sub ExistInCache (Key As String) As Boolean
+	Return App.ctx.ContainsKey(Key)
+End Sub
+
+Private Sub ReadFromCache (Key As String) As Object
+	Dim Value As Object = App.ctx.Get(Key)
+	If Value Is MiniHtml Then
+		Return Value.As(MiniHtml)
+	Else If GetType(Value) = "[B" Then
+		Return MH.ConvertFromBytes(Value)
+	Else
+		Return Value
+	End If
+End Sub
+
+Private Sub WriteToCache (Key As String, Value As Object)
+	App.ctx.Put(Key, Value)
+End Sub
+
+Public Sub Show As String
+	Dim CacheName As String = "Items Page"
+	If ExistInCache(CacheName) = False Then
+		mShowLogout = True
+		WriteToCache(CacheName, ItemsPage)
+	End If
+	Dim page1 As MiniHtml = ReadFromCache(CacheName)
+	Dim doc As MiniHtml
+	doc.Initialize("")
+	doc.Write("<!DOCTYPE html>")
+	doc.Write(page1.build)
+	Return doc.ToString
+End Sub
+
+' Generates the modal markup for Add, Edit, or Delete actions
+Public Sub Modal (Action As String, Data As Map) As String
+	Select Action
+		Case "Add"
+			Dim CacheName As String = "Items Add Modal"
+			If ExistInCache(CacheName) = False Then
+				WriteToCache(CacheName, ModalAdd)
+			End If
+			Dim modal1 As MiniHtml = ReadFromCache(CacheName)
+			Return modal1.build
+		Case "Edit"
+			Dim CacheName As String = "Items Edit Modal"
+			If ExistInCache(CacheName) = False Then
+				WriteToCache(CacheName, ModalEdit)
+			End If
+			Dim modal1 As MiniHtml = ReadFromCache(CacheName)
+			Dim modalBody As MiniHtml = modal1.Child(1)
+			
+			Dim id1 As MiniHtml = modalBody.Child(1)
+			id1.attr("value", Data.Get("id"))
+			
+			Dim group1 As MiniHtml = modalBody.Child(2)
+			Dim input1 As MiniHtml = group1.Child(1)
+			input1.attr("value", Data.Get("item_code"))
+			
+			Dim group2 As MiniHtml = modalBody.Child(3)
+			Dim input2 As MiniHtml = group2.Child(1)
+			input2.attr("value", Data.Get("item_name"))
+			
+			Dim group3 As MiniHtml = modalBody.Child(4)
+			Dim input3 As MiniHtml = group3.Child(1)
+			Dim price As String = NumberFormat2(Data.Get("item_price"), 1, 2, 2, False)
+			input3.attr("value", price)
+			
+			Dim group4 As MiniHtml = modalBody.Child(5)
+			Dim input4 As MiniHtml = group4.Child(1)
+			input4.text2(Data.GetDefault("item_description", ""))
+			
+			Return modal1.build
+		Case "Delete"
+			Dim CacheName As String = "Items Delete Modal"
+			If ExistInCache(CacheName) = False Then
+				WriteToCache(CacheName, ModalDelete)
+			End If
+			Dim modal1 As MiniHtml = ReadFromCache(CacheName)
+			Dim modalBody As MiniHtml = modal1.Child(1)
+			Dim id1 As MiniHtml = modalBody.Child(1)
+			id1.attr("value", Data.Get("id"))
+			Dim p1 As MiniHtml = modalBody.Child(2)
+			p1.text2($"Delete ${Data.Get("item_name")} (${Data.Get("item_code")})?"$)
+			Return modal1.build
+		Case Else
+			Return ""
+	End Select
+End Sub
+
+Public Sub Alert (info As AlertInfo) As String
+	Dim div1 As MiniHtml = MH.Div
+	div1.cls("alert alert-" & info.Status)
+	div1.text(info.Message)
+	Return div1.build
+End Sub
+
+Public Sub Toast (info As ToastInfo, data As List) As String
+	Dim div1 As MiniHtml = MH.Div
+	div1.attr("id", CONTAINER_ID)
+	div1.attr("hx-swap-oob", "true")
+	ItemsTableFilled(data).up(div1)
+	Dim script1 As MiniJs
+	script1.Initialize
+	script1.AddCustomEventDispatch("entity:changed", _
+        CreateMap( _
+        "entity": info.Entity, _
+        "action": info.Action, _
+        "message": info.Message, _
+        "status": info.Status))
+	Return div1.build & CRLF & script1.Generate
+End Sub
+
+Public Sub RenderedTable (data As List) As String
+	Return ItemsTableFilled(data).build
+End Sub
+
+Private Sub ItemsPage As MiniHtml
+	Dim main1 As MainView
+	main1.Initialize
+	main1.LoadContent(ContainerContent)
+	main1.LoadModal(ContainerModal)
+	main1.LoadToast(ContainerToast)
+	Dim page1 As MiniHtml = main1.Render
+	Dim navitem1 As MiniHtml = GetNavItem(page1)
+	
+	' Add extra navbar navigation if needed
+	If mShowLogout Then
+		LogoutLink.up(navitem1)
+	End If
+	Return page1
+End Sub
+
+Private Sub ContainerContent As MiniHtml
+	Dim content1 As MiniHtml = MH.Div.cls("row mt-3")
+	Dim col12 As MiniHtml = MH.Div.up(content1).cls("col-md-12")
+	Dim form1 As MiniHtml = MH.Form.up(col12).cls("form mb-3")
+	Dim row1 As MiniHtml = MH.Div.up(form1).cls("row")
+	Dim col1 As MiniHtml = MH.Div.up(row1).cls("col-md-6 col-lg-6")
+	Dim group1 As MiniHtml = MH.Div.up(col1).cls("input-group mb-3")
+	Dim label1 As MiniHtml = MH.Label.up(group1)
+	label1.attr("for", "keyword")
+	label1.cls("input-group-text mt-2")
+	label1.text("Search")
+	Dim input1 As MiniHtml = MH.Input.up(group1)
+	input1.attr("type", "text")
+	input1.cls("form-control col-md-6 mt-2")
+	input1.attr("id", "keyword")
+	input1.attr("name", "keyword")
+	Dim searchBtn As MiniHtml = MH.Button.up(group1)
+	searchBtn.cls("btn btn-danger btn-md pl-3 pr-3 ml-3 mt-2")
+	searchBtn.text("Submit")
+	searchBtn.attr("hx-post", ROUTE_PREFIX & "/table")
+	searchBtn.attr("hx-target", "#" & CONTAINER_ID)
+	searchBtn.attr("hx-swap", "innerHTML")
+	
+	Dim col2 As MiniHtml = MH.Div.up(row1).cls("col-md-6 col-lg-6")
+	Dim div2 As MiniHtml = MH.Div.up(col2).cls("float-end mt-2")
+	Dim button1 As MiniHtml = MH.Button.up(div2)
+	button1.cls("btn btn-success ml-2")
+	button1.attr("hx-get", ROUTE_PREFIX & "/add")
+	button1.attr("hx-target", "#modal-content")
+	button1.attr("hx-trigger", "click")
+	button1.attr("data-bs-toggle", "modal")
+	button1.attr("data-bs-target", "#modal-container")
+	MH.Icon.up(button1).cls("bi bi-plus-lg me-2")
+	button1.text("Add Item")
+	
+	Dim container1 As MiniHtml = MH.Div.up(col12)
+	container1.attr("id", CONTAINER_ID)
+	container1.attr("hx-get", ROUTE_PREFIX & "/table")
+	container1.attr("hx-trigger", "load")
+	container1.text("Loading...")
+	Return content1
+End Sub
+
+' Helper to retrieve nav list from layout structure
+Private Sub GetNavItem (dom As MiniHtml) As MiniHtml
+	Dim body1 As MiniHtml = dom.Child(1)
+	Dim nav1 As MiniHtml = body1.Child(1)
+	Dim container1 As MiniHtml = nav1.Child(0)
+	Dim navbar1 As MiniHtml = container1.Child(3)
+	Dim ulist1 As MiniHtml = navbar1.Child(0)
+	Return ulist1
+End Sub
+
+Private Sub ItemsTableFilled (data As List) As MiniHtml
+	Dim CacheName As String = "Items Table"
+	If ExistInCache(CacheName) = False Then
+		WriteToCache(CacheName, ItemsTable)
+	End If
+
+	Dim CacheNameRow As String = "Items Table Row"
+	If ExistInCache(CacheNameRow) = False Then
+		WriteToCache(CacheNameRow, ItemsTableRow.ConvertToBytes)
+	End If
+
+	Dim table1 As MiniHtml = ReadFromCache("Items Table")
+	Dim tbody1 As MiniHtml = table1.Child(1)
+	tbody1.Children.Clear
+	For Each row As Map In data
+		Dim tr1 As MiniHtml = ReadFromCache("Items Table Row")
+		tr1.Child(0).text2(row.Get("id"))
+		tr1.Child(1).text2(row.Get("item_code"))
+		tr1.Child(2).text2(row.Get("item_name"))
+		tr1.Child(3).text2(NumberFormat2(row.Get("item_price"), 1, 2, 2, True))
+		tr1.Child(4).text2(row.GetDefault("item_description", ""))
+		tr1.Child(5).Child(0).attr("hx-get", ROUTE_PREFIX & "/edit/" & row.Get("id"))
+		tr1.Child(5).Child(1).attr("hx-get", ROUTE_PREFIX & "/delete/" & row.Get("id"))
+		tr1.up(tbody1)
+	Next
+	Return table1
+End Sub
+
+Private Sub ItemsTable As MiniHtml
+	Dim table1 As MiniHtml = MH.Table
+	table1.cls("table table-bordered table-hover rounded small")
+	Dim thead1 As MiniHtml = MH.Thead.cls("table-light").up(table1)
+	MH.Th.up(thead1).sty("text-align: right; width: 50px").text("#")
+	MH.Th.up(thead1).text("Code")
+	MH.Th.up(thead1).text("Name")
+	MH.Th.up(thead1).sty("text-align: right; width: 100px").text("Price")
+	MH.Th.up(thead1).text("Description")
+	MH.Th.up(thead1).sty("text-align: center; width: 120px").text("Actions")
+	MH.Tbody.up(table1)
+	Return table1
+End Sub
+
+Private Sub ItemsTableRow As MiniHtml
+	Dim tr1 As MiniHtml = MH.Tr
+	MH.Td.up(tr1).cls("align-middle").sty("text-align: right")
+	MH.Td.up(tr1).cls("align-middle")
+	MH.Td.up(tr1).cls("align-middle")
+	MH.Td.up(tr1).cls("align-middle").sty("text-align: right")
+	MH.Td.up(tr1).cls("align-middle")
+	
+	Dim td6 As MiniHtml = MH.Td.up(tr1)
+	td6.cls("align-middle text-center px-1 py-1")
+	
+	Dim a1 As MiniHtml = MH.Anchor.up(td6)
+	a1.cls("edit text-primary mx-2")
+	a1.attr("hx-get", ROUTE_PREFIX & "/edit/{id}")
+	a1.attr("hx-target", "#modal-content")
+	a1.attr("hx-trigger", "click")
+	a1.attr("data-bs-toggle", "modal")
+	a1.attr("data-bs-target", "#modal-container")
+	MH.Icon.up(a1).cls("bi bi-pencil")
+	a1.attr("title", "Edit")
+	
+	Dim a2 As MiniHtml = MH.Anchor.up(td6)
+	a2.cls("delete text-danger mx-2")
+	a2.attr("hx-get", ROUTE_PREFIX & "/delete/{id}")
+	a2.attr("hx-target", "#modal-content")
+	a2.attr("hx-trigger", "click")
+	a2.attr("data-bs-toggle", "modal")
+	a2.attr("data-bs-target", "#modal-container")
+	MH.Icon.up(a2).cls("bi bi-trash3")
+	a2.attr("title", "Delete")
+	
+	Return tr1
+End Sub
+
+Private Sub ModalAdd As MiniHtml
+	Dim form1 As MiniHtml = MH.Form
+	form1.attr("hx-post", ROUTE_PREFIX)
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	
+	Dim modalHeader As MiniHtml = MH.Div.up(form1).cls("modal-header")
+	Dim h51 As MiniHtml = MH.H5.up(modalHeader).cls("modal-title").text("Add Item") 'ignore
+	Dim close1 As MiniHtml = MH.Button.up(modalHeader).attr("type", "button").cls("btn-close").attr("data-bs-dismiss", "modal") 'ignore
+	
+	Dim modalBody As MiniHtml = MH.Div.up(form1).cls("modal-body")
+	MH.Div.up(modalBody).attr("id", "modal-messages")
+	
+	Dim group1 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	Dim label1 As MiniHtml = MH.Label.up(group1).text("Code ")
+	MH.Span.up(label1).cls("text-danger").text("*")
+	MH.Input.up(group1).attr("type", "text").attr("name", "code").cls("form-control").required
+	
+	Dim group2 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	Dim label2 As MiniHtml = MH.Label.up(group2).text("Name ")
+	MH.Span.up(label2).cls("text-danger").text("*")
+	MH.Input.up(group2).attr("type", "text").attr("name", "name").cls("form-control").required
+	
+	Dim group3 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	MH.Label.up(group3).text("Price ")
+	MH.Input.up(group3).attr("type", "text").attr("name", "price").cls("form-control")
+	
+	Dim group4 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	MH.Label.up(group4).text("Description ")
+	MH.Textarea.up(group4).attr("name", "description").cls("form-control")
+	
+	Dim modalFooter As MiniHtml = MH.Div.up(form1).cls("modal-footer")
+	MH.Button.up(modalFooter).attr("type", "submit").cls("btn btn-success px-3").text("Create")
+	MH.Button.up(modalFooter).attr("type", "button").cls("btn btn-secondary px-3").attr("data-bs-dismiss", "modal").text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ModalEdit As MiniHtml
+	Dim form1 As MiniHtml = MH.Form
+	form1.attr("hx-put", ROUTE_PREFIX)
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	
+	Dim modalHeader As MiniHtml = MH.Div.up(form1).cls("modal-header")
+	MH.H5.up(modalHeader).cls("modal-title").text("Edit Item")
+	MH.Button.up(modalHeader).attr("type", "button").cls("btn-close").attr("data-bs-dismiss", "modal")
+	
+	Dim modalBody As MiniHtml = MH.Div.up(form1).cls("modal-body")
+	MH.Div.up(modalBody).attr("id", "modal-messages")
+	MH.Input.up(modalBody).attr("type", "hidden").attr("name", "id")
+	
+	Dim group1 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	Dim label1 As MiniHtml = MH.Label.up(group1).text("Code ")
+	MH.Span.up(label1).cls("text-danger").text("*")
+	MH.Input.up(group1).attr("type", "text").cls("form-control").attr("name", "code").required
+	
+	Dim group2 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	Dim label2 As MiniHtml = MH.Label.up(group2).text("Name ")
+	MH.Span.up(label2).cls("text-danger").text("*")
+	Dim input2 As MiniHtml = MH.Input.up(group2).attr("type", "text").cls("form-control").attr("name", "name")
+	input2.required
+	
+	Dim group3 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	MH.Label.up(group3).text("Price ")
+	MH.Input.up(group3).attr("type", "text").cls("form-control").attr("name", "price")
+	
+	Dim group4 As MiniHtml = MH.Div.up(modalBody).cls("form-group mb-2")
+	MH.Label.up(group4).text("Description ")
+	MH.Textarea.up(group4).cls("form-control").attr("name", "description")
+	
+	Dim modalFooter As MiniHtml = MH.Div.up(form1).cls("modal-footer")
+	MH.Button.up(modalFooter).cls("btn btn-primary px-3").text("Update")
+	MH.Button.up(modalFooter).attr("type", "button").cls("btn btn-secondary px-3").attr("data-bs-dismiss", "modal").text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ModalDelete As MiniHtml
+	Dim form1 As MiniHtml = MH.Form
+	form1.attr("hx-delete", ROUTE_PREFIX)
+	form1.attr("hx-target", "#modal-messages")
+	form1.attr("hx-swap", "innerHTML")
+	
+	Dim modalHeader As MiniHtml = MH.Div.cls("modal-header").up(form1)
+	MH.H5.up(modalHeader).cls("modal-title").text("Delete Item")
+	MH.Button.up(modalHeader).attr("type", "button").cls("btn-close").attr("data-bs-dismiss", "modal")
+	
+	Dim modalBody As MiniHtml = MH.Div.cls("modal-body").up(form1)
+	MH.Div.up(modalBody).attr("id", "modal-messages")
+	MH.Input.up(modalBody).attr("type", "hidden").attr("name", "id")
+	MH.P.up(modalBody)
+	
+	Dim modalFooter As MiniHtml = MH.Div.up(form1).cls("modal-footer")
+	MH.Button.up(modalFooter).cls("btn btn-danger px-3").text("Delete")
+	MH.Button.up(modalFooter).attr("type", "button").cls("btn btn-secondary px-3").attr("data-bs-dismiss", "modal").text("Cancel")
+	Return form1
+End Sub
+
+Private Sub ContainerModal As MiniHtml
+	Dim modal1 As MiniHtml = MH.Div
+	modal1.attr("id", "modal-container")
+	modal1.cls("modal fade")
+	modal1.attr("tabindex", "-1")
+	modal1.attr("aria-hidden", "true")
+	Dim modalDialog As MiniHtml = MH.Div.up(modal1).cls("modal-dialog modal-dialog-centered")
+	MH.Div.up(modalDialog).cls("modal-content").attr("id", "modal-content")
+	Return modal1
+End Sub
+
+Private Sub ContainerToast As MiniHtml
+	Dim div1 As MiniHtml = MH.Div.cls("position-fixed end-0 p-3").sty("z-index: 2000").sty("bottom: 0%")
+	Dim toast1 As MiniHtml = MH.Div.up(div1).attr("id", "toast-container").cls("toast align-items-center text-bg-success border-0").attr("role", "alert")
+	Dim div2 As MiniHtml = MH.Div.up(toast1).cls("d-flex")
+	MH.Div.up(div2).cls("toast-body").attr("id", "toast-body").text("Operation successful!")
+	MH.Button.up(div2).attr("type", "button").cls("btn-close btn-close-white me-2 m-auto").attr("data-bs-dismiss", "toast")
+	Return div1
+End Sub
+
+Private Sub LogoutLink As MiniHtml
+	Dim li1 As MiniHtml = MH.Li.cls("nav-item d-block d-lg-block")
+	Dim a1 As MiniHtml = MH.Anchor.up(li1).cls("nav-link float-end").attr("href", "/logout")
+	MH.Icon.up(a1).cls("bi bi-box-arrow-right me-2")
+	a1.text("Logout")
+	Return li1
+End Sub

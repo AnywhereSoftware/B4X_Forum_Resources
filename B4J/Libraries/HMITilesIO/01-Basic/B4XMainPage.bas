@@ -1,0 +1,405 @@
+﻿B4A=true
+Group=Default Group
+ModulesStructureVersion=1
+Type=Class
+Version=9.85
+@EndOfDesignText@
+' ================================================================
+' File:			B4XMainPage
+' Project:		HMITilesIO
+' Brief:		Development program for the B4X HMITilesIO library.
+' Date:			See Class_Globals VERSION
+' Author:		Robert W.B. Linn (c) 2026 MIT
+' Description:	This page is used to develop & test the HMITilesIO library.
+'				The target is B4J first as main developement tool, then B4A.
+' DependsOn:	XUI Views, 
+'				jStringUtils - HMiTilesIOSevenSegment Base64 encoding
+' ================================================================
+
+#Region Shared Files
+' Ref: www.b4x.com/android/forum/threads/b4x-codebundle-–-export-projects-as-a-single-json-for-ai-analysis.169835/
+#Macro: Title, Code bundle, ide://run?File=%ADDITIONAL%\CodeBundle.jar&Args=%PROJECT_NAME%&vmargs=-DCompactJson%3DFalse
+#CustomBuildAction: folders ready, %WINDIR%\System32\Robocopy.exe,"..\..\Shared Files" "..\Files"
+#End Region
+
+Private Sub Class_Globals
+	Private VERSION As String	= "HMITilesIO 1.0.0 (Build 20261018)"
+	Private ABOUT As String 	= "HMITilesIO (c) 2026 Robert W.B. Linn - MIT"
+	
+	' UI
+	Private xui As XUI
+	Private Root As B4XView
+	Private LabelAbout As B4XView
+	
+	' UI HMITilesIO
+	Private TileSwitch As HMITilesIO
+	Private TileGauge As HMITilesIO
+	Private TileGaugeReverse As HMITilesIO
+	Private TileLEDPanel As HMITilesIO
+	Private TileVerticalMeter As HMITilesIO
+	Private TileSlider As HMITilesIO
+	Private TileSevenSegment As HMITilesIO
+	Private TileReadOut As HMITilesIO
+	Private TileReadOutEnv As HMITilesIO
+	Private TileSpinner As HMITilesIO
+	Private TileByteStatus As HMITilesIO
+	Private TileSelector As HMITilesIO
+	Private TileIOPanel As HMITilesIO
+	Private TileMultiState As HMITilesIO
+	Private TileVerticalMeter As HMITilesIO
+	Private TileButton As HMITilesIO
+	Private TileDualReadOut As HMITilesIO
+	Private TileIconIndicator As HMITilesIO
+	Private TileTrendChart As HMITilesIO
+	Private TileBattery As HMITilesIO
+	Private TileSignal As HMITilesIO
+	Private TileTimer As HMITilesIO
+	Private TileTimerClock As HMITilesIO
+	Private TileTiltGauge As HMITilesIO
+	Private TileWatchdog As HMITilesIO
+	Private TileCompass As HMITilesIO
+	Private TileHorizon As HMITilesIO
+	Private TileAlarm As HMITilesIO
+	Private TileLoadingIndicator As HMITilesIO
+	Private TileQuadReadOut As HMITilesIO
+	Private TileQuadReadOut2 As HMITilesIO
+End Sub
+
+Public Sub Initialize
+	B4XPages.GetManager.LogEvents = True
+End Sub
+
+'This event will be called once, before the page becomes visible.
+Private Sub B4XPage_Created (Root1 As B4XView)
+	Root = Root1
+	Root.LoadLayout("mainpage")
+
+	' UI  additional settings
+	Root.Color = 0xFFE6E6E6
+	#if B4A
+	B4XPages.SetTitle(Me, $"${VERSION} (B4A)"$)
+	#End If
+	#if B4J
+	B4XPages.SetTitle(Me, $"${VERSION} (B4J)"$)
+	B4XPages.GetNativeParent(Me).Resizable = False
+	#End If
+	#if LINUX
+	B4XPages.SetTitle(Me, $"${VERSION} (LINUX)"$)
+	B4XPages.GetNativeParent(Me).Resizable = False
+	#End If
+	LabelAbout.Text = ABOUT
+	LabelAbout.TextColor = 0xFF000000
+
+	' HMITiles
+	' Ensure to set sleep prior calling customviews 
+	' (set 100 or more depending completness of the tiles)
+	Sleep(100)
+
+	' ----------
+	' State
+	' ----------
+
+'	TileAlarm.Value = "0,OK"
+	TileAlarm.Value = "1,WARN"
+'	TileAlarm.Value = "2,ERROR"
+
+	' Button
+	TileButton.State = False
+
+	' LEDPanel - state set in the designer
+	' TileLEDPanel.State = True
+
+	' Switch
+	TileSwitch.State = True
+
+	' ----------
+	' Value
+	' ----------
+
+	TileBattery.Value = 10
+	
+	' ByteStatus
+	TileByteStatus.Value = 103	' 0110 0111
+	TileByteStatus.InstanceByteStatus.PinsAttached = Array As Byte(1,1,1,1,1,1,1,1)
+
+'	TileByteStatus.Value = 103	' 0110 0111
+'	TileByteStatus.InstanceByteStatus.PinsAttached = Array As Byte(1,1,1,1,0,0,0,0)
+	' Log(HMITilesIOByteStatus.ByteToBin(TileByteStatus.Value.As(Byte)))
+
+	' Compass
+	TileCompass.Value = 165
+	TileCompass.Footer = $"${TileCompass.Value} | ${TileCompass.InstanceCompass.GetDirection(TileCompass.Value)}"$
+
+	' Dual
+	' TileDualReadOut.ValueFontColor = "#0000FF"
+
+	' Horizon (Pitch,Roll)
+	TileHorizon.Value = "5.5,-12.3"
+	TileHorizon.Footer = TileHorizon.InstanceHorizon.PitchRollDegreesString(TileHorizon.Value)
+
+	' Icon Indicator
+	TileIconIndicator.Value = "ok"	' "error"
+
+	' Selector
+	TileSelector.Items = Array As String("COM1","COM2","COM3")
+	TileSelector.Value = TileSelector.Items.Get(0)
+	TileSelector.Footer = "Select COM port"
+	
+	' Spinner
+	TileSpinner.Value = 99
+	TileSpinner.ValueFontSize = 18
+	TileSpinner.InstanceSpinner.StepSize = 10
+	
+	' ReadOut
+	TileReadOut.Value = "Value"
+	' TileReadOut.ValueFontColor = "#FF0000"
+
+	' ReadOutEnv
+	TileReadOutEnv.Value = $"23°C"$
+	TileReadOutEnv.Footer = "68%RH"
+	' TileReadOutEnv.FooterFontSize = 16
+	' TileReadOutEnv.FooterFontColor = "#000000"
+
+	' Slider
+	TileSlider.Value = 68
+	
+	' SevenSegment
+	TileSevenSegment.Value = TileSlider.Value
+	TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_STATIC_TEXT
+	
+	' TiltGauge
+	TileTiltGauge.Value = TileSlider.Value
+	TileTiltGauge.InstanceTiltGauge.SetPositionSegmentColor("#FF0000")
+	TileTiltGauge.InstanceTiltGauge.Inverted = False
+	TileTiltGauge.Footer = $"${NumberFormat(TileTiltGauge.Value, 0, 0)}"$
+
+	' VMeter
+	TileVerticalMeter.Value = TileSlider.Value
+
+	' IOPanel
+	TileIOPanel.Value = "0111"	' "01010101"
+	TileIOPanel.Footer = TileIOPanel.Value
+	TileIOPanel.InstanceIOPanel.SetChannelText(3, "P9")
+
+	' Gauge
+	TileGauge.Value = TileSlider.Value
+	TileGauge.Footer = $"${NumberFormat(TileGauge.Value, 0, 0)}"$
+	TileGaugeReverse.Value = TileSlider.Value
+	TileGaugeReverse.Footer = $"${NumberFormat(TileGauge.Value, 0, 0)}"$
+	TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_RED, TileGaugeReverse.SEGMENT_GREEN_COLOR)
+	TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_YELLOW, TileGaugeReverse.SEGMENT_YELLOW_COLOR)
+	TileGaugeReverse.SetSegmentColor(TileGaugeReverse.SEGMENT_GREEN, TileGaugeReverse.SEGMENT_RED_COLOR)
+
+	' MultiState
+	TileMultiState.InstanceMultiState.States = Array As Byte(1,1,1,1,1,0,0,0)
+	TileMultiState.Value = 2
+	TileMultiState.Footer = $"Select state"$
+	TileMultiState.InstanceMultiState.SetStateText(0, "1")
+	TileMultiState.InstanceMultiState.SetStateText(1, "2")
+	TileMultiState.InstanceMultiState.SetStateText(2, "3")
+	TileMultiState.InstanceMultiState.SetStateText(3, "4")
+	TileMultiState.InstanceMultiState.SetStateText(4, "5")
+
+	' TrendChart
+	TileTrendChart.Value = "10;20;30;25;20;68"
+
+	' Timer
+	TileTimer.State = False
+	TileTimer.Value = "40;60"
+	TileTimerClock.InstanceTimer.StartClock
+	'TileTimerClock.Value = TileTimerClock.InstanceTimer.GetTime
+	'TileTimerClock.Footer = TileTimerClock.InstanceTimer.GetDate
+	' CallSubDelayed(Me, "TileTimerTest")
+
+	' Watchdog
+	TileWatchdog.Value = TileWatchdog.InstanceWatchdog.STATUS_WARNING
+	
+	' QuadReadOut
+	' Clear out default labels so the hidden logic triggers cleanly
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(1, "Left Var", "V", "#0f172a")
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(2, "Right Var", "A", "#0f172a")
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(3, "", "", "") ' Hides Bottom-Left
+	TileQuadReadOut2.InstanceQuadReadOut.SetQuadConfiguration(4, "", "", "") ' Hides Bottom-Right
+
+	' Push 2-digit array metric directly to the layout property binder
+	TileQuadReadOut2.InstanceQuadReadOut.SetTile("DUAL MONITOR", "Split Active", "19,58")
+
+End Sub
+
+' ================================================================
+' TILE EVENTS
+' ================================================================
+
+Private Sub TileSwitch_Click(state As Boolean, value As String)
+	TileSwitch.State = IIf(state, False, True)
+	Log($"[TileSwitch_Click] state=${TileSwitch.state}, value=${TileSwitch.value}"$)
+End Sub
+
+Private Sub TileLEDPanel_Click(state As Boolean, value As String)
+	TileLEDPanel.State = IIf(state, False, True)
+	Log($"[TileLEDPanel_Click] state=${TileLEDPanel.state}, value=${TileLEDPanel.value}"$)
+End Sub
+
+Private Sub TileGauge_Click(state As Boolean, value As String)
+	Log($"[TileGauge_Click] state=${TileGauge.state}, value=${TileGauge.value}"$)
+End Sub
+
+Private Sub TileSlider_Click(state As Boolean, value As String)
+	' Update several component values
+	TileGauge.Value = value
+	TileGauge.Footer = NumberFormat(TileGauge.Value, 0, 0)
+	
+	TileGaugeReverse.Value = value
+	TileGaugeReverse.Footer = NumberFormat(TileGaugeReverse.Value, 0, 0)
+
+	TileTiltGauge.Value = value
+	TileTiltGauge.Footer = NumberFormat(TileTiltGauge.Value, 0, 0)
+
+	TileVerticalMeter.Value = value
+
+	TileSevenSegment.Value = value
+	If value > 80 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_ERROR_STATE
+	Else if value > 75 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_WARNING_STATE
+	Else if value > 10 Then
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_NORMAL_STATE
+	Else
+		TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_STATIC_TEXT
+	End If
+
+	TileTrendChart.Value = $"${TileTrendChart.Value};${value}"$
+
+	TileBattery.Value = value
+
+	TileSignal.Value = value
+	
+	If value > 0 Then
+		Dim r As Float = 360 * (value / 100)			' 0-360
+		Dim p As Float = -30 + (60 * (value / 100))		' -30 - 30
+		TileHorizon.Value = $"${p},${r}"$
+		TileHorizon.Footer = TileHorizon.InstanceHorizon.PitchRollDegreesString(TileHorizon.Value)
+	End If
+	
+	TileQuadReadOut.InstanceQuadReadOut.UpdateSingleValue(3, value)
+	
+	Log($"[TileSlider_Click] state=${TileSlider.state}, value=${TileSlider.value}"$)
+End Sub
+
+Private Sub TileReadOut_Click(State As Boolean, Value As String)
+	Log($"[TileReadOut_Click] state=${State}, value=${Value}"$)
+End Sub
+
+Private Sub TileByteStatus_Click(State As Boolean, Value As String)
+	Log($"[TileByteStatus_Click] state=${State}, value=${Value}"$)
+End Sub
+
+Private Sub TileSelector_Click(State As Boolean, Value As String)
+	Log($"[TileSelector_Click] state=${State}, value=${Value}"$)
+	TileReadOut.Value = Value
+End Sub
+
+Private Sub TileMultiState_Click(State As Boolean, Value As String)
+	Log($"[TileMultiState_Click] state=${State}, value=${Value}"$)
+	TileMultiState.Footer = $"Set state ${Value}"$
+End Sub
+
+Private Sub TileIOPanel_Click(state As Boolean, value As String)
+	Log($"[TileIOPanel_Click] state=${state}, value=${value}"$)
+	TileIOPanel.Footer = TileIOPanel.Value
+End Sub
+
+Private Sub TileSevenSegment_Click(state As Boolean, value As String)
+	Log($"[TileSevenSegment_Click] state=${state}, value=${value}"$)
+End Sub
+
+Private Sub TileVerticalMeter_Click(state As Boolean, value As String)
+	Log($"[TileVerticalMeter_Click] state=${state}, value=${value}"$)
+End Sub
+
+Private Sub TileButton_Click(state As Boolean, value As String)
+	TileButton.State = IIf(state, False, True)
+	Log($"[TileButton_Click] state=${TileButton.state}, value=${TileButton.value}"$)
+End Sub
+
+Private Sub TileLoadingIndicator_Click(State As Boolean, Value As String)
+	TileLoadingIndicator.State = IIf(State, False, True)
+	Log($"[TileLoadingIndicator_Click] state=${TileLoadingIndicator.state}, value=${TileLoadingIndicator.value}"$)
+End Sub
+
+Private Sub TileQuadReadOut_Click(State As Boolean, Value As String)
+	
+End Sub
+
+' ================================================================
+' TILE SPECIFIC
+' ================================================================
+
+' Test the timer running from 40 to 60 seconds
+Private Sub TileTimerTest	'ignore
+	Dim TIMER_STEP_PAUSE As Int = 1000
+	Dim currenttime As Long = TileTimer.InstanceTimer.CurrentTime
+	Dim totaltime As Long = TileTimer.InstanceTimer.TotalTime
+	For i = currenttime To totaltime
+		TileTimer.Value = $"${i};${totaltime}"$
+		TileTimer.Footer = TileTimer.Value
+		Sleep(TIMER_STEP_PAUSE)
+	Next
+	TileTimer.State = False
+End Sub
+
+Private Sub TileTimer_Click(State As Boolean, Value As String)
+	If TileTimer.State = True Then Return
+	Log($"[TileTimer] State=${State}"$)
+	TileTimer.Value = "40;60"
+	TileTimer.Footer = TileTimer.Value
+	TileTimer.State = True
+	CallSubDelayed(Me, "TileTimerTest")		
+End Sub
+
+' ================================================================
+' HELPER
+' ================================================================
+
+Private Sub TakeSnapShot
+	' Open an output stream to save the file locally on the Pi
+	Dim out As OutputStream
+	Dim imgname As String = "hmitilesio-snapshot.png"
+	Dim folder As String
+	#If B4J
+	folder = File.dirapp
+	#End If
+	#If B4A
+		folder = File.DirInternal	
+	#End If
+	
+	' Capture the RootPane as a B4XBitmap
+	Dim bmp As B4XBitmap = Root.Snapshot
+    
+	out = File.OpenOutput(folder, imgname, False)
+    
+	' Write the image as a PNG
+	bmp.WriteToStream(out, 100, "PNG")
+	out.Close
+    
+	Log("Screenshot saved: " & File.Combine(folder, imgname))
+	' RPi: Screenshot saved: /home/rwbl/data/b4j/tempjars/hmitilesio-snapshot.png
+	' Windows: Screenshot saved: C:\Daten\b4\b4j\projects\CUSTOM~1\HMITIL~2\src\B4J\Objects\hmitilesio-snapshot.png
+	' Screenshot saved: /data/user/0/com.rwbl.hmitilesio/files/hmitilesio-snapshot.png
+End Sub
+
+' Double click on the labelabout makes a snapshot of the mainpage
+' Saved as PNG image in the dir app folder.
+#If B4J
+Private Sub LabelAbout_MouseClicked (EventData As MouseEvent)
+	If EventData.ClickCount == 2 Then
+		TakeSnapShot
+	End If
+End Sub
+#End If
+
+#If B4A
+Private Sub LabelAbout_Click
+	TakeSnapShot
+End Sub
+#End If

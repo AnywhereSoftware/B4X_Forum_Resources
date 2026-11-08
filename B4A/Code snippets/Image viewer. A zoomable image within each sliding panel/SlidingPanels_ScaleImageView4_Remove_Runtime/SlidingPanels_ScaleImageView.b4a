@@ -1,0 +1,107 @@
+﻿Build1=Default,b4a.slidingpanels_scaleimageview
+File1=dream_TradingCard.jpg
+File2=einstein.jpg
+File3=geometrias.jpg
+File4=LayoutAppCompat.bal
+File5=LayoutMain.bal
+File6=LayoutViewer.bal
+File7=loffit-groucho-marx-11-600x450-1538404429.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+Library1=appcompat
+Library2=core
+Library3=scaleimageview
+Library4=xmllayoutbuilder
+Library5=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~SetApplicationAttribute(android:theme, "@style/MyAppTheme")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style name="MyAppTheme" parent="Theme.AppCompat.Light.NoActionBar">~\n~        <item name="colorPrimary">#0098FF</item>~\n~        <item name="colorPrimaryDark">#007CF5</item>~\n~        <item name="colorAccent">#AAAA00</item>~\n~        <item name="windowNoTitle">true</item>~\n~        <item name="windowActionBar">false</item>~\n~    </style>~\n~</resources>~\n~)~\n~~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE) ' Allows an application to write to external storage.~\n~~\n~
+Module1=PostGallery
+Module2=SlidingPanels
+Module3=Starter
+NumberOfFiles=7
+NumberOfLibraries=5
+NumberOfModules=3
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SlidingPanels_ScaleImageView
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#Extends: android.support.v7.app.AppCompatActivity
+	#AdditionalJar: ScaleImage
+	#AdditionalRes: ..\resource
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+	Public lstFilenames As List
+	Private rp As RuntimePermissions
+	Public ImagesFolder As String
+End Sub
+
+Sub Globals
+	
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+
+	Activity.LoadLayout("LayoutMain")
+
+	If FirstTime Then lstFilenames.Initialize
+	
+	ImagesFolder = rp.GetSafeDirDefaultExternal("Images")
+End Sub
+
+Sub Activity_Resume
+	
+	Log("ImagesFolder = " & ImagesFolder)
+	
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	If Result = True Then
+
+		'Placed here so it can be done when you return from the other activity
+		lstFilenames.Clear
+		
+		'Using an auxiliary list to make it work
+		Private lst As List = File.ListFiles(File.DirAssets)
+		Dim i As Int
+		For i = 0 To lst.Size - 1
+			
+			Dim name As String = lst.Get(i)
+			
+			If name.EndsWith(".jpg") Or name.EndsWith(".jpeg") Or name.EndsWith(".png") Then
+				Log("name on onCreate = " & name)
+					
+				lstFilenames.Add(name)
+					
+				If File.Exists(ImagesFolder, name) = False Then File.Copy(File.DirAssets, name, ImagesFolder, name)
+			End If
+		Next
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnOpen_Click
+	
+	StartActivity(PostGallery)
+End Sub

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RSRF05</name>
+        <shortname>SRF05</shortname>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+<comment>
+  constructor to set the trigger and echo pin. OUT pin is not used yet.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>trigger</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>echo</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>out</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setSpeedOfSound">setSpeedOfSound</name>
+<comment>
+  adjust the speed of sound. See table in https:/ /github.com/RobTillaart/SRF05 page
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>sos</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getSpeedOfSound">getSpeedOfSound</name>
+<comment>
+  return set value
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="setCorrectionFactor">setCorrectionFactor</name>
+<comment>
+  adjust the timing by a few percentage e.g. to adjust clocks.
+ Typical values are between 0.95 and 1.05 to correct up to 5%.
+ Should not be used to correct the speed of sound.
+ Returns false if factor less or = 0.
+</comment>
+                 <returntype>Bool</returntype>
+            <parameter>
+                <name>factor</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getCorrectionFactor">getCorrectionFactor</name>
+<comment>
+  returns the current correction factor
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="setModeSingle">setModeSingle</name>
+<comment>
+  read a single time.
+ This is the default and typical the fastest.
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="setModeAverage">setModeAverage</name>
+<comment>
+  read count times and take the average.
+  Note: between the reads there is a delay of 1 millisecond.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>count</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setModeMedian">setModeMedian</name>
+<comment>
+ read count times and take the median.
+ count must between 3 and 15 otherwise it is clipped.
+ Note: between the reads there is a delay of 1 millisecond
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>count</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="setModeRunningAverage">setModeRunningAverage</name>
+<comment>
+  use a running average algorithm with a weight alpha.
+ Value for alpha depends on your application.
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>alpha</name>
+                <type>Double</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getOperationalMode">getOperationalMode</name>
+<comment>
+  returns the operational mode 0..3. See table in https:/ /github.com/RobTillaart/SRF05 page
+</comment>
+                 <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="getTime">getTime</name>
+<comment>
+  returns distance in microseconds
+</comment>
+                 <returntype>ULong</returntype>
+        </method>
+        <method>
+            <name DesignerName="getMillimeter">getMillimeter</name>
+<comment>
+  returns distance in millimetre
+</comment>
+                 <returntype>ULong</returntype>
+        </method>
+        <method>
+            <name DesignerName="getCentimeter">getCentimeter</name>
+<comment>
+  returns distance in centimetre
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="getMeter">getMeter</name>
+<comment>
+  returns distance in meter
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="getInch">getInch</name>
+<comment>
+  returns distance in inches. (1 inch = 2.54 cm)
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="getFeet">getFeet</name>
+<comment>
+  returns distance in feet. (1 feet = 12 inch)
+</comment>
+                 <returntype>Double</returntype>
+        </method>
+        <method>
+            <name DesignerName="determineSpeedOfSound">determineSpeedOfSound</name>
+<comment>
+  Experimental
+  distance is between sensor and the wall - not forth and back. The distance is averaged over 16 measurements.
+  Function can be used to compensate for temperature and humidity
+</comment>
+                 <returntype>Double</returntype>
+            <parameter>
+                <name>count</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <property>
+            <name>TriggerLength</name>
+<comment>
+  Experimental
+  The idea is that shorter triggers can be used with harder surfaces or short distances. Longer trigger for longer distances
+  Experimental - adjust trigger length
+  - gain is a few microseconds at best.
+  - 10 microseconds is advised minimum
+  - to be investigated.
+</comment>
+            <parameter>
+                <name>length</name>
+                <type>Byte</type>
+            </parameter>
+        </property>
+        <method>
+            <name DesignerName="getTriggerLength">getTriggerLength</name>
+<comment>
+  The idea is that shorter triggers can be used with harder surfaces or short distances. Longer trigger for longer distances.                                 //#Meth
+  Experimental - adjust trigger length
+  - gain is a few microseconds at best.
+  - 10 microseconds is advised minimum
+  - to be investigated.
+</comment>
+                 <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="lastTime">lastTime</name>
+<comment>
+  TIMING
+</comment>
+                 <returntype>ULong</returntype>
+        </method>
+    </class>
+    <version>1.0</version>
+</root>

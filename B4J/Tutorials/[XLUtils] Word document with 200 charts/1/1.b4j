@@ -1,0 +1,163 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=owid-covid-data.csv
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xchart
+Library6=xlutils
+Library7=jstringutils
+Module1=|absolute|C:\Users\H\Documents\B4J\CSVParser
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=1
+Version=9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private CountriesData As B4XOrderedMap
+	Type CountryDataPoint (Date As Long, TotalCases As Int, TotalDeaths As Int, Country As String)
+	Private parser As CSVParser
+	Private xChart1 As xChart
+	Private wd As WordUtils
+	Private su As StringUtils
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	CountriesData.Initialize
+	ReadCountriesData(File.ReadString(File.DirAssets, "owid-covid-data.csv"))
+	
+	wd.Initialize
+	xui.SetDataFolder("word example")
+	Dim doc As WordDocument = CreateDocument
+	Dim f As String = doc.SaveAs(xui.DefaultFolder, "covid report.docx", True)
+	Wait For (wd.PowerShellConvertToPdf(f, File.Combine(xui.DefaultFolder, "Report.pdf"), True)) Complete (Success As Boolean)
+	Wait For (wd.OpenWord(f)) Complete (Success As Boolean)
+	ExitApplication
+End Sub
+
+Private Sub CreateDocument As WordDocument
+	Dim doc As WordDocument = wd.CreateDocument
+'	doc.DebugLog = True
+
+	
+	doc.Append($"
+		[footer]
+			[p][color=blue][url=bookmark://top]TOP[/url][/color][/p]
+		[/footer]
+		[p alignment=center][bookmark=top/]Covid Cases Report[/p]
+		[p]Data source: [color=blue][url=https://ourworldindata.org/coronavirus-source-data]https://ourworldindata.org/coronavirus-source-data[/url][/color][/p]
+	
+	"$)
+	doc.Append(CreateCountriesTable)
+	
+	
+	For Each Country As String In CountriesData.Keys
+		xChart1.ClearData
+		xChart1.AddLine("Cases", xui.Color_Blue)
+		xChart1.AddLine("Deaths", xui.Color_Red)
+		AddPointsToChart(CountriesData.Get(Country), xChart1)
+		xChart1.DrawChart
+		Dim out As OutputStream = File.OpenOutput(xui.DefaultFolder, Country & ".png", False)
+		xChart1.mBase.Snapshot.WriteToStream(out, 100, "PNG")
+		out.Close
+		
+		doc.Append($"[p Alignment=Center PageBreak=True][bookmark="${su.EncodeUrl(Country, "utf8")}"/][b]${Country}[/b]
+
+[img Dir="${xui.DefaultFolder}" FileName="${Country}.png" Width=400 Height=300/]
+[/p]"$)
+	Next
+	Return doc
+End Sub
+
+Private Sub CreateCountriesTable As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim NumberOfRows As Int = Ceil(CountriesData.Size / 4)
+	sb.Append($"[Table rows=${NumberOfRows} Cols=4]	"$)
+	Dim CountryIndex As Int
+	For row = 0 To NumberOfRows - 1
+		sb.Append("[row]")
+		For CountryIndex = CountryIndex To CountryIndex + 3
+			If CountryIndex < CountriesData.Size Then
+				Dim country As String = CountriesData.Keys.Get(CountryIndex)
+				sb.Append($"[cell width=100][p alignment=center][url="bookmark://${su.EncodeUrl(country, "utf8")}"]${country}[/url][/p][/cell]"$)
+			Else
+				sb.Append($"[cell][p] [/p][/cell]"$) 'the space is needed. Empty cells will be rejected.
+			End If
+		Next
+		sb.Append("[/row]")
+	Next
+	sb.Append("[/table]")
+	Return sb.ToString
+End Sub
+
+
+Sub ReadCountriesData (csv As String)
+	Log("Read countries data")
+	parser.Initialize
+	Dim Data As List = parser.Parse(csv, ",", True)
+	Dim CurrentCountry As String
+	CountriesData.Initialize
+	DateTime.DateFormat = "yyyy-MM-dd"
+	For Each row() As String In Data
+		Dim Country As String = row(2)
+		If row(4) = "" Then row(4) = "0"
+		If row(7) = "" Then row(7) = "0"
+		If row(1) = "" Then Continue 'not country
+		If Country <> CurrentCountry Then
+			CurrentCountry = Country
+			Dim CountryDataPoints As List
+			CountryDataPoints.Initialize
+			CountriesData.Put(CurrentCountry, CountryDataPoints)
+		End If
+		Dim Date As Long = DateTime.DateParse(row(3))
+		CountryDataPoints.Add(CreateCountryDataPoint(Date, row(4), row(7), Country))
+	Next
+	'remove countries with no data
+	Dim NoDataCountries As List
+	NoDataCountries.Initialize
+	For Each Country As String In CountriesData.Keys
+		Dim Data As List = CountriesData.Get(Country)
+		If Data.Size = 0 Then
+			NoDataCountries.Add(Country)
+		Else
+			Dim point As CountryDataPoint = Data.Get(Data.Size - 1)
+			If point.TotalCases = 0 Then NoDataCountries.Add(Country)
+		End If
+	Next
+	For Each Country As String In NoDataCountries
+		CountriesData.Remove(Country)
+	Next
+End Sub
+
+Sub AddPointsToChart (Points As List, Chart As xChart)
+	For Each cdp As CountryDataPoint In Points
+		Chart.AddLineMultiplePoints(DateTime.Date(cdp.Date), Array As Double(cdp.TotalCases, cdp.TotalDeaths), False)
+	Next
+End Sub
+
+Public Sub CreateCountryDataPoint (Date As Long, TotalCases As Int, TotalDeaths As Int, Country As String) As CountryDataPoint
+	Dim t1 As CountryDataPoint
+	t1.Initialize
+	t1.Date = Date
+	t1.TotalCases = TotalCases
+	t1.TotalDeaths = TotalDeaths
+	t1.Country = Country
+	Return t1
+End Sub

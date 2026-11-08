@@ -1,0 +1,94 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=pnd_mlkitlanguageid
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~'MlKit manifest text~\n~AddPermission(android.permission.ACCESS_NETWORK_STATE)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION)~\n~AddManifestText(<permission~\n~        android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"~\n~        android:protectionLevel="signature" />)~\n~		~\n~AddApplicationText(<provider~\n~            android:name="com.google.mlkit.common.internal.MlKitInitProvider"~\n~            android:authorities="${applicationId}.mlkitinitprovider"~\n~            android:exported="false"~\n~            android:initOrder="99" />~\n~~\n~   <service~\n~            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"~\n~            android:directBootAware="true"~\n~            android:exported="false" >~\n~            <meta-data~\n~                android:name="com.google.firebase.components:com.google.mlkit.nl.languageid.bundled.internal.ThickLanguageIdRegistrar"~\n~                android:value="com.google.firebase.components.ComponentRegistrar" />~\n~				<meta-data~\n~                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"~\n~                android:value="com.google.firebase.components.ComponentRegistrar" />~\n~				 <meta-data~\n~                android:name="com.google.firebase.components:com.google.mlkit.nl.languageid.internal.LanguageIdRegistrar"~\n~                android:value="com.google.firebase.components.ComponentRegistrar" />~\n~        </service>~\n~ ~\n~      <activity android:name="com.google.android.gms.common.api.GoogleApiActivity" android:theme="@android:style/Theme.Translucent.NoTitleBar" android:exported="false" />~\n~	)
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=0
+Version=13.1
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MlKit Language Id
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+
+	#AdditionalJar: com.google.android.gms:play-services-mlkit-language-id
+	#AdditionalJar: com.google.firebase:firebase-messaging
+	#AdditionalJar: com.google.mlkit:language-id
+	#AdditionalJar: com.google.mlkit:language-id-common
+	#AdditionalJar: com.google.mlkit:common
+#End Region
+
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+End Sub
+
+
+Sub Globals
+	Private EditText1 As EditText
+	Private Label1 As Label
+	Private btnDetectLanguage As Button
+	Private MlKitLanguageId1 As Pnd_MlKitLanguageId
+	Private btnDetectAllLanguages As Button
+End Sub
+
+
+	'**********************************************************
+	'*******************   CHECK MANIFEST   *******************
+	'**********************************************************
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	MlKitLanguageId1.Initialize("MlKitLanguageId1")
+End Sub
+
+
+Sub Activity_Resume
+End Sub
+
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Private Sub btnDetectLanguage_Click
+	Label1.Text = ""
+	MlKitLanguageId1.IdentifyLanguage(EditText1.Text, 0.01)
+End Sub
+
+
+Sub MlKitLanguageId1_OnSuccess (Language As String) ' fire after IdentifyLanguage call
+	Label1.Text = "Language: " & Language           ' if no language is confidently detected, the code "und" (undetermined) is passed.
+End Sub
+
+
+Private Sub btnDetectAllLanguages_Click
+	Label1.Text = ""
+	MlKitLanguageId1.IdentifyPossibleLanguages(EditText1.Text, 0.01)
+End Sub
+
+
+Sub MlKitLanguageId1_OnSuccessAll (Languages As Map) ' fire after IdentifyPossibleLanguages call
+	For Each Language As String In Languages.Keys
+		Label1.Text = Label1.Text & "Language: " & Language & " - Confidence: " & Languages.Get(Language) & CRLF ' if no language is confidently detected, the code "und" (undetermined) is passed.
+	Next
+End Sub
+
+
+Sub MlKitLanguageId1_OnError (Error As String)
+	Log (Error)
+End Sub

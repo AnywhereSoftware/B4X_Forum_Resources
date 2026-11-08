@@ -1,0 +1,48 @@
+--[[
+    rfxmeterswitches.dzvents - Explore Arduino_RFXCOM.
+    20220405 rwbl
+]]--
+
+local rfxmeter = 384
+local rfxmeterswitch = 386
+
+-- Convert a number to N bits.
+-- value - number to convert (integer or long with bit pattern 0|1).
+-- Return table with N bit entries.
+local function convert_to_bits(value)
+    local result = {}
+    for letter in value:gmatch(".") do 
+        table.insert(result, letter)
+    end
+    return result
+end
+
+return {
+	on = {
+		devices = { rfxmeter }
+	},
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETER', },
+	execute = function(domoticz, device)
+		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+        -- Convert the sValue from string to number
+		local value = tonumber(device.sValue)
+        -- Convert Long Number to N Bits and assign to Domoticz Virtual Sensor Switches
+        -- The first bit is leading and not used.
+        -- Example: Value contains 6 bits 101011 split into table {"1", "0", "1", "0", "1", "1"}
+		-- The bits 2 to 6 hold the switch status On(1) or Off(0)
+        local data = convert_to_bits(device.sValue)
+        -- Log & set the switches state starting at bit #2 because bit #1 is the leading bit
+        for i = 2, #data do
+            domoticz.log(("Switch ID%d=%d"):format(i - 1, data[i]))
+            -- Assign the values to a Domoticz device depending switch ID and state 0=Off, 1=On
+			-- FOR TESTS only the first switch (i=2) is triggered.
+            if i == 2 then 
+                if tonumber(data[i]) == 1 then
+                    domoticz.devices(rfxmeterswitch).switchOn()
+                else
+                    domoticz.devices(rfxmeterswitch).switchOff()
+                end
+            end
+        end
+    end
+}

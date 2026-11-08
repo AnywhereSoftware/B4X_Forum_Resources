@@ -1,0 +1,222 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleclient
+Module1=BuWizz2Controller
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rBLEClient
+' Brief:	Example connecting to the BuWizz2 brick and run the motor connected to port 1.
+'			Handle notifications with the event NewData.
+'
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-07-29
+' License:	MIT — see LICENSE file.
+
+' MCU:		ESP-WROOM-32, B4R IDE ESP32 Dev Module, Arduino Boards Manager ESP32 3.0.0.
+' 			IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+' Wiring:	No additional wiring
+
+' Log:
+'			[AppStart] rBLEClient BuWizz2 v20250729
+'			[AppStart] MAC=50:fa:ab:38:a6:1a
+'			[AppStart] Connecting To BuWizz2
+'			[Client_NewData] data=00184F000000000000175A0020FF73BF00000000
+'			[ParseNotification] Data received bytes=20,hex=00184F000000000000175A0020FF73BF00000000
+'			[ParseNotification] BatteryVoltage=3.7900 V,hex=4F
+'			[ParseNotification] OutputVoltage=4 V,hex=00
+'			[ParseNotification] Motor1Current=0 A,hex=00
+'			[ParseNotification] Motor2Current=0 A,hex=00
+'			[ParseNotification] Motor3Current=0 A,hex=00
+'			[ParseNotification] Motor4Current=0 A,hex=00
+'			[ParseNotification] PowerLevel=0,hex=00
+'			[ParseNotification] Temperature=23 C,hex=17
+'			[ParseNotification] AccX=90,hex=5A
+'			[ParseNotification] AccY=0,hex=00
+'			[ParseNotification] AccZ=32,hex=20
+'			[AppStart] Connected To BuWizz2
+'			[AppStart] Sending test data To BuWizz2
+'			[AppStart] Port 1 speed 100
+'			[SetPowerLevel] Set port 0 To level 100
+'			[SetOutputLevel] Set output level To 1 with command 0x11
+'			[AppStart] Port 1 speed 0
+'			[SetPowerLevel] Set port 0 To level 0
+'			[SetOutputLevel] Set output level To 1 with command 0x11
+'			[AppStart] Port 1 speed -100
+'			[SetPowerLevel] Set port 0 To level -100
+'			[SetOutputLevel] Set output level To 1 with command 0x11
+'			[AppStart] Port 1 speed 0
+'			[SetPowerLevel] Set port 0 To level 0
+'			[SetOutputLevel] Set output level To 1 with command 0x11
+'			[AppStart] Disconnected from BuWizz2
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEClient BuWizz2 v20250730"
+	Public Serial1 As Serial
+
+	' BLE -  Peripheral BuWizz2
+	Private NAME As String	= "BuWizz2"
+	Private MAC As String 	= "50:fa:ab:38:a6:1a"	' BuWizz2 mac address in lowercase!
+    Private Client As BLEClient
+	Private ConnectRetries As Byte = 1 
+	Private CONNECT_RETRIES_MAX As Byte = 3
+	Private IsConnected As Boolean = False
+	
+	' Example using tasks
+	Private TASK_RUN_MOTOR = 0, TASK_BATTERY_VOLTAGE = 1 As Byte
+	Private Task As Byte = TASK_RUN_MOTOR
+
+	' Helper	
+	Private bc As ByteConverter
+	Private NewDataCounter As Int = 0
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[AppStart] ", VERSION)
+	Log("[AppStart] MAC=", MAC)
+
+    ' Initialize the BLE client with MAC, Service UUID, Characteristic UUID
+	Client.Initialize(MAC, _
+        		   	  BuWizz2Controller.UUID_SERVICE, _ 
+					  BuWizz2Controller.UUID_CHARACTERISTIC, _
+					  BuWizz2Controller.UUID_CHARACTERISTIC, _
+        		   	  "Client_NewData", "Client_Error", _
+					  False)
+
+	Log("[AppStart] Connecting to ", NAME)
+
+	' Set the task
+	Task = TASK_BATTERY_VOLTAGE
+	Task = TASK_RUN_MOTOR
+
+	' Try to connect
+	Do While Not(DoConnect)
+		If ConnectRetries > CONNECT_RETRIES_MAX Then
+			Exit
+		End If
+	Loop
+
+	' Task
+	If Client.IsConnected Then
+		CallSubPlus("DoTask", 300, 1)
+	End If
+
+	Log("[AppStart] Done")
+End Sub
+
+Private Sub DoConnect As Boolean
+	If Client.Connect Then
+		Log("[DoConnect] Connected to ", NAME)
+		IsConnected = True
+		Return True
+	Else
+		Log("[DoConnect] Connection failed to ", NAME, ", retry ", ConnectRetries)
+		If ConnectRetries == CONNECT_RETRIES_MAX Then
+			Log("[DoConnect] Abort")
+		End If
+		ConnectRetries = ConnectRetries + 1
+		IsConnected = False
+		Return False
+	End If
+End Sub
+
+' Perform the selected task
+Public Sub DoTask(tag As Byte)
+	Select Task
+		Case TASK_RUN_MOTOR
+			Log("[DoTask] Task=Run Motor connected to port 1")
+			RunMotor
+		Case TASK_BATTERY_VOLTAGE
+			Log("[DoTask] Task=Battery Voltage")
+			RequestBatteryVoltage
+	End Select
+End Sub
+
+Public Sub RunMotor
+	Log("[RunMotor] Connected to ", NAME)
+
+	Log("[RunMotor] Sending test data to ", NAME)
+
+	Log("[RunMotor] Port 1 speed 100")
+	BuWizz2Controller.SetPowerLevel(Client, 0, 100)
+	Delay(2000)
+
+	Log("[RunMotor] Port 1 speed 0")
+	BuWizz2Controller.SetPowerLevel(Client, 0, 0)
+	Delay(2000)
+
+	Log("[RunMotor] Port 1 speed -100")
+	BuWizz2Controller.SetPowerLevel(Client, 0, -100)
+	Delay(2000)
+
+	Log("[RunMotor] Port 1 speed 0")
+	BuWizz2Controller.SetPowerLevel(Client, 0, 0)
+	Delay(2000)
+		
+	Client.Disconnect
+	Log("[RunMotor] Disconnected from ", NAME)
+End Sub
+
+#Region Battery Voltage Example
+' Request the battery voltage by setting the outputlevel.
+' This will trigger the newdata event with notification data.
+' The data is then parsed to get the battery voltage
+Public Sub RequestBatteryVoltage
+		Log("[RequestBatteryVoltage] Connected to ", NAME)
+		' Set mandatory output level
+		BuWizz2Controller.SetOutputLevel(Client)
+End Sub
+#End Region
+
+#Region Events
+' Callback when data is received from BLE device.
+' Log only once else log is flooded.
+Private Sub Client_NewData(data() As Byte)
+	
+	' Only handle data is client is connected.
+	' New data could still be received from BLE buffer.
+	If Not(IsConnected) Then Return
+	
+	' Increase the new data counter
+	NewDataCounter = NewDataCounter + 1
+
+	Select Task
+		Case TASK_RUN_MOTOR
+			' Do something with the motor
+						
+		Case TASK_BATTERY_VOLTAGE
+			' Only take a single data sample
+			If NewDataCounter == 1 Then
+				Log("[Client_NewData] data=", bc.HexFromBytes(data))
+				If BuWizz2Controller.ParseNotification(data) Then
+					Log("[Client_NewData] battery voltage=", BuWizz2Controller.BuWizz2Status.BatteryVoltage, " V")					
+				End If
+				Client.Disconnect
+				Log("[Client_NewData] Disconnected from ", NAME)
+			End If
+	End Select
+End Sub
+
+' Callback when BLE error occurs
+Sub Client_Error(code As Byte)
+	Log("[Client_Error] code=", code)
+End Sub
+#End Region

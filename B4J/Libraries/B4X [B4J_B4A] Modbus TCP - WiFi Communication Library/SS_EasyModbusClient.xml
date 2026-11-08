@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.EasyModbusClient.EasyModbusClient</name>
+        <shortname>EasyModbusClient</shortname>
+        <comment>EasyModbusClient - TCP implementation for B4X applications.
+ This library provides Modbus TCP communication with support for 16-bit and 32-bit data.</comment>
+        <owner>process</owner>
+        <event>CoilsReceived (Values() As Boolean)</event>
+        <event>DiscreteInputsReceived (Values() As Boolean)</event>
+        <event>HoldingRegistersReceived (Values() As Int)</event>
+        <event>InputRegistersReceived (Values() As Int)</event>
+        <event>MultipleCoilsWritten (StartingAddress As Int, Values() As Boolean)</event>
+        <event>MultipleRegistersWritten (StartingAddress As Int, Values() As Int)</event>
+        <event>Connected (Message As String, Connected As Boolean)</event>
+        <event>Disconnected (Message As String)</event>
+        <event>Error (Message As String)</event>
+        <event>ConnectionCheckDone(IsLive As Boolean, Message As String)</event>
+        <event>TestCompleted(Success As Boolean, Message As String)</event>
+        <event>DiagnosticRequest(SubFunction As Int, Data As Int)</event>
+        <event>WriteResult(Success As Boolean, Message As String)</event>
+        <permission>android.permission.INTERNET</permission>
+        <method>
+            <name>ReadHoldingRegisters</name>
+            <comment>Reads holding registers as unsigned 16-bit values (Function Code 3).
+ StartingAddress The 0-based starting register address.
+ Quantity Number of registers to read.
+ Return an array of unsigned 16-bit integers.
+ Results are also raised asynchronously in the HoldingRegistersReceived event.</comment>
+            <returntype>int[]</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>quantity</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>TestFunction</name>
+            <comment>Executes a self-test based on the configured TestFunction and TestAddress.
+ Results are returned asynchronously in the TestCompleted and ConnectionCheckDone events.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Connected</name>
+            <comment>Indicates whether the Modbus TCP client is currently connected.
+ Return true if connected, otherwise false.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>Connect</name>
+            <comment>Connects to a Modbus TCP slave at the specified IP address and port.
+ IpAddress The IP address of the Modbus TCP slave.
+ Port The TCP port of the Modbus TCP slave.
+ TimeoutMs The connection timeout in milliseconds.
+ Raises the Connected event when complete.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ipAddress</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>port</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>timeoutMs</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadCoils</name>
+            <comment>Reads coil values (Function Code 1).
+ StartingAddress The 0-based starting coil address.
+ Quantity Number of coils to read.
+ Return an array of boolean values.
+ Results are also raised asynchronously in the CoilsReceived event.</comment>
+            <returntype>boolean[]</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>quantity</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the EasyModbusClient wrapper for use in B4A/B4J.
+ EventName The event name prefix used for raising events.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteRegister</name>
+            <comment>Writes a single holding register (Function Code 6).
+ Offset The 0-based register address.
+ Value The 16-bit value to write.
+ Results are raised asynchronously in the WriteResult event.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Offset</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Value</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Disconnect</name>
+            <comment>Closes the connection to the Modbus TCP slave.
+ Always raises the Disconnected event when complete.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>ReadInputRegisters</name>
+            <comment>Reads input registers as unsigned 16-bit values (Function Code 4).
+ StartingAddress The 0-based starting register address.
+ Quantity Number of registers to read.
+ Return an array of unsigned 16-bit integers.
+ Results are also raised asynchronously in the InputRegistersReceived event.</comment>
+            <returntype>int[]</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>quantity</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteCoil</name>
+            <comment>Writes a single coil value (Function Code 5).
+ Offset The 0-based coil address.
+ Value The boolean value to write.
+ Results are raised asynchronously in the WriteResult event.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Offset</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Value</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadWriteMultipleRegisters</name>
+            <comment>FC23: Read/Write Multiple Registers.
+ Supports both 16-bit and 32-bit (via register pairing) data types.
+ All register data is treated as unsigned 16-bit integers (0-65535).
+ Read results are returned in HoldingRegistersReceived; write results in WriteResult.</comment>
+            <returntype>int[]</returntype>
+            <parameter>
+                <name>readStartingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>quantityToRead</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>writeStartingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>valuesToWrite</name>
+                <type>int[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>FloatToRegisters</name>
+            <comment>Converts a 32-bit Float into two 16-bit registers (Hi/Lo).
+ Returns an Int array where index 0 is high and index 1 is low.</comment>
+            <returntype>int[]</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteRegisters</name>
+            <comment>Writes multiple holding registers (Function Code 16).
+ StartingAddress The 0-based starting register address.
+ Values Array of 16-bit values to write.
+ Results are raised asynchronously in the MultipleRegistersWritten event.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>values</name>
+                <type>int[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReadDiscreteInputs</name>
+            <comment>Reads discrete input values (Function Code 2).
+ StartingAddress The 0-based starting input address.
+ Quantity Number of inputs to read.
+ Return an array of boolean values.
+ Results are also raised asynchronously in the DiscreteInputsReceived event.</comment>
+            <returntype>boolean[]</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>quantity</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DiagnosticRequest</name>
+            <comment>Diagnostic Request (Function Code 8).
+ SubFunction - The diagnostic sub-function code.
+ Data - The data value to send.
+ This implementation currently handles SubFunction 0 (Loopback/Echo).
+ Raises the DiagnosticRequest event.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>SubFunction</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Data</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetTestConfig</name>
+            <comment>Configures the test function used by TestFunction().
+ TestFunction The type of register to read for the test (use TEST_ constants).
+ TestAddress The 0-based address to read for the test.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>TestFunction</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>TestAddress</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WriteCoils</name>
+            <comment>Writes multiple coil values (Function Code 15).
+ StartingAddress The 0-based starting coil address.
+ Values Array of boolean values to write.
+ Results are raised asynchronously in the MultipleCoilsWritten event.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>startingAddress</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>values</name>
+                <type>boolean[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>RegistersToFloat</name>
+            <comment>Converts two 16-bit registers (Hi/Lo) into a 32-bit Float.</comment>
+            <returntype>float</returntype>
+            <parameter>
+                <name>RegHi</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>RegLo</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <property>
+            <name>SlaveID</name>
+            <returntype>int</returntype>
+            <parameter>
+                <name>id</name>
+                <type>int</type>
+            </parameter>
+            <comment>Returns the current Modbus Slave Unit ID.
+ Return the active SlaveID value.</comment>
+        </property>
+        <property>
+            <name>VerboseLogs</name>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>value</name>
+                <type>boolean</type>
+            </parameter>
+            <comment>Indicates whether verbose logging is currently enabled.
+ Return true if verbose logging is enabled.</comment>
+        </property>
+        <field>
+            <name>TEST_COIL</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_INPUT</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PostReadDelay</name>
+            <comment>Property: Sets the post read delay in ms(milliseconds).
+ Set between (50–250) if you are having concurrent read issues.
+ The default value is 0.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_NONE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_DISCRETE</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>PostWriteDelay</name>
+            <comment>Property: Sets the post write delay in ms(milliseconds).
+ Set between (50–250) if you are having concurrent write issues.
+ The default value is 0.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>TEST_HOLDING</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <version>1.0</version>
+    <author>Peter Simpson</author>
+    <dependsOn>EasyModbusJavaClient.jar</dependsOn>
+</root>

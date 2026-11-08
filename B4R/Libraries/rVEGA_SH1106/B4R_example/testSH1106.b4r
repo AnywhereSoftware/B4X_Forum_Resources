@@ -1,0 +1,422 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rvega_sh1106
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private display As VEGA_SH1106
+	Private SCREEN_WIDTH As Byte = 132
+	Private SCREEN_HEIGHT As Byte = 64
+	Private OLED_RESET As Byte = 4
+	Private NUMFLAKES As Byte = 10
+	Private XPOS As Byte = 0
+	Private YPOS As Byte = 1
+	Private DELTAY As Byte = 1
+	Private LOGO16_GLCD_HEIGHT As Byte = 16 
+	Private LOGO16_GLCD_WIDTH As Byte = 16
+	Private logo16_glcd_bmp() As Byte = Array As Byte(0x00, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x03, 0xE0, 0xF3, 0xE0, 0xFE, 0xF8, 0x7E, 0xFF, 0x33, 0x9F, _
+	                   	                              0x1F, 0xFC, 0x0D, 0x70, 0x1B, 0xA0, 0x3F, 0xE0, 0x3F, 0xF0, 0x7C, 0xF0, 0x70, 0x70, 0x00, 0x30)
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	If wifi.Connect2("SSID", "PASSWORD") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+
+'SH1106 driver don't provide several functions such as scroll commands.
+'*********************************************************************/
+
+'#include <SPI.h>
+'#include <Wire.h>
+'#include <Adafruit_GFX.h>
+'#include <Adafruit_SH1106.h>
+
+'TwoWire Wire(1);
+'SPIClass SPI(0);
+
+'#define SCREEN_WIDTH 132 // OLED display width, in pixels
+'#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+'#define OLED_RESET 4
+'Adafruit_SH1106 display(OLED_RESET);
+
+'#define NUMFLAKES 10
+'#define XPOS 0
+'#define YPOS 1
+'#define DELTAY 1
+
+'	Private bmpBuff() As Byte = Array (0x00, 0xC0, 0x01, 0xC0, 0x01, 0xC0, 0x03, 0xE0, 0xF3, 0xE0, 0xFE, 0xF8, 0x7E, 0xFF, 0x33, 0x9F, _
+'	                   	               0x1F, 0xFC, 0x0D, 0x70, 0x1B, 0xA0, 0x3F, 0xE0, 0x3F, 0xF0, 0x7C, 0xF0, 0x70, 0x70, 0x00, 0x30)
+'#define LOGO16_GLCD_HEIGHT 16 
+'#define LOGO16_GLCD_WIDTH  16 
+'static const unsigned char PROGMEM logo16_glcd_bmp[] =
+'{ B00000000, B11000000,
+'  B00000001, B11000000,
+'  B00000001, B11000000,
+'  B00000011, B11100000,
+
+'  B11110011, B11100000,
+'  B11111110, B11111000,
+'  B01111110, B11111111,
+'  B00110011, B10011111,
+
+'  B00011111, B11111100,
+'  B00001101, B01110000,
+'  B00011011, B10100000,
+'  B00111111, B11100000,
+
+'  B00111111, B11110000,
+'  B01111100, B11110000,
+'  B01110000, B01110000,
+'  B00000000, B00110000 };
+
+'#if (SH1106_LCDHEIGHT != 64)
+'#error("Height incorrect, please fix Adafruit_SH1106.h!");
+'#endif
+
+'void setup()   {                
+'  Serial.begin(115200);
+	display.initialize2(OLED_RESET)
+  '// by default, we'll generate the high voltage from the 3.3v line internally! (neat!)
+  display.begin(display.SH1106_SWITCHCAPVCC, display.SH1106_I2C_ADDRESS_0x3C, False)  
+  '// initialize with the I2C addr 0x3D (For the 128x64)
+  '// init done
+  
+  '// Show image buffer on the display hardware.
+  '// Since the buffer is intialized with an Adafruit splashscreen
+  '// internally, this will display the splashscreen.
+  display.display
+  Delay(5000)
+
+  '// Clear the buffer.
+  display.clearDisplay
+
+  Log("draw a single pixel")
+  display.drawPixel(10, 10, display.WHITE)
+  '// Show the display buffer on the hardware.
+  '// NOTE: You _must_ call display after making any drawing commands
+  '// To make them visible on the display hardware!
+  display.display
+  Delay(5000)
+  display.clearDisplay
+
+  Log(" draw many lines")
+  testdrawline
+  '// display.display();
+  Delay(5000)
+  display.clearDisplay
+
+  Log(" draw rectangles")
+  testdrawrect
+  '// display.display();
+  Delay(5000)
+  display.clearDisplay
+
+  Log(" draw multiple rectangles")
+  testfillrect
+  '// display.display();
+  Delay(5000)
+  display.clearDisplay
+
+  Log(" draw mulitple circles")
+  testdrawcircle
+  '// display.display();
+  Delay(5000)
+  display.clearDisplay
+
+  Log(" draw a white circle, 10 pixel radius")
+  display.fillCircle(display.width()/2, display.height()/2, 10, display.WHITE)
+  '//display.display();
+  Delay(5000)
+  display.clearDisplay
+  
+  Log(" draw round rectangles")
+  testdrawroundrect
+  Delay(5000)
+  display.clearDisplay
+
+  testfillroundrect
+  Delay(5000)
+  display.clearDisplay
+  
+  Log(" draw triangle")
+  testdrawtriangle
+  Delay(5000)
+  display.clearDisplay
+  
+  Log(" draw fill triangle") 
+  testfilltriangle
+  Delay(5000)
+  display.clearDisplay 
+
+  Log(" draw the first ~12 characters in the font")
+  testdrawchar
+  '// display.display();
+  Delay(5000)
+  display.clearDisplay
+
+'  Log(" draw scrolling text")
+  '/* testscrolltext();
+'  Delay(5000)
+'  display.clearDisplay
+
+  Log(" text display tests")
+  display.setTextSize(1)
+  display.setTextColor(display.WHITE)
+  display.setCursor(0,0)
+  display.println("Hello, world!")
+  display.setTextColor(display.BLACK)  '// 'inverted' text
+  display.println(3.141592)
+  display.setTextSize(2)
+  display.setTextColor(display.WHITE)
+  display.print("0x"): display.println(0xDEADBEEF)
+  display.display
+  Delay(5000)
+
+  Log(" miniature bitmap display")
+  display.clearDisplay
+	display.drawBitmap(30, 16, logo16_glcd_bmp, 16, 16, 1)
+  display.display
+  Delay(5000)
+  
+  Log(" invert the display")
+  display.invertDisplay1(True)
+  Delay(2000)
+  display.invertDisplay1(False)
+  Delay(2000) 
+
+  Log(" draw a bitmap icon And 'animate' movement")
+	testdrawbitmap(logo16_glcd_bmp, LOGO16_GLCD_HEIGHT, LOGO16_GLCD_WIDTH)
+End Sub
+
+
+
+Sub testdrawbitmap(bitmap() As Byte, w As Byte, h As Byte)
+  'uint8_t icons[NUMFLAKES][3];
+	Dim icons(NUMFLAKES * 3) As Byte
+ 
+  '// initialize
+  Dim f As Int
+  For  f=0 To NUMFLAKES 
+		icons(f+XPOS*NUMFLAKES) = random(0,display.width)
+		icons(f+YPOS*NUMFLAKES) = 0
+		icons(f + DELTAY*NUMFLAKES) = random(0,5) + 1
+    
+		Log(("x: ") ,icons(f + XPOS*NUMFLAKES), (" y: "), icons(f + YPOS*NUMFLAKES), (" dy: "), icons(f + DELTAY*NUMFLAKES))
+  Next
+
+  Do While True
+    '// draw each icon
+    For f=0 To NUMFLAKES 
+			display.drawBitmap(icons(f + XPOS*NUMFLAKES), icons(f + YPOS*NUMFLAKES), logo16_glcd_bmp, w, h, display.WHITE)
+    Next
+    display.display
+    Delay(200)
+    
+    '// Then erase it + move it
+    For f=0 To NUMFLAKES
+			display.drawBitmap(icons(f + XPOS*NUMFLAKES), icons(f + YPOS*NUMFLAKES), logo16_glcd_bmp, w, h,display.BLACK)
+      '// move it
+			icons(f +YPOS*NUMFLAKES) = icons(f + YPOS*NUMFLAKES) + icons(f + DELTAY*NUMFLAKES)
+      '// If its gone, reinit
+			If icons(f + YPOS*NUMFLAKES) > display.height Then
+				icons(f + XPOS*NUMFLAKES) = random(0,display.width)
+				icons(f + YPOS*NUMFLAKES) = 0
+				icons(f + DELTAY*NUMFLAKES) = random(0,5) + 1
+      End If
+    Next
+  Loop
+End Sub
+
+
+Sub testdrawchar
+  display.setTextSize(1)
+  display.setTextColor(display.WHITE)
+  display.setCursor(0,0)
+
+  Dim i  As Int
+  For i=0 To 168
+    If (i <> "\n") Then
+      display.write(i)
+      If (i > 0) And (i Mod 21 = 0) Then
+        display.println("")
+	  End If 
+	End If 
+  Next  
+  display.display
+End Sub
+
+Sub testdrawcircle
+	Dim i As Int
+  For i=0 To display.height Step 2
+    display.drawCircle(display.width/2, display.height/2, i, display.WHITE)
+    display.display()
+  Next
+End Sub
+
+Sub testfillrect
+  Dim color As Byte  = 1 : Dim i As Byte
+  For i=0 To display.height/2 Step 3 
+    '// alternate colors
+    display.fillRect(i, i, display.width-i*2, display.height-i*2, color Mod 2)
+    display.display
+    color = color + 1
+  Next
+End Sub
+
+Sub testdrawtriangle
+	Dim i As Int	
+  For  i=0 To Min(display.width,display.height)/2 Step 5
+    display.drawTriangle(display.width/2, display.height/2-i,display.width/2-i, display.height/2+i, display.width/2+i, display.height/2+i, display.WHITE)
+    display.display
+  Next
+End Sub
+
+Sub testfilltriangle
+  Dim color As Byte = display.WHITE : Dim i As Int
+  For  i=Min(display.width,display.height)/2 To 0 Step -5
+    display.fillTriangle(display.width/2, display.height/2-i, display.width/2-i, display.height/2+i, display.width/2+i, display.height/2+i, display.WHITE)
+    If (color = display.WHITE) Then 
+		color = display.BLACK
+    Else 
+		color = display.WHITE
+	End If	
+    display.display
+  Next
+End Sub
+
+Sub testdrawroundrect
+	Dim i As Int 
+  For i=0 To display.height/2-2 Step 2
+    display.drawRoundRect(i, i, display.width-2*i, display.height-2*i, display.height/4, display.WHITE)
+    display.display
+  Next
+End Sub
+
+Sub testfillroundrect
+  Dim color As Byte = display.WHITE
+  For  i=0 To display.height/2-2  Step 2
+    display.fillRoundRect(i, i, display.width-2*i, display.height-2*i, display.height/4, color)
+    If (color == display.WHITE)Then 
+		color = display.BLACK
+    Else 
+		color = display.WHITE
+	End If	
+    display.display
+  Next
+End Sub
+   
+Sub testdrawrect
+	Dim i As Int
+  For  i=0 To display.height/2  Step 2
+    display.drawRect(i, i, display.width-2*i, display.height-2*i, display.WHITE)
+    display.display
+  Next
+End Sub
+
+Sub testdrawline
+	Dim i As Int 
+  For  i=0 To display.width Step 4
+    display.drawLine(0, 0, i, display.height-1, display.WHITE)
+    display.display
+  Next
+  For i=0 To display.height Step 4
+    display.drawLine(0, 0, display.width-1, i, display.WHITE)
+    display.display
+  Next
+ '// Delay(250);
+  
+  display.clearDisplay
+  For i=0 To display.width Step 4
+    display.drawLine(0, display.height-1, i, 0, display.WHITE)
+    display.display
+  Next
+  For i=display.height-1 To 0 Step -4
+    display.drawLine(0, display.height-1, display.width-1, i, display.WHITE)
+    display.display
+  Next
+  '// Delay(250);
+  
+  display.clearDisplay
+  For i=display.width-1 To 0 Step -4
+    display.drawLine(display.width-1, display.height-1, i, 0, display.WHITE)
+    display.display
+  Next
+  For i=display.height-1 To 0 Step -4
+    display.drawLine(display.width-1, display.height-1, 0, i, display.WHITE)
+    display.display
+  Next
+  '//Delay(250);
+
+  display.clearDisplay
+  For i=0 To display.height Step 4
+    display.drawLine(display.width-1, 0, 0, i, display.WHITE)
+    display.display
+  Next
+  For i=0 To display.width Step 4
+    display.drawLine(display.width-1, 0, i, display.height-1, display.WHITE)
+    display.display
+  Next
+  '// Delay(250);
+End Sub
+
+
+Sub random(Mini As Long,Maxi As Long) As Long
+	Dim tmp() As Long = Array As Long(Mini, Maxi)
+	Dim Ret As Long=  RunNative("getRandom",tmp)
+'	Log("mini=",tmp(0),"  maxi=",tmp(1)," result :",Ret)
+	Return Ret
+End Sub
+Sub randomSeed
+	RunNative("setRandomSeed",0)
+End Sub
+ 
+#if C
+
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  int32_t* a = (int32_t*) b->data;
+//	  Serial.print(String(a[0]));Serial.print(" - "); Serial.println(String(a[1]));
+	  int32_t rand = random(a[0],a[1]); 
+//	  Serial.println(String(rand));
+//long random(long, long);	  
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      uint32_t ran =  (uint32_t) millis();
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,ran);
+//void randomSeed(unsigned long);
+	  randomSeed(ran); 
+ }; 
+
+
+#end if

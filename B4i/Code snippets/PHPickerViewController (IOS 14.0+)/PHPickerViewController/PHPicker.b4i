@@ -1,0 +1,165 @@
+﻿Build1=Default,com.quickmen
+File1=Page1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+NumberOfFiles=1
+NumberOfLibraries=1
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+' The PHPickerViewController class is an alternative to UIImagePickerController.
+' Framework PhotosUI. Availability: iOS 14.0+, iPadOS 14.0+, Mac Catalyst 14.0+.
+' Based on https://ikyle.me/blog/2020/phpickerviewcontroller
+' Documentation: https://developer.apple.com/documentation/photokit/phpickerviewcontroller?language=objc
+
+#Region  Project Attributes
+    #ApplicationLabel: B4i Example
+    #Version: 1.0.0
+    'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+    #iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+    #iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+    #Target: iPhone, iPad
+
+    #CertificateFile    : ios_development.cer
+    #ProvisionFile      : XCodeFirebase.mobileprovision
+
+    #ATSEnabled: True
+    #MinVersion: 8
+#End Region
+
+Sub Process_Globals
+    'These global variables will be declared once when the application starts.
+    'Public variables can be accessed from all modules.
+
+    Public App                                                                  As Application
+    Public NavControl                                                           As NavigationController
+    Private Page1                                                               As Page
+    Private ImageView1                                                          As ImageView
+    Private listImages                                                          As List
+    Private ButtonMinus                                                         As Button
+    Private ButtonPlus                                                          As Button
+    Private Label1                                                              As Label
+    Private Panel1                                                              As Panel
+
+    Private intCount                                                            As Int
+    Private intCurrent                                                          As Int
+    Private intReceived                                                         As Int
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+
+    NavControl = Nav
+    Page1.Initialize ("Page1")
+    Page1.RootPanel.LoadLayout ("Page1")
+    NavControl.ShowPage (Page1)
+
+End Sub
+
+Sub Button1_Click
+
+    Dim nativeObjectMe                                                          As NativeObject = Me
+    Dim doubleOSVersion                                                         As Double
+
+    ImageView1.Visible = False
+    Panel1.Visible = False
+
+    doubleOSVersion = App.OSVersion
+    If doubleOSVersion >= 14 Then
+        #If Release
+        nativeObjectMe.RunMethod ("showPicker:", Array (Page1))
+        #Else
+        Msgbox ("Works in Release mode only", "Warning")
+        #End If
+    Else
+        ' Use UIImagePickerController
+    End If
+
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+
+End Sub
+
+Private Sub PHPicker_Item (Item As Object)
+
+    listImages.Add (Item)
+    intReceived = intReceived + 1
+    If intReceived = intCount Then
+        ImageView1.Visible = True
+        Panel1.Visible = True
+        ShowPhoto
+    End If
+
+End Sub
+
+Private Sub PHPicker_Finished (count As Int)
+
+    listImages.Initialize
+    intCount = count
+    intCurrent = 1
+    intReceived = 0
+
+End Sub
+
+Private Sub ButtonPlus_Click
+
+    If intCurrent < intCount Then
+         intCurrent = intCurrent + 1
+         ShowPhoto
+    End If
+
+End Sub
+
+Private Sub ButtonMinus_Click
+
+    If intCurrent > 1 Then
+        intCurrent = intCurrent - 1
+        ShowPhoto
+    End If
+
+End Sub
+
+Private Sub ShowPhoto
+
+    Dim item                                                                    As Object
+
+    item = listImages.Get (intCurrent - 1)
+    Label1.Text = intCurrent & " / " & intCount
+    If item = Null Then    ImageView1.As(NativeObject).setField ("image", Null) Else ImageView1.Bitmap = item
+
+End Sub
+
+#If OBJC
+
+#import <Photos/Photos.h>
+#import <PhotosUI/PhotosUI.h>
+
+- (void) showPicker: (UIViewController *) page API_AVAILABLE (ios (14))
+    {
+    PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init]; // An object that contains information about how To configure a picker view controller.
+    config.selectionLimit = 1000;                                         // The maximum number of selections the user can make.
+    config.filter = [PHPickerFilter imagesFilter];                        // imagesFilter - A filter To display images, including Live Photos.
+
+    PHPickerViewController *pickerViewController = [[PHPickerViewController alloc] initWithConfiguration:config];
+    pickerViewController.delegate = (id) self;
+    [page presentViewController: pickerViewController animated: YES completion: nil];
+    }
+
+- (void) picker: (PHPickerViewController *) picker didFinishPicking: (NSArray <PHPickerResult *> *) results API_AVAILABLE (ios (14))
+    {
+    [picker dismissViewControllerAnimated: YES completion: nil];
+    [self _phpicker_finished: (int) [results count]];
+    for (PHPickerResult *result in results)
+        {
+        [result.itemProvider loadObjectOfClass: [UIImage class] completionHandler: ^(__kindof id<NSItemProviderReading>  _Nullable object, NSError * _Nullable error)
+            {
+            if ((error == nil) && ([object isKindOfClass: [UIImage class]])) { dispatch_async (dispatch_get_main_queue (), ^{ [self _phpicker_item: object]; } ); }
+            else { [self _phpicker_item: nil]; };
+            }
+        ];
+        }
+    }
+
+#End If
+

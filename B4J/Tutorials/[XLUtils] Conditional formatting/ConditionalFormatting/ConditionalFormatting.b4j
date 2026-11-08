@@ -1,0 +1,95 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=xlutils
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private xl As XLUtils
+End Sub
+
+Sub AppStart (Args() As String)
+	Example
+	StartMessageLoop
+End Sub
+
+Sub Example
+	xl.Initialize
+	Dim Workbook As XLWorkbookWriter = xl.CreateWriterBlank
+	Dim Sheet As XLSheetWriter = Workbook.CreateSheetWriterByName("Sheet1")
+	Dim TitleStyle As XLStyle = Workbook.CreateStyle.FontBoldColor(11, xl.COLOR_WHITE).ForegroundColor(xl.COLOR_BLACK)
+
+	'string match
+	Sheet.PutString(xl.AddressName("A1"), $"Rule: Cell = "ABC""$).SetStyle(Sheet.LastAccessed, TitleStyle)
+	Sheet.PutString(xl.AddressName("A2"), "GHI")
+	Sheet.PutString(xl.AddressName("A3"), "DEF")
+	Sheet.PutString(xl.AddressName("A4"), "ABC")
+	Dim FirstCell As XLAddress = xl.AddressName("A2")
+	Dim rule As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule($"${xl.AddressToString(FirstCell)} = "ABC""$).ForegroundColor(xl.COLOR_BRIGHT_GREEN)
+	Sheet.AddConditionalFormatting(xl.CreateXLRange(FirstCell, xl.AddressName("A4")), Array(rule))
+	
+	'two rules
+	Sheet.PutString(xl.AddressName("B1"), $"Rule1: AND(Cell > 10, Cell < 30)"$).SetStyle(Sheet.LastAccessed, TitleStyle)
+	Sheet.PutString(xl.AddressName("B2"), $"Rule2: OR(Cell <= 10, Cell >= 30)"$).SetStyle(Sheet.LastAccessed, TitleStyle)
+	For row1 = 3 To 20
+		Sheet.PutNumber(xl.AddressOne("B", row1), Rnd(0, 100))
+	Next
+	Dim FirstCell As XLAddress = xl.AddressName("B3")
+	Dim rule1 As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule($"AND(${xl.AddressToString(FirstCell)} > 10,  ${xl.AddressToString(FirstCell)} < 30)"$) _
+		.ForegroundColor(xl.COLOR_BRIGHT_GREEN)
+	Dim rule2 As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule($"OR(${xl.AddressToString(FirstCell)} <= 10, ${xl.AddressToString(FirstCell)} >= 30)"$) _
+		.ForegroundColor(xl.COLOR_CORNFLOWER_BLUE)
+	Sheet.AddConditionalFormatting(xl.CreateXLRange(FirstCell, xl.AddressName("B20")), Array(rule1, rule2))
+	
+	'reference absolute cell:
+	Sheet.PutString(xl.AddressName("C1"), $"Rule1: Cell = $C$2 - change C2 value"$).SetStyle(Sheet.LastAccessed, TitleStyle)
+	Dim ImportantNumberAddress As XLAddress = xl.AddressName("C2")
+	Sheet.PutNumber(ImportantNumberAddress, Rnd(0, 5)).SetStyle(Sheet.LastAccessed, Workbook.CreateStyle.FontBold(14).ForegroundColor(xl.COLOR_WHITE))
+	For row1 = 3 To 20
+		Sheet.PutNumber(xl.AddressOne("C", row1), Rnd(0, 5))
+	Next
+	Dim FirstCell As XLAddress = xl.AddressName("C3")
+	Dim rule As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule($"${xl.AddressToString(FirstCell)} = ${xl.AddressToStringAbs(ImportantNumberAddress, True, True)}"$) _
+		.FontStyle(True, True, xl.COLOR_RED).ForegroundColor(xl.COLOR_BRIGHT_GREEN)
+	Sheet.AddConditionalFormatting(xl.CreateXLRange(FirstCell, xl.AddressName("C20")), Array(rule))
+	
+	'odd / even rows
+	Sheet.PutString(xl.AddressName("D1"), "Rule1: Mod(ROW(), 2) = 0").SetStyle(Sheet.LastAccessed, TitleStyle)
+	Sheet.PutString(xl.AddressName("D2"), "Rule2: Mod(ROW(), 2) = 1").SetStyle(Sheet.LastAccessed, TitleStyle)
+	Dim FirstCell As XLAddress = xl.AddressName("D3")
+	Dim rule1 As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule("Mod(ROW(), 2) = 0").ForegroundColor(xl.COLOR_SKY_BLUE)
+	Dim rule2 As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule("Mod(ROW(), 2) = 1").ForegroundColor(xl.COLOR_PALE_BLUE)
+	Sheet.AddConditionalFormatting(xl.CreateXLRange(xl.AddressName("D3"), xl.AddressName("D20")), Array(rule1, rule2))
+	
+	'duplicate values
+	Sheet.PutString(xl.AddressName("E1"), "Find duplicates").SetStyle(Sheet.LastAccessed, TitleStyle)
+	Sheet.PutString(xl.AddressName("E2"), "Rule: COUNTIF(AllRange, Cell) > 1").SetStyle(Sheet.LastAccessed, TitleStyle)
+	For row1 = 3 To 20
+		Sheet.PutNumber(xl.AddressOne("E", row1), Rnd(0, 20))
+	Next
+	Dim FirstCell As XLAddress = xl.AddressName("E3")
+	Dim LastCell As XLAddress = xl.AddressName("E20")
+	Dim Formula As String = $"COUNTIF(${xl.AddressToStringAbs(FirstCell, True, True)}:${xl.AddressToStringAbs(LastCell, True, True)},${xl.AddressToString(FirstCell)}) > 1"$
+	Log(Formula)
+	Dim rule As XLConditionalFormattingRule = Sheet.CreateConditionalFormattingRule(Formula)
+	rule.ForegroundColor(xl.COLOR_LIGHT_TURQUOISE)
+	Sheet.AddConditionalFormatting(xl.CreateXLRange(xl.AddressName("E3"), xl.AddressName("E20")), Array(rule))
+	
+	
+	For i = 0 To 10
+		Sheet.AutoSizeColumn(i)
+	Next
+	Dim f As String = Workbook.SaveAs(File.DirApp, "Conditional.xlsx", True)
+	Wait For (xl.OpenExcel(f)) Complete (Success As Boolean)
+	StopMessageLoop 'non-ui
+End Sub

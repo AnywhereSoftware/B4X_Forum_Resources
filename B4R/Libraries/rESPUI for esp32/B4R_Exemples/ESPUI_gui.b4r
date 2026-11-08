@@ -1,0 +1,252 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=respui
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private UI As ESPUI
+	Private wifi As ESP8266WiFi 
+	Private statusLabelId, graphId, millisLabelId, testSwitchId As Int
+	Private oldTime As ULong = 0
+	Private SSID As String = "xxxxx"
+	Private PASS As String = "xxxxxxxxxxx"
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+	Log("connecting to Livebox-7b06 ...")
+	If wifi.Connect2(SSID,PASS) Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	UI.Initialize("OnExtendedCB")
+    Log("local IP ",wifi.LocalIp)
+    AddLooper("localloop")
+	
+    UI.setVerbosity(UI.Verb_Verbose)
+	
+'#ifdef ESP8266
+'    { HeapSelectIram doAllocationsInIRAM;
+'#endif
+
+    statusLabelId = UI.label("Status:", UI.ControlCol_Turquoise, "Stop")
+    millisLabelId = UI.label("Millis:", UI.ControlCol_Emerald, "0")
+
+    UI.button_CB("Push Button", UI.ControlCol_Peterriver, "Press",0)
+    UI.button_CB("Other Button", UI.ControlCol_Wetasphalt, "Press", 19)
+    UI.padWithCenter_CB("Pad with center", UI.ControlCol_Sunflower,0)
+    UI.pad_CB("Pad without center", UI.ControlCol_Carrot,0)
+    testSwitchId = UI.switcher_CB("Switch one", UI.ControlCol_Alizarin, False, 0)
+    UI.switcher_CB("Switch two",UI.ControlCol_None, True,12)
+    UI.slider_CB("Slider one", UI.ControlCol_Alizarin, 30,0,100,0)
+    UI.slider_CB("Slider two", UI.ControlCol_None, 100,0,100,0)
+    UI.text_CB("Text Test:", UI.ControlCol_Alizarin, "a Text Field",0)
+    UI.number_CB("Numbertest", UI.ControlCol_Alizarin, 5, 0, 10,0)
+
+    graphId = UI.graph("Graph Test", UI.ControlCol_Wetasphalt)
+
+'    /*
+'     * .begin loads And serves all files from PROGMEM directly.
+'     * If you want To serve the files from LITTLEFS use ESPUI.beginLITTLEFS
+'     * (.prepareFileSystem has To be run in an empty sketch before)
+'     */
+
+'    // Enable this option If you want sliders To be continuous (update during move) And Not discrete (update on stop)
+'    // ESPUI.sliderContinuous = true;
+
+'    /*
+'     * Optionally you can use HTTP BasicAuth. Keep in mind that this is Not a
+'     * SECURE way of limiting access.
+'     * Anyone who is able To sniff traffic will be able To intercept your password
+'     * since it is transmitted in cleartext. Just add a string As username And
+'     * password, For example begin("ESPUI Control", "username", "password")
+'     */
+	UI.begin("ESPUI Control", "", "", 80)
+
+'#ifdef ESP8266
+'    } // HeapSelectIram
+'#endif
+	
+End Sub
+
+
+Sub OnExtendedCB(ControlId As UInt, ControlType As Byte, ControlLabel As String, ControlValue As String, eventType As Int, userData As ULong)
+	Log("ControlId=",ControlId," ControlType=",ControlType, " ControlLabel= '",ControlLabel, "' ControlValue='",ControlValue, "' eventType=", eventType, " userData=",userData)
+	Select ControlType
+	Case UI.ControlTyp_pad
+			padExample(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+	Case UI.ControlTyp_PadWithCenter
+			padExample(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+	Case UI.ControlTyp_Button
+		If userData = 19 Then 
+			buttonExample(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		Else
+			buttonCallback(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		End If	
+	Case UI.ControlTyp_Switcher
+		If userData = 12 Then
+				otherSwitchExample(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		Else
+			switchExample(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+		End If
+	Case UI.ControlTyp_Slider
+			slider(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+	Case UI.ControlTyp_Number
+			numberCall(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+	Case UI.ControlTyp_Text
+			textCall(ControlId, ControlType, ControlLabel, ControlValue, eventType, userData)
+	End Select
+End Sub
+
+Sub numberCall(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+
+    Log(ControlValue)
+End Sub
+
+Sub textCall(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Log("Text: ID: ", ControlId, ", Value: ", ControlValue)
+End Sub
+
+Sub slider(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Log("Slider: ID: ", ControlId, ", Value: ", ControlValue)
+    '// Like all Control Values in ESPUI slider values are Strings. To use them As Int simply Do this:
+    Dim sliderValueWithOffset As Int = ControlValue + 100
+    Log("SliderValue with offset", sliderValueWithOffset)
+End Sub
+
+Sub buttonCallback(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Select eventType
+	Case UI.CBEvent_B_DOWN
+        Log("Button DOWN")
+	Case UI.cbevent_B_UP
+        Log("Button UP")
+    End Select
+End Sub
+
+Sub buttonExample(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Log("param: ", userData)
+    Select (eventType)
+
+	Case UI.cbevent_B_DOWN
+        Log("Status: Start")
+        UI.print(statusLabelId, "Start")
+	Case UI.cbevent_B_UP
+        Log("Status: Stop")
+        UI.print(statusLabelId, "Stop")
+    End Select
+End Sub
+
+Sub padExample(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Select eventType
+    Case UI.cbevent_P_LEFT_DOWN
+        Log("left down")
+	Case UI.cbevent_P_LEFT_UP
+        Log("left up")
+	Case UI.cbevent_P_RIGHT_DOWN
+        Log("right down")
+	Case UI.cbevent_P_RIGHT_UP
+        Log("right up")
+	Case UI.cbevent_P_FOR_DOWN
+        Log("for down")
+	Case UI.cbevent_P_FOR_UP
+        Log("for up")
+	Case UI.cbevent_P_BACK_DOWN
+        Log("back down")
+	Case UI.cbevent_P_BACK_UP
+        Log("back up")
+	Case UI.cbevent_P_CENTER_DOWN
+        Log("center down")
+	Case UI.cbevent_P_CENTER_UP
+        Log("center up")
+    End Select
+    Log(" ", ControlId)
+End Sub
+
+Sub switchExample(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+    Select eventType
+		Case UI.cbevent_S_ACTIVE
+        Log("Active:")
+		Case UI.cbevent_S_INACTIVE
+        Log("Inactive")
+    End Select
+
+    Log(" ", ControlId)
+End Sub
+
+Sub otherSwitchExample(ControlId As UInt, ControlType As Byte,ControlLabel As String,ControlValue As String, eventType As Int, userData As ULong)
+	Log("param = ",userData)
+	Select eventType
+		Case UI.cbevent_S_ACTIVE
+			Log("Active:")
+		Case UI.cbevent_S_INACTIVE
+			Log("Inactive")
+	End Select
+
+    Log(" ", ControlId)
+End Sub
+
+
+Sub localloop
+    Dim testSwitchState As bool = False
+
+    If (Millis - oldTime > 5000) Then
+        UI.print(millisLabelId, (Millis))
+
+        UI.addGraphPoint(graphId, random(1, 50), -1)
+
+        testSwitchState = Not(testSwitchState)
+        UI.updateSwitcher(testSwitchId, testSwitchState, -1)
+
+		oldTime = Millis
+	End If
+End Sub
+
+Sub random(Mini As Int,Maxi As Int) As Int
+	Dim tmp() As Int =Array As Int(Mini, Maxi)
+	Return RunNative("getRandom",tmp)
+End Sub
+Sub randomSeed As Int
+	Return RunNative("setRandomSeed",0)
+End Sub
+
+#if C
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  int16_t* a = (int16_t*) b->data;
+	  int16_t rand = random(a[0],a[1]); 
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      int16_t ran =  (int16_t) millis();
+	  uint8_t * rand = (uint8_t*) &ran;
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,rand[0]);
+	  randomSeed(rand[0]); 
+	  return returnvalue.wrapNumber(rand[0]);
+ }; 
+#End If

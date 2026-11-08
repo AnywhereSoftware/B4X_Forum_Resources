@@ -1,0 +1,86 @@
+﻿Build1=Default,b9x.scanner.feed
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=phone
+Library3=runtimepermissions
+Library4=xui
+Library5=voicelibclient
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.RECORD_AUDIO)    ~\n~AddPermission(android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK)~\n~SetServiceAttribute(Starter, android:foregroundServiceType, "mediaPlayback")~\n~SetApplicationAttribute(android:theme, "@style/LightTheme")~\n~CreateResource(values, theme.xml,~\n~<resources>~\n~    <style~\n~        name="LightTheme" parent="@android:style/Theme.Material.Light">~\n~       <item name="android:actionMenuTextAppearance">@style/LowerCaseMenu</item>~\n~       <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>~\n~    </style>~\n~     <style name="LowerCaseMenu" parent="android:TextAppearance.Material.Widget.ActionBar.Menu">~\n~        <item name="android:textAllCaps">false</item>~\n~    </style>~\n~</resources>~\n~)~\n~~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Scanner Audio Feed App
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Public voip As modVoice
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private btnConnect As Button
+	Private btnClose As Button
+	Private eventList As ListView
+	Private btnClear As Button
+	Private Label2 As Label
+	Private txtHost As EditText
+	Private txtPort As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Be sure to enable PERMISSION_RECORD_AUDIO and update your manifest file
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub btnConnect_Click
+	CallSubDelayed3(Starter, "setHostPort", txtHost.Text.trim, txtPort.Text.trim) 'set host/ip and port of server
+	CallSubDelayed(Starter, "connect")
+	'CallSubDelayed(Starter, "startSending")
+	CallSubDelayed(Starter, "voxOn")
+End Sub
+
+Private Sub btnClose_Click
+	'CallSubDelayed(Starter, "stopSending")
+	CallSubDelayed(Starter, "voxOff")
+	CallSubDelayed(Starter, "close")
+End Sub
+Sub voipMessage(msg As String)
+	Dim msgx As String
+	' to do
+	msgx=voip.vGetNthField(1,msg)
+	If msgx<>"PING" And msgx<>"PING_SVR" Then
+		eventList.AddSingleLine(msgx)
+	End If
+End Sub
+
+
+Private Sub btnClear_Click
+	eventList.Clear
+End Sub

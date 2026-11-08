@@ -1,0 +1,130 @@
+﻿Build1=Default,b4a.example
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=DOListDialog
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=1
+NumberOfModules=2
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: DOList Dialog Demo
+	#VersionCode: 1
+	#VersionName: 1.0
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private shortButton As Button
+	Private longButton As Button
+	Private dialog As DOListDialog
+	Private resultLabel As Label
+	Private stringLabel As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Main")
+	Activity.Title = Application.LabelName
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause(UserClosed As Boolean)
+End Sub
+
+Sub Activity_KeyPress(KeyCode As Int) As Boolean 	'Return True to consume the event
+	If dialog.IsInitialized And dialog.Visible Then
+		If dialog.isCancelable Then
+			dialog.cancel
+		End If
+		Return True
+	Else
+		Return False
+	End If
+End Sub
+
+'example of a list dialog with default settings and automatic height adjustment
+Private Sub shortButton_Click
+'	shortSingleLineList.Initialize		'if you give it an empty list, you get a log error
+	Dim shortSingleLineList As List = createShortSingleLineList
+
+	dialog.Initialize(Me, Activity, "dialog")
+	dialog.show("A short list", shortSingleLineList, dialog.LAYOUT_AUTO_HEIGHT, dialog.CANCELABLE)
+	
+	Wait For dialog_result(index As Int)
+	resultLabel.Text = "result = " & index
+	If index = dialog.NO_VALUE Then
+		stringLabel.Text = "You cancelled the dialog"
+	Else
+		stringLabel.Text = "You chose " & QUOTE & shortSingleLineList.Get(index) & QUOTE
+	End If
+End Sub
+
+Sub createShortSingleLineList As List
+	Dim tempList As List
+	tempList.Initialize2(Array As String("North", "South", "East", "West"))
+	Return tempList
+End Sub
+
+'example of customising the visuals by setting properties of the component views
+Private Sub longButton_Click
+	Dim longDoubleLineList As List = createLongDoubleLineList
+
+	dialog.Initialize(Me, Activity, "dialog")
+	dialog.dialogPanel.Color = Colors.ARGB(255, 185, 255, 255)
+	dialog.titleLabel.TextColor = Colors.blue
+	dialog.titleLabel.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	dialog.cancelButton.Background = dialog.createStateListDrawableFromColor(Colors.Cyan, Colors.Magenta)
+	dialog.lv.TwoLinesLayout.Label.TextColor = Colors.Blue
+	dialog.lv.TwoLinesLayout.Label.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.CENTER_HORIZONTAL)
+	dialog.lv.TwoLinesLayout.SecondLabel.Gravity = dialog.lv.TwoLinesLayout.Label.Gravity
+	dialog.show("A long double list", longDoubleLineList, dialog.LAYOUT_AUTO_BOTH, dialog.CANCELABLE)
+	
+	Wait For dialog_result(index As Int)
+	resultLabel.Text = "result = " & index
+	If index = dialog.NO_VALUE Then
+		stringLabel.Text = "You cancelled the dialog"
+	Else
+		stringLabel.Text = "You chose " & QUOTE & longDoubleLineList.Get(index).As(twoLineItem).firstLine & QUOTE
+	End If
+End Sub
+
+Sub createLongDoubleLineList As List
+	Dim tempList As List
+	tempList.Initialize
+	For i = 1 To 40
+		Dim doubleItem As twoLineItem
+		doubleItem.Initialize
+		doubleItem.firstLine = createRandomWord
+		doubleItem.secondLine = createRandomWord & " " & createRandomWord & " " & createRandomWord
+		tempList.Add(doubleItem)
+	Next
+	Return tempList
+End Sub
+
+Sub createRandomWord As String
+	Dim const ALPHABET As String = "abcdefghijklmnopqrstuvwxyz"
+	Dim tempWord As String
+	Dim randomLength As Int = Rnd(1, 15)
+	For i = 1 To randomLength
+		Dim randomIndex As Int = Rnd(0, 26)
+		tempWord = tempWord & ALPHABET.SubString2(randomIndex, randomIndex + 1)
+	Next
+	Return tempWord
+End Sub
+

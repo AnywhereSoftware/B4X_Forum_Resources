@@ -1,0 +1,53 @@
+#Class ScoreBoard Final
+
+#Property Score As Int = 0
+#Property Lives As Int = 3
+#Property Running As Boolean = False
+#Property Message As String = "Move the mouse to control the paddle. Click to launch."
+
+Sub Class_Globals
+    Private xui As XUI
+End Sub
+
+Public Sub Initialize
+    ' Resets HUD state for a new game.
+    Score = 0
+    Lives = 3
+    Running = False
+    Message = "Move the mouse to control the paddle. Click to launch."
+End Sub
+
+Public Sub AddScore(aPoints As Int)
+    ' Adds brick score to the total.
+    Score = getScore + aPoints
+End Sub
+
+Public Sub LoseLife As Boolean
+    ' Stops the ball and returns True when the game is over.
+    Lives = getLives - 1
+    If getLives <= 0 Then
+        Running = False
+        Message = "Game over. Click to restart."
+        Return True
+    End If
+    Running = False
+    Message = "Life lost. Click to relaunch."
+    Return False
+End Sub
+
+Public Sub WinGame
+    ' Stops the level and shows the victory message.
+    Running = False
+    Message = "Victory! All bricks cleared. Click to restart."
+End Sub
+
+Public Sub Render(aCvs As B4XCanvas, aGameWidth As Float)
+    ' Draws score, lives and status message.
+    aCvs.DrawText("Score: " & getScore, 12dip, 25dip, xui.CreateDefaultBoldFont(16), xui.Color_White, "LEFT")
+    aCvs.DrawText("Lives: " & getLives, aGameWidth - 12dip, 25dip, xui.CreateDefaultBoldFont(16), xui.Color_White, "RIGHT")
+    If getMessage.Length > 0 Then
+        aCvs.DrawText(getMessage, aGameWidth / 2, 455dip, xui.CreateDefaultFont(14), xui.Color_White, "CENTER")
+    End If
+End Sub
+
+#End Class

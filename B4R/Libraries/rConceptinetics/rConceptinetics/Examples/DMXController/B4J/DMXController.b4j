@@ -1,0 +1,257 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=icon.png
+File2=ListPorts.exe
+File3=Main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=javaobject
+Library3=jcore
+Library4=jfx
+Library5=jnetwork
+Library6=jrandomaccessfile
+Library7=jserial
+Library8=jshell
+Library9=byteconverter
+Module1=B4RSerializator
+NumberOfFiles=3
+NumberOfLibraries=9
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region Project Notes
+'File: DMXController.b4j
+'Date: 20240602
+'Author: rwbl
+'Control an LED Par light in DMX mode via USB (serial connector).
+'This example is based upon the tool B4R Serial Connector (THANLS for providing):
+'https://www.b4x.com/android/forum/threads/tool-external-serial-connector.65724/#content
+
+'Communication
+'DESKTOP (B4J Program) <-> USB Serial Line <-> Arduino MEGA (B4R Program)
+
+'The B4R program acts as a DMX interface receiving serialized data.
+'The data has 2 objects channel number 1-512 with channel value 0-255.
+
+'Hints
+'Open the serial line first - ensure the B4R IDE is disconnected (if open)
+'Set the dimmer channel as first command, like 1,255 if the LED address is 1 and the dimmer channel is 1
+#End Region
+
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+' #CustomBuildAction: After Packager, %WINDIR%\System32\robocopy.exe, ..\ temp\build\bin\ jssc.dll
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private txtMessage As TextField
+	Private cmbPort As ComboBox
+	Private btnOpen As Button
+	Private btnSend As Button
+	Private txtLogs As TextArea
+	Private astream As AsyncStreams
+	Private serial As Serial
+	Private chkReset As CheckBox
+	Private const BAUDRATE As Int = 115200
+	Private const settingsFile As String = "Settings.txt"
+	Private udpListener As UDPSocket
+	Private connected As Boolean
+	Private PortsNames As B4XOrderedMap
+	Private DataFolder As String
+
+	Dim ser As B4RSerializator
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Title = "DMX Controller"
+	MainForm.Resizable = False
+	MainForm.Show
+
+	ser.Initialize
+	DataFolder = File.DirData("SerialConnector")
+	serial.Initialize("")
+	
+	'cmbPort.Items.AddAll(serial.ListPorts)
+	
+	Wait For (GetPortsNames) Complete (unused As Boolean)
+	cmbPort.Items.AddAll(PortsNames.Values)
+	
+	If File.Exists(File.DirApp, settingsFile) Then
+		Dim m As Map = File.ReadMap(File.DirApp, settingsFile)
+		If m.ContainsKey("port") Then
+			Dim SavedPort As String = m.Get("port")
+			If PortsNames.ContainsKey(SavedPort) Then
+				cmbPort.SelectedIndex = cmbPort.Items.IndexOf(PortsNames.Get(SavedPort))
+			End If
+		End If
+		chkReset.Checked = m.Get("reset")
+	End If
+	If cmbPort.SelectedIndex = -1 Then cmbPort.SelectedIndex = cmbPort.Items.Size - 1
+	
+	udpListener.Initialize2("udp", 51042, 8192, True, True)
+	
+	'Init the text message with channel 1 command, which sets the dimmer to max value.
+	txtMessage.Text = "1,255"
+End Sub
+
+Sub GetPortsNames As ResumableSub
+	PortsNames.Initialize
+	For Each port As String In serial.ListPorts
+		PortsNames.Put(port, port) 'default names
+	Next
+	File.Copy(File.DirAssets, "ListPorts.exe", DataFolder, "ListPorts.exe")
+	Dim shl As Shell
+	shl.Initialize("shl", File.Combine(DataFolder, "ListPorts.exe"), Null)
+	shl.Run(5000)
+	Wait For shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success And ExitCode = 0 Then
+		For Each line As String In Regex.Split(CRLF, StdOut)
+			Log(line)
+			Dim i As Int = line.IndexOf(" ")
+			If i = -1 Then Continue
+			Dim port As String = line.SubString2(0, i)
+			Dim Description As String = line.Trim
+			If PortsNames.ContainsKey(port) Then PortsNames.Put(port, Description)
+		Next
+	End If
+	Return True
+End Sub
+
+Sub btnOpen_Action
+	OpenAction(True)
+End Sub
+
+Sub OpenAction(User As Boolean)
+	If connected Then 
+		connected = False
+		astream.Close
+		serial.Close
+		btnOpen.Text = "Open"
+		Return
+	End If
+	If User Then
+		OpenAfterDelay
+	Else
+		Sleep(8000)
+		OpenAfterDelay
+	End If
+	
+End Sub
+
+Private Sub OpenAfterDelay
+	Dim msg As String
+	
+	If cmbPort.SelectedIndex = -1 Then Return
+	Try
+		'serial.Open(cmbPort.Items.Get(cmbPort.SelectedIndex))
+		serial.Open(PortsNames.Keys.Get(cmbPort.SelectedIndex))
+		If chkReset.Checked Then
+			serial.SetParams(BAUDRATE, 8, 1, 0)
+		Else
+			Dim jo As JavaObject = serial
+			jo = jo.GetField("sp")
+			jo.RunMethod("setParams", Array(BAUDRATE, serial.DATABITS_8, serial.STOPBITS_1, serial.PARITY_ODD, False, False))
+		End If
+		astream.Initialize(serial.GetInputStream, serial.GetOutputStream, "astream")
+'		astream.InitializePrefix(serial.GetInputStream, False, serial.GetOutputStream, "astream")
+
+		btnSend.Enabled = True
+		btnOpen.Text = "Close"
+
+		connected = True
+		btnOpen.Enabled = connected
+		btnClear_Action
+
+		msg = $"Serial port opened ${PortsNames.Keys.Get(cmbPort.SelectedIndex)}${CRLF}"$
+		txtLogs.Text = msg
+	Catch
+		msg = $"[ERROR] Failed to open port: ${LastException}${CRLF}"$
+		txtLogs.Text = msg
+		' fx.Msgbox(MainForm, msg, "")
+	End Try
+
+End Sub
+
+Sub btnSend_Action
+	Dim msg As String
+	Dim bc As ByteConverter
+	
+	'Split the data into serial data
+	Dim data() As String = Regex.Split(",", txtMessage.Text)
+
+	'Check if the data has 2 objects channel and channel value
+	If data.Length < 2 Then Return
+
+	'Assign data to channel and value data objects
+	Dim channel As Int = data(0)
+	Dim value As Byte = data(1)
+
+	'Serialize the data objects. Example ser data: 7E028301FF7F
+	Dim serdata() As Byte = ser.ConvertArrayToBytes(Array(channel, value))
+
+	msg = $"[DMX Controller] Send to DMX Interface: data=${bc.HexFromBytes(serdata)}"$
+	txtLogs.Text = txtLogs.Text & msg & CRLF
+	Log(msg)
+
+	'Write the serialized data to the asyncstream received by the dmxinterface
+	astream.Write(serdata)
+
+	'Go back to the input field
+	txtMessage.SelectAll
+	txtMessage.RequestFocus
+End Sub
+
+Sub txtMessage_Action
+	btnSend_Action
+End Sub
+
+'Handle data received by adding to the log
+Sub AStream_NewData (Buffer() As Byte)
+	txtLogs.Text = txtLogs.Text & BytesToString(Buffer, 0, Buffer.Length, "utf8")
+	txtLogs.SetSelection(txtLogs.Text.Length, txtLogs.Text.Length)
+End Sub
+
+Sub AStream_Error
+	Log("[ERROR] ASyncstream")
+End Sub
+
+Sub AStream_Terminated
+	Log("[TERMINATED] ASyncstream")
+End Sub
+
+
+Sub btnClear_Action
+	txtLogs.Text = ""
+End Sub
+
+Sub MainForm_Closed
+	Dim m As Map = CreateMap("reset": chkReset.Checked)
+	If cmbPort.SelectedIndex > -1 Then m.Put("port", PortsNames.Keys.Get(cmbPort.SelectedIndex))
+	File.WriteMap(File.DirApp, settingsFile, m)
+End Sub
+
+'Handle UDP packet arrived via the serial line
+Private Sub UDP_PacketArrived (Packet As UDPPacket)
+	Try
+		Dim s As String = BytesToString(Packet.Data, Packet.Offset, Packet.Length, "utf8")
+		If s.StartsWith("B4R") = False Then Return
+		Dim msg() As String = Regex.Split(",", s)
+		If msg.Length < 3 Or cmbPort.SelectedIndex = -1 Then Return
+		If msg(1) = PortsNames.Keys.Get(cmbPort.SelectedIndex) Then
+			If connected <> msg(2) Then 
+				OpenAction(False)
+				
+			End If
+		End If
+	Catch
+		Log(LastException)
+	End Try
+End Sub

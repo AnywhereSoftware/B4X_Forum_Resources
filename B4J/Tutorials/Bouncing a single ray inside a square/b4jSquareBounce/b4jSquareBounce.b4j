@@ -1,0 +1,116 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 650
+	#MainFormHeight: 650
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private cv As Canvas
+	Type PVector(x As Double, y As Double)
+	Dim leftTop, rightTop, leftBottom, rightBottom, centre, ray, speed, oldPos As PVector
+	Dim squarSize As Double
+	Dim nativeMe As JavaObject
+	Dim cnt As Int
+	Dim dub As Double
+	Dim aa As Double
+	Dim col As JavaObject
+
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	Sleep(100)
+	cnt = 0
+	squarSize = 400
+	
+	nativeMe.InitializeStatic("javafx.scene.paint.Color")
+	aa = 1.0                               'for HSB color
+	
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	leftTop.Initialize
+	leftBottom.Initialize
+	rightTop.Initialize
+	rightBottom.Initialize
+	centre.Initialize
+	ray.Initialize
+	speed.Initialize
+	oldPos.Initialize
+	
+	centre.x = cv.Width/2
+	centre.y = cv.Height/2
+	
+	leftTop.x = centre.x - squarSize/2
+	leftTop.y = centre.y - squarSize/2
+	leftBottom.x = centre.x - squarSize/2
+	leftBottom.y = centre.y + squarSize/2
+	rightTop.x = centre.x + squarSize/2
+	rightTop.y = centre.y - squarSize/2
+	rightBottom.x = centre.x + squarSize/2
+	rightBottom.y = centre.y + squarSize/2
+	speed.x = -5/cPI/2
+	speed.y = 4/cPI
+	
+	ray.x = centre.x - 50.375
+	ray.y = centre.y - 100.283
+
+	cv.DrawLine(leftBottom.x, leftBottom.y, leftTop.x, leftTop.y, fx.Colors.White, 2dip)
+	cv.DrawLine(leftTop.x, leftTop.y, rightTop.x, rightTop.y, fx.Colors.White, 2dip)
+	cv.DrawLine(rightTop.x, rightTop.y, rightBottom.x, rightBottom.y, fx.Colors.White, 2dip)
+	cv.DrawLine(rightBottom.x, rightBottom.y, leftBottom.x, leftBottom.y, fx.Colors.White, 2dip)
+	
+	cv.DrawCircle(ray.x, ray.y, 2dip, fx.Colors.Black, True, 1dip)
+	
+	draw
+	
+End Sub
+
+Sub draw
+	
+	dub = cnt
+	col = nativeMe.RunMethod("hsb", Array(dub, aa, aa))  'get the hsb color
+	oldPos.x = ray.x
+	oldPos.y = ray.y
+	ray.x = ray.x + speed.x
+	
+	If ray.x >= rightTop.x-2dip Or ray.x <= leftTop.x+2dip Then 
+		speed.x = -1 * speed.x
+	End If
+	
+	If ray.y <= rightTop.y+2dip Or ray.y >= rightBottom.y-2dip Then
+		speed.y = -1 * speed.y
+	End If
+	
+	ray.y = ray.y + speed.y
+	
+	cv.DrawLine(oldPos.x, oldPos.y, ray.x, ray.y, col, 1dip)
+	
+	oldPos.x = ray.x
+	oldPos.y = ray.y
+	
+	cnt = cnt + 1
+	
+	CallSubDelayed(Me, "draw")
+	
+End Sub

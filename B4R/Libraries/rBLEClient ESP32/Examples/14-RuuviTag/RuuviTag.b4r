@@ -1,0 +1,242 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleclient
+Module1=|relative|..\NumConv
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rBLEClient
+' Brief:	Example reading RuuviTag sensor data.
+'			The RuuviTag is a Bluetooth sensor that monitors environmental conditions and advertises current readings Temperature, Humidity, Air Pressure and Motion.
+'			Handle notifications with the event NewData and parse the data usign Ruuvi Data Format 5 (RAWv2) to get the sensor data.
+'			Ruuvi manufacturer prefix: 99 04 Ruuvi Innovations Ltd.
+'			Tested with the RuuviTag testdata (see reference):
+'			Log("F76FD827B78D99040512FC5394C37C0004FFFC040CAC364200CDCBB8334C884F")
+'			Dim testdata() As Byte = bc.HexToBytes("F76FD827B78D99040512FC5394C37C0004FFFC040CAC364200CDCBB8334C884F")
+'			ParseRawData_RuuviTag(testdata).
+' Ref:		RuuviTag Dataformat 5 http://github.com/ruuvi/ruuvi-sensor-protocols/blob/master/dataformat_05.md
+'
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-07-29
+' License:	MIT — see LICENSE file.
+
+' MCU:		ESP-WROOM-32, B4R IDE ESP32 Dev Module, Arduino Boards Manager ESP32 3.0.0.
+' 			IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+' Wiring:	No additional wiring
+
+' Log:
+'			[AppStart] rBLEClient RuuviTag v20250728
+'			[AppStart] MAC Address=f7:6f:d8:27:b7:8d
+'			[Client_NewData] Temp=24.3000 °C, Hum=53.4900 %, Pressure=100044 Pa
+'			[Client_NewData] Battery=2977 mV, TX Power=4 dBm
+'			[Client_NewData] Movement=66, Seq=205
+'			[Client_NewData] Acceleration X,Y,Z=4,-4,1036
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEClient RuuviTag v20250728"
+    Public Serial1 As Serial
+
+	' BLE -  Peripheral RuuviTag
+	Type TRuuviTag (Temperature As Float, _
+					Humidity As Float, _
+					Pressure As Float, _
+					AccelerationX As Int, _
+					AccelerationY As Int, _
+					AccelerationZ As Int, _
+					BatterymV As UInt, _ 
+					TxPower As Int, _ 
+					MovementCounter As Byte, _ 
+					MeasurementSequence As UInt)
+
+	' Private NAME As String					= "RuuviTag B78D"							' Peripheral name + last 2 bytes of MAC address
+	Private MAC As String 					= "f7:6f:d8:27:b7:8d"						' MAC address nn:nn:nn:nn in lowercase!
+	Private UUID_SERVICE As String 			= "6e400001-b5a3-f393-e0a9-e50e24dcca9e"	' UART serives
+	Private UUID_CHARACTERISTIC  As String	= "6e400003-b5a3-f393-e0a9-e50e24dcca9e" 	' UART TX characteristic
+    Private Client As BLEClient
+	Private RuuviTagData As TRuuviTag
+
+	' Helper	
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[AppStart] ", VERSION)
+    Log("[AppStart] MAC Address=", MAC)
+
+	' Initialize the BLE Client
+	Client.Initialize(MAC, _
+        		   	  UUID_SERVICE, _
+					  UUID_CHARACTERISTIC, UUID_CHARACTERISTIC, _
+        		   	  "Client_NewData", "Client_Error", _
+					  False)
+
+	' Example passive scan
+'	Dim scantime As Byte = 60
+'	Dim timeout As Byte = 90
+'	Log("[AppStart] Starting passive scan for ", scantime, " s.")
+'	Dim result As Boolean = Client.PassiveScan(scantime, False, timeout)
+'	If Not(result) Then
+'		Log("[AppStart] Peripheral with MAC address ", MAC, " not found.")
+'	End If
+
+	' Example passive scan once
+	Log("[AppStart] Starting passive scan once")
+	Dim timeout As Byte = 10
+	Dim result As Boolean = Client.passiveScanOnce(timeout)
+	If Not(result) Then
+		Log("[AppStart] RuuviTag with MAC address ", MAC, " not found.")
+	End If
+End Sub
+
+#Region Callback Events
+' Callback when data is received from BLE peripheral
+' [ble_NewData] data=F76FD827B78D99040510DE75D8C80C00580098040CB9F6040151F76FD827B78D
+Sub Client_NewData(data() As Byte)
+	Log("[Client_NewData] data=", bc.HexFromBytes(data))
+	If ParseRawData(data) Then
+		Log("[Client_NewData] Temp=", RuuviTagData.temperature, " °C, Hum=", RuuviTagData.humidity, " %, Pressure=", RuuviTagData.pressure, " Pa")
+		Log("[Client_NewData] Battery=", RuuviTagData.batterymV, " mV, TX Power=", RuuviTagData.txPower, " dBm")
+		Log("[Client_NewData] Movement=", RuuviTagData.movementCounter, ", Seq=", RuuviTagData.MeasurementSequence)
+		Log("[Client_NewData] Acceleration X,Y,Z=",RuuviTagData.AccelerationX,",",RuuviTagData.AccelerationY,",",RuuviTagData.AccelerationZ)
+	End If
+End Sub
+
+' Callback when BLE error occurs
+Sub Client_Error(code As Byte)
+	Log("[Client_Error] code=", code)
+End Sub
+#End Region
+
+#Region Parse RuuviTag RAWv2 Data
+' RuuviTag V5 parse raw advertising data (RAWv2)
+' Data Example (hex): 
+' F7 6F D8 27 B7 8D 99 04 05 10 DE 75 D8 C8 0C 00 58 00 98 04 0C B9 F6 04 01 51 F7 6F D8 27 B7 8D
+' 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
+' Payload:                0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23
+' Data Length: >= 26 bytes required
+
+' Ruuvi RAWv2 Format:
+' Byte 0-5 (6):			MAC address (repeated later)
+' Byte 6-7 (2):   		0x04 = manufacturer-specific data
+' Byte 8-31 (23):		Actual payload
+' Payload breakdown:
+' Byte 8 (1):   		Ruuvi RAWv2 Format ID (0x05)
+' Byte 9-10 (2):   		Temperature (int16_t), 0.005 °C/LSB, big-endian
+' Byte 11-12 (2): 		Humidity (uint16_t), 0.0025 %RH/LSB, big-endian
+' Byte 13-14 (2): 		Pressure (uint16_t), value + 50,000 Pa
+' Byte 15-16 (2): 		Acceleration X (int16_t), milli-g
+' Byte 17-18 (2): 		Acceleration Y (int16_t), milli-g
+' Byte 19-20 (2): 		Acceleration Z (int16_t), milli-g
+' Byte 21-22 (2):     	Power info: upper 5 bits = battery (in 10 mV), lower 3 bits = TX power
+' Byte 23 (1):     		Movement counter
+' Byte 24-25 (2):  		Sequence number
+' Byte 26-31:  			MAC address 48bit (6 bytes)
+Private Sub ParseRawData(data() As Byte) As Boolean
+
+	' Check length - 26 is without MAC address
+	If data.Length < 26 Then
+		Log("[ParseRawData][ERROR] Invalid data length: ",  data.Length, " (expect 31)")
+		Return False
+	End If
+
+	' Byte 6 & 7
+	' Manufacturer ID 99 04
+	'Log("[ParseRawData] Manufacturer ID: ", bc.HexFromBytes(Array As Byte(data(6), data(7))))
+
+	' Byte 8 [0]
+	' Validate format identifier (Byte 8 = 0x05)
+	If data(8) <> 0x05 Then
+		Log(Millis,"[ParseRawData][ERROR] Unexpected format identifier: ", data(7))
+		Return False
+	End If
+
+	' Byte 9-10 [1-2]
+	' Temperature, signed int16, multiply by 0.005
+	Dim tempRaw As Int = NumConv.TwoBytesToInt(Array As Byte(data(9), data(10)), True)	
+	' Convert to signed
+	If tempRaw > 32767 Then tempRaw = tempRaw - 65536
+	RuuviTagData.Temperature = tempRaw * 0.005
+
+	' Byte 11-12 [3-4]
+	' Humidity unsigned, multiply by 0.0025
+	Dim humRaw As Int = NumConv.TwoBytesToInt(Array As Byte(data(11), data(12)), True)
+	RuuviTagData.Humidity = humRaw * 0.0025
+
+	' Byte 13-14 [5-6]
+	' Pressure, value + 50,000 Pa
+	Dim presRaw As UInt = NumConv.TwoBytesToUInt(Array As Byte(data(13), data(14)), True)
+	RuuviTagData.Pressure = presRaw + 50000
+
+	' Byte 15-16 [7-8]
+	RuuviTagData.AccelerationX = NumConv.TwoBytesToInt(Array As Byte(data(15), data(16)), True)
+	' Byte 17-18 [9-10]
+	RuuviTagData.AccelerationY = NumConv.TwoBytesToInt(Array As Byte(data(17), data(18)), True)
+	' Byte 19-20 [11-12]
+	RuuviTagData.AccelerationZ = NumConv.TwoBytesToInt(Array As Byte(data(19), data(20)), True)
+
+	' Byte 21-22 [13-14]
+	' Battery and TX power
+	Dim powerInfo As UInt 		= Bit.Or(Bit.ShiftLeft(data(21), 8), data(22))
+    Dim batterymVRaw As UInt	= Bit.ShiftRight(powerInfo, 5)
+	RuuviTagData.BatterymV 		= batterymVRaw + 1600
+    Dim txPowerRaw As UInt 		= Bit.And(powerInfo, 0x1F)
+	RuuviTagData.TxPower		= txPowerRaw * 2 - 40
+
+	' Byte 23 [15]
+	' Movement counter
+	RuuviTagData.MovementCounter = data(23)
+
+	' Byte 24-25 [16-17]
+	' Sequence number
+	RuuviTagData.MeasurementSequence = NumConv.TwoBytesToUInt(Array As Byte(data(24), data(25)), True)
+
+	' Byte 26-31 [18-23]
+	' MAC address in reverse order
+	If data.Length == 32 Then
+		Dim macaddress(6) As Byte
+		Dim index As Byte = 0
+		For i = 31 To 26 Step-1
+			macaddress(index) = data(i)
+			index = index + 1
+		Next		
+	End If
+	
+	' Log parsed values
+'	Log("[ParseRawData] MAC Address=", bc.HexFromBytes(macaddress))
+'	Log("[ParseRawData] Temp=", RuuviTagData.temperature, " °C, Hum=", RuuviTagData.humidity, " %, Pressure=", RuuviTagData.pressure, " Pa")
+'	Log("[ParseRawData] Battery=", RuuviTagData.batterymV, " mV, TX Power=", RuuviTagData.txPower, " dBm")
+'	Log("[ParseRawData] Movement=", RuuviTagData.movementCounter, ", Seq=", RuuviTagData.MeasurementSequence)
+'	Log("[ParseRawData] Acceleration X,Y,Z=",RuuviTagData.AccelerationX,",",RuuviTagData.AccelerationY,",",RuuviTagData.AccelerationZ)
+
+	Return True
+End Sub
+
+' Test parsing raw data using the HEX string provided by Ruuvi.
+Private Sub ParseRawDataTest	'ignore
+	Dim data() As Byte = bc.HexToBytes("F76FD827B78D99040512FC5394C37C0004FFFC040CAC364200CDCBB8334C884F")
+	If ParseRawData(data) Then
+		Log("[Client_NewData] Temp=", RuuviTagData.temperature, " °C, Hum=", RuuviTagData.humidity, " %, Pressure=", RuuviTagData.pressure, " Pa")
+		Log("[Client_NewData] Battery=", RuuviTagData.batterymV, " mV, TX Power=", RuuviTagData.txPower, " dBm")
+		Log("[Client_NewData] Movement=", RuuviTagData.movementCounter, ", Seq=", RuuviTagData.MeasurementSequence)
+		Log("[Client_NewData] Acceleration X,Y,Z=",RuuviTagData.AccelerationX,",",RuuviTagData.AccelerationY,",",RuuviTagData.AccelerationZ)
+	End If	
+End Sub
+#End Region

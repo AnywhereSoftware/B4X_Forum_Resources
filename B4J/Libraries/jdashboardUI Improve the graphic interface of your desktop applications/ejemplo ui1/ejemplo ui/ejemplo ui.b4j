@@ -1,0 +1,163 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=2.bjl
+File10=google_firebase_console_512px.png
+File11=home@512px.png
+File12=icons8_android_os_512px.png
+File13=icons8_apple_logo_480px.png
+File14=icons8_available_updates_480px_1.png
+File15=icons8_Google_Play_512px.png
+File16=icons8_google_sheets_512px.png
+File17=icons8_info_512px.png
+File18=icons8_windows_10_480px.png
+File19=Layout1.bjl
+File2=CERRADO.png
+File20=max.png
+File21=maximize.png
+File22=min.png
+File23=MINIMIZADO.png
+File24=private_480px.png
+File25=subtract_480px.png
+File26=trash_480px.png
+File3=chat_room_480px.png
+File4=Close_512px.png
+File5=combo_chart_512px.png
+File6=delete_trash_512px.png
+File7=enlarge_480px.png
+File8=exit (3).png
+File9=factory@512px.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup19=Default Group
+FileGroup2=Default Group
+FileGroup20=Default Group
+FileGroup21=Default Group
+FileGroup22=Default Group
+FileGroup23=Default Group
+FileGroup24=Default Group
+FileGroup25=Default Group
+FileGroup26=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jbitmapcreator
+Library3=jcore
+Library4=jdashboardui
+Library5=jfx
+Library6=jsql
+Library7=jxui
+Library8=cssutils
+Module1=page1
+Module2=page2
+NumberOfFiles=26
+NumberOfLibraries=8
+NumberOfModules=2
+Version=9.8
+@EndOfDesignText@
+
+
+#Region Project Attributes 
+		#MainFormWidth: 500
+	#MainFormHeight: 500
+		#PackagerProperty: IconFile = ..\Files\icon.ico
+	#PackagerProperty: ExeName = Example
+	#PackagerProperty: IncludedModules = javafx.web, jdk.crypto.ec
+   #PackagerProperty: Version = 1.0.2
+#End Region
+
+Sub Process_Globals
+	Public UI As jdashboard_WindowsStyle
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	
+	Public bcerrar As Button
+	Public bmin As Button
+	Public bmax As Button
+
+	Public menu As Jdashboard_Menu
+'	Private Button2 As Button
+	
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm.Initialize("MainForm", 1200, 600)
+	MainForm.Title ="Dashboard UI"
+	MainForm.SetFormStyle("UNDECORATED")
+	MainForm.Icon = fx.LoadImage(File.DirAssets, "chat_room_480px.png")
+	UI.Initialize(Me, MainForm,"UI")
+	UI.TopBarcolor("#81699B","#81699B","#81699B","#81699B")
+	UI.bordercolor("#81699B")
+	UI.SetIcon(File.DirAssets,"chat_room_480px.png")
+	UI.Title.TextColor = fx.Colors.White
+	UI.Title.Text= "Dashboard UI"
+	UI.Title.Font = fx.CreateFont("",14,True,False)
+	UI.AnimationsActivated =False
+	UI.BorderWidth = 6
+	MainForm.Show
+	UI.Show_panel_with_menu
+	UI.pbase.LoadLayout("Layout1")
+	UI.AnimationsActivated = False
+
+
+	'button
+	bcerrar = UI.ButtonAdd("",0)
+	jdashboardUtils.ButtonSetImage2(bcerrar,File.DirAssets,"exit (3).png","#81699B","#81699B",16,16,"LEFT")
+	UI.ButtonBindToAction(bcerrar,UI.ACTION_EXIT)
+	jdashboardUtils.ToolTip(bcerrar,"cerrar aplicacion",fx.DefaultFont(14),File.DirAssets,"CERRADO.png",30,30)
+	
+	bmax = UI.ButtonAdd("",0)
+	jdashboardUtils.ButtonSetImage2(bmax,File.DirAssets,"max.png","#81699B","#81699B",16,16,"LEFT")
+	UI.ButtonBindToAction(bmax,UI.ACTION_MAXIMIZE)
+	jdashboardUtils.ToolTip(bmax,"maximizar aplicacion",fx.DefaultFont(14),File.DirAssets,"maximize.png",30,30)
+	
+	bmin = UI.ButtonAdd("",0)
+	jdashboardUtils.ButtonSetImage2(bmin,File.DirAssets,"min.png","#81699B","#81699B",16,16,"LEFT")
+	UI.ButtonBindToAction(bmin,UI.ACTION_MINIMIZE)
+	jdashboardUtils.ToolTip(bmin,"minimizar aplicacion",fx.DefaultFont(14),File.DirAssets,"MINIMIZADO.png",30,30)
+	
+	
+
+	'menu
+	menu.Initialize
+	menu.InitializePanels(Me,MainForm,6,"#81699B","#81699B")
+	menu.logo = fx.LoadImage(File.DirAssets,"home@512px.png")
+	menu.SetTitle("Dashboard")
+	menu.Add_MenuItem2("a","Dashboard",fx.Colors.White,Chr(0xF015),"#81699B",fx.Colors.RGB(53, 165, 138),fx.Colors.RGB(129, 105, 155),"page 1",fx.LoadImage(File.DirAssets,"home@512px.png"))
+	menu.Add_MenuItem("b","Use of APIs",fx.Colors.White,fx.LoadImageSample(File.DirAssets,"combo_chart_512px.png",35,35),"#81699B",fx.Colors.RGB(129, 105, 155),"page 2")
+
+	page1.show
+End Sub
+
+Sub MainForm_Resize(Width As Double, Height As Double)
+	UI.resize_with_menu
+	menu.resize
+End Sub
+
+Sub a_OptionClicked
+	menu.logo = fx.LoadImage(File.DirAssets,"home@512px.png")
+	menu.SetTitle("Dashboard")
+
+	page1.show
+End Sub
+Sub b_OptionClicked
+	menu.logo = fx.LoadImage(File.DirAssets,"combo_chart_512px.png")
+	menu.SetTitle("Use of APIs")
+	
+	page2.show
+End Sub

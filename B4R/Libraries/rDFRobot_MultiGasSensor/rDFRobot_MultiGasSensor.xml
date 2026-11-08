@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RDFRobot_MultiGasSensor</name>
+        <shortname>DFRobot_MultiGasSensor</shortname>
+        <comment>@class DFRobot_MultiGasSensor
+@brief Wrapper class that exposes the DFRobot MultiGasSensor to B4R.
+       Enhanced with custom constants &amp; functions.</comment>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>@fn Initialize
+@brief Initialize with default I2C address (0x74)
+@n Mode of obtaining data is passiv and the temperature compensation is turned on
+@return bool type, indicating whether the initialization is successful
+@retval True succeed
+@retval False failed</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="InitializeWithAddress">InitializeWithAddress</name>
+            <comment>@fn InitializeWithAddress
+@brief Initialize with a custom I2C address
+@n Mode of obtaining data is passiv and the temperature compensation is turned on
+@param addr Byte I2C address
+@n Default address 0x74
+@return bool type, indicating whether the initialization is successful
+@retval True succeed
+@retval False failed</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>Byte</name>
+                <type>B4R::const</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetAcquireMode">SetAcquireMode</name>
+            <comment>@fn SetAcquireMode
+@brief Set the mode of acquiring sensor data
+@param mode Mode select
+@n INITIATIVE The sensor proactively reports data
+@n PASSIVITY The main controller needs to request data from sensor
+@return bool type, indicating whether the setting is successful
+@retval True succeed
+@retval False failed</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>mode</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadConcentrationPPM">ReadConcentrationPPM</name>
+            <comment>@fn ReadConcentrationPPM
+@brief Read the gas concentration from sensor, unit PPM
+@return float type, indicating return gas concentration, if data is transmitted normally, return gas concentration, otherwise, return 0.0</comment>
+            <returntype>float</returntype>
+        </method>
+        <method>
+            <name DesignerName="ReadGasType">ReadGasType</name>
+            <comment>@fn ReadGasType
+@brief Read the type of current gas probe, i.e. O2,CO,H2S,NO2,O3,CL2,NH3,H2,HCL,SO2,HF,PH3
+@return String type, indicating the gas type as string</comment>
+            <returntype>B4R::B4RString*</returntype>
+        </method>
+        <method>
+            <name DesignerName="ReadGasTypeID">ReadGasTypeID</name>
+            <comment>@fn ReadGasTypeID
+@brief Read the type of current gas probe, i.e. O2=0x05,CO=0x04,H2S=0x03,NO2=0x2C,O3=0x2A,CL2=0x31,NH3=0x02,H2=0x06,HCL=0X2E,SO2=0X2B,HF=0x33,PH3=0x45
+@return Byte type, indicating gas type ID as byte</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetThresholdAlarm">SetThresholdAlarm</name>
+            <comment>@fn setThresholdAlarm
+@brief Set sensor alarm threshold
+@n Function modified to use the type of the current gas probe (using QueryGasType)
+@n Recommend to create own threshold solution in B4R
+@param switchoff Whether to turn on threshold alarm switch
+@n ON turn on
+@n OFF turn off
+@param threshold The threshold for starting alarm
+@param alamethod Set sensor high or low threshold alarm
+@return bool type, indicating whether the setting is successful
+@retval True succeed
+@retval False failed</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>switchoff</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>threshold</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>alamethod</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadTemperatureC">ReadTemperatureC</name>
+            <comment>@fn ReadTemperatureC
+@brief Get sensor onboard temperature
+@return float type, indicating return the current onboard temperature</comment>
+            <returntype>float</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetTemperatureCompensation">SetTemperatureCompensation</name>
+            <comment>@fn SetTemperatureCompensation
+@brief Set whether to turn on temperature compensation, values output by sensor under different temperatures are various.
+@n To get more accurate gas concentration, temperature compensation is necessary when calculating gas concentration.
+@param tempswitch Whether to turn on temperature compensation
+@n ON Turn on temperature compensation
+@n OFF Turn off temperature compensation</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>tempswitch</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadVoltage">ReadVoltage</name>
+            <comment>@fn ReadVoltage
+@brief Read voltage output by sensor probe (for calculating the current gas concentration)
+@n This is the original voltage output V0 of the gas probe
+@return float type, indicating return voltage value</comment>
+            <returntype>float</returntype>
+        </method>
+        <method>
+            <name DesignerName="IsDataAvailable">IsDataAvailable</name>
+            <comment>@fn IsDataAvailable
+@brief Call this function in active mode to determine the presence of data on data line
+@return bool type, indicating whether there is data coming from the sensor
+@retval True Has uploaded data
+@retval False No data uploaded</comment>
+            <returntype>bool</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetI2CAddrGroup">SetI2CAddrGroup</name>
+            <comment>@fn SetI2CAddrGroup
+@brief Set the I2C address group
+@param group Address group select
+@return int type, indicating return init status
+@retval bool type
+@retval True Change succeed
+@retval False Change failed</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>group</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="I2C_DEFAULT_ADDRESS">I2C_DEFAULT_ADDRESS</name>
+            <comment>I2C Default Address.</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="MODE_INITIATIVE">MODE_INITIATIVE</name>
+            <comment>** Acquire modes (Mode of obtaining data). */</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="MODE_PASSIVITY">MODE_PASSIVITY</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_O2">GASTYPE_O2</name>
+            <comment>** Gas types. */</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_CO">GASTYPE_CO</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_H2S">GASTYPE_H2S</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_NO2">GASTYPE_NO2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_O3">GASTYPE_O3</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_CL2">GASTYPE_CL2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_NH3">GASTYPE_NH3</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_H2">GASTYPE_H2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_HCL">GASTYPE_HCL</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_SO2">GASTYPE_SO2</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_HF">GASTYPE_HF</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="GASTYPE_PH3">GASTYPE_PH3</name>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

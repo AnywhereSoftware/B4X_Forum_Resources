@@ -1,0 +1,103 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	ToastMessageShow ( DateToShamsi(DateTime.Now) , False)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub DateToShamsi ( time As Long ) As String
+	Dim msPerDay As Long = 1000*60*60*24
+	time = time / msPerDay
+	Dim m(3) As Int
+	m(0) = 11
+	m(1) = 10
+	m(2) = 1348
+	Do While time >= 1
+		
+		If (m(0) = 30) And (m(1) > 6 ) And (m(1) < 12) Then
+			m(0) = 1
+			m(1) = m(1) + 1
+		else If (m(0) = 31) And (m(1) > 0 ) And (m(1) < 7) Then
+			m(0) = 1
+			m(1) = m(1) + 1
+		else If (m(0) = 29) And (m(1) = 12 ) And (IsLeapYear(m(2)) = False ) Then
+			m(0) = 1
+			m(1) = 1
+			m(2) = m(2) + 1
+		else If (m(0) = 30) And (m(1) = 12 ) And (IsLeapYear(m(2)) = True ) Then
+			m(0) = 1
+			m(1) = 1
+			m(2) = m(2) + 1
+		Else
+			m(0) = m(0) + 1
+		End If
+		
+		time = time-1
+	Loop
+	Dim n(12) As String
+	n(0) = "فروردین"
+	n(1) = "اردیبهشت"
+	n(2) = "خرداد"
+	n(3) = "تیر"
+	n(4) = "مرداد"
+	n(5) = "شهریور"
+	n(6) = "مهر"
+	n(7) = "آبان"
+	n(8) = "آذر"
+	n(9) = "دی"
+	n(10) = "بهمن"
+	n(11) = "اسفند"
+	Return ( m(0) & "  " & n (m(1)-1) & "  " & m(2) )
+	
+End Sub
+
+Sub IsLeapYear ( sal As Int ) As Boolean
+	If (sal Mod 33=1)Or(sal Mod 33=5)Or(sal Mod 33=9)Or(sal Mod 33=13)Or(sal Mod 33=17)Or(sal Mod 33=22)Or(sal Mod 33=26)Or(sal Mod 33=30) Then
+		Return True
+	Else
+		Return False
+	End If
+End Sub

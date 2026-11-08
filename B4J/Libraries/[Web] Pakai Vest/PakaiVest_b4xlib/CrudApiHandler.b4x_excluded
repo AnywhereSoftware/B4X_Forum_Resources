@@ -1,0 +1,275 @@
+' Crud Api Handler Template
+' Exposes RESTful API endpoints for the CRUD model (supporting JSON and XML requests).
+Sub Class_Globals
+	Private Path As String
+	Private Method As String
+	Private Request As ServletRequest
+	Private Response As ServletResponse
+	Private HRM As HttpResponseMessage
+	Private Model As CrudModel
+	
+	' Customize route prefixes
+	Private Const API_PATH As String = "/api/items"
+End Sub
+
+Public Sub Initialize
+	HRM = Main.HRM
+	Model.Initialize
+End Sub
+
+Sub Handle (req As ServletRequest, resp As ServletResponse)
+	Request = req
+	Response = resp
+	Path = Request.RequestURI
+	Method = Request.Method.ToUpperCase
+	
+	' API Route Dispatching
+	If Path = API_PATH And Method = "GET" Then
+		GetItems
+	Else If Path = API_PATH And Method = "POST" Then
+		PostItem
+	Else If Path.StartsWith(API_PATH & "/") And Method = "GET" Then
+		GetItemById
+	Else If Path.StartsWith(API_PATH & "/") And Method = "PUT" Then
+		PutItemById
+	Else If Path.StartsWith(API_PATH & "/") And Method = "DELETE" Then
+		DeleteItemById
+	Else
+		WebApiUtils.ReturnBadRequest(HRM, Response)
+	End If
+End Sub
+
+' Retrieve all items
+Private Sub GetItems
+	Log($"${Method}: ${Path}"$)
+	Dim Data As List = Model.Read
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+	Else
+		HRM.ResponseCode = 200
+		HRM.ResponseData = Data
+	End If
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+' Retrieve single item by ID
+Private Sub GetItemById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString((API_PATH & "/").Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid ID value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	Dim Row As Map = Model.GetRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+	Else
+		If Model.Found Then
+			HRM.ResponseCode = 200
+			HRM.ResponseObject = Row
+		Else
+			HRM.ResponseCode = 404
+			HRM.ResponseError = "Item not found"
+		End If
+	End If
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+' Create new item
+Private Sub PostItem
+	Log($"${Method}: ${Path}"$)
+	Dim str As String = WebApiUtils.RequestDataText(Request)
+	If WebApiUtils.ValidateContent(str, HRM.PayloadType) = False Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = $"Invalid ${HRM.PayloadType} payload"$
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	Dim data As Map
+	If HRM.PayloadType = WebApiUtils.MIME_TYPE_XML Then
+		data = WebApiUtils.ParseXML(str)
+	Else
+		data = WebApiUtils.ParseJSON(str)
+	End If
+	
+	' Validate required payload keys
+	Dim RequiredKeys As List = Array As String("item_code", "item_name")
+	For Each requiredkey As String In RequiredKeys
+		If data.ContainsKey(requiredkey) = False Then
+			HRM.ResponseCode = 400
+			HRM.ResponseError = $"Key '${requiredkey}' not found in request payload"$
+			WebApiUtils.ReturnHttpResponse(HRM, Response)
+			Return
+		End If
+	Next
+	
+	Dim item_code As String = data.Get("item_code")
+	Dim item_name As String = data.Get("item_name")
+	Dim item_price As Double = data.GetDefault("item_price", 0)
+	Dim item_description As String = data.GetDefault("item_description", "")
+	
+	' Check conflict code
+	Dim Found As Boolean = Model.FindRowByCode(item_code)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Found Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "Item code already exists"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Insert new row
+	Model.Create(item_code, item_name, item_price, item_description)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	HRM.ResponseCode = 201
+	HRM.ResponseObject = Model.First
+	HRM.ResponseMessage = "Item created successfully"
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+' Update item by ID
+Private Sub PutItemById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString((API_PATH & "/").Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid ID value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	Dim str As String = WebApiUtils.RequestDataText(Request)
+	If WebApiUtils.ValidateContent(str, HRM.PayloadType) = False Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = $"Invalid ${HRM.PayloadType} payload"$
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	Dim data As Map
+	If HRM.PayloadType = WebApiUtils.MIME_TYPE_XML Then
+		data = WebApiUtils.ParseXML(str)
+	Else
+		data = WebApiUtils.ParseJSON(str)
+	End If
+	
+	' Validate required payload keys
+	Dim RequiredKeys As List = Array As String("item_code", "item_name")
+	For Each requiredkey As String In RequiredKeys
+		If data.ContainsKey(requiredkey) = False Then
+			HRM.ResponseCode = 400
+			HRM.ResponseError = $"Key '${requiredkey}' not found in request payload"$
+			WebApiUtils.ReturnHttpResponse(HRM, Response)
+			Return
+		End If
+	Next
+	
+	' Find row by id
+	Dim Found As Boolean = Model.FindRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Not(Found) Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "Item not found"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	Dim item_code As String = data.Get("item_code")
+	Dim item_name As String = data.Get("item_name")
+	Dim item_price As Double = data.GetDefault("item_price", 0)
+	Dim item_description As String = data.GetDefault("item_description", "")
+	
+	' Check conflict on code
+	Dim CodeConflict As Boolean = Model.FindRowByCodeNotEqualId(item_code, id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If CodeConflict Then
+		HRM.ResponseCode = 409
+		HRM.ResponseError = "Item code already exists on another item"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Update row
+	Model.Update(id, item_code, item_name, item_price, item_description)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "Item updated successfully"
+	HRM.ResponseObject = Model.First
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub
+
+' Delete item by ID
+Private Sub DeleteItemById
+	Log($"${Method}: ${Path}"$)
+	Try
+		Dim id As Int = Path.SubString((API_PATH & "/").Length)
+	Catch
+		HRM.ResponseCode = 400
+		HRM.ResponseError = "Invalid ID value"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End Try
+	
+	' Find row by id
+	Dim Found As Boolean = Model.FindRowById(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	If Not(Found) Then
+		HRM.ResponseCode = 404
+		HRM.ResponseError = "Item not found"
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	' Delete row
+	Model.Delete(id)
+	If Model.Error.IsInitialized Then
+		HRM.ResponseCode = 422
+		HRM.ResponseError = Model.Error.Message
+		WebApiUtils.ReturnHttpResponse(HRM, Response)
+		Return
+	End If
+	
+	HRM.ResponseCode = 200
+	HRM.ResponseMessage = "Item deleted successfully"
+	WebApiUtils.ReturnHttpResponse(HRM, Response)
+End Sub

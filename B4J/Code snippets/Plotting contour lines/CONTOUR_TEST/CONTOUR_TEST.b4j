@@ -1,0 +1,132 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jreflection
+Module1=rcontour
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 625
+	#MainFormHeight: 650
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private btnPlot As Button
+	Private btnQuit As Button
+	Dim a(),b() As Double
+	Dim lower,upper As Int
+	Dim contourlines,resolution As Int
+	Dim xui As XUI
+	Dim mycnt As CT ' data type CT
+	Private cvs1 As Canvas
+	Dim rect1 As B4XRect
+	Dim timeFont As Font
+	Dim cW,cH,W,H,xoffset,yoffset As Double
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	timeFont = fx.CreateFont("Verdana,Tahoma,Arial", 12, True, True)
+	cW=cvs1.Width
+	cH=cvs1.Height
+	xoffset=50
+	yoffset=50
+	W=cW-2*xoffset
+	H=cH-2*yoffset
+	rect1.Initialize(0,0,W,H)
+End Sub
+
+
+Private Sub btnQuit_Click
+	MainForm.Close
+	ExitApplication
+End Sub
+
+Private Sub btnPlot_Click
+	cvs1.ClearRect(0,0,cW,cH)
+	cvs1.DrawRect(0,0,cW,cH,fx.Colors.White,True,2)
+	lower=0 'lower bound for function under test
+	upper=6 'upper bound for function under test
+	plotgrid(lower,upper) ' plot the axes and grid
+	mycnt.Initialize
+	contourlines=300 '#of contour lines
+	resolution=500 '#resolution for the variables (takes more time to draw contour if resolution is high)
+	a=rcontour.linspace(lower,upper,resolution) 
+	b=rcontour.linspace(lower,upper,resolution)
+	Dim C(resolution,resolution) As Double=function(a,b,resolution)'compute the output for the function
+	
+	mycnt=rcontour.conrec(C,a,b,contourlines,resolution,W,H) 'call conrec function to compute contour points, returns a variable with data type CT
+	
+	Dim cmapped(resolution,resolution) As Double=rcontour.mmap(C,0,contourlines)' map the values of function output to the total number of contour lines
+	Dim x1,y1,x2,y2 As Double
+	For i=0 To resolution-1
+		For j=0 To resolution-1
+			
+			x1=mycnt.u1(i,j)
+			y1=mycnt.v1(i,j)
+			x2=mycnt.u2(i,j)
+			y2=mycnt.v2(i,j)
+			Dim c1 As Int=rcontour.InterpolateColorsInRange(xui.Color_green,xui.Color_red,0,contourlines,cmapped(i,j))'returns interpolated color for current function value
+			
+			Dim g As Object=fx.Colors.From32Bit(c1)
+			cvs1.DrawLine(x1+xoffset,H-y1+yoffset,x2+xoffset,H-y2+yoffset,g,1) 'draws the contour
+		
+			
+		Next
+			
+	Next
+		
+
+	
+End Sub
+Sub plotgrid(lb As Double,ub As Double)
+	Dim p(2) As Double=Array As Double(lb,ub)
+	Dim q(2) As Double=rcontour.amap(p,0,W)
+	Dim r(2) As Double=rcontour.amap(p,0,H)
+	Dim slope1 As Double=(ub-lb)/(W-0)
+	Dim slope2 As Double=(ub-lb)/(H-0)
+	
+	Dim i As Double
+	'vertical 
+	For i=q(0) To q(1) Step 50
+		Dim v As Double=lb+slope1*(i-0)
+		cvs1.DrawLine(i+xoffset,yoffset,i+xoffset,H+yoffset,fx.Colors.LightGray,1)
+		cvs1.DrawLine(i+xoffset,H+yoffset-5,i+xoffset,H+yoffset+5,fx.Colors.black,1)
+		cvs1.DrawText(NumberFormat(v,1,1),i+xoffset,H+yoffset+20,timeFont,fx.Colors.Black,"CENTER")
+	Next
+	'horizontal
+	For i=r(0) To r(1) Step 50
+		Dim v As Double=lb+slope2*(i-0)
+		cvs1.DrawLine(xoffset,i+yoffset,W+xoffset,i+yoffset,fx.Colors.LightGray,1)
+		cvs1.DrawLine(xoffset-5,i+yoffset,xoffset+5,i+yoffset,fx.Colors.Black,1)
+		cvs1.DrawText(NumberFormat(v,1,1),20,H-i+yoffset+5,timeFont,fx.Colors.Black,"CENTER")
+	Next
+End Sub
+
+Sub function(a1() As Double,b1() As Double,res As Int) As Double(,)
+	Dim c1(res,res) As Double
+	For i=0 To res-1
+		For j=0 To resolution-1
+			'c1(i,j)=((Power(a1(i),3)-3*a1(i)+Power(b1(j),3)-3*b1(j))-5.5)'set lower=-10, upper=10
+			'c1(i,j)=((Power(a1(i),2)-a(i)*b1(j)+Power(b1(j),2)+2*a1(i)+4*b1(j)+3))'set lower=-5, upper=5
+			c1(i,j)=(Power((Power(a1(i),2)+b1(j)-11),2)+Power((a1(i)+Power(b1(j),2)-7),2)) 'set lower=0, upper=6
+			'c1(i,j)=SinD(Sqrt(((Power(a1(i),2)+Power(b1(j),2)))))'set lower=-360, upper=360
+			'c1(i,j)=Sin(a1(i))*Cos(b1(j))'set lower=-2*cPI, upper=2*cPI
+			'c1(i,j)=Power(a1(i),2)+Power(b1(j),2)'set lower=-5, upper=5
+		Next
+	Next
+	Return c1
+End Sub

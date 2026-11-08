@@ -1,0 +1,86 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rconceptinetics
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+'File: dmxinterface.b4r
+'Date: 20240602
+'Author: Robert W.B. Linn
+'DMX512 Interface accepting channel commands via the serial line.
+'A channel command has 2 objects channel number (1-512) & value (0-255) is send using the B4RSerializer.
+'Whilst developing disconnect the IDE from the serial line after uploading.
+
+'See more in the basic example.
+
+'Set the project attributes
+'Increase the stackbuffer
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 800
+#End Region
+
+Sub Process_Globals
+	Private dmx_master As DMXMaster
+
+	Public Serial1 As Serial
+	Private astream As AsyncStreams	'rRandomAccessFile
+	Private ser As B4RSerializator	'rRandomAccessFile, type
+	Private be(4) As Object 		'Serializer storage buffer for up-to 4 objects
+	Private const DATAOBJECTLENGTH = 2 As Byte
+End Sub
+
+Private Sub AppStart
+	'IMPORTANT - the dmx master has to be initialized prior Serial1
+	dmx_master.Initialize(10, dmx_master.RXEN_PIN)
+
+	'Init serial1 and asyncstream to handle channel commands
+	Serial1.Initialize(115200)
+	astream.Initialize(Serial1.stream, "Astream_NewData", "Astream_Error")
+
+	Log("[DMX Interface] Started")
+End Sub
+
+'Handle new data received via the serial line
+Sub Astream_NewData (Buffer() As Byte)
+	'Check buffer length
+	If Buffer.Length == 0 Then
+		Log("[DMX Interface] [ERROR] Invalid message received (No data).")
+		Return
+	End If
+
+	'Log the bytes received as HEX, like 7E0283807F (7E 02 83 80 7F)
+	Dim bc As ByteConverter
+	Log("[DMX Interface] Received: bytes=", bc.HexFromBytes(Buffer))
+
+	'Serialized data check which has
+	'Byte first HEX 7E, DEC 126 and byte last HEX 7F, DEC 127
+	' Log("Buffer:",Buffer(0),"=",Buffer(Buffer.Length - 1))
+	If Buffer(0) == 126 And Buffer(Buffer.Length - 1) == 127 Then
+		'Get the data objects from the serialized bytes buffer
+		Dim Data() As Object = ser.ConvertBytesToArray(Buffer, be)
+
+		'Check if there are two objects
+		If Data.Length < DATAOBJECTLENGTH Then
+			Log("[DMX Interface] [ERROR] Invalid message received (wrong number of data objects).")
+			Return
+		End If
+
+		'Handle the data received
+		'Data(0) = channel 1-512
+		'Data(1) = channel value 0-255
+		Log("[DMX Interface] Received: channel=", Data(0),", value=",Data(1))
+		dmx_master.SetChannelValue(Data(0), Data(1))		
+	Else
+		Log("[DMX Interface] [ERROR] Invalid message received (not serialized).")
+	End If
+End Sub
+
+Sub AStream_Error
+	Log("[DMX Interface] [ERROR] Invalid message received.")
+End Sub

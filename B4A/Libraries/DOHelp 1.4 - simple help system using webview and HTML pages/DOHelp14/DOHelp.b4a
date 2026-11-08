@@ -1,0 +1,87 @@
+﻿Build1=Default,b4a.dohelpdemo
+File1=DOHelp.bal
+File2=help.zip
+File3=main.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=archiver
+Library2=core
+Library3=webviewextras2
+Library4=xui
+Library5=ime
+ManifestCode=AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~
+Module1=DOHelp
+Module2=Starter
+NumberOfFiles=3
+NumberOfLibraries=5
+NumberOfModules=2
+Version=14.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: DOHelp demo
+	#VersionCode: 14
+	#VersionName: 1.4
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: true
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private lightButton, darkButton As Button
+	Dim helpWindow As DOHelp
+	
+	'for edge-to-edge fix in Android 16
+	Private root As Panel
+	Private xui As XUI
+	Private kb As IME
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'set up root panel for edge-to-edge in Android 16
+	kb.Initialize("kb")
+	kb.AddHeightChangedEvent
+	root = xui.CreatePanel("")
+	Dim content As Rect = kb.GetContentRect
+	Activity.AddView(root, content.Left, content.Top, content.Width, content.Height)
+	kb.UpdatePercentageReference(root.Width, root.Height)
+	root.LoadLayout("main")
+
+	helpWindow.Initialize(root, "help", "index.html")
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_KeyPress(KeyCode As Int) As Boolean 	'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If helpWindow.isShowing Then
+			helpWindow.close
+			Return True
+		Else
+			Return False
+		End If
+	Else
+		Return False							'not handled, so don't consume event
+	End If
+End Sub
+
+Sub Activity_Pause(UserClosed As Boolean)
+End Sub
+
+Sub lightButton_Click
+	helpWindow.show("index.html", True)
+End Sub
+
+Sub darkButton_Click
+	helpWindow.show("index.html", False)
+End Sub

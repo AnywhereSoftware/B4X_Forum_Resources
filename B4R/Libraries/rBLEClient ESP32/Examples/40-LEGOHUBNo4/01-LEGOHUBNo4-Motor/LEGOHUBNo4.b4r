@@ -1,0 +1,107 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rbleclient
+Module1=|relative|..\LEGOHUBNo4Controller
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rBLEClient
+' Brief:	Example connecting to the LEGOHUBNo4 brick and run the motor connected to port B (index 1).
+'			LEGO Battery Box Powered Up Bluetooth HUB NO. 4 (Hub 88009).
+'			Handle notifications with the event NewData.
+'
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Date: 	2025-08-01
+' License:	MIT — see LICENSE file.
+
+' MCU:		ESP-WROOM-32, B4R IDE ESP32 Dev Module, Arduino Boards Manager ESP32 3.0.0.
+' 			IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+' Wiring:	No additional wiring
+
+' Log:
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String 		= "rBLEClient LEGOHUBNo4 v20250801"
+	Public Serial1 As Serial
+
+	' BLE -  Peripheral LEGOHUBNo4
+	Private NAME As String			= "LEGOHUBNo4"
+	Private MAC As String 			= "90:84:2b:c1:94:79" ' MAC address in lowercase!
+    Public Client As BLEClient
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[AppStart] ", VERSION)
+
+    ' Initialize the BLE client with MAC, Service UUID, Characteristic UUID
+	Client.Initialize(MAC, _
+        		   	  LEGOHUBNo4Controller.UUID_SERVICE, _ 
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+					  LEGOHUBNo4Controller.UUID_CHARACTERISTIC, _
+        		   	  "Client_NewData", "Client_Error", _
+					  True)
+
+	Log("[AppStart] Connecting to ", NAME)
+	If Client.Connect Then
+		Log("[AppStart] Connected to ", NAME)
+
+		Log("[AppStart] Sending test data to ", NAME)
+		
+		' Set port B & speed
+		Dim portid As Byte = LEGOHUBNo4Controller.PORT_B
+		Dim speed As Int 
+		
+		speed = 50
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+
+		speed = 0
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(1000)
+
+		speed = -50
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+
+		speed = 0
+		Log("[AppStart] Port=", portid, ",speed=",speed)
+		LEGOHUBNo4Controller.SetPowerLevel(Client, portid, speed)
+		Delay(2000)
+				
+		Log("[AppStart] Disconnected from ", NAME)
+		Client.Disconnect
+    Else
+		Log("[AppStart] Connection failed to ", NAME)
+    End If
+End Sub
+
+' Callback when data is received from BLE
+Sub Client_NewData(data() As Byte)
+	LEGOHUBNo4Controller.MessageLogger(data)
+End Sub
+
+' Callback when BLE error occurs
+Sub Client_Error(code As Byte)
+	Log("[Client_Error] code=", code) 
+End Sub

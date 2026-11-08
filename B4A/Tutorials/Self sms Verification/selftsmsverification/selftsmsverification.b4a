@@ -1,0 +1,97 @@
+﻿Build1=Default,self.sms.verification
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=phone
+Library3=reflection
+Library4=xui
+Library5=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~~\n~AddPermission(android.permission.RECEIVE_SMS)~\n~AddReceiverText(smsverify,~\n~<intent-filter>~\n~    <action android:name="android.provider.Telephony.SMS_RECEIVED" />~\n~</intent-filter>)~\n~~\n~
+Module1=smsverify
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=2
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Self SMS Verification
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private EditText1 As EditText
+	Private EditText2 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	
+	'dont forget mainfest editor code!
+	
+	If EditText1.Text.Trim<>"" And EditText2.Text.Trim<>"" Then
+		Dim p As Phone
+		p.HideKeyboard(Activity)
+		Dim rp As RuntimePermissions
+		rp.CheckAndRequest(rp.PERMISSION_SEND_SMS)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result=True Then
+			rp.CheckAndRequest(rp.PERMISSION_RECEIVE_SMS)
+			Wait For Activity_PermissionResult (Permission As String, Result1 As Boolean)
+			If Result1=True Then
+				ProgressDialogShow2("Please wait for sms verification ...",False)
+				Dim phsms As PhoneSms
+				smsverify.smstoken=EditText1.Text
+				smsverify.mobilenumber=EditText2.Text
+				phsms.Send(smsverify.mobilenumber,smsverify.smstoken)
+				Log("sms sent")
+				Do While smsverify.smsVerified=False
+					Sleep(250)
+				Loop
+				ProgressDialogHide
+				If smsverify.smsVerified Then
+					Log("sms verification success")
+					xui.MsgboxAsync("sms verified successfully","")
+				Else
+					Log("sms verification failed")
+					xui.MsgboxAsync("sms verification failed","")
+				End If
+			Else
+				Log("receive sms permission required")
+			End If
+		Else
+			Log("send sms permission required")
+		End If
+	Else
+		ToastMessageShow("write token",False)	
+	End If
+	
+End Sub

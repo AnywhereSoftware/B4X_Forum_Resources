@@ -1,0 +1,173 @@
+﻿Build1=Default,b4a.example
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=jmqtt
+Library3=randomaccessfile
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddPermission(android.permission.INTERNET)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: ControllerDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private pnlGraph As Panel
+	Private Canvas As Canvas
+	Private btnStart As Button
+	Private btnStop As Button
+	Private btnClear As Button
+
+	Dim Client As MqttClient
+	Dim Const IPAddress As String = "192.168.1.7" 'Broker IP Address
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+	Dim Const WAIT_BEFORE_RECONNECT As Int = 5 'sec.
+
+	Dim Color(9) As Int = Array As Int(Colors.Black, Colors.Blue, Colors.Cyan, Colors.Gray, Colors.Green, Colors.Magenta, Colors.Red, Colors.White, Colors.Yellow)
+	Dim ColorIndex As Int
+	Dim SensorMap As Map
+
+	Dim Serializator As B4XSerializator
+	Type typControl(Sensor As String, Stop As Boolean)
+	Type typData(Sensor As String, Data As Object)
+	Type typSensor(X As Int, PreviousX As Int, PreviousY As Int, LegendX As Int, Color As Object)
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+
+	'Initializes the canvas for the graph
+	Canvas.Initialize(pnlGraph)
+	Dim R As Rect
+	R.Initialize(0, 0, pnlGraph.Width, pnlGraph.Height)
+	Canvas.DrawRect(R, Colors.LightGray, True, 0)
+
+	'Initializes the map of sensors
+	SensorMap.Initialize
+
+	'Connects to the MQTT broker
+	Client.Initialize("Monitor", ServerURI, "C" & Rnd(0, 100000))
+	Client.Connect
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub PublishControlMsg(Stop As Boolean)
+	'Sends an order to start or stop all the sensors
+	Dim ControlMsg As typControl
+	ControlMsg.Initialize
+	ControlMsg.Sensor = "*" 'All sensors
+	ControlMsg.Stop = Stop
+	Client.Publish("control", Serializator.ConvertObjectToBytes(ControlMsg))
+End Sub
+
+Sub btnStart_Click
+	Log("Start all")
+	PublishControlMsg(False)
+End Sub
+
+Sub btnStop_Click
+	Log("Stop all")
+	PublishControlMsg(True)
+End Sub
+
+Sub btnClear_Click
+	'Clears the canvas and resets the X positions
+	Dim R As Rect
+	R.Initialize(0, 0, pnlGraph.Width, pnlGraph.Height)
+	Canvas.DrawRect(R, Colors.LightGray, True, 0)
+	For Each SensorID As String In SensorMap.Keys
+		Dim Sensor As typSensor = SensorMap.Get(SensorID)
+		Sensor.X = 0
+		Sensor.PreviousX = Sensor.X
+		SensorMap.Put(SensorID, Sensor)
+	Next
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	If Success Then
+		Log("Connected")
+		Client.Subscribe("data", Client.QOS_1_LEAST_ONCE)
+		btnStart.Enabled = True
+		btnStop.Enabled = True
+	Else
+		Log("Connection failed. Reconnect attempt in " & WAIT_BEFORE_RECONNECT & " seconds.")
+		Sleep(WAIT_BEFORE_RECONNECT * 1000)
+		Client.Connect
+	End If
+End Sub
+
+Sub RecordAndDraw(Msg As typData)
+	'Computes the Y position for the new value
+	Dim Ratio As Float = pnlGraph.Height / 200
+	Dim Y As Int = pnlGraph.Height - (Msg.Data * Ratio)
+
+	Dim Sensor As typSensor
+	If Not(SensorMap.ContainsKey(Msg.Sensor)) Then
+		'Registers a new sensor with its distinct color for the graph
+		Sensor.Initialize
+		Sensor.X = 0
+		Sensor.PreviousX = Sensor.X
+		Sensor.PreviousY = Y
+		Sensor.Color = Color(ColorIndex)
+		Sensor.LegendX = ColorIndex * 100%x / 10 + 10dip
+		ColorIndex = ColorIndex + 1
+	Else
+		'Gets the sensor from the map
+		Sensor = SensorMap.Get(Msg.Sensor)
+	End If
+
+	'Draws a line between the previous value and the new value
+	Canvas.DrawLine(Sensor.PreviousX, Sensor.PreviousY, Sensor.X, Y, Sensor.Color, 2dip)
+	Sensor.PreviousX = Sensor.X
+	Sensor.PreviousY = Y
+	Sensor.X = Sensor.X + Ratio
+
+	'Displays the sensor ID
+	Canvas.DrawText(Msg.Sensor, Sensor.LegendX, pnlGraph.Height - 15dip, Typeface.DEFAULT, 14, Sensor.Color, "LEFT")
+	pnlGraph.Invalidate
+
+	'Keeps track of changes
+	SensorMap.Put(Msg.Sensor, Sensor)
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	If Topic = "data" Then
+		'Records and draws the new data
+		RecordAndDraw(Serializator.ConvertBytesToObject(Payload))
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed And Client.Connected Then
+		Client.Close
+	End If
+End Sub

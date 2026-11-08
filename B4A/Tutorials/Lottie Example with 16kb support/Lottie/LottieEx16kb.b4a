@@ -1,0 +1,102 @@
+﻿Build1=Default,com.lottieexample
+File1=emoji_simple.json
+File2=Layout1.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=appcompat
+Library2=core
+Library3=lottie
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A LottieEx16kb
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+#DebuggerForceStandardAssets: true
+#AdditionalJar:androidx.core:core
+#AdditionalJar:androidx.appcompat:appcompat
+'latest version: https://mvnrepository.com/artifact/com.airbnb.android/lottie/6.6.9
+#AdditionalJar:Lottie-6.6.9.aar
+'#AdditionalJar:Lottie.aar
+
+'latest version: https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib/2.2.20
+#AdditionalJar:kotlin-stdlib-2.2.20 
+'#AdditionalJar:kotlin-stdlib-1.3.21
+
+#AdditionalJar:Lottie-assets.aar
+#AdditionalJar:okio-1.17.4.jar
+
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Private factory As LottieCompositionFactory
+	Private Lotti As LottieAnimationView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	
+	Activity.LoadLayout("Layout1")
+	'lottie.SetAnimation2("slide_in_right",lottie.CacheStrategyStrong)
+	
+	factory.Initialize("Lotti")
+	
+	'===method 1: LOAD AS JSON
+'	Dim json As String = File.ReadString(File.DirAssets,"emoji_simple.json")
+'	factory.fromJsonString(json,"json")
+	
+	'====method 2: LOAD FROM ASSETS
+	'If loading from assets, make sure to add #DebuggerForceStandardAssets: true
+	factory.fromAsset("emoji_simple.json")
+	
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+#Region lottie
+Sub Lotti_onResult(success As Boolean, result As Object)
+	Log($"Lotti_onResult(${success})"$)
+	If success Then
+		Log("Lottie1.Composition = " & result)
+		Lotti.Composition = result
+		Lotti.RepeatCount = 100 'For loop / continues playback
+		
+		Lotti.playAnimation
+		
+	Else
+		Log("FALSE -> log error")
+		Log(result)
+	End If
+End Sub
+
+
+#End Region

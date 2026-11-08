@@ -1,0 +1,87 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=MainPage.bjl
+FileGroup1=New Group
+Group=Default Group
+Library1=b4xpages
+Library2=jcore
+Library3=jfx
+Library4=jokhttputils2
+Library5=json
+Module1=|relative|..\B4XMainPage
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 180 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	
+	'Form1 is the standard window
+	'We use an invisible help window to hide the task bar icon
+	Form1.SetFormStyle("UTILITY")
+	Form1.WindowWidth = 0
+	Form1.WindowHeight = 0
+	Form1.WindowLeft = -2000 ' Move the window outside of the visible area
+	Form1.Show
+		
+	'Now we create the widgit window
+	MainForm.Initialize("MainForm", 300, 180)
+		
+	' Make the window completely frameless and clear
+	MainForm.SetFormStyle("TRANSPARENT")
+	
+	'Bind the widgit to the hidden help window
+	Dim joMain As JavaObject = MainForm
+	Dim joOwner As JavaObject = Form1
+	Dim stageMain As JavaObject = joMain.GetField("stage")
+	Dim stageOwner As JavaObject = joOwner.GetField("stage")
+	stageMain.RunMethod("initOwner", Array(stageOwner))
+	
+	'Initialise our B4XPages in our widgit window	
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+	MainForm.Show
+	
+	'Make background transparent
+	Dim scene As JavaObject = stageMain.RunMethod("getScene", Null)
+	If scene.IsInitialized Then
+		scene.RunMethod("setFill", Array(Null)) ' Remove the JavaFX-Grey
+	End If
+	MainForm.RootPane.Style = "-fx-background-color: transparent;"
+
+End Sub
+
+
+'Template version: B4J-1.0
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region

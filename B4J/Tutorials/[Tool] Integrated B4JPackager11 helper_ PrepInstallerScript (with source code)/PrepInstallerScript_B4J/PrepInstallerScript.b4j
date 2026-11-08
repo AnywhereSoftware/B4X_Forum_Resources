@@ -1,0 +1,357 @@
+﻿AppType=JavaFX
+Build1=Default,com.code4data.PrepInstallerScript
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+Library4=jxui
+Library5=javaobject
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+	#LibraryVersion: 0.1
+	#LibraryName: PrepInstallerScript
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+
+	Private appName As String = "PrepInstallerScript"
+	Private lineSeparator As String
+	Private m As Map
+	Private lst As List
+	Private errorCode As Int = 0
+
+	Private TextArea1 As TextArea
+	Private ButtonExit As Button
+
+	Private exitTimer As Timer
+	Private exitCount As Int = 10
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	Dim i As Int
+	Dim installerscriptExists As Boolean = False
+	Dim argLowerCase As String
+	Dim s As String
+	Dim s2 As String
+	Dim runInnoSetup As String = ""
+
+#If RELEASE
+	RedirectOutput(File.DirData(appName), "stdOut.txt", True)
+	RedirectOutput(File.DirData(appName), "stdErr.txt", False)
+#End If
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.SetFormStyle("TRANSPARENT")
+	MainForm.Show
+
+	lineSeparator = GetSystemProperty("line.separator", CRLF)
+
+	If Args.Length = 0 Then
+		HandleError("No arguments were given", 1, True)
+		Return
+	Else If Args.Length Mod 2 <> 0 Then
+		HandleError("Arguments should be paired as 'key' and 'value'; you passed " & Args.Length & " arguments", 2, True)
+		Return
+	End If
+
+	m.Initialize
+	m.Put("source", "Objects\temp\build\*; DestDir: {app}; Flags: ignoreversion recursesubdirs createallsubdirs")
+
+	For i = 0 To (Args.Length - 2) ' -2: args are supposed to be paired as "key" and "value"
+		argLowerCase = Args(i).ToLowerCase
+		Select Case argLowerCase
+			Case "installerscripttemplate"
+				If File.Exists(Args(i + 1), "") = False Then
+					HandleError("'installerscripttemplate' file does not exist: " & Args(i + 1), 3, False)
+					Return
+				End If
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "installerscript"
+				installerscriptExists = File.Exists(Args(i + 1), "")
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "myappname"
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "myappversion"
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "myapppublisher"
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "myappexename"
+				If Args(i + 1).Contains("\") Then
+					HandleError("'myappexename' should be a filename without path: " & Args(i + 1), 4, True)
+					Return
+				Else If Args(i + 1).Trim.ToLowerCase.EndsWith(".exe") = False Then
+					HandleError("'myappexename' value should end with '.exe': " & Args(i + 1), 5, True)
+					Return
+				End If
+				m.Put(argLowerCase, Args(i + 1))
+				i = i + 1
+			Case "setupiconfile"
+				If File.Exists(Args(i + 1), "") = False Then
+					HandleError("'setupiconfile' file does not exist: " & Args(i + 1), 6, False)
+					Return
+				Else If Args(i + 1).Trim.ToLowerCase.EndsWith(".ico") = False Then
+					HandleError("'setupiconfile' value should end with '.ico': " & Args(i + 1), 7, True)
+					Return
+				End If
+				m.Put(argLowerCase, GetCanonicalPath(Args(i + 1)))
+				i = i + 1
+			Case "run"
+				runInnoSetup = GetCanonicalPath(Args(i + 1))
+				If File.Exists(runInnoSetup, "") = False Then
+					HandleError("'run' file does not exist: " & runInnoSetup, 8, False)
+					Return
+				Else If Args(i + 1).Trim.ToLowerCase.EndsWith(".exe") = False Then
+					HandleError("'run' value should end with '.exe': " & runInnoSetup, 9, True)
+					Return
+				End If
+				i = i + 1
+			Case "deletetempfolder"
+				m.Put(argLowerCase, True)
+				i = i + 1
+			Case Else
+				HandleError("Invalid 'key' argument: " & Args(i), 10, True)
+				Return
+		End Select
+	Next
+
+	If m.GetDefault("installerscript", "") = "" Then
+		HandleError("No 'installerscript' argument was given", 11, True)
+		Return
+	Else If installerscriptExists = False Then
+		' Create the InstallerScript from the template
+		s = m.GetDefault("installerscripttemplate", "")
+		If s = "" Then
+			HandleError("'installerscript' file does not exist, and no 'installerscripttemplate' argument was given", 12, True)
+			Return
+		End If
+		Try
+			' Copy the InstallerScript template
+			File.Copy(s, "", m.Get("installerscript"), "")
+		Catch
+			HandleError("Could not copy the 'installerscript' file from the 'installerscripttemplate' file: " & LastException, 13, False)
+			Return
+		End Try
+	End If
+
+	' I guess the below tests and changes could be done more elegantly with RegEx but ok
+	lst = File.ReadList(m.Get("installerscript"), "")
+	For i = 0 To (lst.Size - 1)
+		s = lst.Get(i)
+		s2 = s.ToLowerCase.Trim.replace(" ", "")
+		If s2.StartsWith("#definemyappname""") Then
+			ReplaceQuotedValue("myappname", s, i)
+		Else If s2.StartsWith("#definemyappversion""") Then
+			ReplaceQuotedValue("myappversion", s, i)
+		Else If s2.StartsWith("#definemyapppublisher""") Then
+			ReplaceQuotedValue("myapppublisher", s, i)
+		Else If s2.StartsWith("#definemyappexename""") Then
+			ReplaceQuotedValue("myappexename", s, i)
+		Else If s2.StartsWith("setupiconfile=") Then
+			ReplaceAfterDelimiter("setupiconfile", s, i, "=")
+		Else If s2.StartsWith("source:build") Then
+			ReplaceAfterDelimiter("source", s, i, ":")
+		End If
+	Next
+
+	' Write lst back to the target InstallerScript file
+	Try
+		File.WriteList(m.Get("installerscript"), "", lst)
+	Catch
+		HandleError("Could not write the 'installerscript' file: " & LastException, 14, False)
+		Return
+	End Try
+
+	AppendText("PrepInstallerScript completed successfully; output file: " & m.Get("installerscript"))
+
+	If runInnoSetup <> "" Then
+		AppendText("Starting Inno Setup...")
+		Dim jsh As Shell
+		jsh.Initialize("shl", runInnoSetup, Array As String("/cc", m.Get("installerscript")))
+		jsh.Run(-1)
+	Else
+		ExitApplication
+	End If
+
+End Sub
+
+Sub ReplaceQuotedValue(key As String, s As String, i As Int)
+
+	' If m contains 'key', replace the value between quotes by the one found in m and update lst
+
+	If m.ContainsKey(key) = False Then Return
+
+	Dim firstQuote As Int = s.IndexOf("""")
+	Dim lastQuote As Int = s.LastIndexOf("""")
+
+	s = s.SubString2(0, firstQuote + 1) & m.Get(key) & s.SubString(lastQuote)
+	lst.Set(i, s)
+
+End Sub
+
+Sub ReplaceAfterDelimiter(key As String, s As String, i As Int, delimiter As String)
+
+	' If m contains 'key', replace the value after 'delimiter' by the one found in m and update lst
+
+	If m.ContainsKey(key) = False Then Return
+
+	Dim firstDelim As Int = s.IndexOf(delimiter)
+
+	s = s.SubString2(0, firstDelim + 1) & m.Get(key)
+	lst.Set(i, s)
+
+End Sub
+
+Sub GetCanonicalPath(Path As String) As String
+
+	' Code from https://www.b4x.com/android/forum/threads/b4j-lastindexof.79572/#post-503846
+
+	Dim fileO As JavaObject
+	fileO.InitializeNewInstance("java.io.File", Array As Object(Path))
+	Return fileO.RunMethod("getCanonicalPath", Null)
+
+End Sub
+
+Sub shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+
+	If Success And ExitCode = 0 Then
+		If m.GetDefault("deletetempfolder", "") <> "" Then
+			AppendText("Deleting temp folder...")
+			DeleteFolderRecursive("temp")
+			File.Delete("temp", "")
+		End If
+		HandleError("Inno Setup seems to have completed successfully", 0, False)
+	Else
+		HandleError("Inno Setup: " & StdErr, 15, False)
+	End If
+
+End Sub
+
+Sub DeleteFolderRecursive(Folder As String)
+
+	' Code from https://www.b4x.com/android/forum/threads/folder-remove.57304/#post-360773
+
+	For Each f As String In File.ListFiles(Folder)
+		If File.IsDirectory(Folder, f) Then
+			DeleteFolderRecursive (File.Combine(Folder, f))
+		End If
+		File.Delete(Folder, f)
+	Next
+
+End Sub
+
+Sub HandleError(msg As String, exitCode As Int, showHelp As Boolean)
+
+	If exitCode > 0 Then
+		AppendText("ERROR: " & msg)
+	Else
+		AppendText(msg)
+	End If
+
+	If showHelp Then
+		AppendText("")
+		AppendText("=== General info: ===")
+		AppendText("* PrepInstallerScript's command line arguments must be paired: a key and value combination is expected for each one")
+		AppendText("* Values that contain spaces can be enclosed in double quotes")
+		AppendText("* In case of issues with PrepInstallerScript, its stdout and stderr can be found in %APPDATA%\PrepInstallerScript")
+		AppendText("* You'll probably also have to increase the Process Timeout in the IDE: Tools -> IDE Options -> Configure Process Timeout")
+		AppendText("")
+		AppendText("=== Valid key/value combinations are: ===")
+		AppendText("* installerscripttemplate <template file path>: the path of the template file; optional if the 'installerscript' file already exists")
+		AppendText("* installerscript <target file path>: the path of the installerscript file that is to be updated, or created from the template file")
+		AppendText("* myappname <name of your app>: if omitted, the existing value (possibly from the template file) will remain")
+		AppendText("* myappversion <version of your app>: if omitted, the existing value (possibly from the template file) will remain")
+		AppendText("* myapppublisher <publisher name for your app>: if omitted, the existing value (possibly from the template file) will remain")
+		AppendText("* myappexename <filename.exe>: the file name to be used for your app's executable; don't include path information, do include '.exe'; if omitted, the existing value (possibly from the template file) will remain")
+		AppendText("* setupiconfile <icon file path>: the path of the .ico file to be used as icon for your app")
+		AppendText("* run <Inno Setup's Compil32.exe path>: optional; if specified, Inno Setup will be run after successful completion")
+		AppendText("* deletetempfolder <anything as value>: if specified and Inno Setup was run successfully, the Objects/temp folder will be deleted")
+		AppendText("")
+		AppendText("=== Example with all possible pairs: ===")
+		AppendText("#CustomBuildAction: After Packager, YOUR_PATH_HERE\PrepInstallerScript.jar, installerscripttemplate ./temp/InstallerScript-Template.iss installerscript ../InstallerScript.iss myappname ""Sample App"" myappversion 1.0 myapppublisher ""My Company Inc"" myappexename SampleApp.exe setupiconfile ../files/appicon.ico run ""C:\Program Files (x86)\Inno Setup 6\Compil32.exe"" deletetempfolder YeahWhyNot")
+	End If
+
+	errorCode = exitCode
+	ButtonExit.Visible = True
+
+	If exitCode = 0 Then
+		ButtonExit.Text = "Exit (10)"
+		exitTimer.Initialize("ExitTimer", 1000)
+		exitTimer.Enabled = True
+	End If
+
+End Sub
+
+Sub ExitTimer_Tick
+
+	exitCount = exitCount - 1
+
+	If exitCount = 0 Then
+		ExitApplication
+	Else
+		ButtonExit.Text = "Exit (" & exitCount & ")"
+	End If
+
+End Sub
+
+Sub AppendText(txt As String)
+
+	If TextArea1.Text <> "" Then TextArea1.Text = TextArea1.Text & lineSeparator
+	TextArea1.Text = TextArea1.Text & txt
+
+End Sub
+
+Private Sub ButtonExit_Click
+
+	ExitApplication2(errorCode)
+
+End Sub
+
+' stdOut: if False, stdErr is redirected
+Sub RedirectOutput(Dir As String, FileName As String, stdOut As Boolean)
+
+	' Code based on https://www.b4x.com/android/forum/threads/redirect-the-output-to-a-file.65165
+
+	If File.Exists(Dir, FileName) Then
+		Try
+			File.Delete(Dir, FileName)
+		Catch
+			Log("Could not delete stdX file, will append to it: " & LastException)
+		End Try
+	End If
+
+	Dim out As OutputStream = File.OpenOutput(Dir, FileName, True) 'Set to True to append the logs
+	Dim tw As TextWriter
+	tw.Initialize(out)
+	tw.WriteLine("************************************" & CRLF & DateTime.Date(DateTime.Now) & " " & DateTime.Time(DateTime.Now))
+	tw.Flush
+	Dim ps As JavaObject
+	ps.InitializeNewInstance("java.io.PrintStream", Array(out, True, "utf8"))
+	Dim jo As JavaObject
+	jo.InitializeStatic("java.lang.System")
+	If stdOut Then
+		jo.RunMethod("setOut", Array(ps))
+	Else
+		jo.RunMethod("setErr", Array(ps))
+	End If
+
+End Sub

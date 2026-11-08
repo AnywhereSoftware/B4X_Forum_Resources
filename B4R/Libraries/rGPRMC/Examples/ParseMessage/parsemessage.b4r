@@ -1,0 +1,92 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rgprmc
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+'parsemessage.b4r
+'Test parsing NMEA GPRMC sentence message into fields. There is no GPS module connected.
+'Hardware:
+'Arduino UNO
+'Additional libraries:
+'rGPRMS - GPS module
+'rRandomAccessFile - ByteConverter
+'20210704 rwbl
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	Private Const SERIALLINE_BAUD As ULong = 115200
+	' $xxRMC, Time, Status, Lat, NS, Lon, EW, Spd, Cog, Date, MV, MWEW, PosMode, NavStatus*CS
+	Private GPRMC_DATA As String = "$GPRMC,083559.00,A,4717.11437,N,00833.91522,E,10.4,77.52,290621,,,A,V*57"
+	' Note: Fields 10 - 14 are not parsed
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(SERIALLINE_BAUD)
+	Log("GPRMC Test - Parse Sentence Message v20210704")
+	'Init the GPS object
+	GPRMC.Initialize(False, 2, 0)
+	GPRMC_Test
+End Sub
+
+'Test parsing GPRMC data
+'Output:
+'GPRMC Module Test - Parse Sentence Message v20210701
+'RMC Data:
+'$GPRMC,083559.00,A,4717.11437,N,00833.91522,E,10.4,77.52,290621,,,A,V*57
+'RMC Data Parsed:
+'> Data Valid: 1
+'> DateStamp (D.M.Y): 290621=29.6.21
+'> TimeStamp (h:m:s): 83559=8:35:59
+'> Lat: 47.2852, Indicator: N
+'> Lon: 8.5653, Indicator: E
+'> Speed (kmh): 19.2608, Course (deg): 77.5200
+'*******************************************
+'Distance & Bearing from city Hamburg To Kiel (Germany)
+'> Distance (km, approx): 86.5038
+'> Bearing (degrees, approx): 6.2814
+Private Sub GPRMC_Test
+	Dim bc As ByteConverter
+	Log("RMC Data:")
+	Log(GPRMC_DATA)
+	Log("RMC Data Parsed:")
+	If GPRMC.Parse_RMC_Sentence(GPRMC_DATA) Then
+		Log("> Data Valid: ", GPRMC.DataValid)
+		Log("> DateStamp (D.M.Y): ", GPRMC.DateStamp.Stamp, "=", GPRMC.DateStamp.Day, ".", GPRMC.DateStamp.Month, ".", GPRMC.DateStamp.Year)
+		Log("> TimeStamp (h:m:s): ", GPRMC.TimeStamp.Stamp, "=",GPRMC.TimeStamp.Hours, ":", GPRMC.TimeStamp.Minutes, ":", GPRMC.TimeStamp.Seconds)
+		Log("> Lat: ", GPRMC.Lat.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lat.Indicator)))
+		Log("> Lon: ", GPRMC.Lon.DegreesDec, ", Indicator: ", bc.StringFromBytes(Array As Byte(GPRMC.Lon.Indicator)))
+		Log("> Speed (kmh): ", GPRMC.Speed, ", Course (deg): ", GPRMC.Course)
+	End If
+
+	' Approx Distance & Bearing between cities Hamburg and Kiel (Germany) = 86.5038 km, 6.2814 degrees
+	Log("*******************************************")
+	Log("Distance & Bearing from city Hamburg to Kiel (Germany)")
+	Log("> Distance (km, approx): ", GPRMC.Distance_Between_Positions(53.551086, 9.993682, 54.323334, 10.1394444))
+	Log("> Bearing (degrees, approx): ", GPRMC.Course_To(53.551086, 9.993682, 54.323334, 10.1394444))
+
+	' Time Difference
+	Log("*******************************************")
+	Log("Time Difference (used for duration calculations)")
+	GPRMC.Time_Difference(10, 55, 1, 11, 2, 3)
+	' Time Difference: 702,0,7,2
+	Log("Time Difference: ", GPRMC.TimeDifference.Stamp, ",",GPRMC.TimeDifference.Hours,",",GPRMC.TimeDifference.Minutes,",",GPRMC.TimeDifference.Seconds)
+	'Time Difference: 000702
+	Log("Time Difference: ", NumberFormat(GPRMC.TimeDifference.Hours,2,0), _
+							 NumberFormat(GPRMC.TimeDifference.Minutes,2,0), _
+							 NumberFormat(GPRMC.TimeDifference.Seconds,2,0))
+End Sub
+

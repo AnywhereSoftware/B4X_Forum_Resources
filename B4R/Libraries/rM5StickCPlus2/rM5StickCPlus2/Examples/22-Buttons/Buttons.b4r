@@ -1,0 +1,71 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rm5stickcplus2
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		Buttons
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Test the buttons A (big button), B (top left), PWR (bottom right)of the M5 Stick-CPlus2.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' Secrets:		N/A.
+' Author:		Robert W.B. Linn
+' Date:			20251021
+' Wiring:		None.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private m5 As M5StickCPlus2
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart][I]")
+
+	m5.InitializeWithButtonEvent("button_pressed")
+	Log("[Main.AppStart][I] M5 initialized")
+	
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+
+	m5.SetTextSize(3)
+	m5.SetTextAt(20, 50, "Button Test", 3, m5.COLOR_GREEN)
+End Sub
+
+' Handle button pressed event.
+' buttonid 0=A,1=B,2=PWR
+Private Sub Button_Pressed(buttonid As Byte)
+	Log("[Main.Button_Pressed][I] buttonid=", buttonid)
+	Dim btn As String
+	' [Main.Button_Pressed] buttonid=1
+	m5.SetTextSize(3)
+	Select buttonid
+		Case m5.BTN_A
+			m5.SetLed(True)
+			btn = "Button A"
+			Log("[Main.Button_Pressed][I] Button A was pressed")
+		Case m5.BTN_B
+			btn = "Button B"
+			m5.SetLed(False)
+			Log("[Main.Button_Pressed][I] Button B was pressed")
+			' [Main.Button_Pressed] Button B was pressed
+		Case m5.BTN_PWR
+			btn = "Button PWR"
+			Log("[Main.Button_Pressed][I] Button PWR was pressed")
+	End Select
+	m5.Clear
+	m5.SetTextAt(20, 20, "Pressed:", 3, m5.COLOR_WHITE)
+	m5.SetTextAt(20, 60, btn, 3, m5.COLOR_WHITE)
+End Sub

@@ -1,0 +1,93 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 100
+	#MainFormHeight: 100 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+'	Private xui As XUI 
+	Private mCanvas As Canvas
+	Type TextMetric (Width As Double,Height As Double)
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	' get the map file name that was created and stored as a file
+	Dim mp As String = Args(0) 
+	
+	' change this path to where you stored this map file
+	If File.Exists(File.DirApp&"/www/tripinspect/images/tmplbl", mp) Then
+		Makelabel(mp)
+	End If
+	
+    ExitApplication2(0)
+
+End Sub
+
+
+Sub Makelabel(map As String) 
+
+	' change this path to where you stored this map file
+	Dim markmap As Map = File.ReadMap(File.DirApp&"/www/tripinspect/images/tmplbl", map)
+
+' NOTE:  the map must be Simple, with key and value being a number or text...
+
+	For Each key As String In markmap.Keys
+		
+		' the filename is the key
+		Dim fn As String = key 
+		
+		' the string to place on image png is the value
+		Dim t As String = markmap.Get(key) 
+	
+		mCanvas.Initialize("")
+		Dim fs As Double = 16
+		
+		Dim TM As TextMetric = MeasureText(t,fx.DefaultFont( fs))
+
+		Dim width, height As Double
+		width = TM.Width + 6
+		height = TM.Height + 1
+		
+		mCanvas.SetSize(width,height)
+		mCanvas.DrawRect( 0  , 0,  width, height,  fx.Colors.White,  True,  1) 'check size
+		mCanvas.DrawText2(t,   1, 16, fx.DefaultFont(fs),fx.Colors.Black,"LEFT",TM.Width)
+		
+		Dim Dir As String
+		
+		' change this path to where you stored this map file
+		Dir = File.DirApp&"/www/tripinspect/images/tmplbl"
+		Dim Out As OutputStream
+		Out = File.OpenOutput(Dir, fn, False)
+		
+		mCanvas.Snapshot.WriteToStream(Out)
+		Out.Close
+	Next
+	
+End Sub
+
+
+Sub MeasureText(Text As String,TFont As Font) As TextMetric
+	Dim TB,Bounds As JavaObject
+	Dim TM As TextMetric
+
+	TB.InitializeStatic("javafx.scene.text.TextBuilder")
+	Bounds = TB.RunMethodJO("create",Null).RunMethodJO("text",Array(Text)).RunMethodJO("font",Array(TFont)).RunMethodJO("build",Null).RunMethodJO("getLayoutBounds",Null)
+
+	TM.Width = Bounds.RunMethod("getWidth",Null)
+	TM.Height = Bounds.RunMethod("getHeight",Null)
+	Return TM
+End Sub

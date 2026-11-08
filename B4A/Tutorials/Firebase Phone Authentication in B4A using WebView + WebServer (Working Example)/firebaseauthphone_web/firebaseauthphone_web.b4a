@@ -1,0 +1,94 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=ime
+Library3=json
+Library4=webviewextras2
+Library5=xui
+Library6=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=firebaseauthphoneweb
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim firebaseauthphone1 As firebaseauthphoneweb
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	ini_firebaseauth
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub ini_firebaseauth
+	firebaseauthphone1.Initialize(Activity, Me)
+End Sub
+
+Sub firebaseauthphoneweb_fail
+	'si hay error al cargar webview cierra y carga el validacuenta clasico
+	If firebaseauthphone1.IsInitialized Then firebaseauthphone1.CloseAndRemove
+	ToastMessageShow("ERROR VALIDATE",False)
+	Log("ERROR VALIDATE")
+	Sleep(1000)
+	ini_firebaseauth
+End Sub
+Sub firebaseauthphoneweb_result(phonenumber As String)
+	If firebaseauthphone1.IsInitialized Then firebaseauthphone1.CloseAndRemove
+	If phonenumber.trim = "" Then
+		ToastMessageShow("ERROR VALIDATE",False)
+		Log("ERROR VALIDATE")
+		Sleep(1000)
+		ini_firebaseauth
+	End If
+	'comprueba las veces que se ha usado el tlf para crear una cuenta
+	ToastMessageShow("VALIDATION OK",False)
+	Log("VALIDATION OK")
+	
+	Sleep(1000)
+	ini_firebaseauth
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+	If firebaseauthphone1.IsInitialized And firebaseauthphone1.WebView1.Visible=True Then
+		If firebaseauthphone1.IsInitialized Then
+			firebaseauthphone1.CloseAndRemove
+		End If
+		ini_firebaseauth
+		Return True
+	End If
+
+	Return False
+End Sub

@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RAdafruitPWMServoDriver</name>
+        <shortname>AdafruitPWMServoDriver</shortname>
+        <comment>@class B4RAdafruitPWMServoDriver
+@brief Wrapper class that exposes the Adafruit 16-channel PWM/Servo driver (PCA9685) to B4R.
+       Enhanced with custom constants &amp; functions.
+
+Provides functions for initialization, PWM frequency configuration, direct PWM control,
+servo angle control, and oscillator tuning.</comment>
+        <property>
+            <name>OscillatorFrequency</name>
+            <comment>Set the internal oscillator frequency.
+@param freq - Frequency in Hz (e.g. 25,000,000).</comment>
+            <returntype>ULong</returntype>
+            <parameter>
+                <name>freq</name>
+                <type>ULong</type>
+            </parameter>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initialize with default I2C address (0x40).</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="Initialize2">Initialize2</name>
+            <comment>Initialize with a custom I2C address.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Byte</name>
+                <type>B4R::const</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Initialize3">Initialize3</name>
+            <comment>Initialize with a custom I2C address and I2C bus instance.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Byte</name>
+                <type>B4R::const</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="Reset">Reset</name>
+            <comment>Reset the device to default settings.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="Sleep">Sleep</name>
+            <comment>Put the device into low-power sleep mode.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="Wakeup">Wakeup</name>
+            <comment>Wake the device from sleep mode.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="SetExtClk">SetExtClk</name>
+            <comment>Use an external clock source.
+@param prescale - The prescale value for the external clock.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>prescale</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPWMFreq">SetPWMFreq</name>
+            <comment>Set PWM frequency for all channels.
+@param freq - Frequency in Hz (typical for servos: 50–60 Hz).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>freq</name>
+                <type>float</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetOutputMode">SetOutputMode</name>
+            <comment>Configure output mode.
+@param totempole - true for totem pole, false for open drain.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>totempole</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetPWM">GetPWM</name>
+            <comment>Read PWM on/off values for a given channel.
+@param channel - Channel number (0–15).
+@param off - When true, returns the "off" value; otherwise, the "on" value.
+@return The raw PWM counter value.</comment>
+            <returntype>UInt</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>off</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPWM">SetPWM</name>
+            <comment>Set the on/off tick counts for a channel.
+@param channel - Channel number (0–15).
+@param on - Counter tick when signal goes high.
+@param off - Counter tick when signal goes low.
+@return The last written "off" value.</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>on</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>off</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetPin">SetPin</name>
+            <comment>Set channel output value.
+@param channel - Channel number (0–15).
+@param val - PWM value (0–4095).
+@param invert - When true, output is inverted.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>val</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>invert</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ReadPrescale">ReadPrescale</name>
+            <comment>Read current prescale value.</comment>
+            <returntype>Byte</returntype>
+        </method>
+        <method>
+            <name DesignerName="WriteMicroseconds">WriteMicroseconds</name>
+            <comment>Write pulse length in microseconds to a channel.
+@param channel - Channel number (0–15).
+@param microseconds - Pulse width in µs.</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>microseconds</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="EnablePWM">EnablePWM</name>
+            <comment>EnablePWM
+
+Re-enables PWM output for a channel using the last stored angle.
+Useful after DisablePWM() to "wake up" the servo at its previous position.
+
+@param channel Servo channel (0–15).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="DisablePWM">DisablePWM</name>
+            <comment>Disable PWM (servo free, no buzz) by setting pulse length to 0.
+@param channel - Channel number (0–15).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetLimits">SetLimits</name>
+            <comment>Set servo angle min / max limits on a given channel.
+If not used, the defaults are 0°-180°.
+@param channel - Channel number (0–15).
+@param minangle - Minimum servo angle (clamped to ANGLE_MIN).
+@param minangle - Maximum servo angle (clamped to ANGLE_MAX).</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>minAngle</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>maxAngle</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetAngle">SetAngle</name>
+            <comment>Set servo angle on a given channel.
+@param channel - Channel number (0–15).
+@param angle - Desired servo angle (clamped to servo min / max angle).
+@param disable - Disable PWM (servo free, no buzz).
+@return Corresponding pulse length (out of 4096) or -1 if channel is invalid.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>angle</name>
+                <type>UInt</type>
+            </parameter>
+            <parameter>
+                <name>disable</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetAngle">GetAngle</name>
+            <comment>Get servo angle on a given channel.
+@param channel - Channel number (0–15).
+@return Current angle (0-180) or -1 if channel is invalid.</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>channel</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="AngleToPulse">AngleToPulse</name>
+            <comment>Convert angle (0–180°) to PWM pulse length.
+@param angle - Angle in degrees.
+@return Corresponding pulse length (out of 4096).</comment>
+            <returntype>UInt</returntype>
+            <parameter>
+                <name>angle</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PulseToAngle">PulseToAngle</name>
+            <comment>Convert PWM pulse length to angle (0–180°).
+@param microseconds - Pulse width in µs.
+@return Corresponding angle (0-180°). Not 100% accurate +/- 1°.</comment>
+            <returntype>UInt</returntype>
+            <parameter>
+                <name>microseconds</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <field>
+            <name DesignerName="CHANNELS">CHANNELS</name>
+            <comment>Number of PWM channels (0-15)</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="PWM_FREQUENCY_DEFAULT">PWM_FREQUENCY_DEFAULT</name>
+            <comment>Default PWM frequency (Analog servos typically run at ~60 Hz).</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="SERVO_MIN">SERVO_MIN</name>
+            <comment>Minimum pulse length (out of 4096) corresponding to ~0°.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="SERVO_MAX">SERVO_MAX</name>
+            <comment>Maximum pulse length (out of 4096) corresponding to ~180°.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="ANGLE_UNKNOWN">ANGLE_UNKNOWN</name>
+            <comment>Unknown angle.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="ANGLE_MIN">ANGLE_MIN</name>
+            <comment>Minimum angle 0°.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="ANGLE_MAX">ANGLE_MAX</name>
+            <comment>Maximum angle 180°.</comment>
+            <returntype>UInt</returntype>
+        </field>
+        <field>
+            <name DesignerName="MOVE_DELAY">MOVE_DELAY</name>
+            <comment>Servo move delay in microseconds.</comment>
+            <returntype>UInt</returntype>
+        </field>
+    </class>
+    <version>1</version>
+</root>

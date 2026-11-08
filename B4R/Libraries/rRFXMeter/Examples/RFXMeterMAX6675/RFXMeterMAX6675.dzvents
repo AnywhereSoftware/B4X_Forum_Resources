@@ -1,0 +1,41 @@
+--[[
+    rfxmetermax6675.dzvents - Explore Arduino_RFXtrx433e.
+    The Arduino sends Thermosensor MAX6675 temperature via the 433Mhz Transmitter to the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+    The data is received by a RFXMeter device, parsed into idx, temperature value and the Temp device with given idx is updated.
+    Hardware
+    Arduino UNO with connected modules 433Mhz Transmitter and Thermosensor MAX6675.
+
+    Domoticz Devices
+    Device RFXMeter (name RFXMETER) connected hardware RFXCOM RFXtrx433e:
+    IDX=384, hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, type=RFXMeter, SubType=RFXMeter counter, Data=69425 (Example)
+    Device Temperature (name RFXMeterMAX6675) connected hardware Dummy (Virtual Sensors):
+    IDX=375, Hardware=VirtualSensors, ID=141C7, Unit=1, Name=RFXMeterMAX6675, Type=Temp, SubType=LaCrosse TX3, Data=66.0
+    HINT: The RFXMeter can set to hidden by setting the name first character to $. Example: $RFXMeter.
+
+    20220406 rwbl
+]]--
+
+-- IDX of the devices used.
+local IDX_RFXMETER = 384
+
+return {
+	on = { devices = { IDX_RFXMETER } },
+	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERMAX6675', },
+	execute = function(domoticz, device)
+	    -- RFXMETER: 1337518 = 1(LeadingNumber) 3(IDX length) 375(IDX) 18(Temperature)
+		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+        -- Method string.sub extracts a piece of the string s, from the i-th to the j-th character inclusive. In Lua, the first character of a string has index 1
+        -- Get the length of the idx at pos 2 (pos 1 is not used as fixed leading number 1)
+        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+        -- Get the idx starting at pos 3 of the sValue
+        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+        -- The temperature is set as sValue. The nvalue is just for completeness
+        local nvalue = 0
+        local svalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+        domoticz.log(("IDX %d=%d, %d"):format(idx, nvalue, svalue))
+        if (idx ~= 0) then 
+            -- The device is updated via HTTP: http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=375&nvalue=0&svalue=18&parsetrigger=false
+            domoticz.devices(idx).setValues(nvalue, svalue)
+        end
+    end
+}

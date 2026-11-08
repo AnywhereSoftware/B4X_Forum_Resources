@@ -1,0 +1,121 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+Module1=Icons
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example simple icons.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1200
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx ICONS v20250406"
+
+	'Communication
+	Public Serial1 As Serial
+	
+	'Display instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+
+	Log("[Demo] Display dimensions: w=", lcd.Width,",h=",lcd.Height)
+
+	lcd.DisplayRotation = 1
+	Log("[Demo] getrotation=", lcd.DisplayRotation)
+	
+	'Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_GREEN
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_WHITE, lcd.COLOR_BLACK, lcd.COLOR_RED)
+
+	'Draw text at bottom left
+	lcd.DrawFooter("B4X is great... enjoy", lcd.FONT_FONT0, lcd.TEXT_ALIGN_LEFT, 1, lcd.COLOR_BLACK, lcd.BackgroundColor, lcd.COLOR_NONE)
+
+	'Draw some test icons defined in the code module icons.
+	lcd.DrawIcon(20,50, 6, 8, 8, Icons.BatteryFull, lcd.COLOR_BLACK, lcd.color_GREEN)
+	lcd.DrawIcon(100,50, 6, 8, 8, Icons.BatteryHalf, lcd.COLOR_BLACK, lcd.color_YELLOW)
+	lcd.DrawIcon(180,50, 4, 8, 8, Icons.BatteryEmpty, lcd.COLOR_BLACK, lcd.color_RED)
+
+	lcd.DrawIcon(20,150, 5, 8, 8, Icons.ArrowRight, lcd.COLOR_BLACK, lcd.BackgroundColor)
+	lcd.DrawIcon(100,150, 5, 8, 4, Icons.ArrowRight, lcd.COLOR_BLUE, lcd.BackgroundColor)
+	lcd.DrawIcon(180,150, 5, 8, 16, Icons.ArrowRight, lcd.COLOR_RED, lcd.BackgroundColor)
+
+End Sub
+
+'Example own method to draw a pixel size 8x8
+Public Sub DrawPixel8(x As Int, y As Int, color As ULong)
+	For i=x To x+8
+		For j=y To y+8
+			lcd.DrawPixel(i, j, color)
+		Next
+	Next
+End Sub
+
+'Example own method to draw an icon
+'DrawIcon(100, 100, 6, 8, 4, SpecialChars.BatteryHalf, lcd.COLOR_BLACK, lcd.color_RED)
+Public Sub DrawIcon(x As UInt, y As UInt, rows As UInt, cols As UInt, size As Byte, bitmap() As Byte, color As ULong, bgcolor As ULong)
+	Dim row As Int
+	Dim col As Int
+	Dim clr As ULong
+	
+	For row = 0 To rows - 1
+		For col = 0 To cols - 1
+			clr = IIf(Bit.And(Icons.BatteryHalf(row), Bit.ShiftRight(0x80, col)) <> 0, color, bgcolor)
+			lcd.DrawPixelSize(x + col * size, y + row * size, size, clr)
+		Next
+	Next
+End Sub
+
+'Example own method to draw an icon BatteryHalf
+Public Sub DrawBatteryHalf(x As Long, y As Long, color As ULong)
+	Dim row As Int
+	Dim col As Int
+	For row = 0 To 5 ' 6 rows total
+		For col = 0 To 7 ' 8 columns total
+			If Bit.And(Icons.BatteryHalf(row), Bit.ShiftRight(0x80, col)) <> 0 Then ' Shift RIGHT instead
+				lcd.DrawPixel4(x + col * 4, y + row * 4, color) ' 4x4 blocks
+			End If
+		Next
+	Next
+End Sub

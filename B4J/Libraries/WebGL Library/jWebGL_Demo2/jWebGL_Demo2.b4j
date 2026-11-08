@@ -1,0 +1,236 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jwebgl
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 300
+	#MainFormHeight: 200 
+#End Region
+
+' This demo code focus on create more geometries and place them to the 3D space.
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private Button1 As B4XView
+	
+	Private gl As WebGL
+	Private Port As Int = 8888
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Title = "WebGL Demo 2"
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Button1.Enabled = False
+	
+	' Set here the path where THREEJS distribution was unzipped.
+	' More concurrent projects can run at same time, just use different port for each if you need this.
+	gl.Initialize(Me, "WebGL", "WebGL_Demo2", "GMT+1", File.DirData("B4XWebGL"), Port)
+	
+	Wait For (gl.GetEngine) Complete (Success As Boolean)
+	If Success Then
+'		gl.SetLocalServer
+		gl.StartEngine
+	Else
+		LogError("Unable to initialize WebGL Library")
+	End If
+End Sub
+
+'///////////// WebGL Library Events ////////////
+
+' Called if error occours
+Sub WebGL_Error(Error As String)
+	LogColor(Error, xui.Color_Red)
+End Sub
+
+' Called when the library is fully initialized and user is ready to code
+Sub WebGL_ReadyToCode(Url As String)
+	Log(" ") : LogColor("WebGL ReadyToCode. Your WebGL code start here. URL: " & Url, 0xFF9A4EC0)
+					
+	gl.Alert("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")
+	gl.Console("'Welcome to B4X WebGL Library.\n\nThis library is aimed by THREEJS project.\nCurrently tested on THREEJS r164.\nhttps://threejs.org/'")	
+	gl.Console("'THREEJS REVISION: ' + THREE.REVISION")
+	gl.Console($"'Point to ${gl.ServerProjectPath} to see library examples\n'"$)
+	gl.Console($"'Point to ${gl.ServerMainPage} to see library main page\n'"$)
+	
+	DrawScene
+End Sub
+
+' Called just one time when the scene is updated
+Private Sub WebGL_Updated(Url As String)
+	Log(" ") : LogColor("Server static folder: " & gl.MainFolder, xui.Color_Magenta)
+	Log(" ") : Log("To access the scene:")
+	LogColor(Url, xui.Color_Magenta)
+	Log("To access the library main page:")
+	LogColor(gl.ServerMainPage, xui.Color_Magenta) : Log(" ")
+	
+'	LogColor(gl.HtmlString, xui.Color_Blue) : Log(" ")  ' Show the final html string
+'	LogColor(gl.HtmlStringDebug, xui.Color_Blue) : Log(" ")  ' Show the final html string in debug mode with line numbers. With this we can track JavaScript console errors.
+End Sub
+
+' Called when there are library server logs
+Private Sub WebGL_ServerLog(Text As String)
+	If Text.Contains(".html") Or Text.ToLowerCase.Contains("mainpage") Then
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Magenta)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	Else
+		If Text.Contains("[200]") Then  ' File found
+			LogColor(Text, xui.Color_Blue)
+		Else If Text.Contains("[304]") Then  ' Cached
+			LogColor(Text, 0xFFFF7F00)
+		Else If Text.Contains("[404]") Then  ' File not found
+			LogColor(Text, xui.Color_Red)
+		End If
+	End If
+End Sub
+
+'/////////////////////////// SCENE ///////////////////////////////
+
+Sub DrawScene
+	
+	gl.Import("* as THREE from 'three'")
+	gl.Import("{ OrbitControls } from 'three/addons/controls/OrbitControls.js'")
+	
+	Dim html As String = $"
+/////////////////////////////////////////////
+//                                         //
+// Don't forget to post comments and your  //
+// 3D creations on B4X Forum.              //
+//                                         //
+// Author: Massimo Meli (ITALY)            //                                   
+// matrix20001@tin.it                      //
+// max123 on B4X Forum                     //
+//                                         //
+//   Enjoy with ThreeJS and full 3D !!!    //                                         
+//                                         //
+/////////////////////////////////////////////
+	
+var camera, scene, renderer, controls, geometry, material, mesh;
+
+init();
+animate();
+
+function init() {
+   scene = new THREE.Scene();
+
+	camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.01, 100);
+	camera.position.z = 2;    
+	camera.position.x = 1.5;    
+
+	AddLights();
+	CreateCubes();
+   CreateSpheres();
+
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	document.body.appendChild( renderer.domElement );
+
+   controls = new OrbitControls(camera, renderer.domElement);
+	
+	// Optionals controls adjustments
+	controls.rotateSpeed = 1.2;  // By default 1.0
+	controls.zoomSpeed = 0.8;    // By default 1.0
+	controls.panSpeed = 1.4;     // By default 1.0
+	controls.enableDamping = true;  // By default false
+	controls.dampingFactor = 0.02;   // By default 0.05
+	//controls.autoRotate = true;  // By default false
+	//controls.autoRotateSpeed = 0.5;  // By default 1.0
+	
+	window.addEventListener('resize', onWindowResize, false); // Handle resize
+}
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	animate();
+}
+
+function animate() {
+	requestAnimationFrame( animate );
+	controls.update();
+	renderer.render( scene, camera );
+}
+
+function CreateCubes() {
+	geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+	material = new THREE.MeshNormalMaterial();
+	for (let x = 0; x < 10; x ++) {
+		mesh = new THREE.Mesh( geometry, material );
+		mesh.position.x = x / 3; 
+		scene.add(mesh);
+	}
+}
+
+function CreateSpheres() {
+   const radius = 0.125;
+   const widthSegments = 32;
+   const heightSegments = 32;
+
+   var geo = new THREE.SphereGeometry( radius, widthSegments, heightSegments );
+   var mat = new THREE.MeshPhongMaterial({color:0x0000ff});
+
+   for (let i = 0; i < 10; i++) { 
+      const sphere = new THREE.Mesh(geo, mat);
+      sphere.position.y = i / 4;
+      scene.add(sphere); 
+   }
+}
+
+function AddLights() {
+
+	///// AMBIENT LIGHT /////
+		
+	const aLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
+	scene.add(aLight);
+
+	///// DIRECTIONAL LIGHT /////
+
+	const dLight = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+	dLight.position.set(40,30,40);
+   dLight.intensity = 0.80;
+	scene.add(dLight);  // WE CAN ADD LIGHT TO A SCENE OR CAMERA
+
+	// Optional Helper object to assist with visualizing a DirectionalLight's effect on the scene. 
+	// This consists of plane and a line representing the light's position and direction. 
+	// const dlHelper = new THREE.DirectionalLightHelper(dLight, 5);
+	// scene.add(dlHelper);
+
+	///// POINT LIGHT /////
+
+	// var pLight = new THREE.PointLight(0xFFFFFF);
+	// pLight.position.set(-10, 15, 50);
+	// scene.add(pLight);
+			
+	// Optional this displays a helper object consisting
+	// of a spherical Mesh for visualizing a PointLight. 	
+	// var sSize = 1;  // Sphere size
+	// const plHelper = new THREE.PointLightHelper(pLight, sSize);
+	// scene.add(plHelper);
+}"$
+	
+	gl.Inject(html)
+	gl.Update ' Always remember to update. This will create your html file.
+End Sub

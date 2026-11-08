@@ -1,0 +1,78 @@
+' Users Model
+' Version 1.00
+Sub Class_Globals
+	Private DB As MiniORM
+	Type Users (username As String, email As String, password As String, role As String)
+End Sub
+
+Public Sub Initialize
+	DB = Main.DB
+End Sub
+
+Public Sub Create (Username As String, Email As String, Password As String, Role As String)
+	DB.Open
+	DB.Table = "tbl_users"
+	DB.Columns = Array("username", "email", "password", "role")
+	DB.Parameters = Array(Username, Email, Password, Role)
+	DB.Save
+End Sub
+
+Public Sub FindRowByUsername (Username As String) As Boolean
+	DB.Open
+	DB.Table = "tbl_users"
+	DB.Conditions = Array("username = ?")
+	DB.Parameters = Array(Username)
+	DB.Query
+	Return DB.Found
+End Sub
+
+Public Sub Found As Boolean
+	Return DB.Found
+End Sub
+
+Public Sub GetRowByUsername (Username As String) As Map
+	DB.Open
+	DB.Table = "tbl_users"
+	DB.Columns = Array("username", "email", "password", "role")
+	DB.Condition = "username = ?"
+	DB.Parameter = Username
+	DB.Query
+	If DB.Found Then
+		Return DB.First
+	End If
+	Return CreateMap()
+End Sub
+
+Public Sub First As Map
+	Return DB.First
+End Sub
+
+Public Sub Error As Exception
+	Return DB.Error
+End Sub
+
+Public Sub CreateUsersTable
+	DB.ShowExtraLogs = True
+	DB.UseTimestamps = True
+	DB.QueryExecute = False
+	DB.QueryAddToBatch = True
+	DB.IfNotExist = True
+	
+	Log("Creating Users table...")
+	DB.Open
+	DB.Table = "tbl_users"
+	DB.Columns.Add(CreateMap("Name": "username", "Null": False))
+	DB.Columns.Add(CreateMap("Name": "email", "Null": False))
+	DB.Columns.Add(CreateMap("Name": "password", "Null": False))
+	DB.Columns.Add(CreateMap("Name": "role", "Default": "user"))
+	DB.Create
+	
+	Wait For (DB.ExecuteBatchAsync) Complete (Success As Boolean)
+	If Success Then
+		Log("Table Users created successfully!")
+	Else
+		Log("Table Users creation failed!")
+	End If
+	DB.Close
+	DB.QueryExecute = True
+End Sub

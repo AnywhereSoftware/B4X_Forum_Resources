@@ -1,0 +1,454 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rlittlefs
+Library4=rrandomaccessfile
+Library5=rawot
+Module1=|absolute|D:\B4R\B4R_Modules\GlobalStore
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+    Public P_buff() As Byte
+    Public Serial1 As Serial
+    Private wifi As ESP8266WiFi
+    Private bc As ByteConverter
+    Private lfs As LittleFS
+    Private aWOT As aWOT
+    Dim buff(256) As Byte
+    Dim Debug As Boolean = True
+    Dim DebugF As Boolean = False
+    Dim traces As Boolean = True
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("AppStart")
+
+    'example of connecting to a local network
+    If wifi.Connect2("xxxxx", "xxxxxxxxxx") Then
+        Log("Connected to network")
+    Else
+        Log("Failed to connect to network")
+    End If
+    aWOT.initialize1("finally","notfound")
+    If Not(lfs.Initialize()) Then Log("FS initialization error") Else Log("init lfs OK")
+    Log(wifi.LocalIp)
+    GlobalStore.put(0,"/")
+    AddLooper("process")
+
+'1) managemant "/" with "app"
+'    aWOT.app_setTimeout(3000)
+	aWOT.app_use1("m0_traces")           ' traces
+	aWOT.app_get("/","m7_filebrowser")       ' app_Router -> middleware 7 to show basic_menu html"
+
+	aWOT.app_get("/filebrowser","m7_filebrowser") ' app_Router -> middleware 7 to show LittleFS html
+    aWOT.app_useR("/filebrowser",7) ' app_Router -> Router 7 to handle LittleFS interface
+
+'6) file management with rLittleFS
+	aWOT.rout_post(7,"/action","m21_filebrowser_action")   ' Router 7 -> middleware 21 to handle webserver post <file transfert to esp>
+	aWOT.rout_post(7,"/upload","m22_FileUpload")   ' Router 7 -> middleware 22 to handle webserver post <file upload to esp>
+	aWOT.rout_post(7,"/download","m23_FileDownload")   ' Router 7 -> middleware 22 to handle webserver post <file upload to esp>
+	aWOT.rout_post(7,"/FSload","m30_browserFSload")   ' Router 7 -> middleware 29 to provide FS configuration at Browser launch>
+
+End Sub
+
+ Sub process()
+   aWOT.process
+End Sub
+
+'*********************************************
+Sub m0_traces
+    If traces Then
+        Log(" ")
+         Log(" ClientIP ====>",aWOT.ClientIP)
+'        Dim IPA () As Byte= aWOT.ClientIP1:Log(" ClientIP ====>",IPA(0),".",IPA(1),".",IPA(2),".",IPA(3))
+        Log("Trace - path received:",aWOT.req_path)
+        Select aWOT.req_method
+            Case 0 :Log("Trace - MethodType::UNKNOWN")
+            Case 1 : Log("Trace - MethodType::GET")
+            Case 2 : Log("Trace - MethodType::HEAD")
+            Case 3 : Log("Trace - MethodType::POST")
+            Case 4 : Log("Trace - MethodType::PUT")
+            Case 5 : Log("Trace - MethodType::DELETE")
+            Case 6 : Log("Trace - MethodType::PATCH")
+            Case 7 : Log("Trace - MethodType::OPTIONS")
+            Case 8 : Log("Trace - MethodType::ALL")
+            Case Else: Log("Trace - method= ",    aWOT.req_method)
+        End Select
+    End If
+'    aWOT.res_set("Connection", "keep-alive")
+End Sub
+
+'**********************************************************************************
+Sub m7_filebrowser
+'	Log("filebrowser1 html")
+'	getdatafiles("/gzip/index_m.htm.gz","text/html; charset=utf-8", "gzip")
+'	If Debug Then Log("stack4=",StackBufferUsage)
+'End Sub
+    Log("filebrowser1 html")
+    getdatafiles("/html/index.htm","text/html; charset=utf-8", "none")
+    If Debug Then Log("stack4=",StackBufferUsage)
+End Sub
+
+Sub m30_browserFSload
+    Log("Filebrowser -> getFSdata")
+    aWOT.res_set("Content-Type", "text/plain")
+    aWOT.res_set("Content-Encoding","none")
+    aWOT.res_println(bc.StringFromBytes(GlobalStore.slot0))  'open directory
+    aWOT.res_println(NumberFormat(lfs.TotalSize,0,0)) 'total size of FS
+    aWOT.res_println(NumberFormat(lfs.UsedSize,0,0))  'used size of FS
+    For Each f As File In lfs.ListFiles(bc.StringFromBytes(GlobalStore.Slot0))
+        browserFSload1(f)
+    Next
+'    aWOT.res_println("[end]")
+    aWOT.res_sendStatus(200)
+    aWOT.res_end
+    If DebugF Then Log("stack FSload=",StackBufferUsage)
+End Sub
+
+Sub browserFSload1(f As File)
+    Dim point As Int = bc.LastIndexOf(f.Name.getbytes,".".getbytes)+1
+    If f.IsDirectory Then
+        Dim Type1() As Byte ="Dir"
+    Else
+        Dim Type1() As Byte = (bc.SubString(f.Name.getbytes,point))
+    End If
+'    aWOT.res_println(JoinStrings(Array As String(f.Name,"|",Type2,"|",NumberFormat(f.size,0,0))))
+    aWOT.res_print(f.Name): aWOT.res_print("|"): aWOT.res_print(bc.StringFromBytes(Type1)): aWOT.res_print("|"): aWOT.res_println(NumberFormat(f.size,0,0)):
+    If DebugF Then Log("stack File load=",StackBufferUsage)
+End Sub
+Sub m21_filebrowser_action
+    If Debug Then Log("filebrowser -> action")
+ '   identFirst = 0
+    Dim name(20) As Byte
+    Dim value(20) As Byte
+    aWOT.req_form(name, value)
+'    Dim nam1 As String = bc.StringFromBytes(name)
+    Dim act As String = bc.StringFromBytes(bc.Trim(value))
+    If Debug Then Log("act -> ",act)
+    aWOT.req_form(name, value)
+'    Dim nam2 As String = bc.StringFromBytes(name)
+    Dim nam1 As String = bc.StringFromBytes(bc.Trim(value))
+    If Debug Then Log("nam1 -> ",nam1)
+    aWOT.req_form(name, value)
+    Dim nam2 As String = bc.StringFromBytes(bc.Trim(value))
+    If Debug Then Log("nam2 -> ",nam2)
+    aWOT.req_form(name, value)
+    Dim typ As String = bc.StringFromBytes(bc.Trim(value))
+    If Debug Then Log("typ -> ",typ)
+    Select act
+        Case "DCreate"
+            If typ = "Dir" Then m21_DirCreate(nam1)
+        Case "DOpen"
+            If typ = "Dir" Then m21_DirOpen(nam1)
+        Case "DClose"
+            m21_DirClose(nam1)
+        Case "DDelete"
+            If typ = "Dir" Then m21_DirDelete(nam1)
+        Case "Delete"
+            If typ = "File" Then m21_FileDelete(nam1)
+        Case "Rename"
+            If typ <> "Dir" Then m21_FileRename(nam1,nam2)
+        Case "Format"
+            m21_Format
+'        Case "Download"
+ '           m21_FileDownload(nam1)
+    End Select
+'    aWOT.res_set("Location", "/")
+'    aWOT.res_sendStatus(302)
+    aWOT.res_sendStatus(200)
+    If Debug Then Log("stack=",StackBufferUsage)
+End Sub
+Sub m21_Format
+    Log ("Eeprom Format")
+
+    lfs.Format
+End Sub
+Sub m21_DirDelete(nam1 As String)
+    Log ("DirDelete")
+    If nam1 <> "" Then
+      Dim fullnam As String = JoinStrings(Array As String(bc.StringFromBytes(GlobalStore.Slot0),"/",nam1))
+        If DebugF Then Log("fullnam=",fullnam)
+        If  lfs.Exists( fullnam) Then lfs.RMDir(fullnam)
+    End If
+End Sub
+Sub m21_DirCreate(nam1 As String)
+    Log ("DirCreate")
+    If nam1 <> "" Then
+        Dim fullnam As String = getfullnam(nam1.GetBytes)
+        If  Not(lfs.Exists(fullnam)) Then lfs.MKDir(fullnam)
+    End If
+End Sub
+
+Sub m21_DirOpen(nam1 As String)
+    Log ("DirOpen")
+    If nam1 <> "" Then
+      Dim fullnam As String = getfullnam(nam1.GetBytes)
+      If  lfs.Exists( fullnam) Then GlobalStore.Put(0,fullnam.getbytes)Else GlobalStore.Put(0,"/")
+    End If
+End Sub
+Sub m21_DirClose(nam1 As String)
+    Log("DirClose")
+    Dim i As Int = bc.LastIndexOf(GlobalStore.Slot0,"/".GetBytes)
+    If i > 0 Then GlobalStore.put(0,bc.SubString2(GlobalStore.slot0,0,i)) Else GlobalStore.put(0,"/")
+End Sub
+Sub m21_FileDelete(nam1 As String)
+    Log("FileDelete")
+    Dim fullnam As String = getfullnam(nam1.GetBytes)
+    If  lfs.Exists(fullnam) Then lfs.Remove(fullnam)
+End Sub
+Sub m21_FileRename(nam1 As String,nam2 As String)
+    Log("FileRename")
+    If (nam1 <> "") And (nam2<>"") Then
+        Dim fullnam1 As String = getfullnam(nam1.GetBytes)
+        Dim fullnam2 As String = getfullnam(nam2.GetBytes)
+        If  lfs.Exists( fullnam1) Then lfs.Rename(fullnam1,fullnam2)
+    End If
+End Sub
+
+'**********************************************************************************
+Sub m23_FileDownload
+    If Debug Then Log("filebrowser -> download")
+    '   identFirst = 0
+    Dim name(20) As Byte
+    Dim value(20) As Byte
+    aWOT.req_form(name, value)
+    '    Dim nam1 As String = bc.StringFromBytes(name)
+    Dim value1 As String = bc.StringFromBytes(bc.Trim(value))
+    If Debug Then Log("file -> ",value1)
+    m23_File_Download(value1)
+    aWOT.res_set("Location", "/")
+    aWOT.res_sendStatus(302)
+'    aWOT.res_sendStatus(200)
+    If Debug Then Log("stack=",StackBufferUsage)
+End Sub
+Sub m23_File_Download(filename As String)
+    If (lfs.CurrentFile.IsFile) Then lfs.close
+
+    Dim fullnam As String = getfullnam(filename.getbytes)
+    Dim nbR As UInt
+    If lfs.OpenRead(fullnam) Then 'file exist
+        Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0
+        aWOT.res_set("Content-Transfer-Encoding", "binary")
+        aWOT.res_set("Accept-Ranges","bytes")
+        aWOT.res_set("Content-Length", NumberFormat(filesize,0,0))
+        aWOT.res_set("Content-Encoding","none")
+        Dim attach As String =JoinStrings(Array As String("application/",getext(filename.getbytes)))
+        aWOT.res_set("Content-Type",attach)
+        attach = JoinStrings(Array As String("attachment; filename=",filename))
+        aWOT.res_set("Content-Disposition",attach )
+
+        If DebugF Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+        Do While filesize > filecurrent
+            nbR = Min(filesize-filecurrent,buff.Length)
+            If DebugF Then Log("nb byte max to read : ", nbR, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbR)) Else lfs.Stream.ReadBytes(buff,0,nbR)
+            writestream(nbR)
+            aWOT.req_flush
+            filecurrent = lfs.Position
+            If DebugF Then Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+        Loop
+    End If
+    lfs.Close
+    aWOT.res_end
+    If DebugF Then Log("Download End")
+    If Debug Then Log("stack=",StackBufferUsage)
+End Sub
+
+'**********************************************************************************
+Sub writestream(nbW As UInt)
+    If aWOT.req_availableForWrite < buff.Length Then
+        If DebugF Then Log("=> flush")
+        aWOT.req_flush
+    End If
+    If DebugF Then Log("written to aWOT stream:",aWOT.res_write1(buff,nbW)) Else aWOT.res_write1(buff,nbW)
+End Sub
+Sub getext(filename() As Byte) As String
+    Dim point() As Byte = Array As Byte(46)
+    Dim ext() As Byte = bc.SubString(filename,bc.LastIndexOf(filename,point))
+    Return bc.StringFromBytes(ext)
+End Sub
+Sub getfullnam(filename() As Byte) As String
+    Dim dir() As Byte = GlobalStore.slot0
+    If dir = "/" Then
+        Dim fullnam() As Byte = JoinBytes(Array(dir,filename))
+    Else
+        Dim fullnam() As Byte = JoinBytes(Array(dir,"/".getbytes,filename))
+    End If
+    fullnam = bc.SubString2(fullnam,0,Min(34,fullnam.length))
+    If Debug Then Log("===> Fname=",filename," fullname = ",fullnam)
+    Return bc.StringFromBytes(fullnam)
+End Sub
+
+'**********************************************************************************
+Sub m22_FileUpload
+    Log("File Upload"):
+    If (lfs.CurrentFile.IsFile) Then lfs.close
+
+    'header read to find file name and file size
+    Dim endheader As UInt = 0
+    If DebugF Then Log("=> req_left Start:",aWOT.req_left, " req_available Start:",aWOT.req_available)
+    Dim nbR As UInt =aWOT.req_read1(buff)
+    Dim endheader As UInt = cutheader
+    If DebugF Then Log("first nb read=stream",nbR, " endheader size=",endheader)
+
+    Dim fsize As ULong = Bit.ParseInt(bc.StringFromBytes(GlobalStore.Slot2),10): Log(" Fsize=",fsize)
+    Dim fullnam As String = getfullnam(GlobalStore.Slot1)
+    If fsize < (lfs.TotalSize-lfs.UsedSize) Then
+    'now we have to read the file from the streamand to write it on the file
+      If (lfs.OpenReadWrite(bc.StringFromBytes(fullnam))= False) Then
+        If DebugF Then Log("error openning ", fullnam)
+        If DebugF Then Log("error Update")
+      Else
+          If DebugF Then Log("file open :",lfs.CurrentFile.Name)
+          Dim nbW As UInt = lfs.Stream.WriteBytes(buff,endheader,Min(nbR-endheader,fsize))
+            If DebugF Then Log("aWOT read :",nbR,"  file write :",nbW)
+
+          Dim tag As UInt =0
+          Do While (aWOT.req_left > 0)And (tag <10)
+          tag = aWOTreq_read(fsize,tag)
+          Loop
+          If tag =10 Then Log("timeout reading aWOT stream")
+            If DebugF Then Log("Write End")
+          lfs.Close
+          If DebugF Then Log("file Closed")
+            If DebugF Then Log("=> req_left End:",aWOT.req_left, " req_available End:",aWOT.req_available)
+'      aWOT.res_sendStatus(204)
+
+          aWOT.res_set("Location", "/")
+          aWOT.res_sendStatus(302)
+'          aWOT.res_sendStatus(200)
+          If DebugF Then Log("Update End")
+      End If
+     Else
+         If DebugF Then Log("file too large, update abort")
+     End If
+    If Debug Then Log("stack=",StackBufferUsage)
+End Sub
+Sub aWOTreq_read(fsize As ULong,tag As Byte) As Byte
+    Dim nbR,nbW As UInt = 0
+    If aWOT.req_available > 0 Then
+      nbR=aWOT.req_read1(buff)
+      Dim ToWrite As ULong = fsize - lfs.Position
+      If ToWrite > 0 Then
+          nbW=lfs.Stream.WriteBytes(buff,0,Min(nbR,ToWrite))
+      Else
+          nbW = 0
+        tag = tag+1
+      End If
+        If DebugF Then Log("aWOT read :",nbR,"  file write :",nbW)
+        If DebugF Then Log(" => req_left :",aWOT.req_left, " req_available :",aWOT.req_available, "fileposition :",lfs.Position)
+    Else
+      nbR = 0
+      tag = tag + 1
+      If DebugF Then Log("Delay...",tag)
+      Dim temp As ULong = Millis
+      Do While (temp+250)> Millis
+        Delay(1)
+      Loop
+    End If
+    Return tag
+End Sub
+Sub cutheader() As UInt
+    Dim LF() As Byte = Array As Byte(13,10): Dim chr34() As Byte = Array As Byte(34)
+    Dim endline1 As UInt =bc.IndexOf(buff, LF)
+    Dim line1() As Byte = bc.SubString2(buff,0,endline1) :          'Log("line1=",line1)
+    Dim endline2 As UInt =bc.IndexOf2(buff, LF,endline1+2)
+    Dim line2() As Byte = bc.SubString2(buff,endline1+2,endline2):  'Log("line2=",line2)
+    Dim findex As UInt =  bc.IndexOf(line2,"filename=".getbytes)
+    Dim findex2 As UInt =  bc.IndexOf2(line2,Array As Byte(34),findex+10 )
+    Dim fsize1 As UInt = bc.IndexOf(line2,"name=".getbytes)
+    Dim fsize2 As UInt = bc.IndexOf2(line2,chr34, fsize1+6)
+    Dim fname() As Byte = bc.SubString2(line2,findex+10,findex2): GlobalStore.put(1,fname) ': Log("filenam found =",fname)
+    Dim fsize() As Byte = bc.SubString2(line2,fsize1+6,fsize2): GlobalStore.put(2,fsize) ': Log("file size =",fsize)
+'    Log( "int value ===> ",Bit.ParseInt(bc.StringFromBytes(fsize),10))
+    Dim endline3 As UInt =bc.IndexOf2(buff, LF,endline2+2)
+    Dim line3() As Byte = bc.SubString2(buff,endline2+2,endline3):  'Log("line3=",line3)
+    Dim endline4 As UInt =bc.IndexOf2(buff, LF,endline3+2)
+    Dim line4() As Byte = bc.SubString2(buff,endline3+2,endline4):  'Log("line4=",line4)
+    If Debug Then Log("stack=",StackBufferUsage)
+	Return endline4+2
+End Sub
+
+'**********************************************************************************
+'Sub getdatafilesP(fullnam As String, c_type As String, c_encoding As String)
+'	Dim nfile As UInt
+'	Log("fullname=",fullnam)
+'	'to make link betweeen file and PROGMEM file
+'	Select fullnam
+'		Case "/gzip/index.htm.gz"
+'			nfile = 1
+'	End Select
+'	If DebugF Then Log("fullname=>nfile:",nfile)
+'	Dim filesize As ULong = P.getlength(nfile) : Dim filecurrent As ULong = 0
+'	Log("file size:",filesize)
+'	If filesize > 0 Then
+'		aWOT.res_set("Content-Type", c_type) '"text/html; charset=utf-8")
+'		aWOT.res_set("Content-Encoding",c_encoding)
+'		aWOT.res_set("Cache-Control", "no-cache")
+'		aWOT.res_set("Content-Length",  NumberFormat(filesize,0,0))
+'		aWOT.res_set("Last-Modified", "Mon, 01 Jan 2525 00:00:00 GMT")
+'		If DebugF Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+'		If DebugF Then Log("nb byte max to read : ", nbr, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbr)) Else lfs.Stream.ReadBytes(buff,0,nbr)
+'		For i = 0 To filesize
+'			aWOT.req_write(P.getbyte(nfile,i))
+'		if Bit.And(i,0x0080)>0 then Log("current=",i)
+'		Next
+'		If DebugF Then Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+'		aWOT.res_end
+'		If DebugF Then Log("Download End")
+'	End If
+'End Sub
+
+Sub getdatafiles(fullnam As String, c_type As String, c_encoding As String)
+    If (lfs.CurrentFile.IsFile) Then lfs.close
+    Log("fullname:",fullnam)
+    Dim nbR As UInt
+    If lfs.OpenRead(fullnam) Then 'file exist
+        Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0
+        aWOT.res_set("Content-Type", c_type) '"text/html; charset=utf-8")
+        aWOT.res_set("Content-Encoding",c_encoding)
+        aWOT.res_set("Cache-Control", "no-cache")
+        aWOT.res_set("Content-Length",  NumberFormat(filesize,0,0))
+        aWOT.res_set("Last-Modified", "Mon, 01 Jan 2525 00:00:00 GMT")
+        If DebugF Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+        Do While filesize > filecurrent
+            nbR = Min(filesize-filecurrent,buff.Length)
+            If DebugF Then Log("nb byte max to read : ", nbR, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbR)) Else lfs.Stream.ReadBytes(buff,0,nbR)
+            writestream(nbR)
+            aWOT.req_flush
+            filecurrent = lfs.Position
+            If DebugF Then Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+        Loop
+    End If
+    lfs.Close
+    aWOT.res_end
+    If DebugF Then Log("Download End")
+
+End Sub
+
+'**********************************************************************************
+Sub finally()
+    Log("run finally Call Back")
+End Sub
+
+'**********************************************************************************
+Sub notfound()
+	Dim meth_type() As String = Array As String("UNKNOWN","GET","HEAD","POST","PUT","DELETE","OPTIONS","ALL")
+	Log("Middleware not found - Call Back 404")
+	Log("method = ",meth_type(aWOT.req_method))
+	Log("path = ",aWOT.req_path)
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub

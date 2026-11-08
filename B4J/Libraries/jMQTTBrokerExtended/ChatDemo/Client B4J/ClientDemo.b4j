@@ -1,0 +1,143 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private txtName As TextField
+	Private btnConnect As Button
+	Private txtLogs As TextArea
+	Private txtMessage As TextField
+	Private btnSend As Button
+	Private lstUsers As ListView
+
+	Dim Client As MqttClient
+	Dim SBLog As StringBuilder
+	Dim Const IPAddress As String = "127.0.0.1"
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+
+	Dim Serializator As B4XSerializator
+	Type typData(Publisher As String, Msg As String)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+
+	txtName.Text = "User" & Rnd(0, 100000)
+	txtLogs.Editable = False
+	txtLogs.WrapText = True
+	SBLog.Initialize
+
+	MainForm.Show
+End Sub
+
+Sub btnConnect_Click
+	If txtName.Text = "" Then
+		fx.Msgbox(MainForm, "Please enter your name.", "Invalid name")
+		Return
+	End If
+
+	txtLogs.Text = ""
+	lstUsers.Items.Clear
+
+	Client.Initialize("Monitor", ServerURI, txtName.Text)
+	Dim Options As MqttConnectOptions
+	Options.Initialize(txtName.Text, "")
+	Options.SetLastWill("all", CreatePayload("I lost the connection. Bye bye"), Client.QOS_0_MOST_ONCE, False)
+	Client.Connect2(Options)
+End Sub
+
+Sub CreatePayload(Msg As String) As Byte()
+	Dim Data As typData
+	Data.Initialize
+	Data.Publisher = txtName.Text
+	Data.Msg = Msg
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub txtMessage_Action
+	btnSend_Click
+End Sub
+
+Sub btnSend_Click
+	If txtMessage.Text = "" Then
+		fx.Msgbox(MainForm, "Please enter your message.", "Invalid message")
+		Return
+	End If
+
+	Dim Bytes() As Byte = CreatePayload(txtMessage.Text)
+	Client.Publish2("all", Bytes, Client.QOS_1_LEAST_ONCE, True)
+	txtMessage.Text = ""
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	If Success = True Then
+		txtName.Enabled = False
+		btnConnect.Enabled = False
+		txtMessage.Enabled = True
+		btnSend.Enabled = True
+		Client.Subscribe("all/#", Client.QOS_1_LEAST_ONCE)
+	End If
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	Log("Message arrived: Topic=" & Topic & " / Length=" & Payload.Length)
+	If Payload.Length = 0 Then
+		'Ignores the message
+		Return
+	Else If Topic = "all/users" Then
+		'Fills the list of users
+		Dim ConnectedClients As List = Serializator.ConvertBytesToObject(Payload)
+		lstUsers.Items.Clear
+		For Each U As String In ConnectedClients
+			lstUsers.Items.Add(U)
+		Next
+	Else
+		'Displays the message
+		Dim Data As typData = Serializator.ConvertBytesToObject(Payload)
+		SBLog.Append(Data.Publisher).Append(": ").Append(Data.Msg).Append(CRLF)
+		txtLogs.Text = SBLog.ToString
+		txtLogs.SetSelection(txtLogs.Text.Length, txtLogs.Text.Length)
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+	txtName.Enabled = True
+	btnConnect.Enabled = True
+	txtMessage.Enabled = False
+	btnSend.Enabled = False
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_Closed
+	If Client.Connected Then
+		Client.Publish2("all", CreatePayload("Bye bye"), Client.QOS_0_MOST_ONCE, False)
+		Client.Close
+	End If
+End Sub

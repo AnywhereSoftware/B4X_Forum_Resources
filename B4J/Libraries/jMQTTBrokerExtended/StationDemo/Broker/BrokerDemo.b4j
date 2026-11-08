@@ -1,0 +1,63 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jmqttbrokerextended
+Library3=jrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Dim Broker As MQTTBrokerExtended
+	Dim Const Port As Int = 1883
+End Sub
+
+Sub AppStart (Args() As String)
+	'Starts the broker
+	Broker.Initialize(Port, Broker.AUTHENTICATION_NO, False, "Broker")
+	Broker.Start
+	StartMessageLoop 'Non-UI app
+End Sub
+
+Sub Broker_Connect(ClientID As String, Username As String, ProtocolName As String, ProtocolVersion As Byte, QOS As String, KeepAlive As Int, IsCleanSession As Boolean, IsDupFlag As Boolean, IsRetainFlag As Boolean, IsWillFlag As Boolean)
+	Broker.AddToLog("CONNECT : " & ClientID & " Username=" & Username & " ProtocolName=" & ProtocolName & " ProtocolVersion=" & ProtocolVersion & " QOS=" & QOS, Broker.LOG_LEVEL_INFO)
+	Broker.AddToLog("        : KeepAlive=" & KeepAlive & " IsCleanSession=" & IsCleanSession & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag & " IsWillFlag=" & IsWillFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Disconnect(ClientID As String, Username As String)
+	Broker.AddToLog("DISCONNECT : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_ConnectionLost(ClientID As String, Username As String)
+	Broker.AddToLog("CONNECTION_LOST : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_LastWill(ClientID As String, Username As String, QOS As Byte, TopicName As String, Message() As Byte, IsRetainFlag As Boolean)
+	Broker.AddToLog("LASTWILL : " & ClientID & " QOS=" & QOS & " Topic=" & TopicName & " Message=" & Message.Length & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Subscribe(ClientID As String, Username As String, RequestedQOS As String, TopicFilter As String)
+	Broker.AddToLog("SUBSCRIBE : " & ClientID & " Username=" & Username & " ReqQOS=" & RequestedQOS & " TopicFilter=" & TopicFilter, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Unsubscribe(ClientID As String, Username As String, TopicFilter As String)
+	Broker.AddToLog("UNSUBSCRIBE : " & ClientID & " Username=" & Username & " TopicFilter=" & TopicFilter, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Publish(ClientID As String, Username As String, QOS As String, TopicName As String, Message() As Byte, IsDupFlag As Boolean, IsRetainFlag As Boolean)
+	'Broker.AddToLog("PUBLISH : " & ClientID & " Username=" & Username & " QOS=" & QOS & " Topic=" & TopicName & " MessageLength=" & Message.Length & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Broker.AddToLog("APP ERROR: " & Error.Message, Broker.LOG_LEVEL_ERROR)
+	Return True
+End Sub

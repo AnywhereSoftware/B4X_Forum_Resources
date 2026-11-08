@@ -1,0 +1,144 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rawot
+Library2=rcore
+Library3=resp8266wifi
+Library4=rlittlefs
+Library5=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 24000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private aWOT As aWOT
+	Private lfs As LittleFS
+	Private bc As ByteConverter
+	Private Network As String = "xxxxx"
+	Private Password As String = "xxxxxxxxxx"
+	Private analog0 As Int = 0
+	Private analog1 As Int = 0
+	Private up0 As bool = True
+	Private up1 As bool = True
+	Private text() As Byte
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	'example of connecting to a local network
+	If wifi.Connect2( Network, Password) Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	
+'	aWOT.initialize
+	aWOT.initialize1("finally","notfound")
+    Log("end init aWOT")
+	If lfs.Initialize Then Log("init lfs OK") Else Log("init lfs NOK")
+    Log(wifi.LocalIp)
+	AddLooper("process")
+
+'1) start managemant at "/" 
+	aWOT.app_setTimeout(3000)	
+	aWOT.app_get("/", "handleRoot")  	      
+	aWOT.app_get("/index.html", "handleGauge")
+	aWOT.app_get("/jquery.min.js", "handleGauge")
+	aWOT.app_get("/d3-gauge.js", "handleGauge")
+	aWOT.app_get("/style.css", "handleGauge")
+	aWOT.app_get("/getADC", "handleADC") 
+	aWOT.app_get("/getPRES", "handlePRES")
+End Sub
+
+'//===============================================================
+'// This routine is executed when you open its IP in browser
+'//===============================================================
+private Sub handleRoot
+	aWOT.res_set("Location", "/index.html")
+	aWOT.res_sendStatus(302)
+End Sub
+ 
+Sub handleGauge
+	Dim path As String
+	If aWOT.req_path = "/" Then path = "/index.html" Else path = aWOT.req_path
+	
+	If lfs.Exists(path) Then
+		Dim mimeType As String = aWOT.Mime_getType(path) : Log("mimeType :",mimeType)	
+		Dim nbr As UInt = 0	
+		lfs.OpenRead(path)
+		aWOT.res_set("Content-Type", mimeType)		
+		Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0
+		Dim buff(1024) As Byte : Log("file size :",buff.Length," ",lfs.CurrentFile.Size)
+		Do While filesize > filecurrent
+			nbr = Min(filesize-filecurrent,buff.Length)		
+			lfs.Stream.ReadBytes(buff,0,nbr)
+			aWOT.res_write1(buff,nbr)	
+			filecurrent = lfs.Position			
+			Log("file read/awot_write :", filecurrent,"  on ", filesize )
+		Loop		
+		lfs.close	
+		Log("file ",path," sent to server")
+	Else
+		Log("no such file ",path)
+	End If	
+End Sub
+private Sub handleADC
+	If up0 = True Then analog0 = analog0 + 2 Else analog0 = analog0 - 2
+	If analog0 < 2 Then up0 = True
+	If analog0 > 105 Then up0 = False
+
+	Log("ADC value :",analog0)
+	aWOT.res_println(NumberFormat(analog0,0,0))
+End Sub
+
+private Sub handlePRES
+	If up1 = True Then analog1 = analog1 + 2 Else analog1 = analog1 - 2
+	If analog1 < 10 Then up1 = True
+	If analog1 > 25 Then up1 = False
+
+	Log("PRES value :",analog1)
+	aWOT.res_println(NumberFormat(analog1,0,0))
+End Sub
+
+Sub process()
+	aWOT.process
+End Sub
+
+'*********************************************
+'Sub m0_keepAlive()
+'	Log("start keepAlive")
+'	aWOT.res_set("Connection", "keep-alive")
+'	'    Log("end keepAlive")
+'	Log("status sent keepalive: ",aWOT.res_statusSent)
+'End Sub
+
+
+'**********************************************************************************
+Sub finally()
+	Log("Client Closed")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+'**********************************************************************************
+Sub notfound()	
+	Dim meth_type() As String = Array As String("UNKNOWN","GET","HEAD","POST","PUT","DELETE","OPTIONS","ALL")
+	Log("Middleware not found - Call Back 404")
+	Log("method = ",meth_type(aWOT.req_method))
+	Log("path = ",aWOT.req_path)
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+

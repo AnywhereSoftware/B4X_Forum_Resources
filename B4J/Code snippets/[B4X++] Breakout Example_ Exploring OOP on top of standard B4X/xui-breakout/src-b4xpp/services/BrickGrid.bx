@@ -1,0 +1,69 @@
+#Class BrickGrid Final
+
+#Property Remaining As Int = 0
+
+Sub Class_Globals
+    Private xui As XUI
+    Private mBricks As List
+End Sub
+
+Public Sub Initialize(aGameWidth As Float)
+    ' Prepares the brick list and builds the first level.
+    mBricks.Initialize
+    BuildLevel(aGameWidth)
+End Sub
+
+Public Sub BuildLevel(aGameWidth As Float)
+    ' Creates a simple colored grid of bricks.
+    mBricks.Clear
+    Dim columns As Int = 8
+    Dim rows As Int = 5
+    Dim gap As Float = 5dip
+    Dim brickWidth As Float = (aGameWidth - gap * (columns + 1)) / columns
+    Dim brickHeight As Float = 22dip
+
+    For rowIndex = 0 To rows - 1
+        For columnIndex = 0 To columns - 1
+            Dim brickX As Float = gap + columnIndex * (brickWidth + gap)
+            Dim brickY As Float = 54dip + rowIndex * (brickHeight + gap)
+            Dim brickColor As Int
+            If rowIndex Mod 3 = 0 Then
+                brickColor = xui.Color_RGB(244, 112, 94)
+            Else If rowIndex Mod 3 = 1 Then
+                brickColor = xui.Color_RGB(255, 198, 85)
+            Else
+                brickColor = xui.Color_RGB(91, 192, 235)
+            End If
+            Dim brickItem As Brick
+            brickItem.Initialize(brickX, brickY, brickWidth, brickHeight, brickColor, 10 + rowIndex * 5)
+            mBricks.Add(brickItem)
+        Next
+    Next
+    Remaining = mBricks.Size
+End Sub
+
+Public Sub RenderAll(aCvs As B4XCanvas)
+    ' Draws every brick. Broken bricks skip their own rendering.
+    For brickIndex = 0 To mBricks.Size - 1
+        Dim brickItem As Brick
+        brickItem = mBricks.Get(brickIndex)
+        brickItem.Render(aCvs)
+    Next
+End Sub
+
+Public Sub CheckBallCollision(aGameBall As Ball) As Int
+    ' Returns score gained when the ball hits a brick.
+    For brickIndex = 0 To mBricks.Size - 1
+        Dim brickItem As Brick
+        brickItem = mBricks.Get(brickIndex)
+        If brickItem.getBroken = False And aGameBall.CollidesWithBox(brickItem.Left, brickItem.Top, brickItem.Right, brickItem.Bottom) Then
+            aGameBall.BounceY
+            Dim gainedPoints As Int = brickItem.Hit
+            If gainedPoints > 0 Then Remaining = getRemaining - 1
+            Return gainedPoints
+        End If
+    Next
+    Return 0
+End Sub
+
+#End Class

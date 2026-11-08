@@ -1,0 +1,90 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Public MainForm As Form
+	Private Button2, Button3, Button4 As B4XView
+	Private robot As JavaObject
+	Private pane1 As Pane
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+End Sub
+
+Private Sub Button1_Click
+	
+	Dim jo As JavaObject
+	jo.InitializeStatic("com.sun.glass.ui.Application")
+	robot = jo.RunMethodJO("GetApplication",Null).RunMethodJO("createRobot",Null)
+	
+	Dim moveX, moveY As Int
+	Dim x = (pane1.Left + (pane1.Width/2)), y = (pane1.Top + (pane1.Height/2)) As Double
+    Dim form As Form = MainForm
+	moveX = (form.WindowLeft + x).As(Int)
+	moveY = (form.WindowTop + y + 30dip).As(Int)
+    robot.RunMethod("mouseMove", Array(moveX, moveY)) 'rough compensation for the title
+    Dim buttons As JavaObject
+    Dim btn As JavaObject
+    btn.InitializeStatic("javafx.scene.input.MouseButton")
+    buttons.InitializeArray("javafx.scene.input.MouseButton", Array(btn.GetField("PRIMARY")))
+'	robot.RunMethod("mouseClick", Array(buttons))
+End Sub
+
+Private Sub Button2_Click
+	Dim jo As JavaObject
+	jo.InitializeStatic("com.sun.glass.ui.Application")
+	robot = jo.RunMethodJO("GetApplication",Null).RunMethodJO("createRobot",Null)
+	
+	Dim moveX, moveY As Int
+	Dim x = (Button3.Left + (Button3.Width/2)), y = (Button3.Top + (Button3.Height/2)) As Double
+	Dim form As Form = MainForm
+	moveX = (form.WindowLeft + x + 3dip).As(Int)
+	moveY = (form.WindowTop + y + 30dip).As(Int)
+	robot.RunMethod("mouseMove", Array(moveX, moveY)) 'rough compensation for the title
+	Dim buttons As JavaObject
+	Dim btn As JavaObject
+	btn.InitializeStatic("javafx.scene.input.MouseButton")
+	buttons.InitializeArray("javafx.scene.input.MouseButton", Array(btn.GetField("PRIMARY")))
+'	robot.RunMethod("mouseClick", Array(buttons))
+End Sub
+
+Private Sub Button4_Click
+	Dim jo As JavaObject
+	jo.InitializeStatic("com.sun.glass.ui.Application")
+	robot = jo.RunMethodJO("GetApplication",Null).RunMethodJO("createRobot",Null)
+	
+	Dim moveX, moveY As Int
+	Dim x = (pane1.Left + (pane1.Width/2)), y = (pane1.Top + Button2.Top + Button2.Height/2) As Double
+	Dim form As Form = MainForm
+	moveX = (form.WindowLeft + x).As(Int)
+	moveY = (form.WindowTop + y + 30dip).As(Int)
+	robot.RunMethod("mouseMove", Array(moveX, moveY)) 'rough compensation for the title
+	Dim buttons As JavaObject
+	Dim btn As JavaObject
+	btn.InitializeStatic("javafx.scene.input.MouseButton")
+	buttons.InitializeArray("javafx.scene.input.MouseButton", Array(btn.GetField("PRIMARY")))
+'	robot.RunMethod("mouseClick", Array(buttons))
+End Sub
+
+Private Sub Button3_Click
+	Log("Click: in Button No.3")
+End Sub

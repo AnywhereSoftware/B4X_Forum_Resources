@@ -1,0 +1,107 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xui views
+Module1=|relative|..\B4xDialog4Button
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	
+	Private Dialog As B4XDialog
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	
+	Dialog.Initialize(MainForm.RootPane)
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	
+	Dialog.Title = "Add type"
+	Dialog.ButtonsFont = xui.CreateDefaultFont(14)
+	
+	'	Dialog.Show("Select","Positive","Negative","Cancel")
+	
+	Dim T As B4XInputTemplate
+	T.Initialize
+	T.Text = "Data"
+	
+	
+	Dim D4 As B4xDialog4Button
+	D4.Initialize(Dialog)
+	
+	
+	Wait For (D4.ShowTemplate(T,"NewBtn","Positive","Negative","Cancel")) Complete (Resp As Int)
+	
+	
+	Select Resp
+		Case D4.DialogResponse_NewButton
+			Log("NewButton")
+		Case D4.DialogResponse_Cancel
+			Log("Cancel")
+		Case D4.DialogResponse_Negative
+			Log("Negative")
+		Case D4.DialogResponse_Positive
+			Log("Positive")
+			
+	End Select
+	
+	Log(T.Text)
+	
+	Sleep(100)
+	Dim P As B4XView = xui.CreatePanel("")
+	P.SetLayoutAnimated(0,0,0,400,500)
+	Dim TA As TextArea
+	TA.Initialize("")
+	P.AddView(TA,0,0,400,500)
+	
+	Wait For (D4.ShowCustom(P,"NewBtn","Positive","Negative","Cancel")) Complete (Resp As Int)
+	
+	Select Resp
+		Case D4.DialogResponse_NewButton
+			Log("NewButton")
+		Case D4.DialogResponse_Cancel
+			Log("Cancel")
+		Case D4.DialogResponse_Negative
+			Log("Negative")
+		Case D4.DialogResponse_Positive
+			Log("Positive")
+			
+	End Select
+	
+Log("Here")
+'	Sleep(100)
+'	Dialog.Title = "Test1"
+'	Wait For (Dialog.Show("Test","OK","","")) Complete (Resp As Int)
+'	
+'	Dialog.Title = "Test2"
+'	Wait For (Dialog.Show("Test","OK","","")) Complete (Resp As Int)
+	
+End Sub
+
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello World!", "B4X")
+End Sub
+
+Private Sub MainForm_Resize (Width As Double, Height As Double)
+	Dialog.Resize(Width,Height)
+End Sub

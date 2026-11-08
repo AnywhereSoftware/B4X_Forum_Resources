@@ -1,0 +1,209 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=xui views
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 650
+	#MainFormHeight: 650
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+
+	Private cv As Canvas
+	
+	Dim xoffset As Double
+	Dim yoffset As Double
+	Dim x, y As Int
+	
+	Dim phi_0 As Double
+	Dim phi_1 As Double
+	
+	Dim angle, new_angle As Double
+	
+	Dim nativeMe As JavaObject
+	
+	Dim cnt As Int
+	Dim sleeptime As Int
+	Dim radius As Double
+	
+	Dim t As Timer
+	
+	
+	Private slider_radius As Slider
+	Private pm0, pm1 As B4XPlusMinus
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	sleeptime = 10
+	t.Initialize("t", 20)
+	
+	Sleep(100)
+	cnt = 0
+	
+	pm0.SetNumericRange(0, 360, 0.1)
+	pm1.SetNumericRange(0, 360, 0.1)
+	
+	radius  = 250
+	
+	slider_radius.MinValue = 25
+	slider_radius.MaxValue = (cv.Height/2) - 10
+	slider_radius.Value = radius
+	
+	nativeMe.InitializeStatic("javafx.scene.paint.Color")
+	
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	phi_0 = 324.2                'first postion on the circle (starting angle measured from  positive x-axis)
+	phi_1 = 144.7                'second position on the circle (ending angle measured from  positive x-axis)
+								 'First line will be drawn from phi_0 to phi_1 as a cord of the circle
+	pm0.SelectedValue = phi_0
+	pm1.SelectedValue = phi_1
+	
+	xoffset = cv.Width/2
+	yoffset = cv.Height/2
+	
+	
+	
+	
+	draw_circle				   'draw the initial circle outline
+	draw                       'keep on drawing - reflect the ray continuously
+	
+	t.Enabled = True
+
+End Sub
+
+Sub draw
+	
+	
+	Dim aa As Double = 1.0                               'for HSB color
+	Dim dub As Double = cnt                              'for hsb color
+	Dim col As JavaObject
+	col = nativeMe.RunMethod("hsb", Array(dub, aa, aa))  'get the hsb color
+	
+	If phi_1 > phi_0 Then
+		
+		angle = phi_1 + 360 - phi_0
+		new_angle = phi_1 + angle '+ Rnd(0, 20)
+		
+		cv.DrawLine(radius * Cos(2 * cPI * phi_1/360)+ xoffset, -1 * radius * Sin(2 * cPI * phi_1/360) + yoffset, _
+				radius * Cos(2 * cPI * new_angle/360)+ xoffset, -1 * radius * Sin(2 * cPI * new_angle/360) + yoffset, _
+				col, _
+				1dip)
+		phi_0 = phi_1
+		phi_1 = new_angle
+		Sleep(sleeptime)
+		
+	else if phi_1 < phi_0 Then
+		angle = 360 - phi_0 + phi_1
+		Log(angle)
+		new_angle = phi_1 + angle '+ Rnd(0,20)
+		Log(new_angle)
+		
+		cv.DrawLine(radius * Cos(2 * cPI * phi_1/360)+ xoffset, -1 * radius * Sin(2 * cPI * phi_1/360) + yoffset, _
+				radius * Cos(2 * cPI * new_angle/360)+ xoffset, -1 * radius * Sin(2 * cPI * new_angle/360) + yoffset, _
+				col, _
+				1dip)
+		phi_0 = phi_1
+		phi_1 = new_angle
+		Sleep(sleeptime)
+		
+	End If
+	
+	cnt = cnt + 1
+	
+'	CallSubDelayed(Me, "draw")
+	
+	
+End Sub
+
+Sub draw_circle
+	
+	
+	Dim incr As Double = 0.1      
+	Dim i As Double = 0
+	'draw the circle with steps of 0.01 degrees
+	Do While i < 360
+		x = radius * Cos(2 * cPI * i/360)
+		y = -1 * radius * Sin(2 * cPI * i/360)
+		cv.DrawCircle(x + xoffset, y + yoffset, 1dip, fx.Colors.Red, True,1dip)
+		i = i + incr
+	Loop
+	Sleep(0)
+End Sub
+
+
+
+Private Sub slider_radius_ValueChange (Value As Double)
+	
+	t.Enabled = False
+	radius = Value
+	cv.ClearRect(0, 0, cv.Width, cv.Height)
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	draw_circle				   'draw the initial circle outline
+	Sleep(500)
+'	draw                       'keep on drawing - reflect the ray continuously
+	
+	t.Enabled = True
+	
+	
+End Sub
+
+Sub t_tick
+	
+	draw
+	
+End Sub
+
+
+
+Private Sub pm0_ValueChanged (Value As Object)
+	
+	t.Enabled = False
+	phi_0 = Value
+	phi_1 = pm1.SelectedValue
+	cv.ClearRect(0, 0, cv.Width, cv.Height)
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	draw_circle				   'draw the initial circle outline
+	Sleep(500)
+'	draw                       'keep on drawing - reflect the ray continuously
+	
+	t.Enabled = True
+	
+End Sub
+
+Private Sub pm1_ValueChanged (Value As Object)
+	
+	t.Enabled = False
+	phi_1 = Value
+	phi_0 = pm0.SelectedValue
+	cv.ClearRect(0, 0, cv.Width, cv.Height)
+	cv.DrawRect(0, 0, cv.Width, cv.Height, fx.Colors.Black, True, 1dip)
+	
+	draw_circle				   'draw the initial circle outline
+	Sleep(500)
+'	draw                       'keep on drawing - reflect the ray continuously
+	
+	t.Enabled = True
+	
+End Sub

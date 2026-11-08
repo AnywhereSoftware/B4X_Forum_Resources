@@ -1,0 +1,134 @@
+﻿Build1=Default,b4a.claude.chatapp
+File1=1.bal
+File2=firebase-adminsdk.json
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=bctextengine
+Library2=core
+Library3=dialogs
+Library4=firebaseadmin
+Library5=ime
+Library6=keyvaluestore
+Library7=runtimepermissions
+Library8=xui
+Library9=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />~\n~)
+Module1=Chat
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=9
+NumberOfModules=2
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Chat App
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#MultiDex: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim DeviceId As String
+	Dim Key As KeyValueStore
+	Dim ActivityClosed As Boolean = False
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private chat1 As Chat
+	Private ime As IME
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Key.Initialize(Starter.rp.GetSafeDirDefaultExternal(""),"data")
+	If Key.ContainsKey("id") Then
+		DeviceId = Key.Get("id")
+	Else
+		Dim ID As Int = Rnd(10000,99999)
+		Key.Put("id",ID)
+		DeviceId = Key.Get("id")
+	End If
+	Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_READ_PHONE_STATE)
+	Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+	Log(DeviceId)
+	Dim User As Map = Starter.Firestore.GetDocument("users",DeviceId)
+	If User.IsInitialized Then
+		Starter.UserName = User.Get("user_name")
+	Else
+		CallSub(Me,"SetupUser")
+	End If
+	chat1.Initialize(Activity)
+	Activity.Title = "Chat Example"
+	ime.Initialize("ime")
+	ime.AddHeightChangedEvent
+End Sub
+
+Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	chat1.HeightChanged(NewHeight)
+End Sub
+
+
+Sub Activity_Resume
+	ActivityClosed = False
+	If Starter.PendingMessages.IsInitialized Then
+		Log("Has Pending")
+		If Starter.PendingMessages.Size > 0 Then
+			For i = 0 To Starter.PendingMessages.Size-1
+				Dim m As Map = Starter.PendingMessages.Get(i)
+				UpdateChat(m)
+			Next
+			Starter.PendingMessages.Clear
+		End If
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	ActivityClosed = Not(UserClosed)
+End Sub
+
+Sub SetupUser
+	Dim id As InputDialog
+	Dim sf As Object = id.ShowAsync("", "Enter your name", "Ok", "", "Cancel", Null, False)
+	Wait For (sf) Dialog_Result(Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+		Dim UserData As Map
+		UserData.Initialize
+		UserData.Put("user_id",DeviceId)
+		UserData.Put("user_name",id.Input)
+		Starter.Firestore.CreateDocument("users",DeviceId,UserData)
+		Starter.UserName = id.Input
+	End If
+End Sub
+
+Sub UpdateChat(Data As Map)
+	Log("Collection changed: " & Data)
+	If Data.IsInitialized Then
+		Dim Params As Map = Data.Get("data")
+		Select Data.Get("type")
+			Case Starter.Firestore.TYPE_ADDED
+				Dim Left As Boolean = False
+				If Params.Get("sender_id") == DeviceId Then
+					Left = True
+				End If
+				chat1.AddItem(Params.Get("text"),Params.Get("sender"), Left)
+		End Select
+	End If	
+End Sub
+
+Sub UpdateUsers(Data As Map)
+	If Data.IsInitialized Then
+'		ToastMessageShow("New user joined",False)
+	End If
+End Sub

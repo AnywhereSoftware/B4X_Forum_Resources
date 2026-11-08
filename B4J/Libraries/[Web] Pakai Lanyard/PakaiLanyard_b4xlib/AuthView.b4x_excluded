@@ -1,0 +1,118 @@
+' Auth View
+' Version 1.00
+Sub Class_Globals
+	Private App As EndsMeet
+End Sub
+
+Public Sub Initialize
+	App = Main.App
+End Sub
+
+Private Sub ExistInCache (Key As String) As Boolean
+	Return App.ctx.ContainsKey(Key)
+End Sub
+
+Private Sub ReadFromCache (Key As String) As Object
+	Dim Value As Object = App.ctx.Get(Key)
+	If Value Is MiniHtml Then
+		Return Value.As(MiniHtml)
+	Else If GetType(Value) = "[B" Then
+		Return MH.ConvertFromBytes(Value)
+	Else
+		Return Value
+	End If
+End Sub
+
+Private Sub WriteToCache (Key As String, Value As Object)
+	App.ctx.Put(Key, Value)
+End Sub
+
+Public Sub Login (Message As String) As MiniHtml
+	Dim CacheName As String = "Login"
+	If ExistInCache(CacheName) = False Then
+		WriteToCache(CacheName, ContainerLogin)
+	End If
+	Dim div1 As MiniHtml = ReadFromCache(CacheName)
+	Dim div2 As MiniHtml = div1.ChildById("alert")
+	If Message = "" Then
+		div2.sty("display: none").text2("")
+	Else
+		div2.sty("display: block").text2(Message)
+	End If
+	Return div1
+End Sub
+
+Public Sub Register (Message As String) As MiniHtml
+	Dim CacheName As String = "Register"
+	If ExistInCache(CacheName) = False Then
+		WriteToCache(CacheName, ContainerRegister)
+	End If
+	Dim div1 As MiniHtml = ReadFromCache(CacheName)
+	Dim div2 As MiniHtml = div1.ChildById("alert")
+	If Message = "" Then
+		div2.sty("display: none").text2("")
+	Else
+		div2.sty("display: block").text2(Message)
+	End If
+	Return div1
+End Sub
+
+Private Sub ContainerLogin As MiniHtml
+	Dim div1 As MiniHtml = MH.Div.cls("container mt-1")
+	Dim row1 As MiniHtml = MH.Div.up(div1).cls("row justify-content-center")
+	Dim col1 As MiniHtml = MH.Div.up(row1).cls("col-md-4")
+	Dim card1 As MiniHtml = MH.Div.up(col1).cls("card shadow")
+	Dim header1 As MiniHtml = MH.Div.up(card1).cls("card-header bg-primary text-white text-center")
+	MH.H3.up(header1).text("Login")
+	Dim body1 As MiniHtml = MH.Div.up(card1).cls("card-body")
+	MH.Div.up(body1).cls("alert alert-danger").sty("display: none").Id = "alert"
+	Dim form1 As MiniHtml = MH.Form.up(body1).attr("method", "POST").attr("action", "/login")
+	
+	Dim group1 As MiniHtml = MH.Div.up(form1).cls("mb-3")
+	MH.Label.up(group1).text("Username")
+	MH.Input.up(group1).cls("form-control").attr("name", "username").attr("required", "true")
+	
+	Dim group2 As MiniHtml = MH.Div.up(form1).cls("mb-3")
+	MH.Label.up(group2).text("Password")
+	MH.Input.up(group2).cls("form-control").attr("name", "password").attr("type", "password").attr("required", "true")
+	
+	MH.Button.up(form1).cls("btn btn-primary w-100").text("Login")
+	
+	Dim footer1 As MiniHtml = MH.Div.up(body1).cls("mt-3 text-center")
+	MH.Span.up(footer1).text("Don't have an account? ")
+	MH.Anchor.up(footer1).attr("href", "/register").text("Register here")
+	
+	Return div1
+End Sub
+
+Private Sub ContainerRegister As MiniHtml
+	Dim div1 As MiniHtml = MH.Div.cls("container mt-1")
+	Dim row1 As MiniHtml = MH.Div.up(div1).cls("row justify-content-center")
+	Dim col1 As MiniHtml = MH.Div.up(row1).cls("col-md-4")
+	Dim card1 As MiniHtml = MH.Div.up(col1).cls("card shadow")
+	Dim header1 As MiniHtml = MH.Div.up(card1).cls("card-header bg-success text-white text-center")
+	MH.H3.up(header1).text("Register")
+	Dim body1 As MiniHtml = MH.Div.up(card1).cls("card-body")
+	MH.Div.up(body1).cls("alert alert-danger").sty("display: none").Id = "alert"
+	Dim form1 As MiniHtml = MH.Form.up(body1).attr("method", "POST").attr("action", "/register")
+	
+	Dim group1 As MiniHtml = MH.Div.up(form1).cls("mb-3")
+	MH.Label.up(group1).text("Username")
+	MH.Input.up(group1).cls("form-control").attr("name", "username").attr("required", "true")
+	
+	Dim group2 As MiniHtml = MH.Div.up(form1).cls("mb-3")
+	MH.Label.up(group2).text("Email")
+	MH.Input.up(group2).cls("form-control").attr("name", "email").attr("type", "email").attr("required", "true")
+	
+	Dim group3 As MiniHtml = MH.Div.up(form1).cls("mb-3")
+	MH.Label.up(group3).text("Password")
+	MH.Input.up(group3).cls("form-control").attr("name", "password").attr("type", "password").attr("required", "true")
+	
+	MH.Button.up(form1).cls("btn btn-success w-100").text("Register")
+	
+	Dim footer1 As MiniHtml = MH.Div.up(body1).cls("mt-3 text-center")
+	MH.Span.up(footer1).text("Already have an account? ")
+	MH.Anchor.up(footer1).attr("href", "/login").text("Login here")
+	
+	Return div1
+End Sub

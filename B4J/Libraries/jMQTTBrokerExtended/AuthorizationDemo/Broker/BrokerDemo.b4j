@@ -1,0 +1,137 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=passwords
+File2=permissions
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jmqttbrokerextended
+Library3=encryption
+Library4=jrandomaccessfile
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	#IgnoreWarnings: 7
+#End Region
+
+Sub Process_Globals
+	Dim Broker As MQTTBrokerExtended
+	Dim Const Port As Int = 1883
+
+	Dim MD As MessageDigest
+	Dim B64 As Base64
+	Dim PasswordMap As Map
+	Dim PermissionMap As Map
+
+	Dim Serializator As B4XSerializator
+	Type typData(Publisher As String, Msg As String)
+End Sub
+
+Sub AppStart (Args() As String)
+	'Loads the passwords map
+	PasswordMap = File.ReadMap(File.DirAssets, "passwords")
+
+	'Loads the permissions map
+	PermissionMap = File.ReadMap(File.DirAssets, "permissions")
+
+	'Starts the broker
+	Broker.Initialize(Port, Broker.AUTHENTICATION_GUEST_ALLOWED, False, "Broker")
+	Broker.SetAuthenticator("Authenticator")
+	Broker.SetAuthorizator("Authorizator")
+	Broker.Start
+	StartMessageLoop 'Non-UI app
+End Sub
+
+Sub Broker_Authenticator(ClientID As String, Username As String, Password() As Byte) As Boolean
+	Broker.AddToLog("AUTHENTICATOR : " & ClientID & " Username=" & Username & " PwdLength=" & Password.Length, Broker.LOG_LEVEL_INFO)
+	If PasswordMap.ContainsKey(Username) Then
+		'Compares the given password to the stored password
+		Dim MD5() As Byte = MD.GetMessageDigest(Password, "MD5")
+		Dim StoredMD5 As String = PasswordMap.Get(Username)
+		Return (B64.EncodeBtoS(MD5, 0, MD5.Length) = StoredMD5)
+	Else
+		'User not found
+		Broker.AddToLog("AUTHENTICATOR : User " & Username & " cannot be found (CId=" & ClientID & ")", Broker.LOG_LEVEL_WARN)
+		Return False
+	End If
+End Sub
+
+Sub Broker_Authorizator(ClientID As String, Username As String, Topic As String, Permission As String) As Boolean
+	Broker.AddToLog("AUTHORIZATOR : " & ClientID & " Username=" & Username & " Topic=" & Topic & " Permission=" & Permission, Broker.LOG_LEVEL_INFO)
+	If Username = Null Then
+		'Anonymous user (guest)
+		If Permission = Broker.PERMISSION_WRITE Then
+			'Only reading is allowed
+			Return False
+		Else
+			'Can only read the demo public topic
+			Return (Topic = "PublicTopic")
+		End If
+	End If
+	If Topic = "PublicTopic" Then
+		'This demo topic has no restrictions for authentified users
+		Return True
+	End If
+	If PermissionMap.ContainsKey(Username) Then
+		'Checks the user's permissions
+		Dim Allowed As String = PermissionMap.Get(Username)
+		Return (Allowed.Contains(Permission))
+	Else
+		'User not found
+		Broker.AddToLog("AUTHORIZATOR : User " & Username & " cannot be found (CId=" & ClientID & ")", Broker.LOG_LEVEL_WARN)
+		Return False
+	End If
+End Sub
+
+Sub Broker_Connect(ClientID As String, Username As String, ProtocolName As String, ProtocolVersion As Byte, QOS As String, KeepAlive As Int, IsCleanSession As Boolean, IsDupFlag As Boolean, IsRetainFlag As Boolean, IsWillFlag As Boolean)
+	Broker.AddToLog("CONNECT : " & ClientID & " Username=" & Username & " ProtocolName=" & ProtocolName & " ProtocolVersion=" & ProtocolVersion & " QOS=" & QOS, Broker.LOG_LEVEL_INFO)
+	Broker.AddToLog("        : KeepAlive=" & KeepAlive & " IsCleanSession=" & IsCleanSession & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag & " IsWillFlag=" & IsWillFlag, Broker.LOG_LEVEL_INFO)
+	Broker.AddToLog(Broker.ConnectedClients, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Disconnect(ClientID As String, Username As String)
+	Broker.AddToLog("DISCONNECT : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_ConnectionLost(ClientID As String, Username As String)
+	Broker.AddToLog("CONNECTION_LOST : " & ClientID & " Username=" & Username, Broker.LOG_LEVEL_INFO)
+	Broker.AddToLog(Broker.ConnectedClients, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_LastWill(ClientID As String, Username As String, QOS As Byte, TopicName As String, Message() As Byte, IsRetainFlag As Boolean)
+	Broker.AddToLog("LASTWILL : " & ClientID & " QOS=" & QOS & " Topic=" & TopicName & " Message=" & Message.Length & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub CreateWelcomeMsg(TopicName As String) As Byte()
+	Dim Data As typData
+	Data.Initialize
+	Data.Publisher = "Broker"
+	Data.Msg = "You can read " & TopicName
+	Return Serializator.ConvertObjectToBytes(Data)
+End Sub
+
+Sub Broker_Subscribe(ClientID As String, Username As String, RequestedQOS As String, TopicFilter As String)
+	Broker.AddToLog("SUBSCRIBE : " & ClientID & " Username=" & Username & " ReqQOS=" & RequestedQOS & " TopicFilter=" & TopicFilter, Broker.LOG_LEVEL_INFO)
+	Broker.InternalPublish(TopicFilter, CreateWelcomeMsg(TopicFilter), Broker.QOS_AT_LEAST_ONCE, False)
+End Sub
+
+Sub Broker_Unsubscribe(ClientID As String, Username As String, TopicFilter As String)
+	Broker.AddToLog("UNSUBSCRIBE : " & ClientID & " Username=" & Username & " TopicFilter=" & TopicFilter, Broker.LOG_LEVEL_INFO)
+End Sub
+
+Sub Broker_Publish(ClientID As String, Username As String, QOS As String, TopicName As String, Message() As Byte, IsDupFlag As Boolean, IsRetainFlag As Boolean)
+	Broker.AddToLog("PUBLISH : " & ClientID & " Username=" & Username & " QOS=" & QOS & " Topic=" & TopicName & " MessageLength=" & Message.Length & " IsDupFlag=" & IsDupFlag & " IsRetainFlag=" & IsRetainFlag, Broker.LOG_LEVEL_INFO)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Broker.AddToLog("APP ERROR: " & Error.Message, Broker.LOG_LEVEL_ERROR)
+	Return True
+End Sub

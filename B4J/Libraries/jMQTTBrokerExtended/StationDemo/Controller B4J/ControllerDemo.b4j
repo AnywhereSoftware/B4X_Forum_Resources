@@ -1,0 +1,157 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private Canvas As Canvas
+	Private btnStart As Button
+	Private btnStop As Button
+	Private btnClear As Button
+
+	Dim Client As MqttClient
+	Dim Const IPAddress As String = "127.0.0.1"
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+	Dim Const WAIT_BEFORE_RECONNECT As Int = 5 'sec.
+
+	Dim Colors(9) As Object = Array(fx.Colors.Black, fx.Colors.Blue, fx.Colors.Cyan, fx.Colors.Gray, fx.Colors.Green, fx.Colors.Magenta, fx.Colors.Red, fx.Colors.White, fx.Colors.Yellow)
+	Dim ColorIndex As Int
+	Dim SensorMap As Map
+
+	Dim Serializator As B4XSerializator
+	Type typControl(Sensor As String, Stop As Boolean)
+	Type typData(Sensor As String, Data As Object)
+	Type typSensor(X As Int, PreviousX As Int, PreviousY As Int, LegendX As Int, Color As Object)
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+	Canvas.DrawRect(0, 0, Canvas.Width, Canvas.Height, fx.Colors.LightGray, True, 0)
+	MainForm.Show
+
+	'Initializes the map of sensors
+	SensorMap.Initialize
+
+	'Connects to the MQTT broker
+	Client.Initialize("Monitor", ServerURI, "C" & Rnd(0, 100000))
+	Client.Connect
+End Sub
+
+Sub PublishControlMsg(Stop As Boolean)
+	'Sends an order to start or stop all the sensors
+	Dim ControlMsg As typControl
+	ControlMsg.Initialize
+	ControlMsg.Sensor = "*" 'All sensors
+	ControlMsg.Stop = Stop
+	Client.Publish("control", Serializator.ConvertObjectToBytes(ControlMsg))
+End Sub
+
+Sub btnStart_Click
+	Log("Start all")
+	PublishControlMsg(False)
+End Sub
+
+Sub btnStop_Click
+	Log("Stop all")
+	PublishControlMsg(True)
+End Sub
+
+Sub btnClear_Click
+	'Clears the canvas and resets the X positions
+	Canvas.DrawRect(0, 0, Canvas.Width, Canvas.Height, fx.Colors.LightGray, True, 0)
+	For Each SensorID As String In SensorMap.Keys
+		Dim Sensor As typSensor = SensorMap.Get(SensorID)
+		Sensor.X = 0
+		Sensor.PreviousX = Sensor.X
+		SensorMap.Put(SensorID, Sensor)
+	Next
+End Sub
+
+Sub Monitor_Connected (Success As Boolean)
+	If Success Then
+		Log("Connected")
+		Client.Subscribe("data", Client.QOS_1_LEAST_ONCE)
+		btnStart.Enabled = True
+		btnStop.Enabled = True
+	Else
+		Log("Connection failed. Reconnect attempt in " & WAIT_BEFORE_RECONNECT & " seconds.")
+		Sleep(WAIT_BEFORE_RECONNECT * 1000)
+		Client.Connect
+	End If
+End Sub
+
+Sub RecordAndDraw(Msg As typData)
+	'Computes the Y position for the new value
+	Dim Ratio As Float = Canvas.Height / 200
+	Dim Y As Int = Canvas.Height - (Msg.Data * Ratio)
+
+	Dim Sensor As typSensor
+	If Not(SensorMap.ContainsKey(Msg.Sensor)) Then
+		'Registers a new sensor with its distinct color for the graph
+		Sensor.Initialize
+		Sensor.X = 0
+		Sensor.PreviousX = Sensor.X
+		Sensor.PreviousY = Y
+		Sensor.Color = Colors(ColorIndex)
+		Sensor.LegendX = ColorIndex * 62 + 12
+		ColorIndex = ColorIndex + 1
+	Else
+		'Gets the sensor from the map
+		Sensor = SensorMap.Get(Msg.Sensor)
+	End If
+
+	'Draws a line between the previous value and the new value
+	Canvas.DrawLine(Sensor.PreviousX, Sensor.PreviousY, Sensor.X, Y, Sensor.Color, 2)
+	Sensor.PreviousX = Sensor.X
+	Sensor.PreviousY = Y
+	Sensor.X = Sensor.X + Ratio
+
+	'Displays the sensor ID
+	Canvas.DrawText(Msg.Sensor, Sensor.LegendX, Canvas.Height - 15, fx.DefaultFont(14), Sensor.Color, "LEFT")
+
+	'Keeps track of changes
+	SensorMap.Put(Msg.Sensor, Sensor)
+End Sub
+
+Sub Monitor_MessageArrived (Topic As String, Payload() As Byte)
+	If Topic = "data" Then
+		'Records and draws the new data
+		RecordAndDraw(Serializator.ConvertBytesToObject(Payload))
+	End If
+End Sub
+
+Sub Monitor_Disconnected
+End Sub
+
+Sub MainForm_Closed
+	If Client.Connected Then
+		Client.Close
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub

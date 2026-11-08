@@ -1,0 +1,136 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=respnow
+Library3=rconvert
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	datareader.bas
+' Project:     	rESPNOW
+' Brief:       	ESP-NOW Advanced Example – send 8-byte packet with checksum.
+' Date:        	2026-05-05
+' Author:      	Robert W.B. Linn (c) 2025 MIT
+' Dependencies: rESPNOW, rConvert
+' Description:	This example shows
+'				- Multi-field packing
+'				- Signed + unsigned handling
+'				- Scaling floats
+'				- Protocol thinking
+'				- Reusable later
+'				- Very small payload (ESP-NOW friendly)
+'				- No floats over the air (avoid endian/precision issues)
+'				- Self-validating (checksum)
+'				- Easy To debug (hex readable)
+' Packet Design:Temperature + Humidity + Flags
+'				Structure (8 bytes)
+'				- Byte 0   : 0xAA        (Start)
+'				- Byte 1-2 : Temperature (Int16, °C × 100)
+'				- Byte 3   : Humidity    (0–100 %)
+'				- Byte 4   : Flags       (user-defined)
+'				- Byte 5   : Counter     (rolling)
+'				- Byte 6   : Reserved    (future use = 0)
+'				- Byte 7   : Checksum    (XOR 0–6)
+' Data Example:	- Temperature = 23.45°C
+'				- Humidity = 56%
+'				- Flags = 0xA5
+'				- Temperature as Int > 23.45 × 100 = 2345 → 0x0929
+'				Packet:		AA 09 29 38 A5 01 00 ??
+'				Checksum:	AA ^ 09 ^ 29 ^ 38 ^ A5 ^ 01 ^ 00 = 6E
+'				Final:		AA 09 29 38 A5 01 00 6E
+' Notes:		- Data fixed length > simple parsing
+'				- Temperature As Int16 ×100 > precise, no float issues
+'				- Humidity fits in 1 byte
+'				- Flags = flexible (bits later)
+'				- Counter > detect missed packets
+'				- XOR checksum > cheap + effective
+'				- Start byte > framing
+' Hardware:		ESP32 Wrover Kit.
+' Software:		B4R 4.00(64 bit), Platform ESP32 3.3.8 (board esp32wroverkit)
+' Wiring:		n/a
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "ESPNow DataReader v20260505"
+    
+	Public SerialLine As Serial
+	Private SERIAL_LINE_BAUDRATE As ULong = 115200
+
+	Private Esp As ESPNow
+	Private PeerMac() As Byte = Array As Byte(0x80,0xF3,0xDA,0x4C,0x36,0x78)
+	Private Counter As Byte = 0
+	Private ReadTimer As Timer
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(SERIAL_LINE_BAUDRATE)
+	Log("[DataReader.AppStart] ", VERSION)
+
+	Esp.Initialize("OnReceived", "OnDataSent")
+	Log("[DataReader.AppStart] MAC=", Convert.BytesToHex(Esp.GetMAC()))
+
+	Esp.SetChannel(1)
+	Esp.AddPeer(PeerMac)
+
+	ReadTimer.Initialize("ReadTimer_Tick", 5000)
+	ReadTimer.Enabled = True
+End Sub
+
+Private Sub ReadTimer_Tick
+	Dim t As Float = Rnd(1000, 3001) / 100			' 10-30; 23.45
+	Dim h As Int = Rnd(0, 101)						' 0-100; 58
+	Dim f As Byte = Rnd(0,2)						' 0-1; 1
+	Dim pkt() As Byte = CreatePacket(t, h, f)
+	Esp.SendData(PeerMac, pkt)
+End Sub
+
+Private Sub OnReceived(mac() As Byte, data() As Byte)
+	Log("[DataReader.OnReceived][RX] ", Convert.BytesToHex(data))
+End Sub
+
+Private Sub OnDataSent(mac() As Byte, status As Byte)
+	If status = Esp.SEND_OK Then
+		Log("[DataReader.OnDataSent] OK")
+	Else
+		Log("[DataReader.OnDataSent][E] FAIL")
+	End If
+End Sub
+
+Private Sub CreatePacket(temp As Float, hum As Byte, flags As Byte) As Byte()
+	Dim p(8) As Byte
+
+	' Convert temperature (×100)
+	Dim t As Int = temp * 100
+
+	' Create the packet
+	p(0) = 0xAA
+	p(1) = Bit.ShiftRight(t, 8)		' High byte
+	p(2) = Bit.And(t, 0xFF)			' Low byte
+	p(3) = hum
+	p(4) = flags
+	p(5) = Counter
+	p(6) = 0      					' reserved
+
+	' Increment counter (wrap automatically)
+	Counter = Counter + 1
+
+	' XOR Checksum
+	Dim cs As Byte = 0
+	For i = 0 To 6
+		cs = Bit.Xor(cs, p(i))
+	Next
+	p(7) = cs
+
+	Log("[DataReader.CreatePacket] temp=", temp, " hum=", hum, " flags=", flags, " packet=", Convert.BytesToHex(p))
+	' [DataReader.CreatePacket] temp=26.3800 hum=62 flags=1 packet=AA0A4E3E011A00CB
+	Return p
+End Sub

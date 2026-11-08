@@ -1,0 +1,102 @@
+﻿Build1=Default,b4a.example
+File1=android48.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=dialogs2
+Library3=javaobject
+Library4=runtimepermissions
+Library5=xui
+Library6=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~AddPermission(android.permission.MANAGE_EXTERNAL_STORAGE)~\n~SetApplicationAttribute(android:requestLegacyExternalStorage, true)
+Module1=ManageExternalStorage
+Module2=Starter
+NumberOfFiles=2
+NumberOfLibraries=6
+NumberOfModules=2
+Version=10.7
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: true
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim Bmp As Bitmap
+	Dim device As Phone
+	Dim MES As ManageExternalStorage
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	If FirstTime Then
+		Bmp.Initialize(File.DirAssets, "android48.png")
+		MES.Initialize(Me, "MES")	
+	End If
+	
+	' get the device SDK version
+	Dim SdkVersion As Int = device.SdkVersion
+	
+	' Choose which permission to request in order to access external storgage
+	If SdkVersion < 30 Then
+		Log("SDK = " & SdkVersion & " : Requesting WRITE_EXTERNAL_STORAGE permission")
+		Dim rp As RuntimePermissions
+		rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE) ' Implicit read capability if granted
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		Log($"PERMISSION_WRITE_EXTERNAL_STORAGE = ${Result}"$)
+	Else
+		Log("SDK = " & SdkVersion & " : Requesting MANAGE_EXTERNAL_STORAGE permission")
+		Log("On Entry MANAGE_EXTERNAL_STORAGE = " & MES.HasPermission)
+		If Not(MES.HasPermission) Then
+			MsgboxAsync("This app requires access to all files, please enable the option", "Manage All Files")
+			Wait For Msgbox_Result(Res As Int)
+			Log("Getting permission")
+			MES.GetPermission
+			Wait For MES_StorageAvailable
+		End If
+	End If
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+' As analternative to getting permission in Activity_Create you can do it when needed like ExternalStorage
+'	If device.SdkVersion >= 30 Then
+'		MES.GetPermission
+'		Wait For MES_StorageAvailable
+'	End If
+	Dim fd As FileDialog
+	fd.FileFilter = ""
+	'fd.FileFilter = ".txt" ' for example or ".jpg,.png" for multiple file types
+	fd.FastScroll = True
+	fd.FilePath = File.DirRootExternal ' also sets ChosenName to an emtpy string
+	Dim fda As Object = fd.ShowAsync("B4A File Dialog", "OK", "Cancel", "", Bmp, False)
+	Wait For (fda) Dialog_Result(ret As Int)
+	ToastMessageShow(ret & " : Path : " & fd.FilePath & CRLF & "File : " & fd.ChosenName, False)
+End Sub
+

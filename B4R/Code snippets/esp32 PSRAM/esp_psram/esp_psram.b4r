@@ -1,0 +1,173 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Module1=esp_psram
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 3000
+#End Region
+Sub Process_Globals
+	' These variables are accessible across all modules
+	Public Serial1 As Serial
+	Private Timer1 As Timer
+	Private TestIndex As Int = 0
+	Private MaxTests As Int = 1000 ' Number of test entries
+	Private bc As ByteConverter
+	Private TotalSavedBytes As ULong
+	
+	' Добавить переменные для мониторинга
+	Public WriteErrors As Int
+	Public ReadErrors As Int
+	Public LastFreePSRAM As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Delay(3000)
+	Log("AppStart")
+    
+	If esp_psram.Initialize Then
+		Log("PSRAM initialized. Free: ", esp_psram.GetFreePSRAM, " bytes")
+		Log("Total PSRAM: ", esp_psram.GetTotalPSRAM, " bytes")
+        
+		' Start test with delay to avoid interfering logs
+		Timer1.Initialize("Timer1_Tick", 2) '2 ms
+		Timer1.Enabled = True
+		
+		'Test(0)
+	Else
+		Log("PSRAM initialization failed or PSRAM not available")
+		Return
+	End If
+	
+End Sub
+
+Sub Test (tag As Byte)
+	TotalSavedBytes = 0
+	Dim SavedQTY As UInt
+	Log("=== Starting test: writing ", MaxTests, " strings to PSRAM ===")
+	For i = 0 To MaxTests - 1
+		' Create a large string (~200 bytes)
+		Dim Key As String = JoinStrings(Array As String("key_", i))
+		Dim Value As String = getRNDValue
+    
+		' Write to PSRAM
+		If esp_psram.SaveStringToPSRAM(Key, Value) Then
+			TotalSavedBytes = TotalSavedBytes + Value.Length + Key.Length
+			SavedQTY = SavedQTY + 1
+		Else
+			Log("Write error for key: ", Key)
+		End If
+		Delay(4)
+	Next
+	Log("Saved ", TotalSavedBytes, " bytes; SavedQTY = ", SavedQTY)
+	Log("=== Writing completed. Verification and deletion ===")
+	Log("Free after writing: ", esp_psram.GetFreePSRAM, " bytes")
+        
+	' Verification: read first, middle and last
+	Log("key_0: ", esp_psram.ReadStringFromPSRAM("key_0"))
+	'Log("key_99: ", esp_psram.ReadStringFromPSRAM("key_99"))
+	Log("key_500: ", esp_psram.ReadStringFromPSRAM("key_500"))
+	Log("key_999: ", esp_psram.ReadStringFromPSRAM("key_999"))
+        
+	' Delete
+	Log("Next - deleting all...")
+	esp_psram.ClearAllStrings
+		
+	Log("Free after deletion: ", esp_psram.GetFreePSRAM, " bytes")
+        
+	' Final check
+	Log("=== Test completed ===")
+	Delay(1000)
+	Log("Again")
+	TestIndex = 0
+	CallSubPlus("Test", 500, 0)
+End Sub
+
+Sub Timer1_Tick
+	Timer1.Enabled = False
+    
+	If TestIndex = 0 Then
+		Log("=== Starting test: writing ", MaxTests, " strings to PSRAM ===")
+		TotalSavedBytes = 0
+	End If
+    
+	' Create a large string (~200 bytes)
+	Dim Key As String = JoinStrings(Array As String("key_", TestIndex))
+	Dim Value As String = getRNDValue
+    
+    
+	' Write to PSRAM
+	If esp_psram.SaveStringToPSRAM(Key, Value) Then
+		' Read back for verification (optional, can be commented out for speed)
+		'Log("Wrote ", Key)
+
+		TotalSavedBytes = TotalSavedBytes + Value.Length + Key.Length
+		'Dim ReadBack As String = esp_psram.ReadStringFromPSRAM(Key)
+		'Log(ReadBack)
+		'If ReadBack <> Value Then Log("Read error for key: ", Key)
+	Else
+		Log("Write error for key: ", Key)
+		
+	End If
+    
+	TestIndex = TestIndex + 1
+    
+	If TestIndex < MaxTests Then
+		' Continue with next tick
+		Timer1.Enabled = True
+	Else
+		Log("Saved ", TotalSavedBytes, " bytes")
+		Log("=== Writing completed. Verification and deletion ===")
+		Log("Free after writing: ", esp_psram.GetFreePSRAM, " bytes")
+        
+		' Verification: read first, middle and last
+		Log("key_0: ", esp_psram.ReadStringFromPSRAM("key_0"))
+		'Log("key_99: ", esp_psram.ReadStringFromPSRAM("key_99"))
+		Log("key_500: ", esp_psram.ReadStringFromPSRAM("key_500"))
+		Log("key_999: ", esp_psram.ReadStringFromPSRAM("key_999"))
+        
+		' Delete
+		Log("Next - deleting all...")
+		esp_psram.ClearAllStrings
+		
+		Log("Free after deletion: ", esp_psram.GetFreePSRAM, " bytes")
+        
+		' Final check
+		Log("=== Test completed ===")
+		Delay(1000)
+		Log("Again")
+		TestIndex = 0
+		Timer1.Enabled = True
+	End If
+End Sub
+
+Sub getRNDValue As String
+	Return JoinStrings(Array As String("TestData_", TestIndex, "_", CreateRandomString(180)))
+End Sub
+
+Sub getKeyName(num As Int) As String
+	Return JoinStrings(Array As String("key_", num))
+End Sub
+
+' Helper function: generate random string
+Sub CreateRandomString(Length As Int) As String
+	Dim Chars As String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	Dim CharsBytes() As Byte = Chars.GetBytes
+	Dim Result(Length) As Byte
+
+	For i = 0 To Length - 1
+		Dim SingleByte As Byte
+		SingleByte = CharsBytes(Rnd(0, CharsBytes.Length))
+		Result(i) = SingleByte
+	Next
+	
+	Return bc.StringFromBytes(Result)
+End Sub

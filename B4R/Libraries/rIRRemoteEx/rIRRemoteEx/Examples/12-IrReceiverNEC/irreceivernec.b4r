@@ -1,0 +1,130 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rirremoteex
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+'B4R Library:	rIrRemoteEx
+'Example:		IR Receiver to test remote control NEC (KEYES 17-keys).
+'				Only the keys 1,2,3 are handled.
+'Date: 			See globals VERSION
+'Author:		Robert W.B. Linn
+'Pins:			The TX default pin is used as defined in PinDefinitionsAndMore.h are used.
+'Hardware:		Arduino UNO
+'				KEYES IR-Receiver KY-022 with CHQ1838 Sensor (carrier frequency 38 kHz, distance max 18m).
+'Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+'Hints:			Set LONG DELAY after receive to avoid noise or multiple receives.
+
+'Log Example NEC remote control pressing keys 1,2,3
+'KEY 1
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=NEC Address=0x0 Command=0x16 Raw-Data=0xE916FF00 32 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: IrSender.sendNEC(0x0, 0x16, <numberOfRepeats>);
+'[NewData] +++
+'[NewData] protocol=8,name=NEC,address=0,command=22,commandhex=16,flags=0,initialgapticks=65535,flags_is_repeat=1
+'[NewData] rawdata len=68,decoded=3238126971,hex=7BE501C1
+'[NewData] ---
+'
+'KEY 2
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=NEC Address=0x0 Command=0x19 Raw-Data=0xE619FF00 32 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: IrSender.sendNEC(0x0, 0x19, <numberOfRepeats>);
+'[NewData] +++
+'[NewData] protocol=8,name=NEC,address=0,command=25,commandhex=19,flags=0,initialgapticks=65535,flags_is_repeat=1
+'[NewData] rawdata len=68,decoded=2538093563,hex=FB3B4897
+'[NewData] ---
+'
+'KEY 3
+'[rIRRemoteEx irreceiver Looper] irresultshort=Protocol=NEC Address=0x0 Command=0xD Raw-Data=0xF20DFF00 32 bits LSB first
+'[rIRRemoteEx irreceiver Looper] irsendusage=Send with: IrSender.sendNEC(0x0, 0xD, <numberOfRepeats>);
+'[NewData] +++
+'[NewData] protocol=8,name=NEC,address=0,command=13,commandhex=0D,flags=0,initialgapticks=65535,flags_is_repeat=1
+'[NewData] rawdata len=68,decoded=4039382595,hex=4316C4F0
+'[NewData] ---
+#End Region
+
+#Region Wiring
+'IR-Receiver KY-022 = Arduino UNO (wirecolor)
+'VCC = 5V (RED)
+'RX = 2 (YELLOW)
+'GND = GND (BLACK)
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rRemoteEx IRRECEIVER v20250506"
+
+	Private serialLine As Serial
+	Private irreceiver As IrReceiver
+
+	'Key codes for RC KEYES 17-Buttons - NOTE: These might differ per device.
+	Private KEY_UP=0x46, KEY_DOWN=0x15, KEY_LEFT=0x44, KEY_RIGHT=0x43, KEY_OK=0x40, _ 
+		    KEY_1=0x16, KEY_2=0x19, KEY_3=0x0D, KEY_4=0x0C, KEY_5=0x18, KEY_6=0x5E, KEY_7=0x08, KEY_8=0x1C, KEY_9=0x5A, _
+			KEY_STAR=0x42, KEY_0=0x52, KEY_HASH=0x4A As Byte	'ignore
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(CRLF, "[AppStart] ", VERSION)
+	
+	'Init the ireceiver with default pin 2 (see PinDefinitionsAndMore.h) and set the callback event NewData.
+	irreceiver.Initialize("NewData")
+
+	Log(CRLF, "[AppStart] waiting for commands from IR remote control...")
+End Sub
+
+'Handle new IR data received for all protocols including UNKNOWN.
+Private Sub NewData(data As IrDecodedData)
+
+	If data.Protocol == 8 Then
+		HandleCommandNEC(data.Command)
+	End If
+	
+	Log("[NewData] +++")
+	Log("[NewData] protocol=", data.Protocol, ",name=", data.ProtocolName, ",address=", data.Address, ",command=", data.Command, ",commandhex=", HexFromByte(data.Command), ",flags=", data.Flags, ",initialgapticks=", data.InitialGapTicks, ",flags_is_repeat=",irreceiver.IRDATA_FLAGS_IS_REPEAT)
+	Log("[NewData] rawdata len=", data.RawDataLen, ",decoded=", data.RawDataDecoded, ",hex=",HexFromULong(data.RawDataDecoded))
+	Log("[NewData] ---")
+	
+	'Delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it As one long signal.
+	Delay(irreceiver.DELAY_LONG_AFTER_RECEIVE)
+End Sub
+
+'Take action on the receivedcommand from the NEC RC.
+'Not all keys exposed.
+Private Sub HandleCommandNEC(command As Byte)
+	Log("[HandleCommandNEC] command=", command, ",0x", HexFromByte(command))
+	Log("[HandleCommandNEC] keys 1,2,3=", KEY_1,",",KEY_2,",",KEY_3)
+	Select command
+		Case KEY_1
+			Log("[HandleCommandNEC] key 1=", command)
+		Case KEY_2
+			Log("[HandleCommandNEC] key 2=", command)
+		Case KEY_3
+			Log("[HandleCommandNEC] key 3=", command)
+	End Select
+	
+End Sub
+#Region HELPER
+'Depends on: ByteConverter defined as global public bc as ByterConverter.
+
+'Get the HEX string from a single byte value.
+Public Sub HexFromByte(value As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(value))
+End Sub
+
+'Get the HEX string from an ULong value.
+Public Sub HexFromULong(value As ULong) As String
+	Return bc.HexFromBytes(bc.ULongsToBytes(Array As ULong(value)))
+End Sub
+#End Region

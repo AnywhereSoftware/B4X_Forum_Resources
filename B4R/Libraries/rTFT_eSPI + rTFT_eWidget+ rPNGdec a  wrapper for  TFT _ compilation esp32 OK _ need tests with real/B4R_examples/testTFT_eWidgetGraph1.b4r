@@ -1,0 +1,117 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rrandomaccessfile
+Library4=rtft_espi
+Library5=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Button widget demo, requires SPI display with touch screen
+
+'// Requires widget library here:
+'// https://github.com/Bodmer/TFT_eWidget
+
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private raf As RandomAccessFile
+    Private LFS As LittleFS
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+	Private GR As GraphWidget
+	Private GRid As ULong
+	Private TR As TraceWidget
+	Private gxLow As Double  = 0.0
+	Private gxHigh As Double = 100.0
+	Private gyLow As Double  = -512.0
+	Private gyHigh As Double = 512.0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+ 	TFTid = TFT.Initialize(-1,-1)
+	GRid = GR.initialize(TFTid)
+	TR.initialize(GRid)
+
+	TFT.begin(0xFF)
+	TFT.setRotation(3)
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	'// Graph area is 200 pixels wide, 150 pixels high, dark grey background
+	GR.createGraph(200, 150, TFT.color565(5, 5, 5))
+
+	'// x scale units is from 0 To 100, y scale units is -512 To 512
+	GR.setGraphScale(gxLow, gxHigh, gyLow, gyHigh)
+
+	'// X GRid starts at 0 with lines every 20 x-scale units
+	'// Y GRid starts at -512 with lines every 64 y-scale units
+	'// blue GRid
+	GR.setGraphGrid(gxLow, 20.0, gyLow, 64.0, TFT.TFT_BLUE)
+
+	'// Draw empty graph, top left corner at pixel coordinate 40,10 on TFT
+	GR.drawGraph(40, 10)
+
+	'// Start a trace with using red, trace points are in x And y scale units
+	'// In this example a horizontal line is drawn
+	TR.startTrace(TFT.TFT_RED)
+	'// Add a trace point at 0.0,0.0 on graph
+	TR.addPoint(0.0, 0.0)
+	'// Add another point at 100.0, 0.0 this will be joined via line To the last point added
+	TR.addPoint(100.0, 0.0)
+
+	'// Start a new trace with using white
+	TR.startTrace(TFT.TFT_WHITE)
+
+
+	AddLooper ("LocalLoop")
+End Sub
+
+Sub LocalLoop
+	Dim plotTime As ULong = Millis()
+	Dim gx As Double = 0.0, gy = 0.0
+	Dim delta As Double = 10.0
+
+	'// Create a new plot point every 100ms
+	If (Millis - plotTime >= 100) Then
+		plotTime = Millis
+
+		'// Add a plot, first point in a trace will be a single pixel (If within graph area)
+		TR.addPoint(gx, gy)
+		gx = gx + 1.0
+		If (gy >  500.0) Then delta = -10.0
+		If (gy < -500.0) Then delta =  10.0
+		gy = gy + delta
+
+		'// If the end of the graph x ais is reached start a new trace at 0.0,0.0
+		If (gx > gxHigh) Then
+			gx = 0.0
+			gy = 0.0
+
+			'// Draw empty graph at 40,10 on display To clear old one
+			GR.drawGraph(40, 10)
+			'// Start new trace
+			TR.startTrace(TFT.TFT_GREEN)
+    	End If
+  	End If 
+End Sub

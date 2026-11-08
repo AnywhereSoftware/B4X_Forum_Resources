@@ -1,0 +1,206 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=byteconverter
+Library2=encryption
+Library3=jcore
+Library4=jfx
+Library5=jnetwork
+Library6=jrandomaccessfile
+Library7=jstringutils
+Library8=jxui
+Module1=B4RSerializator
+NumberOfFiles=1
+NumberOfLibraries=8
+NumberOfModules=1
+Version=9.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+	#AdditionalJar: bcprov-jdk15on-160 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Public SU As StringUtils,BC As ByteConverter
+	Dim KPG As KeyPairGenerator
+	Dim EC As Cipher
+	
+	Dim ESP32KPG As KeyPairGenerator
+	Dim ESP32EC As Cipher
+	
+	Public connected As Boolean
+	Private client As Socket
+	Public server As ServerSocket
+	Private astream As AsyncStreams
+	Public PORT As Int
+	Public const ESPIP As String = "192.168.178.65"
+		
+	Public ser As B4RSerializator
+	
+	Public MyPubKeyPEM, MyPrivateKeyPEM, PubKeyFromESP As String
+	Public ESP32PubkeyAsBytes() As Byte
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+		
+	ser.Initialize
+	
+	GenMyRSAKeys
+	ConnectToServer(ESPIP)
+End Sub
+
+Public Sub ConnectToServer(ip As String)
+	
+	Log("Trying to connect to: " & ESPIP)
+	CloseExistingConnection
+	Dim client As Socket
+	
+	For PORT=52000 To 52000
+		client.Initialize("client")
+		Log("Trying to connect to PORT " & PORT)
+		client.Connect(ESPIP, PORT, 2000)
+		Wait For Client_Connected (Successful As Boolean)
+		If Successful Then
+			astream.InitializePrefix(client.InputStream, False, client.OutputStream, "astream")
+			Log("Connected...")
+			SendMyPubKeyToESP32
+			Exit
+		Else
+			client.Close
+			Log("Failed to connect: " & LastException)
+		End If
+	Next
+End Sub
+
+public Sub Disconnect
+	Log("Disconnecting...")
+	CloseExistingConnection
+
+End Sub
+
+Sub CloseExistingConnection
+	If astream.IsInitialized Then astream.Close
+	If client.IsInitialized Then client.Close
+	
+End Sub
+
+Sub AStream_Error
+	Log("Astream terminated")
+End Sub
+
+Sub AStream_Terminated
+	AStream_Error
+End Sub
+
+Sub SendMyPubKeyToESP32
+	Log("Sending PubKey to ESP32...")
+	astream.Write(ser.ConvertArrayToBytes(Array("PUBKEY",MyPubKeyPEM)))
+End Sub
+
+Sub AStream_NewData (Buffer() As Byte)
+	Dim data() As Object = ser.ConvertBytestoarray(Buffer)
+	Log("Received (" & data.Length & " objects)")
+	'For Each o As Object In data
+	'	Log(o)
+	'Next
+	
+	Select data(0)
+		Case "INIT"
+			If data(1) = "OK"  Then
+				Log("Login OK")
+			Else
+				Log("Login failed!")
+			End If
+		Case "ESP32PUBKEY"
+			Log("ESP32's Pubkey: " & data(1))
+			PubKeyFromESP=data(1)
+			LoadESP32PubKey(PubKeyFromESP)
+		Case "ESP32ENC"
+			
+			Dim encHex As String=data(1)
+			Dim enc() As Byte=BC.HexToBytes(encHex)
+			Dim EC2 As Cipher
+			EC2.Initialize("RSA/ECB/PKCS1Padding")
+			Dim de() As Byte=EC2.Decrypt(enc,KPG.PrivateKey,False)
+			Log("Decrypted: " & BC.StringFromBytes(de,"UTF8"))
+		
+		End Select
+	
+End Sub
+
+Sub LoadESP32PubKey(PubKey As String)
+	'Log("Pubkey-Length: "& PubKey.Length)
+	PubKey=PubKey.Replace("-----BEGIN PUBLIC KEY-----","")
+	PubKey=PubKey.Replace("-----END PUBLIC KEY-----","")
+	PubKey=PubKey.Replace(CRLF,"")
+	ESP32PubkeyAsBytes=SU.DecodeBase64(PubKey)
+	ESP32EC.Initialize("RSA/ECB/PKCS1Padding")
+	ESP32KPG.Initialize("RSA", 2048)
+	ESP32KPG.PublicKeyFromBytes(ESP32PubkeyAsBytes)
+	
+	'Encrypt with the ESP's Public Key and send it
+	Dim mp() As Byte="Greetings from B4x".GetBytes("UTF8")
+	Dim Enc() As Byte=ESP32EC.Encrypt(mp,ESP32KPG.PublicKey,False)
+	
+	astream.Write(ser.ConvertArrayToBytes(Array("ENC",Enc)))
+End Sub
+
+Public Sub SendData (data As String) As Boolean
+	If connected Then
+		astream.Write(ser.ConvertArrayToBytes(Array(data)))
+		
+		'astream.Write(data.GetBytes("UTF8"))
+		Return True
+	Else
+		Return False
+	End If
+End Sub
+
+Sub GenMyRSAKeys
+	EC.Initialize("RSA/ECB/PKCS1Padding")
+	KPG.Initialize("RSA", 2048)
+	KPG.GenerateKey
+	MyPubKeyPEM=SU.EncodeBase64(KPG.PublicKeyToBytes)
+	MyPrivateKeyPEM=SU.EncodeBase64(KPG.PrivateKeyToBytes)
+	MyPubKeyPEM=PubKey2PEM(MyPubKeyPEM)
+End Sub
+
+Sub PubKey2PEM (RawPubKey As String) As String
+	Dim l,co As Int
+	Dim PK As String
+	PK = "-----BEGIN PUBLIC KEY-----" & CRLF
+	 	 
+	'l=32
+	l=64
+	co=0
+	 
+	For i=0 To RawPubKey.Length-1
+		PK=PK & RawPubKey.CharAt(i)
+		co=co+1
+		If co=l Then
+			co=0
+			l=64
+			'Log (RSAOwnPubKeyString.Length)
+			PK=PK & CRLF
+		End If
+	Next
+	PK = PK &  CRLF & "-----END PUBLIC KEY-----"
+	 
+	PK=PK.Replace(CRLF&CRLF,CRLF)
+	File.WriteString(File.DirApp,"pubkey.pem",PK)
+	Return PK
+End Sub
+
+
+
+

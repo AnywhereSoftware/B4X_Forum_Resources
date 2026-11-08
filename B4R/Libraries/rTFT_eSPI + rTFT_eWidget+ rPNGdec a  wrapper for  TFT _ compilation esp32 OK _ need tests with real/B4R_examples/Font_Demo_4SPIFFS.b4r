@@ -1,0 +1,202 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266filesystem
+Library3=rrandomaccessfile
+Library4=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+ '/*
+ ' There are four different methods of plotting anti-aliased fonts To the screen.
+
+ ' This sketch uses method 4, printing "String" Or character Array types only To screen,
+ ' via a Sprite. The Sprite must Not have been created already. The printToSprite()
+ ' function automatically creates a sprite of a minimal size To contain the String,
+ ' Then plots To screen at the "tft" cursor position. Printing via a sprite draws the
+ ' text faster on the screen. This method minimises flicker but uses RAM For the Sprite,
+ ' the Sprite is automatically deleted after plotting To the TFT.
+
+ ' Number And float types must be converted To strings To use printToSprite() e.g.:
+ ' SPR.printToSprite( (String) number );
+ ' SPR.printToSprite( (String) (number * 55 / 1.23) );  // Put calculations within brackets0
+
+ ' The key advantage of this method is that you Do Not need To calculate the size of sprite
+ ' needed To contain the text, the library does that For you. The library also fills the
+ ' the sprite with text background colour For you.
+
+ ' printToSprite() has a second purpose, If the sprite has been created already the String
+ ' will be printed into the Sprite at the "sprite" cursor position, which is
+ ' different To the "tft" cursor position. In this Case the Sprite is Not deleted And
+ ' you must use pushSprite() To plot on the screen. This method is Not used in this sketch.
+ ' because in general it is better To use drawString() in an already created sprite.
+ ' printToSprite() will Not move the TFT cursor.
+
+  '*/
+'//  The fonts used are in the sketch data folder, press Ctrl+K To view.
+
+'//  Upload the fonts And icons To SPIFFS (must set at least 1M For SPIFFS) using the
+'//  "Tools"  "ESP8266 (or ESP32) Sketch Data Upload" menu option in the IDE.
+'//  To add this option follow instructions here For the ESP8266:
+'//  https://github.com/esp8266/arduino-esp8266fs-plugin
+'//  Or For the ESP32:
+'//  https://github.com/me-no-dev/arduino-esp32fs-plugin
+
+'//  Close the IDE And open again To see the new menu option.
+
+'// A processing sketch To create new fonts can be found in the Tools folder of TFT_eSPI
+'// https://github.com/Bodmer/TFT_eSPI/tree/master/Tools/Create_Smooth_Font/Create_font
+
+'// This sketch uses font files created from the Noto family of fonts:
+'// https://www.google.com/get/noto/
+
+'#define AA_FONT_SMALL "NotoSansBold15"
+'#define AA_FONT_LARGE "NotoSansBold36"
+
+'// Font files are stored in SPIFFS, so load the library
+
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private SPR As TFT_eSprite
+	Private FS As ESP8266FileSystem
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	
+	SPR.Initialize(TFTid)
+	
+	TFT.begin(0xFF)
+
+	TFT.setRotation(1)
+	
+	SPR.setcolorDepth(16)
+	
+	If Not(FS.initialize) Then 
+	  	Log("SPIFFS initialisation failed!")
+		Do While(True):Delay(100):Loop
+    End If
+	Log("\n\SPIFFS available!")
+
+	'// ESP32 will crash If any of the fonts are missing
+	Dim font_missing As bool = False
+	If (FS.exists("/NotoSansBold15.vlw") = False) Then font_missing = True
+	If (FS.exists("/NotoSansBold36.vlw") = False) Then font_missing = True
+	If (font_missing) Then
+		Log("\nFont missing in Flash FS, did you upload it?")
+		Do While(True):Delay(100):Loop
+	Else 
+		Log("\nFonts found OK.")
+	End If
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+		
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False) ' // Set the font colour And the background colour
+
+	TFT.setTextDatum(TFT.TC_DATUM)  ' // Top CENTRE datum
+
+	Dim xpos As Int = TFT.width() / 2 ' // Half the screen width
+	Dim ypos As Int = 50
+
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Small font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	SPR.loadFontFS("NotoSansBold15")   ' // Must load the font first into the sprite class
+  
+	SPR.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_BLACK,False) ' // Set the sprite font colour And the background colour
+
+	TFT.setCursor(xpos - 50, ypos)   '        // Set the TFT cursor position, yes TFT position!
+	SPR.printToSprite("Small 15pt font") '    // Prints To TFT cursor position, TFT cursor Not moved
+
+	ypos = ypos + SPR.fontHeight1 '   // Get the font height And move ypos down
+
+	SPR.unloadFont() ' // Remove the font from sprite class To recover memory used
+
+	Delay(4000)
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Large font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	SPR.loadFontFS("NotoSansBold36") ' // Load another different font
+
+	SPR.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLUE,False) ' // Set the font colour And the background colour
+
+	TFT.setCursor(xpos - 90, ypos) '  // Set the TFT cursor position
+	SPR.printToSprite("36pt font") '  // Text is rendered via a minimally sized sprite
+
+	ypos = ypos + SPR.fontHeight1 '  // Get the font height And move ypos down
+
+	'// Draw changing numbers - no flicker using this plot method!
+	For  i = 0 To 200
+		TFT.setCursor(10, 10)
+		'// Number is converted To String Type by (String) (number)
+		SPR.printToSprite(" " + NumberFormat(i / 100.0,4,4)+ " ") ' // Space padding helps over-write old numbers
+		Delay (20)
+    Next
+
+	SPR.unloadFont ' // Remove the font To recover memory used
+
+	Delay(8000)
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt) As Byte()
+	Dim Result(16) As Byte
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+    Next
+	Return Result
+End Sub
+

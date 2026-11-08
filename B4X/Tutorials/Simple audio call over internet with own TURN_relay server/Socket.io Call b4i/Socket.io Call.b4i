@@ -1,0 +1,133 @@
+﻿Build1=Default,com.brandsum.calltest
+File1=Call.bil
+File2=classic_ringtone.mp3
+File3=Home.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+Group=Default Group
+Library1=icore
+Library2=ijson
+Library3=irandomaccessfile
+Library4=isocketioclient
+Library5=iui8
+Library6=ixui
+Library7=iphone
+Module1=CallPage
+Module2=HomePage
+NumberOfFiles=3
+NumberOfLibraries=7
+NumberOfModules=2
+Version=7
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Socket.io Call
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 10
+	
+	#PlistExtra: <key>NSMicrophoneUsageDescription</key><string>Used to record voice for call.</string>
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	
+	
+	Public socket As iSocketIOClient
+	Public busy As Boolean = False
+	Public connectedUsers As List
+	Public myID As String
+	Public status As String
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	
+	connectedUsers.Initialize
+	myID = Rnd(10000,99999)&"_"&Rnd(10000,99999)
+	socket.initialize("socket")
+	
+	HomePage.ShowPage
+	
+End Sub
+
+Sub Application_Background
+	socket.disconnect
+End Sub
+
+Sub socket_OnDisconnect (data As List)
+	HomePage.update_status("Disconnected - "&data.get(0))
+End Sub
+
+Sub socket_OnConnecting(data As List)
+	HomePage.update_status("Connecting to server...")
+End Sub
+
+Sub socket_OnReconnecting (data As List)
+	HomePage.update_status("Trying to reconnect...")
+End Sub
+
+Sub socket_OnError (data As List)
+	HomePage.update_status("Error")
+End Sub
+
+Sub socket_OnConnect(data As List)
+	socket.AddListener("user_update","user_update")
+	socket.AddListener("is_connected","registered")
+	socket.EmitString("reg_user",myID)
+	HomePage.update_status("Registering Device...")
+End Sub
+
+Sub socket_registered(data As List, ack As Object)
+	If data.Get(0) = "0" Then
+		myID = Rnd(10000,99999)&"_"&Rnd(10000,99999)
+		socket.EmitString("reg_user",myID)
+		Return
+	End If
+	HomePage.update_status("Connected. My ID: "&myID)
+	Dim j As JSONParser
+	j.Initialize(data.Get(0))
+	connectedUsers = j.NextArray
+	HomePage.update_user_list
+	
+	socket.AddListener("call_in","call_in")
+	socket.AddListener("call_status","call_status")
+End Sub
+
+Sub socket_audiorecived(data As List, ack As Object)
+	If busy Then
+		CallPage.audiorecived(data.Get(0))
+	End If
+End Sub
+
+Sub socket_call_status(data As List, ack As Object)
+	CallPage.call_status(data.Get(0))
+End Sub
+
+Sub socket_user_update(data As List, ack As Object)
+	Dim j As JSONParser
+	j.Initialize(data.Get(0))
+	connectedUsers = j.NextArray
+	HomePage.update_user_list
+End Sub
+
+Sub socket_call_in(data As List, ack As Object)
+	If CallPage.isVisible Then
+		socket.sendAck(ack,0)
+		Return
+	End If
+	socket.sendAck(ack,1)
+	Dim j As JSONParser
+	j.Initialize(data.Get(0))
+	CallPage.callType = "in"
+	CallPage.peerId = j.NextObject.Get("from")
+	CallPage.ShowPage
+End Sub

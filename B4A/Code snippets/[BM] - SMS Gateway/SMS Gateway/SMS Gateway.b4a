@@ -1,0 +1,215 @@
+﻿Build1=Default,b4a.example
+File1=Item.bal
+File2=kredito_sms.db
+File3=kredito_sms.sqbpro
+File4=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=ahttpserver
+Library10=runtimepermissions
+Library11=sql
+Library12=xcustomlistview
+Library13=xui
+Library14=xui views
+Library15=clipboard
+Library2=b4xtable
+Library3=core
+Library4=httpserver
+Library5=javaobject
+Library6=network
+Library7=okhttp
+Library8=okhttputils2
+Library9=phone
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddPermission(android.permission.SEND_SMS)~\n~AddPermission(android.permission.INTERNET)~\n~AddPermission(android.permission.READ_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.WRITE_EXTERNAL_STORAGE)~\n~~\n~~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=SmsGatewayService
+Module2=Starter
+NumberOfFiles=4
+NumberOfLibraries=15
+NumberOfModules=2
+Version=13.3
+@EndOfDesignText@
+'SMS GATEWAY By Brian Michael
+'Made with love for B4X.com 
+
+#AdditionalJar: com.android.support:support-core-utils
+
+Sub Process_Globals
+	Private rp As RuntimePermissions
+	Private SQL1 As SQL
+End Sub
+
+
+Sub Globals
+	Private lblIP As Label
+	
+	Private edtKey As EditText
+	Private edtMax As EditText
+	Private btnSave As Button
+	Private clvKeys As CustomListView
+	Private editingIndex As Int = -1
+	
+	Private lblStatus As Label
+	Private btnCopy As Button
+	Private btnDelete As Button
+	Private txtApiKey_Item As EditText
+	Private txtMax_Item As EditText
+	Private btnAdd As Button
+	Public cb As BClipboard
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	lblStatus.Text = rp.GetSafeDirDefaultExternal("")
+	
+	Dim dbPath As String = rp.GetSafeDirDefaultExternal("")
+	
+	If File.Exists(dbPath, "kredito_sms.db") = False Then
+		Log("Database not found, Creating new database...")
+		SQL1.Initialize(dbPath, "kredito_sms.db", True)
+		CreateTables
+	Else
+		SQL1.Initialize(dbPath, "kredito_sms.db", True)
+		If (Database_GetTables.Size = 0) Then CreateTables
+	End If
+
+	If SQL1.IsInitialized Then LoadKeys
+	
+	Dim socket As ServerSocket : socket.Initialize(0, "")
+	
+	Dim ip As String = socket.GetMyWifiIP
+	lblIP.Text = "IP: " & ip & $":${SmsGatewayService.port}/"$
+	
+End Sub
+
+
+Sub Activity_Resume
+	For Each permission As String In Array(rp.PERMISSION_SEND_SMS, rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+		rp.CheckAndRequest(permission)
+		Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+		If Result = False Then
+			ToastMessageShow("❌ Permission are required, closing the app.", True)
+			Activity.Finish
+			Return
+		End If
+	Next
+	ToastMessageShow("✅ All Permissions allowed, opening...", False)
+		
+	' Inicializar UI, iniciar servicio o mostrar CRUD
+	StartService(SmsGatewayService)
+
+End Sub
+
+Sub Database_GetTables As List
+	Dim result As List
+	result.Initialize
+	Dim cursor As ResultSet
+	Dim cmd As String = "SELECT * FROM sqlite_master WHERE TYPE=""table"" ORDER BY name;"
+	Try
+		cursor = SQL1.ExecQuery(cmd)
+		Do While cursor.NextRow
+			result.Add(cursor.GetString("name"))
+		Loop
+	Catch
+		Log("ERROR: " & LastException.Message)
+	End Try
+	Return result
+End Sub
+
+Sub LoadKeys
+	clvKeys.Clear
+	
+	Dim Cursor As Cursor
+	Cursor = SQL1.ExecQuery("SELECT * FROM apikeys")
+	If Cursor.RowCount = 0 Then
+		clvKeys.AddTextItem("No API KEYS avalible","")
+	Else
+		For i = 0 To Cursor.RowCount - 1
+			Cursor.Position = i
+			Dim p As Panel = CreateKeyItem(Cursor.GetString("apikey"), Cursor.GetInt("max_per_month"))
+			clvKeys.Add(p, Cursor.GetString("apikey"))
+			'clvKeys.AddTextItem(Cursor.GetString("apikey") & " " & Cursor.GetString("max_per_month"),"")
+		Next
+	End If
+End Sub
+
+
+
+Sub CreateTables
+	SQL1.ExecNonQuery("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, apikey TEXT, number TEXT, message TEXT, ip TEXT, status TEXT, date TEXT)")
+	SQL1.ExecNonQuery("CREATE TABLE IF NOT EXISTS apikeys (apikey TEXT PRIMARY KEY, max_per_month INTEGER)")
+	Log("Database created!")
+End Sub
+
+
+private Sub CreateKeyItem(apikey As String, M As Int) As Panel
+	Dim p As Panel : p.Initialize("Item")
+	p.LoadLayout("Item")
+	p.Width = 100%y
+	p.Height = 140dip
+	
+	txtApiKey_Item.Text = apikey
+	txtMax_Item.Text = M
+	btnCopy.Tag = apikey
+    btnSave.Tag = apikey
+    btnDelete.Tag = apikey
+    Return p
+End Sub
+
+Sub btnAdd_Click
+    Dim key As String = edtKey.Text.Trim
+    Dim M As String = edtMax.Text.Trim
+    If key = "" Or M = "" Then
+        ToastMessageShow("Complete API KEY and Max usage.", False)
+        Return
+    End If
+
+    If editingIndex = -1 Then
+        SQL1.ExecNonQuery2("INSERT OR REPLACE INTO apikeys (apikey, max_per_month) VALUES (?, ?)", Array As Object(key, M))
+    Else
+        SQL1.ExecNonQuery2("UPDATE apikeys SET max_per_month = ? WHERE apikey = ?", Array As Object(M, key))
+    End If
+
+    ClearInputs
+    LoadKeys
+End Sub
+
+Sub btnCopy_Click
+	cb.setText(Sender.As(Button).tag)
+End Sub
+
+Sub btnSave_Click
+    Dim key As String = Sender.As(Button).Tag
+	
+	Dim Cursor As Cursor
+
+	Cursor = SQL1.ExecQuery2("SELECT * FROM apikeys WHERE apikey = ?", Array As String(key))
+	
+	For i = 0 To Cursor.RowCount - 1
+		edtKey.Text = Cursor.GetString("apikey")
+		edtMax.Text = Cursor.GetString("max_per_month")
+	    editingIndex = clvKeys.GetItemFromView(Sender)
+	Next
+	
+End Sub
+
+Sub btnDelete_Click
+	Dim key As String = Sender.As(Button).Tag
+	
+	Msgbox2Async($"¿Delete this API KEY '${key}'?"$, "Confrim", "Yes", "", "No", Null, True)
+	Wait For Msgbox_Result (Result As Int)
+	If Result = DialogResponse.POSITIVE Then
+		SQL1.ExecNonQuery2("DELETE FROM apikeys WHERE apikey = ?", Array As String(key))
+		LoadKeys	
+	End If
+End Sub
+
+Sub ClearInputs
+    edtKey.Text = ""
+    edtMax.Text = ""
+    editingIndex = -1
+End Sub

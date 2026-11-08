@@ -1,0 +1,84 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=test.db
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=jsql
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+
+'https://github.com/Willena/sqlite-jdbc-crypt/releases
+'https://github.com/Willena/sqlite-jdbc-crypt/releases/tag/3.46.0.0
+
+'Working
+'#AdditionalJar: sqlite-jdbc-3.30.0 
+'#AdditionalJar: sqlite-jdbc-3.31.1 
+'#AdditionalJar: sqlite-jdbc-3.35.5.1
+
+'Using the latest Version, you need to Add the slf4j API, otherwise you will get Class not found
+#AdditionalJar: sqlite-jdbc-3.46.0.0
+#AdditionalJar: slf4j-api-1.7.36
+
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	
+	'Dim dbNamePath As String ="C:\\Users\\DEVN\\Desktop\\test.db"
+	Dim dbName As String = "test.db"
+	Dim password As String = "12345678"
+	
+	Dim sql As SQL
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	
+	If File.Exists(File.DirApp,dbName) = False Then
+		File.Copy(File.DirAssets,dbName,File.DirApp,dbName)
+		Log("file copied")		
+	End If
+	
+	Sleep(0)
+	
+	If sql.IsInitialized = False Then
+		'===========Database and App in one location======================
+		sql.Initialize("org.sqlite.JDBC",$"jdbc:sqlite:file:test.db?cipher=sqlcipher&legacy=4&kdf_iter=256000&key=${password}"$)
+		
+		'===========You can also specify Path to the Database============================
+		'sql.Initialize("org.sqlite.JDBC","jdbc:sqlite:file:C:\Users\DEVN\Desktop\test.db?cipher=sqlcipher&legacy=4&key=12345678&kdf_iter=256000")
+		Log("DB Started")
+	End If
+End Sub
+
+Sub Button1_Click
+	Dim ver As Int = sql.ExecQuerySingleResult("SELECT version from DBVersion")
+	
+	Log(ver)
+	
+	Log("****************************")
+	Dim res As ResultSet
+	res = sql.ExecQuery("SELECT * FROM tblusers")
+	
+	Do While res.NextRow
+		Log(res.GetString("fname") & " " & res.GetString("lname"))
+	Loop
+End Sub

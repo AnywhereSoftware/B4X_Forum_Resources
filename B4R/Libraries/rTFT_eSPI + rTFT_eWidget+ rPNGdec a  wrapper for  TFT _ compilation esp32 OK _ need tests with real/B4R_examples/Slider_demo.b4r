@@ -1,0 +1,318 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlittlefs
+Library3=rrandomaccessfile
+Library4=rtft_espi
+Library5=rtft_ewidget
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+'// Slider widget demo, requires display with touch screen
+
+'// Requires widget library here:
+'// https://github.com/Bodmer/TFT_eWidget
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private LFS As LittleFS
+	Private raf As RandomAccessFile
+  	Private TFT As TFT_eSPI
+	Private TFTid As ULong
+	Private knob As TFT_eSprite
+	Private s1 As SliderWidget
+	Private s2 As SliderWidget
+	Private SPRid As ULong
+	Private CALIBRATION_FILE As String = "/TouchCalData1"
+	Private REPEAT_CAL As bool = False
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+
+ 	TFTid = TFT.Initialize(-1,-1)
+	SPRid =1: knob.Initialize(TFTid)
+	s1.initialize(TFTid,SPRid)
+	s2.initialize(TFTid, SPRid)
+	
+	TFT.begin(0xFF)
+	TFT.setRotation(0)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	
+	TFT.setFreeFont(0) '(FF18 = FreeMonoBold18pt7b = FreeFont 0)
+
+	'// Calibrate the touch screen And retrieve the scaling factors
+	If (REPEAT_CAL) Then
+		touch_calibrate
+		TFT.fillScreen(TFT.TFT_BLACK)
+  	End If
+
+	'// Create a parameter set For the slider
+	'slider_t param
+
+'// Slider slot parameters for s1
+s1.param_slotWidth = 9           '// Note: ends of slot will be rounded And anti-aliased
+s1.param_slotLength = 200        '// Length includes rounded ends
+s1.param_slotColor = TFT.TFT_BLUE    '// Slot colour
+s1.param_slotBgColor = TFT.TFT_BLACK '// Slot background colour For anti-aliasing
+s1.param_orientation = TFT.H_SLIDER  '// sets it "true" For horizontal
+
+'// Slider control knob parameters (smooth rounded rectangle)
+s1.param_knobWidth = 15          '// Always along x axis
+s1.param_knobHeight = 25         '// Always along y axis
+s1.param_knobRadius = 5          '// Corner radius
+s1.param_knobColor = TFT.TFT_WHITE   '// Anti-aliased with slot backgound colour
+s1.param_knobLineColor = TFT.TFT_RED '// Colour of marker line (set To same As knobColor For no line)
+
+'// Slider range And movement speed
+s1.param_sliderLT = 0            '// Left side For horizontal, top For vertical slider
+s1.param_sliderRB = 100          '// Right side For horizontal, bottom For vertical slider
+s1.param_startPosition = 50      '// Start position For control knob
+s1.param_sliderDelay = 0         '// Microseconds per pixel movement Delay (0 = no Delay)
+
+'// Slider slot parameters for s2
+s2.param_slotWidth = 9           '// Note: ends of slot will be rounded And anti-aliased
+s2.param_slotLength = 200        '// Length includes rounded ends
+s2.param_slotColor = TFT.TFT_BLUE    '// Slot colour
+s2.param_slotBgColor = TFT.TFT_BLACK '// Slot background colour For anti-aliasing
+s2.param_orientation = TFT.H_SLIDER  '// sets it "true" For horizontal
+
+'// Slider control knob parameters (smooth rounded rectangle)
+s2.param_knobWidth = 15          '// Always along x axis
+s2.param_knobHeight = 25         '// Always along y axis
+s2.param_knobRadius = 5          '// Corner radius
+s2.param_knobColor = TFT.TFT_WHITE   '// Anti-aliased with slot backgound colour
+s2.param_knobLineColor = TFT.TFT_RED '// Colour of marker line (set To same As knobColor For no line)
+
+'// Slider range And movement speed
+s2.param_sliderLT = 0            '// Left side For horizontal, top For vertical slider
+s2.param_sliderRB = 100          '// Right side For horizontal, bottom For vertical slider
+s2.param_startPosition = 50      '// Start position For control knob
+s2.param_sliderDelay = 0         '// Microseconds per pixel movement Delay (0 = no Delay)
+'// Create slider using parameters And plot at 0,0
+s1.drawSliderParam(0, 0)
+
+'/ Show bounding box (1 pixel outside slider working area)
+Dim x, y As Int    '// x And y can be negative
+Dim w, h As UInt   '// Width And height
+Dim xywh(4) As Int
+s1.getBoundingRect(xywh)    '// Update x,y,w,h with bounding box
+x = xywh(0):y = xywh(0): w = xywh(0): h = xywh(0)
+TFT.drawRect(x, y, w, h, TFT.TFT_DARKGREY)   '// Draw rectangle outline
+'/*
+'// Alternative discrete fns To create/modify same slider - but fn sequence is important...
+'s1.createSlider(9, 200, TFT.TFT_BLUE, TFT.TFT_BLACK, TFT.H_SLIDER)
+'s1.createKnob(15, 25, 5, TFT.TFT_WHITE, TFT.TFT_RED)
+'s1.setSliderScale1(0, 100)
+'s1.drawSlider(0, 0)
+'*/
+Delay(1000)
+s1.setSliderPosition(50)
+Delay(1000)
+s1.setSliderPosition(100)
+
+'// Update any parameters that are different For slider 2
+s2.param_slotWidth = 4
+s2.param_orientation = TFT.V_SLIDER   '// sets it "false" For vertical
+
+s2.param_knobWidth = 19
+s2.param_knobHeight = 19
+s2.param_knobRadius = 19/2    '// Half w And h so creates a circle
+
+s2.param_sliderLT = 200     '// Top For vertical slider
+	s2.param_sliderRB = 0   '// Bottom For vertical slider
+	s2.param_sliderDelay = 2000  '// 2ms per pixel movement Delay (movement is blocking Until complete)
+
+	s2.drawSliderParam(0, 50)
+
+	s2.getBoundingRect(xywh)
+	x = xywh(0): y = xywh(1): w = xywh(2): h = xywh(3)
+	TFT.drawRect(x, y, w, h, TFT.TFT_DARKGREY)
+	'/*
+	'// Alternative discrete fns To create/modify same slider - but fn sequence is important...
+	's2.createSlider(4, 200, TFT.TFT_BLUE, TFT.TFT_BLACK, TFT.V_SLIDER)
+	's2.createKnob(19, 19, 9, TFT.TFT_WHITE, TFT.TFT_RED)
+	's2.setSliderScale(200, 0, 2000)
+	's2.drawSlider(0, 50)
+	'*/
+	'// Move slider under software control
+	Delay(1000)
+	s2.setSliderPosition(50)
+	Delay(1000)
+	s2.setSliderPosition(100)
+
+	AddLooper ("LocalLoop")
+End Sub
+
+Sub LocalLoop
+
+Dim scanTime As ULong = Millis
+Dim t_x As UInt = 9999: Dim t_y As UInt = 9999    ' // To store the touch coordinates
+Dim t_xy(2) As UInt
+'// Scan For touch every 50ms
+	If (Millis - scanTime >= 20) Then
+	'// Pressed will be set True If there is a valid touch on the screen
+		If( TFT.getTouch(t_xy, 250)=1 ) Then
+			t_x = t_xy(0): t_y = t_xy(1)
+			If (s1.checkTouch(t_x, t_y)) Then
+				Log("Slider 1 = ",s1.getSliderPosition)
+     		 End If
+			If (s2.checkTouch(t_x, t_y)) Then
+				Log("Slider 2 = ",s2.getSliderPosition())
+     		End If
+    	End If
+	scanTime = Millis
+  End If
+
+	'//s1.moveTo(random(0,101))
+	'//Delay(250)
+	'//s2.moveTo(random(0,101))
+	'//Delay(250)
+End Sub
+
+'Sub mapValue(ip As Double, ipmin As Double, ipmax As Double, tomin As Double, tomax As Double) As Double
+'  Return tomin + (((tomax - tomin) * (ip - ipmin))/ (ipmax - ipmin))
+'End Sub
+
+Sub touch_calibrate
+Dim calDatab(14) As Byte
+Dim calData(7) As UInt
+Dim calDataOK As bool = False
+
+  '// check file system exists
+  If (Not(LFS.Initialize)) Then
+    Log("Formating file system")
+	LFS.format()
+	If Not(LFS.Initialize) Then
+		Log("ERROR Formating file system")
+		Do While True : Delay(100) : Loop
+	End If
+  End If
+		
+  '// check If calibration file exists And size is correct
+  If (LFS.exists(CALIBRATION_FILE)) Then
+	If (REPEAT_CAL) Then
+	'// Delete If we want To re-calibrate
+	 	LFS.remove(CALIBRATION_FILE)
+	Else
+    	Dim f As bool = LFS.OpenRead(CALIBRATION_FILE)
+		If (f=True) Then
+        	If (LFS.Stream.ReadBytes(calDatab,0, 14) = 14) Then
+				setUInt(calDatab,calData)
+				calDataOK = True
+			End If
+			LFS.close
+		End If
+	End If
+  End If
+
+ If calDataOK And Not(REPEAT_CAL) Then
+	'// calibration data valid
+	TFT.setTouch(calData)
+ Else
+	'// data Not valid so recalibrate
+	TFT.fillScreen(TFT.TFT_BLACK)
+	TFT.setCursor(20, 0)
+	TFT.setTextFont(2)
+	TFT.setTextSize(1)
+	TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False)  '????
+
+	TFT.println("Touch corners as indicated")
+
+	TFT.setTextFont(1)
+	TFT.println("")
+
+	If (REPEAT_CAL) Then
+		TFT.setTextColor1(TFT.TFT_RED, TFT.TFT_BLACK,False)
+		TFT.println("Set REPEAT_CAL to false to stop this running again!")
+	End If
+
+	TFT.calibrateTouch(calData, TFT.TFT_MAGENTA, TFT.TFT_BLACK, 15)
+
+	TFT.setTextColor1(TFT.TFT_GREEN, TFT.TFT_BLACK,False)
+	TFT.println("Calibration complete!")
+
+	'// store data
+	Dim f As bool = LFS.openread(CALIBRATION_FILE)
+	If (f=True) Then
+		'      f.write((const unsigned char *)calData, 14)
+		setByte(calData,calDatab)
+		LFS.stream.WriteBytes(calDatab,0, 14)
+		LFS.close()
+	End If
+  End If
+End Sub
+	
+Sub setByte(in() As UInt, out() As Byte)
+	For i = 0 To 6
+		out(i*2) = Bit.HighByte(in(i))
+		out(i*2+1) = Bit.LowByte(in(i))
+	Next
+End Sub
+Sub setUInt(in() As Byte, out() As UInt)
+	Dim b(2) As Byte
+	raf.Initialize(b,False)
+	For i = 0 To 6
+		raf.WriteByte(in(i*2),0)
+		raf.WriteByte(in(i*2+1),8)
+		out(i)=raf.ReadUInt16(0)
+	Next
+End Sub
+
+
+Sub random(Mini As ULong,Maxi As ULong) As ULong
+	Dim tmp() As ULong = Array As ULong(Mini, Maxi)
+	Return RunNative("getRandom",tmp)
+End Sub
+Sub randomSeed As ULong
+	Return RunNative("setRandomSeed",0)
+End Sub
+
+#if C
+   const GFXfont * B4R::B4RTFT_eSPI::GFXfonts[1]= { 
+      &FreeMonoBold18pt7b             // => setFreeFont(00)
+   };
+
+
+
+//***********************
+// random
+//***********************  
+B4R::Object returnvalue;
+
+ B4R::Object* getRandom(B4R::Object* o) { 
+      B4R::Array* b = (B4R::Array*)B4R::Object::toPointer(o);
+	  uint32_t* a = (uint32_t*) b->data;
+	  uint32_t rand = random(a[0],a[1]); 
+  	  return returnvalue.wrapNumber(rand);
+ }; 
+//**********************
+// randomseed
+//**********************
+ B4R::Object* setRandomSeed(B4R::Object* o) { 
+      uint32_t ran =  (uint32_t) millis();
+	  uint8_t * rand = (uint8_t*) &ran;
+//	  B4R::Common::LogHelper(2,102,"Milli() :",6,ran);
+//	  B4R::Common::LogHelper(1,1,rand[0]);
+	  randomSeed(rand[0]); 
+	  return returnvalue.wrapNumber(rand[0]);
+ }; 
+#End If

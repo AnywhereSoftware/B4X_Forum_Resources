@@ -1,0 +1,68 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+Library1=core
+Library2=declarativeui
+Library3=javaobject
+Library4=okhttputils2
+Library5=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddPermission(android.permission.INTERNET)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=13.7
+@EndOfDesignText@
+
+#Region  Project Attributes
+    #ApplicationLabel: Declarative Counter
+    #VersionCode: 1
+    #VersionName: 1.0
+    #SupportedOrientations: portrait
+#End Region
+
+#Region  Activity Attributes
+    #FullScreen: False
+    #IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+    Private CounterState As UIState
+End Sub
+
+Sub Globals
+    Private Root As B4XView
+    Private AppTheme As UITheme
+    Private Screen As UIScaffold
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Root = Activity
+    If FirstTime Then CounterState = UI.State(0)
+    AppTheme = UI.ThemeWithScheme(0xFF6558D3)
+    RebuildUI
+End Sub
+
+Private Sub RebuildUI
+    If Screen.IsInitialized Then UI.Unmount(Screen)
+    Screen = UI.Scaffold(UI.Center(UI.Column(Null) _
+        .Spacing(12dip).MainAxisAlignment("center").CrossAxisAlignment("stretch") _
+        .AddChild(UI.Text("You have pushed the button this many times:") _
+            .Size(AppTheme.BodyLarge).Color(AppTheme.SecondaryText)) _
+        .AddChild(UI.Text("").BindText(CounterState) _
+            .Size(52).Color(AppTheme.PrimaryText)))) _
+        .AppBar(UI.AppBar("Declarative Counter") _
+            .Action(UI.IconFA(Chr(IIf(AppTheme.IsDark, 0xF185, 0xF186))).Size(24) _
+                .Color(AppTheme.DashboardBarText).OnClick(Me, "ToggleTheme_Click"))) _
+        .FloatingActionButtonRight(UI.Fab("+") _
+            .OnClick(Me, "Increment_Click")) _
+        .ApplyTheme(AppTheme)
+    UI.Show(Root, Screen)
+End Sub
+
+Sub Increment_Click
+    CounterState.SetState(CounterState.GetState + 1)
+End Sub
+
+Sub ToggleTheme_Click
+    AppTheme.Toggle
+    RebuildUI
+End Sub

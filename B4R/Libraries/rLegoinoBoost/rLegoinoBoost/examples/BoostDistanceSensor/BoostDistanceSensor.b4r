@@ -1,0 +1,87 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlegoinoboost
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+' BoostDistanceSensor.b4r
+' Sample project for the B4R Library rLegoinoBoost.
+' The distance is taken from the statechangeex event which is triggered by the library.
+' The hub LED color is set according thresholds for MIN, MED distance.
+' 20211013 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "B4R Library rLegoinoBoost - BoostDistanceSensor v20211013"
+	Private DEBUG As Boolean = False
+	' Communication	
+	Public serialLine As Serial
+	' MoveHUB
+	Private moveHub As LegoinoBoost
+	' The MAC address can be obtained using the hcitool or Android app Serial Bluetooth
+	Private Const MOVEHUB_ADDRESS As String = "00:16:53:AE:9B:27"
+	' Connectionstate
+	Private ConnectionStatePrev As Boolean = False
+	' Distance Sensor in mm
+	Private DistancePrev As Double = -1
+	Private Const DISTANCE_MIN As Double = 20
+	Private Const DISTANCE_MED As Double = 50
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init sensor with callback event, MAC adress 00:16:53:AE:9B:27 and debug flag
+	moveHub.InitializeEx("MoveHub_StateChangedEx", MOVEHUB_ADDRESS, DEBUG)
+	Log("Waiting for MoveHub Bluetooth connection: ", MOVEHUB_ADDRESS)
+End Sub
+
+' Handle the movehub bluetooth state changes for the various properties
+' Connected As Boolean, Battery As Byte, Voltage As Double, Distance As Double, Color As Int)
+' For this example, the property Connected is checked and the Distance.
+' This event is triggered by the library rLegoinoBoost poller.
+' Note: First time after connection the distance is reported 0mm which is immediate followed by the actual distance.
+Sub MoveHub_StateChangedEx(Connected As Boolean, Battery As Byte, Voltage As Double, Distance As Double, Color As Int)
+	' Bluetooth connection state change
+	If Connected <> ConnectionStatePrev Then
+		If Connected Then
+			Log("MoveHub StateChanged: Connected to ", moveHub.Name)
+		Else
+			Log("MoveHub StateChanged: Disconnected")
+		End If
+		ConnectionStatePrev = Connected
+	End If
+	' Check if distance 0 or less. Do nothing
+	If Connected And Distance <= 0 Then
+		Return
+	End If
+	' Check if the distance has changed
+	If Connected And Distance <> DistancePrev Then
+		If Distance <= DISTANCE_MIN Then
+			moveHub.SetLedColor(moveHub.LED_COLOR_RED)
+			Log("Distance: ", Distance, "mm = below min threshold (LED RED)")
+		Else If Distance > DISTANCE_MIN And Distance <= DISTANCE_MED Then
+			moveHub.SetLedColor(moveHub.LED_COLOR_YELLOW)
+			Log("Distance: ", Distance, "mm = between min and medium threshold (LED YELLOW)")
+		Else
+			moveHub.SetLedColor(moveHub.LED_COLOR_GREEN)
+			Log("Distance: ", Distance, "mm = above threshold (LED GREEN)")
+		End If
+		DistancePrev = Distance
+	End If
+End Sub

@@ -1,0 +1,63 @@
+﻿Build1=Default,b4a.example.intellvold.myaccess
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=intellvold_accessibilityservice
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~~\n~~\n~~\n~~\n~AddPermission("android.permission.BIND_ACCESSIBILITY_SERVICE")~\n~~\n~~\n~~\n~~\n~~\n~AddApplicationText(<service~\n~			android:name="com.intellvold.accessibility.library.intellvold_accessibilityservice$MyAccessibilityService"~\n~			android:exported="true"~\n~			android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">~\n~			~\n~			<intent-filter>~\n~			         <action android:name="android.accessibilityservice.AccessibilityService" />~\n~			     </intent-filter>~\n~				  <meta-data~\n~			        android:name="com.intellvold.accessibility.library.intellvold_accessibilityservice$MyAccessibilityService"~\n~					android:value="intellvold"/>~\n~					~\n~		</service>~\n~)~\n~~\n~~\n~'End of default text.~\n~
+Module1=myservi
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=2
+Version=12.5
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Intellvold_accessibilty
+	#VersionCode: 1
+	#VersionName: 1.0
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim myservice As Intellvold_AccessibilityService
+	Dim myserviceper As Intellvold_AccessibilityService_Permission
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+End Sub
+
+Sub Activity_Resume
+	myservice.Initialize(Me ,"myserevent" ,"MyAccessibilityService")
+	StartService(myservi)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub myserevent_Intellvold_AccessibilityService_Status(Status As Boolean)
+	Log(Status)
+	If(Status)Then
+		
+		Else
+			myserviceper.Initialize
+	End If
+End Sub
+

@@ -1,0 +1,68 @@
+﻿Build1=Default,b4a.httpserver
+File1=Layout.bal
+File2=www.zip
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=archiver
+Library2=core
+Library3=httpserver
+Library4=network
+Library5=stringutils
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: HttpServer
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	Dim ssocket As ServerSocket 'ignore
+	If ssocket.GetMyWifiIP = "127.0.0.1" Then
+		Log("Device not connected to local network")
+	Else
+		Log("Device address: " & ssocket.GetMyWifiIP & ":" & Starter.port)
+	End If
+
+	' Copy from asset to internal
+	' Credit: Frédéric Leneuf-Magaud & Kamran Zafar, Informatix, Djembefola
+	Dim arc As Archiver
+	File.Copy(File.DirAssets, "www.zip", File.DirInternal, "www.zip")
+	arc.AsyncUnZip(File.DirInternal, "www.zip", File.DirInternal, "arc")
+	Wait For arc_UnZipDone (Completed As Boolean, Files As Int)
+    'Log(Completed & " (" & Files & ")")
+	Log("ready")
+	'Log( File.Exists(File.DirInternal, "www") )
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub

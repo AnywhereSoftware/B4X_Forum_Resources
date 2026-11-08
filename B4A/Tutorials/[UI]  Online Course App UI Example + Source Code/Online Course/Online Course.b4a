@@ -1,0 +1,286 @@
+﻿Build1=Default,b4a.example
+File1=Bookmark.png
+File10=Home.png
+File11=Home1.png
+File12=Layout.bal
+File13=Notification.png
+File14=Notification1.png
+File15=Settings.png
+File16=Settings1.png
+File17=Writing.jpg
+File18=xtools!.jpg
+File2=Bookmark1.png
+File3=Business.jpg
+File4=Cards.bal
+File5=CourseDetailes.bal
+File6=CourseLessons.bal
+File7=CoursePage.bal
+File8=Designing.jpg
+File9=Developing.jpg
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=core
+Library2=xcustomlistview
+Library3=xui
+Library4=xui views
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Course
+Module2=Starter
+NumberOfFiles=18
+NumberOfLibraries=4
+NumberOfModules=2
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Online Course UI Example
+	#VersionCode: 1
+	#VersionName: 1.0.0
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+	Type MyTy(SomeBitmap As Bitmap , SomeStr As String , SomeAuthor As String, SomeSubject As String)
+	Public SomeVar As MyTy
+End Sub
+
+Sub Globals
+	Private Edt_Search As EditText
+	
+	Private Img_Profile,Img_Course As B4XImageView
+	
+	Private Lbl_CourseDesc , Lbl_CourseName,Ico_Info As Label
+	
+	Private CustomListView1 As CustomListView
+	
+	Private bitmp(4) As Bitmap
+	
+	Private StrCourse(4),StrAuthor(4),StrSubject(4) As String	
+	
+	Private Ico_Notification,Ico_Saved,Ico_Setting,Ico_Home As ImageView
+	
+	Private Pnl_Search , Pnl_Writing , Pnl_Design , Pnl_IT , Pnl_Business , Selection_Dot As Panel
+End Sub 
+
+Sub Activity_Create(FirstTime As Boolean)
+	SetStatusBarAndNavigationColor(0xFF1C7ED5)
+	Activity.LoadLayout("Layout")
+	''
+	BackgroundAndCornerRadius(Pnl_Search,10dip)
+	BackgroundAndCornerRadius(Edt_Search,10dip)
+
+	Selection_Dot.Initialize("Selection_Dot")
+
+	Img_Profile.RoundedImage = True
+	Img_Profile.Load(File.DirAssets,"XTools!.jpg")
+	Edt_Search.Hint = " Search Course"
+	
+	Panel_Selection_Attr(Ico_Home)
+	
+	InitializeDatas
+	
+	CreateItem
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello world!", "B4X")
+End Sub
+
+Sub CreateItem()
+	For i = 0 To 3
+		Dim p As B4XView = xui.CreatePanel("")
+		Dim height As Int = 180dip
+		p.SetLayoutAnimated(0, 0, 0, 240dip , height)
+		p.LoadLayout("Cards")
+		Dim Info As MyTy
+		Img_Course.CornersRadius = 12dip
+		Img_Course.Bitmap = bitmp(i)
+		Lbl_CourseName.Text = StrCourse(i)
+		Lbl_CourseDesc.Text = StrAuthor(i)
+		
+		Info.SomeBitmap = bitmp(i)
+		Info.SomeStr = StrCourse(i)
+		Info.SomeAuthor = StrAuthor(i)
+		Info.SomeSubject = StrSubject(i)
+		CustomListView1.Add(p,Array(i,Info))
+	Next
+End Sub
+
+''Set Bacground and Corner Radius 
+Sub BackgroundAndCornerRadius(View As View , CornerRadius As Int)
+	Dim cdw1 As ColorDrawable
+	cdw1.Initialize(Colors.White, CornerRadius)
+	View.Background = cdw1
+End Sub
+
+Sub SetStatusBarAndNavigationColor(clr As Int)
+	Try
+		Dim jo As JavaObject
+		jo.InitializeContext
+		Dim window As JavaObject = jo.RunMethodJO("getWindow", Null)
+		window.RunMethod("addFlags", Array (0x80000000))
+		window.RunMethod("clearFlags", Array (0x04000000))
+		window.RunMethod("setStatusBarColor", Array(clr))
+		Dim jo2 As JavaObject
+		jo2.InitializeContext
+		jo2.RunMethodJO("getWindow", Null).RunMethod("setNavigationBarColor", Array(clr))
+	Catch
+		ToastMessageShow("Some error with your android version ( <5 )",True)
+	End Try
+End Sub
+
+Private Sub CustomListView1_ItemClick (Index As Int, Value As Object)
+	Dim v() As Object = Value
+	Dim Index As Int = v(0)
+	SomeVar = v(1)
+	StartActivity(Course)
+End Sub
+
+Sub InitializeDatas
+	bitmp(0) = LoadBitmap(File.DirAssets,"Developing.jpg")
+	bitmp(1) = LoadBitmap(File.DirAssets,"Designing.jpg")
+	bitmp(2) = LoadBitmap(File.DirAssets,"Business.jpg")
+	bitmp(3) = LoadBitmap(File.DirAssets,"Writing.jpg")
+
+	StrCourse(0) = "B4X Developing Course 0-100"
+	StrAuthor(0) = "Erel and Community"
+	StrSubject(0) = "Programming" 
+	
+	StrCourse(1) = "UI/UX Designing Complete Guide"
+	StrAuthor(1) = "XTools Group"
+	StrSubject(1) = "UI/UX Design"
+
+	StrCourse(2) = "Cryptocurrency Investment Tutorial"
+	StrAuthor(2) = "The Coin Holders"
+	StrSubject(2) = "Business/Crypto"
+
+	StrCourse(3) = "10 Ways To Upgrade Your Essay"
+	StrAuthor(3) = "Dude With A Pen"
+	StrSubject(3) = "Writing"
+
+End Sub
+
+Sub ChangeColorBasedOnAlphaLevel(bmp As B4XBitmap, NewColor As Int) As B4XBitmap
+	Dim bc As BitmapCreator
+	bc.Initialize(bmp.Width, bmp.Height)
+	bc.CopyPixelsFromBitmap(bmp)
+	Dim a1, a2 As ARGBColor
+	bc.ColorToARGB(NewColor, a1)
+	For y = 0 To bc.mHeight - 1
+		For x = 0 To bc.mWidth - 1
+			bc.GetARGB(x, y, a2)
+			If a2.a > 0 Then
+				a2.r = a1.r
+				a2.g = a1.g
+				a2.b = a1.b
+				bc.SetARGB(x, y, a2)
+			End If
+		Next
+	Next
+	Return bc.Bitmap
+End Sub
+
+Sub Panel_Selection_Attr(Selection As ImageView)
+	'PanelSelection.Initialize("PanelSelection")
+	Ico_Home.Bitmap = LoadBitmap(File.DirAssets,"Home1.png")
+	Ico_Notification.Bitmap = LoadBitmap(File.DirAssets,"Notification1.png")
+	Ico_Saved.Bitmap = LoadBitmap(File.DirAssets,"Bookmark1.png")
+	Ico_Setting.Bitmap = LoadBitmap(File.DirAssets,"Settings1.png")
+	Select Selection
+		Case Ico_Home
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Home.png")
+		Case Ico_Notification
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Notification.png")
+		Case Ico_Saved
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Bookmark.png")
+		Case Ico_Setting
+			Dim bmp As B4XBitmap = LoadBitmap(File.DirAssets,"Settings.png")
+	End Select
+	BackgroundAndCornerRadius(Selection_Dot,5dip)
+	Selection_Dot.Color = 0xFF1C7ED5
+	Dim Left As Int = Selection.Left + (Selection.Width/2)
+	Dim Top As Int = Selection.Top + Selection.Height
+	Activity.AddView(Selection_Dot,Left - 13dip,Top+ 6dip,26dip,4dip)
+	SetBitmapWithFitOrFill(Selection, ChangeColorBasedOnAlphaLevel(bmp,0xFF1C7ED5))
+	Selection_Dot.BringToFront
+End Sub
+
+Public Sub SetBitmapWithFitOrFill (vTargetView As B4XView, bmp As B4XBitmap)
+	vTargetView.SetBitmap(bmp)
+   #if B4A
+	'B4XView.SetBitmap sets the gravity in B4A to CENTER. This will prevent the bitmap from being scaled as needed so
+	'we switch to FILL
+	Dim iv As ImageView = vTargetView
+	iv.Gravity = Gravity.FILL
+   #End If
+End Sub
+
+Private Sub Ico_Setting_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Setting)
+End Sub
+
+Private Sub Ico_Saved_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Saved)
+End Sub
+
+Private Sub Ico_Notification_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Notification)
+End Sub
+
+Private Sub Ico_Home_Click
+	Selection_Dot.RemoveView
+	Panel_Selection_Attr(Ico_Home)
+End Sub
+
+
+Private Sub Pnl_Design_Click
+	ToastMessageShow("Design Section Clicked",False)
+End Sub
+
+Private Sub Pnl_IT_Click
+	ToastMessageShow("IT Section Clicked",False)
+End Sub
+
+Private Sub Pnl_Business_Click
+	ToastMessageShow("Business Section Clicked",False)
+End Sub
+
+Private Sub Pnl_Writing_Click
+	ToastMessageShow("Writing Section Clicked",False)
+End Sub
+

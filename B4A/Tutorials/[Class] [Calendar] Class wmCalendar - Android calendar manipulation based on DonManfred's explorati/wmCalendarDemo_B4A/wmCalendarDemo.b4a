@@ -1,0 +1,549 @@
+﻿Build1=Default,com.code4data.wmcalendardemo
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=contentresolver
+Library2=core
+Library3=googlecalendarclient
+Library4=runtimepermissions
+Library5=sql
+Library6=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~~\n~' Required to read and write calendars, as per DonManfred's~\n~' https://www.b4x.com/android/forum/threads/working-with-calendars-using-contentresolver-query-insert-update-delete.100229/~\n~AddManifestText(~\n~<uses-permission android:name="android.permission.READ_CALENDAR"/>~\n~<uses-permission android:name="android.permission.WRITE_CALENDAR"/>~\n~)~\n~AddPermission("android.permission.GET_ACCOUNTS")
+Module1=Starter
+Module2=|absolute|C:\Users\walter\Documents\_WM\Dropbox\B4X\_B4XsharedModules\wmCalendar
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=2
+Version=11.5
+@EndOfDesignText@
+' Demo for class wmCalendar, which is based on the library (GoogleCalendarClientV0.2) and tutorial by DonManfred:
+' https://www.b4x.com/android/forum/threads/working-with-calendars-using-contentresolver-query-insert-update-delete.100229/
+
+' Notice that the Manifest has been edited as well !
+
+'#CustomBuildAction step values as per https://www.b4x.com/android/forum/threads/what-are-the-custombuildaction-steps-supported-by-b4j.69925 :
+'- "folders ready": after the code is parsed and the folders tree is ready. This is the only cross platform step.
+'- "1": no reason to use. (is "Before the compilation steps.")
+'- "2": before the compiled program Is run.
+'- "3": after a library was compiled.
+'- "after packager": after a standalone package was built. (B4J/Project/Build Standalone Package)
+#Region  Project Attributes 
+	#ApplicationLabel: wmCalendarDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Private xui As XUI
+
+	Private wmCalendar1 As wmCalendar
+	Private originalDateFormat As String = DateTime.DateFormat
+	Private todaysUTCdateTimeStartAsTicks As Long
+
+End Sub
+
+Sub Globals
+
+	'These global variables will be redeclared each time the activity is created.
+
+	Private EditTextSelectByName As EditText
+	Private LabelSelectedCalendarID As Label
+	Private LabelSelectedCalendarName As Label
+	Private PanelEvent As Panel
+	Private CheckBoxShowEventInstances As CheckBox
+	Private CheckBoxPreviousAndNextMonthsEventsOnly As CheckBox
+	Private LabelSelectedEventID As Label
+	Private LabelSelectedEventTitle As Label
+	Private PanelEventDetails As Panel
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	Dim rp As RuntimePermissions
+
+	Activity.LoadLayout("Layout")
+
+	rp.CheckAndRequest(rp.PERMISSION_READ_CALENDAR)
+	Wait For Activity_PermissionResult(Permission As String, Result As Boolean)
+	If Result = False Then
+		Log("NO Permission to Read Calendar")
+		ExitApplication ' I know, using ExitApplication is not recommended
+		Return
+	End If
+
+	rp.CheckAndRequest(rp.PERMISSION_WRITE_CALENDAR)
+	Wait For Activity_PermissionResult(Permission As String, Result As Boolean)
+	If Result = False Then
+		Log("NO Permission to Write Calendar")
+		ExitApplication ' I know, using ExitApplication is not recommended
+		Return
+	End If
+
+	rp.CheckAndRequest(rp.PERMISSION_GET_ACCOUNTS)
+	Wait For Activity_PermissionResult(Permission As String, Result As Boolean)
+	If Result = False Then
+		Log("NO Permission to Get Accounts")
+		ExitApplication ' I know, using ExitApplication is not recommended
+		Return
+	End If
+
+	wmCalendar1.Initialize
+	todaysUTCdateTimeStartAsTicks = TodayStartAsUTCticks ' Used by ButtonAddEvent_Click
+
+End Sub
+
+Private Sub TodayStartAsUTCticks As Long
+
+	' Disclaimer: not sure if this is the most intelligent/elegant way of doing this, but it works
+	' Get midnight (start of 'today') ticks, not in the local timezone but as UTC ticks - see https://www.b4x.com/android/forum/threads/date-time-to-utc.51569/
+
+	Dim saveTZoffset As Double = DateTime.TimeZoneOffset
+	DateTime.SetTimeZone(0)
+	DateTime.DateFormat = "yyyyMMdd"
+	Dim today As String = DateTime.Date(DateTime.Now)
+	DateTime.DateFormat = "yyyyMMddHHmmss"
+	today = today & "000000"
+	Dim dateOut As Long = DateTime.DateParse(today) - (DateTime.TicksPerHour * DateTime.TimeZoneOffset)
+	DateTime.DateFormat = originalDateFormat
+	DateTime.SetTimeZone(saveTZoffset)
+	Return dateOut
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Private Sub ButtonAddCalendar_Click
+
+	' Add a new visible Calendar called 'Test Calendar'
+
+	Dim newName As String = "Test Calendar"
+
+	Dim cconValues As List
+	cconValues.Initialize
+	cconValues.Add(wmCalendar1.ccon.NAME)
+	cconValues.Add(wmCalendar1.ccon.CALENDAR_DISPLAY_NAME)
+	cconValues.Add(wmCalendar1.ccon.VISIBLE)
+
+	Dim theCalendar As CalendarInfo
+	theCalendar.Initialize
+	theCalendar.name = newName
+	theCalendar.displayName = newName
+	theCalendar.visible = True
+
+	Dim newCalendarID As Int = wmCalendar1.AddCalendar(theCalendar, cconValues)
+	If newCalendarID < 0 Then
+		Msgbox("Calendar '" & newName & "' could not be added", Application.LabelName)
+	Else
+		LabelSelectedCalendarID.Text = newCalendarID
+		LabelSelectedCalendarName.Text = newName
+		Msgbox("Calendar '" & newName & "' has been added", Application.LabelName)
+	End If
+
+End Sub
+
+Private Sub ButtonSelectCalendar_Click
+
+	If EditTextSelectByName.Text = "" Then
+		SelectCalendarFromList
+	Else
+		SelectCalendarByName
+	End If
+
+	LabelSelectedEventID.Text = ""
+	LabelSelectedEventTitle.Text = ""
+	ButtonBack_Click
+
+End Sub
+
+Private Sub SelectCalendarFromList
+
+	' Get all Calendars, and let the user pick one
+
+	Dim i As Int
+	Dim picked As Int
+	Dim values As List
+	Dim selectedCalendar As String
+	Dim allCalendars As List = wmCalendar1.GetAllVisibleCalendars(wmCalendar1.ccon.CALENDAR_DISPLAY_NAME, True)
+
+	values.Initialize
+	For i = 0 To (allCalendars.Size - 1)
+		Dim oneCalendar As CalendarInfo = allCalendars.Get(i)
+		values.Add(oneCalendar.displayName & " - ID=" & oneCalendar.id)
+	Next
+	values.Add("Cancel")
+	picked = InputList(values, "Select a Calendar", -1)
+	If (picked = (values.Size - 1)) Or (picked < 0) Then Return
+
+	selectedCalendar = values.Get(picked)
+	i = selectedCalendar.LastIndexOf("ID=")
+	LabelSelectedCalendarID.Text = selectedCalendar.SubString(i + 3)
+	LabelSelectedCalendarName.Text = selectedCalendar.SubString2(0, i - 3)
+
+End Sub
+
+Private Sub SelectCalendarByName
+
+	' Select all calendars with a specific displayName, and let the user pick one
+	' Note that:
+	' - name or displayName can be used; we'll use displayName in this example
+	' - the value is case-sensitive !
+	' - hidden calendars will be returned as well, not only the visible ones
+
+	Dim i As Int
+	Dim picked As Int
+	Dim values As List
+	Dim selectedCalendar As String
+	Dim qualifyingCalendars As List = wmCalendar1.GetCalendarByName("", EditTextSelectByName.Text, "", True) ' <<< displayName is used here
+
+	values.Initialize
+	For i = 0 To (qualifyingCalendars.Size - 1)
+		Dim oneCalendar As CalendarInfo = qualifyingCalendars.Get(i)
+		values.Add(oneCalendar.displayName & " - ID=" & oneCalendar.id)
+	Next
+	values.Add("Cancel")
+	picked = InputList(values, "Select a Calendar", -1)
+	If (picked = (values.Size - 1)) Or (picked < 0) Then Return
+
+	selectedCalendar = values.Get(picked)
+	i = selectedCalendar.LastIndexOf("ID=")
+	LabelSelectedCalendarID.Text = selectedCalendar.SubString(i + 3)
+	LabelSelectedCalendarName.Text = selectedCalendar.SubString2(0, i - 3)
+
+End Sub
+
+Private Sub ButtonSelectEvent_Click
+
+	If CheckBoxPreviousAndNextMonthsEventsOnly.Checked Then
+		SelectEventInPreviousOrNextMonth
+	Else
+		SelectAnyVisibleEvent
+	End If
+
+End Sub
+
+Private Sub SelectEventInPreviousOrNextMonth
+
+	' For the selected Calendar, get all Events for the past and next month,
+	' let the user pick one, and show its details
+
+	If CalendarSelected = False Then Return
+
+	Dim allEvents As List
+
+	If CheckBoxShowEventInstances.Checked Then
+		' Return all Event Instances within a selected period: (today - 1 month) to (today + 1 month).
+		' No additional selection is done (it can be done for Instances too, see below and see the comments in the wmCalendar class).
+		Dim eventSelectionFields() As String
+		Dim eventSelectionOperators() As String
+		Dim eventSelectionArgs() As String
+		allEvents = wmCalendar1.GetSelectedEventsInstancesForCalendar(LabelSelectedCalendarID.Text, _
+																	eventSelectionFields, eventSelectionOperators, eventSelectionArgs, _
+																	DateTime.Add(DateTime.Now, 0, -1, 0), DateTime.Add(DateTime.Now, 0, 1, 0), _
+																	wmCalendar1.econ.TITLE, True)
+	Else
+		' Return Calendar Event entries without recurring Instances.
+		' The selection is a period: (today - 1 month) to (today + 1 month).
+		Dim eventSelectionFields() As String = Array As String(wmCalendar1.econ.DTSTART, wmCalendar1.econ.DTEND)
+		Dim eventSelectionOperators() As String = Array As String(">=", "<=")
+		Dim eventSelectionArgs() As String = Array As String(DateTime.Add(DateTime.Now, 0, -1, 0), DateTime.Add(DateTime.Now, 0, 1, 0))
+		allEvents = wmCalendar1.GetSelectedEventsForCalendar(LabelSelectedCalendarID.Text, _
+															eventSelectionFields, eventSelectionOperators, eventSelectionArgs, _
+															wmCalendar1.econ.TITLE, True)
+	End If
+
+	PickAndShowEvent(allEvents)
+
+End Sub
+
+Private Sub SelectAnyVisibleEvent
+
+	' For the selected Calendar, get all Events,
+	' let the user pick one, and show its details
+
+	If CalendarSelected = False Then Return
+
+	Dim allEvents As List
+	If CheckBoxShowEventInstances.Checked Then
+		' Return all visible Event Instances up to and including 'now'.
+		allEvents = wmCalendar1.GetAllVisibleEventsInstancesForCalendar(LabelSelectedCalendarID.Text, _
+																		0, DateTime.Now, _
+																		wmCalendar1.econ.TITLE, True)
+	Else
+		' Return visible Calendar Event entries without recurring Instances.
+		allEvents = wmCalendar1.GetAllVisibleEventsForCalendar(LabelSelectedCalendarID.Text, wmCalendar1.econ.TITLE, True)
+	End If
+
+	PickAndShowEvent(allEvents)
+
+End Sub
+
+Private Sub PickAndShowEvent(allEvents As List)
+
+	' Let the user pick an Event and show its details
+
+	Dim picked As Int
+	Dim values As List
+	Dim selectedEvent As EventInfo
+
+	values.Initialize
+	For i = 0 To (allEvents.Size - 1)
+		Dim oneEvent As EventInfo = allEvents.Get(i)
+		values.Add(oneEvent.title & " - ID=" & oneEvent.eventId)
+	Next
+	values.Add("Cancel")
+	picked = InputList(values, "Events", -1)
+	If (picked = (values.Size - 1)) Or (picked < 0) Then Return
+
+	selectedEvent = allEvents.Get(picked)
+	LabelSelectedEventID.Text = selectedEvent.eventId
+	LabelSelectedEventTitle.Text = selectedEvent.title
+
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("id=").Append(selectedEvent.eventId).Append(CRLF)
+
+	Dim attendees As List = wmCalendar1.GetEventAttendees(selectedEvent.eventId, wmCalendar1.acon.ATTENDEE_NAME, True)
+	sb.Append("===========").Append(CRLF).Append("Attendees:").Append(CRLF)
+	For Each att As AttendeeInfo In attendees
+		sb.Append("- ").Append(att.name).Append(CRLF)
+	Next
+
+	Dim reminders As List = wmCalendar1.GetEventReminders(selectedEvent.eventId, "", True)
+	sb.Append("===========").Append(CRLF).Append("Reminders:").Append(CRLF)
+	For Each rem As ReminderInfo In reminders
+		sb.Append("- ").Append(rem.method).Append("; ").Append(rem.minutesBefore).Append(" minutes").Append(CRLF)
+	Next
+
+	sb.Append("===========").Append(CRLF)
+	sb.Append("allDay=").Append(selectedEvent.allDay).Append(CRLF)
+	sb.Append("availability=").Append(selectedEvent.availability).Append(CRLF)
+	sb.Append("calendarAccessLevel=").Append(selectedEvent.calendarAccessLevel).Append(CRLF)
+	sb.Append("customAppPackage=").Append(selectedEvent.customAppPackage).Append(CRLF)
+	sb.Append("customAppUri=").Append(selectedEvent.customAppUri).Append(CRLF)
+	sb.Append("dateTimeEnd=").Append(FormatDateTime(selectedEvent.dateTimeEnd)).Append(CRLF)
+	sb.Append("dateTimeStart=").Append(FormatDateTime(selectedEvent.dateTimeStart)).Append(CRLF)
+	sb.Append("displayColor=").Append(selectedEvent.displayColor).Append(CRLF)
+	sb.Append("duration=").Append(selectedEvent.duration).Append(CRLF)
+	sb.Append("endTimeZone=").Append(selectedEvent.endTimeZone).Append(CRLF)
+	sb.Append("eventColor=").Append(selectedEvent.eventColor).Append(CRLF)
+	sb.Append("eventColorKey=").Append(selectedEvent.eventColorKey).Append(CRLF)
+	sb.Append("eventStatus=").Append(selectedEvent.eventStatus).Append(CRLF)
+	sb.Append("instanceBegin=").Append(FormatDateTime(selectedEvent.instanceBegin)).Append(CRLF)
+	sb.Append("instanceEnd=").Append(FormatDateTime(selectedEvent.instanceEnd)).Append(CRLF)
+	sb.Append("instanceId=").Append(selectedEvent.instanceId).Append(CRLF)
+	sb.Append("location=").Append(selectedEvent.location).Append(CRLF)
+	sb.Append("organizer=").Append(selectedEvent.organizer).Append(CRLF)
+	sb.Append("recurrenceDates=").Append(selectedEvent.recurrenceDates).Append(CRLF)
+	sb.Append("recurrenceExceptionDates=").Append(selectedEvent.recurrenceExceptionDates).Append(CRLF)
+	sb.Append("recurrenceExceptionRule=").Append(selectedEvent.recurrenceExceptionRule).Append(CRLF)
+	sb.Append("recurrenceRule=").Append(selectedEvent.recurrenceRule).Append(CRLF)
+	sb.Append("syncId=").Append(selectedEvent.syncId).Append(CRLF)
+	sb.Append("timeZone=").Append(selectedEvent.timeZone).Append(CRLF)
+	sb.Append("visible=").Append(selectedEvent.visible).Append(CRLF)
+	sb.Append("description=").Append(selectedEvent.description).Append(CRLF)
+	Msgbox(sb.ToString, selectedEvent.title)
+
+End Sub
+
+Private Sub FormatDateTime(dt As String) As String
+
+	' Formats ticks as a readable date & time
+
+	If IsNumber(dt) = False Then Return ""
+
+	Dim saveFormat As String = DateTime.DateFormat
+	DateTime.DateFormat = "yyyy-MM-dd HH:mm:ss"
+	Dim reslt As String = DateTime.Date(dt)
+	DateTime.DateFormat = saveFormat
+	Return reslt
+
+End Sub
+
+Private Sub ButtonEventActions_Click
+
+	If CalendarSelected = False Then Return
+
+	PanelEvent.Visible = False
+	PanelEventDetails.Visible = True
+
+End Sub
+
+Private Sub ButtonAddEvent_Click
+
+	' Add an all-day Event to the selected Calendar for today (***in UTC timezone***),
+	' titled "Test Event" and with description "Added with wmCalendar".
+	' Make this new Event the selected one.
+	' For more information about writing Events, see https://developer.android.com/reference/android/provider/CalendarContract.Events#writing-to-events
+
+	Dim econValues As List
+	econValues.Initialize
+	econValues.Add(wmCalendar1.econ.ALL_DAY)
+	econValues.Add(wmCalendar1.econ.DESCRIPTION)
+	econValues.Add(wmCalendar1.econ.DTEND)
+	econValues.Add(wmCalendar1.econ.DTSTART)
+	econValues.Add(wmCalendar1.econ.TITLE)
+	econValues.Add(wmCalendar1.econ.EVENT_END_TIMEZONE)
+	econValues.Add(wmCalendar1.econ.EVENT_TIMEZONE)
+
+	Dim theEvent As EventInfo
+	theEvent.Initialize
+	theEvent.allDay = 1
+	theEvent.description = "Added with wmCalendar on " & GetTimeStamp(DateTime.Now)
+	theEvent.visible = 1
+	' IMPORTANT RE DATETIMESTART AND DATETIMEEND IN COMBINATION WITH ALLDAY=1 (https://developer.android.com/reference/android/provider/CalendarContract.Events#writing-to-events):
+	' "If allDay is set to 1 eventTimezone must be "UTC" and the time must correspond to a midnight boundary."
+	theEvent.dateTimeStart = todaysUTCdateTimeStartAsTicks ' See Sub TodayStartAsUTCticks
+	theEvent.dateTimeEnd = DateTime.Add(todaysUTCdateTimeStartAsTicks, 0, 0, 1)
+	theEvent.title = "Test Event"
+	theEvent.timeZone = "UTC"
+	theEvent.endTimeZone = "UTC"
+
+	Dim newEventID As Int = wmCalendar1.AddEvent(LabelSelectedCalendarID.Text, theEvent, econValues)
+	If newEventID < 0 Then
+		Msgbox("The Event could not be created", Application.LabelName)
+	Else
+		LabelSelectedEventID.Text = newEventID
+		LabelSelectedEventTitle.Text = theEvent.title
+		Msgbox("The Event has been created and is now the selected Event", Application.LabelName)
+	End If
+
+End Sub
+
+Private Sub ButtonUpdateEvent_Click
+
+	' Updates the currently selected Event's description by adding a line to it
+
+	If EventSelected = False Then Return
+
+	Dim theEvent As EventInfo = wmCalendar1.GetEventByID(LabelSelectedEventID.Text)
+	If theEvent = Null Then
+		Msgbox("Couldn't retrieve the Event's data", Application.LabelName)
+		Return
+	End If
+
+	theEvent.description = theEvent.description & CRLF & "Updated with wmCalendar on " & GetTimeStamp(DateTime.Now)
+
+	Dim econValues As List
+	econValues.Initialize
+	econValues.Add(wmCalendar1.econ.DESCRIPTION)
+
+	Msgbox(wmCalendar1.UpdateEvent(LabelSelectedEventID.Text, theEvent, econValues) & " Events were updated", Application.LabelName)
+
+End Sub
+
+Private Sub GetTimeStamp(dateIn As Long) As String
+
+	' Gets a timestamp that is used by ButtonAddEvent_Click and ButtonUpdateEvent_Click
+
+	DateTime.DateFormat = "yyyy-MM-dd HH.mm.ss"
+	Dim strOut As String = DateTime.Date(dateIn)
+	DateTime.DateFormat = originalDateFormat
+	Return strOut
+
+End Sub
+
+Private Sub ButtonDeleteEvent_Click
+
+	' Deletes the currently selected Event
+
+	If EventSelected = False Then Return
+
+	If Msgbox2("Are you sure you want to delete the currently selected Event?", Application.LabelName, "Yes", "", "No", Null) = DialogResponse.POSITIVE Then
+		Msgbox(wmCalendar1.DeleteEvent(LabelSelectedEventID.Text) & " Events were deleted", Application.LabelName)
+		LabelSelectedEventID.Text = ""
+		LabelSelectedEventTitle.Text = ""
+	End If
+
+End Sub
+
+Private Sub ButtonAddAttendee_Click
+
+	' Adds Attendee 'Douglas Adams' to the currently selected Event
+
+	If EventSelected = False Then Return
+
+	Dim aconValues As List
+	aconValues.Initialize
+	aconValues.Add(wmCalendar1.acon.ATTENDEE_NAME)
+	aconValues.Add(wmCalendar1.acon.ATTENDEE_EMAIL)
+	aconValues.Add(wmCalendar1.acon.EVENT_ID)
+
+	Dim theAttendee As AttendeeInfo
+	theAttendee.Initialize
+	theAttendee.name = "Douglas Adams"
+	theAttendee.email = "douglas.adams@galaxy.com"
+	theAttendee.eventId = LabelSelectedEventID.Text
+
+	Dim newAttendeeID As Int = wmCalendar1.AddAttendeeToEvent(theAttendee, aconValues)
+	If newAttendeeID < 0 Then
+		Msgbox("Attendee '" & theAttendee.name & "' could not be added", Application.LabelName)
+	Else
+		Msgbox("Attendee '" & theAttendee.name & "' has been added", Application.LabelName)
+	End If
+
+End Sub
+
+Private Sub ButtonAddReminder_Click
+
+	' Adds an Alarm-type Reminder to the currently selected Event,
+	' which will be triggered 5 minutes before the start of the Event.
+
+	If EventSelected = False Then Return
+
+	Dim newReminderID As Int = wmCalendar1.AddReminderToEvent(LabelSelectedEventID.Text, wmCalendar1.rcon.METHOD_ALARM, 5)
+	If newReminderID < 0 Then
+		Msgbox("The Reminder could not be added", Application.LabelName)
+	Else
+		Msgbox("The Reminder has been added", Application.LabelName)
+	End If
+
+End Sub
+
+Private Sub CalendarSelected As Boolean
+
+	If LabelSelectedCalendarID.Text = "" Then
+		Msgbox("Select a Calendar first", Application.LabelName)
+		Return False
+	Else
+		Return True
+	End If
+
+End Sub
+
+Private Sub EventSelected As Boolean
+
+	If LabelSelectedEventID.Text = "" Then
+		Msgbox("Select an Event first", Application.LabelName)
+		Return False
+	Else
+		Return True
+	End If
+
+End Sub
+
+Private Sub ButtonBack_Click
+
+	PanelEvent.Visible = True
+	PanelEventDetails.Visible = False
+
+End Sub

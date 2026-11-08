@@ -1,0 +1,305 @@
+﻿AppType=JavaFX
+Build1=Default,com.stevel05.jaudiorecord2
+File1=1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library10=threading
+Library2=byteconverter
+Library3=cssutils
+Library4=javaobject
+Library5=jcore
+Library6=jfx
+Library7=jrandomaccessfile
+Library8=jxui
+Library9=xui views
+Module1=Capture_Static
+Module10=WaveFile
+Module2=CaptureMethod
+Module3=CaptureMethod_Static
+Module4=CaptureRaw
+Module5=CaptureRaw_TH
+Module6=CaptureToFile
+Module7=CaptureToFile_TH
+Module8=jAudioRecord2_Utils
+Module9=TargetDataLineWrapper
+NumberOfFiles=1
+NumberOfLibraries=10
+NumberOfModules=10
+Version=9.96
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+#If Version
+v 0.1
+	Initial release
+V 0.11
+	Added sub GetDevices and related Constants to JAudioRecordUtils
+#End If
+
+'SL Utils
+'Archive Project Modules - before creating B4xLib'Archive Modules: ide://run?File=C:\Java\jdk1.8.0_271\bin\java.exe&Args=-jar&Args=C:\NoInstApps\B4j\ArchiveProjectModules\ArchiveProjectModules.jar&Args=%PROJECT%\%PROJECT_NAME%.b4j
+
+'Demos: D:\Documents\AnywhereSoftware\B4j\JavaxSound\jAudioRecord-FileDemo\jAudioRecord-FileDemo.b4j
+'		D:\Documents\AnywhereSoftware\B4j\JavaxSound\jAudioRecord2-Demo\jAudioRecord2-Demo.b4j
+
+Sub Process_Globals
+	
+	
+	Private fx As JFX
+	Private MainForm As Form
+	Private TDL As TargetDataLineWrapper
+	Private lblAmplitude As B4XView
+
+	Private MP As MediaPlayer
+	Private lblRec As Label
+	
+	Private btnStart As Button
+	Private btnStop As Button
+	Private btnFile As Button
+	Private btnPlay As B4XView
+	
+	Private lblFileName As Label
+	Private InitialFilePath,FileName As String
+	Private cbInputs As B4XComboBox
+	
+	Private Devices As List
+	Private InDevice As JavaObject
+	
+	
+	Private SampleRateHz As Float = 44100
+	Private SampleSizeInBits As Int = 16
+	Private ChannelConfig As Int = 2
+	
+	Private AudioFormat As JavaObject
+	
+	'Parent Class for CaptureRaw and CaptureToFile.
+	'If you only want to use one method, you can access it directly.
+	Private CaptureMethod1 As CaptureMethod
+
+	Private SelectedMethod As String
+	Private SwMethod As B4XSwitch
+	
+	Private Dialog As B4XDialog
+	Private cbThreaded As CheckBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("1") 'Load the layout file.
+	MainForm.Show
+	
+	MainForm.Title = "jAudioRecord2"
+
+	'Get the Users Home directory for use in file dialog
+	InitialFilePath = GetSystemProperty("user.home","")
+	
+	'Setup Device names in a B$XCombobox and MixerInfo objects in a list
+	Dim MixerInfos As List = jAudioRecord2_Utils.GetDevices(jAudioRecord2_Utils.DEVICETYPE_INPUT,"")
+	
+	Dim L As List
+	L.Initialize
+	Devices.Initialize
+	For Each MI As JavaObject In MixerInfos
+		'Add the name to the list for the B4xCombobox
+		L.add(MI.RunMethod("getName",Null))
+		'Add the MixerInfo to the corresponding Devices List
+		Devices.Add(MI)
+	Next
+	
+	'Set the list for the B4xCombobox
+	cbInputs.SetItems(L)
+	cbInputs_SelectedIndexChanged (0)
+
+	SelectedMethod = Capture_Static.CAPTURE_FILE
+	SwMethod_ValueChanged(False)
+	
+	Dialog.Initialize(MainForm.RootPane)
+	
+End Sub
+
+Private Sub MainForm_CloseRequest (EventData As Event)
+	'Check if targetDataLine is initialized and  is Running and stop and/or close as required
+	If TDL.IsReady Then
+		If TDL.IsRunning Then
+			TDL.Stop
+			'Give Recordfile time to stop and finish writing the file
+			Sleep(500)
+		End If
+		TDL.Close
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+#Region Gui
+
+'Change CaptureMethod
+Private Sub SwMethod_ValueChanged (Value As Boolean)
+	If Value = False Then
+		SelectedMethod = CaptureMethod_Static.CAPTUREMETHOD_FILE
+	Else
+		SelectedMethod = CaptureMethod_Static.CAPTUREMETHOD_RAW
+	End If
+	
+	'Initialize the required capture method
+	Dim CaptureMethod1 As CaptureMethod
+
+	CaptureMethod1.Initialize(SelectedMethod,Me,"CaptureMethod",cbThreaded.Checked)
+	
+	'Add an amplitude listener so we can get the calculated amplitude from the recording sub
+	CaptureMethod1.AddAmplitudeListener(Me,"CaptureMethod")
+End Sub
+
+Private Sub cbThreaded_CheckedChange(Checked As Boolean)
+	If SwMethod.Value = False Then
+		SelectedMethod = CaptureMethod_Static.CAPTUREMETHOD_FILE
+	Else
+		SelectedMethod = CaptureMethod_Static.CAPTUREMETHOD_RAW
+	End If
+	
+	'Initialize the required capture method
+	Dim CaptureMethod1 As CaptureMethod
+
+	CaptureMethod1.Initialize(SelectedMethod,Me,"CaptureMethod",Checked)
+	
+	'Add an amplitude listener so we can get the calculated amplitude from the recording sub
+	CaptureMethod1.AddAmplitudeListener(Me,"CaptureMethod")
+End Sub
+
+
+Sub BtnFile_Click
+
+	'Get a file to save from the user
+	Dim FC As FileChooser
+	
+	FC.Initialize
+	FC.Title="Save a Wav file"
+	FC.SetExtensionFilter("Wav files",Array As String("*.wav"))
+	FC.InitialDirectory = InitialFilePath
+	Dim response As String = FC.ShowSave(MainForm)
+	If response = "" Then Return
+	InitialFilePath = File.GetFileParent(response)
+	FileName =  File.GetName(response)
+	lblFileName.Text=File.Combine(InitialFilePath,FileName)
+	
+End Sub
+
+
+Sub btnPlay_Click
+	If FileName = "" Or Not(File.Exists(InitialFilePath, FileName)) Then 
+		Dialog.Title = "Play File"
+		Dim Msg As String
+		If FileName = "" Then 
+			Msg = "File not recorded"
+		Else
+			Msg = "File not found"
+		End If
+		Wait For(Dialog.Show(Msg,"","","Cancel")) Complete (Resp As Int)
+		Return
+	End If
+	
+	'Play the file with MediaPlayer if it exists
+	
+	MP.Initialize("MP",File.GetUri(InitialFilePath,FileName))
+	MP.Play
+End Sub
+
+Sub btnStop_Click
+	'Stop the CaptureMethod if it is initialized and recording
+	If CaptureMethod1.IsInitialized And CaptureMethod1.IsRecording Then CaptureMethod1.Stop
+End Sub
+
+Sub btnStart_Click
+	If FileName = "" Then 
+		Dialog.Title = "Record File"
+		Wait For(Dialog.Show("Please select a file first","","","Cancel")) Complete (Resp As Int)
+		Return
+	End If
+	'Check if Capture method is currently recording and stop it.
+	If CaptureMethod1.IsInitialized Then
+		If CaptureMethod1.IsRecording Then
+			CaptureMethod1.Stop
+		End If
+	End If
+	
+	
+	btnPlay.Enabled = False
+	'Start recording
+	CaptureMethod1.Start(TDL, File.Combine(InitialFilePath, FileName))
+End Sub
+
+Private Sub cbInputs_SelectedIndexChanged (Index As Int)
+
+	If CaptureMethod1.IsInitialized And CaptureMethod1.IsRecording Then
+		CaptureMethod1.Stop
+		Sleep(500)
+	End If
+	
+	'Stop and close the TargetDataLine if needed
+	If TDL.IsInitialized And TDL.IsReady Then
+		If TDL.IsRunning Then
+			TDL.Stop
+		End If
+		TDL.Close
+	End If
+	
+	'Create an Audioformat Instance
+	AudioFormat = jAudioRecord2_Utils.NewAudioFormat(SampleRateHz,SampleSizeInBits,ChannelConfig, True, False)
+	
+	'Get the selected Mixer Object from the Devices List
+	Dim MI As JavaObject = Devices.Get(Index)
+	
+	'Close the existing inDevice if required
+	If InDevice.IsInitialized Then InDevice.RunMethod("close",Null)
+	'Getthe new inDevice TargetDataLine from the audioSystem with the appropriate Audioformat and specified mixer
+	InDevice = jAudioRecord2_Utils.GetTargetDataLine2(AudioFormat, MI)
+	
+	'Get a wrapped instance of the targetDataLine
+	Dim TDL As TargetDataLineWrapper
+	TDL.Initialize(InDevice)
+	
+	'Add a Listener to the TargetDataLine so we can get events for Start, Stop etc.
+	TDL.AddLineListener(Me,"DataLine")
+	
+	Log("Changed " & cbInputs.GetItem(Index))
+	
+End Sub
+
+#End Region gui
+
+#Region Callbacks
+'Recording has finished
+Private Sub CaptureMethod_Complete
+	Log("Recording Finished")
+	'If the CaptureRaw method is selected then save the data in the Buffer as a wav file.  Adds an appropriate file header
+	If CaptureMethod1.CaptureType = Capture_Static.CAPTURE_RAW Then WaveFile.Save(CaptureMethod1.GetBuffer,AudioFormat,InitialFilePath,FileName)
+	btnPlay.Enabled = True
+End Sub
+
+'Callback for the TargetDataLine Listener
+Public Sub DataLine_Event(Name As String)
+	'Manage the gui for start and stop events
+	Select True
+		Case Name.StartsWith("Start")
+			CSSUtils.SetBackgroundColor(lblRec,fx.Colors.Red)
+			
+		Case Name.StartsWith("Stop")
+			CSSUtils.SetBackgroundColor(lblRec,fx.Colors.From32Bit(0xFFB8B8B8))
+	End Select
+End Sub
+
+'Callback for the Amplitude notification
+Public Sub CaptureMethod_Amplitude(AmplitudeVal As Int)
+	lblAmplitude.Text = AmplitudeVal
+End Sub
+
+#End Region Callbacks
+
+

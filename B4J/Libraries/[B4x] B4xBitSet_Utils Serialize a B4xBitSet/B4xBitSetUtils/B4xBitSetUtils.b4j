@@ -1,0 +1,78 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=jcore
+Library3=jfx
+Library4=jrandomaccessfile
+Library5=jxui
+Library6=json
+Module1=B4xBitSet_Utils
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	Dim Bitset As B4XBitSet
+	Bitset.Initialize(128)
+
+	For i = 0 To 16
+		Bitset.Set(i,True)
+		Bitset.Set(i + 32,True)
+		Bitset.Set(i + 64,True)
+'		Bitset.Set(i + 96,True)
+	Next
+	
+	Bitset.set(96,True)
+	Bitset.set(104,True)
+	
+	Dim A As List = B4xBitSet_Utils.Serialize(Bitset)
+	For j = 0 To A.Size - 1
+		Log(j & " : " &  A.Get(j))
+	Next
+	
+	Dim RAF As RandomAccessFile
+	RAF.Initialize("D:\","SetTest.dat",False)
+	
+	RAF.WriteB4XObject(A,0)
+	RAF.Close
+	
+	Log("*****")
+	
+	Dim RAF As RandomAccessFile
+	RAF.Initialize("D:\","SetTest.dat",True)
+	Dim B As List = RAF.ReadB4XObject(0)
+	RAF.Close
+	
+	
+	Dim BitSet2 As B4XBitSet = B4xBitSet_Utils.Deserialize(B)
+	Dim C As List = B4xBitSet_Utils.Serialize(BitSet2)
+
+	For j = 0 To C.size - 1
+		Log(j & " : " &  C.Get(j))
+	Next
+		
+End Sub
+
+Sub Button1_Click
+	xui.MsgboxAsync("Hello World!", "B4X")
+End Sub

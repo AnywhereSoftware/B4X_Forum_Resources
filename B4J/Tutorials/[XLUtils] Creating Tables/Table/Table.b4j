@@ -1,0 +1,72 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=xlutils
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private xl As XLUtils
+End Sub
+
+Sub AppStart (Args() As String)
+	CreateTable
+	StartMessageLoop
+End Sub
+
+Sub CreateTable
+	xl.Initialize
+	Dim Workbook As XLWorkbookWriter = xl.CreateWriterBlank
+	Dim sheet1 As XLSheetWriter = Workbook.CreateSheetWriterByName("Sheet1")
+	'set the title
+	sheet1.AddMergedRegion(xl.CreateXLRange(xl.AddressName("A1"), xl.AddressName("D1")))
+	sheet1.PutString(xl.AddressName("A1"), "Important Products List")
+	sheet1.SetStyle(sheet1.LastAccessed, Workbook.CreateStyle.Font(15).HorizontalAlignment("CENTER"))
+	sheet1.PutString(xl.AddressName("A2"), "Product")
+	sheet1.PutString(xl.AddressName("B2"), "Price")
+	sheet1.PutString(xl.AddressName("C2"), "Quantity")
+	sheet1.PutString(xl.AddressName("D2"), "Total")
+
+	Dim ProductStyle As XLStyle = Workbook.CreateStyle
+	Dim PriceStyle As XLStyle = Workbook.CreateStyle.DataFormat("$#,##0.0")
+	Dim QuantityStyle As XLStyle = Workbook.CreateStyle.DataFormat("#,##0")
+	Dim TotalStyle As XLStyle = Workbook.CreateStyle.DataFormat("$#,##0")
+	For i = 1 To 25
+		Dim Row1Based As Int = 2 + i 'starting from row 2.
+		sheet1.PutString(xl.AddressOne("A", Row1Based), "Product #" & i).SetStyle(sheet1.LastAccessed, ProductStyle)
+		sheet1.PutNumber(xl.AddressOne("B", Row1Based), Rnd(0, 100000) / 100).SetStyle(sheet1.LastAccessed, PriceStyle)
+		sheet1.PutNumber(xl.AddressOne("C", Row1Based), Rnd(0, 5000)).SetStyle(sheet1.LastAccessed, QuantityStyle)
+		sheet1.PutFormula(xl.AddressOne("D", Row1Based), $"${xl.AddressOneToString("B", Row1Based)} * ${xl.AddressOneToString("C", Row1Based)}"$)
+		sheet1.SetStyle(sheet1.LastAccessed, TotalStyle)
+	Next
+	Dim table As XLTable = sheet1.CreateTable(xl.CreateXLRange(xl.AddressName("A2"), xl.AddressName("D27")), "Table1", "TableStyleMedium3")
+	table.AddAutoFilter
+	table.ShowRowStripes = True
+	Dim BoldStyle As XLStyle = Workbook.CreateStyle.FontBold(Workbook.DefaultFontSize)
+	sheet1.PutString(xl.AddressName("C28"), "Total:").SetStyle(sheet1.LastAccessed, BoldStyle)
+	sheet1.PutFormula(xl.AddressName("D28"), "SUM(Table1[Total])").SetStyles(sheet1.LastAccessed, Array(TotalStyle, BoldStyle))
+	'Set the columns widths to fit the content
+	'To make sure that the "total" column is measured correctly we need to first evaluate the formulas:
+	Workbook.EvaluateFormulas
+	For col0 = xl.AddressName("A").Col0Based To xl.AddressName("D").Col0Based
+		sheet1.AutoSizeColumn(col0)
+	Next
+	'make the columns a bit wider to make room for the filter arrows:
+	For col0  = 0 To 3
+		sheet1.PoiSheet.SetColumnWidth(col0, sheet1.PoiSheet.GetColumnWidth(col0) + 1200)
+	Next
+	
+	'save the workbook
+	Dim f As String = Workbook.SaveAs("C:\Users\H\Downloads\", "Table.xlsx", True)
+	Wait For (xl.OpenExcel(f)) Complete (Success As Boolean)
+	StopMessageLoop
+End Sub

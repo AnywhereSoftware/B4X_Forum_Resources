@@ -1,0 +1,67 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200
+	#MergeLibraries: False
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+	' How to switch to iframe
+    ' How to find and click the form button
+    ' How to get text from Alert dialog
+    ' How to press OK button inside of the Alert dialog
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+	
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+
+	Selenium.NavigateTo("https://www.w3schools.com/jsref/tryit.asp?filename=tryjsref_alert")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+	Selenium.SwitchToFrame("iframeResult")                              ' switch to IFRAME - HTML of iframe: <iframe frameborder="0" id="iframeResult" name="iframeResult" allowfullscreen="true">
+
+	Dim Button As Pnd_WebElement = Selenium.FindByTagName("button")     ' find the BUTTON tag
+	Button.Click                                                        ' click the BUTTON
+	Sleep(3000)                                                         ' sleep not necessary, but to give you time to see the Alert modal dialog
+
+	Dim SwitchSuccess As Boolean = Selenium.AlertSwitchTo			    ' switch to Alert dialog
+	If SwitchSuccess Then                                               ' if SwitchSuccess = true
+		Dim AlertText As String = Selenium.AlertGetText                 ' get text from Alert dialog
+		Log("Text from Alert dialog: " & AlertText)
+		Selenium.AlertAccept                                            ' press OK button in Alert dialog
+		Sleep(2000)                                                     ' sleep not necessary, but to give you time to see the Alert modal dialog is closed
+	End If
+
+	Selenium.Quit
+	Sleep(500)
+	ExitApplication
+End Sub
+

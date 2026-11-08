@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.05</doclet-version-NOT-library-version>
+    <class>
+        <name>com.airlinemates.mlwifi.MLwifi</name>
+        <shortname>MLwifi</shortname>
+        <owner>process</owner>
+        <event>Wifi_ConnectionResult(success As Boolean)</event>
+        <event>scandone(wifis As List, wifiCount As Int)</event>
+        <event>isonline_pingdone(exitValue As Int)</event>
+        <permission>android.permission.ACCESS_NETWORK_STATE</permission>
+        <permission>android.permission.ACCESS_WIFI_STATE</permission>
+        <permission>android.permission.CHANGE_WIFI_STATE</permission>
+        <permission>android.permission.ACCESS_FINE_LOCATION</permission>
+        <permission>android.permission.INTERNET</permission>
+        <permission>android.permission.CHANGE_NETWORK_STATE</permission>
+        <permission>android.permission.WRITE_SETTINGS</permission>
+        <method>
+            <name>releaseWifiOn</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>WifiSSID</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>isWifiConnected</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>is5GHzBandSupported</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>isOnline</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>CalcWifiPct</name>
+            <comment></comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>WifiSignal</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiFrequency</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>holdWifiOn2</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>lockType</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiMACAddress</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>isWifiHeldOn</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>connectWifiAP</name>
+            <comment>Connects to an existing Wifi Network
+Params:
+ ssid - the name of the Wifi Network
+ security = 0 = Open (SECURITY_OPEN), 1 = WEP (SECURITY_WEP), 2 = WPA-2/PSK (SECURITY_WPA2PSK)
+ password - the password or "" if the network is open
+ timeout - fail if not connected within timeout (Ms)
+
+Raises Wifi_ConnectionResult event on success or failure
+
+Example:&lt;code&gt;
+     Private Sub connectToWifi
+         Private wifi As MLwifi
+         'To connect to an open network
+         wifi.connectWifiAP("wifissid", wifi.SECURITY_OPEN, "", 30000)
+         'To connect to a WPA-2 secured network
+         wifi.connectWifiAP("wifissid", wifi.SECURITY_WPA2PSK, "password", 30000)
+     End Sub
+
+     Public Sub Wifi_ConnectionResult(success As Boolean)
+         If success then
+             'Connected - set up sockets, etc...
+         Else
+             'Couldn't connect...
+         End If
+     End Sub
+ &lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>ssid</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>security</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>saveWifiAP</name>
+            <comment>Adds a Wifi network, then optionally connects
+Params:
+ ssid - the name of the Wifi Network
+ security = 0 = Open (SECURITY_OPEN), 1 = WEP (SECURITY_WEP), 2 = WPA-2/PSK (SECURITY_WPA2PSK)
+ password - the password or "" if the network is open
+ connect - ignored for Android Q+ (will always connect)
+ timeout - fail if not connected within timeout (ms)
+
+Raises Wifi_ConnectionResult event on success or failure
+
+Example:&lt;code&gt;
+ Private Sub connectToWifi
+     Private wifi As MLwifi
+     'To save &amp; connect to an open network
+     wifi.saveWifiAP("wifissid", wifi.SECURITY_OPEN, "", True, 30000)
+     'To connect to a WPA-2 secured network
+     wifi.saveWifiAP("wifissid", wifi.SECURITY_WPA2PSK, "password", True, 30000)
+ End Sub
+
+ Public Sub Wifi_ConnectionResult(success As Boolean)
+     If success then
+         'Connected - set up sockets, etc...
+     Else
+         'Couldn't connect...
+     End If
+ End Sub
+&lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>ssid</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>security</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>connect</name>
+                <type>boolean</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>isOnlinePing5</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiLinkSpeed</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>isOnlinePing6</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>IpHost</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiIpAddress</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>isOnlinePing3</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>timeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiBand</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>isOnlinePing4</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>IpHost</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>isSavedWifiAP</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>ssid</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ActiveNetworkType</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>isOnlinePing2</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>IpHost</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiBSSID</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>isWifiEnabled</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>WifiSignalPct</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>APIversion</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>isOnlinePing</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>holdWifiOn</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>ActiveNetworkTypeName</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>EnableWifi</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Enabled</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>disconnectWifiAP</name>
+            <comment>Disconnect from a Wifi network
+Params:
+none
+
+Returns True (success) or False (failure)
+
+Usage:&lt;code&gt;
+ Private disconnected As Boolean = MLwifi.disconnectWifiAP
+&lt;/code&gt;</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>reconnectWifiAP</name>
+            <comment>Reconnects to a saved Wifi Network
+Params:
+ ssid - the name of the Wifi Network
+ timeout - fail if not connected within timeout (Ms)
+
+Raises Wifi_ConnectionResult event on success or failure
+
+ NOTE FOR SDK 29+: Will only work if the network being connected to is not secured.
+ You can connect to the previously connected network by calling disconnectWifiAP
+ or a specific network by calling connectWifiAP with the correct parameters.
+
+Example:&lt;code&gt;
+     Private Sub connectToWifi
+         Private wifi As MLwifi
+         'reconnect to a Wifi network saved on this device
+         wifi.reconnectWifiAP("wifissid", 30000)
+     End Sub
+
+     Public Sub Wifi_ConnectionResult(success As Boolean)
+         If success then
+             'Connected - set up sockets, etc...
+         Else
+             'Couldn't connect...
+         End If
+     End Sub
+ &lt;/code&gt;</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>ssid</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiChannel</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>WifiStrength</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>WifiSignal</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>removeWifiAP</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>ssid</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiAPDistance</name>
+            <comment></comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>isMobileConnected</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <field>
+            <name>debug</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>SECURITY_WPA2PSK</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>SECURITY_OPEN</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>SECURITY_WEP</name>
+            <comment></comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>com.airlinemates.mlwifi.MLwifi.MLWifiScanner</name>
+        <shortname>MLScan</shortname>
+        <owner>process</owner>
+        <method>
+            <name>listSavedNetworks</name>
+            <comment></comment>
+            <returntype>java.util.List</returntype>
+        </method>
+        <method>
+            <name>isSavedWifiAP</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>EntryNumber</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>WifiCap</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>EntryNumber</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>connectWifiAP</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EntryNumber</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>saveWifiAP</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EntryNumber</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>securityType</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>timeout</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>stopScan</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>startScan</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>NoEventOnSystemScan</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>removeWifiAP</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>NetId</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>updateWifiList</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getBSSID</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>EntryNumber</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <field>
+            <name>wifis</name>
+            <comment></comment>
+            <returntype>java.lang.String[]</returntype>
+        </field>
+        <field>
+            <name>Results</name>
+            <comment></comment>
+            <returntype>java.util.List</returntype>
+        </field>
+    </class>
+    <version>4.41</version>
+    <author>V-2.17 by Jem Miller - Missing Link Software; V-3.00 by bgsoft; v4.00+ by Computersmith</author>
+    <dependsOn>MLwifi400.aar</dependsOn>
+</root>

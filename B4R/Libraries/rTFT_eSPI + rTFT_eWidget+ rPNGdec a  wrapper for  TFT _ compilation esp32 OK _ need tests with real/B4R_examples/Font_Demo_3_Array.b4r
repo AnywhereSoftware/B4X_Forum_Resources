@@ -1,0 +1,263 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266filesystem
+Library3=rrandomaccessfile
+Library4=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+	'/*
+	'This sketch is the same As the Font_Demo_3 example, except the fonts in this
+	'example are in a FLASH (program memory) Array. This means that processors
+	'such As the STM32 series that are Not supported by a SPIFFS library can use
+	'smooth (anti-aliased) fonts.
+	'*/
+
+	'/*
+	'There are four different methods of plotting anti-aliased fonts To the screen.
+
+	'This sketch uses method 3, the font characters are first plotted in a Sprite, Then the
+	'Sprite is pushed To the screen. This method is very flexible And the Sprite can be
+	'created, deleted, resized As needed. To render anti-aliased fonts well the Sprite
+	'needs To be 16-Bit.  The fonts will render in 1 Bit per pixel sprites but there
+	'will Then be no anti-aliasing. Using 1 Bit per pixel Sprites is however useful
+	'To use the extended Unicode range in fonts on mono displays like ePaper.
+
+	'A single Sprite can be re-used For plotting different values And graphics To
+	'	different positions on the screen. This makes this method a very powerful display tool,
+	'	For example Round buttons can be created, making use of transparent colour plotting.
+	'	*/
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	Private SPR As TFT_eSprite
+	Private CENTRE As UInt =240
+	Private wait As UInt = 0
+	Private runtime As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	TFT.begin(0xFF)
+	SPR.Initialize(TFTid)
+
+	TFT.begin(0xFF)
+
+	TFT.setRotation(1)
+
+	SPR.setcolorDepth(16)  '// 16-Bit colour needed To show antialiased fonts
+
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+		
+'		// The font names are arrays references, thus must Not be in quotes ""
+'#define AA_FONT_SMALL NotoSansBold15
+'#define AA_FONT_LARGE NotoSansBold36
+'#define AA_FONT_MONO  NotoSansMonoSCB20 // NotoSansMono-SemiCondensedBold 20pt
+
+	TFT.fillScreen(TFT.TFT_DARKGREY)
+
+	Dim xpos As Int = TFT.width() / 2 '// Half the screen width
+	Dim ypos As Int = 50
+
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Small font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	SPR.loadFontFS("NotoSansBold15") '// Must load the font first into the sprite class
+
+	SPR.createSprite(100, 50,1)   '// Create a sprite 100 pixels wide And 50 high
+
+	SPR.fillSprite(TFT.TFT_BLUE)
+
+	SPR.drawRect(0, 0, 100, 50, TFT.TFT_WHITE)   '// Draw sprite border outline (so we see extent)
+
+	SPR.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_DARKGREY,False)  '// Set the sprite font colour And the background colour
+
+	SPR.setTextDatum(TFT.MC_DATUM)   '// Middle CENTRE datum
+  
+	SPR.drawString1("15pt font", 50, 25 )  '// Coords of middle of 100 x 50 Sprite
+
+	SPR.pushSprite(10, 10)   '// Push To TFT screen coord 10, 10
+
+	SPR.pushSprite1(10, 70, TFT.TFT_BLUE)  '// Push To TFT screen, TFT_BLUE is transparent
+ 
+	SPR.unloadFont()  '// Remove the font from sprite class To recover memory used
+
+	Delay(4000)
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Large font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	TFT.fillScreen(TFT.TFT_BLACK)
+
+	'// Beware: Sprites are a different "class" To TFT, so different fonts can be loaded
+	'// in the TFT And sprite instances, so load the font in the class instance you use!
+	'// In this example this means the SPR. instance.
+	
+	SPR.loadFontFS("NotoSansBold36")  '// Load another different font into the sprite instance
+
+	'// 100 x 50 sprite was created above And still exists...
+
+	SPR.fillSprite(TFT.TFT_GREEN)
+
+	SPR.setTextColor1(TFT.TFT_BLACK, TFT.TFT_GREEN,False)  '// Set the font colour And the background colour
+
+	SPR.setTextDatum(TFT.MC_DATUM)   '// Middle CENTRE datum
+
+	SPR.drawString1("Fits", 50, 25)   '// Make sure text fits in the Sprite!
+	SPR.pushSprite(10, 10)   '        // Push To TFT screen coord 10, 10
+
+	SPR.fillSprite(TFT.TFT_RED)
+	SPR.setTextColor1(TFT.TFT_WHITE, TFT.TFT_RED,False)  ' // Set the font colour And the background colour
+
+	SPR.drawString1("Too big", 50, 25)   '// Text is too big To all fit in the Sprite!
+	SPR.pushSprite(10, 70)  '            // Push To TFT screen coord 10, 70
+
+	'// Draw changing numbers - no flicker using this plot method!
+
+	'// >>>> Note: it is best To use drawNumber() And drawFloat() For numeric values <<<<
+	'// >>>> this reduces digit position movement when the value changes             <<<<
+	'// >>>> drawNumber() And drawFloat() functions behave like drawString() And are <<<<
+	'// >>>> supported by setTextDatum() And setTextPadding()                        <<<<
+	
+	SPR.setTextDatum(TFT.TC_DATUM)  '// Top CENTRE datum
+
+	SPR.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLUE,False)  '// Set the font colour And the background colour
+
+	For i = 0 To 200
+	  SPR.fillSprite(TFT.TFT_BLUE)
+	  SPR.drawFloat1(i / 100.0, 2, 50, 10) ' // draw with 2 decimal places at 50,10 in sprite
+	  SPR.pushSprite(10, 130)  ' // Push To TFT screen coord 10, 130
+	  Delay (20)
+    Next
+
+	SPR.unloadFont() '; // Remove the font To recover memory used
+
+	SPR.deleteSprite() '; // Recover memory
+  
+	Delay(1000)
+
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	'// Mono spaced font
+	'// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  
+	SPR.loadFontFS("NotoSansBold15")  '// Mono spaced fonts have fixed inter-character gaps To
+	'// aid formatting
+	Dim bnum As Int  = 1
+
+	'// example of drawing buttons
+	For j = 0 To 4
+  	  For k = 0 To 4
+	    Dim x As Int = 120 + k * 45
+	    Dim y As Int = 40  + j * 30
+		bnum=bnum+1
+	    button(x, y, bnum)
+      Next
+    Next
+
+	For i = 0 To 100  
+		button(120, 160, i)
+		Delay(50)
+    Next
+  
+	SPR.unloadFont()
+
+	Delay(8000)
+End Sub
+
+'// #########################################################################
+'// Draw a number in a rounded rectangle with some transparent pixels
+'// Load the font before calling
+'// #########################################################################
+Sub button(x As Int, y As Int, num As Int )
+
+    '// Size of sprite
+    Dim  IWIDTH  As Int = 40
+    Dim  IHEIGHT As Int = 25
+
+	'// Create a 16-Bit sprite 40 pixels wide, 25 high (2000 bytes of RAM needed)
+	SPR.setcolorDepth(16)
+	SPR.createSprite(IWIDTH, IHEIGHT, 1)
+
+	'// Fill it with black (this will be the transparent colour this time)
+	SPR.fillSprite(TFT.TFT_BLACK)
+
+	'// Draw a background For the numbers
+	SPR.fillRoundRect(  0, 0,  IWIDTH, IHEIGHT, 8, TFT.TFT_RED)
+	SPR.drawRoundRect(  0, 0,  IWIDTH, IHEIGHT, 8, TFT.TFT_WHITE)
+
+	'// Set the font parameters
+
+	'// Set text coordinate datum To middle CENTRE
+	SPR.setTextDatum(TFT.MC_DATUM)
+
+	'// Set the font colour And the background colour
+	SPR.setTextColor1(TFT.TFT_WHITE,TFT.TFT_RED,False)
+
+	'// Draw the number
+	SPR.drawNumber1(num, IWIDTH/2, 1 + IHEIGHT/2)
+
+	'// Push sprite To TFT screen CGRAM at coordinate x,y (top left corner)
+	'// All black pixels will Not be drawn hence will show As "transparent"
+	SPR.pushSprite1(x, y, TFT.TFT_BLACK)
+
+	'// Delete sprite To free up the RAM
+	SPR.deleteSprite()
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt, Result() As Byte)
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+ Next
+End Sub
+
+

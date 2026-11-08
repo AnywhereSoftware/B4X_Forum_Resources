@@ -1,0 +1,88 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=ConfigPage.bjl
+File2=MainPage.bjl
+FileGroup1=Default Group
+FileGroup2=New Group
+Group=Default Group
+Library1=b4xpages
+Library2=byteconverter
+Library3=jcore
+Library4=jfx
+Library5=jnetwork
+Library6=jrandomaccessfile
+Library7=xui views
+Module1=|relative|..\B4RSerializator
+Module2=|relative|..\B4XConfigPage
+Module3=|relative|..\B4XMainPage
+Module4=|relative|..\Boost
+Module5=|relative|..\Constants
+NumberOfFiles=2
+NumberOfLibraries=7
+NumberOfModules=5
+Version=9.1
+@EndOfDesignText@
+#Region Project Notes
+#Region Project Notes
+'BoostRCCar.b4j
+'Example client app remote control Lego Boost (MoveHUB) via WiFi connected to an ESP32 controller which communicated via BLE with LEGO Boost Hub.
+'The ESP32 controller must be connected to the Lego Boost Hub prior sending commands from this client.
+'Inspired by (Many Thanks): https://ramblingbrick.com/2018/02/14/beginning-with-boost-driven-to-distraction/
+'202110016 rwbl
+'Requirements
+'B4A v10.0+, B4J v8.50+, B4i v6.80+.
+'References:
+'Intro: https://www.b4x.com/android/forum/threads/b4x-B4XPages-what-exactly-does-it-solve.119078/
+'Tutorial: https://www.b4x.com/android/forum/threads/b4x-b4xpages-cross-platform-and-simple-framework-for-managing-multiple-pages.118901/#content
+'Example:https://www.b4x.com/android/forum/threads/b4xpages-bluetooth-chat-example.119014/#content
+#End Region
+
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	' UI
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+#Region APPLICATION
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle("UTILITY")
+	MainForm.Show
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Private Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Log($"[ERROR] App: ${Error.Message}, StackTrace: ${StackTrace}"$)
+	Return True
+End Sub
+#End Region
+
+'Template version: B4J-1.0
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region

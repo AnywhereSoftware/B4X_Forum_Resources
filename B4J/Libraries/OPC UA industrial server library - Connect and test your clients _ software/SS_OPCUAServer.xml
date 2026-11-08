@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.11</doclet-version-NOT-library-version>
+    <class>
+        <name>com.simplysoftware.OPCUAServer.OPCUAServer</name>
+        <shortname>OPCUAServer</shortname>
+        <comment>OPC UA Server library.
+ This class provides a bridge to OPC UA services including node management,
+ session monitoring, and data communication.</comment>
+        <owner>process</owner>
+        <event>ServerStarted(EndpointUrl As String)</event>
+        <event>ServerFailed(Reason As String)</event>
+        <event>ClientConnecting(SessionId As String)</event>
+        <event>ClientConnected(SessionName As String)</event>
+        <event>ClientDisconnected(SessionName As String)</event>
+        <event>Error(Message As String)</event>
+        <event>ValueChanged(Name As String, Value As Object)</event>
+        <event>ValueRead(Name As String, Value As Object)</event>
+        <method>
+            <name>SetCredentials</name>
+            <comment>Sets the username and password required for basic auth connections.
+ If credentials are set, anonymous connections can also be explicitly toggled.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Username</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Password</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AddVariable</name>
+            <comment>Adds a variable node under the Data folder.
+ Name - The name of the variable.
+ InitialValue - The initial value for the variable.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Name</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>InitialValue</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CreateTCPHardwareController</name>
+            <comment>Creates a simple TCP-based hardware controller for remote communication.
+ host - The remote hostname.
+ port - The remote port.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>port</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Start</name>
+            <comment>Starts the OPC UA server and registers the custom namespace.
+ This logic is executed synchronously to ensure the server is ready
+ before the B4J application proceeds.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Stop</name>
+            <comment>Stops the OPC UA server and shuts down all active sessions.
+ Executed asynchronously to prevent blocking the B4J main thread.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetVariableAccessLevel</name>
+            <comment>Sets the access level for a specific variable using a bitmask.
+ name - The variable name.
+ accessLevel - The access level bitmask.
+ userAccessLevel - The user access level bitmask.
+ 
+ Bit 0 (Value 1): CurrentRead - The current value is readable.
+ Bit 1 (Value 2): CurrentWrite - The current value is writable.
+ Bit 2 (Value 4): HistoryRead - The history of the value is readable.
+ Bit 3 (Value 8): HistoryWrite - The history of the value is writable.
+
+ Common Combinations
+ Because they are bitmasks, you add the values together to combine permissions:
+
+ 1: Read-only (CurrentRead only)
+ 2: Write-only (CurrentWrite only)
+ 3 (1 + 2): Read and Write (CurrentRead + CurrentWrite)
+ 5 (1 + 4): Read current value and read history (CurrentRead + HistoryRead)
+
+ Note: An operation is only permitted if both accessLevel and userAccessLevel
+ contain the corresponding bit.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>name</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>accessLevel</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>userAccessLevel</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name>UpdateVariable</name>
+            <comment>Updates the value of an existing variable on the server.
+ name - The name of the variable to update.
+ value - The new value.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>name</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>value</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialises the OPC UA server configuration only.
+ ba - The BA instance.
+ EventName - The B4J event name prefix.
+ Host - The hostname or IP address to bind to.
+ Port - The TCP port for the server.
+ ServerName - The display name of the server.
+ ApplicationUri - The unique application URI.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Host</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Port</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>ServerName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>ApplicationUri</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetAllowAnonymous</name>
+            <comment>Allows explicitly enabling or disabling anonymous access alongside credentials.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>Allow</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetHardwareController</name>
+            <comment>Assigns an object to handle hardware-related writes.
+ controller - The controller object.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>controller</name>
+                <type>java.lang.Object</type>
+            </parameter>
+        </method>
+    </class>
+    <version>1.0</version>
+    <author>Peter Simpson</author>
+    <dependsOn>bcpkix-jdk18on-1.78.1.jar</dependsOn>
+    <dependsOn>bcprov-jdk18on-1.78.1.jar</dependsOn>
+    <dependsOn>failureaccess-1.0.1.jar</dependsOn>
+    <dependsOn>gson-2.10.1.jar</dependsOn>
+    <dependsOn>guava-33.0.0-jre.jar</dependsOn>
+    <dependsOn>jaxb-api-2.3.1.jar</dependsOn>
+    <dependsOn>netty-buffer-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-channel-fsm-0.9.jar</dependsOn>
+    <dependsOn>netty-codec-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-codec-http-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-common-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-handler-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-resolver-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-resolver-dns-4.1.86.Final.jar</dependsOn>
+    <dependsOn>netty-transport-4.1.86.Final.jar</dependsOn>
+    <dependsOn>sdk-core-0.6.16.jar</dependsOn>
+    <dependsOn>sdk-server-0.6.16.jar</dependsOn>
+    <dependsOn>slf4j-api-2.0.17.jar</dependsOn>
+    <dependsOn>slf4j-simple-2.0.17.jar</dependsOn>
+    <dependsOn>stack-core-0.6.16.jar</dependsOn>
+    <dependsOn>stack-server-0.6.16.jar</dependsOn>
+    <dependsOn>strict-machine-0.6.jar</dependsOn>
+</root>

@@ -1,0 +1,120 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32rgbledc
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rESP32RGBLEDC
+'Description:	Basic example for the B4R Library rESP32RGBLEDC.
+'				Set the color of an RGB LED connected to an ESP32 PWM pins by using the Arduino-ESP32 LEDC API.
+'Source:		BasicExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries
+'rESP32RGBLEDC
+
+'Components
+'Microcontroller:	ESP32 Wrover Kit
+'RGB LED Module:	Keyes KY-016 FZ0455 3-Color
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'RGB LED	= ESP32 (wirecolor)
+'Red		= GPIO25 (D25) (red)
+'Green		= GPIO26 (D26) (green)
+'Blue		= GPIO27 (D27) (blue)
+'GND		= GND (black)
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rESP32RGBLEDC BasicExample v20250210"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'RGB
+	Private rgb As ESP32RGBLEDC
+	Private redPin As Byte = 25
+	Private greenPin As Byte = 26
+	Private bluePin As Byte = 27
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init the rgb
+	Dim result As Boolean = rgb.Initialize(redPin, greenPin, bluePin, rgb.FREQUENCY_DEFAULT, rgb.RESOLUTION_DEFAULT)
+	If Not(result) Then
+		Log("[ERROR][Initialize] RGB LEDC not initialized. Check log.")
+		Return
+	Else
+		Log("[Initialize] RGB LEDC OK.")
+	End If
+
+	'Call method Test after 2 seconds
+	CallSubPlus("Test", 2000, 1)
+End Sub
+
+Private Sub Test(tag As Byte)
+	Dim delayms As ULong = 2000
+
+	rgb.On
+	Delay(delayms)
+
+	'Red low duty
+	rgb.Red = 50
+	Delay(delayms)
+
+	'Green full duty
+	rgb.Green = rgb.DUTY_MAX
+	Delay(delayms)
+
+	FadingRed
+	Delay(delayms)
+	
+	'Blue test out of duty range 0-255
+	'11111 (14bit) overflow > duty set 103 (last 7bit)
+	rgb.Blue = 11111
+	Dim colors(3) As Byte = rgb.GetColor
+	Log("[GetColor] r=",colors(0),",g=",colors(1),",b=",colors(2))
+	'[GetColor] r=0,g=0,b=103
+	Delay(delayms)
+
+	'Yellow
+	rgb.SetColor(255, 255, 0)
+	Delay(delayms)
+
+	Delay(delayms)
+	'Get the RGB LEDC duty values = must be yellow as previous set
+	Dim colors(3) As Byte = rgb.GetColor
+	'[GetColor] r=255,g=255,b=0
+	Log("[GetColor] r=",colors(0),",g=",colors(1),",b=",colors(2))
+	
+	Delay(delayms)
+	rgb.Off
+End Sub
+
+'Own method to fade RED LED from duty min to max.
+Private Sub FadingRed
+	For i = rgb.DUTY_MIN To rgb.DUTY_MAX
+		rgb.Red = i
+		Delay(20)
+	Next
+End Sub

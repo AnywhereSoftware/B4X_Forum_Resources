@@ -1,0 +1,171 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=reeprom
+Library3=resp8266
+Library4=rrandomaccessfile
+Library5=rsmqttbroker
+Library6=resp8266wifi
+Module1=WiFiServer
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=1
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public esp As ESP8266
+	Public Wifi As ESP8266WiFi 
+	Private Broker As sMQTTBroker
+	Public eeprom As EEPROM
+	Private const MAGIC_EEPROM As Byte = 213
+	Private sr As B4RSerializator
+	Private bc As ByteConverter
+	Private time As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	ConnectToNetwork(0)
+End Sub
+	
+private Sub ConnectToNetwork(tag As Byte)
+    Dim SSID, PASS As String
+	Wifi.Disconnect
+	Dim datas() As Byte = GetStoredData
+		Dim ObjectsBuffer(16) As Object
+		Dim Objects() As Object = sr.ConvertBytesToArray(datas, ObjectsBuffer)
+		SSID = bc.StringFromBytes(Objects(0))
+		PASS = bc.StringFromBytes(Objects(1))
+	Log("Trying to connect to: [",SSID, "] password: [", PASS,"]")
+	'example of connecting to a local network
+	If Wifi.Connect2(SSID,PASS) Then
+		Log("Connected to network")
+		CallSubPlus("BrokerStart",250,tag)
+	Else
+		Log("Failed to connect to network")
+		CallSubPlus("ConnectToNetwork",60*1000,1) 'try to connect again after 1mn
+	End If
+	WiFiServer.Start
+End Sub
+
+Sub BrokerStart(tag As Byte)
+	If tag = 0 Then		
+		Log("Broker IP : ",Wifi.LocalIp," Port : 1883")
+		Broker.Initialize(1883,True)
+		Log("init Broker done")	
+		Broker.InitCB("OnNewClient","OnRemoveClient","OnPublish","OnLostConnection","OnSubscribe","OnUnSubscribe")
+		Log("all CallBacks created and active")
+		AddLooper("LoopBase")
+		time = Millis
+	Else
+		Broker.restart
+	End If		
+End Sub
+
+Sub LoopBase
+	Broker.update
+	Dim time2 As ULong = Millis
+	If time2 > time + 60000 Then 
+		If Not(Wifi.IsConnected) Then
+			CallSubPlus("ConnectToNetwork", 500, 0) 'try to connect again after 1mn
+		End If
+'		Log("Stack : ",StackBufferUsage, " Memory : ",AvailableRAM)
+		Dim TopicNb As ULong = Broker.RetainedTopicCount
+		If TopicNb = 0 Then 
+			Log("No Topic Retaied")
+		Else	
+			For i = 0 To TopicNb -1 
+				Log("Topics  Retaied : ",TopicNb," TopicName :", Broker.getRetaiedTopicName(i))
+			Next
+		End If	
+		time = Millis
+	End If	
+End Sub
+
+Sub OnLostConnection
+	Log("Wifi connection lost")
+	If Wifi.IsConnected Then Log("wifi disconnected") Else Log("Wifi still connected")
+End Sub
+Sub OnNewClient(ClientID As ULong, user As String, password As String)
+	Log("New Client Connected, ClientID: ",ClientID," user: ",user, " password: ", password)
+End Sub
+Sub OnRemoveClient(ClientID As ULong)
+	Log("Client Removed, ClientID: ",ClientID)
+End Sub
+Sub OnPublish(ClientID As ULong, Topic As String, Payload As String)
+	Log("New Publish, ClientID: ",ClientID," Topic: ",Topic, " Payload: ", Payload)	
+End Sub
+Sub OnSubscribe(ClientID As ULong, Topic As String)
+	Log("New Subscribe, ClientID: ",ClientID," Topic: ",Topic)
+End Sub
+Sub OnUnSubscribe(ClientID As ULong, Topic As String)
+	Log("New UnSubscribe, ClientID: ",ClientID," Topic: ",Topic)
+End Sub
+
+Public Sub SaveNetworkDetails(Data() As Byte)
+'	Log("Saving Network data"," - length: ", Data)
+'	Log("memory=", AvailableRAM)
+'	Log("stack :",StackBufferUsage)
+'	Log("data to eeprom=",Data)
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM, Data.Length), 0)
+	eeprom.WriteBytes(Data, 2)
+End Sub
+
+Public Sub GetStoredDataLength As Byte
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+'	Log("header lu=",header(0),"+",header(1))
+	If header(0) = MAGIC_EEPROM Then
+		Return header(1)
+	End If
+	Return 0
+End Sub
+
+Sub	GetStoredData As Byte()
+	Dim length As Byte = GetStoredDataLength
+'	Log("length wifi=",length)
+	If length > 0 Then
+'		Log("eeprom length :",length)
+		Dim Data() As Byte = eeprom.ReadBytes(2, length)
+'		Log("Datas read",Data)
+		Return Data
+	Else
+		Dim Data(2) As Byte =sr.ConvertArrayToBytes(Array( "_".getbytes,"_".getbytes))
+'		Log("Datas renew",Data)
+		Return Data
+	End If
+End Sub
+
+Public Sub ClearStoredDataLength
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	If header(0) = MAGIC_EEPROM Then
+'		Log("MAGIC_EEPROM header :",header(0),"-",header(1))
+		header(1) = 0
+		eeprom.WriteBytes(header,0)
+		Log("clear done")
+	End If
+End Sub
+
+Sub esp_reset(tag As Byte)
+	esp.Restart
+End Sub
+
+public Sub StopAP
+	Log("Stop AP")
+	RunNative("stopAP", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopAP (B4R::Object* u) {
+  WiFi.softAPdisconnect(1);
+  }
+#end if

@@ -1,0 +1,209 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=rds18b20
+Library4=rnimbleadvertiser
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	BLEAdvertiser.bas
+' Project:     	rDS18B20
+' Brief:       	Advertise in regular intervals DS18B20 temperature data.
+' Date:        	2026-03-29
+' Author:      	Robert W.B. Linn (c) 2026 MIT
+' Dependencies: rNimBLEAdvertiser, rConvert
+' Description:	The temperature is read by the sampletimer tick
+'				In case of an error, the error call back is called.
+' Hardware:		ESP32
+'				PTC High Temperature Sensor DS18B20
+' Wiring:		Sensor		= MCU
+'				VCC(+)      = 5V
+'				DAT(out) 	= GPIO 4 > 4k7 Ω pull-up resistor between the 1-Wire data line and 5V power
+'				GND(-)      = GND
+' BLE:			
+' Packet:		EncodePayload
+' Data example:	58 19 01 01 07 58 00
+'				0  1  2  3  4  5  6  
+' Data length:	7 bytes
+' Byte 0-1 (2):	Manufacturer Key 1958 as little endian
+' Byte 2 (1):	Protocol Header
+' Byte 3 (1):	Model Header
+' Byte 4-5 (2): Temperature (INT16, big endian, °C * 100)
+' Byte 6 (1):	Padding
+
+' Log Example:	Debug false; DecodePayload used to verify payload published.
+'[AppStart][I] rDS18B20 BLEAdvertiser v20260329
+'[AppStart][I] BLE Advertiser started, duration=0 (0=forever)
+'[AppStart][I] SampleTimer enabled with interval 10000 ms
+'[AppStart][I] OK
+'[SampleTimer_Tick][I] t=17.1250
+'[EncodePayload][I] 5819010106B100
+'[SampleTimer_Tick][I] SetManufacturerData=5819010106B100
+'[DecodePayload][I] Data=5819010106B100
+'[DecodePayload][I] t=17.13
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rDS18B20 BLEAdvertiser v20260329"
+	
+	' Serial
+	Public serialLine As Serial
+	Private SERIALLINE_BAUDRATE As ULong = 115200
+
+	' Sensor
+	Private Sensor As DS18B20					
+	Private PIN_NUMBER As Byte = 4
+	
+	' BLE
+	Private DEVICE_NAME As String = "B4R-DS18B20"
+	Private Adv As NimBLEAdvertiser
+	' Adv duration for NN MS, 0=forever
+	Private ADV_DURATION As ULong = 0
+	
+	' Timer
+	Private SampleTimer As Timer
+	Private SAMPLETIMER_INTERVAL As ULong = 10000	' Every 10 seconds
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(SERIALLINE_BAUDRATE)
+	Log("[AppStart][I] ", VERSION)
+
+	' Init the sample timer
+	SampleTimer.Initialize("SampleTimer_Tick", SAMPLETIMER_INTERVAL)
+	' Start the timer if sensor initialized is OK
+	SampleTimer.Enabled = False
+
+	' Sensor disable debug
+	Sensor.SetDebug(False)
+	' Sensor init > note OnStateChanged is not used because of the sampletimer
+	Sensor.Initialize(PIN_NUMBER, _
+					  Sensor.ADC_RESOLUTION_12, _ 
+					  "OnStateChanged", _
+					  "OnError")
+	' Sensor error > stop
+	If Not(Sensor.IsInitialized) Then 
+		Return
+	End If
+	
+	' Sensor disable events because sample timer is used
+	Sensor.EventEnabled = False
+	
+	' BLE Advertiser
+	Adv.Initialize(DEVICE_NAME)
+	Adv.SetDebug(False)
+	Adv.Start(ADV_DURATION)
+	' OnStateChanged sets the manufacturer data
+	Log("[AppStart][I] BLE Advertiser started, duration=", ADV_DURATION, " (0=forever)")
+	
+	' Sampletimer start
+	SampleTimer.Enabled= True
+	Log("[AppStart][I] Sampletimer enabled with interval ", SAMPLETIMER_INTERVAL, " ms")
+
+	Log("[AppStart][I] OK")
+End Sub
+
+Private Sub SampleTimer_Tick
+	Dim t As Float = Sensor.GetTemperature
+	Log("[SampleTimer_Tick][I] t=", t)
+	
+	Dim payload() As Byte = EncodePayload(t)
+	Adv.SetManufacturerData(payload)
+	Log("[SampleTimer_Tick][I] SetManufacturerData=", Convert.BytesToHex(payload))
+	
+	' Check payload
+	DecodePayload(payload)
+End Sub
+
+' ================================================================
+' DS18B20 EVENTS
+' ================================================================
+
+#Region DS18B20 Events
+' NOT USED because of the sampletimer
+Private Sub OnStateChanged(t As Float)
+	Log("[OnStateChanged][I] t=", t)
+End Sub
+
+Private Sub OnError(code As Byte)
+	Log("[OnError][E] code=", code)
+End Sub
+#End Region
+
+' ================================================================
+' BLE PAYLOAD
+' ================================================================
+
+#Region BLE Payload
+
+' EncodePayload
+' Company: Reserved ID <1958>0x0101075800
+' Data example:	58 19 01 01 07 58 29 00
+'				0  1  2  3  4  5  6  7
+' Data length:	10 bytes
+' Byte 0-1 (2):	Manufacturer Key 1958 as little endian
+' Byte 2 (1):	Protocol Header
+' Byte 3 (1):	Model Header
+' Byte 4-5 (2): Temperature (INT16, big endian, °C * 100)
+' Byte 6 (1):	Padding
+Private Sub EncodePayload(t As Float) As Byte()
+
+	' Temperature as INT16
+	Dim tempint As Int = Round(t * 100)
+
+	' Extract bytes (big endian)
+	Dim t1 As Byte = Bit.And(Bit.ShiftRight(tempint,8),0xFF)
+	Dim t2 As Byte = Bit.And(tempint,0xFF)
+
+	Dim payload() As Byte = Array As Byte( _
+        0x58,0x19, _
+        0x01, _
+        0x01, _
+        t1,t2, _
+        0x00)
+
+	Log("[EncodePayload][I] ", Convert.BytesToHex(payload))
+	Return payload
+End Sub
+
+' DecodePayload
+' See BuildPayload header.
+Private Sub DecodePayload(payload() As Byte)
+	Log("[DecodePayload][I] Data=", Convert.BytesToHex(payload))
+
+	If payload.Length < 7 Then
+		Log("[DecodePayload][E] Payload too short!")
+		Return
+	End If
+
+	' Verify Company ID
+	If payload(0) <> 0x58 Or payload(1) <> 0x19 Then
+		Log("[DecodePayload][E] Wrong Company ID")
+		Return
+	End If
+
+	' Rebuild signed INT16 temperature
+	Dim raw As Int = _
+        Bit.Or( _
+            Bit.ShiftLeft(Bit.And(payload(4),0xFF),8), _
+            Bit.And(payload(5),0xFF) _
+        )
+
+	' Sign correction
+	If raw > 32767 Then raw = raw - 65536
+
+	Dim temp As Float = raw / 100.0
+
+	Log("[DecodePayload][I] t=", NumberFormat(temp,1,2))
+End Sub
+#End Region

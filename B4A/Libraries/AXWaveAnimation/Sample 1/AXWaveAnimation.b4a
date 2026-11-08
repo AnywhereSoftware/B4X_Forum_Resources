@@ -1,0 +1,146 @@
+﻿Build1=Default,com.aghajari.axwaveanimation.sample
+File1=mic.png
+FileGroup1=New Group
+Group=Default Group
+Library1=core
+Library2=axwaveanimation
+Library3=appcompat
+Library4=reflection
+Library5=phone
+Library6=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~~\n~SetApplicationAttribute(android:theme,"@style/AppTheme")~\n~CreateResource(values,styles.xml,~\n~<resources>~\n~    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">~\n~        <item name="colorPrimary">#3F51B5</item>~\n~        <item name="colorPrimaryDark">#303F9F</item>~\n~        <item name="colorAccent">#FF4081</item>~\n~    </style>~\n~</resources>)
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=10.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: AXWaveAnimation
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+	#Extends :  androidx.appcompat.app.AppCompatActivity
+#End Region
+
+
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Dim WaveView As AXWaveView
+	Dim LineWaveView As AXLineWaveView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Color = 0xFF1C2229
+	
+	Dim Seekbar As ACSeekBar
+	Seekbar.Initialize("Seekbar")
+	Activity.AddView(Seekbar,16dip,16dip,100%x-32dip,32dip)
+	
+	WaveView.Initialize
+	Dim Size As Int = 250dip
+	Activity.AddView(WaveView,50%x - (Size/2), 50%y - (Size/2) , Size, Size)
+	InitWaveView
+	
+	Dim MicImage As ImageView
+	MicImage.Initialize("")
+	Size = 64dip
+	Activity.AddView(MicImage,50%x - (Size/2), 50%y - (Size/2) , Size, Size)
+	Dim BD As BitmapDrawable
+	BD.Initialize(LoadBitmap(File.DirAssets,"mic.png"))
+	Dim AC As AppCompat
+	AC.SetDrawableTint(BD,Colors.White)
+	MicImage.Background = BD
+	
+	LineWaveView.Initialize
+	Activity.AddView(LineWaveView,0,100%y-36dip,100%x,36dip)
+	InitLineWaveView
+End Sub
+
+Private Sub InitWaveView
+	Dim State1 As AXWeavingState
+	State1.Initialize3(1,WaveView.CreateRadialShader(200,0xff2BCEFF,0xff0976E3))
+	State1.Width = WaveView.Width + 20dip
+	State1.Height = State1.Width
+	WaveView.AddState(1,State1)
+	
+	Dim State2 As AXWeavingState
+	State2.Initialize(2,WaveView.CreateRadialShader(200,0xff12B522,0xff00D6C1),"WaveState2")
+	State2.Width = WaveView.Width + 20dip
+	State2.Height = State2.Width
+	WaveView.AddState(2,State2)
+	
+	WaveView.SetState(1)
+	WaveView.CircleEnabled = True
+	WaveView.Amplitude = -1
+	
+	Dim Reflection As Reflector
+	Reflection.Target = WaveView
+	Reflection.SetOnClickListener("Wave_Click")
+End Sub
+
+Private Sub WaveState2_UpdateTargets (State As AXWeavingState)
+	State.TargetX = 0.2f + 0.1f * Rnd(1,100) / 100
+	State.TargetY = 0.7f + 0.1f * Rnd(1,100) / 100
+End Sub
+
+Private Sub Wave_Click (Tag As Object)
+	Dim State As AXWeavingState = WaveView.CurrentState
+	If State.State = 2 Then
+		WaveView.SetState(1)
+		LineWaveView.SetState(1)
+		SetNavigationBarColor(0xff0976E3)
+		Else
+		WaveView.SetState(2)
+		LineWaveView.SetState(2)
+		SetNavigationBarColor(0xff00D6C1)
+	End If
+End Sub
+
+Private Sub Seekbar_ValueChanged (Value As Int, UserChanged As Boolean)
+	WaveView.Amplitude = Value * WaveView.MAX_AMPLITUDE / 100
+	LineWaveView.Amplitude = Value * LineWaveView.MAX_AMPLITUDE / 100
+End Sub
+
+Private Sub InitLineWaveView
+	Dim State1 As AXLineWeavingState
+	State1.Initialize3(1,WaveView.CreateRadialShader(200,0xff0976E3,0xff0976E3))
+	LineWaveView.AddState(1,State1)
+	
+	Dim State2 As AXLineWeavingState
+	State2.Initialize3(2,WaveView.CreateRadialShader(200,0xff00D6C1,0xff00D6C1))
+	LineWaveView.AddState(2,State2)
+	
+	LineWaveView.SetState(1)
+	SetNavigationBarColor(0xff0976E3)
+	LineWaveView.MaxAlpha = 120
+	LineWaveView.MainWaveEnabled = False
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Public Sub SetNavigationBarColor (NewColor As Int)
+	Dim sdk As Phone
+	If sdk.SdkVersion >= 21 Then
+		Dim j1 As JavaObject
+		j1.InitializeContext
+		j1.RunMethodJO("getWindow",Null) _
+			.RunMethod("setNavigationBarColor",Array (NewColor))
+	End If
+End Sub

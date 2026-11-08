@@ -1,0 +1,29 @@
+#Class Paddle Extends GameEntity Final
+
+#Property Speed As Float = 720
+
+#Constructor(aX As Float, aY As Float, aWidth As Float, aHeight As Float, aColor As Int)
+    ' Paddle is a specialized rectangle controlled by the mouse.
+    Super.Initialize(aX, aY, aWidth, aHeight, aColor)
+    Speed = 720
+#End Constructor
+
+Public Sub MoveCenter(aTargetCenterX As Float, aBoundsWidth As Float)
+    ' Keeps the paddle centered under the mouse while staying inside the arena.
+    Dim newLeft As Float = aTargetCenterX - getWidth / 2
+    newLeft = BreakoutMath.ClampF(newLeft, 0, aBoundsWidth - getWidth)
+    SetPosition(newLeft, getY)
+End Sub
+
+Public Sub Nudge(aDirection As Int, aDeltaSeconds As Float, aBoundsWidth As Float)
+    ' Optional keyboard-style movement helper.
+    MoveCenter(CenterX + aDirection * getSpeed * aDeltaSeconds, aBoundsWidth)
+End Sub
+
+Override Sub Render(aCvs As B4XCanvas)
+    ' Draws the paddle.
+    If getVisible = False Then Return
+    aCvs.DrawRect(EntityRect, getColor, True, 0)
+End Sub
+
+#End Class

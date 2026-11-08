@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RPNG</name>
+        <shortname>PNG</shortname>
+         <event>pngDraw(pDrawID as ULong, pDraw_y as Int, pDraw_iWidth as Int)</event>
+        <field>
+            <name DesignerName="const">const</name>
+            <returntype>B4R::static</returntype>
+        </field>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="openRAM">openRAM</name>
+<comment>
+ Memory initialization
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>pData</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>pngDrawSub</name>
+                <type>SubVoid_DblIntInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="openFLASH">openFLASH</name>
+<comment>
+ It's necessary to separate out a FLASH version on Harvard architecture machines
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>PNGid</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>pngDrawSub</name>
+                <type>SubVoid_DblIntInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="open">open</name>
+<comment>
+ File (SD/MMC) based initialization
+</comment>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>szFilename</name>
+                <type>B4R::B4RString*</type>
+            </parameter>
+            <parameter>
+                <name>pngDrawSub</name>
+                <type>SubVoid_DblIntInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="close">close</name>
+<comment>
+ Close the file - not needed when decoding from memory
+</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="decode">decode</name>
+                 <returntype>Int</returntype>
+            <parameter>
+                <name>iOptions</name>
+                <type>Int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getWidth">getWidth</name>
+<comment>
+ Get the width of the image in pixels
+ can be called after opening the file (before decoding)
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getHeight">getHeight</name>
+<comment>
+ Get the height of the image in pixels
+ can be called after opening the file (before decoding)
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getBpp">getBpp</name>
+<comment>
+ Returns the number of bits per color stimulus
+ values of 1,2,4, and 8 are supported
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="hasAlpha">hasAlpha</name>
+<comment>
+ Alpha information can be per pixel, per color or a single color
+ depending on the PNG pixel type of the image
+ This call simply tells you if there is alpha for the current pixel type
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getTransparentColor">getTransparentColor</name>
+<comment>
+ For truecolor and palette images, it's possible to have a single
+ transparent color defined. This call will return it if defined
+</comment>
+                 <returntype>ULong</returntype>
+        </method>
+        <method>
+            <name DesignerName="isInterlaced">isInterlaced</name>
+<comment>
+ Returns true or false for the use of Adam7 interlacing
+ This option is not supported by the decoder, but after opening the image
+ you can determine if it's set
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getPalette">getPalette</name>
+<comment>
+ Returns a pointer to the palette
+ If there is alpha info for the palette, it starts at pPalette[768]
+</comment>
+                 <returntype>Byte[]</returntype>
+        </method>
+        <method>
+            <name DesignerName="getPixelType">getPixelType</name>
+<comment>
+ Returns the PNG pixel type (see enum in PNGdec.h)
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getLastError">getLastError</name>
+<comment>
+ return the last error (if any)
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getBufferSize">getBufferSize</name>
+<comment>
+ Returns the size in bytes of the buffer needed to hold the uncompressed image
+</comment>
+                 <returntype>Int</returntype>
+        </method>
+        <method>
+            <name DesignerName="getBuffer">getBuffer</name>
+<comment>
+ Returns the previously set image buffer or NULL if there is none
+</comment>
+                 <returntype>Byte[]</returntype>
+        </method>
+        <method>
+            <name DesignerName="setBuffer">setBuffer</name>
+<comment>
+ Set the image buffer to memory managed by the caller
+ If set, decode() will not use the PNGDRAW callback function
+ and instead write the image into this buffer in one shot
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pBuffer</name>
+                <type>Byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getAlphaMask">getAlphaMask</name>
+<comment>
+ Note: pushMaskedImage is for pushing to the TFT and will not work pushing into a sprite
+  uint8_t  pmask[1 + MAX_IMAGE_WIDTH / 8];  // Mask buffer
+ default: ucThreshold = 255
+ check if any pixels are opaque, and draw them
+</comment>
+                 <returntype>Byte</returntype>
+            <parameter>
+                <name>pDrawID</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>pMask</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>ucThreshold</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="getLineAsRGB565">getLineAsRGB565</name>
+<comment>
+ Convert a line of native pixels (all supported formats) into RGB565
+ can optionally mix in a background color - set to -1 to disable
+ Background color is in the form of a uint32_t -- 00BBGGRR (MSB on left)
+default: u32Bkgd = 0xffffffff
+default: iEndianness = PNG_RGB565_BIG_ENDIAN
+uint16_t lineBuffer[MAX_IMAGE_WIDTH];          // Line buffer for rendering
+</comment>
+                 <returntype>B4R::void</returntype>
+            <parameter>
+                <name>pDrawID</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>lineBuffer</name>
+                <type>UInt[]</type>
+            </parameter>
+            <parameter>
+                <name>iEndianness</name>
+                <type>Int</type>
+            </parameter>
+            <parameter>
+                <name>u32Bkgd</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_RGB565_BIG_ENDIAN">B4R_PNG_RGB565_BIG_ENDIAN</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_SUCCESS">B4R_PNG_SUCCESS</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_INVALID_PARAMETER">B4R_PNG_INVALID_PARAMETER</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_DECODE_ERROR">B4R_PNG_DECODE_ERROR</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_MEM_ERROR">B4R_PNG_MEM_ERROR</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_NO_BUFFER">B4R_PNG_NO_BUFFER</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_UNSUPPORTED_FEATURE">B4R_PNG_UNSUPPORTED_FEATURE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_INVALID_FILE">B4R_PNG_INVALID_FILE</name>
+            <returntype>byte</returntype>
+        </field>
+        <field>
+            <name DefineMethod="true" DesignerName="PNG_TOO_BIG">B4R_</name>
+            <returntype>byte</returntype>
+        </field>
+    </class>
+    <version>1.01</version>
+</root>

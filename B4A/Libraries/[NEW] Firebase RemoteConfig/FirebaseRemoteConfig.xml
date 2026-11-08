@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.biswajit.fbremoteconfig.FBRemoteConfig</name>
+        <shortname>FirebaseRemoteConfig</shortname>
+        <owner>process</owner>
+        <event>Error(message as String)</event>
+        <event>ConfigInfoReceived(info as FirebaseRemoteConfigInfo)</event>
+        <event>Initialized</event>
+        <event>Fetched</event>
+        <event>DefaultsAdded</event>
+        <event>ResetComplete</event>
+        <event>Activated(activated as boolean)</event>
+        <event>FetchedAndActivated(activated as boolean)</event>
+        <method>
+            <name>Fetch2</name>
+            <comment>Starts fetching configs, adhering to the specified minimum fetch interval.
+ The fetched configs only take effect after the next activate() call.
+ Depending on the time elapsed since the last fetch from the Firebase Remote Config backend, configs are either served from local storage, or fetched from the backend. The default minimum fetch interval can be set while initializing the library; the static default is 12 hours.
+ Note: Also initializes the Firebase installations SDK that creates installation IDs to identify Firebase installations and periodically sends data to Firebase servers. Remote Config requires installation IDs for Fetch requests. To stop the periodic sync, call delete(). Sending a Fetch request after deletion will create a new installation ID for this Firebase installation and resume the periodic sync.
+minimumFetchIntervalInSeconds: If configs in the local storage were fetched more than this many seconds ago, configs are served from the backend instead of local storage.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>minimumFetchIntervalInSeconds</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAll</name>
+            <comment>Returns a Map of Firebase Remote Config key value pairs.
+ Evaluates the values of the parameters in the following order:
+ 1. The activated value, if the last successful activate() contained the key.
+ 2. The default value, if the key was set with setDefaultsAsync.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.Map</returntype>
+        </method>
+        <method>
+            <name>GetDouble</name>
+            <comment>Returns the parameter value for the given key as a double.
+ Evaluates the value of the parameter in the following order:
+ 1. The activated value, if the last successful activate() contained the key, and the value can be converted into a double.
+ 2. The default value, if the key was set with setDefaultsAsync, and the value can be converted into a double.
+ 3. DEFAULT_VALUE_FOR_DOUBLE.
+key: A Firebase Remote Config parameter key with a double parameter value.</comment>
+            <returntype>double</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetBoolean</name>
+            <comment>Returns the parameter value for the given key as a boolean.
+ Evaluates the value of the parameter in the following order:
+ 1. The activated value, if the last successful activate() contained the key, and the value can be converted into a boolean.
+ 2. The default value, if the key was set with setDefaultsAsync, and the value can be converted into a boolean.
+ 3. DEFAULT_VALUE_FOR_BOOLEAN.
+ "1", "true", "t", "yes", "y", and "on" are strings that are interpreted (case insensitive) as true, and "0", "false", "f", "no", "n", "off", and empty string are interpreted (case insensitive) as false.
+key: A Firebase Remote Config parameter key with a boolean parameter value.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetLong</name>
+            <comment>Returns the parameter value for the given key as a long.
+ Evaluates the value of the parameter in the following order:
+ 1. The activated value, if the last successful activate() contained the key, and the value can be converted into a long.
+ 2. The default value, if the key was set with setDefaultsAsync, and the value can be converted into a long.
+ 3. DEFAULT_VALUE_FOR_LONG.
+key: A Firebase Remote Config parameter key with a long parameter value.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment>Initialize the object. On success Eventname_Initialize event will be raised.
+eventName: The event name prefix.
+MinimumFetchInterval: Sets the minimum interval between successive fetch calls.
+FetchTimeout: Sets the connection and read timeouts for fetch requests to the Firebase Remote Config servers in seconds.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>eventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>MinimumFetchInterval</name>
+                <type>long</type>
+            </parameter>
+            <parameter>
+                <name>FetchTimeout</name>
+                <type>long</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Fetch</name>
+            <comment>Starts fetching configs, adhering to the default minimum fetch interval.
+ On success Eventname_Fetched will be raised.
+ The fetched configs only take effect after the next activate() call.
+ Depending on the time elapsed since the last fetch from the Firebase Remote Config backend, configs are either served from local storage, or fetched from the backend. The default minimum fetch interval can be set while initializing the library; the static default is 12 hours.
+ Note: Also initializes the Firebase installations SDK that creates installation IDs to identify Firebase installations and periodically sends data to Firebase servers. Remote Config requires installation IDs for Fetch requests. To stop the periodic sync, call delete(). Sending a Fetch request after deletion will create a new installation ID for this Firebase installation and resume the periodic sync.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Activate</name>
+            <comment>Asynchronously activates the most recently fetched configs, so that the fetched key value pairs take effect.
+ Task with a true result if the current call activated the fetched configs; if the fetched configs were already activated by a previous call, returns a Task with a false result.
+ On success Eventname_Activated event will be raised.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>SetDefaults</name>
+            <comment>Asynchronously sets default configs using the given Map.
+ The values in defaults must be one of the following types: byte[], Boolean, Double, Long, String
+ On success Eventname_DefaultsAdded event will be raised.
+defaults: Map of key value pairs representing Firebase Remote Config parameter keys and values.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>defaults</name>
+                <type>anywheresoftware.b4a.objects.collections.Map</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetString</name>
+            <comment>Returns the parameter value for the given key as a String.
+ Evaluates the value of the parameter in the following order:
+ 1. The activated value, if the last successful activate() contained the key.
+ 2. The default value, if the key was set with setDefaultsAsync.
+ 3. DEFAULT_VALUE_FOR_STRING.
+key: A Firebase Remote Config parameter key.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>FetchAndActivate</name>
+            <comment>Asynchronously fetches and then activates the fetched configs.
+ On success Eventname_FetchedAndActivated event will be raised.
+ If the time elapsed since the last fetch from the Firebase Remote Config backend is more than the default minimum fetch interval, configs are fetched from the backend.
+ After the fetch is complete, the configs are activated so that the fetched key value pairs take effect.
+ Task with a true result if the current call activated the fetched configs; if no configs were fetched from the backend and the local fetched configs have already been activated, returns a Task with a false result.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>EnsureInitialized</name>
+            <comment>Returns an object representing the initialization status of this Firebase Remote Config instance.
+ On success Eventname_ConfigInfoReceived will be raised.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>Reset</name>
+            <comment>Deletes all activated, fetched and defaults configs and resets all Firebase Remote Config settings.
+ On success Eventname_ResetComplete event will be raised.</comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>GetKeysByPrefix</name>
+            <comment>Returns a list of all Firebase Remote Config parameter keys with the given prefix.
+prefix: The key prefix to look for. If the prefix is empty, all keys are returned.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>prefix</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetValue</name>
+            <comment>Returns the parameter value for the given key as a FirebaseRemoteConfigValue.
+ Evaluates the value of the parameter in the following order:
+ 1. The activated value, if the last successful activate() contained the key.
+ 2. The default value, if the key was set with setDefaultsAsync.
+ 3. A FirebaseRemoteConfigValue that returns the static value for each type.
+key: A Firebase Remote Config parameter key.</comment>
+            <returntype>com.biswajit.fbremoteconfig.FBRemoteConfigValue</returntype>
+            <parameter>
+                <name>key</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>Info</name>
+            <returntype>com.biswajit.fbremoteconfig.FBRemoteConfigInfo</returntype>
+            <comment>Returns the state of this FirebaseRemoteConfig instance as a FirebaseRemoteConfigInfo.</comment>
+        </property>
+        <field>
+            <name>LAST_FETCH_STATUS_NO_FETCH_YET</name>
+            <comment>Indicates that the FirebaseRemoteConfig singleton object has not yet attempted to fetch parameter values from the Firebase Remote Config Server.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>LAST_FETCH_STATUS_THROTTLED</name>
+            <comment>Indicates that the most recent attempt to fetch parameter values from the Firebase Remote Config Server was throttled.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>DEFAULT_VALUE_FOR_BYTE_ARRAY</name>
+            <comment>The static default byte array value for any given key.</comment>
+            <returntype>byte[]</returntype>
+        </field>
+        <field>
+            <name>DEFAULT_VALUE_FOR_LONG</name>
+            <comment>The static default long value for any given key.</comment>
+            <returntype>long</returntype>
+        </field>
+        <field>
+            <name>VALUE_SOURCE_STATIC</name>
+            <comment>Indicates that the value returned is the static default value.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>VALUE_SOURCE_DEFAULT</name>
+            <comment>Indicates that the value returned was retrieved from the defaults set by the client.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>DEFAULT_VALUE_FOR_STRING</name>
+            <comment>The static default string value for any given key.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DEFAULT_VALUE_FOR_BOOLEAN</name>
+            <comment>The static default boolean value for any given key.</comment>
+            <returntype>boolean</returntype>
+        </field>
+        <field>
+            <name>LAST_FETCH_STATUS_SUCCESS</name>
+            <comment>Indicates that the most recent fetch of parameter values from the Firebase Remote Config Server was completed successfully.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>LAST_FETCH_STATUS_FAILURE</name>
+            <comment>Indicates that the most recent attempt to fetch parameter values from the Firebase Remote Config Server has failed.</comment>
+            <returntype>int</returntype>
+        </field>
+        <field>
+            <name>DEFAULT_VALUE_FOR_DOUBLE</name>
+            <comment>The static default double value for any given key.</comment>
+            <returntype>double</returntype>
+        </field>
+        <field>
+            <name>VALUE_SOURCE_REMOTE</name>
+            <comment>Indicates that the value returned was retrieved from the Firebase Remote Config Server.</comment>
+            <returntype>int</returntype>
+        </field>
+    </class>
+    <class>
+        <name>com.biswajit.fbremoteconfig.FBRemoteConfigInfo</name>
+        <shortname>FirebaseRemoteConfigInfo</shortname>
+        <owner>process</owner>
+        <method>
+            <name>GetMinimumFetchIntervalInSeconds</name>
+            <comment>Returns the minimum interval between successive fetches calls in seconds.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetFetchTimeMillis</name>
+            <comment>Gets the timestamp (milliseconds since epoch) of the last successful fetch, regardless of whether the fetch was activated or not.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetFetchTimeoutInSeconds</name>
+            <comment>Returns the fetch timeout in seconds.</comment>
+            <returntype>long</returntype>
+        </method>
+        <method>
+            <name>GetLastFetchStatus</name>
+            <comment>Gets the status of the most recent fetch attempt.</comment>
+            <returntype>int</returntype>
+        </method>
+    </class>
+    <class>
+        <name>com.biswajit.fbremoteconfig.FBRemoteConfigValue</name>
+        <shortname>FirebaseRemoteConfigValue</shortname>
+        <owner>process</owner>
+        <method>
+            <name>AsString</name>
+            <comment></comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>AsDouble</name>
+            <comment></comment>
+            <returntype>double</returntype>
+        </method>
+        <method>
+            <name>AsByteArray</name>
+            <comment></comment>
+            <returntype>byte[]</returntype>
+        </method>
+        <method>
+            <name>GetSource</name>
+            <comment>Indicates at which source this value came from.
+ One of VALUE_SOURCE constant</comment>
+            <returntype>int</returntype>
+        </method>
+        <method>
+            <name>AsBoolean</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>AsLong</name>
+            <comment></comment>
+            <returntype>long</returntype>
+        </method>
+    </class>
+    <version>1.0</version>
+    <author>Biswajit Sarkar</author>
+    <dependsOn>com.google.firebase:firebase-common</dependsOn>
+    <dependsOn>com.google.firebase:firebase-core</dependsOn>
+    <dependsOn>com.google.firebase:firebase-config</dependsOn>
+    <dependsOn>com.google.firebase:firebase-analytics</dependsOn>
+    <dependsOn>com.google.android.gms:play-services-tasks</dependsOn>
+</root>

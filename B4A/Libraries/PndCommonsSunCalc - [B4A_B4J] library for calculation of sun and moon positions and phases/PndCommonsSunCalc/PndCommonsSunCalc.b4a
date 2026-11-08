@@ -1,0 +1,150 @@
+﻿Build1=Default,b4a.example
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=pndcommonssuncalc
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="26" android:targetSdkVersion="31"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=11.96
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	Private PndCommonsSunCalc1 As PndCommonsSunCalc
+	Private Label1 As Label
+	Private btnSunRiseSet As Button
+	Private btnGoldenHour As Button
+	Private btnMoonRiseSet As Button
+	Private btnMoonIllumination As Button
+	Private btnFullMoonDates As Button
+	Private btnSuperMoon As Button
+	Private btnMicroMoon As Button
+	
+	Private Latitude As Double = 40.712778    ' New York/USA coordinates
+	Private Longitude As Double = -74.005833  ' New York/USA coordinates
+	Private Year As Int = DateTime.GetYear(DateTime.Now)
+	Private Month As Int = DateTime.GetMonth(DateTime.Now)
+	Private Day As Int = DateTime.GetDayOfMonth(DateTime.Now)	
+End Sub
+
+' minSdkVersion="26" (Android 8.0) - check manifest.
+'
+' Accuracy
+' Astronomical calculations are far more complex than throwing a few numbers into an obscure formula And Then getting a fully accurate result.
+' There Is always a tradeoff between accuracy And computing time.
+' This library has its focus on getting acceptable results at low cost, so it can also run on mobile devices,
+' Or devices with a low computing Power. The results have an accuracy of about a minute, which should be 
+' good enough For common applications (like sunrise/sunset timers), but Is probably Not sufficient For astronomical purposes.
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+		
+	' If you do not set time zone, calculation is made by your's computer/server local time.
+	' For example your location is in Europe but you calculate sunrise in New York coordinates without DateTime.SetTimeZone(-5),
+	' you will see what time will be in Europe when sunrise in New York.
+	DateTime.SetTimeZone(-5) ' New York/USA time zone is GMT-5, to calculate sunrise and sunset in New York local time.
+	
+	PndCommonsSunCalc1.Initialize
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+Private Sub btnSunRiseSet_Click
+	Label1.Text = ""
+	Dim SunriseTicks As Long = PndCommonsSunCalc1.Sunrise(Latitude, Longitude, Year, Month, Day)
+	Label1.Text = Label1.Text & "Sunrise in New York: " & DateTime.Time(SunriseTicks) & " " & DateTime.Date(SunriseTicks) & CRLF
+	Dim SunsetTicks As Long =  PndCommonsSunCalc1.Sunset(Latitude, Longitude, Year, Month, Day)
+	Label1.Text = Label1.Text & "Sunset in New York: " & DateTime.Time(SunsetTicks) & " " & DateTime.Date(SunsetTicks)
+End Sub
+
+Private Sub btnGoldenHour_Click
+	' By default SunTimes computes the sunrise and sunset times as we would expect it.
+	' The sun rises when the upper part of the sun disc just appears on the horizon, and it sets when the upper part just vanishes.
+	' Because of our atmosphere, the sun is actually deeper on the horizon as it appears to be.
+	' This effect is called atmospheric refraction, and it is factored into the calculation.
+	' There are other twilights that may be interesting. Photographers are especially interested in the Golden hour, which gives a warm and soft sunlight.
+	' In the morning, Golden hour starts at an angle of -4° (which Is the end of the Blue hour), And ends when the sun reaches an angle of 6°.
+	' In the evening, the golden hour starts when the sun reaches an angle of 6°, And ends at an angle of -4°.
+	'
+	' Full explanation for twilights: https://shredzone.org/maven/commons-suncalc/examples.html#twilight
+	' Illustration of twilights: https://shredzone.org/maven/commons-suncalc/usage.html#twilight
+	
+	Label1.Text = ""
+	Dim BlueHourRiseTicks As Long = PndCommonsSunCalc1.TwilightRise(Latitude, Longitude, Year, Month, Day, PndCommonsSunCalc1.TWILIGHT_BLUE_HOUR)
+	Label1.Text = Label1.Text & "Morning golden hour in New York starts at: " & DateTime.Time(BlueHourRiseTicks) & " " & DateTime.Date(BlueHourRiseTicks) & CRLF
+	Dim GoldHourRiseTicks As Long = PndCommonsSunCalc1.TwilightRise(Latitude, Longitude, Year, Month, Day, PndCommonsSunCalc1.TWILIGHT_GOLDEN_HOUR)
+	Label1.Text = Label1.Text & "Morning golden hour in New York ends at: " & DateTime.Time(GoldHourRiseTicks) & " " & DateTime.Date(GoldHourRiseTicks) & CRLF & CRLF
+	Dim GoldHourSetTicks As Long = PndCommonsSunCalc1.TwilightSet(Latitude, Longitude, Year, Month, Day, PndCommonsSunCalc1.TWILIGHT_GOLDEN_HOUR)
+	Label1.Text = Label1.Text & "Evening golden hour in New York starts at: " & DateTime.Time(GoldHourSetTicks) & " " & DateTime.Date(GoldHourSetTicks) & CRLF
+	Dim BlueHourSetTicks As Long = PndCommonsSunCalc1.TwilightSet(Latitude, Longitude, Year, Month, Day, PndCommonsSunCalc1.TWILIGHT_BLUE_HOUR)
+	Label1.Text = Label1.Text & "Evening golden hour in New York ends at: " & DateTime.Time(BlueHourSetTicks) & " " & DateTime.Date(BlueHourSetTicks)
+End Sub
+
+Private Sub btnMoonRiseSet_Click
+	Label1.Text = ""
+	Dim MoonRiseTicks As Long = PndCommonsSunCalc1.MoonRise(Latitude, Longitude, Year, Month, Day)
+	Label1.Text = Label1.Text & "Moon rise in New York: " & DateTime.Time(MoonRiseTicks) & " " & DateTime.Date(MoonRiseTicks) & CRLF
+	Dim MoonSetTicks As Long =  PndCommonsSunCalc1.MoonSet(Latitude, Longitude, Year, Month, Day)
+	Label1.Text = Label1.Text & "Moon set in New York: " & DateTime.Time(MoonSetTicks) & " " & DateTime.Date(MoonSetTicks)
+End Sub
+
+Private Sub btnMoonIllumination_Click
+	Label1.Text = ""
+	Dim IlDay As Int
+	For i = 1 To 20
+		IlDay = i
+		Dim IlluminationPercent As Double = PndCommonsSunCalc1.MoonIllumination(Year, Month, IlDay)
+		Label1.Text = Label1.Text & "On " & Year & "/" & Month & "/" & IlDay & " the moon was " & NumberFormat(IlluminationPercent, 0, 0) & "% lit." & CRLF
+	Next
+End Sub
+
+Private Sub btnFullMoonDates_Click
+	Label1.Text = ""
+	Dim ListOfDates As List = PndCommonsSunCalc1.MoonPhase(Year, Month, Day, 20, PndCommonsSunCalc1.MOONPHASE_PHASE_FULL_MOON)
+	For Each Ticks As Long In ListOfDates
+		Label1.Text = Label1.Text & DateTime.Date(Ticks) & CRLF
+	Next
+End Sub
+
+Private Sub btnSuperMoon_Click
+	' More info: https://starwalk.space/en/infographics/supermoons-and-micromoons
+	Label1.Text = ""
+	Dim ListOfDates As List = PndCommonsSunCalc1.MoonPhaseSuperMoon(Year, Month, Day, 10)
+	For Each Ticks As Long In ListOfDates
+		Label1.Text = Label1.Text & DateTime.Date(Ticks) & CRLF
+	Next
+End Sub
+
+Private Sub btnMicroMoon_Click
+	' More info: https://starwalk.space/en/infographics/supermoons-and-micromoons
+	Label1.Text = ""
+	Dim ListOfDates As List = PndCommonsSunCalc1.MoonPhaseMicroMoon(Year, Month, Day, 10)
+	For Each Ticks As Long In ListOfDates
+		Label1.Text = Label1.Text & DateTime.Date(Ticks) & CRLF
+	Next
+End Sub

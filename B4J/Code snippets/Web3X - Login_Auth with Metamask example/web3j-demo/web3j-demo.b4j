@@ -1,0 +1,49 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=bignumbers
+Library2=encryption
+Library3=jcore
+Library4=web3x
+Library5=jserver
+Module1=accountFilter
+Module2=accountHandler
+Module3=authHandler
+Module4=DB
+Module5=getMessageHandler
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=5
+Version=9.1
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+'	Private Web3Ropsten As Web3X
+'	Private Utils As W3Utils
+	Public server As Server
+End Sub
+
+Sub AppStart (Args() As String)
+	server.Initialize("")
+	DB.initialize
+	If Args.Length > 0 Then
+		server.Port = Args(0)
+	Else
+		server.Port = 51042
+	End If
+	
+	server.AddHandler("/getmessage", "getMessageHandler", False)
+	server.AddHandler("/authenticate", "authHandler", False)
+	
+	server.AddFilter("/account/*", "accountFilter", False )
+	server.AddHandler("/account", "accountHandler", False)
+	server.Start
+
+	StartMessageLoop
+End Sub
+

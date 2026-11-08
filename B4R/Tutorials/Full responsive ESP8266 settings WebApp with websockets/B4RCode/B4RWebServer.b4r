@@ -1,0 +1,273 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rrandomaccessfile
+Library4=rmqtt
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+#Region Project Attributes
+#AutoFlushLogs: True
+#CheckArrayBounds: True
+#StackBufferSize: 3000
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public Serial1 As Serial
+	Public wifi As ESP8266WiFi
+	Public wificlient As WiFiSocket
+	
+	Public Astream As AsyncStreams
+	Public server As WiFiServerSocket
+	Public mqtt As MqttClient
+	Public sets As MqttConnectOptions
+	Public sID As String = "AABBCCDD"
+
+	Public st As ULong
+
+	Private bc As ByteConverter
+	Private quotearray() As Byte = """"
+	Public LastIndex As Long
+
+	Private sIP As String = "192.168.1.206"
+	Private bIP() As Byte = Array As Byte(192,168,1,206)
+	
+End Sub
+
+Private Sub AppStart
+	st=Millis
+
+	Serial1.Initialize(9600)
+	Log("AppStart")
+	Log("after start time: ",Millis-st)
+
+	RunNative("SetSTA", Null)
+
+
+	Delay(0)
+	Log("Before connect time: ",Millis-st)
+	If Not(wifi.IsConnected) Then wifi.ConnectAsync("SSID", "PASSWORD", 0, Null, "wifi_Connected")
+	
+
+
+End Sub
+
+
+Private Sub mqtt_MessageArrived (Topic As String, Payload() As Byte)
+	
+	
+	Dim bRet(250) As Byte
+	GetTextValueFromKey(Payload, "action", 0, bRet, 1500)
+	
+	
+	Log("------------------------------------------")
+	Log("------------------------------------------")
+	Select Case bc.StringFromBytes(bRet)
+		Case "btnswitches"
+			Log("You have saved ""Settings Group 1"" settings")
+			Log("------------------------------------------")
+			GetTextValueFromKey(Payload, "sw1", 0, bRet, 1500)
+			If bRet.Length > 0 Then
+				If bc.StringFromBytes(bRet) = "1" Then
+					Log("Setting 1 is on")
+				Else
+					Log("Setting 1 is off")
+				End If
+			End If
+			
+			
+			GetTextValueFromKey(Payload, "sw2", 0, bRet, 1500)
+			If bRet.Length > 0 Then
+				If bc.StringFromBytes(bRet) = "1" Then
+					Log("Setting 2 is on")
+				Else
+					Log("Setting 2 is off")
+				End If
+			End If
+			
+			
+			GetTextValueFromKey(Payload, "sw3", 0, bRet, 1500)
+			If bRet.Length > 0 Then
+				If bc.StringFromBytes(bRet) = "1" Then
+					Log("Setting 3 is on")
+				Else
+					Log("Setting 3 is off")
+				End If
+			End If
+			
+		Case "btnkeep"
+			Log("You have saved ""Settings Group 2"" settings")
+			Log("------------------------------------------")
+			GetTextValueFromKey(Payload, "dat", 0, bRet, 1500)
+			If bRet.Length > 0 Then
+				
+				Dim date() As Byte
+				
+				For Each s() As Byte In bc.Split(bRet, "\")
+					date = JoinBytes(Array(date,s))
+				Next	
+				
+				Log("Date : ", date)
+			End If
+			
+			GetTextValueFromKey(Payload, "tim", 0, bRet, 1500)
+			
+			If bRet.Length > 0 Then
+				Log("Time : ", bc.StringFromBytes(bRet))
+			End If
+			
+						
+		Case "btnsave"
+			Log("You have saved ""Settings Group 3"" settings")
+			Log("------------------------------------------")
+			GetTextValueFromKey(Payload, "usr", 0, bRet, 1500)
+			If bRet.Length > 0 Then
+				Log("Username : ", bc.StringFromBytes(bRet))
+			End If
+			
+			GetTextValueFromKey(Payload, "pass", 0, bRet, 1500)
+			
+			If bRet.Length > 0 Then
+				Log("Password : ", bc.StringFromBytes(bRet))
+			End If
+			
+	End Select
+	Log("------------------------------------------")
+	Log("------------------------------------------")
+	Log(" ")
+	Log(" ")
+End Sub
+
+Private Sub mqtt_Disconnected
+	Log("* * * * * * *   MQTT Disconnected  * * * * * * *")
+End Sub
+
+
+
+Sub WiFi_Connected (Success As Boolean)
+	Log("connected: ", Success)
+	If Success Then
+		Log(Success)
+		Log("After connect time: ",Millis-st)
+
+		Log("IP: ",wifi.LocalIp)
+
+		server.Initialize(80, "Server_NewConnection")
+		server.Listen
+		Log("After server start time: ",Millis-st)	
+
+		ConnectAndReconnect
+	End If
+End Sub
+
+
+Sub ConnectAndReconnect
+	sets.Initialize("b4r", "webapp")
+	
+	
+	
+	Dim sClientId As String = JoinStrings(Array As String("CLID", sID))
+	
+	
+	mqtt.Initialize(wificlient.Stream, bIP, 51041, sClientId, "mqtt_MessageArrived", "mqtt_Disconnected")
+	
+	mqtt.Close
+	If mqtt.Connect2(sets) Then
+		Log("Connected - MQTT")
+		mqtt.Subscribe(sID, 0)
+	Else
+		Log("Not connected - MQTT")
+	End If
+
+End Sub
+
+Private Sub Server_NewConnection (NewSocket As WiFiSocket)
+	Log("NEW server CONNECTION ********** at: ", Millis-st)
+	Astream.Initialize(NewSocket.Stream, "astream_NewData", "astream_Error")
+	Astream.MaxBufferSize=1000
+End Sub
+
+Private Sub Astream_NewData (Buffer() As Byte)
+	Log("Astream Data -------------------------------------- ", Millis-st)
+	Log("Length: ",Buffer.Length,CRLF)
+	Log(Buffer)
+	Log(CRLF)
+	Log("Time: ",Millis-st)
+
+	Astream.Write("HTTP/1.1 200").Write(CRLF)
+	Astream.Write("Content-Type: text/html").Write(CRLF).Write(CRLF)
+	Dim sString As String = JoinStrings(Array As String("<html><head></head><body style=""border:none;margin:0;""><iframe src=""http://", sIP, ":51042/?id=", sID, """ style=""border:none;margin:0;"" title=""Iframe Example"" width=""100%"" height=""100%""></iframe></body></html>"))
+	Astream.Write(sString).Write(CRLF)
+	CallSubPlus("CloseConnection",200,0)
+End Sub
+
+Private Sub AStream_Error
+	Log("Disconnected at Astream Error sub")
+	server.Listen
+	ConnectAndReconnect
+End Sub
+
+Private Sub CloseConnection(u As Byte)
+	Log("close connection sub at: ", Millis-st)
+	If server.Socket.Connected Then
+		Log("server was connected")
+		server.Socket.Stream.Flush
+		server.Socket.Close
+	Else
+		Log("server was not connected")
+	End If
+End Sub
+
+#if C
+void SetSTA(B4R::Object* o) {
+WiFi.mode(WIFI_STA);
+}
+#end if
+
+#Region JSONParse
+
+Sub GetTextValueFromKey (json() As Byte, Key() As Byte, StartIndex As Int, ResultBuffer() As Byte, MaxLength As UInt)
+
+	
+	Dim qkey() As Byte = JoinBytes(Array(quotearray, Key, quotearray))
+	Dim i As Int = bc.IndexOf2(json, qkey, StartIndex)
+	If i = -1 Then
+
+		bc.ArrayCopy(Array As Byte(), ResultBuffer)
+		Return
+	End If
+	Dim i1 As Int = bc.IndexOf2(json, quotearray, i + qkey.Length + 1)
+	Dim i2 As Int = bc.IndexOf2(json, quotearray, i1 + 1)
+	bc.ArrayCopy(bc.SubString2(json, i1 + 1, Min(i2, i1 + 1 + MaxLength)), ResultBuffer)
+	LastIndex = i2
+End Sub
+
+Sub GetNumberValueFromKey (json() As Byte, Key() As Byte, StartIndex As Int) As Double
+
+	Dim qkey() As Byte = JoinBytes(Array(quotearray, Key, quotearray))
+	Dim i As Int = bc.IndexOf2(json, qkey, StartIndex)
+	If i = -1 Then Return 0
+	Dim colon As Int = bc.IndexOf2(json, ":", i + qkey.Length)
+	Dim i2 As Int = 0
+	For Each c As String In Array As String(",", "}", "]")
+		i2 = bc.IndexOf2(json, c, colon + 1)
+		If i2 <> -1 Then
+			Exit
+		End If
+	Next
+	Dim res() As Byte = bc.SubString2(json, colon + 1, i2)
+	LastIndex = i2 + 1
+	res = bc.Trim(res)
+	Dim s As String = bc.StringFromBytes(res)
+	Dim value As Double = s
+	Return value
+End Sub
+
+#End Region

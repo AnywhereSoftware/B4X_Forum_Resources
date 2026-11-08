@@ -1,0 +1,216 @@
+﻿Build1=Default,b4a.example,SERVER
+File1=MainPage.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xpages
+Library2=core
+Library3=ime
+Library4=json
+Library5=okhttputils2
+Library6=xml2map
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~	~\n~SetActivityAttribute(main, android:windowSoftInputMode, adjustResize|stateHidden)~\n~SetActivityAttribute(Main, android:configChanges, "orientation|keyboard|keyboardHidden|screenSize|uiMode")~\n~~\n~'SetActivityAttribute(Main, android:configChanges, "orientation|keyboard|keyboardHidden|screenSize")~\n~'SetActivityAttribute(activityname, android:configChanges,"keyboard|keyboardHidden|navigation")~\n~'The "orientation" value prevents restarts when the screen orientation changes.~\n~'The "screenSize" value also prevents restarts when orientation changes, but only for Android 3.2 (API level 13) and above.~\n~'The "screenLayout" value is necessary to detect changes that can be triggered by devices such as foldable phones and convertible Chromebooks.~\n~'The "keyboardHidden" value prevents restarts when the keyboard availability changes~\n~'The user interface mode has changed — the user has placed the device into a desk or car dock, or the night mode has changed.~\n~'SetActivityAttribute(Main, android:windowSoftInputMode, "adjustNothing")~\n~'SetActivityAttribute(main, android:windowSoftInputMode, adjustNothing|stateHidden)~\n~~\n~SetApplicationAttribute(android:largeHeap,"true")   ~\n~	~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~~\n~AddPermission(android.permission.INTERNET)~\n~~\n~'End of default text.~\n~
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\..\..\AndroidProjects\MySharedCode\cDropBox
+Module3=|relative|..\..\..\AndroidProjects\MySharedCode\cHttpCodes
+Module4=|absolute|D:\AndroidProjects\MySharedCode\cKoofr
+Module5=Starter
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=5
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel	: Test
+	#VersionCode		: 1
+	#VersionName		: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations		: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: true
+	#IncludeTitle: false
+#End Region
+
+#if Release
+	#BridgeLogger					: true
+#End If
+
+
+Sub Process_Globals
+			Public ActionBarHomeClicked 				As Boolean
+	
+			Public ActivityWidth, ActivityHeight 		As Int	
+			
+			Private mPausedResume						As Boolean = False	
+End Sub
+
+Sub Globals
+			Private mIME 								As IME
+	
+			Private ActivityParent 						As JavaObject
+	
+			Private mPagesManager 						As B4XPagesManager
+	
+			Private mActivity_Pause_Width				As Int		= 0
+			Private mActivity_Pause_Height				As Int		= 0
+
+			Private mActivity_Resume_Width				As Int		= 0
+			Private mActivity_Resume_Height				As Int		= 0
+			
+			Private mIgnore_HeightChange				As Boolean = False
+	
+#if Consent		
+	Private  mConsent									As cConsent
+#end if	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+			LogColor("Main - Activity_Create", Colors.Red)	
+	
+			mPausedResume	=	False
+	
+			ActivityWidth	=	Activity.Width
+			ActivityHeight	=	Activity.Height
+			
+			
+'			cBBsGlobals.gJaveObjectMe = Activity
+	
+			CallSubDelayed(Me, "Create_Startup")			
+End Sub
+
+Private Sub Create_Startup																		
+
+			LogColor("Main - Create_Startup", Colors.Red)	
+
+			mPagesManager.Initialize(Activity)	
+			mPagesManager.LogEvents = True
+							
+			mIME.Initialize("IME_Event")
+			mIME.AddHeightChangedEvent
+			
+			Dim jo As JavaObject = Activity
+			
+			jo.RunMethodJO("getContext", Null).RunMethodJO("getWindow", Null).RunMethod("setSoftInputMode", Array As Object(0x20))
+							
+			ActivityParent = jo.RunMethodJO("getParent", Null)			
+End Sub		
+
+Private Sub IME_Event_HeightChanged(NewHeight As Int, OldHeight As Int)
+			Log($"Main::IME_Event_HeightChanged  NewHeight:${NewHeight}: OldHeight:${OldHeight}  PausedResume:${mPausedResume}"$)
+			
+
+			If  mPausedResume = False Then				
+				If  mIgnore_HeightChange Then
+					mIgnore_HeightChange = False
+					Return
+				End If
+				
+				AfterChange
+			End If
+End Sub
+
+Private Sub AfterChange As ResumableSub
+			Log("Main::AfterChange")
+	
+			Try		
+				Dim Width 	As Int 		= ActivityWidth
+				Dim Height 	As Int 		= ActivityHeight
+
+				If  ActivityParent <> Null Then			
+					Log("Main::AfterChange - RunMethod - getMeasuredWidth/Height")
+					
+					Width  = ActivityParent.RunMethod("getMeasuredWidth", Null)
+					Height = ActivityParent.RunMethod("getMeasuredHeight", Null)
+			
+					If 	Width = 0 Or Height = 0 Then 
+						Return False
+					End If
+				
+					ActivityHeight 	= Height
+					ActivityWidth  	= Width
+				End If
+
+				If  mPagesManager.IsInitialized Then							
+					Log("Main::AfterChange - RunMethod - mPagesManager.Initialized")
+					
+					Dim ajo 	As Panel 	= Activity
+				
+					If  ajo.Width <> Width Or ajo.Height <> Height Then
+						ajo.width 	= Width 		'update the "activity" width and height
+						ajo.height 	= Height
+					
+						Dim TopPage As B4XPageInfo = B4XPages.GetManager.GetTopPage
+				
+						If  TopPage.IsInitialized And TopPage.B4XPage <> Null Then
+							If  SubExists(TopPage.B4XPage, "B4XPage_Resize") Then
+								'wait For (CallSub3(TopPage.B4XPage, "B4XPage_Resize", Width, Height)) Complete(Nothing As Object)
+								CallSubDelayed3(TopPage.B4XPage, "B4XPage_Resize", Width, Height)
+							End If
+						End If
+					End If
+				End If
+			Catch
+				Log($"Main::AfterChange - Last Execption:${LastException.Message}"$)
+			End Try
+			
+			Return True
+End Sub
+	
+
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+			If  mPagesManager.IsInitialized Then		
+				Return B4XPages.Delegate.Activity_KeyPress(KeyCode)
+			Else
+				Return False
+			End If
+End Sub
+
+Sub Activity_Resume
+			LogColor("Main - Activity_Resume", Colors.Red)
+			
+			mActivity_Resume_Width 	= Activity.Width
+			mActivity_Resume_Height	= Activity.Height
+	
+			If  mActivity_Resume_Width > mActivity_Resume_Height And	_
+				mActivity_Pause_Width > mActivity_Pause_Height Then
+'			If  mActivity_Resume_Width 	= mActivity_Pause_Width 	And 	_
+'				mActivity_Resume_Height	= mActivity_Pause_Height	Then
+				mIgnore_HeightChange = True
+			Else
+				mIgnore_HeightChange = False
+			End If
+	
+			mPausedResume = False
+	
+			If  mPagesManager.IsInitialized Then
+				B4XPages.Delegate.Activity_Resume
+			End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+			LogColor("Main - Activity_Pause", Colors.Red)	
+				
+			mActivity_Pause_Width 	= Activity.Width
+			mActivity_Pause_Height	= Activity.Height
+
+			mPausedResume = True
+	
+			If  mPagesManager.IsInitialized Then	
+				B4XPages.Delegate.Activity_Pause
+			End If
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+			LogColor("Main - Activity_PermissionResult", Colors.Red)	
+	
+			If  mPagesManager.IsInitialized Then		
+				B4XPages.Delegate.Activity_PermissionResult(Permission, Result)
+			End If
+End Sub
+#End Region
+
+'Program code should go into B4XMainPage and other pages.

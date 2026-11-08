@@ -1,0 +1,149 @@
+﻿Build1=Default,b4a.wm.pdfab
+File1=Layout1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=pdfium
+Library3=xui
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~'======== Adaptive icon handling start ========~\n~SetApplicationAttribute(android:icon, "@mipmap/ic_launcher")~\n~SetApplicationAttribute(android:roundIcon, "@mipmap/ic_launcher")~\n~CreateResource(mipmap-anydpi-v26, ic_launcher.xml,~\n~<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">~\n~<background android:drawable="@mipmap/background"/>~\n~<foreground android:drawable="@mipmap/foreground"/>~\n~</adaptive-icon>~\n~)~\n~'======== Adaptive icon handling end ========~\n~~\n~'======== THESE NEXT ONES HAVE BEEN ADDED SPECIFICALLY FOR THIS APP ========~\n~AddPermission (android.permission.READ_EXTERNAL_STORAGE)~\n~' Partially from https://www.c-sharpcorner.com/article/how-to-make-your-pdf-viewer-handle-pdf-files-with-intent-filters-in-android/ :~\n~AddActivityText(Main,~\n~       <intent-filter>~\n~           <action android:name="android.intent.action.VIEW" />~\n~           <category android:name="android.intent.category.DEFAULT" />~\n~           <data android:mimeType="application/pdf" />~\n~       </intent-filter>~\n~	   )
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=12.5
+@EndOfDesignText@
+' Based on DonManfred's PDFium example app at https://www.b4x.com/android/forum/threads/pdfium-pdfview2.102756
+#Region  Project Attributes
+	#ApplicationLabel: PDFab
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+	' This next line is for the Adaptive Icon that was created with https://icon.kitchen (see https://www.b4x.com/android/forum/threads/adaptive-icons-simple-instructions-and-tips.123843/)
+	#AdditionalRes: ../icon
+#End Region
+
+#Region  Activity Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: android-pdf-viewer.aar
+#AdditionalJar: com.android.support:support-v4
+#AdditionalJar: Pdfium.aar
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+	Dim prevIntent As Intent
+	Private xui As XUI
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Dim rp As RuntimePermissions
+	Dim pdf As PdfiumCore
+	Private PDFView1 As PDFView
+	Private lblPages As Label
+	Private glPages As Int
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+
+	Activity.LoadLayout("Layout1")
+	pdf.Initialize("PDFium")
+
+	If FirstTime Then
+		Wait For (CheckPermissions(Array As String(rp.PERMISSION_READ_EXTERNAL_STORAGE))) Complete (Success As Boolean)
+		If Success = False Then ExitApplication ' This is not a clean way to exit, but it does the job
+	End If
+
+End Sub
+
+Private Sub CheckPermissions(whichOnes As List) As ResumableSub
+
+	' IMPORTANT: make sure that the requested permissions have also been added to the Manifest:
+	'			 AddPermission(android.permission.PERMISSION_READ_EXTERNAL_STORAGE)
+
+	For Each per As String In whichOnes
+		rp.CheckAndRequest(per)
+		'NOTE : in a B4XPages app, the next line should be: Wait For B4XPage_PermissionResult(permission As String, Result As Boolean)
+		Wait For Activity_PermissionResult(permission As String, Result As Boolean)
+		If Result = False Then Return False
+	Next
+
+	Return True
+
+End Sub
+
+Sub Activity_Resume
+
+	Dim intent1 As Intent = Activity.GetStartingIntent
+	If intent1.IsInitialized And (intent1 <> prevIntent) And (intent1.Action = intent1.ACTION_VIEW) Then
+		prevIntent = intent1
+		' As I couldn't get this to work:
+		'    Dim cfg As Configurator = PDFView1.fromUri(...)
+		' I'm copying the received file to 'tmp.pdf' in the xui.DefaultFolder
+		File.Copy("ContentDir", intent1.GetData, xui.DefaultFolder, "tmp.pdf")
+		Dim cfg As Configurator = PDFView1.fromFile(xui.DefaultFolder, "tmp.pdf")
+		cfg.SetEventname("PDFium")
+		cfg.autoSpacing(True).enableSwipe(True).pageSnap(True).swipeHorizontal(False).addOnErrorListener.addOnLoadCompleteListener.addOnPageChangeListener.addOnPageErrorListener.addOnTapListener.load
+	End If
+
+End Sub
+
+#Region Unchanged (almost) code from DonManfred's example app at https://www.b4x.com/android/forum/threads/pdfium-pdfview2.102756
+Sub PDFium_loadComplete(pages As Int)
+	Log($"PDFium_loadComplete(${pages})"$)
+	glPages = pages
+	lblPages.Text = $"${glPages}"$
+End Sub
+
+Sub PDFium_onInitiallyRendered(page As Int)
+	Log($"PDFium_onInitiallyRendered(${page})"$)
+End Sub
+
+Sub PDFium_onPageChanged(page As Int, TotalPages As Int)
+	Log($"PDFium_onPageChanged(${page},${TotalPages})"$)
+	lblPages.Text = $"${page + 1}/${glPages}"$ ' Changed {page-1} to {page + 1}
+End Sub
+
+Sub PDFium_PageNum(page As Int)
+	Log($"PDFium_PageNum(${page})"$)
+End Sub
+
+Sub PDFium_Show()
+	Log($"PDFium_Show()"$)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub btnFirst_Click
+	PDFView1.jumpTo2(0,False)	
+End Sub
+
+Sub btnPrev_Click
+	PDFView1.jumpTo2(PDFView1.CurrentPage-1,False)
+End Sub
+
+Sub lblPages_Click
+End Sub
+
+Sub btnNext_Click
+	PDFView1.jumpTo2(PDFView1.CurrentPage+1,False)
+End Sub
+
+Sub btnLast_Click
+	PDFView1.jumpTo2(glPages-1,False)
+End Sub
+#End Region ' Unchanged (almost) code from DonManfred's example app at https://www.b4x.com/android/forum/threads/pdfium-pdfview2.102756

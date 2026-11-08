@@ -1,0 +1,69 @@
+﻿Build1=Default,com.stoltex.alarm
+File1=alarm_1.mp3
+File2=frm_main.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=as_alarm
+Library2=b4xpages
+Library3=icore
+Module1=|relative|..\B4XMainPage
+Module2=|relative|..\..\..\UserNotificationCenter\UserNotificationCenter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=2
+Version=8.45
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: AS Alarm Example
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 11
+	#ProvisionFile: StolteX.mobileprovision
+	
+	#PlistExtra: <key>BGTaskSchedulerPermittedIdentifiers</key>
+	#PlistExtra: <array>
+	#PlistExtra:   	<string>com.stoltex.alarm</string>
+	#PlistExtra: </array>
+	#PlistExtra: <key>UIBackgroundModes</key>
+	#PlistExtra: <array>
+	#PlistExtra:	<string>audio</string> 
+	#PlistExtra:	<string>fetch</string>
+	#PlistExtra: </array>
+
+#End Region
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Public Alarm As AS_Alarm
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(NavControl)
+	
+	Alarm.Initialize
+End Sub
+
+'Add this to the main menu if you want to notify the user if the app is terminated and the alarm will not triggered
+Private Sub Application_Terminate
+	Alarm.ApplicationTerminated
+End Sub
+
+'Template version: B4i-1.0
+#Region Delegates
+Private Sub Application_Background
+	B4XPages.Delegate.Activity_Pause
+End Sub
+
+Private Sub Application_Foreground
+	B4XPages.Delegate.Activity_Resume
+End Sub
+#End Region

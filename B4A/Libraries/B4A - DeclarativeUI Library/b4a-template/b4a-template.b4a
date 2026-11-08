@@ -1,0 +1,615 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+Library1=core
+Library2=declarativeui
+Library3=okhttputils2
+Library4=xui
+Library5=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddPermission(android.permission.INTERNET)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=0
+Version=13.7
+@EndOfDesignText@
+
+#Region  Project Attributes
+    #ApplicationLabel: Ship It
+    #VersionCode: 1
+    #VersionName: 1.0
+    #SupportedOrientations: portrait
+#End Region
+
+#Region  Activity Attributes
+    #FullScreen: False
+    #IncludeTitle: False
+	#IgnoreWarnings: 12
+#End Region
+
+' "Ship It" - a developer dashboard for a side project that will definitely
+' get released this year. Built entirely with the DeclarativeUI library:
+' one module, one scaffold, four screens, reactive state, theming, dialogs
+' and snacks. Read it like a code review: everything you see on screen is
+' declared in the widget trees below.
+
+Sub Process_Globals
+    Private Darkmode As UIState
+    Private Repos As List
+    Private FilteredRepos As List
+    Private ReposActive As UIState
+    Private BuildHealth As UIState
+    Private Pipelines As List
+    Private PipelineOn As UIState
+    Private PipelineProgress As UIState
+    Private Deploy As UIAsyncState
+    Private DeployLabel As UIState
+    Private TitleState As UIState
+    Private TabIndex As UIState
+    Private SearchStatus As UIState
+    Private CurrentTab As String
+End Sub
+
+Sub Globals
+    Private Root As B4XView
+    Private AppTheme As UITheme
+    Private Nav As UINavigator
+    Private Shell As UIScaffold
+    Private UiMounted As Boolean
+    Private LastWidth, LastHeight As Int
+    Private ReposList As UIListView
+    Private AboutDialog As UIAlertDialog
+    Private AddDialog As UIAlertDialog
+    Private AddNameInput As UIInput
+    Private AddBlurbInput As UIInput
+End Sub
+
+#Region  Lifecycle
+
+Sub Activity_Create(FirstTime As Boolean)
+    Root = Activity
+    If FirstTime Then
+        Darkmode = UI.State(False)
+        Repos = CreateRepos
+        FilteredRepos = Repos
+        ReposActive = UI.State("0 of 0 active")
+        BuildHealth = UI.State(0)
+        Pipelines = CreatePipelines
+        PipelineOn = UI.State("0 of 0 enabled")
+        PipelineProgress = UI.State(0)
+        Deploy = UI.AsyncState
+        DeployLabel = UI.State("Tap Deploy to ship it.")
+        TitleState = UI.State("Ship It")
+        TabIndex = UI.State(0)
+        SearchStatus = UI.State(Repos.Size & " repos")
+        CurrentTab = ""
+        UpdateStats
+    End If
+    AppTheme = UI.ThemeWithScheme(0xFF2563EB)
+    If ReadBool(Darkmode.GetState) Then AppTheme.DarkMode(True)
+    RebuildUI
+End Sub
+
+Private Sub RebuildUI
+    If Shell.IsInitialized Then UI.Unmount(Shell)
+
+    Nav = UI.Navigator
+    Nav.AddScreen("home", HomeScreen)
+    Nav.AddScreen("repos", ReposScreen)
+    Nav.AddScreen("pipelines", PipelinesScreen)
+    Nav.AddScreen("settings", SettingsScreen)
+
+    If CurrentTab <> "" Then Nav.NavigateTo(CurrentTab)
+    TabIndex.SetState(IndexFor(CurrentTab))
+
+    ' The single ApplyTheme on the scaffold themes the whole tree:
+    ' AppBar, BottomNav and FAB receive it directly, and the Navigator
+    ' forwards it to every registered screen. Explicit colors always win.
+    Shell = UI.Scaffold(Nav) _
+        .AppBar(UI.AppBar("").BindTitle(TitleState) _
+            .Action(UI.IconFA(Chr(IIf(AppTheme.IsDark, 0xF185, 0xF186))).Size(20) _
+                .Color(AppTheme.DashboardBarText).OnClick(Me, "ToggleTheme_Click"))) _
+        .BottomNavigationBar(UI.BottomNavigationBar _
+            .UseFontAwesome(True) _
+            .AddItem("home", Chr(0xF015), "Home") _
+            .AddItem("repos", Chr(0xF121), "Repos") _
+            .AddItem("pipelines", Chr(0xF233), "Pipelines") _
+            .AddItem("settings", Chr(0xF013), "Settings") _
+            .BindSelectedIndex(TabIndex) _
+            .OnSelected(Me, "Nav_Selected")) _
+        .FloatingActionButtonRight(UI.Fab("+").OnClick(Me, "AddRepo_Click")) _
+        .ApplyTheme(AppTheme)
+
+    FilteredRepos = Repos
+    SearchStatus.SetState(Repos.Size & " repos")
+    UiMounted = False
+    LastWidth = 0
+    LastHeight = 0
+    MountUI
+    If CurrentTab <> "" Then TitleState.SetState(TitleFor(CurrentTab))
+End Sub
+
+Private Sub MountUI
+    If Root.Width <= 0 Or Root.Height <= 0 Then Return
+    If UiMounted = False Or LastWidth <> Root.Width Or LastHeight <> Root.Height Then
+        UI.Show(Root, Shell)
+        UiMounted = True
+        LastWidth = Root.Width
+        LastHeight = Root.Height
+    End If
+    ' Safe area is measured by the scaffold, not the Navigator.
+    Shell.RefreshInsets
+End Sub
+
+Sub Activity_Resume
+    MountUI
+End Sub
+
+#End Region
+
+#Region  Screens
+
+Private Sub HomeScreen As Object
+    Dim header As UIColumn = UI.Column(Null).Spacing(2dip) _
+        .AddChild(UI.Text(Greeting).Size(24).Color(AppTheme.PrimaryText)) _
+        .AddChild(UI.Text("Here's what your side project did today.").Size(13).Color(AppTheme.SecondaryText))
+
+    Dim hero As UICard = UI.Card(UI.Padding(18dip, UI.Column(Null).Spacing(12dip).CrossAxisAlignment("stretch") _
+        .AddChild(UI.Text("Build health").Size(12).Color(AppTheme.MutedText)) _
+        .AddChild(UI.Text("").BindText(BuildHealth).Size(40).Color(AppTheme.Accent)) _
+        .AddChild(UI.Progress(0).BarHeight(10dip).CornerRadius(5dip).BindValue(BuildHealth)) _
+        .AddChild(UI.Text("from the builds that passed today").Size(12).Color(AppTheme.MutedText)))) _
+        .CornerRadius(18dip)
+
+    Dim actions As UIRow = UI.Row(Null).Spacing(12dip) _
+        .AddChild(UI.Expanded(UI.Button(Chr(0xF144) & "  Run pipelines").CornerRadius(12dip).OnClick(Me, "GoPipelines_Click"))) _
+        .AddChild(UI.Expanded(UI.Button(Chr(0xF067) & "  Add repo").CornerRadius(12dip).OnClick(Me, "AddRepo_Click")))
+
+    Dim reposRow As UIRow = UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Card(UI.Padding(12dip, UI.IconFA(Chr(0xF121)).Size(16).Color(Colors.White))) _
+            .BackgroundColor(AppTheme.Accent).CornerRadius(20dip)) _
+        .AddChild(UI.Expanded(UI.Column(Null).Spacing(2dip) _
+            .AddChild(UI.Text("Repos").Size(14).Color(AppTheme.PrimaryText)) _
+            .AddChild(UI.Text("").BindText(ReposActive).Size(12).Color(AppTheme.MutedText)))) _
+        .AddChild(UI.IconFA(Chr(0xF105)).Size(18).Color(AppTheme.SecondaryText) _
+            .OnClick(Me, "GoRepos_Click"))
+    Dim reposSummary As UICard = UI.Card(UI.Padding(14dip, reposRow)).CornerRadius(16dip)
+
+    Dim deployRow As UIRow = UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.IconFA(Chr(0xF021)).Size(16).Color(AppTheme.Info)) _
+        .AddChild(UI.Expanded(UI.Text("").BindText(DeployLabel).Size(13).Color(AppTheme.SecondaryText))) _
+        .AddChild(UI.Button("Deploy").CornerRadius(10dip).OnClick(Me, "Deploy_Click"))
+
+    Dim content As UIColumn = UI.Column(Null).Spacing(16dip).CrossAxisAlignment("stretch") _
+        .AddChild(header) _
+        .AddChild(hero) _
+        .AddChild(actions) _
+        .AddChild(reposSummary) _
+        .AddChild(UI.Card(UI.Padding(14dip, deployRow)))
+    Return UI.Scroll(UI.Padding(16dip, content))
+End Sub
+
+Private Sub Greeting As String
+    Dim ticks As Long = DateTime.Now
+    Dim hourOfDay As Int = (ticks / 3600000) Mod 24
+    If hourOfDay < 12 Then Return "Good morning, ship it"
+    If hourOfDay < 18 Then Return "Good afternoon, ship it"
+    Return "Good evening, ship it"
+End Sub
+
+Private Sub ReposScreen As Object
+    ReposList = UI.ListView(FilteredRepos) _
+        .ItemHeight(84dip).Overscan(2) _
+        .CreateItem(Me, "RepoItem")
+
+    Dim header As UIRow = UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Text("All repos").Size(20).Color(AppTheme.PrimaryText)) _
+        .AddChild(UI.Expanded(UI.Space(1))) _
+        .AddChild(UI.Card(UI.Padding(8dip, UI.Text("").BindText(ReposActive).Size(12).Color(AppTheme.SecondaryText))) _
+            .BackgroundColor(AppTheme.Surface).CornerRadius(10dip))
+
+    Dim content As UIColumn = UI.Column(Null).Spacing(10dip).CrossAxisAlignment("stretch") _
+        .AddChild(UI.Input("Search by name or blurb") _
+            .OnTextChanged(Me, "ReposSearch_TextChanged")) _
+        .AddChild(UI.Text("").BindText(SearchStatus).Size(12).Color(AppTheme.MutedText)) _
+        .AddChild(header) _
+        .AddChild(UI.Expanded(ReposList))
+    Return UI.Padding(16dip, content)
+End Sub
+
+Sub RepoItem(Index As Int) As Object
+    Dim r As Map = FilteredRepos.Get(Index)
+    Dim name As String = r.Get("Name")
+    Dim blurb As String = r.Get("Blurb")
+    Dim glyph As String = r.Get("Glyph")
+    Dim badgeColor As Int = r.Get("Color")
+    Dim active As UIState = r.Get("Active")
+
+    Dim badge As UICard = UI.Card(UI.Padding(12dip, UI.IconFA(glyph).Size(16).Color(Colors.White))) _
+        .BackgroundColor(badgeColor).CornerRadius(20dip)
+    Dim info As UIColumn = UI.Column(Null).Spacing(2dip) _
+        .AddChild(UI.Text(name).Size(15).Color(AppTheme.PrimaryText)) _
+        .AddChild(UI.Text(blurb).Size(12).Color(AppTheme.SecondaryText))
+    Return UI.Card(UI.Padding(10dip, UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(badge) _
+        .AddChild(UI.Expanded(info)) _
+        .AddChild(UI.Switch("").BindChecked(active).OnChanged(Me, "RepoSwitch_Changed"))))
+End Sub
+
+Private Sub PipelinesScreen As Object
+    Dim header As UIRow = UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Text("Your pipelines").Size(20).Color(AppTheme.PrimaryText)) _
+        .AddChild(UI.Expanded(UI.Space(1))) _
+        .AddChild(UI.Card(UI.Padding(8dip, UI.Text("").BindText(PipelineOn).Size(12).Color(AppTheme.SecondaryText))) _
+            .BackgroundColor(AppTheme.Surface).CornerRadius(10dip))
+
+    Dim content As UIColumn = UI.Column(Null).Spacing(12dip).CrossAxisAlignment("stretch") _
+        .AddChild(header)
+    For Each p As Map In Pipelines
+        content.AddChild(PipelineCard(p))
+    Next
+    content.AddChild(UI.Progress(0).BarHeight(10dip).CornerRadius(5dip).BindValue(PipelineProgress))
+    content.AddChild(UI.Button(Chr(0xF144) & "  Run all pipelines").CornerRadius(12dip).OnClick(Me, "RunAllPipelines_Click"))
+    Return UI.Scroll(UI.Padding(16dip, content))
+End Sub
+
+Private Sub PipelineCard(P As Map) As UICard
+    Dim name As String = P.Get("Name")
+    Dim desc As String = P.Get("Desc")
+    Dim glyph As String = P.Get("Glyph")
+    Dim badgeColor As Int = P.Get("Color")
+    Dim enabled As UIState = P.Get("Enabled")
+
+    Dim badge As UICard = UI.Card(UI.Padding(12dip, UI.IconFA(glyph).Size(16).Color(Colors.White))) _
+        .BackgroundColor(badgeColor).CornerRadius(20dip)
+    Dim info As UIColumn = UI.Column(Null).Spacing(2dip) _
+        .AddChild(UI.Text(name).Size(14).Color(AppTheme.PrimaryText)) _
+        .AddChild(UI.Text(desc).Size(11).Color(AppTheme.MutedText))
+    Return UI.Card(UI.Padding(10dip, UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(badge) _
+        .AddChild(UI.Expanded(info)) _
+        .AddChild(UI.Switch("").BindChecked(enabled).OnChanged(Me, "PipelineSwitch_Changed"))))
+End Sub
+
+Private Sub SettingsScreen As Object
+    Dim profile As UICard = UI.Card(UI.Padding(14dip, UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Card(UI.Padding(12dip, UI.IconFA(Chr(0xF120)).Size(16).Color(Colors.White))) _
+            .BackgroundColor(AppTheme.Accent).CornerRadius(20dip)) _
+        .AddChild(UI.Expanded(UI.Column(Null).Spacing(2dip) _
+            .AddChild(UI.Text("Ship It").Size(15).Color(AppTheme.PrimaryText)) _
+            .AddChild(UI.Text("Version 1.0.0 - it compiles, ship it").Size(12).Color(AppTheme.MutedText)))))) _
+        .CornerRadius(16dip)
+
+    Dim darkCard As UICard = UI.Card(UI.Padding(14dip, UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Expanded(UI.Column(Null).Spacing(2dip) _
+            .AddChild(UI.Text("Dark mode").Size(14).Color(AppTheme.PrimaryText)) _
+            .AddChild(UI.Text("For those who code at 3am").Size(11).Color(AppTheme.MutedText)))) _
+        .AddChild(UI.Switch("").BindChecked(Darkmode).OnChanged(Me, "DarkSwitch_Changed"))))
+
+    Dim aboutCard As UICard = UI.Card(UI.Padding(14dip, UI.Row(Null).Spacing(10dip).CrossAxisAlignment("center") _
+        .AddChild(UI.Expanded(UI.Column(Null).Spacing(2dip) _
+            .AddChild(UI.Text("About").Size(14).Color(AppTheme.PrimaryText)) _
+            .AddChild(UI.Text("Built with the DeclarativeUI library").Size(11).Color(AppTheme.MutedText)))) _
+        .AddChild(UI.IconFA(Chr(0xF105)).Size(18).Color(AppTheme.SecondaryText) _
+            .OnClick(Me, "About_Click"))))
+
+    Dim content As UIColumn = UI.Column(Null).Spacing(12dip).CrossAxisAlignment("stretch") _
+        .AddChild(profile) _
+        .AddChild(UI.Text("Appearance").Size(12).Color(AppTheme.MutedText)) _
+        .AddChild(darkCard) _
+        .AddChild(UI.Text("About").Size(12).Color(AppTheme.MutedText)) _
+        .AddChild(aboutCard)
+    Return UI.Scroll(UI.Padding(16dip, content))
+End Sub
+
+#End Region
+
+#Region  Navigation
+
+Sub Nav_Selected(Index As Int, Id As String)
+    SwitchTab(Id)
+End Sub
+
+Sub GoRepos_Click
+    SwitchTab("repos")
+End Sub
+
+Sub GoPipelines_Click
+    SwitchTab("pipelines")
+End Sub
+
+Private Sub SwitchTab(Id As String)
+    CurrentTab = Id
+    TabIndex.SetState(IndexFor(Id))
+    Nav.NavigateTo(Id)
+    TitleState.SetState(TitleFor(Id))
+End Sub
+
+Private Sub IndexFor(Id As String) As Int
+    Select Id
+        Case "home"
+            Return 0
+        Case "repos"
+            Return 1
+        Case "pipelines"
+            Return 2
+        Case "settings"
+            Return 3
+    End Select
+    Return 0
+End Sub
+
+Private Sub TitleFor(Id As String) As String
+    Select Id
+        Case "home"
+            Return "Ship It"
+        Case "repos"
+            Return "Repos"
+        Case "pipelines"
+            Return "Pipelines"
+        Case "settings"
+            Return "Settings"
+    End Select
+    Return "Ship It"
+End Sub
+
+#End Region
+
+#Region  Events
+
+Sub RepoSwitch_Changed(Checked As Boolean)
+    UpdateStats
+End Sub
+
+Sub PipelineSwitch_Changed(Checked As Boolean)
+    UpdateStats
+End Sub
+
+Sub ReposSearch_TextChanged(Text As String)
+    FilteredRepos.Initialize
+    Dim q As String = Text.Trim.ToLowerCase
+    For Each r As Map In Repos
+        Dim name As String = r.Get("Name")
+        Dim blurb As String = r.Get("Blurb")
+        If q.Length = 0 Or name.ToLowerCase.Contains(q) Or blurb.ToLowerCase.Contains(q) Then
+            FilteredRepos.Add(r)
+        End If
+    Next
+    ReposList.Items(FilteredRepos)
+    If FilteredRepos.Size = 0 Then
+        SearchStatus.SetState("No repos match " & Chr(34) & q & Chr(34))
+    Else If q.Length = 0 Then
+        SearchStatus.SetState(Repos.Size & " repos")
+    Else
+        SearchStatus.SetState(FilteredRepos.Size & " of " & Repos.Size & " match")
+    End If
+End Sub
+
+Sub DarkSwitch_Changed(Checked As Boolean)
+    AppTheme.DarkMode(Checked)
+    Darkmode.SetState(Checked)
+    RebuildUI
+End Sub
+
+Sub ToggleTheme_Click
+    AppTheme.Toggle
+    Darkmode.SetState(AppTheme.IsDark)
+    RebuildUI
+End Sub
+
+Sub Deploy_Click
+    If Deploy.IsLoading Then Return
+    Deploy.SetLoading
+    DeployLabel.SetState("Building, testing, crossing fingers...")
+    Sleep(1600)
+    Deploy.SetSuccess(Null)
+
+    ' Deterministic deploy simulation: repo activity follows the time of day,
+    ' so the same deploy always reports the same result for a given hour.
+    Dim now As Long = DateTime.Now
+    Dim hour As Int = DateTime.GetHour(now)
+    Dim updated As Int = 0
+    For Each r As Map In Repos
+        Dim st As UIState = r.Get("Active")
+        Dim expected As Boolean = HubState(r, hour)
+        If ReadBool(st.GetState) <> expected Then
+            st.SetState(expected)
+            updated = updated + 1
+        End If
+    Next
+    UpdateStats
+    DeployLabel.SetState("Last deploy " & FormatTime(now) & " - " & updated & " repo(s) updated.")
+    UI.Snack("Deployed to prod. Pray.").Duration(2000).ApplyTheme(AppTheme).Show(Root)
+End Sub
+
+Sub RunAllPipelines_Click
+    PipelineProgress.SetState(0)
+    For i = 1 To 10
+        Sleep(120)
+        PipelineProgress.SetState(i * 10)
+    Next
+    For Each p As Map In Pipelines
+        ApplyPipeline(p)
+    Next
+    UpdateStats
+    UI.Snack("Pipelines green").Duration(2000).ApplyTheme(AppTheme).Show(Root)
+End Sub
+
+Sub About_Click
+    AboutDialog.Initialize
+    AboutDialog.Title("Ship It") _
+        .Message("A developer dashboard demo built with the DeclarativeUI library for B4X. Deployed with love and a little fear.") _
+        .PositiveButton("Close", Me, "AboutDismiss") _
+        .ApplyTheme(AppTheme) _
+        .Show(Root)
+End Sub
+
+Sub AboutDismiss
+    If AboutDialog.IsInitialized Then AboutDialog.Dismiss
+End Sub
+
+Sub AddRepo_Click
+    AddNameInput = UI.Input("Repo name").ApplyTheme(AppTheme)
+    AddBlurbInput = UI.Input("One-line blurb").ApplyTheme(AppTheme)
+    AddDialog.Initialize
+    AddDialog.Title("Add repo") _
+        .Content(UI.Column(Null).Spacing(10dip).CrossAxisAlignment("stretch") _
+            .AddChild(AddNameInput) _
+            .AddChild(AddBlurbInput)) _
+        .PositiveButton("Add", Me, "AddRepoConfirm") _
+        .NegativeButton("Cancel", Me, "AddRepoCancel") _
+        .ApplyTheme(AppTheme) _
+        .Show(Root)
+End Sub
+
+Sub AddRepoConfirm
+    Dim newName As String = AddNameInput.GetText.Trim
+    If newName.Length = 0 Then
+        UI.Snack("A repo without a name is just a folder").Duration(1800).ApplyTheme(AppTheme).Show(Root)
+        Return
+    End If
+    Dim idx As Int = Repos.Size Mod 4
+    Dim color As Int
+    Select idx
+        Case 0
+            color = 0xFFF4B400
+        Case 1
+            color = 0xFF4285F4
+        Case 2
+            color = 0xFF34A853
+        Case 3
+            color = 0xFFDB4437
+    End Select
+    Repos.Add(NewRepo(newName, AddBlurbInput.GetText.Trim, Chr(0xF121), color, False))
+    FilteredRepos = Repos
+    SearchStatus.SetState(Repos.Size & " repos")
+    ReposList.Items(FilteredRepos)
+    UpdateStats
+    AddDialog.Dismiss
+    UI.Snack("Repo added - one more thing to maintain").Duration(1500).ApplyTheme(AppTheme).Show(Root)
+End Sub
+
+Sub AddRepoCancel
+    If AddDialog.IsInitialized Then AddDialog.Dismiss
+End Sub
+
+#End Region
+
+#Region  Data
+
+Private Sub CreateRepos As List
+    Dim list As List
+    list.Initialize
+    list.Add(NewRepo("declarative-ui", "The library that builds itself", Chr(0xF121), 0xFF6366F1, True))
+    list.Add(NewRepo("todo-app", "Finished after 4 years. It works. Probably.", Chr(0xF14A), 0xFF22C55E, False))
+    list.Add(NewRepo("portfolio-site", "Redesigned 3 times this year. Still no blog.", Chr(0xF0AC), 0xFF3B82F6, True))
+    list.Add(NewRepo("game-jam", "One day we will actually ship it", Chr(0xF11B), 0xFFEF4444, False))
+    list.Add(NewRepo("dotfiles", "1200 commits. Zero features. Precious.", Chr(0xF120), 0xFFA855F7, False))
+    Return list
+End Sub
+
+Private Sub NewRepo(Name As String, Blurb As String, Glyph As String, GlyphColor As Int, IsActive As Boolean) As Map
+    Dim m As Map
+    m.Initialize
+    m.Put("Name", Name)
+    m.Put("Blurb", Blurb)
+    m.Put("Glyph", Glyph)
+    m.Put("Color", GlyphColor)
+    m.Put("Active", UI.State(IsActive))
+    Return m
+End Sub
+
+Private Sub CreatePipelines As List
+    Dim list As List
+    list.Initialize
+    list.Add(NewPipeline("Ship It", "lint -> test -> build -> pray", Chr(0xF135), 0xFF22C55E, True))
+    list.Add(NewPipeline("Deploy to prod", "Friday deploys only. What could go wrong?", Chr(0xF233), 0xFF3B82F6, False))
+    list.Add(NewPipeline("Kill the tech debt", "Someday. Probably not this sprint.", Chr(0xF0AD), 0xFFA855F7, True))
+    Return list
+End Sub
+
+Private Sub NewPipeline(Name As String, Desc As String, Glyph As String, GlyphColor As Int, IsEnabled As Boolean) As Map
+    Dim m As Map
+    m.Initialize
+    m.Put("Name", Name)
+    m.Put("Desc", Desc)
+    m.Put("Glyph", Glyph)
+    m.Put("Color", GlyphColor)
+    m.Put("Enabled", UI.State(IsEnabled))
+    Return m
+End Sub
+
+Private Sub ApplyPipeline(P As Map)
+    Dim pipelineName As String = P.Get("Name")
+    Select pipelineName
+        Case "Ship It"
+            SetRepoActive("declarative-ui", True)
+            SetRepoActive("todo-app", True)
+        Case "Deploy to prod"
+            SetRepoActive("portfolio-site", True)
+        Case "Kill the tech debt"
+            SetRepoActive("dotfiles", False)
+    End Select
+End Sub
+
+Private Sub SetRepoActive(RepoName As String, Value As Boolean)
+    For Each r As Map In Repos
+        If r.Get("Name") = RepoName Then
+            Dim st As UIState = r.Get("Active")
+            st.SetState(Value)
+            Return
+        End If
+    Next
+End Sub
+
+Private Sub UpdateStats
+    Dim activeCount As Int = 0
+    For Each r As Map In Repos
+        Dim st As UIState = r.Get("Active")
+        If ReadBool(st.GetState) Then activeCount = activeCount + 1
+    Next
+    ReposActive.SetState(activeCount & " of " & Repos.Size & " active")
+    If Repos.Size > 0 Then BuildHealth.SetState(activeCount * 100 / Repos.Size)
+
+    Dim onPipelines As Int = 0
+    For Each p As Map In Pipelines
+        Dim ps As UIState = p.Get("Enabled")
+        If ReadBool(ps.GetState) Then onPipelines = onPipelines + 1
+    Next
+    PipelineOn.SetState(onPipelines & " of " & Pipelines.Size & " enabled")
+End Sub
+
+Private Sub HubState(Repo As Map, Hour As Int) As Boolean
+    Dim name As String = Repo.Get("Name")
+    Select name
+        Case "declarative-ui"
+            Return Hour >= 7 And Hour < 21
+        Case "todo-app"
+            Return Hour >= 21 Or Hour < 6
+        Case "portfolio-site"
+            Return Hour >= 9 And Hour < 17
+        Case "game-jam"
+            Return True
+        Case "dotfiles"
+            Return Hour < 5
+    End Select
+    Return False
+End Sub
+
+Private Sub FormatTime(Ticks As Long) As String
+    Dim h As Int = DateTime.GetHour(Ticks)
+    Dim m As Int = DateTime.GetMinute(Ticks)
+    Return NumberFormat2(h, 0, 0, 2, False) & ":" & NumberFormat2(m, 0, 0, 2, False)
+End Sub
+
+Private Sub ReadBool(Value As Object) As Boolean
+    If Value = Null Then Return False
+    Dim normalized As String = ("" & Value).Trim.ToLowerCase
+    If normalized = "true" Then Return True
+    If normalized = "false" Or normalized = "" Then Return False
+    If IsNumber(normalized) Then
+        Dim numericValue As Double = normalized
+        Return numericValue <> 0
+    End If
+    Return False
+End Sub
+
+#End Region

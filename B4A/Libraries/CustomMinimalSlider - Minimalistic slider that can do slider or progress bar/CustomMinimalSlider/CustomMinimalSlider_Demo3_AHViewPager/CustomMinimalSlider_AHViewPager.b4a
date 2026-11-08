@@ -1,0 +1,239 @@
+﻿Build1=Default,b4a.example
+Group=Default Group
+IconFile=
+Library1=core
+Library2=ahviewpager
+Library3=animationplus
+Library4=customminimalslider
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="19"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=7.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+	Private FILL_PARENT As Int = -1
+'	Private WRAP_CONTENT As Int = -2
+
+	Private MaxValue As Int = 100
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	
+	Private Container As AHPageContainer       ' The container object
+	Private Pager As AHViewPager               ' The ViewPager object
+	Private FixedTabs As AHViewPagerFixedTabs	 ' Optionally you can use an AHViewPagerTabs object as a page indicator
+	Private Button1 As Button	                ' Button for direct page access
+
+	Private CMS1 As CustomMinimalSlider
+	Private CMS2 As CustomMinimalSlider
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+	
+	Button1.Initialize("Button1")	 'Add a Button at the bottom of the page for jumping directly to a page.
+	Button1.Gravity = Gravity.CENTER
+	Activity.AddView(Button1, 88dip, Activity.Height - 44dip, Activity.Width - 88dip - 88dip, 40dip)
+	
+	Container.Initialize ' Initialize the container
+	
+	For i = 0 To 3
+		Dim pan As Panel = CreatePanel(i)
+		Container.AddPage(pan,"Page " & i)
+	Next
+	
+	Pager.Initialize(Container, "Pager")	'Now we have a container with our panels just add it to the pager object
+	
+	FixedTabs.Initialize(Pager)	'As we want to show the tabs page indicator, we initialize it
+	FixedTabs.TextSize = 12
+	FixedTabs.TextColor = Colors.LightGray
+	FixedTabs.LineColor = Colors.Green
+	FixedTabs.LineColorSelected = Colors.Red
+	FixedTabs.LineHeightSelected = 8dip
+	FixedTabs.LineHeight = 2dip
+'	fixedTabs.UpperCaseTitle = True
+
+	Activity.AddView(FixedTabs, 0, 0, 100%x, 50dip)
+	
+	'Now we can add the pager to the activity
+	Activity.AddView(Pager, 0, 52dip, Activity.Width, Activity.Height-100dip)
+	SetButtonText
+	
+	' Set sliders to work on top of ViewPager avoiding touch event conflicts.
+	' This only affects horizontal sliders but can be applied to all sliders.
+	CMS1.UseViewPager(Pager)
+	CMS2.UseViewPager(Pager)
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+' This creates a page of the given type
+Sub CreatePanel(PageNum As Int) As Panel
+	Dim pan As Panel
+
+	pan.Initialize("")
+	Dim lab As Label
+
+	lab.Initialize("")
+	lab.Text = "Page " & PageNum
+	lab.TextSize = 16
+	lab.Gravity = Gravity.CENTER
+	pan.AddView(lab, 0, 0, FILL_PARENT, FILL_PARENT)
+	
+	If PageNum = 0 Then
+		
+		' //// Vertical	(Accept Activity or Panel or View as first argument)
+		CMS1.Initialize
+		CMS1.Create(pan, Me, "CustomMinimalSlider1", 30dip, 40dip, 40dip, 50%y, _
+		            Colors.Black, Colors.Blue, Colors.White, 1, True,True,True,True)
+
+      ' Customize it
+		CMS1.MaxValue = MaxValue
+		CMS1.Tag = "CMS1"
+		CMS1.ValueLabel.TextSize = 10
+		CMS1.ValueLabel.TextColor = Colors.White
+		CMS1.TagLabel.TextSize = 10
+		CMS1.TagLabel.TextColor = Colors.Green
+		CMS1.TagLabel.Text = "ADC1"
+		
+'	CMS1.FireEventMove(False)  ' We can disable _Move event, and then reenable it multiple times. (by default True)
+'	CMS1.FireEventRelease(False)  ' We can disable _Release event, and then reenable it multiple times. (by default True)
+			
+'	CMS1.TouchOffset = 10%y  ' We can set touch offset	
+'	CMS1.Enabled = False		
+		
+		' //// Horizontal 	(Accept Activity or Panel or View as first argument)
+		CMS2.Initialize
+		CMS2.Create(pan, Me, "CustomMinimalSlider2", 140dip, 10%y, 80%x-140dip, 40dip, _
+			         Colors.Black, Colors.Blue, Colors.White, 1, True,True,True,True)
+		
+		' Customize it
+		CMS2.MaxValue = MaxValue
+		CMS2.Tag = "CMS2"
+		CMS2.ValueLabel.TextSize = 10
+		CMS2.ValueLabel.TextColor = Colors.White
+		CMS2.TagLabel.TextSize = 10
+		CMS2.TagLabel.TextColor = Colors.Green
+		CMS2.TagLabel.Text = "ADC2"
+		
+''		CMS1.FireEventMove(False)  ' We can disable _Move event, and then reenable it multiple times. (by default True)
+''		CMS1.FireEventRelease(False)  ' We can disable _Release event, and then reenable it multiple times. (by default True)
+		
+'		CMS2.TagLabel.Left = CMS2.TagLabel.Left - 10dip
+'		CMS2.ValueLabel.Left = CMS2.ValueLabel.Left + 10dip
+		
+		'	CMS2.TouchOffset = 10%x   ' We can set touch offset
+		'	CMS2.Enabled = False
+		
+		pan.Color = Colors.Black
+	Else
+		pan.Color = Colors.RGB(Rnd(0, 150), Rnd(0,150), Rnd(0,150))
+	End If
+	
+	Return pan
+End Sub
+
+'/////////////////////////// SLIDER EVENTS /////////////////////////
+
+' Vertical slider
+Sub CustomMinimalSlider1_Moved(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS1.UserChanged Then
+		Log("MOVED     Tag: " & CMS1.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+Sub CustomMinimalSlider1_Released(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS1.UserChanged Then
+		Log("RELEASED      Tag: " & CMS1.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+' Horizontal slider
+Sub CustomMinimalSlider2_Moved(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS2.UserChanged Then
+		Log("MOVED     Tag: " & CMS2.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+Sub CustomMinimalSlider2_Released(Index As Int, Value As Int)    'Single CMS Slider always return Index 0.
+	' This show a log only if the user has changed value manually by touching it and do not affects if we change the sliders value by code
+	If CMS2.UserChanged Then
+		Log("RELEASED      Tag: " & CMS2.Tag & "   Index: " & Index & "   Value " & Value)
+	End If
+End Sub
+
+' ////////////////////////// PAGER RELATED ////////////////////////
+
+' This event gets called when the page has changed. Be aware that it is possible that scrolling is not finished at this moment
+Sub Pager_PageChanged (Position As Int)
+	Log ("Page Changed to " & Position)
+'	CurrentPage = Position
+	SetButtonText
+End Sub
+
+' This event gets called when the ViewPager instantiates the page. In this sub you can update the content of the page or even load a layout.
+' Have a look in the logs to see when Pager_PageCreated and Pager_PageDestroyed are called.
+Sub Pager_PageCreated (Position As Int, Page As Object)
+	Log ("Page created " & Position)
+End Sub
+
+' This event gets called when the ViewPager destroys the page. Here you can free large bitmaps etc to save memory.
+Sub Pager_PageDestroyed (Position As Int, Page As Object)
+	Log("Page destroyed " & Position)
+End Sub
+
+Sub SetButtonText
+	Button1.Text = "Page " & Pager.CurrentPage
+End Sub
+
+' When the button is pressed let the user select a new page
+Sub Button1_Click
+	Dim pl As List
+	Dim ret As Int
+	pl.Initialize
+	
+	'Add all page titles to a list
+	For i = 0 To Container.Count - 1
+		pl.Add(Container.GetTitle(i))
+	Next
+	
+	ret = InputList(pl, "Choose page", Pager.CurrentPage)	' Request new page from user
+	
+	If ret = DialogResponse.CANCEL Then
+		ToastMessageShow("Aborted", False)
+	Else
+		Pager.GotoPage(ret, True) ' Scroll to the new page
+	End If
+End Sub
+

@@ -1,0 +1,75 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 440
+	#MainFormHeight: 340 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private Button1 As B4XView
+	Private lblDateEaster, lblDateFridayEaster, lblDateMondayEaster As Label
+	Private lblDateAssumption, lblDatePentecost, lblDateWithMonday As Label
+	Private ComboBox1 As ComboBox
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	DateTime.DateFormat = "d/MM/yyyy"
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	For i = 0 To 30
+		ComboBox1.Items.Add(2000+i)
+	Next
+	ComboBox1.SelectedIndex = 0
+	MainForm.Show
+End Sub
+
+Sub Button1_Click
+	Dim easterDate As String = GetEasterSunday(ComboBox1.Items.Get(ComboBox1.SelectedIndex))
+	lblDateEaster.Text = easterDate
+	Dim easterDayLong As Long = DateTime.DateParse(easterDate)
+	lblDateFridayEaster.Text = DateTime.Date(easterDayLong - (DateTime.TicksPerDay * 2))
+	lblDateMondayEaster.Text = DateTime.Date(easterDayLong + DateTime.TicksPerDay)
+	lblDateAssumption.Text = DateTime.Date(easterDayLong + (DateTime.TicksPerDay * 39))
+	lblDatePentecost.Text = DateTime.Date(easterDayLong + (DateTime.TicksPerDay * 49))
+	lblDateWithMonday.Text = DateTime.Date(easterDayLong + (DateTime.TicksPerDay * 50))
+End Sub
+
+Sub GetEasterSunday (Year As Long) As String
+	' cf. wikipedia fr : https://fr.wikipedia.org/wiki/Calcul_de_la_date_de_P%C3%A2ques
+	' Gregorian Easter date (Butcher-Meeus algorithm)
+	' Here i put signifant named variables to better understand the algorithm
+	Dim MetonCycle, quotienYearDivideBy100, restYearDivideBy100 As Int
+	Dim Centurybissextil, restOFCenturyBissextil, proemptoseCycle, proemptose As Int
+	Dim epacte, leapYear, restOfleapYear, dominicalLetter, correction As Int
+	Dim Day, Month As Int
+	MetonCycle = Year Mod 19									'MetonCycle
+	quotienYearDivideBy100 = Year/100							'hundred of the year
+	restYearDivideBy100 = Year Mod 100							'Rank of the year
+	Centurybissextil = quotienYearDivideBy100/4					'leap century
+	restOFCenturyBissextil = quotienYearDivideBy100 Mod 4		'Rest of leap century
+	proemptoseCycle = (quotienYearDivideBy100+8)/25				'proemptosis cycle
+	proemptose = (quotienYearDivideBy100-(proemptoseCycle+1))/3	'proemptosis
+	epacte = ((19*MetonCycle)+quotienYearDivideBy100-Centurybissextil-proemptose+15) Mod 30		'epacte
+	leapYear = restYearDivideBy100/4							'Leap year
+	restOfleapYear = restYearDivideBy100 Mod 4					'Rest of Leap year
+	dominicalLetter = ((2*restOFCenturyBissextil)+(2*leapYear)-epacte-restOfleapYear+32) Mod 7	'Dominical Letter
+	correction = (MetonCycle+(11*epacte)+(22*dominicalLetter))/451								'Correction
+	Month = (epacte+dominicalLetter-(7*correction)+114) / 31									'Month
+	Day = ((epacte+dominicalLetter-(7*correction)+114) Mod 31) + 1								'Day
+	'Here the date returned, formatted for the format i put before, could be adapted, French date format 'd/MM/yyyy"
+	Return (Day & "/" & NumberFormat2(Month,2,0,0,False) & "/" & NumberFormat2(Year,4,0,0,False))
+End Sub

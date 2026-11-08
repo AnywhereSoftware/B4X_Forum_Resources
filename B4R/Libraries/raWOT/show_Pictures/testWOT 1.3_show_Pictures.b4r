@@ -1,0 +1,236 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rlittlefs
+Library4=rrandomaccessfile
+Library5=rawot
+Module1=|absolute|D:\B4R\B4R_Modules\GlobalStore
+NumberOfFiles=0
+NumberOfLibraries=5
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+    #AutoFlushLogs: True
+    #CheckArrayBounds: True
+    #StackBufferSize: 2500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+    Public P_buff() As Byte
+	Public text() As Byte
+    Public Serial1 As Serial
+    Private wifi As ESP8266WiFi
+    Private bc As ByteConverter
+    Private lfs As LittleFS
+    Private aWOT As aWOT
+    Dim buff(256) As Byte
+    Dim Debug As Boolean = True
+    Dim DebugF As Boolean = False
+    Dim traces As Boolean = True
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("AppStart")
+
+    'example of connecting to a local network
+    If wifi.Connect2("xxxxx", "xxxxxxxxxx") Then
+        Log("Connected to network")
+    Else
+        Log("Failed to connect to network")
+    End If
+    aWOT.initialize1("finally","notfound")
+    If Not(lfs.Initialize()) Then Log("FS initialization error") Else Log("init lfs OK")
+    Log(wifi.LocalIp)
+    GlobalStore.put(0,"/")
+    AddLooper("process")
+
+'1) managemant "/" with "app"
+'    aWOT.app_setTimeout(3000)
+	aWOT.app_use1("m0_traces")           ' traces
+	
+	aWOT.app_get("/","m7_index")       ' app_Router -> middleware 7 to show basic_menu html"
+	aWOT.app_get("/sun","m7_sun")
+	aWOT.app_get("/sun-cloud","m7_suncloud")
+	aWOT.app_get("/cloud","m7_cloud")
+	aWOT.app_get("/rain","m7_rain")	
+	aWOT.app_get("/storm","m7_storm")
+	aWOT.app_get("/snow","m7_sun")
+	aWOT.app_get("/comb","m7_comb")
+End Sub
+
+ Sub process()
+   aWOT.process
+End Sub
+
+'*********************************************
+Sub m0_traces
+    If traces Then
+        Log(" ")
+         Log(" ClientIP ====>",aWOT.ClientIP)
+'        Dim IPA () As Byte= aWOT.ClientIP1:Log(" ClientIP ====>",IPA(0),".",IPA(1),".",IPA(2),".",IPA(3))
+        Log("Trace - path received:",aWOT.req_path)
+        Select aWOT.req_method
+            Case 0 :Log("Trace - MethodType::UNKNOWN")
+            Case 1 : Log("Trace - MethodType::GET")
+            Case 2 : Log("Trace - MethodType::HEAD")
+            Case 3 : Log("Trace - MethodType::POST")
+            Case 4 : Log("Trace - MethodType::PUT")
+            Case 5 : Log("Trace - MethodType::DELETE")
+            Case 6 : Log("Trace - MethodType::PATCH")
+            Case 7 : Log("Trace - MethodType::OPTIONS")
+            Case 8 : Log("Trace - MethodType::ALL")
+            Case Else: Log("Trace - method= ",    aWOT.req_method)
+        End Select
+    End If
+'    aWOT.res_set("Connection", "keep-alive")
+End Sub
+
+'**********************************************************************************
+Sub m7_index  '//case inlineC string
+	' 	String s = MAIN_page; //Read HTML contents
+	RunNative("gethtml", 0)		'MAIN_page
+	aWOT.res_write1(text,text.length)
+End Sub
+
+Sub m7_sun
+	getdatafiles("/png/sun.png", "image/png", "none")
+End Sub
+Sub m7_suncloud
+		getdatafiles("/png/sun-cloud.png", "image/png", "none")
+End Sub
+Sub m7_cloud
+		getdatafiles("/png/cloud.png", "image/png", "none")
+End Sub
+Sub m7_rain
+		getdatafiles("/png/rain.png", "image/png", "none")
+End Sub
+Sub m7_storm
+		getdatafiles("/png/storm.png", "image/png", "none")
+End Sub
+Sub m7_snow
+		getdatafiles("/png/snow.png", "image/png", "none")
+End Sub
+Sub m7_comb
+		getdatafiles("/png/comb.jpg", "image/png", "none")
+End Sub
+'**********************************************************************************
+'Sub getdatafilesP(fullnam As String, c_type As String, c_encoding As String)
+'	Dim nfile As UInt
+'	Log("fullname=",fullnam)
+'	'to make link betweeen file and PROGMEM file
+'	Select fullnam
+'		Case "/gzip/index.htm.gz"
+'			nfile = 1
+'	End Select
+'	If DebugF Then Log("fullname=>nfile:",nfile)
+'	Dim filesize As ULong = P.getlength(nfile) : Dim filecurrent As ULong = 0
+'	Log("file size:",filesize)
+'	If filesize > 0 Then
+'		aWOT.res_set("Content-Type", c_type) '"text/html; charset=utf-8")
+'		aWOT.res_set("Content-Encoding",c_encoding)
+'		aWOT.res_set("Cache-Control", "no-cache")
+'		aWOT.res_set("Content-Length",  NumberFormat(filesize,0,0))
+'		aWOT.res_set("Last-Modified", "Mon, 01 Jan 2525 00:00:00 GMT")
+'		If DebugF Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+'		If DebugF Then Log("nb byte max to read : ", nbr, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbr)) Else lfs.Stream.ReadBytes(buff,0,nbr)
+'		For i = 0 To filesize
+'			aWOT.req_write(P.getbyte(nfile,i))
+'		if Bit.And(i,0x0080)>0 then Log("current=",i)
+'		Next
+'		If DebugF Then Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+'		aWOT.res_end
+'		If DebugF Then Log("Download End")
+'	End If
+'End Sub
+
+Sub getdatafiles(fullnam As String, c_type As String, c_encoding As String)
+    If (lfs.CurrentFile.IsFile) Then lfs.close
+    Log("fullname:",fullnam)
+    Dim nbR As UInt
+    If lfs.OpenRead(fullnam) Then 'file exist
+        Dim filesize As ULong = lfs.CurrentFile.Size : Dim filecurrent As ULong = 0
+        aWOT.res_set("Content-Type", c_type) '"text/html; charset=utf-8")
+        aWOT.res_set("Content-Encoding",c_encoding)
+        aWOT.res_set("Cache-Control", "no-cache")
+        aWOT.res_set("Content-Length",  NumberFormat(filesize,0,0))
+        aWOT.res_set("Last-Modified", "Mon, 01 Jan 2525 00:00:00 GMT")
+        If DebugF Then Log("ORG: filesize=",filesize, "  file current pos = ",filecurrent,CRLF)
+        Do While filesize > filecurrent
+            nbR = Min(filesize-filecurrent,buff.Length)
+            If DebugF Then Log("nb byte max to read : ", nbR, " /Nb bytes from file : ",lfs.Stream.ReadBytes(buff,0,nbR)) Else lfs.Stream.ReadBytes(buff,0,nbR)
+            writestream(nbR)
+            aWOT.req_flush
+            filecurrent = lfs.Position
+            If DebugF Then Log("filesize = ",filesize, "  file current pos = ",filecurrent)
+        Loop
+    End If
+    lfs.Close
+    aWOT.res_end
+    If DebugF Then Log("Download End")
+End Sub
+Sub writestream(nbW As UInt)
+	If aWOT.req_availableForWrite < buff.Length Then
+		If Debug Then Log("=> flush")
+		aWOT.req_flush
+	End If
+	If Debug=True Then Log("written to aWOT stream:",aWOT.res_write1(buff,nbW)) Else aWOT.res_write1(buff,nbW)
+End Sub
+'**********************************************************************************
+Sub finally()
+    Log("run finally Call Back")
+End Sub
+
+Sub notfound()
+	Dim meth_type() As String = Array As String("UNKNOWN","GET","HEAD","POST","PUT","DELETE","OPTIONS","ALL")
+	Log("Middleware not found - Call Back 404")
+	Log("method = ",meth_type(aWOT.req_method))
+	Log("path = ",aWOT.req_path)
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+'**********************************************************************************
+
+#if c
+
+#include <pgmspace.h>
+
+const char MAIN_page[] PROGMEM = R"=====(
+<!DOCTYPE HTML><html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <h2>ESP Image Web Server</h2>
+  <img src="sun">
+  <img src="sun-cloud">
+  <img src="cloud">
+  <img src="rain">
+  <img src="storm">
+  <img src="snow">
+  <img src="comb"> 
+</body>  
+
+</html>
+)=====";
+								
+const char* const msg_table[] PROGMEM = { MAIN_page};
+const uint16_t msg_len[] =  {sizeof(MAIN_page)};
+	
+char strx[2000];
+  
+B4R::Object* gethtml(B4R::Object* o) {
+	strcpy_P(strx, (char*)pgm_read_dword(&(msg_table[o->toLong()])));
+	Serial.print("length_msg[");Serial.print(o->toLong());Serial.print("]= ");Serial.println(msg_len[o->toLong()]);		
+    b4r_main::_text->data = strx;
+    b4r_main::_text->length = msg_len[o->toLong()]-1; 
+    return 0; 
+}
+#end if
+
+

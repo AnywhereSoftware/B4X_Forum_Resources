@@ -1,0 +1,34 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jserver
+Library3=qrcodegen
+Module1=index
+Module2=qrgen
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=8.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private srvr As Server
+End Sub
+
+Sub AppStart (Args() As String)
+	srvr.Initialize("srvr")
+	srvr.Port = 80
+	srvr.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	
+	srvr.AddHandler("/*", "index", False)
+	srvr.AddHandler("/qrgen", "qrgen", False)
+
+	srvr.Start
+	StartMessageLoop
+	'open browser and navigate to: http://127.0.0.1:80/
+End Sub

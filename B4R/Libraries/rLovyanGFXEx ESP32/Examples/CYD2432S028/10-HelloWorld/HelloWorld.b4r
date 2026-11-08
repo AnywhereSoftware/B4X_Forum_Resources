@@ -1,0 +1,88 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example display Hello World.
+'Hardware:		Sunton ESP32 2.8" TFT, w320xh240, touch, driver ILI9341 
+'DefineExtra:	#define ESP32_2432S028
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Display
+'Set the display to use in the project attributes directive #DefineExtra. See below.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+
+	'Define the display driver
+	#DefineExtra: #define ESP32_2432S028
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx HELLOWORLD v20250409"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display Instance
+	Private lcd As LovyanGFXEx
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	'Set rotation to top left
+	lcd.DisplayRotation = 1
+	
+	' Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	' Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_WHITE, lcd.COLOR_NAVY, lcd.COLOR_RED)
+
+	' Draw text bottom left using drawtext
+	lcd.DrawFooter("B4X=great... enjoy", lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_WHITE, lcd.COLOR_NAVY, lcd.COLOR_RED)
+		
+	' Print text in dark red at cursor position using text methods
+	lcd.SetCursor(100, 100)
+	lcd.Font = lcd.FONT_FONT4
+	lcd.SetTextSize(1)
+	lcd.SetTextColor(lcd.ColorRGB(139, 0, 0))
+	lcd.Print("HELLO")
+
+	' Draw text using the DrawTextFont
+	lcd.DrawTextFont(lcd.CenterX, 150, "World!", lcd.FONT_ORBITRON_LIGHT_24, lcd.TEXT_ALIGN_MIDDLE_CENTER, 1, lcd.COLOR_BLACK, lcd.BackgroundColor)
+End Sub

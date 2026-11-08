@@ -1,0 +1,219 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rdhtesp
+Library3=rrandomaccessfile
+Library4=rblebeacon
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rBLEBeacon
+'Description:	HomeAssistant Example for the B4R Library rBLEServer.
+'				Advertise 6 bytes from a DHT22 Temp+Hum sensor, the temperature (Int, 2bytes) & humidity (int, 2bytes) plus additional state temperature (byte) & humidity (byte)
+'BLE:			Device name: BLEBeacon, MAC: 30:C9:22:D1:80:2E
+'Source:		HomeAssistantExample.b4r
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rDHTESP 1.01 - DHT22 reader for ESP
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Wrover Kit
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'DHT22 = ESP32 (wirecolor)
+'VCC = 5V (red)
+'Signal = D4 (brown)
+'GND = GND (black)
+
+'Various
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rBLEBeacon HomeAssistant Example v20250217"
+
+	'Communication
+	Public Serial1 As Serial
+	Private BLEBeacon As BLEBeacon
+
+	'DHT22
+	Private DHT As DHTESP
+	Private DHTPinNumber As UInt = 0x04
+	Private Temperature As Int
+	Private TemperatureState As Byte
+	Private Humidity As Int
+	Private HumidityState As Byte
+	
+	'Timer
+	Private TimerDataAdvertising As Timer
+	Private TimerDataAdvertisingInterval As ULong = 20000	'Milliseconds
+
+	'Helper
+	Private bc As ByteConverter
+End Sub
+
+#Region AppStart
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, "[AppStart]", VERSION)
+
+	'Init the ble beacon with name and error event
+	BLEBeacon.Initialize("BLEBEACONDHT", "BLEBeacon_Error")
+
+	'Init DHT22
+	DHT.Setup22(DHTPinNumber)
+
+	'Init Timer Data Advertising
+	TimerDataAdvertising.Initialize("TimerDataAdvertising_Tick", TimerDataAdvertisingInterval)
+	TimerDataAdvertising.Enabled = True
+	TimerDataAdvertising_Tick
+End Sub
+#End Region
+
+#Region Timer
+'Read the DHT22 data, set states (magic numbers hardcoded) and advertise.
+'[TimerDataAdvertising_Tick] t=1650, h=5330, ts=3 hs=1
+'[BLEBeacon_AdvertiseRaw] data=7206D2140301,size=6,serviceinfo=1
+'[B4RBLEBeacon::AdvertiseRaw] Advertised data size: 6
+'[B4RBLEBeacon::AdvertiseRaw] Advertised data: 7206D2140301
+Sub TimerDataAdvertising_Tick
+
+	'Update globals
+	Temperature	= DHT.GetTemperature * 100  'Convert float to int 19.30 → 1930
+	Humidity	= DHT.GetHumidity * 100		'Convert float to int 92.40 → 9240
+
+	'Set temperature & humidity states
+	If Temperature < 20 Then
+		TemperatureState = 1
+	Else if Temperature > 26 Then
+		TemperatureState = 3
+	Else
+		TemperatureState = 2
+	End If
+	
+	If HumidityState < 30 Then
+		HumidityState = 1
+	Else if HumidityState > 60 Then
+		HumidityState = 3
+	Else
+		HumidityState = 2
+	End If
+
+	'[TimerDataAdvertising_Tick] t=1720, h=5520, ts=1, hs=2
+	Log("[TimerDataAdvertising_Tick] t=", NumberFormat(Temperature,0,0),", h=", NumberFormat(Humidity,0,0),", ts=", TemperatureState, " hs=", HumidityState)
+
+	'Advertise 6 bytes: 
+	'temperature (Int, 2bytes) + humidity (int, 2bytes) + temperaturestate (byte) + humiditystate (byte)
+	BLEBeacon_AdvertiseRaw
+
+	'BLE advertise as serialized data; marker start 7E, end 7F
+	'BLEBeacon_AdvertiseSerialized
+End Sub
+#End Region
+
+'Advertise raw data as service UUID.
+'data - Byte array containing data fo the connected client.
+Private Sub BLEBeacon_AdvertiseRaw
+	'Set serviceinfo flag true
+	Dim serviceinfo As Boolean = True
+	
+	'Set data 6 bytes little-endian - these are assigned per byte
+	Dim data(6) As Byte
+	Dim t(2) As Byte = BytesFromInt(Temperature, True)
+	Dim h(2) As Byte = BytesFromInt(Humidity, True)
+
+	data(0) = t(0)
+	data(1) = t(1)
+	data(2) = h(0)
+	data(3) = h(1)
+	data(4) = TemperatureState
+	data(5) = HumidityState
+	
+	'[BLEBeacon_AdvertiseRaw] data=720618150301,size=6,serviceinfo=1
+	Log("[BLEBeacon_AdvertiseRaw] data=", bc.HexFromBytes(data), ",size=", data.Length, ",serviceinfo=", serviceinfo )
+	BLEBeacon.AdvertiseRaw(data, serviceinfo)
+End Sub
+
+'Advertise raw data as service UUID.
+'Data containing serialized temperature+humidity+temperaturestate+humiditystate.
+'data - Byte array containing serialized data fo the connected client.
+Private Sub BLEBeacon_AdvertiseRawSerialized
+	'Set serviceinfo flag
+	Dim serviceinfo As Boolean = True
+	'Define the B4R serializer
+	Dim ser As B4RSerializator
+
+	'Set serialized data
+	Dim data() As Byte = ser.ConvertArrayToBytes(Array As Object(Temperature, Humidity, TemperatureState, HumidityState))
+
+	'[BLEBeacon_AdvertiseSerialized]
+	Log("[BLEBeacon_AdvertiseSerialized] serdata=", bc.HexFromBytes(data), ",size=", data.Length, ",serviceinfo=", serviceinfo )
+	BLEBeacon.AdvertiseRaw(data, serviceinfo)
+End Sub
+
+'Handle BLE Beacon error.
+'Log the error to the B4R IDE, but could also use an LED.
+Private Sub BLEBeacon_Error(code As Byte)
+	Log("[BLEBeacon_Error]code=",code)
+	Select code
+		Case BLEBeacon.ERROR_ADV_DATA_SIZE_TOO_LARGE
+			Log("[ERROR][Advertise] Data size exceeds maximum ", BLEBeacon.MAX_ADV_DATA_SIZE, " bytes.")
+	End Select
+End Sub
+
+'Helper
+'Get HEX code for a single byte.
+'b - Single byte
+'Returns HEX code as string
+Public Sub HexFromByte(b As Byte) As String
+	Return bc.HexFromBytes(Array As Byte(b))
+End Sub
+
+Public Sub HexFromInt(i As Int) As String
+	Dim b() As Byte = bc.IntsToBytes(Array As Int(i))
+	'Log("[HexFromInt]i=", i, ",bytes=",b(0),b(1))
+	Return bc.HexFromBytes(b)
+End Sub
+
+'Get 4 bytes from long.
+'Do not use the byteconverter as it converts per default to little endian.
+'value - Long value to convert
+'littleendian - Flag to set little endian, set to false for big endian
+'Returns 4 bytes
+Public Sub BytesFromLong(value As Long, littleendian As Boolean) As Byte()
+	Dim raf As RandomAccessFile
+	'Set the return byte array size = 4
+	Dim b(4) As Byte
+	raf.Initialize(b, littleendian)
+	raf.WriteULong32(value, 0)
+	Return b
+End Sub
+
+'Get 2 bytes from integer.
+'value - Integer value to convert
+'littleendian - Flag to set little endian, set to false for big endian
+'Returns 2 bytes as uint
+Public Sub BytesFromInt(value As Int, littleendian As Boolean) As Byte()
+	Dim raf As RandomAccessFile
+	'Set the return byte array size = 2
+	Dim b(2) As Byte
+	raf.Initialize(b, littleendian)
+	raf.WriteUInt16(value, 0)
+	Return b
+End Sub

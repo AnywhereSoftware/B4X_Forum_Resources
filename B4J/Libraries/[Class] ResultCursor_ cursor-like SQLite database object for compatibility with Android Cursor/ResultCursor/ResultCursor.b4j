@@ -1,0 +1,78 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example.resultcursor
+Group=Default Group
+Library1=jcore
+Library2=jsql
+Library3=javaobject
+Module1=DBUtils
+Module2=|absolute|C:\TEMP\Shell-ВТК_1.475\ResultCursor
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#AdditionalJar: sqlite-jdbc-3.7.2
+
+Sub Process_Globals
+	Dim dbName As String = "db.sqlite"
+	Dim SQL As SQL
+	Dim c As ResultCursor
+	Dim c2 As ResultSet
+	Dim req As String = "SELECT time as 'Random time', id FROM test"
+End Sub
+
+Sub AppStart (Args() As String)
+	Create_DB
+	
+	
+	c2 = SQL.ExecQuery(req)
+	Do While c2.NextRow
+		Log("ResultSet item " & c2.GetString("id") & " = " & c2.GetString("Random time") & ", " & c2.GetColumnName(0))
+	Loop
+	c2.Close
+	
+	
+	c.Initialize(SQL, req, Null, 5)
+	For i = 0 To c.RowCount - 1
+		c.Position = i
+'		Log("ResultCursor String " & c.GetString("id") & " = " & c.GetString("Random time") & ", " & c.GetColumnName(0))
+'		Log("ResultCursor Int " & c.GetInt("id") & " = " & c.GetInt("Random time") & ", " & c.GetColumnName(0))
+		Log("ResultCursor Long " & c.GetLong("id") & " = " & c.GetLong("Random time") & ", " & c.GetColumnName(0))
+'		Log("ResultCursor Double " & c.GetDouble("id") & " = " & c.GetDouble("Random time") & ", " & c.GetColumnName(0))
+	Next
+	Log(c.isInitialized)
+	c.Close
+	Log(c.isInitialized)
+End Sub
+
+Sub Folder As String
+	Return File.DirData("ResultCursor")
+End Sub
+
+Sub Create_DB
+	File.Delete(Folder, dbName)
+	SQL.InitializeSQLite(Folder, dbName, True)	'DB
+	
+	If Not(DBUtils.TableExists(SQL, "test")) Then
+		Dim ft As Map
+		ft.Initialize
+		ft.Put("id", DBUtils.DB_INTEGER)
+		ft.Put("time", DBUtils.DB_TEXT)	'milliseconds
+		DBUtils.CreateTable(SQL, "test", ft, "id")
+		Dim L As List
+		L.Initialize
+		
+		For i = 0 To 9
+			ft.Initialize
+			ft.Put("time", DateTime.Now + Rnd(0, 100000))	'milliseconds
+			L.Add(ft)
+		Next
+		
+		DBUtils.InsertMaps(SQL, "test", L)
+	End If
+End Sub

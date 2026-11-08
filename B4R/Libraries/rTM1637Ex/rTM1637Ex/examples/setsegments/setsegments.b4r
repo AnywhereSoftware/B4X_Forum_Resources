@@ -1,0 +1,58 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rtm1637ex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+' segments.b4r
+' Sample project for the B4R Library rTM1637Ex - Seven Segment Display
+' Additional Libraries: rTM1637Ex
+' 20210216 rwbl
+#End Region
+
+#Region Wiring
+'TM1637 = Arduino
+'CLK = D2 
+'DIO = D3 
+'GND = GND
+'VCC = 3.3v Or 5v
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rTM1637Ex - SetSegments v20210216"
+	Public serialLine As Serial
+	Private tmDisplay As TM1637Display
+	Private PINCLK As Byte = 2
+	Private PINDIO As Byte = 3
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	tmDisplay.Initialize(PINCLK, PINDIO)
+	
+	'Clear the display first
+	tmDisplay.Clear
+	
+	'The display to show: 9°C
+
+	'Set a single digit number (9) at position 1
+	tmDisplay.ShowNumberDec2(9,False,1,1)
+	
+	'Show °C (circle C) at position 2 (from left) using setsegments
+	Dim circle As Byte = Bit.Or(tmDisplay.SEG_A, Bit.Or(tmDisplay.SEG_B, Bit.Or(tmDisplay.SEG_F, tmDisplay.SEG_G)))
+	Dim celcius As Byte = Bit.Or(tmDisplay.SEG_A, Bit.Or(tmDisplay.SEG_D, Bit.Or(tmDisplay.SEG_E, tmDisplay.SEG_F)))
+	tmDisplay.SetSegments(Array As Byte(circle, celcius), 2)
+		
+End Sub

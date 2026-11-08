@@ -1,0 +1,166 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rawot
+Library2=rcore
+Library3=resp8266wifi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 3000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private aWOT As aWOT
+	Private Network As String = "xxxxx"
+	Private Password As String = "xxxxxxxxxx"
+	Private analogread As Int = 0
+	Private wayup As bool = True
+
+	Private text() As Byte
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	'example of connecting to a local network
+	If wifi.Connect2( Network, Password) Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+	
+'	aWOT.initialize
+	aWOT.initialize1("finally","notfound")
+    Log("end init aWOT")
+    Log(wifi.LocalIp)
+	AddLooper("process")
+
+'1) start managemant at "/" 
+	aWOT.app_setTimeout(3000)
+	
+	aWOT.app_get("/", "handleRoot")        	
+	aWOT.app_get("/readADC", "handleADC") 
+
+End Sub
+
+'//===============================================================
+'// This routine is executed when you open its IP in browser
+'//===============================================================
+private Sub handleRoot
+' 	String s = MAIN_page; //Read HTML contents
+'	server.send(200, "text/html", s); //Send web page
+	RunNative("gethtml", 0)		'MAIN_page
+	aWOT.res_write1(text,text.length)
+End Sub
+ 
+private Sub handleADC
+	If wayup = True Then analogread = analogread + 2 Else analogread = analogread - 2
+	If analogread < 2 Then wayup = True
+	If analogread > 254 Then wayup = False
+ 
+	'   server.send(200, "text/plane", adcValue); //Send ADC value only To client ajax request
+ 
+	aWOT.res_println(NumberFormat(analogread,0,0))
+End Sub
+
+
+Sub process()
+	aWOT.process
+End Sub
+
+'*********************************************
+'Sub m0_keepAlive()
+'	Log("start keepAlive")
+'	aWOT.res_set("Connection", "keep-alive")
+'	'    Log("end keepAlive")
+'	Log("status sent keepalive: ",aWOT.res_statusSent)
+'End Sub
+
+
+'**********************************************************************************
+Sub finally()
+	Log("Client Closed")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+'**********************************************************************************
+Sub notfound()	
+	Log("Middleware not found - Call Back 404")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+#if c
+
+#include <pgmspace.h>
+
+const char MAIN_page[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html>
+<style>
+.card{
+    max-width: 400px;
+     min-height: 250px;
+     background: #02b875;
+     padding: 30px;
+     box-sizing: border-box;
+     color: #FFF;
+     margin:20px;
+     box-shadow: 0px 2px 18px -4px rgba(0,0,0,0.75);
+}
+</style>
+<body>
+
+<div class="card">
+  <h4>The ESP32 Update web page without refresh</h4><br>
+  <h1>Sensor Value: <span id="ADCValue">0</span></h1><br>
+  <br><a href="https://circuits4you.com">Circuits4you.com</a>
+</div>
+<script>
+
+setInterval(function() {
+  // Call a function repetatively with 2 Second interval
+  getData();
+}, 2000); //2000mSeconds update rate
+
+function getData() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("ADCValue").innerHTML =
+      this.responseText;
+    }
+  };
+  xhttp.open("GET", "readADC", true);
+  xhttp.send();
+}
+</script>
+</body>
+</html>
+)=====";
+								
+const char *const msg_table[] PROGMEM = { MAIN_page};
+const uint16_t msg_len[] =  {sizeof(MAIN_page)};
+	
+char strx[1000];
+  
+B4R::Object* gethtml(B4R::Object* o) {
+	strcpy_P(strx, (char*)pgm_read_dword(&(msg_table[o->toLong()])));
+	Serial.print("length_msg[");Serial.print(o->toLong());Serial.print("]= ");Serial.println(msg_len[o->toLong()]);		
+    b4r_main::_text->data = strx;
+    b4r_main::_text->length = msg_len[o->toLong()]-1; 
+    return 0; 
+}
+#end if
+

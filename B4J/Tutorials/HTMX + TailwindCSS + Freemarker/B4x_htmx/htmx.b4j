@@ -1,0 +1,106 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=freemarkerwrapper
+Library2=jcore
+Library3=jserver
+Module1=handlerContactUs
+Module2=handlerFeatures
+Module3=handlerLandingPage
+Module4=handlerPrices
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=4
+Version=10
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+	
+	#AdditionalJar: freemarker.jar
+#End Region
+
+Sub Process_Globals
+	Private be_free As Freemarker
+	Private base_url As String = "http://localhost:3000"
+	Private port As Int = 3000
+	
+	Private server As Server
+	Public urls As Map
+End Sub
+
+Sub AppStart (Args() As String)
+	base_url = $"${base_url}:${port}"$
+	init_templates
+	init_server
+	
+	StartMessageLoop
+End Sub
+
+private Sub init_server
+	server.Initialize("srvr")
+	server.StaticFilesFolder = File.Combine(File.DirApp, "www")
+	
+	server.Port = port
+	
+	'HANDLERS
+	'HANDLERS - WEB
+	urls = server.CreateThreadSafeMap
+	urls.Put("handlerLandingPage", "")
+	urls.Put("handlerFeatures"	 , "/features")
+	urls.Put("handlerContactUs"	 , "/contactUs")
+	urls.Put("handlerPrices"	 , "/prices")
+	
+	For Each url As String In urls.Keys
+		server.AddHandler(urls.Get(url), url, False)
+	Next
+	
+	be_free.addSharedVariable("urls", urls)
+	
+	server.SetStaticFilesOptions(CreateMap("dirAllowed": False))
+
+	server.Start
+End Sub
+
+Private Sub init_templates
+	be_free.Initialize
+	be_free.DefaultEncoding = "UTF-8"
+	be_free.DirectoryForTemplateLoading = File.DirApp & "/freemarker_templates"
+	be_free.LazyAutoImports = True
+	be_free.addAutoImport("fun", "functions.ftl")
+	be_free.exposeFields
+	be_free.addSharedVariable("base_url", base_url)
+	be_free.addSharedVariable("derechos_ano", DateTime.GetYear( DateTime.Now ).As(String))
+End Sub
+
+public Sub answer(resp As ServletResponse, freemarker_template As String, root As Map)
+	Dim is_htmx As Boolean = root.GetDefault("htmx", False)
+	
+	If is_htmx Then
+		answer_freemarker_part(resp, freemarker_template, root)
+	Else
+		answer_freemarker(resp, freemarker_template, root)
+	End If
+End Sub
+
+public Sub answer_freemarker(resp As ServletResponse, freemarker_template As String, root As Map)
+	Dim t As Template = be_free.getTemplate("layout.html")
+	resp.CharacterEncoding = "UTF-8"
+	
+	root.Put("bodyTemplate", freemarker_template)
+	resp.Write(t.stdOut(root))
+End Sub
+
+public Sub answer_freemarker_part(resp As ServletResponse, freemarker_template As String, root As Map)
+	Dim t As Template = be_free.getTemplate(freemarker_template)
+	resp.CharacterEncoding = "UTF-8"
+	resp.Write(t.stdOut(root))
+End Sub
+
+public Sub htmx_middleware(req As ServletRequest) As Map
+	Dim is_boosted As Boolean = req.GetHeader("HX-Boosted").As(String) <> ""
+	Dim is_htmx	   As Boolean = req.GetHeader("HX-Request").As(String) <> ""
+	
+	Return CreateMap("boosted": is_boosted, "htmx": is_htmx)
+End Sub

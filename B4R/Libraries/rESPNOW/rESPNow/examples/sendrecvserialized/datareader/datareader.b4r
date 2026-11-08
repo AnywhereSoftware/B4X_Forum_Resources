@@ -1,0 +1,101 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rconvert
+Library2=rcore
+Library3=respnow
+Library4=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+' ================================================================
+' File:        	datareader.bas
+' Project:     	rESPNOW
+' Brief:       	ESP-NOW Advanced Example – send serialized data
+' Date:        	2026-05-05
+' Author:      	Robert W.B. Linn (c) 2025 MIT
+' Dependencies: rESPNOW, rConvert, rRandomAccessFile
+' Description:	This example shows usage of the B4R Serializer to send data:
+'				Serializer vs Manual Packet Tradeoff
+'				Serializer (this example)
+'				✔ Very easy
+'				✔ Flexible
+'				✔ Supports multiple types
+'				❌ Larger payload
+'				❌ Slightly slower
+'				❌ Less control over format
+' Packet:		4 Objects
+'				temp    = Float   (4 bytes, fine)
+'				hum     = Byte    (0–100 > perfect fit)
+'				flags   = Byte    (bitfield later); Usually bit-based (8 flags max) Bit 0 = OK,Bit 1 = unstable,Bit 2 = error
+'				Counter = Byte    (wrap at 255 is fine); only need sequence detection
+' Hardware:		ESP32 Wrover Kit.
+' Software:		B4R 4.00(64 bit), Platform ESP32 3.3.8 (board esp32wroverkit)
+' Wiring:		n/a
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "ESPNow DataReader v20260505"
+    
+	Public SerialLine As Serial
+	Private SERIAL_LINE_BAUDRATE As ULong = 115200
+
+	Private Esp As ESPNow
+	Private PeerMac() As Byte = Array As Byte(0x80,0xF3,0xDA,0x4C,0x36,0x78)
+	Private Counter As Byte = 0
+	Private ReadTimer As Timer
+	Private SerData As B4RSerializator
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(SERIAL_LINE_BAUDRATE)
+	Log("[DataReader.AppStart] ", VERSION)
+
+	Esp.Initialize("OnReceived", "OnDataSent")
+	Log("[DataReader.AppStart] MAC=", Convert.BytesToHex(Esp.GetMAC()))
+
+	Esp.SetChannel(1)
+	Esp.AddPeer(PeerMac)
+
+	ReadTimer.Initialize("ReadTimer_Tick", 5000)
+	ReadTimer.Enabled = True
+End Sub
+
+Private Sub ReadTimer_Tick
+	Dim t As Float = Rnd(1000, 3001) / 100			' 10-30; 23.45
+	Dim h As Byte = Rnd(0, 101)						' 0-100; 58
+	Dim f As Byte = Rnd(0,2)						' 0-1; 1
+	Dim data() As Byte = CreateSerData(t, h, f)
+	Esp.SendData(PeerMac, data)
+End Sub
+
+Private Sub OnReceived(mac() As Byte, data() As Byte)
+	Log("[DataReader.OnReceived][RX] ", Convert.BytesToHex(data))
+End Sub
+
+Private Sub OnDataSent(mac() As Byte, status As Byte)
+	If status = Esp.SEND_OK Then
+		Log("[DataReader.OnDataSent] OK")
+	Else
+		Log("[DataReader.OnDataSent][E] FAIL")
+	End If
+End Sub
+
+' CreateSerData
+' Create serialized data with 4 objects emp,hum,flags,counter with start byte 7E and end byte 7F.
+Private Sub CreateSerData(temp As Float, hum As Byte, flags As Byte) As Byte()
+	
+	Dim data() As Byte = SerData.ConvertArrayToBytes(Array(temp, hum, flags, Counter))
+	Counter = Counter + 1
+
+	Log("[DataReader.CreateSerData] temp=", temp, " hum=", hum, " flags=", flags, " packet=", Convert.BytesToHex(data))
+	' [DataReader.CreateSerData] temp=19.9500 hum=90 flags=0 packet=7E04079A999F41DA80A67F
+	Return data
+End Sub

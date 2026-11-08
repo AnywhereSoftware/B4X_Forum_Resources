@@ -1,0 +1,215 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.B4JGoogleTranslateDB,KVSENCRYPT,B4J,Release,Release_obfuscated
+File1=1.db3
+File2=1.png
+File3=Main.bjl
+File4=strings.db3
+File5=TitleBar.bjl
+FileGroup1=Default UnpackAssets
+FileGroup2=Default Icons
+FileGroup3=Default Group
+FileGroup4=Default Localizator
+FileGroup5=Default TitleBars
+Group=Default Group
+Library1=aesencryption
+Library10=jrandomaccessfile
+Library11=jsql
+Library12=xui views
+Library13=b4xcheckinternet
+Library2=b4xpages
+Library3=dialogsfx v.1.00
+Library4=encryption
+Library5=jb4xencryption
+Library6=jcontrolsfx
+Library7=jcore
+Library8=jfx
+Library9=jokhttputils2
+Module1=B4XLocalizator
+Module2=|relative|..\B4XMainPage
+Module3=CircularProgressBar
+Module4=CSVParser
+Module5=FormUtils
+Module6=KeyValueStore2
+Module7=SharedCode
+Module8=TitleBarCV
+NumberOfFiles=5
+NumberOfLibraries=13
+NumberOfModules=8
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth:  600
+	#MainFormHeight: 600 
+	
+	'========== B4J Project UI3 ==================
+	#AdditionalJar:  sqlite-jdbc-3.7.2
+	#AdditionalJar:  bcprov-jdk18on-171
+	'=============================================
+#End Region
+
+#If Release
+	#CustomBuildAction: 2, c:\windows\system32\cmd.exe, /c copy  ..\Objects\B4JGoogleTranslateDB.jar F:\©.B4X_Launch4J\B4J\B4JGoogleTranslateDB.jar
+#End If
+
+Sub Process_Globals
+	Private jfx As JFX
+	Private xui As XUI
+	Dim MainForm As Form
+	
+	' Globals variables:
+    #Region ©.Globals constants 
+	Dim ImageIcon As Image
+	Dim UpdatedAssetsFolder As String
+	Dim GenerateIVf As String = "Globals.chs"
+	Dim uppercaseArray() As String = Array As String ("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z")
+	Dim lowercaseArray() As String = Array As String ("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")
+	Dim numbersArray()   As String = Array As String ("0","1","2","3","4","5","6","7","8","9")
+	Dim symbolsArray()   As String = Array As String ("@","$","%","&","?","#","!","*","+","-",";","_","^","(",")","_","=","<",">",".","/","\","{","}","[","]","|","~","`")
+	#End Region
+
+	' Globals variables translate:
+    #Region ©.Globals constants translate 
+	Dim SeparatorChar As Char
+	#End Region
+
+    #Region ©.Protection App 
+	
+	Dim ss_passdAES As String = ""
+	Dim iv_passdAES As String = "SWDcAKYT0iSk~dxZ"
+	Dim pc_passdAES As String = "~3B.=`NE%p7ujz@T"
+	Dim st_password As String = "SHA512_32741126fd03279a05d86215f28b38e5e365fg0359ff28"
+	Dim FileOpts As String = "options.db3"
+	Dim FileTran As String = "strings.db3"
+	Dim kvs As KeyValueStore2
+	Dim loc As B4XLocalizator
+	#End Region
+
+    #Region ©.Globals Version and AppName 
+	Dim AppName As String = "B4JGoogleTranslateDB"
+	Dim VersionCode As Int = 1
+	#End Region
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.SetFormStyle ("TRANSPARENT")
+	MainForm.BackColor = jfx.Colors.Transparent
+
+    #Region ©.Protection App 
+	xui.SetDataFolder("GoogleTranslate_Ltd")
+	kvs.Initialize(xui.DefaultFolder, FileOpts)
+	loc.Initialize(File.DirAssets, FileTran)
+	#End Region
+	
+    #Region ©.Protection Assets 
+	ImageIcon.InitializeSample(File.DirAssets, "1.png",50,50)
+	UpdatedAssetsFolder = File.Combine(xui.DefaultFolder, VersionCode)
+	#End Region 
+	
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+	
+	Wait For (UnpackEncryptedAssets("1.db3", st_password, VersionCode)) Complete (isUnpack As Boolean)
+	If isUnpack = False Then ExitApplication2(0)
+	
+	B4XPages.MainPage.fc.Initialize
+	If File.Exists(xui.DefaultFolder, "folders.map") Then
+		Dim m As Map = File.ReadMap(xui.DefaultFolder, "folders.map")
+		B4XPages.MainPage.txtDB.Text = m.Get("db")
+		B4XPages.MainPage.txtFILE.Text = m.Get("xlsx")
+	End If
+	B4XPages.MainPage.btnClose.RequestFocus
+End Sub
+
+Sub UnpackEncryptedAssets(StoreName As String, Password As String, Version As Int) As ResumableSub
+	Dim UAssetsFolder As String
+	Try
+		File.MakeDir(xui.DefaultFolder, Version)
+		If File.Exists(UpdatedAssetsFolder, "UpdatedAssets.db") Then
+			Return True
+		End If
+		'delete old versions
+		For i = 1 To Version - 1
+			If File.Exists(xui.DefaultFolder, i) Then
+				UAssetsFolder = File.Combine(xui.DefaultFolder, i)
+				For Each f As String In File.ListFiles(UAssetsFolder)
+					Wait For (SharedCode.Delete(UAssetsFolder, f)) Complete (bo As Boolean)
+				Next
+				File.Delete(xui.DefaultFolder, i)
+			End If
+		Next
+		B4XPages.MainPage.cutils.ShowNotification3(AppName,loc.Localize("Rozpakowanie zaszyfrowanych aktywów."), B4XPages.MainPage.cutils.ICON_INFORMATION, MainForm, "BOTTOM_CENTER", 1000)
+		Wait For (File.CopyAsync(File.DirAssets, StoreName, UpdatedAssetsFolder, "UpdatedAssets.db")) Complete (Success As Boolean)
+		If Success Then
+			Dim kvs2 As KeyValueStore2
+			UAssetsFolder = File.Combine(xui.DefaultFolder, Version)
+			kvs2.Initialize(UAssetsFolder, "UpdatedAssets.db")
+			For Each key As String In kvs2.ListKeys
+				Dim blob() As Byte = kvs2.GetEncryptedObject(key, Password)
+				Dim out As OutputStream = File.OpenOutput(UAssetsFolder, key, False)
+				out.WriteBytes(blob, 0, blob.Length)
+				out.Close
+				out.Flush
+				Sleep(0)
+			Next
+			Return True
+		Else
+			B4XPages.MainPage.cutils.ShowNotification3(AppName,loc.Localize("Rozpakowanie zaszyfrowanych aktywów.")&CRLF&loc.Localize("Proces przerwany."), B4XPages.MainPage.cutils.ICON_ERROR, MainForm, "BOTTOM_CENTER", 2000)
+		End If
+	Catch
+		B4XPages.MainPage.cutils.ShowNotification3(AppName,loc.Localize("Rozpakowanie zaszyfrowanych aktywów.")&CRLF&loc.Localize("Proces przerwany."), B4XPages.MainPage.cutils.ICON_ERROR, MainForm, "BOTTOM_CENTER", 5000)
+	End Try
+	Return False
+End Sub
+
+Public Sub DeletedAssetsDBaseVersion
+	Private Version As Int = 101
+	Try
+		For i = 0 To Version - 1
+			UpdatedAssetsFolder = File.Combine(xui.DefaultFolder, i)
+			If File.Exists(xui.DefaultFolder, i) Then
+				For Each f As String In File.ListFiles(UpdatedAssetsFolder)
+					Wait For (SharedCode.Delete(UpdatedAssetsFolder, f)) Complete (bo As Boolean)
+				Next
+				File.Delete(xui.DefaultFolder, i)
+			End If
+		Next
+	Catch
+		B4XPages.MainPage.cutils.ShowNotification3(AppName,loc.Localize("Usuwanie zaszyfrowanych aktywów.")&CRLF&loc.Localize("Proces przerwany."), B4XPages.MainPage.cutils.ICON_ERROR, MainForm, "BOTTOM_CENTER", 2000)
+	End Try
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Private Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	SharedCode.ClearSystemClipboard
+	Return True
+End Sub
+
+'Template version: B4J-1.0
+#Region Delegates 
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_MouseClicked (EventData As MouseEvent)
+End Sub
+
+Sub MainForm_Closed
+	SharedCode.ClearSystemClipboard
+	File.WriteMap(xui.DefaultFolder, "folders.map", CreateMap("xlsx": B4XPages.MainPage.txtFILE.Text, "db": B4XPages.MainPage.txtDB.Text))
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	SharedCode.ClearSystemClipboard
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region

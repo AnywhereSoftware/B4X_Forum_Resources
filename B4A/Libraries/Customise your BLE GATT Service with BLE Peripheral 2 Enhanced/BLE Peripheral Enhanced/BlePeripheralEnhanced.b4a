@@ -1,0 +1,133 @@
+﻿Build1=Default,com.simplysoftware.bleperipheralenhanced
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=b4xcollections
+Library2=ble2
+Library3=ble2peripheralenhanced
+Library4=byteconverter
+Library5=core
+Library6=ime
+Library7=javaobject
+Library8=phone
+Library9=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~AddPermission(android.permission.BLUETOOTH_ADVERTISE)~\n~AddPermission(android.permission.ACCESS_FINE_LOCATION)~\n~AddPermission(android.permission.BLUETOOTH_SCAN)~\n~AddPermission(android.permission.BLUETOOTH_CONNECT)~\n~
+Module1=MonitorBLEPeripheral
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=2
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: BLE Enhanced
+	#VersionCode: 1
+	#VersionName: 
+
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: True
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	Private btnSend As Button
+	Private txtMessage As EditText
+	Private txtLogs As EditText
+	Private ime As IME
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+
+	Dim Permissions As List
+	Dim Phone As Phone
+	Dim RP As RuntimePermissions
+
+	If Phone.SdkVersion >= 31 Then
+		Permissions = Array("android.permission.BLUETOOTH_SCAN", "android.permission.BLUETOOTH_CONNECT", "android.permission.BLUETOOTH_ADVERTISE", RP.PERMISSION_ACCESS_FINE_LOCATION)
+	Else
+		Permissions = Array(RP.PERMISSION_ACCESS_FINE_LOCATION)
+	End If
+	For Each Per As String In Permissions
+		RP.CheckAndRequest(Per)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result = False Then
+			ToastMessageShow("No permission: " & Permission, True)
+			Return
+		End If
+	Next
+	
+	ime.Initialize("ime")
+	ime.AddHandleActionEvent(txtMessage)
+	ime.AddHeightChangedEvent		
+
+	StartService(MonitorBLEPeripheral)
+	Sleep(100)
+	SetState(MonitorBLEPeripheral.connectedCentrals.Size > 0)
+End Sub
+
+Private Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	txtLogs.SetLayoutAnimated(200, txtLogs.Left, txtLogs.Top, txtLogs.Width, NewHeight - 5dip - txtLogs.Top)
+End Sub
+
+Public Sub SetState(connected As Boolean)
+	btnSend.Enabled = connected
+	txtMessage.Enabled = connected
+
+	If connected Then
+		ProgressDialogHide
+	Else If MonitorBLEPeripheral.NotAvailable = False Then
+		ProgressDialogShow2("Waiting for connections...", False)
+	End If
+End Sub
+
+Sub Activity_Resume
+	If MonitorBLEPeripheral.NotAvailable = True Then SetState(MonitorBLEPeripheral.connectedCentrals.Size > 0)
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Public Sub NewMessage(msg() As Byte)
+	txtLogs.Text = BytesToString(msg, 0, msg.Length, "utf8") & CRLF & txtLogs.Text
+End Sub
+
+Sub IME_HandleAction As Boolean
+	btnSend_Click
+	Return True 'don't close the keyboard
+End Sub
+
+Sub btnSend_Click
+	If txtMessage.Text.Length = 0 Then Return
+	Dim s As String = "Peripheral (B4A): " & txtMessage.Text
+	CallSub2(MonitorBLEPeripheral, "SendMessage", s.GetBytes("utf8"))
+	NewMessage(s.GetBytes("utf8"))
+	txtMessage.RequestFocus
+	txtMessage.SelectAll
+End Sub
+
+Sub StringToInt(Str As String) As Int 'ignore
+	Dim converter As ByteConverter
+	Dim ii() As Int = converter.IntsFromBytes(converter.HexToBytes(Str))
+	Return ii(0)
+End Sub
+
+Sub StringToUnsignedInt (Str As String) As Long 'ignore
+	Dim converter As ByteConverter
+	Dim a(8) As Byte
+	Dim i() As Byte = converter.HexToBytes(Str)
+	Bit.ArrayCopy(i, 0, a, 4, 4)
+	Dim ll() As Long = converter.LongsFromBytes(a)
+	Return ll(0)
+End Sub

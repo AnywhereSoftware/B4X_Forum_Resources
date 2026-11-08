@@ -1,0 +1,82 @@
+﻿Build1=Default,com.georgieapps.mlkitbarcode
+File1=Layout.bal
+File2=qrcode.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~CreateResourceFromFile(Macro, FirebaseAnalytics.GooglePlayBase) 'add if not already there~\n~'****** text recognitionbarcode *****~\n~AddApplicationText(~\n~ <meta-data~\n~          android:name="com.google.mlkit.vision.DEPENDENCIES"~\n~          android:value="barcode" />~\n~)~\n~'**********~\n~~\n~'*********  ML kit + subject segmentation +  text recognition **********~\n~AddApplicationText(~\n~		 <provider~\n~            android:name="com.google.mlkit.common.internal.MlKitInitProvider"~\n~            android:authorities="${applicationId}.mlkitinitprovider"~\n~            android:exported="false"~\n~            android:initOrder="99" />~\n~~\n~        <service~\n~            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"~\n~            android:directBootAware="true"~\n~            android:exported="false"~\n~             >~\n~            <meta-data~\n~                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"~\n~                android:value="com.google.firebase.components.ComponentRegistrar" />~\n~			<meta-data~\n~                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"~\n~                android:value="com.google.firebase.components.ComponentRegistrar" />~\n~        </service>~\n~)
+Module1=BarcodeScannerClass
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MlKit Barcode
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+
+#AdditionalJar: com.google.android.gms:play-services-mlkit-barcode-scanning
+#AdditionalJar: kotlin-stdlib-1.6.10
+#AdditionalJar: core-runtime-2.2.0.aar
+
+	
+
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Dim bsc As BarcodeScannerClass
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	bsc.Initialize
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	Dim jo As JavaObject
+	jo.InitializeContext
+	Dim formats As List = Array(bsc.FORMAT_ALL_FORMATS) 'For better performance pass the specific formats needed.
+	
+	Dim bmp As Bitmap = LoadBitmap(File.DirAssets, "qrcode.png")
+	
+	Wait For (bsc.Scan(formats,bmp)) Complete (barcodes() As ScannerResult)
+	Dim sb As StringBuilder
+	sb.Initialize
+	
+	For Each b As ScannerResult In barcodes
+		sb.append(b.format).Append(CRLF)
+		sb.Append(b.display).Append(CRLF)
+		sb.Append(b.Value).append(CRLF)
+		sb.Append(CRLF)
+	Next
+	MsgboxAsync(sb.ToString, "Your scan:")
+	wait for msgbox_result(res As Int)
+End Sub
+

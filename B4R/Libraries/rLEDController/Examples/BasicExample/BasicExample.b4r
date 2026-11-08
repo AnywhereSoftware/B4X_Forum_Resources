@@ -1,0 +1,80 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rledcontroller
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+'LEDController.b4r
+'Development B4R program for the B4XLib rLEDController.
+'See README.md
+'Additional Libraries rLEDController.b4xlib
+'Hardware Arduino UNO
+'B4R 3.71
+'Version 20210721 rwbl
+#End Region
+
+#Region Wiring
+'LED = Arduino UNO
+'LED RED Plus = #13				'0x0D
+'LED YELLOW Plus = #12			'0x0C
+'LED GREEN Plus = #11			'0x0B
+'LED RED,YELLOW,GREEN GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rLEDController - Basic Example"
+	Public serialLine As Serial
+	' Declare the LEDS each with unique index used for the LEDControl LED arrays. Must be in range with constant - LEDController.LEDCOUNT.
+	Private Const LEDRED As Int = 0, LEDYELLOW As Int = 1, LEDGREEN As Int = 2
+	' Set the LED controller timer interval in ms.
+	Private Const TIMER_INTERVAL As ULong = 1000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+
+	'Init the LED Controller
+	LEDController.Initialize(TIMER_INTERVAL, True)
+
+	'Add to the LED controller 3 LEDs (Index, PinNr)
+	LEDController.Add_LED(LEDRED, 0x0D)
+	LEDController.Add_LED(LEDYELLOW, 0x0C)
+	LEDController.Add_LED(LEDGREEN, 0x0B)
+
+	'Examples Overview - Commented
+
+	'LEDRED to blink every 4 timer ticks, i.e. every 4 seconds (4 * TIMER_INTERVAL in ms)
+	'LEDController.Set_Mode_Blink(LEDRED, 4)
+
+	'LEDYELLOW to blink 4 seconds, i.e. blinking 2 times (ON-OFF-ON-OFF) if TIMER_INTERVAL is 1000 ms
+	LEDController.Set_Blink_For_Time(LEDYELLOW, 4 * TIMER_INTERVAL)
+
+	'LEDRED ON for 4 seconds, if TIMER_INTERVAL is 1000 ms
+	LEDController.Set_ON_For_Time(LEDRED, 4 * TIMER_INTERVAL)
+
+	'LEDGREEN to blink 6 times (=12 timer ticks)
+	LEDController.Set_Blink_For_Count(LEDGREEN, 6)
+
+	'Let all LEDS blink same time (=interval factor 1)
+	'LEDController.Set_Mode_Blink(LEDRED, 1)
+	'LEDController.Set_Mode_Blink(LEDYELLOW, 1)
+	'LEDController.Set_Mode_Blink(LEDGREEN, 1)
+	
+	'LEDController.Check_LEDS
+	
+	'Turn the timer off after 15 ticks
+	LEDController.Set_Timer_Off_After_Ticks(15)
+	
+End Sub

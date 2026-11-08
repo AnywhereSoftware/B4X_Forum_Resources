@@ -1,0 +1,165 @@
+﻿Build1=Default,anywheresoftware.b4a.samples.gps
+File1=1.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=gnss
+Library3=javaobject
+Library4=okhttputils2
+Library5=phone
+Library6=runtimepermissions
+Library7=xui
+Library8=xui views
+Library9=json
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~AddManifestText(<uses-feature android:name="android.hardware.location.gps"/>)
+Module1=MagneticFieldCalculator
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=9
+NumberOfModules=2
+Version=13
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: False
+	#IncludeTitle: True
+	#ApplicationLabel: GPSTest
+	#VersionCode: 1
+	#VersionName: 
+	#SupportedOrientations: unspecified
+#End Region
+#BridgeLogger: true
+Sub Process_Globals
+	Dim MFCTimer As Timer
+	Dim MFCalc As MagneticFieldCalculator
+End Sub
+
+Sub Globals
+	'Labels on the layout
+	Dim lblLon As B4XView
+	Dim lblLat As B4XView
+	Dim lblSpeed As B4XView
+	Dim lblGnssStatus As B4XView
+	Dim lblDistance As B4XView
+	Private lblBearing As B4XView
+	Private lblDeclination As B4XView
+	
+	Dim LastLoc As Location						'Record of our location the last time it was checked
+	Dim CurLoc As Location						'Current location
+	Dim Distance As Double = 5000				'Don't bother calling the MagneticFieldCalculator unless we are this
+												'many meters from where we checked last time
+	
+	Dim TargetLoc As Location					'Demo target location
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	
+	MFCTimer.Initialize ("MFCTimer", 1000 * 60 * 15)	'Check every 15 minutes
+	MFCTimer.Enabled = False
+	
+	'Settings can be found at https://geomag.bgs.ac.uk/web_service/GMModels
+	MFCalc.Initialize ("","","","")
+	
+	'I was testing bearings and distance so added a static target location - 
+	'a small park a mile or two from my home
+	TargetLoc.Initialize
+	TargetLoc.Latitude = 53.43668335549619
+	TargetLoc.Longitude = -2.721178816462693
+End Sub
+
+Sub Activity_Resume
+	If Starter.GPS1.GPSEnabled = False Then
+		ToastMessageShow("Please enable the GPS device.", True)
+		StartActivity(Starter.GPS1.LocationSettingsIntent) 'Will open the relevant settings screen.
+	Else
+		Starter.rp.CheckAndRequest(Starter.rp.PERMISSION_ACCESS_FINE_LOCATION)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result Then 
+			Log ("Starting GPS")
+			CallSubDelayed(Starter, "StartGPS")
+		End If
+	End If
+End Sub
+	
+
+Sub Activity_Pause (UserClosed As Boolean)
+	CallSubDelayed(Starter, "StopGPS")
+End Sub
+
+Public Sub GnssStatus (Status As JavaObject)
+	Dim NumberOfSatellites As Int = Status.RunMethod("getSatelliteCount", Null)
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("Gnss status:").Append(CRLF)
+	For i = 0 To NumberOfSatellites - 1
+		sb.Append($"Index: ${i}"$ ).Append(CRLF)
+		sb.Append($"Constellation type: ${Status.RunMethod("getConstellationType", Array(i))}"$).Append(CRLF)
+	Next
+	lblGnssStatus.Text = sb.ToString
+End Sub
+
+Public Sub LocationChanged(Location1 As Location)
+	lblLat.Text = "Lat = " & Location1.ConvertToMinutes(Location1.Latitude)
+	lblLon.Text = "Lon = " & Location1.ConvertToMinutes(Location1.Longitude)
+	lblSpeed.Text = $"Speed = $1.2{Location1.Speed} m/s "$
+	lblDistance.Text = $"Distance = $1.2{CalculateDistance (TargetLoc, Location1)} m "$
+
+	'Getting the direction to a target is simple!
+	Dim Bearing As Double = Location1.BearingTo (TargetLoc)
+	Bearing = IIf(Bearing < 0, 360+Bearing, Bearing)
+	lblBearing.Text = $"Bearing = $1.2{Bearing} deg "$
+	
+	CurLoc = Location1
+	
+	If MFCTimer.Enabled = False Then		'Start the MFCTimer if everything is ready
+		LastLoc = Location1
+		GetDeclination (True)				'Force a GetDeclination - first time it is called CurLoc & LastLoc will be the same
+		MFCTimer.Enabled = True
+	End If
+	
+End Sub
+
+
+Sub CalculateDistance(TargetLocation As Location, CurrentLocation As Location) As Double
+	
+	Dim R As Double = 6371000 ' Earth radius in meters
+	Dim dLat As Double = (CurrentLocation.Latitude - TargetLocation.Latitude) * cPI / 180
+	Dim dLon As Double = (CurrentLocation.Longitude - TargetLoc.Longitude) * cPI / 180
+
+	Dim a As Double = Sin(dLat / 2) * Sin(dLat / 2) + Cos(TargetLoc.Latitude * cPI / 180) * Cos(CurrentLocation.Latitude * cPI / 180) * Sin(dLon / 2) * Sin(dLon / 2)
+	Dim c As Double = 2 * ATan2(Sqrt(a), Sqrt(1 - a))
+	Dim Distance As Double = R * c
+
+	Return Distance
+End Sub
+
+Private Sub MFCTimer_Tick
+	GetDeclination (False)			'False = don't force a check
+End Sub
+
+private Sub GetDeclination(Force As Boolean)
+	
+	If Force = True Or CalculateDistance (CurLoc, LastLoc) > Distance Then
+		LastLoc = CurLoc
+
+		'Date format should be year-month-day eg. 2024-11-27
+		Dim n As Long = DateTime.Now
+		Dim dt As String = DateTime.GetYear(n) & "-" & DateTime.GetMonth(n) & "-" & DateTime.GetDayOfMonth(n)
+
+		Wait For (MFCalc.Calculate (LastLoc.Latitude, LastLoc.Longitude, 0, 0, 0, "", dt, "", "")) Complete (success As Boolean)
+		If success Then
+			Log ("Magnetic field Info - ")
+			Log ("Declination = " & MFCalc.Data.declination)
+			Log ("Total intensity = " & MFCalc.Data.total_intensity)
+			Log ("North intensity = " & MFCalc.Data.north_intensity)
+			Log ("East intensity =  " & MFCalc.Data.east_intensity)
+			Log ("Vertical intensity = " & MFCalc.Data.vertical_intensity)
+			Log ("Horizontal intensity = " & MFCalc.Data.horizontal_intensity)
+			
+			lblDeclination.Text = $"Declination = $1.2{MFCalc.Data.declination.Get ("value")} ${MFCalc.Data.declination.Get ("units")} "$
+		Else
+			Log ("No data")
+		End If
+	End If
+End Sub

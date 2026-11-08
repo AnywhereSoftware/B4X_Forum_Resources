@@ -1,0 +1,162 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rdfrobot_multigassensor
+Library3=rm5stickcplus2
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Info
+' Program:		COSensor
+' Brief:		B4R test program for the rM5StickCPlus2 library.
+'				Reads CO gas concentration, VO voltage, and on-board temperature from a CO-sensor.
+'				The LED (red) is turned on if the sensor has not been initialized.
+' Hardware:	ESP-32, DFRobot SEN0466 Grafity CO sensor.
+' Hardware:		M5StickCPlus2 with ESP32-PICO-V3-02ESP-32, DFRobot SEN0466 Grafity CO sensor.
+' Software:		B4R 4.00 (64 bit), Arduino-CLI 1.2.2, JDK 14.
+' Libraries:	Arduino IDE installed M5 libraries: M5Unified, M5GFX.
+' 				rESP8266WiFi 1.60, rDFRobot_MultiGasSensor 1.00
+' Secrets:		Defined in WiFiMod.
+' Author:		Robert W.B. Linn
+' Date:			20251017
+' Wiring:
+' SEN0466 = ESP32 - wire
+' VCC = 3V3 - Red
+' GND = GND - Black
+' D/T SDA = GPIO21 - Green
+' C/R SCL = GPIO22 - Blue
+' I2C = 0x74
+'
+' LED Status = ESP32
+' Onboard = GPIO2
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	
+	' M5 
+	Private m5 As M5StickCPlus2
+	Private SDA_PIN As Int = 26			'SDA Serial Data Line = GPIO25 (blue) - D/T = Data / Transmit
+	Private SCL_PIN As Int = 25			'SCL Serial Clock Line= GPIO26 (green) - C/R = Clock / Receive
+
+	' CO Sensor
+	Private sensorCO As DFRobot_MultiGasSensor
+
+	Private CO_LEVEL_GREEN As Int = 10	' 0–10 ppm
+	Private CO_LEVEL_YELLOW As Int = 11	' 11-30 ppm
+	Private CO_LEVEL_RED As Int = 31	' >30 ppm		'ignore
+
+	' LCD Display
+	Private lcdXPos As Int = 20			'ignore
+	Private lcdYPos As Int = 50			'ignore
+
+	' Timer Measurement
+	Private MeasurementTimer As Timer
+	Private MEASUREMENTTIMER_INTERVAL As ULong = 15000	' ms, every 60 seconds
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("[Main.AppStart][I] M5StickCPlus2 CO Sensor")
+	
+	' Init the measurement timer reading data from the co sensor
+	MeasurementTimer.Initialize("PerformMeasurement", MEASUREMENTTIMER_INTERVAL)
+	' Start the timer after CO sensor init OK
+	MeasurementTimer.Enabled = False
+	
+	' Init the M5 device
+	m5.Initialize
+	Log("[Main.AppStart][I] M5 initialized.")
+		
+	' Display mode landscape (power supply right)
+	m5.Rotation = m5.M5_ROTATION_LANDSCAPE
+	Log("[Main.AppStart][I] Rotation portrait=", m5.IsPortrait)
+
+	' Set header
+	SetPageHeader
+	
+	' Init the CO sensor
+	m5.PrintCentered(m5.GetCenterX, m5.GetCenterY, "Sensor init...", 2, m5.COLOR_WHITE, m5.COLOR_BLACK)
+	If Not(sensorCO.InitializeWithPins(SDA_PIN, SCL_PIN)) Then
+		m5.PrintCentered(m5.GetCenterX, m5.GetCenterY, "Sensor init failed", 2, m5.COLOR_RED, m5.COLOR_BLACK)
+		' Show the red led beside the button power
+		m5.SetLed(True)
+		Log("[Main.AppStart][E] CO sensor initialize failed.")
+	Else
+		m5.PrintCentered(m5.GetCenterX, m5.GetCenterY, "Sensor init OK", 2, m5.COLOR_WHITE, m5.COLOR_BLACK)
+		Log("[Main.AppStart][I]CO sensor initialized.")
+		MeasurementTimer.Enabled = True
+		PerformMeasurement
+	End If
+End Sub
+
+' Helper to set the LCD page header
+Private Sub SetPageHeader
+	Dim textsize As Int = 2
+	Dim linethickness As Int = 1
+	m5.SetHeader("CO Sensor Demo", textsize, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+	m5.SetHorLine((m5.GetFontHeight + 2), m5.COLOR_WHITE, linethickness)
+End Sub
+
+' Helper to set the LCD page footer
+Private Sub SetPageFooter	'ignore
+	Dim textsize As Int = 1
+	Dim linethickness As Int = 1
+	m5.SetFooter("rM5StickCPuls2 Demo", textsize, m5.UI_ALIGN_CENTER, m5.COLOR_GREEN, m5.COLOR_BLACK, True)
+	m5.SetHorLine(m5.GetHeight - (m5.GetFontHeight * textsize) - (linethickness * 2), m5.COLOR_BLUE, linethickness)
+End Sub
+
+' Set sensor reading as row with:
+' Label Value Unit
+Private Sub SetSensorRow(label As String, value As String, unit As String, y As Int, textcolor As Int)
+	' Text settings
+	Dim textsize As Int = 3
+
+	' Text position
+	Dim xlabel As Int = 10
+	Dim xvalue As Int = (m5.GetWidth / 2) - 30
+	Dim xunit As Int = m5.GetWidth - 50
+
+	' Label
+	m5.SetTextAt(xlabel, y, label, textsize, textcolor)
+	m5.SetTextAt(xvalue, y, value, textsize, textcolor)
+	m5.SetTextAt(xunit, y, unit, textsize * 0.9, textcolor)
+End Sub
+
+' Perform Co sensor measurement to get CO ppm, Voltage V0, Temperature on-board. 
+' The display is updated, like below (which is a table with 2 cols and 3 rows):
+' CO	0000  ppm
+' Temp  22.45 C
+Private Sub PerformMeasurement
+	Dim coColor As Int
+
+	' Read sensor data
+	Private co As Float = sensorCO.ReadConcentrationPPM
+	Private temp As Float = sensorCO.ReadTemperatureC
+	Private volt As Float = sensorCO.ReadVoltage
+	Log("[Main.PerformMeasurement][I] CO=", co, " ppm, T=", temp," °C, V=", volt," V")
+	' [Main.PerformMeasurement][I] CO=8.7803 ppm, T=20.5366 °C, V=0.5684 V
+
+	m5.Clear
+	SetPageHeader
+
+	If co <= CO_LEVEL_GREEN Then
+		coColor = m5.COLOR_WHITE  ' normal, keep it subtle
+	Else If co <= CO_LEVEL_YELLOW Then
+		coColor = m5.COLOR_YELLOW ' warning
+	Else
+		coColor = m5.COLOR_RED    ' danger
+	End If
+
+	SetSensorRow("CO", NumberFormat(co,4,0), "ppm", 50, coColor)
+	SetSensorRow("Temp", NumberFormat(temp,2,2), "C", 80, m5.COLOR_WHITE)
+End Sub

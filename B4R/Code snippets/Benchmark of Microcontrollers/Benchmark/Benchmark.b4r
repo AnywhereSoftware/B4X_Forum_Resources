@@ -1,0 +1,81 @@
+﻿Build1=Default,B4RDev
+Build2=ESP32CAM,B4RDev,ESP32CAM
+Build3=ESP8266,B4RDev,ESP8266
+Build4=GENERAL_ARDUINO,B4RDev,GENERAL_ARDUINO
+Group=Default Group
+Library1=rcore
+Library2=resp32cam
+Library3=resp8266wifi
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Dim iCount As ULong = 0
+	Dim mls(200) As ULong
+	
+	#if ESP8266 OR ESP32CAM
+	Private wifi As ESP8266WiFi
+	Public wificlient As WiFiSocket
+    #End If
+	
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(9600)
+    Log("AppStart")
+	'example of connecting to a local network
+	#if ESP8266 OR ESP32CAM
+	If wifi.Connect2("SSID", "WiFiPass") Then
+		#if ESP32CAM
+		ESP32CAM.Initialize(wificlient, Array As Byte(192,168,15,124), 1883, "mqttuser", "mqttpass")
+		ESP32CAM.Log2("Connected to network")
+		#Else
+		Log("Connected to network")
+		#End If
+	Else
+		#If ESP32CAM
+		ESP32CAM.Log2("Failed to connect to network")
+		#Else
+		Log("Failed to connect to network")
+		#End If
+	End If
+	#End if
+	AddLooper("Count")
+	
+End Sub
+
+Sub Count
+	If iCount < 200 Then
+		mls(iCount) = Millis
+	End If
+	If iCount = 200 Then
+		Dim diff As Double = 0
+		
+		For ii = 0 To 198
+			Dim md2 As Double = mls(ii+1)
+			Dim md1 As Double = mls(ii)
+			diff = diff +  md2-md1
+		Next
+		#IF ESP32CAM
+		ESP32CAM.Log2(JoinStrings(Array As String("Mean time: ", diff/100)))
+		#else
+		Log("Mean time: ", diff/100)
+		#End If
+	End If
+	If iCount > 201 Then
+		iCount = 201
+	End If
+	iCount = iCount + 1
+End Sub
+

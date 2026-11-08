@@ -1,0 +1,159 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example simple linechart.
+'Hardware:		Sunton ESP32 2.8" TFT, w320xh240, touch, driver ILI9341 
+'DefineExtra:	#define ESP32_2432S028
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+'rRandomAccessFile 1.91 - ByteConverter
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Display
+'Set the display to use in the project attributes directive #DefineExtra. See below.
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+
+	'Define the display driver
+	#DefineExtra: #define ESP32_2432S028
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx LINECHART v20250408"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Disply instance
+	Private lcd As LovyanGFXEx
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display without touch
+	lcd.Initialize(Null)
+
+	'Call method demo
+	CallSubPlus("Demo", 500, 5)
+End Sub
+
+Private Sub Demo(tag As Byte)
+	lcd.DisplayRotation = 1
+	
+	' Set screen background color green
+	lcd.BackgroundColor = lcd.COLOR_WHITE
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	lcd.FloodFill(50, lcd.Height - 2, lcd.COLOR_FIREBRICK)
+	
+	TestDrawLineChart
+End Sub
+
+Public Sub TestDrawLineChart
+	Dim datapoints() As Float = Array As Float(10, 20, 60, 20, 10, 75, 85, 20, 100, 30)
+	Dim x As Int = 25
+	Dim y As Int = 25
+	DrawLineChart(datapoints, _
+				  x, y, lcd.width - (2 * x), lcd.Height - (2 * y), _
+                  0, 100, _
+				  lcd.COLOR_RED, lcd.COLOR_LIGHTGRAY, lcd.COLOR_WHITE, 5)
+End Sub
+
+#Region LineChart
+Private Sub DrawLineChartScaleText(text As String, x As Int, y As Int, color As ULong)
+	lcd.SetTextSize(1)
+	lcd.SetTextColor(color)
+	lcd.SetTextDatum(lcd.TEXT_ALIGN_MIDDLE_CENTER)
+	lcd.DrawString(text, X, Y)
+End Sub
+
+Public Sub DrawLineChart(dataPoints() As Float, _ 
+						 x As Int, y As Int, width As Int, height As Int, _
+                         minValue As Double, maxValue As Double, _ 
+						 lineColor As ULong, bgColor As ULong, _
+                         scaleColor As ULong, scaleTicks As Int)
+						 
+	Dim scaleOffset As Int = 15
+
+	Dim ts(2) As Byte = lcd.GetTextSize(maxValue, 1)
+	Log("font w=",ts(0),",h=",ts(1),",l=",ts(2),",maxvalue=",maxValue)
+
+	' Check if there are data points
+	If dataPoints.Length == 0 Then
+		Log("No data points.")
+		Return
+	End If
+    
+	' Set up the chart area and axis
+	Dim x0 As Int = x
+	Dim y0 As Int = y + height
+    
+	Dim numPoints As Int = dataPoints.Length
+	Dim deltaX As Float = width / (numPoints - 1)
+    
+	' Draw background
+	lcd.FillRect(x, y, width, height, bgColor)
+    
+	' Draw scale ticks (can adjust the number of ticks)
+	For i = 0 To scaleTicks
+		Dim tickY As Int = y + height - (i * height / scaleTicks)
+		lcd.DrawLine(x, tickY, x + width, tickY, scaleColor)
+		' Draw Y scale text
+        Dim scaleValue As Float = minValue + ((maxValue - minValue) / scaleTicks) * i
+		DrawLineChartScaleText(NumberFormat(scaleValue,0,0), x - scaleOffset, tickY, bgColor)
+	Next
+    
+	' Draw the data line
+	Dim prevX As Int, prevY As Int
+	For i = 0 To numPoints - 1
+		' Calculate current X and Y based on the data
+		Dim currX As Int = x0 + (i * deltaX)
+		Dim deltaY As Float = (dataPoints(i) / maxValue) * height
+		Dim currY As Int = y0 - deltaY
+        
+		' Draw the data point (circle)
+		lcd.FillCircle(currX, currY, 2, lineColor)
+        
+		' Draw the line connecting to the previous point
+		If i > 0 Then lcd.DrawLine(prevX, prevY, currX, currY, lineColor)
+        
+		' Set the current point as the previous point for next iteration
+		prevX = currX
+		prevY = currY
+
+		DrawLineChartScaleText(NumberFormat(i + 1,0,0), currX, y0 + scaleOffset, bgColor)
+        
+		' Log for debugging
+		' Log("i=", i, ", dp=", dataPoints(i), ", px=", prevX, ", py=", prevY, ", cx=", currX, ", cy=", currY)
+	Next
+End Sub
+#End Region

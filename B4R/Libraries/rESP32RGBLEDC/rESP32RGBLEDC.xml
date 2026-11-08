@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RESP32RGBLEDC</name>
+        <shortname>ESP32RGBLEDC</shortname>
+        <property>
+            <name>Red</name>
+            <comment>Set or get the dutycycle of the RED LED.
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+'Set RED LED dutycycle (color) to 100
+rgb.Red = 100
+'Get the dutycycle of the RED LED
+Log(rgb.Red) returning value 100 (must be between 0-255)
+&lt;/code&gt;</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>duty</name>
+                <type>Byte</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Green</name>
+            <comment>Set or get the dutycycle of the GREEN LED.
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+'Set GREEN LED dutycycle (color) to 100
+rgb.Green = 100
+'Get the dutycycle of the GREEN LED
+Log(rgb.Green) returning value 100 (must be between 0-255)
+&lt;/code&gt;</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>duty</name>
+                <type>Byte</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Blue</name>
+            <comment>Set or get the dutycycle of the BLUE LED.
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+'Set BLUE LED dutycycle (color) to 100
+rgb.Blue = 100
+'Get the dutycycle of the BLUE LED
+Log(rgb.Blue) returning value 100 (must be between 0-255)
+&lt;/code&gt;</comment>
+            <returntype>Byte</returntype>
+            <parameter>
+                <name>duty</name>
+                <type>Byte</type>
+            </parameter>
+        </property>
+        <property>
+            <name>Version</name>
+            <comment>Get the library version.
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+Log(rgb.Version)
+'20250210
+&lt;/code&gt;</comment>
+            <returntype>B4R::B4RString*</returntype>
+        </property>
+        <method>
+            <name DesignerName="Initialize">Initialize</name>
+            <comment>Initialize RGB LEDC pins for Red, Yellow, Green with given frequency and resolution. LEDC channel will be selected automatically.
+Ensure to use ESP32 PWM pins, like GPIO 25,26,27.
+redpin - LEDC pin for RED.
+greenpin - LEDC pin for GREEN.
+bluepin - LEDC pin for BLUE.
+frequency - frequency of pwm.
+resolution - resolution for LEDC channel (1-20 bits for ESP32).
+Returns true (OK) or false (error).
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+Dim result As Boolean = rgb.Initialize(redPin, greenPin, bluePin, RGB.FREQUENCY_DEFAULT, RGB.RESOLUTION_DEFAULT)
+If Not(result) Then
+	Log("[ERROR][Initialize] RGB LEDC not initialized. Check log.")
+	Return
+End If
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>redpin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>greenpin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>bluepin</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>frequency</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>resolution</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SetColor">SetColor</name>
+            <comment>Set the RGB color. Ensure to set in range 0-255 prior calling this function..
+red - led dutycycle 0-255.
+green - led dutycycle 0-255.
+blue - led dutycycle 0-255.
+Returns true (OK) or false (error).
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+'Set RGB color to yellow
+RGB.SetColor(255,255,0)
+&lt;/code&gt;</comment>
+            <returntype>bool</returntype>
+            <parameter>
+                <name>red</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>green</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>blue</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="GetColor">GetColor</name>
+            <comment>Get the dutycycle (color setting range 0-255) for each of the RGB LEDs.
+Returns an Array of Byte.
+Example (Private rgb As ESP32RGBLEDC):&lt;code&gt;
+Dim colors(3) As Byte = rgb.GetColor
+Log("[GetColor] r=",colors(0),",g=",colors(1),",b=",colors(2))
+'[GetColor] r=255,g=255,b=0
+&lt;/code&gt;</comment>
+            <returntype>Byte[]</returntype>
+        </method>
+        <method>
+            <name DesignerName="Off">Off</name>
+            <comment>Turn RGB Off.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <method>
+            <name DesignerName="On">On</name>
+            <comment>Turn RGB On color white with max dutycycle 255.</comment>
+            <returntype>B4R::void</returntype>
+        </method>
+        <field>
+            <name DesignerName="DUTY_MIN">DUTY_MIN</name>
+            <comment>DutyCycle min and max</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="DUTY_MAX">DUTY_MAX</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_DEFAULT">FREQUENCY_DEFAULT</name>
+            <comment>PWM Frequency with default (5000Hz), min (10Hz) and max 40MHz (40000000Hz)</comment>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_MIN">FREQUENCY_MIN</name>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="FREQUENCY_MAX">FREQUENCY_MAX</name>
+            <returntype>ULong</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_DEFAULT">RESOLUTION_DEFAULT</name>
+            <comment>Resolution for ESP32 specific with default 8, min 1 and max 20 bits</comment>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_MIN">RESOLUTION_MIN</name>
+            <returntype>Byte</returntype>
+        </field>
+        <field>
+            <name DesignerName="RESOLUTION_MAX">RESOLUTION_MAX</name>
+            <returntype>Byte</returntype>
+        </field>
+    </class>
+    <version>1</version>
+    <author>Robert W.B. Linn</author>
+</root>

@@ -1,0 +1,77 @@
+﻿Build1=Default,b4i.myapplication
+File1=MainPage.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=b4xpages
+Library3=ifirebaseanalytics
+Library4=ifirebasenotifications
+Module1=|relative|..\B4XMainPage
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=1
+Version=6.8
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: Push
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+	#Entitlement: <key>aps-environment</key><string>production</string>
+	'use the provision profile that goes with the explicit App Id
+	#ProvisionFile: Firebase.mobileprovision
+
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private analytics As FirebaseAnalytics
+	Private fm As FirebaseMessaging
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	analytics.Initialize
+	NavControl = Nav
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(NavControl)
+	App.RegisterUserNotifications(True, True, True)
+	App.RegisterForRemoteNotifications
+	fm.Initialize("fm")
+End Sub
+
+Private Sub Application_Active
+	fm.FCMConnect 'should be called from Application_Active
+End Sub
+
+Private Sub Application_Background
+	B4XPages.Delegate.Activity_Pause
+	fm.FCMDisconnect
+End Sub
+
+Private Sub Application_Foreground
+	B4XPages.Delegate.Activity_Resume
+End Sub
+
+
+Private Sub fm_FCMConnected
+	Log("FCMConnected")
+	'here we can subscribe and unsubscribe from topics
+	fm.SubscribeToTopic("ios_general") 'add ios_ prefix to all topics
+End Sub
+
+Private Sub Application_RemoteNotification (Message As Map, CompletionHandler As CompletionHandler)
+	Log($"Message arrived: ${Message}"$)
+	Msgbox(Message, "Push message!")
+	CompletionHandler.Complete
+End Sub
+
+
+Sub Application_PushToken (Success As Boolean, Token() As Byte)
+	Log($"PushToken: ${Success}"$)
+	Log(LastException)
+End Sub

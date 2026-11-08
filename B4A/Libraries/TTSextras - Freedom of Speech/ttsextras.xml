@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.georgieapps.ttsextras.TTSextras</name>
+        <shortname>TTSextras</shortname>
+        <owner>activity</owner>
+        <event>writingdone (Msg As String)</event>
+        <event>synthesizerdone (Msg As String)</event>
+        <event>complete (Result as Boolean)</event>
+        <event>speakingdone (Msg as String)</event>
+        <permission>android.permission.WAKE_LOCK</permission>
+        <method>
+            <name>isSpeaking</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>release</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>saveToDisk</name>
+            <comment>Allows you to save PCM audio output to a &lt;b&gt;single&lt;/b&gt; .wav file of your naming to RuntimePermissions.GetSafeDirDefaultExternal("").  If you want to save your .wav file to your device's Recordings/Audio or Files folder, use the saveToDisk2() method.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>fileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>audioData</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>saveToDisk2</name>
+            <comment>Allows you to save PCM audio output to a &lt;b&gt;single&lt;/b&gt; .wav file of your naming in your system Files folder (aka MediaStore).
+if you want to save the file in your RuntimePermissions.GetSafeDirDefaultExternal("") folder, use the saveToDisk() method.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>fileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>audioData</name>
+                <type>byte[]</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getVoiceName</name>
+            <comment>Returns a voice name as a string. Pass a voice object.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>v</name>
+                <type>android.speech.tts.Voice</type>
+            </parameter>
+        </method>
+        <method>
+            <name>Initialize</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>anevent</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getDisplayCountry</name>
+            <comment>Returns the country as a string for a given locale.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>l</name>
+                <type>java.util.Locale</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getFeatures</name>
+            <comment>Returns a voice's "features" as an object array.  Used by TTSextras to determine whether a given voice
+	in onboard or not or if a given voice is used online.</comment>
+            <returntype>java.lang.Object[]</returntype>
+            <parameter>
+                <name>v</name>
+                <type>android.speech.tts.Voice</type>
+            </parameter>
+        </method>
+        <method>
+            <name>synthesizeToFile</name>
+            <comment>Convert a text file to audio and save as WAV.  Unless you change audio settings, system defaults are used.  Among those are
+	language and a voice based on your locale.  Change settings before calling this method. 
+	note: this is an API call.  it is limited to a maximum length of text as supported by the tts engine.  for android, that is usually
+	about 4000 bytes.  you cannot write more.  (see saveToDisk() and saveToDisk() if you need to handle more text.)  this method only
+	allows you to save the file where a simple save operation is permitted, that is File.DirInternal or RuntimePermissions.GetSafeDirDefaultExternal("").
+	if you want to save your file to your system's Audio/Recordings/File folder, aka MediaStore, use saveToDisk2().</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>params</name>
+                <type>java.lang.Object</type>
+            </parameter>
+            <parameter>
+                <name>outputfolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>rawAudio2Files</name>
+            <comment>this allows you save raw PCM output to a file in your system Documents folder (aka MediaStore).  this output is
+apparently AudioFormat#ENCODING_PCM_16BIT...  this method can help you get around the tts' inability to save audio as .mp3 or .ogg.
+you have the freedom to find your own means of conversion.  of course, you can also simply take your .wav file and submit it directly
+to a converter.  in any case, i put this method out there.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>audioData</name>
+                <type>byte[]</type>
+            </parameter>
+            <parameter>
+                <name>fileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>stop</name>
+            <comment></comment>
+            <returntype>void</returntype>
+        </method>
+        <method>
+            <name>speak</name>
+            <comment>Speaks text in a selected voice and language.  Standard TTS speak defaults to your locale's language and
+	a default voice.  Stanard TTS speak has a maximum text size of 4000 bytes.  TTSextras handles larger text
+	automatically (within your device's memory limitations).  Audio output is captured and is available for saving
+	to disk as a WAV file, if desired. Note: &lt;u&gt;Synthesized audio is 4000 times greater than amount of input text!&lt;/u&gt;
+	 eg. 400 bytes of text = 2MB of audio</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>text</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getDisplayLanguage</name>
+            <comment>Returns the language spoken for this locale.  This is an API call which does not seem to take into account 
+	locales where more than 1 language might be official or spoken.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>l</name>
+                <type>java.util.Locale</type>
+            </parameter>
+        </method>
+        <method>
+            <name>getLocale</name>
+            <comment>Returns a voice's locale as an object.</comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>v</name>
+                <type>android.speech.tts.Voice</type>
+            </parameter>
+        </method>
+        <property>
+            <name>DefaultLocale</name>
+            <returntype>java.lang.Object</returntype>
+            <comment>Returns your system's default locale as an object.</comment>
+        </property>
+        <property>
+            <name>SampleRate</name>
+            <returntype>int</returntype>
+            <comment>this gets the sample rate being used (between 8000hz and 48000hz).  my experience is 22000hz.
+	regrettably, you can't change the sample rate...</comment>
+        </property>
+        <property>
+            <name>RawAudio</name>
+            <returntype>byte[]</returntype>
+            <comment>This is a byte array of raw audio captured during a speak session.  It can get &lt;b&gt;very&lt;/b&gt; large and
+	may cause an out of memory error.  If that occurs, you have 2 options: 1) divide the text file in smaller
+	chunks.  There is no way to calculate how to do this. 2) Use the speak2() method, which will divide your
+	large input file into smaller chunks and create as many output files as needed to handle the input.  They
+	will be named sequentially, and you can queue them up for replay.</comment>
+        </property>
+        <property>
+            <name>Rate</name>
+            <parameter>
+                <name>r</name>
+                <type>java.lang.Float</type>
+            </parameter>
+            <comment>sets speech rate of speed as a float between 0 and 1.  the higher the value, the faster the voice talks.
+	not: this defaults to 1.0.</comment>
+        </property>
+        <property>
+            <name>Pitch</name>
+            <parameter>
+                <name>p</name>
+                <type>java.lang.Float</type>
+            </parameter>
+            <comment>sets speech pitch - whatever that is - as a float.  the higher the value, the more "pitch"... 
+	note: this defaults to 1.0.</comment>
+        </property>
+        <property>
+            <name>AudioFormat</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Voice</name>
+            <parameter>
+                <name>v</name>
+                <type>android.speech.tts.Voice</type>
+            </parameter>
+            <comment>Sets a voice for speaking text.  A voice is not the same as a language, although a voice will
+	speak in a language appropriate to that voice.  A voice is an object.  When you select a voice, you
+	receive an object.  Pass the voice &lt;u&gt;object&lt;/u&gt; to this method.  It's not a string.</comment>
+        </property>
+        <property>
+            <name>Channels</name>
+            <returntype>int</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>Voices</name>
+            <returntype>java.lang.Object[]</returntype>
+            <comment>Returns an array of voices currently supported.  I've skipped over the ones that are not
+	currently onboard or that require an online connection to Google in order to use.  Note: this operation is 
+	asynchronous and can hang on occasion.  If it returns null, you should wait a sec and try again.</comment>
+        </property>
+        <field>
+            <name>isInitialized</name>
+            <comment></comment>
+            <returntype>boolean</returntype>
+        </field>
+    </class>
+    <version>3.0</version>
+    <author>drgottjr</author>
+</root>

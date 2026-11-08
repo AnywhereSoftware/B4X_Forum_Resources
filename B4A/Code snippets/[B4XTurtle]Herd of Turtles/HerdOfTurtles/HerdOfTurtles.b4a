@@ -1,0 +1,83 @@
+﻿Build1=Default,b4a.example
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=b4xturtle
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#Region Activity Preparation
+'Template version 1.00
+Sub Process_Globals
+
+End Sub
+
+Sub Globals
+	Private xui As XUI
+	Private Turtle As B4XTurtle
+
+	Private trackLoading As Int
+	Private nTurtles As Int = 3
+
+	Private frames(nTurtles) As B4XView
+	Private Turtles(nTurtles) As B4XTurtle
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim w As Int = Activity.Width
+	Dim h As Int = Activity.Height
+	Dim xOffset As Int = 0
+	For i = 0 To nTurtles - 1
+		frames(i) = xui.CreatePanel("")
+		Activity.AddView(frames(i), xOffset, 0, w, h)
+		frames(i).LoadLayout("Main")
+		Turtles(i) = Turtle
+	Next
+End Sub
+
+Sub btnRestart_Click
+	Turtle.Stop.ClearScreen.Home
+	Turtle_Start
+End Sub
+
+Sub Activity_Resume
+	Turtle.Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	Turtle.Pause
+End Sub
+#End Region
+
+'B4XTurtle examples: https://www.b4x.com/android/forum/threads/examples-for-teachers-and-parents.116979
+Sub Turtle_Start
+	If trackLoading = nTurtles - 1 Then		'only do this when loading is finished
+		Sleep(2000)
+		Dim vertical As Int = 200
+		For i = 0 To nTurtles - 1
+			Dim thisTurtle As B4XTurtle = Turtles(i)
+			thisTurtle.MoveTo(200, vertical)
+			vertical = vertical + 100
+		Next
+	End If
+	trackLoading = trackLoading + 1
+End Sub

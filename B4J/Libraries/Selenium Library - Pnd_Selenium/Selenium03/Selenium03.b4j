@@ -1,0 +1,76 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pnd_selenium
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 400
+	#MainFormHeight: 200 
+	#MergeLibraries: False 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private Selenium As Pnd_Selenium
+End Sub
+
+
+	' *******************************************************************************
+	' In this example:
+	' How To use AddExperimentalOption
+    ' How To use ExecuteCdpCommand
+    ' My best try to prevent bot detection on websites
+
+	' *******************************************************************************
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	Sleep(500) ' To show MainForm before Chrome
+	
+	
+	' The code below is my best try to prevent bot detection on websites.
+	' In the end, you need to modify chromedriver.exe to remove JS signature to completely escape detection.
+	' More on link:	https://www.zenrows.com/blog/selenium-avoid-bot-detection#remove-javascript-signature
+	
+	
+	' Open DevTools in Chrome for Testing (F12) and use user-agent from request header. You can also try user-agent from standard Chrome browser.
+	Dim UserAgent As String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" 
+	
+	Selenium.AddArgument("--disable-blink-features=AutomationControlled")
+	Selenium.AddArgument("--user-agent=" & UserAgent)
+
+	Selenium.AddExperimentalOption("useAutomationExtension", False)
+	Selenium.AddExperimentalOption("excludeSwitches", Array As String("enable-automation"))
+
+	Selenium.Initialize("Selenium", "e:\Kotlin\Wrap_Selenium\ChromeForTestingAndChromeDriver\chromedriver.exe")
+
+	Selenium.ExecuteScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})", "")
+	
+	Dim Parameters As Map = CreateMap("userAgent":UserAgent)
+	Dim CdpCommandMap As Map = Selenium.ExecuteCdpCommand("Network.setUserAgentOverride", Parameters)
+	Log(CdpCommandMap)
+
+	'Dim Parameters2 As Map = CreateMap("source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+	'Selenium.ExecuteCdpCommand("Page.addScriptToEvaluateOnNewDocument", Parameters2)
+		
+	Selenium.NavigateTo("https://botcheck.luminati.io/")
+	'Selenium.NavigateTo("https://www.browserscan.net/bot-detection")
+End Sub
+
+
+Sub Selenium_NavigationFinished
+
+End Sub
+

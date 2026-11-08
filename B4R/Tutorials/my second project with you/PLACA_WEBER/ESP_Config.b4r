@@ -1,0 +1,523 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=reeprom
+Library3=resp8266
+Library4=resp8266wifi
+Library5=rmqtt_ex
+Library6=ronewire
+Library7=rrandomaccessfile
+Library8=rglobalstore
+Module1=GStore1
+Module2=WiFiServer
+NumberOfFiles=0
+NumberOfLibraries=8
+NumberOfModules=2
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 2500
+#End Region
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Public Wifi As ESP8266WiFi
+	Public esp As ESP8266
+	Public eeprom As EEPROM
+	Private const MAGIC_EEPROM As Byte = 213
+	Private sr As B4RSerializator
+	Private bc As ByteConverter
+	Public mqtt As MqttClient
+	Private mqttSocket As WiFiSocket
+	Private MQTTOpt As MqttConnectOptions
+	
+	Private d1 As D1Pins
+	Private PinGPIO05 As Pin
+	Private PinGPIO04 As Pin
+	Private PinGPIO00 As Pin
+	Private PinGPIO15 As Pin
+	Private PinGPIO13 As Pin
+	Private PinGPIO12 As Pin
+	Private PinGPIO14 As Pin
+	Private PinGPIO16 As Pin
+	Private bc As ByteConverter
+	Private State As Boolean
+	
+	Private type_s As Boolean
+	Private timer1 As Timer
+	Private onewire As OneWire
+	Private address(8) As Byte
+	Private ESPin As D1Pins
+	Private timer2 As Timer
+    Private RS1,RS2,RS3,RS4,RS5,RS6,RS7,RS8 As Boolean		'array used for MQTT update
+	Private const RelayInfoStart As Int = 250   'ou seja, primeiro local para armazenamento de informações de retransmissão
+	Private Temp_Set As Byte
+	Private Set_port as Byte
+
+ End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+    timer1.Initialize("timer1_Tick",2000)
+	timer2.Initialize("Stats",1000)
+	
+	onewire.Initialize(ESPin.D4)
+	PinGPIO05.Initialize(d1.D1,PinGPIO05.MODE_OUTPUT)'Pin D2 ESP Relay 1
+	PinGPIO04.Initialize(d1.D2,PinGPIO04.MODE_OUTPUT)'Pin D5 ESP Relay 2
+	PinGPIO00.Initialize(d1.D3,PinGPIO00.MODE_OUTPUT)'Pin D6 ESP Relay 3
+	PinGPIO15.Initialize(d1.D8,PinGPIO15.MODE_OUTPUT)'Pin D7 ESP Relay 4
+	PinGPIO13.Initialize(d1.D7,PinGPIO13.MODE_OUTPUT)'Pin D2 ESP Relay 5
+	PinGPIO12.Initialize(d1.D6,PinGPIO12.MODE_OUTPUT)'Pin D5 ESP Relay 6
+	PinGPIO14.Initialize(d1.D5,PinGPIO14.MODE_OUTPUT)'Pin D6 ESP Relay 7
+	PinGPIO16.Initialize(d1.D0,PinGPIO16.MODE_OUTPUT)'Pin D7 ESP Relay 8
+	
+	'Set Desligar Pinos ESP
+	PinGPIO05.DigitalWrite(False)
+	PinGPIO04.DigitalWrite(False)
+	PinGPIO00.DigitalWrite(False)
+	PinGPIO15.DigitalWrite(False)
+	PinGPIO13.DigitalWrite(False)
+	PinGPIO12.DigitalWrite(False)
+	PinGPIO14.DigitalWrite(False)
+	PinGPIO16.DigitalWrite(False)
+	
+	WiFiServer.Start
+	ConnectToNetwork(0)
+	timer1.Enabled = True
+	SetRelay(0)
+	SetRelay(1)
+	SetRelay(2)
+	SetRelay(3)
+	SetRelay(4)
+	SetRelay(5)
+	SetRelay(6)
+	SetRelay(7)
+End Sub
+	
+Public Sub SetRelay(RelayNo As Int)
+	Dim State1() As Byte = eeprom.ReadBytes(RelayInfoStart + RelayNo,1)
+	Log("LER STATE1: ",bc.HexFromBytes(State1))
+	Select RelayNo
+		Case 0
+			If State1(0) = 1 Then 
+			PinGPIO05.DigitalWrite(True) 
+			RS1= (True)
+		    timer2.Enabled=True
+		Else 
+			PinGPIO05.DigitalWrite(False)
+			RS1= (False)
+			timer2.Enabled=True
+			End If
+		Case 1
+			If State1(0) = 1 Then 
+			PinGPIO04.DigitalWrite(True)
+			RS2= (True)
+			timer2.Enabled=True
+		Else 
+			PinGPIO04.DigitalWrite(False)
+			RS2= (False)
+			timer2.Enabled=True
+			End If
+		Case 2
+			If State1(0) = 1 Then 
+			PinGPIO00.DigitalWrite(True) 
+			RS3= (True)
+			timer2.Enabled=True
+		Else 
+			PinGPIO00.DigitalWrite(False)'Relay 3
+			RS3= (False)
+			timer2.Enabled=True
+			End If
+		Case 3
+			If State1(0) = 1 Then 
+			PinGPIO15.DigitalWrite(True) 
+			RS4= (True)
+			timer2.Enabled=True
+		Else
+			PinGPIO15.DigitalWrite(False)'Relay 4
+			RS4= (False)
+			timer2.Enabled=True
+			End If
+		Case 4
+			If State1(0) = 1 Then 
+			PinGPIO13.DigitalWrite(True)
+			RS5= (True)
+			timer2.Enabled=True
+		Else 
+			PinGPIO13.DigitalWrite(False)'Relay 5
+			RS5= (False)
+			timer2.Enabled=True
+			End If
+		Case 5
+			If State1(0) = 1 Then 
+			PinGPIO12.DigitalWrite(True) 
+			RS6= (True)
+			timer2.Enabled=True
+		Else 
+			PinGPIO12.DigitalWrite(False)'Relay 6
+			RS6= (False)
+			timer2.Enabled=True
+			End If
+		Case 6
+			If State1(0) = 1 Then 
+			PinGPIO14.DigitalWrite(True) 
+			RS7= (True)
+			timer2.Enabled=True
+		Else 
+			PinGPIO14.DigitalWrite(False)'Relay 7
+			RS7= (False)
+			timer2.Enabled=True
+			End If
+		Case 7
+			If State1(0) = 1 Then
+			PinGPIO16.DigitalWrite(True)
+			RS8= (True)
+			timer2.Enabled=True
+		Else
+			PinGPIO16.DigitalWrite(False)'Relay 7
+			RS8= (False)
+			timer2.Enabled=True
+			End If
+	End Select
+End Sub
+
+Public Sub SaveNetworkDetails(Data() As Byte)'Gravar Eeprom
+	Log("Salvando dados de Rede")
+	Log("Comprimento de Dados : ", Data.Length)
+	Log("Memoria=", AvailableRAM)
+	Log("Tamanho :",StackBufferUsage)
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM,Data.Length), 0)
+	eeprom.WriteBytes(Data, 2)
+End Sub
+
+Public Sub ConnectToNetwork(tag As Byte)
+	Wifi.Disconnect
+ If GetStoredData = 1 Then
+	'read settings from EEPROM
+	  	Dim SSID As String = bc.StringFromBytes(GStore1.slot0) 'ignore
+		Dim Password As String = bc.StringFromBytes(GStore1.slot1) 'ignore" '
+		Log("Tentando se Conectar a: ", SSID, " Senha: ", Password)
+		If Wifi.Connect2(SSID,Password) Then 
+			Log("Conectado com Sucesso : ", GStore1.slot0)
+			Log("IP Local: ", Wifi.LocalIp)
+			StopAP
+			'Conectar_MQTT(0)
+			CallSubPlus("Conectar_MQTT",500,0)
+	   Else
+			Log("WIFI Falha Ao Se Conectar - Iniciar WifiServer ")
+			Log("Automatico Reset Em 5 M")
+			CallSubPlus("ConnectToNetwork",60*1000,0) 'tente conectar novamente após 1 minuto
+	  End If
+	Else
+		Log("Dados Da Rede Não Encontrados .")
+		WiFiServer.Start
+	End If
+End Sub
+
+Private Sub Conectar_MQTT (tag As Byte)
+    mqtt.Initialize2(mqttSocket.Stream, bc.StringFromBytes(GStore1.slot2),bc.StringFromBytes(GStore1.slot3), bc.StringFromBytes(GStore1.slot4), "mqtt_MessageArrived", "mqtt_Disconnected") 'ignore
+	MQTTOpt.Initialize(bc.StringFromBytes(GStore1.Slot5),bc.StringFromBytes(GStore1.slot6))
+	If mqtt.Connect2(MQTTOpt) = False Then
+		Log("Conexão Error do Broker")
+		mqtt_Disconnected
+	Else
+		
+		Log("Nova Conexão Com o Broker OK")
+		CallSubPlus("Conectar_MQTT",5000,0)
+		mqtt.Subscribe("Control_Rele8/#",1) '<---Mude o nome do tópico!
+		mqtt.Subscribe("Rele1_A",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele2_B",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele3_C",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele4_D",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele5_E",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele6_F",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele7_G",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Rele8_H",1)'		 <---Mude o nome do tópico!
+		mqtt.Subscribe("Start",1)'		     <---Mude o nome do tópico!
+		mqtt.Subscribe("Temp_Set",1)'        <---Mude o nome do tópico!
+		mqtt.Subscribe("Set_port",1)
+	End If
+End Sub
+
+Sub mqtt_MessageArrived(Topic As String, payload()As Byte)
+
+	If bc.StringFromBytes(payload) = "true" Then State = True Else State = False
+    Select Case Topic
+		Case "Rele1_A"
+			PinGPIO05.DigitalWrite(Not(State)) 
+			RS1 = (Not(State))
+			If State = False Then
+				SaveRelay(0,1)
+			Else
+				SaveRelay(0,0)
+			End If
+		Case "Rele2_B"
+			PinGPIO04.DigitalWrite(Not(State))
+			RS2 = (Not(State))
+			If State = False Then
+				SaveRelay(1,1)
+			Else
+				SaveRelay(1,0)
+			End If
+		Case "Rele3_C"
+			PinGPIO00.DigitalWrite(Not(State))
+			RS3 = (Not(State))
+			If State = False Then
+				SaveRelay(2,1)
+			Else
+				SaveRelay(2,0)
+			End If
+		Case "Rele4_D"
+			PinGPIO15.DigitalWrite(Not(State))
+			RS4 = (Not(State))
+			If State = False Then
+				SaveRelay(3,1)
+			Else
+				SaveRelay(3,0)
+			End If
+		Case "Rele5_E"
+			PinGPIO13.DigitalWrite(Not(State))
+			RS5 = (Not(State))
+			If State = False Then
+				SaveRelay(4,1)
+			Else
+				SaveRelay(4,0)
+			End If
+		Case "Rele6_F"
+			PinGPIO12.DigitalWrite(Not(State))
+			RS6 = (Not(State))
+			If State = False Then
+				SaveRelay(5,1)
+			Else
+				SaveRelay(5,0)
+			End If
+		Case "Rele7_G"
+			PinGPIO14.DigitalWrite(Not(State)) 
+			RS7 = (Not(State))
+			If State = False Then
+				SaveRelay(6,1)
+			Else
+				SaveRelay(6,0)
+			End If
+		Case "Rele8_H"
+			PinGPIO16.DigitalWrite(True) 
+			CallSubPlus("Rele_Portao",1000,1)'---> Sub
+		Case "Start"
+			timer2.Enabled=True
+		Case "Temp_Set"
+			Temp_Set=bc.StringFromBytes(payload)
+		Case "Set_port"
+			Set_port=bc.StringFromBytes(payload)
+			
+			PinGPIO16.DigitalWrite(Not(State))
+			RS8 = (Not(State))
+			If State = False Then
+				SaveRelay(7,1)
+			Else
+				SaveRelay(7,0)
+			End If
+		End Select
+		
+	
+End Sub
+Sub Rele_Portao(Tag As Byte)
+	PinGPIO16.DigitalWrite(False)'Relay 4 OFF Motor Garage
+End Sub
+Sub mqtt_MessageSend(tag As Byte)
+	If mqttSocket.Connected = True Then
+End If
+	CallSubPlus("mqtt_MessageSend",5000,0)
+End Sub
+	
+'OnOff = 0 for off, 1 for on
+Public Sub SaveRelay(RelayNo As Int,OnOff As Byte)
+	eeprom.WriteBytes(Array As Byte(OnOff), RelayInfoStart + RelayNo)
+End Sub
+
+Sub Stats
+	If RS1 Then
+		mqtt.Publish("Statu1","A")
+	Else
+		mqtt.Publish("Statu1","B")
+	End If
+	
+	If RS2 Then
+		mqtt.Publish("Statu1","C")
+	Else
+		mqtt.Publish("Statu1","D")
+	End If
+	
+	If RS3 Then
+		mqtt.Publish("Statu1","E")
+	Else
+		mqtt.Publish("Statu1","F")
+	End If
+	
+	If RS4 Then
+		mqtt.Publish("Statu1","G")
+	Else
+		mqtt.Publish("Statu1","H")
+	End If
+	
+	If RS5 Then
+		mqtt.Publish("Statu1","I")
+	Else
+		mqtt.Publish("Statu1","J")
+	End If
+	
+	If RS6 Then
+		mqtt.Publish("Statu1","K")
+	Else
+		mqtt.Publish("Statu1","L")
+	End If
+	
+	If RS7 Then
+		mqtt.Publish("Statu1","M")
+	Else
+		mqtt.Publish("Statu1","N")
+	End If
+	
+	If RS8 Then
+		mqtt.Publish("Statu1","O")
+	Else
+		mqtt.Publish("Statu1","P")
+	End If
+	Delay(1000)
+	timer2.Enabled=False
+End Sub
+
+Sub Timer1_Tick
+If onewire.Search(address) = False Then
+		onewire.ResetSearch
+		Return
+	End If
+	If onewire.CRC8(address, 7) <> address(7) Then
+		Return
+	End If
+	Select address(0)
+		Case 0x10
+			type_s = True
+		Case 0x28
+			type_s = False
+		Case 0x22
+			type_s = False
+		Case Else
+			Return
+	End Select
+	onewire.Reset
+	onewire.Select(address)
+	onewire.Write(0x44, True)
+	CallSubPlus("ReadTemparature",1000,0)
+End Sub
+
+Private Sub ReadTemparature (u As Byte)
+	onewire.Reset
+	onewire.Select(address)
+	onewire.Write(0xBE, False)
+	Dim Data(12) As Byte
+	onewire.ReadBytes(Data, 9)
+	Dim raw As Int = Bit.Or(Bit.ShiftLeft(Data(1),8),Data(0))
+	If type_s Then
+		raw = Bit.ShiftLeft(raw, 3)
+		If Data(7) = 0x10 Then
+			raw = Bit.And(raw, 0xFFF0) + 12 - Data(6)
+		End If
+	Else
+		Dim cfg As Byte = Bit.And(Data(4), 0x60)
+		If cfg = 0 Then
+			raw = Bit.And(raw, Bit.Not(7))
+		Else if cfg = 0x20 Then
+			raw = Bit.And(raw, Bit.Not(3))
+		Else if cfg = 0x40 Then
+			Bit.And(raw, Bit.Not(1))
+		End If
+	End If
+	Dim celsius As Double = raw/16
+	Log("Temp_Ds = ", NumberFormat(celsius,0,0),"°C")
+	mqtt.Publish("Temp_Ds",NumberFormat(celsius,0,0))
+
+	If Temp_Set = 0 Then Temp_Set = 40
+	Log("Temp_Set ",Temp_Set)
+	
+	If Temp_Set < 40 Then
+	If NumberFormat(celsius,0,0) > Temp_Set Then
+		PinGPIO14.DigitalWrite(True)
+		mqtt.Publish("Statu1","M")
+	Else
+		PinGPIO14.DigitalWrite(False)
+		mqtt.Publish("Statu1","N")
+	End If
+	End If
+End Sub
+
+public Sub mqtt_Disconnected
+    Log("MQTT_Desconectado")
+	If Wifi.IsConnected Then
+		Log("Wifi Conectado")
+		CallSubPlus("Conectar_MQTT",60*1000,0)'tente conectar novamente após 1 minuto
+	Else
+		Log("Wifi Desconectado")
+		CallSubPlus("ConnectToNetwork",60*1000,0)'tente conectar novamente após 1 minuto
+	End If
+End Sub
+Public Sub GetStoredDataLength As Byte'Ler Eemprom
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	If header(0) = MAGIC_EEPROM  Then
+		Return header(1)
+	End If
+	Return 0
+End Sub
+
+Sub	GetStoredData As Byte'Ler Objetos Eeeprom
+	Dim length As Byte = GetStoredDataLength	
+	Log("Parâmetros do Wifi Salvo na Eeprom  =",length)
+	If length > 0 Then
+		Dim ObjectsBuffer(8) As Object
+		Dim Data() As Byte = eeprom.ReadBytes(2, length)
+		Dim Objects() As Object = sr.ConvertBytesToArray(Data, ObjectsBuffer)
+		If Objects.Length <> 0 Then
+          For i = 0 To 7
+          GStore1.Put(i,Objects(i))
+		  Next
+		  Return 1
+		Else 
+		  Return 0
+		End If	
+	Else
+		Return 0	
+	End If		  
+End Sub
+
+Public Sub ClearStoredDataLength'Apagar Eeeprom
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	If header(0) = MAGIC_EEPROM Then
+		header(1) = 0
+		eeprom.WriteBytes(header,0)	
+		Log("Eeprom Apagada")
+	End If
+	GStore1.Slot0(" ")
+	GStore1.Slot1(" ")
+	Delay(100)
+	esp.restart
+End Sub
+
+public Sub StopAP
+	Log("Stop AP")
+	RunNative("stopAP", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopAP (B4R::Object* u) {
+  WiFi.softAPdisconnect(1);
+  }
+#end if
+
+
+
+
+
+

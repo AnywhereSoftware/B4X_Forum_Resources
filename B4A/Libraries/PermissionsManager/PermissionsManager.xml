@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class b4a_type="StaticCode">
+        <name>igolub.permissionmanager.b4a.PermissionsManagerFileProvider</name>
+        <shortname>FileProvider</shortname>
+        <comment>Copy next lines to manifest:&lt;code&gt;
+ AddApplicationText(
+&lt;provider
+android:name="igolub.permissionmanager.b4a.PMFileProvider"
+android:authorities="$PACKAGE$.provider"
+android:exported="false"
+android:grantUriPermissions="true"&gt;
+&lt;meta-data
+android:name="android.support.FILE_PROVIDER_PATHS"
+android:resource="@xml/provider_paths"/&gt;
+&lt;/provider&gt;
+)
+CreateResource(xml, provider_paths,
+&lt;files-path name="name" path="shared" /&gt;
+)
+&lt;/code&gt;</comment>
+        <owner>process</owner>
+        <method>
+            <name>GetFileUri</name>
+            <comment></comment>
+            <returntype>java.lang.Object</returntype>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetFileUriAsIntentData</name>
+            <comment></comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>mIntent</name>
+                <type>anywheresoftware.b4a.objects.IntentWrapper</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>UseFileProvider</name>
+            <returntype>boolean</returntype>
+            <comment></comment>
+        </property>
+        <property>
+            <name>SharedFolder</name>
+            <returntype>java.lang.String</returntype>
+            <comment></comment>
+        </property>
+    </class>
+    <class b4a_type="StaticCode">
+        <name>igolub.permissionmanager.b4a.PermissionsManagerConstants</name>
+        <shortname>PermissionsManager</shortname>
+        <owner>process</owner>
+        <field>
+            <name>DANGEROUS_SEND_SMS</name>
+            <comment>Allows an application to send SMS messages.
+Constant Value: "android.permission.SEND_SMS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.SEND_SMS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACCESS_COARSE_LOCATION</name>
+            <comment>Allows an application To access approximate location. Alternatively, you might want ACCESS_FINE_LOCATION.
+Constant Value: "android.permission.ACCESS_COARSE_LOCATION".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCESS_COARSE_LOCATION")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_BODY_SENSORS_BACKGROUND</name>
+            <comment>Allows an application to access data from sensors that the user uses to measure what is happening inside their body, such as heart rate. If you're requesting this permission, you must also request BODY_SENSORS. Requesting this permission by itself doesn't give you Body sensors access.
+Constant Value: "android.permission.BODY_SENSORS_BACKGROUND".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.BODY_SENSORS_BACKGROUND")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_RECEIVE_WAP_PUSH</name>
+            <comment>Allows an application to receive WAP push messages.
+Constant Value: "android.permission.RECEIVE_WAP_PUSH".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.RECEIVE_WAP_PUSH")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_MEDIA_VIDEO</name>
+            <comment>Allows an application to read video files from external storage.
+Constant Value: "android.permission.READ_MEDIA_VIDEO".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_MEDIA_VIDEO")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_SYSTEM_ALERT_WINDOW</name>
+            <comment>Allows an application to be shown on top of all other applications. Very few applications should use this permission; these windows are intended for system-level interaction with the user.
+Constant Value: "android.permission.SYSTEM_ALERT_WINDOW".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.SYSTEM_ALERT_WINDOW")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACTIVITY_RECOGNITION</name>
+            <comment>Allows an application to recognise physical activity.
+Constant Value: "android.permission.ACTIVITY_RECOGNITION".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACTIVITY_RECOGNITION")&lt;/code&gt;
+Added in API level 29.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_MEDIA_AUDIO</name>
+            <comment>Allows an application to read audio files from external storage.
+Constant Value: "android.permission.READ_MEDIA_AUDIO".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_MEDIA_AUDIO")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_CALENDAR</name>
+            <comment>Allows an application to read the user's calendar data.
+Constant Value: "android.permission.READ_CALENDAR".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_CALENDAR")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_PACKAGE_USAGE_STATS</name>
+            <comment>Allows an application to collect component usage statistics.
+Constant Value: "android.permission.PACKAGE_USAGE_STATS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.PACKAGE_USAGE_STATS")&lt;/code&gt;
+Added in API level 23.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_WRITE_CONTACTS</name>
+            <comment>Allows an application to write the user's contacts data.
+Constant Value: "android.permission.WRITE_CONTACTS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.WRITE_CONTACTS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_CALL_PHONE</name>
+            <comment>Allows an application to initiate a phone call without going through the Dialler user interface for the user to confirm the call.
+Constant Value: "android.permission.CALL_PHONE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.CALL_PHONE")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_BLUETOOTH_CONNECT</name>
+            <comment>Required to be able to connect to paired Bluetooth devices.
+Constant Value: "android.permission.BLUETOOTH_CONNECT".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.BLUETOOTH_CONNECT")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_CALL_LOG</name>
+            <comment>Allows an application to read the user's call log.
+Constant Value: "android.permission.READ_CALL_LOG".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_CALL_LOG")&lt;/code&gt;
+Added in API level 16.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_MANAGE_EXTERNAL_STORAGE</name>
+            <comment>Allows an application a broad access to external storage in scoped storage. Intended to be used by few applications that need to manage files on behalf of the users.
+Constant Value: "android.permission.MANAGE_EXTERNAL_STORAGE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.MANAGE_EXTERNAL_STORAGE")&lt;/code&gt;
+Added in API level 30.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_UWB_RANGING</name>
+            <comment>Required to be able to range to devices using ultra-wideband.
+Constant Value: "android.permission.UWB_RANGING".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.UWB_RANGING")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_BODY_SENSORS</name>
+            <comment>Allows an application to access data from sensors that the user uses to measure what is happening inside their body, such as heart rate.
+Constant Value: "android.permission.BODY_SENSORS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.BODY_SENSORS")&lt;/code&gt;
+Added in API level 20.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_MANAGE_MEDIA</name>
+            <comment>Allows an application to modify and delete media files on this device or any connected storage device without user confirmation.
+IMPORTANT: Applications must already be granted the READ_EXTERNAL_STORAGE or MANAGE_EXTERNAL_STORAGE permissions for this permission to take effect.
+Constant Value: "android.permission.MANAGE_MEDIA".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.MANAGE_MEDIA")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACCESS_BACKGROUND_LOCATION</name>
+            <comment>Allows an application To access location in the background. If you're requesting this permission, you must also request either ACCESS_COARSE_LOCATION or ACCESS_FINE_LOCATION. Requesting this permission by itself doesn't give you location access.
+Constant Value: "android.permission.ACCESS_BACKGROUND_LOCATION".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCESS_BACKGROUND_LOCATION")&lt;/code&gt;
+Added in API level 29..</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_CONTACTS</name>
+            <comment>Allows an application to read the user's contacts data.
+Constant Value: "android.permission.READ_CONTACTS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_CONTACTS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_EXTERNAL_STORAGE</name>
+            <comment>Allows an application to read from external storage. Note: Starting in API level 33, this permission has no effect. If your app accesses other apps' media files, request one or more of these permissions instead: READ_MEDIA_IMAGES, READ_MEDIA_VIDEO, READ_MEDIA_AUDIO.
+Starting in API level 29, applications don't need to request this permission to access files in their app-specific directory on external storage, or their own files in the MediaStore. Apps shouldn't request this permission unless they need to access other apps' files in the MediaStore.
+Constant Value: "android.permission.READ_EXTERNAL_STORAGE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_EXTERNAL_STORAGE")&lt;/code&gt;
+Added in API level 16.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_RECORD_AUDIO</name>
+            <comment>Allows an application to record audio.
+Constant Value: "android.permission.RECORD_AUDIO".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.RECORD_AUDIO")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_USE_SIP</name>
+            <comment>Allows an application to use SIP service.
+Constant Value: "android.permission.USE_SIP".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.USE_SIP")&lt;/code&gt;
+Added in API level 9.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_WRITE_CALENDAR</name>
+            <comment>Allows an application to write the user's calendar data.
+Constant Value: "android.permission.WRITE_CALENDAR".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.WRITE_CALENDAR")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_PHONE_STATE</name>
+            <comment>Allows read only access to phone state, including the current cellular network information, the status of any ongoing calls, and a list of any PhoneAccounts registered on the device.
+Constant Value: "android.permission.READ_PHONE_STATE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_PHONE_STATE")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_NEARBY_WIFI_DEVICES</name>
+            <comment>Required to be able to advertise and connect to nearby devices via Wi-Fi.
+Constant Value: "android.permission.NEARBY_WIFI_DEVICES".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.NEARBY_WIFI_DEVICES")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_APP_NOTIFICATION</name>
+            <comment>Show notification settings for a single application (in most case's it's unrestricted by default).
+Constant Value: "android.settings.APP_NOTIFICATION_SETTINGS"
+Added in API level 26.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_CAMERA</name>
+            <comment>Required to be able to access the camera device. This will automatically enforce the uses-feature manifest element for all camera features. If you do not require all camera features or can properly operate if a camera is not available, then you must modify your manifest as appropriate in order to install on devices that don't support all camera features.
+Constant Value: "android.permission.CAMERA".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.CAMERA")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_WRITE_SETTINGS</name>
+            <comment>Allows an application to read or write the system settings.
+Constant Value: "android.permission.WRITE_SETTINGS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.WRITE_SETTINGS")&lt;/code&gt;
+Added in API level 1</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_RECEIVE_MMS</name>
+            <comment>Allows an application to monitor incoming MMS messages.
+Constant Value: "android.permission.RECEIVE_MMS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.RECEIVE_MMS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_REQUEST_INSTALL_PACKAGES</name>
+            <comment>Allows an application to request installing packages. Applications targeting APIs greater than 25 must hold this permission in order to use Intent.ACTION_INSTALL_PACKAGE.
+Constant Value: "android.permission.REQUEST_INSTALL_PACKAGES".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.REQUEST_INSTALL_PACKAGES")&lt;/code&gt;
+Added in API level 26.
+For lower SDK devices use SPECIAL_INSTALL_FROM_UNKNOWN_SOURCES.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_IGNORE_BACKGROUND_DATA_RESTRICTIONS</name>
+            <comment>Show screen for controlling background data restrictions for a particular application (in most case's it's unrestricted by default).
+Constant Value: "android.settings.IGNORE_BACKGROUND_DATA_RESTRICTIONS_SETTINGS"
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCESS_NETWORK_STATE")&lt;/code&gt;
+Added in API level 24.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_BLUETOOTH_ADVERTISE</name>
+            <comment>Required to be able to advertise to nearby Bluetooth devices.
+Constant Value: "android.permission.BLUETOOTH_ADVERTISE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.BLUETOOTH_ADVERTISE")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS</name>
+            <comment>Constant Value: "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS")&lt;/code&gt;
+Added in API level 23.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_RECEIVE_SMS</name>
+            <comment>Allows an application to receive SMS messages.
+Constant Value: "android.permission.RECEIVE_SMS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.RECEIVE_SMS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_PHONE_NUMBERS</name>
+            <comment>Allows read access to the device's phone number(s). This is a subset of the capabilities granted by READ_PHONE_STATE but is exposed to instant applications.
+Constant Value: "android.permission.READ_PHONE_NUMBERS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_PHONE_NUMBERS")&lt;/code&gt;
+Added in API level 26.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACCESS_MEDIA_LOCATION</name>
+            <comment>Allows an application to access any geographic locations persisted in the user's shared collection.
+Constant Value: "android.permission.ACCESS_MEDIA_LOCATION".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCESS_MEDIA_LOCATION")&lt;/code&gt;
+Added in API level 29.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_WRITE_CALL_LOG</name>
+            <comment>Allows an application to write (but not read) the user's call log data.
+Constant Value: "android.permission.WRITE_CALL_LOG".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.WRITE_CALL_LOG")&lt;/code&gt;
+Added in API level 16.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_WRITE_EXTERNAL_STORAGE</name>
+            <comment>Allows an application to write to external storage. Note: If your application targets API level 29 or higher, this permission has no effect.
+Constant Value: "android.permission.WRITE_EXTERNAL_STORAGE".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.WRITE_EXTERNAL_STORAGE")&lt;/code&gt;
+Added in API level 4.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ANSWER_PHONE_CALLS</name>
+            <comment>Allows the application to answer an incoming phone call.
+Constant Value: "android.permission.ANSWER_PHONE_CALLS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ANSWER_PHONE_CALLS")&lt;/code&gt;
+Added in API level 26.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACCESS_FINE_LOCATION</name>
+            <comment>Allows an application to access precise location. Alternatively, you might want ACCESS_COARSE_LOCATION.
+Constant Value: "android.permission.ACCESS_FINE_LOCATION".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCESS_FINE_LOCATION")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ADD_VOICEMAIL</name>
+            <comment>Allows an application to add voice mails into the system.
+Constant Value: "com.android.voicemail.permission.ADD_VOICEMAIL".
+Add line to manifest: &lt;code&gt;AddPermission("com.android.voicemail.permission.ADD_VOICEMAIL")&lt;/code&gt;
+Added in API level 14.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_SMS</name>
+            <comment>Allows an application to read SMS messages.
+Constant Value: "android.permission.READ_SMS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_SMS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_ACCEPT_HANDOVER</name>
+            <comment>Allows a calling application to continue a call which was started in another application. An example is a video calling application that wants to continue a voice call on the user's mobile network.
+Constant Value: "android.permission.ACCEPT_HANDOVER".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.ACCEPT_HANDOVER")&lt;/code&gt;
+Added in API level 28.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_APP_NOTIFICATION_BUBBLE</name>
+            <comment>Show notification bubble settings for a single application.
+Constant Value: "android.settings.APP_NOTIFICATION_BUBBLE_SETTINGS"
+Added in API level 29.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_POST_NOTIFICATIONS</name>
+            <comment>Allows an application to post notifications.
+Constant Value: "android.permission.POST_NOTIFICATIONS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.POST_NOTIFICATIONS")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_PROCESS_OUTGOING_CALLS</name>
+            <comment>Allows an application to see the number being dialled during an outgoing call with the option to redirect the call to a different number or abort the call altogether.
+Constant Value: "android.permission.PROCESS_OUTGOING_CALLS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.PROCESS_OUTGOING_CALLS")&lt;/code&gt;
+Added in API level 1.
+Deprecated in API level 29.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_INSTALL_FROM_UNKNOWN_SOURCES</name>
+            <comment>Allows to install applications from unknown sources.
+Added in API level 1.
+Deprecated in API level 26. Use SPECIAL_REQUEST_INSTALL_PACKAGES instead.
+Use this permission only for devices up to SDK25. In higher SDK versions, this setting does not exist and during the check, the return result will always be False.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_BLUETOOTH_SCAN</name>
+            <comment>Required to be able to discover and pair nearby Bluetooth devices.
+Constant Value: "android.permission.BLUETOOTH_SCAN".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.BLUETOOTH_SCAN")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_GET_ACCOUNTS</name>
+            <comment>Allows access to the list of accounts in the Accounts Service.
+Constant Value: "android.permission.GET_ACCOUNTS".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.GET_ACCOUNTS")&lt;/code&gt;
+Added in API level 1.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>DANGEROUS_READ_MEDIA_IMAGES</name>
+            <comment>Allows an application to read image files from external storage.
+Constant Value: "android.permission.READ_MEDIA_IMAGES".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.READ_MEDIA_IMAGES")&lt;/code&gt;
+Added in API level 33.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+        <field>
+            <name>SPECIAL_SCHEDULE_EXACT_ALARM</name>
+            <comment>Allows applications to use exact alarm APIs.
+This is a special access permission that can be revoked by the system or the user. It should only be used to enable user-facing features that require exact alarms.
+Constant Value: "android.permission.SCHEDULE_EXACT_ALARM".
+Add line to manifest: &lt;code&gt;AddPermission("android.permission.SCHEDULE_EXACT_ALARM")&lt;/code&gt;
+Added in API level 31.</comment>
+            <returntype>java.lang.String</returntype>
+        </field>
+    </class>
+    <class>
+        <name>igolub.permissionmanager.b4a.PermissionsManager</name>
+        <shortname>PermissionsManager</shortname>
+        <owner>process</owner>
+        <event>ApplicationResumeAllowed</event>
+        <method>
+            <name>IsSpecial</name>
+            <comment>Check if the permission is Special permission.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CheckAndRequestPermission2</name>
+            <comment>Checks whether the application has been granted the specified permission. If not, dialog with specified DescriptionText and Title will be shown in which you can explain to user for what the application requires this permission. After user closes dialog, a default dialog with asking for permission will be shown.
+The Activity_PermissionResult or B4XPage_PermissionResult will be raised with the result (in all cases).
+This method can only be called from an Activity.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DescriptionDialogText</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DescriptionDialogTitle</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>DialogCloseButtonText</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CheckAndRequestPermission</name>
+            <comment>Checks whether the application has been granted the specified permission. If not then the user will be shown a dialog asking for permission.
+The Activity_PermissionResult or B4XPage_PermissionResult will be raised with the result (in all cases).
+This method can only be called from an Activity.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetSafeDirDefaultExternal</name>
+            <comment>Returns the path to the app's default folder on the secondary storage device.
+The path to File.DirInternal will be returned if there is no secondary storage available.
+It is a better alternative to File.DirDefaultExternal. On Android 4.4+ no permission is required to access this folder.
+SubFolder - A sub folder that will be created for your application. Pass an empty string if not needed.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>subFolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAllSafeDirsExternal</name>
+            <comment>Returns an List with all the external folders available to your application. 
+The first element will be the same as the value returned from GetSafeDirDefaultExternal.
+On Android 4.4+ no permission is required to access these folders.
+On older versions only one folder will be returned. You should add the permission as explained in GetSafeDirDefaultExternal documentation.
+SubFolder - A sub folder that will be created for your application. Pass an empty string if not needed.</comment>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <parameter>
+                <name>subFolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsDangerous</name>
+            <comment>Check if the permission is Dangerous permission.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsDangerousOrSpecial</name>
+            <comment>Check if the permission is Special or Dangerous permission.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CheckPermission</name>
+            <comment>Checks whether the application has been granted the specified permission.
+This method can be called from a Service.</comment>
+            <returntype>java.lang.Boolean</returntype>
+            <parameter>
+                <name>Permission</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <property>
+            <name>AllPermissionsInManifestFile</name>
+            <returntype>anywheresoftware.b4a.objects.collections.List</returntype>
+            <comment>Returns the List of all permissions specified in manifest file. You can use this list to ask for all permissions in manifest at the same time.
+Example: &lt;code&gt;
+For Each permission As String In PermissionManager1.AllPermissionsInManifestFile
+	PermissionManager1.CheckAndRequestPermission(permission)
+	Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+Next&lt;/code&gt;</comment>
+        </property>
+        <property>
+            <name>DeviceSDK</name>
+            <returntype>int</returntype>
+            <comment>Returns the integer value of device's SDK version.
+You don't need Phone library.</comment>
+        </property>
+        <property>
+            <name>ApplicationResumeAllowed</name>
+            <returntype>java.lang.Boolean</returntype>
+            <parameter>
+                <name>Value</name>
+                <type>java.lang.Boolean</type>
+            </parameter>
+            <comment>You can use this property to prevent the application to resume until the permissions requesting process will finish. Before start of permissions requesting process you need to set this value to False. When permissions process is finished, you must set this value to True. PermissionsManager_ApplicationResumeAllowed event will be triggered when you set value to True. Default value is True.
+Example: &lt;code&gt;
+PermissionManager1.ApplicationResumeAllowed=False 'Start preventing Application to resume.
+For Each permission As String In PermissionManager1.AllPermissionsInManifestFile
+	PermissionManager1.CheckAndRequestPermission(permission)
+	Wait For Activity_PermissionResult (permission As String, Result As Boolean)
+Next
+PermissionManager1.ApplicationResumeAllowed=True 'Stop preventing Application to resume.&lt;/code&gt;
+
+On Activity_Resume or other part of code for which you want to prevent to resume until permissions requesting process is ended:
+Example:&lt;code&gt;
+If PermissionsManager1.ApplicationResumeAllowed=False Then
+	Wait For PermissionsManager_ApplicationResumeAllowed	
+End If
+'Rest of the code...&lt;/code&gt;</comment>
+        </property>
+    </class>
+    <version>1.3</version>
+    <author>Ivica Golubovic</author>
+</root>

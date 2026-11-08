@@ -1,0 +1,24 @@
+should go in onresume:
+	' i save it for the last thing in onresume.  otherwise, wait for's can mess you up.
+
+	If Not(backkey.isInitialized) Then
+		Log("initializing backster in main on resume")
+		backkey.Initialize("backster")
+		If backkey.isInitialized Then
+			Log("backster initialized. starting blocking")
+			backkey.StartBlocking
+		End If
+	Else if Not(backkey.isBlocking) Then
+		Log("backster initialized. starting blocking")
+		backkey.StartBlocking
+	End If
+
+
+stopblocking as an early step in onpause.  note: no harm to stopblocking if there was no blocking...
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+note: i've added the global boolean isBlocking.  isInitialized isn't enough.  the library may well be initialized but
+not handling the back key (you can toggle that on/off at will).  and if, for some reason, the back key isn't being 
+handled, you can see if backkey.isBlocking is true.  google's api does not provide any way to check if the callback 
+has been registered or if the handler is actually running.  a flag is one of a number of ways to keep tabs on what the
+handler is doing.  i'm looking at other options.

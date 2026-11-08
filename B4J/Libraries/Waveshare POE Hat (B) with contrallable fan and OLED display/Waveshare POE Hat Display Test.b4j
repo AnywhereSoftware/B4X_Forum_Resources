@@ -1,0 +1,125 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=javaobject
+Library2=jcore
+Library3=jpi4j
+Library4=jnetwork
+Module1=i2c
+Module2=ssd1306
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=2
+Version=9.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+#CommandLineArgs:
+#MergeLibraries: True 
+#JavaCompilerPath: 8, C:\Program Files\Java\jdk1.8.0_144\bin\javac.exe
+#End Region
+Sub Process_Globals
+ Dim IP As String 
+End Sub
+ 
+Sub AppStart (Args() As String)
+ 
+	ssd1306.init(1, 0x3c)
+	ssd1306.Delay_ms(200)
+	ssd1306.reset
+	ssd1306.set_power(1)
+	ssd1306.cls
+	
+	Dim a, a1 As Int
+	Dim b, b1 As Int
+	Dim c As Int
+	For c = 1 To 50
+		a = Rnd(0, ssd1306.x_size)
+		b = Rnd(0, ssd1306.y_size)
+		ssd1306.line(a1, b1, a, b, True)
+		a1 = a
+		b1 = b
+	Next
+ 
+	For c = 1 To 10
+		ssd1306.Inverse_Display(c Mod 2)
+		ssd1306.Delay_ms(200)
+	Next
+ 
+	ssd1306.cls
+	ssd1306.clear_buffer
+	For m = 4 To ssd1306.x_size-5 Step 10
+		For n = 4 To ssd1306.y_size-4 Step 8
+			ssd1306.Circle(m, n, 4, False, True)
+		Next 
+	Next 
+ 
+	ssd1306.cls
+	ssd1306.clear_buffer
+	For m = 0 To ssd1306.x_size Step 8
+		For n = 0 To ssd1306.y_size Step 8
+			ssd1306.Rectangle(m, n, m+8, n+8, False, True, False)
+		Next  
+	Next 
+ 
+	ssd1306.cls
+	ssd1306.clear_buffer
+	Dim a,b As Int
+	Dim c As Int
+	For c = 1 To 50
+		a = Rnd(0, ssd1306.x_size-40)
+		b = Rnd(0, ssd1306.y_size/8)
+		ssd1306.WriteText("Bla Bla", a, b, False)
+	Next
+ 
+	ssd1306.cls
+	ssd1306.clear_buffer
+	ssd1306.bitmap(0, 0, ssd1306.x_size, ssd1306.y_size, ssd1306.pic3)
+	ssd1306.Delay_ms(2000)
+	ssd1306.Inverse_Display(1)
+	ssd1306.Delay_ms(2000)
+	ssd1306.Inverse_Display(0)
+	ssd1306.Delay_ms(2000)
+	ssd1306.cls
+	ssd1306.clear_buffer
+	
+	Dim hr, mn, sc, sc1, sc2 As Int
+	Dim ax As Int = 1
+	Dim sc0, sc1 As Int
+	Dim mn0, mn1 As Int
+	Dim hr0, hr1 As Int
+	Dim now As Long
+	Dim dat As Long
+	Dim date As String
+	Dim y As Byte = 0
+	DateTime.TimeFormat = "dd/MM/yyy"
+	ssd1306.Rectangle(0, 0, 127, 63, False, True, False)
+	Do While ax < 2
+		hr = DateTime.GetHour(DateTime.Now)
+		mn = DateTime.GetMinute(DateTime.Now)
+		sc = DateTime.GetSecond(DateTime.Now)
+		date = DateTime.Date(dat)
+		sc0 = sc Mod 10
+		sc1 = sc/10
+		mn0 = mn Mod 10
+		mn1 = mn/10
+		hr0 = hr Mod 10
+		hr1 = hr/10
+		If sc <> sc2 Then
+			ssd1306.BIGNumber(hr1, y, 1, False)
+			ssd1306.BIGNumber(hr0, y, 25, False)
+			ssd1306.BIGNumber(mn1, y, 76, False)
+			ssd1306.BIGNumber(mn0, y, 101, False)
+			If sc0 Mod 2 = 1 Then
+				ssd1306.BIGNumber(":", y, 51, False)
+			Else
+				ssd1306.BIGNumber(" ", y, 51, False)
+			End If	
+ 
+			sc2 = sc
+		End If
+ 
+	Loop
+
+End Sub
+ 

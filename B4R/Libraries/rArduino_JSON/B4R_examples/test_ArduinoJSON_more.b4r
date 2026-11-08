@@ -1,0 +1,245 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rarduino_json
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+'	Private JSON2 As B4RJSON
+	Private jvar0, jvar1, jvar2, jvar3, jvar4, jvar5, jvar6, jvar7, jvar8, jvar9, jvar10, jvar11, jvar12, tmp As JSONVar
+	Private tempo As Int = 1000
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+    init
+	Delay(tempo): Log(" "):Log(" create JsonVar")	
+	create_json
+	Delay(tempo): Log(" "):Log(" logvar")
+	log_json
+	Delay(tempo): Log(" "):Log(" modif JsonVar")
+	modif_json
+	Delay(tempo): Log(" "):Log(" logvar")
+	log_json
+	
+	Delay(tempo): Log(" "):Log(" create Array")
+	create_Array
+	Delay(tempo): Log(" "):Log(" readArray")
+	read_Array
+	Delay(tempo): Log(" "):Log(" modif Array")
+	modif_Array
+	Delay(tempo): Log(" "):Log(" readArray")
+	read_Array
+	
+	Delay(tempo): Log(" "):Log(" create Object")
+	create_Object
+	Delay(tempo): Log(" "):Log(" readObject")
+	read_Object
+	Delay(tempo): Log(" "):Log(" modif Object")
+	mod_Object
+	Delay(tempo): Log(" "):Log(" read Array+Object")
+	read_Array
+	read_Object 
+	Delay(tempo): Log(" "):Log(" log divers")
+	test_more
+	Log("end")
+End Sub
+
+Sub init
+
+End Sub	
+	
+Sub create_json
+	jvar1.setBool(Array(0),True)
+	jvar2.setNumberL(Array(0),55)
+	jvar3.setNumberL(Array(0),0xFFFFFFFF)
+	jvar4.setNumberL(Array(0),1055)
+	jvar5.setNumberL(Array(0),-35001055)
+	jvar6.setNumberUL(Array(0),4294967295)
+	jvar7.setNumberD(Array(0),42.56)
+	jvar9.setString(Array(0),"azerty azerty")
+		
+	jvar10.setJsonVar(Array(0),jvar2)
+	
+	jvar11.setNull(Array(0))
+End Sub
+
+Sub modif_json
+	jvar1.setBool(Array(0),False)
+	jvar2.setNumberL(Array(0),65)
+	jvar3.setNumberL(Array(0),-550)
+	jvar4.setNumberL(Array(0),10550)
+	jvar5.setNumberL(Array(0),-35001000)
+	jvar6.setNumberUL(Array(0),2140001000)
+	jvar7.setNumberD(Array(0),42.1234)
+	jvar9.setstring(Array(0),"ext-azerty + azerty")
+	jvar10.setJsonVar(Array(0),jvar7)
+End Sub	
+	
+Sub log_json
+	Log("jvar1 bool -> ",jvar1.getBool(Array(0)))
+	Log("jvar2 Byte -> ",jvar2.getNumberL(Array(0)))
+	Log("jvar3 Int -> ",jvar3.getNumberL(Array(0)))
+	Log("jvar4 UInt -> ", jvar4.getNumberL(Array(0)))
+	Log("jvar5 Long ->", jvar5.getNumberL(Array(0)))
+	Log("jvar6 ULong -> ", jvar6.getNumberUL(Array(0)))
+	Log("jvar7 Double= -> ",jvar7.getNumberD(Array(0)))
+	Log("jvar9 String -> ",jvar9.getString(Array(0)))
+	
+	Log("jvar10 jvar -> ",jvar10.getNumberD(Array(0)))
+End Sub
+
+
+
+
+
+
+Sub create_Array
+	jvar0.setNumberL(Array(1,0),124)
+	jvar0.setString(Array(1,1),"la suite")
+	jvar0.setNumberD(Array(1,2),43.752)
+	jvar0.setString(Array(1,3),"comment ca code")
+	jvar0.setNumberL(Array(1,4),0xFFFFFFFE)
+	jvar0.setNumberUL(Array(1,5),3000007290)
+	jvar0.setString(Array(1,6),"c'est la fin")
+End Sub	
+
+Sub modif_Array
+	jvar0.setString(Array(1,0),"ex-124")
+	jvar0.setString(Array(1,1),"ex-la suite")
+	jvar0.setNumberD(Array(1,2),43.123456)
+	jvar0.setString(Array(1,3),"ex-comment ca code")
+	jvar0.setNumberL(Array(1,4),-1)
+	jvar0.setNumberUL(Array(1,5),4294967295)
+	jvar0.setString(Array(1,6),"ex-c'est la fin des Array")
+End Sub
+
+Sub read_Array
+	Log("Jvar0 typeoff :",jvar0.typeof(Array(0)))
+	If jvar0.typeof(Array(0)) = "number" Then
+		Log("load array[0]  Number -> ",jvar0.getNumberL(Array(1,0)))
+	Else
+		Log("load array[0]  String -> ",jvar0.getString(Array(1,0)))
+	End If
+	Log("load array[1]  String -> ",jvar0.getString(Array(1,1)))
+	Log("load array[2]  Double -> ",jvar0.getNumberD(Array(1,2)))
+	Log("load array[3]  String -> ",jvar0.getString(Array(1,3)))
+	Log("load array[4]  Long   : ",jvar0.getNumberL(Array(1,4)))
+	Log("load array[5]  ULong  -> ",jvar0.getnumberUL(Array(1,5)))
+	Log("load array[6]  String -> ",jvar0.getString(Array(1,6)))
+	
+	Log("stringify Array jvar0=", jvar0.stringify(Array(0)))
+End Sub
+
+
+
+
+
+Sub create_Object	
+	jvar11.setNumberL(Array(1,"Obj_1"),12345)
+	jvar11.setNumberL(Array(2,"Obj_2.1","Obj_2.2"),320000)
+
+	jvar12.setString(Array(1,"Obj_3"),"Str_content_3")
+	jvar12.setstring(Array(2,"Obj_4.1","Obj_4.2"),"Str_content_4")
+	jvar12.setString(Array(3,"Obj_5.1","Obj_5.2","Obj_5.3"),"Str_content_5")
+	jvar12.setString(Array(3,"Obj_6.1","Obj_6.2","Obj_6.3"),"Str_content_6")
+	jvar12.setNumberUL(Array(1,"Obj_7.1"),3131313131)
+End Sub
+
+Sub mod_Object
+	jvar11.setNumberL(Array(2,"Obj_1",0),67890)
+	jvar11.setNumberL(Array(2,"Obj_1",1),67889)
+	jvar11.setNumberL(Array(2,"Obj_2.1","Obj_2.2"),640000)
+
+	jvar12.setString(Array(1,"Obj_3"),"ext-Str_content_3")
+	jvar12.setString(Array(2,"Obj_4.1","Obj_4.2"),"ext-Str_content_4")
+	jvar12.setString(Array(3,"Obj_5.1","Obj_5.2","Obj_5.3"),"ext-Str_content_5")
+	jvar12.setString(Array(3,"Obj_6.1","Obj_6.2","Obj_6.3"),"ext-Str_content_6")
+	jvar12.setNumberL(Array(1,"Obj_7.1"),-2066543322)
+	
+'	jvar12.getObjJsonVar(Array("Obj_8.1","Obj_8.2","Obj_8.3"),tmp)
+End Sub
+
+Sub read_Object
+	jvar11.getJsonVar(Array(1,"Obj_1"),tmp)
+	Log("tmp typeoff :",tmp.typeof(Array(0)))
+	If tmp.typeof(Array(0))="number" Then
+		Log("load Object[11] Obj_1 -> ",                  jvar11.getNumberD(Array(1,"Obj_1")))
+	Else
+		Log("load Object[11] Obj_1,0 -> ",                jvar11.getNumberD(Array(2,"Obj_1",0)))
+		Log("load Object[11] Obj_1,1 -> ",                jvar11.getNumberD(Array(2,"Obj_1",1)))
+	End If
+	Log("load Object[11] Obj_2.1 Obj_2.2 -> ",        jvar11.getNumberD(Array(2,"Obj_2.1","Obj_2.2")))
+
+	Log("Jvar12 typeoff :",jvar12.typeof(Array(0)))
+	Log("load Object[12] Obj_3 : ",                   jvar12.getString(Array(1,"Obj_3")))
+	Log("load Object[12] Obj4.1 Obj_4.2 -> ",         jvar12.getString(Array(2,"Obj_4.1","Obj_4.2")))
+	Log("load Object[12] Obj_5.1 Obj_5.2 Obj_5.3 -> ",jvar12.getString(Array(3,"Obj_5.1","Obj_5.2","Obj_5.3")))
+	Log("load Object[12] Obj_6.1 Obj_6.2 Obj_6.3 -> ",jvar12.getString(Array(3,"Obj_6.1","Obj_6.2","Obj_6.3")))
+	Log("case Numer Long at set and read with Long/ULong/Double")
+	Log("load Object[12] Obj_7.1 D-> ",               jvar12.getNumberD(Array(1,"Obj_7.1")))
+	Log("load Object[12] Obj_7.1 L-> ",               jvar12.getNumberL(Array(1,"Obj_7.1")))
+	Log("load Object[12] Obj_7.1 UL-> ",              jvar12.getNumberUL(Array(1,"Obj_7.1")))
+
+'	Log("load Object[12] Obj_8.1 Obj_8.2 Obj_8.3 -> ",jvar12.getObjString(Array("Obj_8.1","Obj_8.2","Obj_8.3")))	
+End Sub
+
+
+
+Sub test_more
+    Log("stringify")
+	Log("stringify Array jvar0", jvar0.stringify(Array(0)))
+	Log("stringify Object jvar11",jvar11.stringify(Array(0)))
+	Log("stringify Object jvar12",jvar12.stringify(Array(0)))
+	Log("typeoff")
+	Log("jvar0 typeoff :",jvar0.typeof(Array(0)))
+	Log("jvar12 typeoff :",jvar12.typeof(Array(0)))
+	Log(CRLF,"test setJsonVar")
+	tmp.setString(Array(0),"azerty_new")
+	jvar11.getJsonVar(Array(1,"Obj_1"), tmp)
+	Log("Obj11(Obj_1) => tmp :",jvar11.getString(Array(1,"Obj_1"))," av/ap ", tmp.getString(Array(0)))
+    Log(CRLF,"test getJsonVar")
+    tmp.getJsonVar(Array(0),jvar5)
+	Log("tmp <= jvar5",tmp.getnumberL(Array(0))," ap/av ",jvar5.getNumberL(Array(0)))
+
+    Log("check if same JsonVar  tmp<=>jvar5  =>",jvar5.checkifJsonVar(Array(0),tmp))
+	Log("check if same JsonVar  jvar7<=>tmp   =>",jvar7.checkifJsonVar(Array(0),tmp))
+	Log(" ")
+	Log("check setNULL + typeof + checkifnull")
+	
+	Log("jvar12 avant setNull= ",jvar12.getstring(Array(2,"Obj_4.1","Obj_4.2")))
+	jvar12.setNull(Array(0))
+	Log("jvar12 after setNull= ",jvar12.getstring(Array(2,"Obj_4.1","Obj_4.2")))
+	Log("typeof after jvar12 NULL : ", jvar12.typeof(Array(2,"Obj_4.1","Obj_4.2")))
+	Log("typeof after jvar12 typeof  : ",jvar12.typeof(Array(0)))
+	Log("check if jvar12 NULL : ",jvar12.checkifnull(Array(2,"Obj_4.1","Obj_4.2")))
+	Log(" ")
+	Log("check  hasOwnProperty")
+	Log("check JsonVar with ",jvar12.hasOwnProperty(Array(0),"Obj_4.1"))
+	Log("check JsonVar without ",jvar12.hasOwnProperty(Array(0),"Obj_4"))
+	Log(" ")
+
+	
+End Sub
+
+

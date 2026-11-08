@@ -1,0 +1,28 @@
+' Auth Filter
+' Version 1.00
+Sub Class_Globals
+	
+End Sub
+
+Public Sub Initialize
+	
+End Sub
+
+Public Sub Filter (req As ServletRequest, resp As ServletResponse) As Boolean
+	Dim Path As String = req.RequestURI
+	
+	' Allow static assets
+	If Path.StartsWith("/assets/") Then Return True
+	
+	' Allow auth pages
+	If Path = "/login" Or Path = "/register" Then Return True
+	
+	' Check session
+	Dim user As Object = req.GetSession.GetAttribute("user")
+	If user = Null Then
+		resp.SendRedirect("/login")
+		Return False
+	End If
+	
+	Return True
+End Sub

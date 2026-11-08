@@ -1,0 +1,310 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlegoinoboost
+Library3=rrandomaccessfile
+Library4=resp8266wifi
+Module1=|relative|..\Boost
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=1
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+' BoostBridge.b4r
+' Sample project for the B4R Library rLegoinoBoost.
+' Remote control the Boost MoveHUB using B4J client connected via Serial Line or WiFi.
+' The ESP32 acts as a Bridge between the Boost MoveHUB (via BLE) and the client (via WiFi).
+' 20211013 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 700
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Private Debug As Boolean = False
+	Public Const VERSION As String = "B4R Library rLegoinoBoost - BoostBridge v20211016"
+
+	' Communication
+	' WiFi Communication
+	Public Const WIFI_SSID As String	= "YOUR_SSID"
+	Public Const WIFI_PW As String		= "YOUR_PW"
+	Public Const WIFI_PORT As Int		= 51042
+	Public serialLine As Serial
+	Private wifiLine As ESP8266WiFi
+	Private serverSocket As WiFiServerSocket
+
+	Private asyncStreamSerial As AsyncStreams
+	Private asyncStreamWiFi As AsyncStreams
+	Private isAsyncStreamWiFiInitialized As Boolean = False
+	Private serData As B4RSerializator
+	Private ObjectsBuffer(10) As Object
+	' MoveHUB
+	Private moveHub As LegoinoBoost
+	Private connectedPrev As Boolean = False
+	Private voltagePrev As Double = -1
+	Private distancePrev As Double = -1
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init ASyncStream Serial
+	' Init Asyncstreams
+	asyncStreamSerial.Initialize(serialLine.Stream, "AsyncStreamSerial_NewData", "AsyncStreamSerial_Error")
+	' Init WiFi
+	If wifiLine.Connect2(WIFI_SSID, WIFI_PW) == True Then
+		Log("Connected to WiFi. Local IP=", wifiLine.LocalIp)
+	Else
+		Log("[ERROR] Failed to connect to WiFi")
+		Return
+	End If
+	' Init the server socket and listen to remote connections
+	serverSocket.Initialize(WIFI_PORT, "Server_NewConnection")
+	serverSocket.Listen
+	' Init movehub with callback event, MAC adress 00:16:53:AE:9B:27 and debug flag
+	moveHub.InitializeEx("MoveHub_StateChangedEx", Boost.MOVEHUB_ADDRESS, Debug)
+	If Debug Then Log("Waiting for MoveHub Bluetooth connection...", Boost.MOVEHUB_ADDRESS)
+End Sub
+
+#Region SERVERSOCKET
+Sub Server_NewConnection(NewSocket As WiFiSocket)
+	Log("Server New Client connected: Remote IP=", NewSocket.RemoteIp)
+	'If Debug Then Log("Server New Client connected: Remote IP=", NewSocket.RemoteIp)
+	asyncStreamWiFi.Initialize(NewSocket.Stream, "ASyncStreamWiFi_NewData", "ASyncStreamWiFi_Error")
+	DelayMicroseconds(20)
+	asyncStreamWiFi.Write(serData.ConvertArrayToBytes(Array As Object("IPConnected", wifiLine.LocalIp)))
+	isAsyncStreamWiFiInitialized = True
+End Sub
+#End Region
+
+#Region MOVEHUB
+Sub MoveHub_StateChangedEx(Connected As Boolean, Battery As Byte, Voltage As Double, Distance As Double, Color As Int)
+	If Connected <> connectedPrev Then
+		connectedPrev = Connected
+		If Connected Then
+			If Debug Then Log("MoveHub StateChanged: Connected to ", moveHub.Name)
+			moveHub.SetLedColor(moveHub.LED_COLOR_GREEN)
+		Else
+			If Debug Then Log("MoveHub StateChanged: Disconnected")
+		End If		
+	End If
+	If Connected And isAsyncStreamWiFiInitialized Then 
+		' Update properties
+		If Abs(voltagePrev - Voltage) > 0.1 Then
+			voltagePrev = Voltage
+			asyncStreamWiFi.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_VOLTAGE, "VoltageSensor", Voltage)))
+		End If
+		If Abs(distancePrev - Distance) > 5 Then
+			distancePrev = Distance
+			asyncStreamWiFi.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_DISTANCE, "DistanceSensor", Distance)))
+		End If
+	End If
+End Sub
+#End Region
+
+' Parse asyncstream incoming data holding command objects.
+' The buffer holds the command objects. The number of objects depends on the command (see constants for list of commands).
+' Command Examples:
+' Set LED Color to RED: 63, 0x20, 9
+Private Sub Parse_Command(asyncStream As AsyncStreams, Buffer() As Byte)
+'	Debug = True
+	Dim prefix As Byte
+	Dim cmd As Byte
+	' Convert the serialzed byte to an array with 3 entries
+	Dim data() As Object = serData.ConvertBytesToArray(Buffer, ObjectsBuffer)
+	' Invalid serialized message if the number of received objects less then 2
+	If data.Length < Boost.SER_DATA_MIN_LENGTH Then
+		Log("[ERROR] Parse_Command: Invalid command.")
+		asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_SET_HUB_MESSAGE, "Message", "[ERROR] Parse_Command: Invalid command.")))
+		Return
+	End If
+	' Assign the prefix and the command from the data objects
+	prefix = data(0)
+	cmd = data(1)
+	' Check the command
+	If Debug Then Log("Data: Prefix=",prefix,", Cmd=", cmd, ", Objects: ", data.length)
+	If prefix <> Boost.CMD_PREFIX Then
+		If Debug Then Log("[ERROR] Boost command has wrong Prefix (must be 63): ", prefix)
+		asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_SET_HUB_MESSAGE, "Message", "[ERROR] Boost command has wrong Prefix (must be 63): ")))
+		Return
+	End If
+	' Log the received command
+	If Debug Then Log("Parse_Command")
+	For Each o As Object In data
+		If Debug Then Log(o)
+	Next
+	' Request HUB Connection State - it is not required to have an active movehub connection
+	' The state is send back to the requestor.
+	If cmd == Boost.CMD_GET_CONNECTION_STATE Then
+		'MoveHUB Connection State: 0=False, 1=True
+		asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_CONNECTION_STATE, "Connected", moveHub.Connected)))
+	End If
+	' Commands only when connected to the hub
+	If moveHub.Connected Then
+		' A = 0x00,B = 0x01,AB = 0x10,C = 0x02,D = 0x03,LED = 0x32,TILT = 0x3A,CURRENT = 0x3B,VOLTAGE = 0x3C
+		' Battery = 0x4A, Shutdown = 0x4B, Debug = 0x4C
+		Select cmd
+			Case Boost.CMD_SET_TACHOMOTOR_SPEED:
+				' cmd: prefix, CMD_SET_TACHOMOTOR_SPEED, port, speed
+				If Not(Check_Command(Boost.CMD_SET_TACHOMOTOR_SPEED, data.Length, 4)) Then Return
+				Dim port As Byte = data(2)
+				Dim speed As Int = data(3)
+				If speed <> 0 Then moveHub.SetTachoMotorSpeed(port, speed, 100, moveHub.BRAKINGSTYLE_BRAKE)
+				If speed == 0 Then moveHub.StopTachoMotor(port)
+			Case Boost.CMD_SET_BASICMOTOR_SPEED:
+				' cmd:prefix, CMD_SET_BASICMOTOR_SPEED, port, speed
+				If Not(Check_Command(Boost.CMD_SET_BASICMOTOR_SPEED, data.Length, 4)) Then Return
+				Dim port As Byte = data(2)
+				Dim speed As Int = data(3)
+				If speed <> 0 Then moveHub.SetBasicMotorSpeed(port, speed)
+				If speed == 0 Then moveHub.StopBasicMotor(port)
+			Case Boost.CMD_MOVEFORWARD:
+				If Not(Check_Command(Boost.CMD_MOVEFORWARD, data.Length, 3)) Then Return
+				Dim steps As Int = data(2)
+				moveHub.MoveForward(steps)
+			Case Boost.CMD_MOVEBACKWARD:
+				If Not(Check_Command(Boost.CMD_MOVEBACKWARD, data.Length, 3)) Then Return
+				Dim steps As Int = data(2)
+				moveHub.MoveBack(steps)
+			Case Boost.CMD_SET_ABSOLUTE_MOTOR_POSITION:
+				If Not(Check_Command(Boost.CMD_SET_ABSOLUTE_MOTOR_POSITION, data.Length, 5)) Then Return
+				Dim port As Byte = data(2)
+				Dim speed As Int = data(3)
+				Dim position As Long = data(4)
+				' Log(port, " = ", speed, " = ", position)
+				moveHub.SetAbsoluteMotorPosition(port, speed, position, 100, moveHub.BRAKINGSTYLE_BRAKE)
+			Case Boost.CMD_SET_ABSOLUTE_MOTOR_ENCODER_POSITION:
+				If Not(Check_Command(Boost.CMD_SET_ABSOLUTE_MOTOR_ENCODER_POSITION, data.Length, 4)) Then Return
+				Dim port As Byte = data(2)
+				Dim position As Long = data(3)
+				' Log(port, " = ", position)
+				moveHub.SetAbsoluteMotorEncoderPosition(port, position)
+			Case Boost.CMD_SET_TACHOMOTOR_SPEED_FOR_DEGREES:
+				If Not(Check_Command(Boost.CMD_SET_TACHOMOTOR_SPEED_FOR_DEGREES, data.Length, 5)) Then Return
+				Dim port As Byte = data(2)
+				Dim speed As Int = data(3)
+				Dim degrees As Long = data(4)
+				moveHub.SetTachoMotorSpeedForDegrees(port, speed, degrees, 100, moveHub.BRAKINGSTYLE_BRAKE)
+			Case Boost.CMD_SET_TACHOMOTOR_SPEEDS_FOR_DEGREES:
+				If Not(Check_Command(Boost.CMD_SET_TACHOMOTOR_SPEEDS_FOR_DEGREES, data.Length, 5)) Then Return
+				Dim speedleft As Int = data(2)
+				Dim speedright As Int = data(3)
+				Dim degrees As Long = data(4)
+				moveHub.SetTachoMotorSpeedsForDegrees(speedleft, speedright, degrees, 100, moveHub.BRAKINGSTYLE_BRAKE)
+			Case Boost.CMD_SET_TACHOMOTOR_SPEED_FOR_TIME:
+				If Not(Check_Command(Boost.CMD_SET_TACHOMOTOR_SPEED_FOR_TIME, data.Length, 5)) Then Return
+				Dim port As Byte = data(2)
+				Dim speed As Int = data(3)
+				Dim timespeed As Int = data(4)
+				moveHub.SetTachoMotorSpeedForTime(port, speed, timespeed, 100, moveHub.BRAKINGSTYLE_BRAKE)
+			Case Boost.CMD_SET_MOTOR_CALIBRATION:
+				If Not(Check_Command(Boost.CMD_SET_MOTOR_CALIBRATION, data.Length, 3)) Then Return
+				Dim port As Byte = data(2)
+				moveHub.SetMotorCalibration(port)				
+			Case Boost.CMD_SET_LED_COLOR:
+				' cmd: prefix, CMD_SET_LED_COLOR, NN
+				If Not(Check_Command(Boost.CMD_SET_LED_COLOR, data.Length, 3)) Then Return
+				Dim value As Byte = data(2)
+				moveHub.SetLedColor(value)
+			Case Boost.CMD_GET_TILT:
+				If Not(Check_Command(Boost.CMD_GET_TILT, data.Length, 2)) Then Return
+				' Tilt sent via communication line
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_TILT, "TiltSensorX", moveHub.TiltSensorX)))
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_TILT, "TiltSensorY", moveHub.TiltSensorY)))
+			Case Boost.CMD_GET_VOLTAGE:
+				If Not(Check_Command(Boost.CMD_GET_VOLTAGE, data.Length, 2)) Then Return
+				' Voltage sent via communication line
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_VOLTAGE, "VoltageSensor", moveHub.VoltageSensor)))
+			Case Boost.CMD_GET_DISTANCE:
+				If Not(Check_Command(Boost.CMD_GET_DISTANCE, data.Length, 2)) Then Return
+				' Distance Sensor sent via communication line
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_DISTANCE, "DistanceSensor", moveHub.DistanceSensor)))
+			Case Boost.CMD_GET_BATTERY_LEVEL:
+				If Not(Check_Command(Boost.CMD_GET_BATTERY_LEVEL, data.Length, 2)) Then Return
+				' Battery Level sent via communication line
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_BATTERY_LEVEL, "BatteryLevel", moveHub.BatteryLevel)))
+			Case Boost.CMD_SHUTDOWN:
+				If Not(Check_Command(Boost.CMD_SHUTDOWN, data.Length, 2)) Then Return
+				' Shut the hub down
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_SHUTDOWN, "ShutDown", 1)))
+				moveHub.ShutDownHub
+			Case Boost.CMD_SET_DEBUG_MODE:
+				If Not(Check_Command(Boost.CMD_SET_DEBUG_MODE, data.Length, 3)) Then Return
+				' Turn debug on or off
+				Dim value As Byte = data(2)
+				If value = 0 Then moveHub.Debug = False
+				If value = 1 Then moveHub.Debug = True
+			Case Boost.CMD_GET_COLOR:
+				If Not(Check_Command(Boost.CMD_GET_COLOR, data.Length, 2)) Then Return
+				' Color Sensor sent via communication line
+				asyncStream.Write(serData.ConvertArrayToBytes(Array As Object(Boost.CMD_GET_COLOR, "ColorSensor", moveHub.ColorSensor)))
+		End Select
+		Delay(50)
+	End If
+'	Debug = False
+End Sub
+
+' ASYNCSTREAM SERIAL LINE
+#Region asyncStreamWiFi
+' asyncStreamSerial - Handle serial line incoming data
+' The serialized data has 3 fields:
+' prefix=63 (fixed number), port=NN, value=NN
+Private Sub ASyncStreamSerial_NewData(Buffer() As Byte)
+	Parse_Command(asyncStreamSerial, Buffer)
+End Sub
+
+' asyncStreamWSerial - Write data over the serial line
+Private Sub ASyncStreamSerial_Write(Data() As Byte)
+	asyncStreamSerial.Write(Data)
+End Sub
+
+' asyncStreamSerial - Log an error
+Private Sub ASyncStreamSerial_Error
+	Log("ASyncStreamSerial_Error")
+End Sub
+#End Region
+
+' ASYNCSTREAM WIFI
+#Region asyncStreamWiFi
+' ASyncStreamWiFi - Handle communication line incoming data
+' The serialized data has 3 fields:
+' prefix=63 (fixed number), port=NN, value=NN
+Private Sub ASyncStreamWiFi_NewData(Buffer() As Byte)
+	Parse_Command(asyncStreamWiFi, Buffer)
+End Sub
+
+' ASyncStreamWiFi - Write data over the communication line
+Private Sub ASyncStreamWiFi_Write(Data() As Byte)
+	asyncStreamWiFi.Write(Data)
+End Sub
+
+' ASyncStreamWiFi - Log an error and restart listening to new connections
+Private Sub ASyncStreamWiFi_Error
+	Log("ASyncStreamWiFi_Error. Connected=", serverSocket.Socket.Connected)
+	' Reconnect if the connection has broken by for example client disconnected
+	If Not(serverSocket.Socket.Connected) Then
+		Log("ASyncStreamWiFi_Error. Restart listening for new connections")
+		serverSocket.Listen
+	End If
+End Sub
+#End Region
+
+' Check the number of objects (length) of a command
+' The datalength can be greater mustlength. These are then not used.
+private Sub Check_Command(cmd As Byte, datalength As Byte, mustlength As Byte)  As Boolean
+	Dim result As Boolean = True
+	If datalength < mustlength Then
+		Log("[ERROR] Command ", cmd, " missing data objects. Must be ", mustlength)
+		result = False
+	End If
+	Return result
+End Sub

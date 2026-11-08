@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ESP32 Weather Station</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <script>
+      function DisplayCurrentTime() {
+          var date = new Date();
+          var hours = date.getHours() < 10 ? "0" + date.getHours() : date.getHours();
+          var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
+          var seconds = date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds();
+          time = hours + ":" + minutes + ":" + seconds;
+          var currentTime = document.getElementById("currentTime");
+          currentTime.innerHTML = time;
+      };
+	  
+	  
+      setInterval(function() {
+        // Gets ADC value at every one second
+        getReadings();
+      }, 2000);
+
+// Function to get current readings on the webpage when it loads for the first time
+    function getReadings(){
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          var myObj = JSON.parse(this.responseText);
+          console.log(myObj);
+          DHT_C.innerHTML = myObj.DHT_C;
+		  DHT_F.innerHTML = myObj.DHT_F;
+		  DHT_h.innerHTML = myObj.DHT_h;
+		  
+		  BMP180_C.innerHTML = myObj.BMP180_C;		  	
+		  BMP180_F.innerHTML = myObj.BMP180_F;	
+		  BMP180_p.innerHTML = myObj.BMP180_p;	
+		  	  	  
+ 		  POT_pos.innerHTML = myObj.POT_pos;
+		  LDR_lum.innerHTML = myObj.LDR_lum;   
+        }
+     }; 
+     xhr.open("GET", "/readings", true);
+     xhr.send();
+	 DisplayCurrentTime();
+  }
+    </script>
+	
+    <style>
+      body {
+        text-align: center;
+        font-family: "Trebuchet MS", Arial;
+      }
+      table {
+        border-collapse: collapse;
+        width:60%;
+        margin-left:auto;
+        margin-right:auto;
+      }
+      th {
+        padding: 16px;
+        background-color: #0043af;
+        color: white;
+      }
+      tr {
+        border: 1px solid #ddd;
+        padding: 16px;
+      }
+      tr:hover {
+        background-color: #bcbcbc;
+      }
+      td {
+        border: none;
+        padding: 16px;
+      }
+      .sensor {
+        color:white;
+        font-weight: bold;
+        background-color: #bcbcbc;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ESP32 Weather Station</h1>
+    <h3>Last update: <span id="currentTime"></span></h3>
+    <table>
+      <tr>
+        <th>SENSOR</th>
+        <th>MEASUREMENT</th>
+        <th>VALUE</th>
+      </tr>
+      <tr>
+        <td><span class="sensor">DHT</span></td>
+        <td>Temp. Celsius</td>
+        <td><span id='DHT_C' class="reading">...</span> *C</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">DHT</span></td>
+        <td>Temp. Fahrenheit</td>
+        <td><span id='DHT_F' class="reading">...</span> *F</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">DHT</span></td>
+        <td>Humidity</td>
+        <td><span id='DHT_h' class="reading">...</span> %</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">BMP180</span></td>
+        <td>Temp. Celsius</td>
+        <td><span id='BMP180_C' class="reading">...</span> *C</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">BMP180</span></td>
+        <td>Temp. Fahrenheit</td>
+        <td><span id='BMP180_F' class="reading">...</span> *F</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">BMP180</span></td>
+        <td>Pressure</td>
+        <td><span id='BMP180_p' class="reading">...</span> Pa</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">POT</span></td>
+        <td>Position</td>
+        <td><span id='POT_pos' class="reading">...</span>/4095</td>
+      </tr>
+      <tr>
+        <td><span class="sensor">LDR</span></td>
+        <td>Luminosity</td>
+        <td><span id='LDR_lum' class="reading">...</span>/4095</td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,324 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rhttputils2
+Library4=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 3000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi
+	
+	Private bc As ByteConverter
+	
+	Private MyID(8) As Byte = "ESP32002"
+	Private SenderID(8) As Byte
+	
+	'AES
+	Public plaintext_buffer(256) As Byte 'Must be a multiple of 16 as PKCSNoPadding is used
+	Public aesencrypted_buffer(256) As  Byte 'the encrypted message
+	Public plaintext_buffer_IN(256) As Byte 'Must be a multiple of 16 as PKCSNoPadding is used
+	Public aesencrypted_buffer_IN(256) As  Byte 'the encrypted message
+	
+	
+	Public iv(16) As Byte 'initialization vector. Must be the same for enc- and decryption
+	Public salt(32) As Byte 'Salt
+	Public pw(32) As  Byte = "Secret"'pw/key (will be hashed to 32 bytes)
+	
+	
+	Public encrypted_len,plaintext_len,encrypted_len_in As Int
+	
+	Public b64encoded (256) As Byte
+	Public b64encoded_len As ULong
+	
+	Public b64decoded (256) As Byte
+	Public b64decoded_len As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	
+	For i=1 To 10
+		Log("Connecting to WiFi...")
+		Log(i)
+		
+		If wifi.Connect2("SSID","SSIDPW") Then
+			Log("Connected to wireless network.")
+			Log("My ip: ", wifi.LocalIp)
+			Exit
+		Else
+			Log("Failed to connect...")
+		End If
+	Next
+	
+	
+	'example of connecting to a local network
+	If wifi.IsConnected Then
+		Log("Connected to network")
+		
+		Encrypt(Pad("Testmessage".GetBytes,16,3,0))
+
+		Log("Starting Job...")
+		HttpJob.Initialize("AES256")
+		HttpJob.AddHeader("Content-Type", "application/json")
+		HttpJob.Post("http://192.168.178.23/esp/espaes256.php",b64encoded)
+		
+	Else
+		Log("Failed to connect to network")
+	End If
+End Sub
+
+Private Sub Encrypt (Messtext() As Byte)
+	'Reset data
+	For I=0 To aesencrypted_buffer.Length-1
+		aesencrypted_buffer(I)=0
+		plaintext_buffer(I)=0
+	Next
+		
+	'Set Plaintext
+	bc.ArrayCopy2(Messtext,0,plaintext_buffer,0,Messtext.Length)
+	
+	'Generate IV
+	bc.ArrayCopy(GenerateRandomBytes(16),iv)
+	Log("IV: ",bc.HexFromBytes(iv))
+	
+	'Generate Salt
+	bc.ArrayCopy(GenerateRandomBytes(32),salt)
+	Log("Salt: ",bc.HexFromBytes(salt))
+	
+	plaintext_len=Messtext.Length
+	RunNative("Encrypt", Null)
+	
+	'New byte array with the real length
+	Dim encryptedmessage(Messtext.Length) As Byte
+	bc.ArrayCopy2(aesencrypted_buffer,0,encryptedmessage,0,Messtext.Length)
+	
+	
+	'message length (as padded to a multiple of 16 is equal to encrypted length)
+	Dim mc(MyID.Length+salt.Length+iv.Length+plaintext_len) As Byte = JoinBytes(Array(MyID,salt,iv,encryptedmessage))
+	bc.ArrayCopy2(mc,0,b64decoded,0,mc.Length)
+	b64decoded_len=mc.Length
+	RunNative("Base64Encode", Null)
+	Log("Base64: ",b64encoded)
+	Log("Lenght: ",b64encoded_len)
+	
+End Sub
+
+Sub JobDone (Job As JobResult)
+	Log("*******************************")
+	Log("JobName: ", Job.JobName)
+	If Job.Success Then
+		
+		Log("Response: ", bc.SubString2(Job.Response, 0, Min(200, Job.Response.Length))) 'truncate to 200 characters
+	
+		bc.ArrayCopy2(Job.Response,0,b64encoded,0,Job.Response.Length)
+		b64encoded_len=Job.Response.Length
+		RunNative("Base64Decode", Null)
+				
+		Dim IDIVAndMessage(b64decoded_len) As Byte
+		bc.ArrayCopy2(b64decoded,0,IDIVAndMessage,0,b64decoded_len)
+		Log("Decrypting...")
+		DecryptMessage(IDIVAndMessage)
+		
+		Dim decmess(encrypted_len_in) As Byte
+		bc.ArrayCopy2(plaintext_buffer_IN,0,decmess,0,encrypted_len_in)
+		Log("   Decrypted from PHP: ",bc.StringFromBytes(Unpad(decmess)))
+		
+	Else
+		Log("ErrorMessage: ", Job.ErrorMessage)
+		Log("Status: ", Job.Status)
+		Log(Job.Response)
+				
+	End If
+End Sub
+
+#if C
+#
+#include <mbedtls/aes.h>
+#include "mbedtls/md.h"
+
+#end if
+
+Private Sub DecryptMessage(enc() As Byte)
+	SplitIDIVMessage(enc)
+	
+	RunNative("Decrypt", Null)
+		
+End Sub
+
+#if c
+
+
+
+void Decrypt (B4R::Object* o) {
+
+  char *pw = (char*)b4r_main::_pw->data;
+
+//256Hash the pw (32 Bytes)
+  byte shaResult[32];
+  mbedtls_md_context_t hash;
+  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+  const size_t pwLength = strlen(pw);         
+  mbedtls_md_init(&hash);
+  mbedtls_md_setup(&hash, mbedtls_md_info_from_type(md_type), 0);
+  mbedtls_md_starts(&hash);
+  mbedtls_md_update(&hash, (const unsigned char *) pw, pwLength);
+  mbedtls_md_finish(&hash, shaResult);
+  mbedtls_md_free(&hash);
+  uint8_t key[32];
+  memcpy(key, shaResult, 32);  
+
+
+
+  esp_aes_context ctx;
+  esp_aes_init( &ctx );
+  esp_aes_setkey( &ctx, key, 256 );
+  esp_aes_crypt_cbc( &ctx, ESP_AES_DECRYPT, b4r_main::_encrypted_len_in, (uint8_t*)b4r_main::_iv->data, (uint8_t*)b4r_main::_aesencrypted_buffer_in->data, (uint8_t*)b4r_main::_plaintext_buffer_in->data );
+  esp_aes_free( &ctx );
+
+}
+
+#End If
+
+Private Sub SplitIDIVMessage (IDIvMessage() As Byte)
+	
+	bc.ArrayCopy2(IDIvMessage,0,SenderID,0,SenderID.Length)
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length,salt,0,salt.Length)
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length+salt.length,iv,0,iv.Length)
+	
+	Dim Mess(IDIvMessage.Length-SenderID.Length-salt.Length-iv.Length) As Byte
+	'Init Mess
+	For i=0 To Mess.Length-1
+		Mess(i)=0
+	Next
+	For I=0 To aesencrypted_buffer_IN.Length-1
+		aesencrypted_buffer_IN(I)=0
+	Next
+	For I=0 To plaintext_buffer_IN.Length-1
+		plaintext_buffer_IN(I)=0
+	Next
+	bc.ArrayCopy2(IDIvMessage,SenderID.Length+salt.Length+iv.Length,Mess,0,IDIvMessage.Length-SenderID.Length-salt.Length-iv.Length)
+	bc.ArrayCopy2(Mess,0,aesencrypted_buffer_IN,0,Mess.Length)
+	encrypted_len_in=Mess.Length
+End Sub
+
+Sub Pad (mess() As Byte, PadTo As Int,PadMode As Int,PadValue As Object) As Byte()
+	Dim MessLength As Int = mess.Length
+	Dim PaddedLength As Int
+	PaddedLength = MessLength-MessLength Mod PadTo + PadTo
+	
+	Dim PaddedMess(PaddedLength) As Byte
+	bc.ArrayCopy2(mess,0,PaddedMess,0,mess.Length)
+	For i=mess.Length To PaddedLength-2
+		Select PadMode
+			Case 1
+				PaddedMess(i)=Rnd(0,256)
+			Case 2
+				PaddedMess(i)=PadValue
+			Case 3
+				PaddedMess(i)=PaddedLength-MessLength
+		End Select
+	Next
+	PaddedMess(PaddedLength-1)=PaddedLength-MessLength
+	Return PaddedMess
+End Sub
+
+Sub Unpad (PaddedMess() As Byte) As Byte()
+	Dim OrigMess(PaddedMess.Length-PaddedMess(PaddedMess.Length-1)) As Byte
+	bc.ArrayCopy2(PaddedMess,0,OrigMess,0,OrigMess.Length)
+	Return OrigMess
+End Sub
+
+
+
+
+#if c
+void Encrypt (B4R::Object* o) {
+	char *pw = (char*)b4r_main::_pw->data;
+
+//256Hash the pw (32 Bytes)
+	  byte shaResult[32];
+	  mbedtls_md_context_t hash;
+	  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA256;
+	  const size_t pwLength = strlen(pw);         
+	  mbedtls_md_init(&hash);
+	  mbedtls_md_setup(&hash, mbedtls_md_info_from_type(md_type), 0);
+	  mbedtls_md_starts(&hash);
+	  mbedtls_md_update(&hash, (const unsigned char *) pw, pwLength);
+	  mbedtls_md_finish(&hash, shaResult);
+	  mbedtls_md_free(&hash);
+	  uint8_t key[32];
+	  memcpy(key, shaResult, 32);  
+	 //***********************************************************************************  
+	 
+//Set iv. Note: The IV is modified internally. So we copy it to a local variable here to keep the original IV
+	uint8_t ivu[16];
+	memcpy(ivu, (uint8_t*)b4r_main::_iv->data, 16);  
+	
+
+esp_aes_context ctx;
+esp_aes_init( &ctx );
+esp_aes_setkey( &ctx, key, 256 );
+esp_aes_crypt_cbc( &ctx, ESP_AES_ENCRYPT, b4r_main::_plaintext_len, ivu, (uint8_t*)b4r_main::_plaintext_buffer->data, (uint8_t*)b4r_main::_aesencrypted_buffer->data );
+esp_aes_free( &ctx );
+
+}
+#End If
+
+Sub GenerateRandomBytes(count As Int) As Byte()
+	Dim rb(count) As Byte
+	For i=0 To count-1
+		rb(i)=Rnd(0,256)
+	Next
+	
+	Return rb
+		
+End Sub
+
+
+#if c
+#include "mbedtls/base64.h"
+void Base64Encode (B4R::Object* o) {
+
+mbedtls_base64_encode( 
+	(unsigned char *)b4r_main::_b64encoded->data,
+	b4r_main::_b64encoded->length,
+	&b4r_main::_b64encoded_len,
+	(unsigned char *)b4r_main::_b64decoded->data,
+	b4r_main::_b64decoded_len
+	);
+
+}
+#End If
+
+#if c
+#include "mbedtls/base64.h"
+void Base64Decode (B4R::Object* o) {
+
+	mbedtls_base64_decode(
+
+	(unsigned char *)b4r_main::_b64decoded->data,
+	b4r_main::_b64decoded->length,
+	&b4r_main::_b64decoded_len,
+	(unsigned char *)b4r_main::_b64encoded->data,
+	b4r_main::_b64encoded_len
+	);
+}
+#End If
+
+
+
+

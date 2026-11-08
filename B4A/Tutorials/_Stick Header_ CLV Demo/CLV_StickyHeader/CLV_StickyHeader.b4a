@@ -1,0 +1,105 @@
+﻿Build1=Default,com.mfs.stickyheader
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Sticky Header
+	#VersionCode: 1
+	#VersionName: 1
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	Private CLV As CustomListView
+	Private LabelFloater As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	'PanelFloater.Color = Colors.RGB(40, 40, 40)
+	LabelFloater.Color = xui.Color_ARGB(255,40,40,40)
+	LabelFloater.TextColor = Colors.White
+	LabelFloater.TextSize = 22
+	
+	' Example data
+	AddTestDataToCLV
+    
+	' Initialize floater
+	LabelFloater.Text = CLV.GetValue(0)
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+Sub AddTestDataToCLV
+	Dim months() As String = Array As String("January","February","March","April","May","June","July","August","September","October","November","December")
+	Dim counter As Int = 1
+    
+	For m = 0 To months.Length - 1
+		' Add month header
+		AddHeader(months(m))
+        
+		' Add 5 items per month
+		For i = 1 To 5
+			AddItem($"Person ${counter}"$,months(m))
+			counter = counter + 1
+		Next
+	Next
+End Sub
+
+Private Sub AddHeader(title As String)
+	Dim p As B4XView = xui.CreatePanel("")
+	p.SetLayoutAnimated(0,0,0,CLV.AsView.Width,40dip)
+	p.Color = xui.Color_ARGB(255,30,30,30)
+    
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title
+	lbl.TextColor = Colors.White
+	lbl.TextSize = 18
+	lbl.Gravity = Gravity.CENTER_VERTICAL
+	p.AddView(lbl, 10dip, 0, 100%x - 20dip, 40dip)
+	CLV.Add(p,title)
+End Sub
+
+Private Sub AddItem(name As String,title As String)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = name
+	lbl.TextSize = 16
+	lbl.TextColor = xui.Color_Black
+	lbl.Color = Colors.White
+	CLV.AddTextItem(name,title)
+End Sub
+
+Sub clv_ScrollChanged(Offset As Int)
+	Dim TopIndex As Int = CLV.FindIndexFromOffset(Offset)
+	LabelFloater.Text = CLV.GetValue(TopIndex)
+End Sub
+
+

@@ -1,0 +1,270 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rmpu6050
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+#Region Project Attributes
+	#AutoFlushLogs: True
+	##CheckArrayBounds: True
+	#StackBufferSize: 1000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi
+	Public mpu As MPU6050
+	Public mpu2 As MPU6050_DATA
+	Private pinbutton As Pin
+End Sub
+
+Sub PinButton_Change(state As Boolean)
+	
+	If state = False Then
+		Log(" "):Log("button ON")
+		Log("ButtonPress =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+		Delay(2000)
+		myloop
+		
+	Else
+		Log("button OFF")
+	End If
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	StopWIFI
+	Delay(2000)
+	mpu.Initialize()
+	Log("init done")
+	Delay(1000)
+	Dim connect = mpu.beginSoftwareI2C(5,14,mpu2.MPU6050_DPS_SCALE_2000DPS,mpu2.MPU6050_RANGE_16G,0x68) As Boolean
+
+	If connect = False Then
+		Log("Could Not find a valid mpu6050 sensor, check wiring!")
+	Else
+		Log("connexion mpu6050 OK")
+	End If
+	pinbutton.Initialize(4,pinbutton.MODE_INPUT_PULLUP)
+	pinbutton.AddListener("PinButton_change")
+	Delay(2000)
+End Sub
+	
+Sub myloop
+	test1
+	Log(" ")
+	Log("test1_back =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+	Log(" ")
+	Delay(1000)
+	test2
+	Log(" ")
+	Log("test2_back =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+	Log(" ")
+	Delay(1000)
+	checkSettings
+	Log(" ")
+	Log("checksettings_back =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+	Log(" ")
+	Delay(1000)
+	test3
+	Log(" ")
+	Log("test3_back =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+	Log(" ")
+	Delay(1000)
+	testActivities
+	Log(" ")
+	Log("testActivities_back =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+	Log(" ")
+	Delay(1000)
+End Sub
+
+Sub test1
+       mpu.setAccelPowerOnDelay(mpu2.MPU6050_DELAY_3MS)
+	  Log("Delay valeur mise 0b11 - valeur lue:", mpu.getAccelPowerOnDelay)
+ 
+      mpu.setIntFreeFallEnabled(False)  
+		If mpu.getIntFreeFallEnabled Then Log("FallEnabled False") Else Log("FallEnabled True")
+      mpu.setIntZeroMotionEnabled(False)
+		If mpu.getIntZeroMotionEnabled Then Log("ZeroMotionEnabled False") Else Log("ZeroMotionEnabled True")
+		mpu.setIntMotionEnabled(False)
+		If mpu.getIntZeroMotionEnabled Then Log("MotionEnabled False") Else Log("MotionEnabled True")
+End Sub	  
+
+Sub test2	  
+	  mpu.setClockSource(mpu2.MPU6050_CLOCK_INTERNAL_8MHZ)
+	  Log(" clock source :", mpu.getClockSource)
+	  
+      mpu.setDHPFMode(mpu2.MPU6050_DHPF_5HZ)
+
+      mpu.setMotionDetectionThreshold(2)
+      mpu.setMotionDetectionDuration(5)
+
+      mpu.setZeroMotionDetectionThreshold(4)
+      mpu.setZeroMotionDetectionDuration(2)	
+End Sub  
+    
+Sub test3
+    	Dim Accel(3) As Double
+	  mpu.readRawGyro(Accel)
+	  Log("RawG_X=",Accel(0),"  RawG_Y=",Accel(1),"  RawG_Y=",Accel(2))
+	  
+	Log(" ")
+'	Log("test3.readrawgyro =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+	  
+	  mpu.readNormalizeGyro(Accel)
+	Log("NormalizeG_X=",Accel(0),"  NormalizeG_Y=",Accel(1),"  NormalizeG_Y=",Accel(2))
+
+	Log(" ")
+'	Log("test3.readNormallizeGyro =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+		
+	  mpu.readRawAccel(Accel)
+	Log("RawAccel_X=",Accel(0),"  RawAccel_Y=",Accel(1),"  RawAccel_Y=",Accel(2))
+
+	Log(" ")
+'	Log("test3.readRawAccel =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+	
+	  mpu.readNormalizeAccel(Accel)
+	Log("NormalizeA_X=",Accel(0),"  NormalizeA_Y=",Accel(1),"  ScaledA_Y=",Accel(2))
+
+	Log(" ")
+'	Log("test3.readNormalizeAccel =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+	
+	  mpu.readScaledAccel(Accel)
+	Log("ScaledA_X=",Accel(0),"  ScaledA_Y=",Accel(1),"  NormalizeA_Y=",Accel(2))
+	
+	Log(" ")
+'	Log("test3 =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+End Sub	
+	
+Sub testActivities		
+	Dim act = mpu.readActivites() As UInt
+	Log("-> Activities : ",act)
+	If  Bit.And(act,mpu2.Activites_isDataReady)>0 Then Log("isDataReady ON")
+	If  Bit.And(act,mpu2.Activites_isOverflow)>0 Then Log("Activites_Overflow ON")	  
+	If  Bit.And(act,mpu2.Activites_isActivity)>0 Then Log("Activites_isActivity ON")
+    If  Bit.And(act,mpu2.Activites_isInactivity)>0 Then Log("Activites_isInactivity ON")
+	If  Bit.And(act,mpu2.Activites_isFreeFall)>0 Then Log("Activites_isFreeFall ON")
+
+    If  Bit.And(act,mpu2.Activites_isPosActivityOnX)>0 Then Log("Activites_isPosActivityOnX ON")
+ 	If  Bit.And(act,mpu2.Activites_isNegActivityOnX)>0 Then Log("Activites_isNegActivityOnX ON")
+	If  Bit.And(act,mpu2.Activites_isPosActivityOnY)>0 Then Log("Activites_isPosActivityOnY ON")
+	If  Bit.And(act,mpu2.Activites_isNegActivityOnY)>0 Then Log("Activites_isNegActivityOnY ON")
+	If  Bit.And(act,mpu2.Activites_isPosActivityOnZ)>0 Then Log("Activites_isPosActivityOnZ ON")
+	If  Bit.And(act,mpu2.Activites_isNegActivityOnZ)>0 Then Log("Activites_isNegActivityOnZ ON")
+
+	Log(" ")
+'	Log("testactivities =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+'	Log(" ")
+	Delay(4000)
+End Sub
+	
+
+Sub checkSettings()
+   
+  Log(" * Sleep Mode:                ")
+  If mpu.getSleepEnabled() Then Log("SleepEnabled") Else Log("SleepDisabled")
+
+  Log(" * Motion Interrupt:     ")
+  If mpu.getIntMotionEnabled() Then Log("IntMotionEnabled") Else Log("IntMotionDisabled")
+
+  Log(" * Zero Motion Interrupt:     ")
+  If mpu.getIntZeroMotionEnabled() Then Log("IntZeroMotionEnabled") Else Log("IntZeroMotionDisabled")
+
+  Log(" * Free Fall Interrupt:       ")
+  If mpu.getIntFreeFallEnabled()  Then Log("IntFreeFallEnabled") Else Log("IntFreeFallDisabled")
+  
+  Log(" * Motion Threshold:          ")
+  Log("getMotionDetectionThreshold= ", mpu.getMotionDetectionThreshold())
+
+  Log(" * Motion Duration:           ")
+  Log("getMotionDetectionDuration= ",  mpu.getMotionDetectionDuration())
+
+  Log(" * Zero Motion Threshold:     ")
+  Log("getZeroMotionDetectionThreshold= ", mpu.getZeroMotionDetectionThreshold())
+
+  Log(" * Zero Motion Duration:      ")
+  Log("getZeroMotionDetectionDuration= ", mpu.getZeroMotionDetectionDuration())
+  
+  Log(" * Clock Source:              ")
+  Dim so =mpu.getClockSource() As Byte
+    Log("-> Clock Sourse : ",so)
+	Select so
+    Case mpu2.MPU6050_CLOCK_KEEP_RESET
+		Log("Clock Stops the clock and keeps the timing generator in reset")
+    Case mpu2.MPU6050_CLOCK_EXTERNAL_19MHZ
+		Log("Clock PLL with external 19.2MHz reference")
+    Case mpu2.MPU6050_CLOCK_EXTERNAL_32KHZ 
+		Log("Clock PLL with external 32.768kHz reference")
+    Case mpu2.MPU6050_CLOCK_PLL_ZGYRO
+	    Log("Clock PLL with Z axis gyroscope reference")
+    Case mpu2.MPU6050_CLOCK_PLL_YGYRO
+	    Log("Clock PLL with Y axis gyroscope reference")
+    Case mpu2.MPU6050_CLOCK_PLL_XGYRO    
+		Log("Clock PLL with X axis gyroscope reference")
+    Case mpu2.MPU6050_CLOCK_INTERNAL_8MHZ   
+		Log("Clock Internal 8MHz oscillator")
+    End Select
+  
+  Log(" * Accelerometer:             ")
+  so=mpu.getRange()
+    Log("-> Accelerometer : ",so)
+	Select so
+    Case mpu2.MPU6050_RANGE_16G 
+	     Log("Range +/- 16 g")
+	Case mpu2.MPU6050_RANGE_8G
+	     Log("Range +/- 8 g")
+	Case mpu2.MPU6050_RANGE_4G
+	     Log("Range +/- 4 g")
+    Case mpu2.MPU6050_RANGE_2G
+	     Log("Range +/- 2 g")
+     End Select
+
+  Log(" * Accelerometer offsets:     ")
+  Log("getAccelOffsetX= ", mpu.getAccelOffsetX())
+  Log(" / ")
+  Log("getAccelOffsetY= ",  mpu.getAccelOffsetY())
+  Log(" / ")
+  Log("getAccelOffsetZ= ",  mpu.getAccelOffsetZ())
+
+  Log(" * Accelerometer power delay: ")
+  so =mpu.getAccelPowerOnDelay()
+    Log("-> Oower selay : ",so)
+	Select so
+	Case mpu2.MPU6050_DELAY_3MS
+	     Log("Delay 3ms")
+	Case mpu2.MPU6050_DELAY_2MS
+	     Log("Delay 2ms")
+	Case mpu2.MPU6050_DELAY_1MS
+	     Log("Delay 1ms")
+	Case mpu2.MPU6050_NO_DELAY
+	     Log("Delay 0ms")
+     End Select
+End Sub  
+
+
+public Sub StopWIFI
+	Log("Stop wifi")
+	RunNative("stopWIFI", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopWIFI (B4R::Object* u) {
+  WiFi.forceSleepBegin();
+  }
+#end if

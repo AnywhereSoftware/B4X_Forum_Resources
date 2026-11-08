@@ -1,0 +1,92 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=cssutils
+Library2=jcore
+Library3=jfx
+Library4=jxui
+Library5=keyvaluestore
+Library6=javaobject
+Module1=ThumbnailView
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=1
+Version=8.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private pageIndex As Int = 0
+	Private files As List
+	Private ThumbnailView1 As ThumbnailView
+	Private Label1 As Label
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	files.Initialize
+	For Each filename As String In File.ListFiles(File.Combine(File.DirApp,"images"))
+		If filename.EndsWith(".png") Or filename.EndsWith(".jpg") Then
+			files.Add(filename)
+		End If
+	Next
+	
+	ThumbnailView1.Margin = 5
+	ThumbnailView1.Padding = 5
+	ThumbnailView1.RowNumber = 3
+	ThumbnailView1.ColNumber = 3
+	ThumbnailView1.Label = "{filename}"
+	ThumbnailView1.EnableThumbnailDatabase(File.DirApp,"thumbs.db")
+	LoadImages
+End Sub
+
+Private Sub LoadImages
+	Dim imgDir As String = File.Combine(File.DirApp,"images")
+	Dim filenames As List
+	filenames.Initialize
+	ThumbnailView1.PageIndex = pageIndex
+	Dim imageNumberToDisplay As Int = ThumbnailView1.ColNumber * ThumbnailView1.RowNumber
+	Dim totalPages As Int = Ceil(files.Size / imageNumberToDisplay) '1.2 -> 2
+	Dim startIndex As Int = pageIndex * imageNumberToDisplay
+	Dim endIndex As Int = pageIndex * imageNumberToDisplay  + imageNumberToDisplay
+	For i = startIndex To endIndex
+		If i > files.Size - 1 Then
+			Exit
+		End If
+		filenames.Add(files.Get(i))
+	Next
+	ThumbnailView1.LoadThumbnails(imgDir,filenames)
+	Label1.Text = (pageIndex + 1) & "/" & totalPages
+End Sub
+
+
+Private Sub PreviousButton_Click
+	pageIndex = Max(0,pageIndex - 1)
+	LoadImages
+End Sub
+
+Private Sub NextButton_Click
+	Dim imageNumberToDisplay As Int = ThumbnailView1.ColNumber * ThumbnailView1.RowNumber
+	Dim totalPages As Int = Ceil(files.Size / imageNumberToDisplay)
+	pageIndex = Min(totalPages - 1,pageIndex + 1)
+	LoadImages
+End Sub
+
+Sub Button1_Click
+	
+End Sub
+
+Private Sub ThumbnailView1_Click
+	Log("Clicked")
+	Log(ThumbnailView1.SelectedIndices)
+End Sub

@@ -1,0 +1,98 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rmpu9250
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+	Private pinbutton As Pin
+	Private timer1 As Timer
+    Private mpu As MPU9250
+	Dim milliOld = 0 As ULong
+End Sub
+
+Sub PinButton_Change(state As Boolean)
+	If state = False Then
+		Log(" "):Log("button ON")
+		If timer1.Enabled = True Then 
+			Log("Stop Timer")
+			timer1.Enabled = False
+		Else
+			Log("launch MyRun")
+			myRun			
+		End If
+	Else
+		Log("button OFF")
+	End If
+End Sub
+
+Sub timerRun
+	If milliOld+1000 < Millis  Then
+		milliOld = Millis
+		Dim tmp As Byte
+		Log("start TimerRun")
+
+		tmp = mpu.readId: If tmp = 255 Then Log("TimerRun_mpuID No access Error ",tmp)Else Log("TimerRun_mpu_ID=",tmp)
+		tmp=mpu.accelUpdate: If tmp=0 Then  Log("AccelUpdate = ",tmp) Else Log("AccelUpdate access error ",tmp)
+		Log("accelX= ",mpu.accelX,"   accelY= ",mpu.accelY,"    accelZ= ",mpu.accelZ)
+		Log("AccelSqrt= ",mpu.accelSqrt)
+		tmp=mpu.gyroUpdate: If tmp=0 Then  Log("gyroUpdate = ",tmp) Else Log("gyroUpdate access error ",tmp)
+		Log("gyroX= ",mpu.gyroX,"   gyroY= ",mpu.gyroY,"    gyroZ= ",mpu.gyroZ)
+    	
+		tmp=mpu.magUpdate: If tmp=0 Then  Log("magUpdate = ",tmp) Else Log("magUpdate access error ",tmp)
+		Log("magX= ",mpu.magX,"   magY= ",mpu.magY,"    magZ= ",mpu.magZ)
+		Log("MagHorizDirection= ",mpu.magHorizDirection)
+		Log("End TimerRun")
+		Log(" ")
+	End If	 
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+    StopWIFI 
+	pinbutton.Initialize(4,pinbutton.MODE_INPUT_PULLUP)
+	pinbutton.AddListener("PinButton_change")
+	Delay(1000)
+	mpu.Initialize2(mpu.I2C_Wire, 14, 5, mpu.MPU9250_Address_AD0_LOW)
+	timer1.Initialize("TimerRun",100)
+	Dim tmp = mpu.readId As Byte: If tmp = 255 Then Log("AppStart_mpuID No access Error ",tmp)Else Log("AppStart_mpu_ID=",tmp)
+'	Log("AppStartEnd =====>memoire: ",AvailableRAM,"  ====>stack: ",StackBufferUsage)
+End Sub
+	
+Sub myRun
+	Dim tmp = mpu.readId As Byte: If tmp = 255 Then Log("MyRun_mpuID No access Error ",tmp)Else Log("MyRun_mpu_ID=",tmp)
+	mpu.beginAccel(mpu.ACC_void)
+	mpu.beginGyro(mpu.GYRO_void)
+	mpu.beginMag(mpu.MAG_Mode_CONTINUOUS_100HZ)
+'	mpu.magSetMode(mpu.MAG_Mode_CONTINUOUS_100HZ)
+'	mpu.setmagXOffset(-50)'
+'	mpu.setmagYOffset(-55)
+'	mpu.setmagZOffset(-10)
+	timer1.enabled = True
+ 	Log("end myRun")
+End Sub
+
+public Sub StopWIFI
+	Log("Stop wifi")
+	RunNative("stopWIFI", Null)
+End Sub
+#if C
+  #include <ESP8266WiFi.h>
+  void stopWIFI (B4R::Object* u) {
+  WiFi.forceSleepBegin();
+  }
+#end if

@@ -1,0 +1,67 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+File1=B4X Libraries.xlsx
+File2=Template.xlsx
+FileGroup1=New Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=xlutils
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private xl As XLUtils
+End Sub
+
+Sub AppStart (Args() As String)
+	SplitLibrariesTable
+	StopMessageLoop 'required for xl.OpenExcel
+End Sub
+
+Sub SplitLibrariesTable
+	xl.Initialize
+	Dim Libraries As XLReaderResult = xl.Reader.ReadSheetByIndex(File.DirAssets, "B4X Libraries.xlsx", 0)
+	Dim Template As XLWorkbookWriter = xl.CreateWriterFromTemplate(File.DirAssets, "Template.xlsx")
+	Dim TemplateSheet As XLSheetWriter = Template.CreateSheetWriterByIndex(0)
+	Dim Platforms As List = Array ("B4A", "B4i", "B4J", "B4R")
+	Dim Center As XLStyle = Template.CreateStyle.HorizontalAlignment("CENTER")
+	For p = 0 To Platforms.Size - 1
+		Dim Platform As String = Platforms.Get(p)
+		Dim sheet As XLSheetWriter = Template.CloneSheet(TemplateSheet, Platform)
+		sheet.PutString(xl.AddressName("A1"), Platform)
+		Dim TargetRow1 As Int = 6
+		For SourceRow1 = 3 To Libraries.BottomRight.Row0Based + 1
+			Dim FileName As String = Libraries.Get(xl.AddressZero(2 + p, SourceRow1 - 1))
+			If FileName = "" Then Continue 'doesn't support this platform
+			sheet.PutString(xl.AddressOne("A", TargetRow1), Libraries.Get(xl.AddressOne("A", SourceRow1)))
+			sheet.PutString(xl.AddressOne("B", TargetRow1), Libraries.Get(xl.AddressOne("B", SourceRow1)))
+			sheet.PutNumber(xl.AddressOne("C", TargetRow1), Libraries.GetDefault(xl.AddressOne("G", SourceRow1), 0)).SetStyle(sheet.LastAccessed, Center)
+			Dim ticks As Long = Libraries.GetDefault(xl.AddressOne("H", SourceRow1), 0)
+			If ticks > 0 Then
+				sheet.PutDate(xl.AddressOne("D", TargetRow1), ticks).SetStyles(sheet.LastAccessed, Array(Template.CreateStyle.DataFormat($"d"-"mmm"-"yyyy"$), Center))
+			End If
+			sheet.PutString(xl.AddressOne("E", TargetRow1), Libraries.Get(xl.AddressOne("I", SourceRow1))).SetStyle(sheet.LastAccessed, Center)
+			sheet.PutString(xl.AddressOne("F", TargetRow1), Libraries.Get(xl.AddressOne("J", SourceRow1)))
+			Dim link As String = Libraries.Get(xl.AddressOne("K", SourceRow1))
+			If link <> "" Then
+				sheet.PutString(xl.AddressOne("G", TargetRow1), link).SetStyle(sheet.LastAccessed, Template.CreateStyle.FontLink(11))
+				sheet.CreateHyperlink(sheet.LastAccessed, "URL", link)
+			End If
+			TargetRow1 = TargetRow1 + 1
+		Next
+		sheet.CreateFreezePane(0, 5)
+	Next
+	Template.RemoveSheetAt(0)
+	Dim f As String = Template.SaveAs(File.DirApp, "Split Libraries.xlsx", True)
+	Wait For (xl.OpenExcel(f)) Complete (Success As Boolean)
+	StopMessageLoop
+End Sub

@@ -1,0 +1,88 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=favicon.png
+File2=Layout1.bjl
+FileGroup1=New Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=0
+Version=9.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	
+	#JavaCompilerPath: 11, C:\Java\jdk-11.0.1\bin\javac.exe
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private txtInputString As TextField
+	Private txtOutputSub As TextArea
+	Private btnGenerate As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	Log(DateTime.Now)
+	MainForm = Form1
+	MainForm.Resizable = False
+	MainForm.RootPane.LoadLayout("Layout1") 'Load the layout file.
+	MainForm.Show
+	
+	txtInputString.Text = "Hello World!"
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub btnGenerate_Click	
+	Dim InputString As String = txtInputString.Text
+	
+	If InputString.Length = 0 Then
+		txtInputString.Text = "ERROR"
+		Return
+	End If
+	
+	Dim OutputSub As String = Encode(InputString)
+	
+	fx.Clipboard.SetString(OutputSub)
+	
+	txtOutputSub.Text = OutputSub
+End Sub
+
+Private Sub Encode(input As String) As String
+	
+	Dim b() As Byte = input.GetBytes("UTF8")
+	
+	RndSeed(DateTime.Now)
+	
+	Dim o As StringBuilder
+	o.Initialize
+	o.Append("Private Sub X() as String")
+	o.Append(CRLF)
+	o.Append($"Dim b(${b.Length}) as Byte"$)
+	o.Append(CRLF)
+	
+	For i = 0 To b.Length-1
+		Dim t As Int = Rnd(0,32767)
+		Dim f As Int = Rnd(0,24)+1
+		t = Bit.Or(Bit.And(t,Bit.Not(Bit.ShiftLeft(0xff,f))),Bit.ShiftLeft(b(i),f))
+		o.Append($"b(${i}) = Bit.ShiftRight(${t},${f})"$)
+		o.Append(CRLF)
+	Next
+	
+	o.Append($"return BytesToString(b, 0, ${b.Length}, "UTF8")"$)
+	o.Append(CRLF)
+	
+	o.Append("End Sub")
+	o.Append(CRLF)
+	
+	Return o.ToString
+End Sub

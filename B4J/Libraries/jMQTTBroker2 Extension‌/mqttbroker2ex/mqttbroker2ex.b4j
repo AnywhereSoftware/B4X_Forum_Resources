@@ -1,0 +1,67 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=byteconverter
+Library2=javaobject
+Library3=jcore
+Library4=jmqttbroker2.2x
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=10.7
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub AppStart (Args() As String)
+	Dim brokerEx As MqttBroker2Ex
+	brokerEx.Initialize(51042)
+	brokerEx.DebugLog = True
+	brokerEx.WebsocketPort=51043
+
+	Dim users As Map = CreateMap("admin": "admin123", "user1": "user1123", "device1": "device123")
+	brokerEx.SetUsers(users)
+	'If a configuration file is specified, the broker will start according to its settings,
+	'overriding the properties mentioned above
+	'If you use a configuration file, you can enable all features of the MQTT broker, such as SSL, WSS and more.
+'	brokerEx.ConfigFile="moquette.conf"
+	brokerEx.EableInterceptor("ic", Me)
+	brokerEx.start
+	
+	StartMessageLoop
+End Sub
+
+Private Sub IC_Connect (Msg As Map)
+	Log("Connect:" & Msg)
+End Sub
+
+Private Sub IC_Disconnect (Msg As Map)
+	Log("Disconnect: " & Msg)
+End Sub
+
+Private Sub IC_ConnectionLost (Msg As Map)
+	Log("ConnectionLost: " & Msg)
+End Sub
+
+Private Sub IC_Publish (Msg As Map)
+	Log("Publish: " & Msg)
+End Sub
+
+Private Sub IC_Subscribe (msg As Map)
+	Log("Subscribe: " & msg)
+End Sub
+
+Private Sub IC_Unsubscribe (msg As Map)
+	Log("Unsubscribe: " & msg)
+End Sub
+
+Private Sub IC_MessageAcknowledged (msg As Object)
+	Log("MessageAcknowledged: " & msg)
+End Sub

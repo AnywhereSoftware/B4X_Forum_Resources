@@ -1,0 +1,133 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rsd32
+Library3=rspi32
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private HSPI As SPI32
+	Private CSSpin As Pin
+	Private CLKSpin As Pin
+	Private MOSIpin As Pin  'out master
+	Private MISOpin As Pin  'in  master
+	Private spiClk As ULong  = 1000000 '// 1 MHz
+	Private data As Int = 0 ' // Contador de Pasadas
+	Private D0 As Byte = 0
+	Private D1 As Byte = 0
+	Private D2 As Byte  = 0
+	Private Valor As Long = 0
+	Private FET As Long = 1000.0 / 8388607
+ 	Private pinCSS As Byte =  27
+	Private pinCLK As Byte =  14
+  	Private pinMOSI As Byte=   12
+	Private pinMISO As Byte =   13
+
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Log("Arranque PRG")
+	
+' ESP32: standard PINS used by default
+'  FSPI= 1, SPI attached To flash / normally Not used
+'  HSPI= 2, uses SPI2  => MOSI (13), SCK (14), MISO (12), SS (15)
+'  VSPI= 3, uses SPI3  => MOSI (23), SCK (18), MISO (19), SS (5)
+'  VSPI is SPI by default
+' ESP32 Alternative PINS with SPI.begin(pin_SCLK, pin_MISO, pin_MOSI, pin_SS)
+'  HSPI= 2 MISO 26  MOSI 27  SCLK 25   SS 32
+'  VSPI= 3 MISO  2  MOSI  4  SCLK  0   SS 33
+
+' ESP32-S2:
+' FSPI= 1, uses SPI2 =>MOSI (13), SCK (14), MISO (15) And SS (12) / 6 SS lines any other pin
+' HSPI= 2, uses SPI3 =>MOSI (35), SCK (36), MISO (37) And SS (34) / 3 SS lines at any other pin
+' VSPI Not defined
+
+' ESP32 C3:
+' FSPI= 0, uses SPIx =>MOSI (5), SCK (6), MISO (7) And SS (10) / 6 SS lines any other pin
+' HSPI Not defined
+' VSPI Not defined
+
+
+
+
+	CSSpin.Initialize(pinCSS , CSSpin.MODE_OUTPUT)
+	CLKSpin.Initialize(pinCLK, CLKSpin.MODE_OUTPUT)
+	MOSIpin.Initialize(pinMOSI, MOSIpin.mode_OUTPUT)
+	MISOpin.Initialize(pinMISO,  MISOpin.mode_INPUT_PULLUP)
+	
+	HSPI.Initialize(HSPI.ESP32_VSPI)
+'        HSPI.begin()
+	HSPI.begin1(0xFF, 0xFF, 0xFF, pinCSS)
+	Delay(1000)
+	Log("Inicia Rutina")
+	AddLooper("LocalLoop")
+End Sub
+
+
+Sub Localloop
+
+  '//use the SPI buses
+  
+  Envia_por_SPI
+  Delay(10)
+  
+End Sub
+
+Sub Envia_por_SPI
+  Dim datas(20) As Byte
+  data = data + 1
+  If (data > 200) Then data = 0
+  
+  HSPI.beginTransaction(spiClk, HSPI.SPI_LSBFIRSTS, HSPI.SPI_MODE1)
+  CSSpin.DigitalWrite(False) '; //Activa CS, lo pone a nivel bajo
+  HSPI.transferBytesR(datas,datas.length)
+  HSPI.transfer1(81)
+  HSPI.transfer1(3)
+  HSPI.transfer1(1)
+  HSPI.transfer1(0)
+  HSPI.transfer1(240)
+  HSPI.transfer1(1)
+  HSPI.transfer1(1)     '// Solicita Lectura del Canal  
+
+  HSPI.endTransaction
+  HSPI.beginTransaction(spiClk, HSPI.SPI_LSBFIRSTS, HSPI.SPI_MODE2)
+
+  D2 = HSPI.transfer1(0)      
+  D1 = HSPI.transfer1(0)   
+  D0 = HSPI.transfer1(0)
+
+  CSSpin.digitalWrite(True)    '; //Desactiva CS, lo pone a nivel alto
+  HSPI.endTransaction
+
+  '// Calcula el Valor en Bruto
+  Valor =(D2 * 65536) + (D1 * 256) + D0
+  
+  '//' Si es un numero Negativo Realiza el Complemento a 2
+  If D2 > 128 Then
+    Valor = 16777215 - Valor 
+    Valor = Valor * -1 
+  End If
+
+  Valor = Valor * FET
+  
+  Log("Lee Valor=",Valor) 
+  Log("CSS pin:",HSPI.pinSS)
+  Dim bus As String = "ON"
+  If HSPI.busStatus = False Then bus = "OFF"
+  Log("HSPI status:", bus)
+End Sub
+

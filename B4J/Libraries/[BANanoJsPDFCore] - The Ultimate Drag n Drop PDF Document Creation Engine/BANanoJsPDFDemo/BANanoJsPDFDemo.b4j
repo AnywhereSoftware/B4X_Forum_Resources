@@ -1,0 +1,233 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Amiri-Regular.ttf
+File10=mypdfpage4.bjl
+File11=mypdfpage5.bjl
+File12=mypdfpage6.bjl
+File13=mypdfpage7.bjl
+File14=mypdfpage8.bjl
+File15=mypdfpage9.bjl
+File16=Octocat.jpg
+File17=Octonyan.jpg
+File18=sponge.png
+File19=theme.css
+File2=banano.jpg
+File20=WelcomeModalLayout.bjl
+File21=WelcomePageLayout.bjl
+File3=config.properties
+File4=MainLayout.bjl
+File5=MenuLayout.bjl
+File6=mouhitu.ttf
+File7=mypdf.bjl
+File8=mypdfpage1.bjl
+File9=mypdfpage2.bjl
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup19=Default Group
+FileGroup2=Default Group
+FileGroup20=Default Group
+FileGroup21=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=banano
+Library2=bananoskeleton
+Library3=jcore
+Library4=jfx
+Library5=bananojspdfcore
+NumberOfFiles=21
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+	#IgnoreWarnings: 16, 10, 14, 15		
+#End Region
+
+Sub Process_Globals
+	Private BANano As BANano 'ignore
+	Public AppName As String = "bananojspdfdemo"
+	Public AppTitle As String = "BANanoJsPDF Code Demo"
+	Private Publish As String = "C:\laragon\www"
+	Public Version As String = "1.00"
+	Public ServerIP As String
+	
+	' from the MainLayout	
+	Private MainHamburgerMenu As SKLabel 'ignore
+	Private MainSidebar As SKSidebar 'ignore
+	Private MainPageHolder As SKContainer 'ignore
+	
+	' from the WelcomeModalLayout
+	Private WelcomeModal As SKModal 'ignore
+	Private WelcomeModalMessage As SKLabel 'ignore
+	
+	' from the WelcomePageLayout
+	Private WelcomePageName As SKTextBox 'ignore
+	Private WelcomePageButton As SKButton 'ignore
+	
+	' from the MenuLayout
+	Private MenuList As SKMenu 'ignore	
+	
+	' some media queries for our responsive menu
+	Private Bigger992px As BANanoMediaQuery
+	Private Smaller992px As BANanoMediaQuery
+	Private btnSavePDF As SKButton
+	Private btnViewPDF As SKButton
+	Private JsPdfDoc1 As JsPdfDoc
+	Private jsPdfView1 As jsPdfView
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	Dim config As Map = File.ReadMap(File.DirAssets, "config.properties")
+	ServerIP = config.Get("ServerIP")
+	
+	' you can change some output params here
+	BANano.Initialize("BANano", AppName, DateTime.now)
+	BANano.Header.Title= AppTitle
+	BANano.JAVASCRIPT_NAME = "app" & DateTime.Now & ".js"
+	
+	BANano.TranspilerOptions.MergeAllCSSFiles = True
+	BANano.TranspilerOptions.MergeAllJavascriptFiles = True
+	'BANano.TranspilerOptions.MinifyOnline = True
+	'BANano.TranspilerOptions.RemoveDeadCode = True
+	'BANano.TranspilerOptions.ShowWarningDeadCode = True
+
+	' write the theme
+	SKTools.WriteTheme
+	
+	BANano.PHP_NAME = $"${AppName}.php"$
+	#if release
+		'change to external host domain e.g http://www.google.com
+		'exclude the port address
+	#end if
+	BANano.PHPHost = $"${ServerIP}/${AppName}/"$
+	BANano.PHPAddHeader("Access-Control-Allow-Origin: *")
+	
+	BANano.Build(Publish)
+	
+	Dim fx As JFX
+	'Dim URL As String = File.GetUri(File.DirApp,"log.txt")
+	'fx.ShowExternalDocument(URL)
+	'
+	Dim appPath As String = $"${ServerIP}/${AppName}/index.html"$
+	fx.ShowExternalDocument(appPath)
+	#if release
+		ExitApplication
+	#end if
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+' HERE STARTS YOUR APP
+Sub BANano_Ready()
+	' get the body tag
+	Private body As BANanoElement
+	body.Initialize("#body")
+	
+	' append and load our main layout
+	body.Append($"<div id="mainHolder"></div>"$).Get("#mainHolder").LoadLayout("MainLayout")
+	' append and load a modal sheet
+	body.Append($"<div id="modalHolder"></div>"$).Get("#modalHolder").LoadLayout("WelcomeModalLayout")
+	
+	' loading our menu in our sidebar
+	MainSidebar.Element.LoadLayout("MenuLayout")
+	
+	' making the menu layout responsive: always open when screen size is bigger than 992px
+	Bigger992px.Initialize("(min-width: 992px)")
+	Smaller992px.Initialize("(max-width: 991px)")
+	
+	' add our menu items	
+	MenuList.AddMenuItem("", "page1", "fas fa-user", "{NBSP}{NBSP}Welcome page")
+	MenuList.AddMenuItem("", "page2", "far fa-file-pdf", "{NBSP}{NBSP}jsPDF Demo")
+	
+	MenuList.Start
+		
+	' load our first page
+	MainPageHolder.Element.LoadLayout("WelcomePageLayout")
+End Sub
+
+Sub Bigger992px_Matched()
+	MainSidebar.AlwaysOpen = True
+	' and hide the hamburger button
+	MainHamburgerMenu.Element.SetStyle($"{"visibility": "hidden"}"$)
+End Sub
+
+Sub Smaller992px_Matched()
+	MainSidebar.AlwaysOpen = False
+	' and show the hamburger button
+	MainHamburgerMenu.Element.SetStyle($"{"visibility": "unset"}"$)
+End Sub
+
+Sub WelcomePageButton_Click (event As BANanoEvent)
+	If WelcomePageName.Text = "" Then
+		SKTools.ShowToast("Please enter your name!", "info", 3000, True)
+		Return
+	End If
+	WelcomeModalMessage.Text = "Welcome " & WelcomePageName.Text
+	
+	WelcomeModal.Open
+End Sub
+
+Sub MenuList_Click (returnName As String)
+	'SKTools.ShowToast("Clicked on " & returnName & "!", "info", 3000, True)
+	' here we can load the layout of the menu item we clicked
+	Select Case returnName
+	Case "page1"
+		MainPageHolder.Element.Empty
+		MainPageHolder.Element.LoadLayout("WelcomePageLayout")
+	Case "page2"
+		MainPageHolder.Element.Empty
+		MainPageHolder.Element.LoadLayout("mypdf")
+		'add the pages to the document NB: use loadlayout append
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage1")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage2")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage4")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage5")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage6")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage7")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage8")
+		BANano.LoadLayoutAppend(JsPdfDoc1.Here, "mypdfpage9")
+	End Select
+	' and close the menu, if not always open
+	If MainSidebar.AlwaysOpen = False Then
+		MainSidebar.Close
+	End If	
+End Sub
+
+Sub MainHamburgerMenu_Click (event As BANanoEvent)
+	MainSidebar.Open
+End Sub
+
+Private Sub btnViewPDF_Click (event As BANanoEvent)
+	JsPdfDoc1.Ready
+	JsPdfDoc1.addFont("./assets/mouhitu.ttf", "Mouhitsu", "normal")
+	JsPdfDoc1.addFont("./assets/Amiri-Regular.ttf", "Amiri", "normal")
+	JsPdfDoc1.Go
+	jsPdfView1.SetValue(JsPdfDoc1.DataURL)
+End Sub
+
+Private Sub btnSavePDF_Click (event As BANanoEvent)
+	JsPdfDoc1.Ready
+	JsPdfDoc1.addFont("./assets/mouhitu.ttf", "Mouhitsu", "normal")
+	JsPdfDoc1.addFont("./assets/Amiri-Regular.ttf", "Amiri", "normal")
+	JsPdfDoc1.Go
+	JsPdfDoc1.Save
+End Sub

@@ -1,0 +1,216 @@
+﻿Build1=Default,b4a.example
+File1=main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=jmqtt
+Library3=randomaccessfile
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddPermission(android.permission.INTERNET)
+Module1=|relative|..\Shared code\clsMQTT
+Module2=|relative|..\Shared code\codConstants
+Module3=|relative|..\Shared code\codGameData
+Module4=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=4
+Version=9.9
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: MultiplayersDemo
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: landscape
+	#CanInstallToExternalStorage: False
+	#IgnoreWarnings: 34
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Dim MQTT As clsMQTT
+
+	Type typMsg(MsgType As Byte, Message As Object)
+	Type typWaiting(PlayerID As String, LastMatchID As String, LastUpdate As Long, EntryTime As Long)
+	Type typJoin(MatchID As String, Players As List, Data As typGameData)
+	Type typGameData(RoundNbr As Int, CurrentPlayer As Int, Data As Object, Timestamp As Long)
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Private txtName As EditText
+	Private btnConnect As Button
+	Private btnWait As Button
+	Private lblState As Label
+	Private btnStart As Button
+	Private btnPlay As Button
+	Private btnLeave As Button
+	Private lstWaiting As ListView
+	Private lstPlayers As ListView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("main")
+
+	txtName.Text = "User" & Rnd(0, 100000)
+	lblState.SingleLine = False
+	lstWaiting.SingleLineLayout.Label.TextSize = 16
+	lstWaiting.SingleLineLayout.ItemHeight = 80
+	lstPlayers.SingleLineLayout.Label.TextSize = 16
+	lstPlayers.SingleLineLayout.ItemHeight = 80
+
+	MQTT.Initialize
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Public Sub ChangeState(StateCode As Int)
+	Dim StateText As String
+	Select StateCode
+		Case codConstants.STATE_CONNECTING
+			StateText = codConstants.STATE_CONNECTING_TXT.Replace("@", MQTT.ServerURI)
+		Case codConstants.STATE_CONNECTED
+			StateText = codConstants.STATE_CONNECTED_TXT
+			txtName.Enabled = False
+			btnConnect.Enabled = False
+		Case codConstants.STATE_CONNECTION_FAILED
+			StateText = codConstants.STATE_CONNECTION_FAILED_TXT
+		Case codConstants.STATE_MUST_WAIT
+			StateText = codConstants.STATE_MUST_WAIT_TXT
+			btnWait.Enabled = True
+		Case codConstants.STATE_SUBSCRIBE_WAITING
+			StateText = codConstants.STATE_SUBSCRIBE_WAITING_TXT
+		Case codConstants.STATE_WAITING
+			StateText = codConstants.STATE_WAITING_TXT
+		Case codConstants.STATE_JOINING
+			StateText = codConstants.STATE_JOINING_TXT
+			lstWaiting.Visible = False
+		Case codConstants.STATE_SUBSCRIBE_GAMETOPIC
+			StateText = codConstants.STATE_SUBSCRIBE_GAMETOPIC_TXT
+		Case codConstants.STATE_PLAYING
+			StateText = codConstants.STATE_PLAYING_TXT
+			btnLeave.Enabled = True
+		Case codConstants.STATE_CANCELING
+			StateText = codConstants.STATE_CANCELING_TXT
+			lstWaiting.Visible = True
+			lstWaiting.Clear
+			lstPlayers.Visible = False
+		Case codConstants.STATE_LEAVING
+			StateText = codConstants.STATE_LEAVING_TXT
+		Case codConstants.STATE_GAMEOVER
+			StateText = codConstants.STATE_GAMEOVER_TXT
+			btnPlay.Enabled = False
+			lstPlayers.Visible = False
+		Case codConstants.STATE_TOO_LATE
+			StateText = codConstants.STATE_TOO_LATE_TXT
+			btnLeave.Enabled = True
+		Case codConstants.STATE_DISCONNECTED
+			StateText = codConstants.STATE_DISCONNECTED_TXT
+			txtName.Enabled = True
+			btnConnect.Enabled = True
+			btnWait.Enabled = False
+			btnStart.Enabled = False
+			btnPlay.Enabled = False
+			btnLeave.Enabled = False
+			lstWaiting.Visible = False
+			lstPlayers.Visible = False
+	End Select
+	lblState.Text = StateText
+	Log(StateText)
+End Sub
+
+Private Sub btnConnect_Click
+	'Is the player name valid?
+	If txtName.Text.Trim = "" Then
+		Msgbox("Please enter a valid name.", "Invalid name")
+		Return
+	End If
+
+	'Initializes all game data
+	codGameData.Initialize(txtName.Text.Trim)
+
+	'Connects the MQTT client to the broker with the chosen name
+	MQTT.Connect(codGameData.GetPlayerID)
+End Sub
+
+Private Sub btnWait_Click
+	'Enters the waiting room
+	MQTT.EnterWaitingRoom
+
+	'Updates the UI
+	btnWait.Enabled = False
+	lstWaiting.Visible = True
+	lstWaiting.Clear
+End Sub
+
+Public Sub UpdateWaitingRoom(WPlayers As List)
+	'Updates the list of waiting players
+	lstWaiting.Visible = True
+	lstWaiting.Clear
+	For Each WPlayer As typWaiting In WPlayers
+		lstWaiting.AddSingleLine(WPlayer.PlayerID)
+	Next
+End Sub
+
+Private Sub btnStart_Click
+	'Confirms that the player wants to play a game with the current participants
+	MQTT.JoinGame
+
+	'Updates the UI
+	btnStart.Enabled = False
+End Sub
+
+Public Sub UpdatePlayersList(EnableStartButton As Boolean)
+	'Updates the list of participants
+	lstPlayers.Visible = True
+	lstPlayers.Clear
+	For Each Player As String In codGameData.GetPlayers
+		lstPlayers.AddSingleLine(Player)
+	Next
+
+	'Waits for a click on the START button?
+	btnStart.Enabled = EnableStartButton
+End Sub
+
+Private Sub btnPlay_Click
+	'Simulates a game action and hands over to the next player
+	codGameData.SimulGameTurn
+
+	'Updates the UI
+	btnPlay.Enabled = False
+End Sub
+
+Public Sub ShowTurnState(AdditionalMsg As String)
+	'Displays the number of the game round and the ID of the player whose turn it is
+	Dim CurrentPlayer As String = codGameData.GetCurrentPlayer
+	If CurrentPlayer <> "" Then
+		lblState.Text = "Round #" & codGameData.GetGameData.RoundNbr & ". Current player: " & CurrentPlayer & CRLF & AdditionalMsg
+		Log(lblState.Text)
+		btnPlay.Enabled = (CurrentPlayer = codGameData.GetPlayerID)
+	End If
+End Sub
+
+Private Sub btnLeave_Click
+	'Abandons the game in progress
+	codGameData.RemovePlayer(codGameData.GetPlayerID)
+	MQTT.LeaveGame
+
+	'Updates the UI
+	btnLeave.Enabled = False
+	btnPlay.Enabled = False
+	lstPlayers.Visible = False
+	lstPlayers.Clear
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	If UserClosed Then
+		MQTT.Close
+	End If
+End Sub

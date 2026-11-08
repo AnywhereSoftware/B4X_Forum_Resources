@@ -1,0 +1,139 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=radafruit_max31856
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=3.5
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private Max31 As Adafruit_MAX31856
+	Dim millisave= 0  As ULong
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	Dim stat= False As Boolean
+	Log("MAX31856 thermocouple test")
+	
+	Do Until stat =True
+'       stat = Max31.Initialize(0)
+		stat = Max31.Initialize1(0,5,14,16)
+		If stat=True Then Log("init OK") Else Log("Could not initialize thermocouple")
+		Delay(500)
+	Loop
+	
+	Max31.setThermocoupleType(Max31.MAX31856_TCTYPE_K)
+
+	Log("Check Thermocouple type : ")
+	
+	Select (Max31.getThermocoupleType) 
+	Case Max31.MAX31856_TCTYPE_B
+		Log("B Type")
+	Case Max31.MAX31856_TCTYPE_E
+		Log("E Type")
+	Case Max31.MAX31856_TCTYPE_J
+		Log("J Type")
+	Case Max31.MAX31856_TCTYPE_K
+		Log("K Type")
+	Case Max31.MAX31856_TCTYPE_N
+		Log("N Type")
+	Case Max31.MAX31856_TCTYPE_R
+		Log("R Type")
+	Case Max31.MAX31856_TCTYPE_S
+		Log("S Type")
+	Case Max31.MAX31856_TCTYPE_T
+		Log("T Type")
+	Case Max31.MAX31856_TCTYPE_G8
+		Log("Voltage x8 Gain mode")
+	Case Max31.MAX31856_TCTYPE_G32
+		Log("Voltage x8 Gain mode")
+	Case Else Log("Unknown")
+	End Select
+	
+	Max31.setConversionMode(Max31.MAX31856_TCTYPE_K)
+'	Max31.setConversionMode(Max31.MAX31856_CVMODE_CONTINUOUS)
+
+	Log("Check Conversion Mode : ")
+	Select Max31.getConversionMode
+		Case Max31.MAX31856_CVMODE_ONESHOT
+			Log("One Shot")
+	   Case Max31.MAX31856_CVMODE_CONTINUOUS
+	   	    Log("Continuous")
+		Case Max31.MAX31856_CVMODE_ONESHOT_NOWAIT
+			Log("One Shot Nowait")			
+	End Select
+	
+	Max31.setNoiseFilter(Max31.MAX31856_NOISE_FILTER_50HZ)
+
+	Log("check Fault type : ")
+	Select Max31.readFault
+		Case Max31.MAX31856_FAULT_CJRANGE
+			Log("Fault status Cold Junction Out-of-Range flag")
+		Case Max31.MAX31856_FAULT_TCRANGE
+			Log("Fault status Thermocouple Out-of-Range flag")
+		Case Max31.MAX31856_FAULT_CJHIGH
+			Log("Fault status Cold-Junction High Fault flag")
+		Case Max31.MAX31856_FAULT_CJLOW
+			Log("Fault status Cold-Junction Low Fault flag")
+		Case Max31.MAX31856_FAULT_TCHIGH
+			Log("Fault status Thermocouple Temperature High Fault flag")
+		Case Max31.MAX31856_FAULT_TCLOW
+			Log("Fault status Thermocouple Temperature Low Fault flag")
+		Case Max31.MAX31856_FAULT_OVUV
+			Log("Fault status Overvoltage or Undervoltage Input Fault flag")
+		Case Max31.MAX31856_FAULT_OPEN
+			Log("Fault status Thermocouple Open-Circuit Fault flag")
+	End Select
+	
+	AddLooper("looper")
+	
+	End Sub
+		
+	Sub looper
+	If Millis + 1000 > millisave Then
+		millisave = Millis
+		get_temp	
+	End If
+	End Sub
+	
+	Sub get_temp
+		'// trigger a conversion, returns immediately
+		Max31.triggerOneShot
+		
+		'//
+		'// here's where you can do other things
+		'//
+		Delay(500) ' // replace this with whatever
+		'//
+		'//
+		
+		'// check For conversion complete And read temperature
+		If (Max31.conversionComplete()) Then
+			Log(Max31.readThermocoupleTemperature)
+		Else 
+			Log("Conversion not complete!")
+		End If
+		
+End Sub
+
+

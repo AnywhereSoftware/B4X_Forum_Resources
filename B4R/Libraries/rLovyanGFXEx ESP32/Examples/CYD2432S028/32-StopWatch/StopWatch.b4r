@@ -1,0 +1,275 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rlovyangfxex
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Notes
+'Project:		rLovyanGFXEx
+'Description:	Example stopwatch with 2 touch buttons using the library function drawbutton.
+'Date:			See globals version
+'Author:		Robert W.B. Linn
+
+'Additional Libraries used (min version)
+
+'Microcontroller
+'ESP32 Dev Module
+'IMPORTANT: Change Tools > Board Selector > Partition scheme to "Hugh app (3MB no OTA/ 1MB SPIFFS)" 
+
+'Compile
+'Reset the ESP32 after compile (press reset button).
+
+'Wiring
+'No additional wiring
+
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Private VERSION As String = "rLovyanGFXEx STOPWATCH v20250407"
+
+	'Communication
+	Public Serial1 As Serial
+
+	'Display Instance
+	Private lcd As LovyanGFXEx
+
+	'Button state
+	'Private BUTTON_STATE_ON As Boolean = True
+	'Private BUTTON_STATE_OFF As Boolean = False
+	'Button default width and height
+	Private BUTTON_WIDTH As ULong = 120
+	Private BUTTON_HEIGHT As ULong = 50
+	Private BUTTON_OFFSET_Y As Int = 10
+
+	'Button labels are defined as constants with fixed text to avoid ESP32 crash when assigning text in a sub (modifying constant strings is problematic)
+	Private ButtonRunLabel As String = "Start"
+	Private ButtonClearLabel As String = "Clear"
+
+	'Button structure without label
+	Type TButton(id As Int, x As ULong, y As ULong, w As ULong, h As ULong, textcolor As ULong, coloron As ULong, coloroff As ULong, State As Byte)
+	'Button array with 2 buttons
+	Private Buttons(2) As TButton
+
+	Private STATE_START=1, STATE_CLEAR=2 As Byte
+	
+	'Stopwatch timer every second
+	Private StopWatchTimer As Timer
+	Private StopWatchTimerInterval As Long = 1000	'ms
+	Private StopWatchRunning As Boolean = False
+	Private StopWatchValue As ULong = 0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log(CRLF, CRLF, "[AppStart]", VERSION)
+
+	'Init display with mandatory touch event
+	lcd.Initialize("LCD_Touch")
+	lcd.DisplayRotation = 1
+
+	'Init the stopwatchtimer with disabled state = stopwatch not running
+	StopWatchTimer.Initialize("StopWatchTimer_Tick", StopWatchTimerInterval)
+	StopWatchTimer.Enabled = StopWatchRunning
+	
+	'Draw the value as 7-segment-display
+	StopWatchInitDisplay
+End Sub
+
+Private Sub StopWatchTimer_Tick
+	'Increase timer value
+	StopWatchValue = StopWatchValue + 1
+	
+	'Draw the value as 7-segment-display
+	StopWatchDrawValue
+	
+	'Log("[StopWatchTimer_Tick] ", StopWatchValue)
+End Sub
+
+'Init the display.
+'This is an expensive solution but fine for tests.
+Private Sub StopWatchInitDisplay
+	lcd.BackgroundColor = lcd.color_white
+
+	'Draw version text at top middle center
+	lcd.DrawHeader(VERSION, lcd.FONT_FONT2, lcd.TEXT_ALIGN_CENTER, 1, lcd.COLOR_BLACK, lcd.COLOR_LIGHTGRAY, lcd.COLOR_BLACK)
+
+	'Draw the buttons at display bottom
+	InitButtons
+
+	'Draw the text using the 7-segment-display font
+	StopWatchDrawValue
+End Sub
+
+'Redraw the display.
+'This is an expensive solution but fine for tests.
+Private Sub StopWatchDrawValue
+	'Font
+	Dim fontsize As Byte = 1
+
+	lcd.FONT = lcd.FONT_FONT7
+
+	'Clear area
+	Dim x,y,w,h As Long
+	x = 0
+	w = lcd.Width
+	h = lcd.FontHeight
+	y = lcd.CenterY - (h/2) - 20
+	lcd.ClearArea(x, y, w, h, lcd.BackgroundColor)
+
+	'Draw the text using the 7-segment-display font
+	lcd.SetTextColor(lcd.COLOR_BLACK)
+	lcd.SetTextSize(fontsize)
+	lcd.SetTextDatum(lcd.TEXT_ALIGN_MIDDLE_CENTER)
+	lcd.DrawString(GetTimeFromTicks(StopWatchValue), lcd.CenterX, lcd.CenterY - 20)
+End Sub
+
+#Region Touch Event
+'LCD touched event with x,y coordinates.
+Private Sub LCD_Touch(x As ULong, y As ULong)
+	'Get the button id of the button touched
+	Dim buttonid As Int = TouchedButton(x, y)
+
+	'Check the buttonid
+	If buttonid < 0 Then
+		Log("[LCD_Touch] x=", x, ",y=", y, ",button touched=NO")
+		Return
+	End If
+
+	'Get the button data from the buttons array
+	Dim btn As TButton = Buttons(buttonid)
+	Log("[LCD_Touch] x=", x, ",y=", y, ",id=", btn.id, ",state=", btn.state)
+	
+	'Check which button
+	Log("[LCD_Touch] x=", x, ",y=", y, ",id=", btn.id, ",state=", btn.state)	
+	Select buttonid
+		'Start
+		Case 0
+			Log("[LCD_Touch] START")
+			'Reverse the stopwatch running state
+			StopWatchRunning = Not(StopWatchRunning)
+			'Start or stop the StopWatchTimer
+			StopWatchTimer.Enabled = StopWatchRunning
+			Log("[LCD_Touch] START stopwatchrunning=",StopWatchRunning)
+		Case 1
+			Log("[LCD_Touch] CLEAR")
+			StopWatchTimer.Enabled = False
+			StopWatchValue = 0
+			StopWatchDrawValue
+	End Select
+End Sub
+#End Region
+
+#Region Buttons
+'Initialize the buttons.
+'The id must be the button array index starting with 0.
+Private Sub InitButtons
+	'Set the button index
+	Dim idx As Byte 
+	
+	'Init and draw the buttons
+	
+	'START
+	idx = 0
+	Buttons(idx).id = idx
+	Buttons(idx).x = 20
+	Buttons(idx).y = lcd.Height - BUTTON_HEIGHT - BUTTON_OFFSET_Y
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_WHITE
+	Buttons(idx).coloron = lcd.COLOR_NAVY
+	Buttons(idx).coloroff = lcd.COLOR_LIGHTGRAY
+	Buttons(idx).state = STATE_START
+	DrawButton(Buttons(0), ButtonRunLabel)
+
+	'CLEAR
+	idx = 1
+	Buttons(idx).id = idx
+	Buttons(idx).x = lcd.Width - BUTTON_WIDTH - 20
+	Buttons(idx).y = lcd.Height - BUTTON_HEIGHT - BUTTON_OFFSET_Y
+	Buttons(idx).w = BUTTON_WIDTH
+	Buttons(idx).h = BUTTON_HEIGHT
+	Buttons(idx).textcolor = lcd.COLOR_WHITE
+	Buttons(idx).coloron = lcd.COLOR_RED
+	Buttons(idx).coloroff = lcd.COLOR_RED
+	Buttons(idx).state = STATE_CLEAR
+	DrawButton(Buttons(1), ButtonClearLabel)
+End Sub
+
+'Draw button using the button properties and the label constants
+Private Sub DrawButton(btn As TButton, label As String)
+	Log("[DrawButton] id=", btn.id)
+
+	'Default textsize
+	Dim textsize As Byte = 1
+
+	'Set bold font
+	lcd.Font = lcd.FONT_FREEMONOBOLD_12
+
+	'Draw the button
+	lcd.DrawButton(btn.id, btn.x, btn.y, btn.w, btn.h, btn.coloron, btn.textcolor, label, textsize, textsize, False)
+
+	'Set font back to default
+	lcd.Font = lcd.FONT_DEFAULT
+End Sub
+
+'Check if a button is touched.
+'Used in the LCD touched event with x,y coordinates.
+'Returns button id or -1 if no button touched
+Private Sub TouchedButton(touchx As ULong, touchy As ULong) As Int
+	' Log("[TouchedButton] touchx=", touchx, ",touchy=", touchy)
+
+	For Each btn As TButton In Buttons
+		' Log("[TouchedButton] id=", btn.id, ",btn.x=", btn.x, ", btn.y=", btn.y)
+		If (touchx >= btn.x And touchx <= btn.x + btn.w) And (touchy >= btn.y And touchy <= btn.y + btn.h) Then
+			Log("[TouchedButton] id=", btn.id, ",touchx=", touchx, ",touchy=", touchy)
+			Return btn.id
+		End If
+	Next
+
+	' Button id not found
+	Return -1
+End Sub
+#End Region
+
+#Region DATETIME
+'Define string with the elapsed time with leading zero.
+'Max time elapsed is 23:59:59.
+Private Sub GetTimeFromTicks(ticks As ULong) As String
+	'Ticks are based on seconds
+	Dim ticksPerHour As Int = 3600
+	Dim ticksPerMinute As Int = 60
+	Dim ticksPerSecond As Int = 1
+
+	Dim result As String
+	
+	Dim hours, minutes, seconds As Int
+	hours = ticks / ticksPerHour
+	minutes = (ticks Mod ticksPerHour) / ticksPerMinute
+	seconds = (ticks Mod ticksPerMinute) / ticksPerSecond
+	'Log("[DrawTimeElapsed] h=",hours,",m=",minutes,",s=",seconds)
+
+	'Check if hours less then a day
+	If hours < 24 Then
+		result = JoinStrings(Array As String(NumberFormat(hours,2,0),":",NumberFormat(minutes,2,0),":",NumberFormat(seconds,2,0)))
+	Else
+		StopWatchRunning = False
+		StopWatchTimer.Enabled = StopWatchRunning
+		lcd.Font = lcd.FONT_ORBITRON_LIGHT_32
+		result = "STOP MAX TIME"
+	End If
+
+	'No conversion
+	'result = NumberFormat(value, 0, 0)
+	Return result
+End Sub
+#End Region

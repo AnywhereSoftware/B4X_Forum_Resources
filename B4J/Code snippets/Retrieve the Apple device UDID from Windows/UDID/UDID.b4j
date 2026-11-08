@@ -1,0 +1,144 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Main.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jshell
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=9.1
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private LabelInfo As Label
+	Private ListViewUDID As ListView
+	Private MapKey As Map
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Main")
+	MainForm.Show
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+
+End Sub
+
+Private Sub ButtonUDID_Click
+	UDID
+End Sub
+
+Private Sub ListViewUDID_SelectedIndexChanged(Index As Int)
+	If Index>-1 Then 
+		LabelInfo.Text="Copy to Clipboard: " & ListViewUDID.Items.Get(Index)
+		fx.Clipboard.SetString(ListViewUDID.Items.Get(Index))
+	End If
+End Sub
+
+Sub ListViewUDID_Action
+	Dim mi As MenuItem = Sender
+	
+	Select mi.Text
+		Case "_Edit"
+			If ListViewUDID.SelectedIndex>-1 Then
+				EditKey(MapKey.Get(ListViewUDID.SelectedItem))
+			End If
+		Case "_Delete"
+			If ListViewUDID.SelectedIndex>-1 Then
+				If fx.Msgbox2(MainForm,$"Delete ${ListViewUDID.SelectedItem} key?"$,"DELETE KEY","Yes","","No",fx.MSGBOX_CONFIRMATION)=fx.DialogResponse.POSITIVE Then
+					'DeleteKey(MapKey.Get(ListViewUDID.SelectedItem) & "\" & ListViewUDID.SelectedItem)
+					DeleteKey(MapKey.Get(ListViewUDID.SelectedItem))
+				End If
+			End If
+	End Select
+End Sub
+
+Public Sub UDID 
+	Dim jShell As Shell
+	
+	If File.Exists(File.DirApp , "reg.txt") Then File.Delete(File.DirApp , "reg.txt")
+	jShell.Initialize("jShell","C:\Windows\System32\REG.exe",Array As String("EXPORT", "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\USB", File.Combine( File.DirApp,"reg.txt")))
+	jShell.WorkingDirectory = File.DirApp
+	jShell.Run(500)
+End Sub
+
+Sub jShell_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	Dim start,index,last, nxt As Int
+	
+	ListViewUDID.Items.Clear
+	MapKey.Initialize
+	If Success And ExitCode = 0 Then
+		Log("Success")
+		Log(StdOut)
+		If File.Exists(File.DirApp , "reg.txt") Then  
+			Dim sUDID As String = File.ReadString(File.DirApp, "reg.txt").Replace(Chr(0),"")
+			Log(sUDID.Length)
+			start=0
+			Do While sUDID.IndexOf2("iphone.appleusb",start)>-1
+				index = sUDID.IndexOf2("iphone.appleusb",start)
+				nxt= sUDID.IndexOf2("[",index)
+				If nxt=-1 Then nxt=UDID.Length
+				If index>-1 Then
+					last=sUDID.SubString2(start,index).LastIndexOf("]")
+					If last>-1 Then
+						index=sUDID.SubString2(start,last+start).LastIndexOf("\")+1
+						If index>0 Then
+							Dim xUDID As String = sUDID.SubString2(index+start,last+start)
+							If xUDID.Length=40 Or (xUDID.Length=25 and xUDID.IndexOf("-")=8) Then 
+								ListViewUDID.Items.Add(xUDID)
+								Log("UDID: " & sUDID.SubString2(index,last))
+								last=sUDID.SubString2(start,last+start).LastIndexOf("[")+1
+								If last>0 Then
+									Dim RegisterKey As String = sUDID.SubString2(last+start,index+start-1)
+									MapKey.Put(xUDID,RegisterKey)
+								End If
+							End If
+						End If
+						start=nxt
+					End If
+				Else
+					start=sUDID.Length
+				End If
+				
+			Loop
+		End If
+	Else
+		Log("Error: " & StdErr)
+	End If
+End Sub
+
+Public Sub DeleteKey(Key As String)
+	Log(Key)
+	Dim jShell As Shell
+	
+	jShell.Initialize("jdlt","C:\Windows\System32\REG.exe",Array As String("DELETE", $""${Key}""$, "/va","/f"))
+	jShell.WorkingDirectory = File.DirApp
+	jShell.Run(500)
+End Sub
+
+Sub jdlt_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	If Success Then 
+		fx.Msgbox(MainForm,"Deleted","ALERT")
+	Else
+		fx.Msgbox(MainForm,"Don't deleted","ALERT")
+	End If
+End Sub
+
+Public Sub EditKey(Key As String)
+	Log(Key)
+	
+End Sub

@@ -1,0 +1,289 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rawot
+Library2=rcore
+Library3=resp8266wifi
+Library4=rlittlefs
+Library5=rrandomaccessfile
+Library6=reeprom
+Module1=|absolute|D:\B4R\B4R_Modules\GlobalStore
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=1
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 4000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private wifi As ESP8266WiFi 
+	Private bc As ByteConverter
+	Private sr As B4RSerializator
+	Public eeprom As EEPROM
+	Private const MAGIC_EEPROM As Byte = 213
+	Private lfs As LittleFS
+	Private aWOT As aWOT
+	Private text() As Byte
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+
+	'example of connecting to a local network
+	If wifi.Connect2( "xxxxx", "xxxxxxxxxx") Then
+		Log("Connected to network")
+	Else
+		Log("Failed to connect to network")
+	End If
+'	aWOT.initialize
+	aWOT.initialize1("finally","notfound")
+    Log("end init aWOT")
+	If Not(lfs.Initialize()) Then Log("FS initialization error") Else Log("init lfs OK")
+    Log(wifi.LocalIp)
+	GlobalStore.put(0,"/")
+	AddLooper("process")
+	'**************************************
+	'** first, routers added  ********************
+	'**************************************
+	'2) management "getvar" with router 2
+	aWOT.rout_get(2,"/save", "m11_getvar_save")   ' Router 2 -> middleware 10 to handle button Save click
+	aWOT.rout_get(2,"/_abort", "m11_getvar_abort")  ' Router 2 -> middleware 11 to handle button Abort click
+	aWOT.rout_get(2,"/_erase", "m11_getvar_erase")  ' Router 2 -> middleware 11 to handle button Erase click
+'1) managemant "/" with "app"	
+	aWOT.app_setTimeout(3000)
+	aWOT.app_get("/", "m0_keepAlive")			'keep alive
+	aWOT.app_get("/", "m1_basemenu")       ' app_Router -> middleware 1 to show basic_menu html
+	
+	aWOT.app_get("/getvar", "m2_getvar")  ' app_Router -> middleware 2 to show getvar html
+	aWOT.app_useR("/getvar",2) ' create Router 2  to handle getvar interface
+   
+End Sub 
+
+ Sub process()	  
+   aWOT.process
+End Sub
+
+'*********************************************
+Sub m0_keepAlive() {
+	Log("start keepAlive")
+  aWOT.res_set("Connection", "keep-alive")
+'    Log("end keepAlive")
+'	Log("status sent keepalive: ",aWOT.res_statusSent)
+End Sub
+ 
+'*********************************************
+
+
+'*********************************************
+Sub m1_basemenu()
+	aWOT.res_set("Location", "/getvar")
+	aWOT.res_sendStatus(302)
+End Sub
+
+'*********************************************
+Sub m2_getvar()
+	RunNative("gethtml", 0)
+	aWOT.res_write1(text,text.length)
+	'add saved values from eeprom
+	Dim ObjectsBuffer(11) As Object
+	Dim datas() As Byte = GetStoredData
+	Dim Objects() As Object = sr.ConvertBytesToArray(datas, ObjectsBuffer)
+    Dim i As Byte = 0
+	Dim nkay() As String = Array As String("_nwk","_key","_rf1","_rf2","_rf3","_rf4","_rf5","_rf6","_rf7","_rf8")
+	For Each n As String In nkay
+		If i < Objects.Length Then
+'		Log("objects=",Objects(i))			
+		  aWOT.res_print("<script>  document.getElementById('"): aWOT.res_print(n): aWOT.res_print("').value = '"): aWOT.res_print(bc.stringfrombytes(Objects(i))): aWOT.res_println("';</script>")
+		Else
+'		  Log("no Object","--")	
+		  aWOT.res_print("<script>  document.getElementById('"): aWOT.res_print(n): aWOT.res_print("').value = '"): aWOT.res_print("--"): aWOT.res_println("';</script>")		
+		End If
+		i = i+1
+	Next
+End Sub
+Sub m11_getvar_save()
+	'format or data reveived:
+	'http://192.168.1.19/getvar/save?_nwk=1&_key=2&_rf1=3&_rf2=3&_rf3=4&_rf4=5&_rf5=6&_rf6=7&_rf7=8&_rf8=9&_save=
+	Log("get -> save")
+	Dim value(30) As Byte
+	Dim vars(11) As Object
+	Dim temp1() As Byte
+	Dim nb As Byte = 0
+	Log(" req_query :",aWOT.req_query):Log(" ")	
+	Dim nkay() As String = Array As String("_nwk","_key","_rf1","_rf2","_rf3","_rf4","_rf5","_rf6","_rf7","_rf8")
+	For Each n As String In nkay
+		aWOT.req_query1(n,value)
+		temp1 =bc.Trim(value)
+		temp1 = ReplaceString(temp1,"%2C",",")
+		temp1 = ReplaceString(temp1,"%252B",",")
+		If bc.trim(temp1)="" Then temp1 = "---"
+		bc.ObjectSet(temp1, vars(nb))
+'		Log(n,"=[",temp1,"]")
+		nb = nb + 1
+	Next	
+	SaveNetworkDetails(sr.ConvertArrayToBytes(vars))
+	
+	aWOT.res_set("Location", "/getvar")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m11_getvar_erase()
+	Log("get -> erase")
+	ClearStoredDataLength
+	aWOT.res_set("Location", "/getvar")
+	aWOT.res_sendStatus(302)
+End Sub
+Sub m11_getvar_abort()
+	Log("get -> abort")
+	aWOT.res_set("Location", "/getvar")
+	aWOT.res_sendStatus(302)
+End Sub
+
+
+'**********************************************************************************
+Sub finally()
+	Log("Client Closed")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+'**********************************************************************************
+Sub notfound()	
+	Log("Middleware not found - Call Back 404")
+'	aWOT.res_status(404)
+'	aWOT.res_print("Middleware Not Found")
+End Sub
+
+Public Sub SaveNetworkDetails(Data() As Byte)
+	Log("Saving Network data")
+	Log("data length: ", Data.Length)
+	Log("memory=", AvailableRAM)
+	Log("stack :",StackBufferUsage)
+'	Log("data to eeprom=",Data)
+    If Data.Length > 256 Then
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM+1, Data.Length), 0)
+	Else
+	eeprom.WriteBytes(Array As Byte(MAGIC_EEPROM, Data.Length), 0)
+	End If
+	eeprom.WriteBytes(Data, 2)
+End Sub
+
+Public Sub GetStoredDataLength As UInt
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	Log("header lu=",header(0),"+",header(1))
+	If header(0) = MAGIC_EEPROM Then
+		Return header(1)
+	else if header(0) = MAGIC_EEPROM+1 Then
+		Return header(1)+256
+	End If
+	Return 0
+End Sub
+
+Sub	GetStoredData As Byte()
+	Dim length As UInt = GetStoredDataLength
+'	Log("length in eeprom=",length)
+	If length > 0 Then
+		Dim Datas() As Byte = eeprom.ReadBytes(2, length)		
+	Else
+		Dim Datas() As Byte = Array As Byte(0)
+	End If
+	Return Datas
+End Sub
+
+Public Sub ClearStoredDataLength
+	Dim header() As Byte = eeprom.ReadBytes(0, 2)
+	Log("Old header=",header(0),"-",header(1))
+	header(0) = 0 :	header(1) = 0
+'	Log("New header=",header(0),"-",header(1))
+	eeprom.WriteBytes(header,0)
+	Log("clear done")
+End Sub
+
+Private Sub ReplaceString(Original() As Byte, SearchFor() As Byte, ReplaceWith() As Byte) As Byte()
+	'count number of occurrences
+	Dim bc2 As ByteConverter
+	Dim c As Int = 0
+	Dim i As Int
+	If SearchFor.Length <> ReplaceWith.Length Then
+		i = bc2.IndexOf(Original, SearchFor)
+		Do While i > -1
+			c = c + 1
+			i = bc2.IndexOf2(Original, SearchFor, i + SearchFor.Length)
+		Loop
+	End If
+	Dim result(Original.Length + c * (ReplaceWith.Length - SearchFor.Length)) As Byte
+	Dim prevIndex As Int = 0
+	Dim targetIndex As Int = 0
+	i = bc2.IndexOf(Original, SearchFor)
+	Do While i > -1
+		bc2.ArrayCopy2(Original, prevIndex, result, targetIndex, i - prevIndex)
+		targetIndex = targetIndex + i - prevIndex
+		bc2.ArrayCopy2(ReplaceWith, 0, result, targetIndex, ReplaceWith.Length)
+		targetIndex = targetIndex + ReplaceWith.Length
+		prevIndex = i + SearchFor.Length
+		i = bc2.IndexOf2(Original, SearchFor, prevIndex)
+	Loop
+	If prevIndex < Original.Length Then
+		bc2.ArrayCopy2(Original, prevIndex, result, targetIndex, Original.Length - prevIndex)
+	End If
+	Return result
+End Sub
+
+
+#if c
+
+#include <pgmspace.h>
+
+const char getvar[]  PROGMEM = R"=====(
+	<!DOCTYPE html>
+	<html lang='en'>
+	<head>
+	  <meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,user-scalable=no'/>
+	  <style>div,fieldset,input,select{padding:5px;font-size:1em;}fieldset{background:#4f4f4f;}p{margin:0.5em 0;}input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#dddddd;color:#000000;}input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}input[type=range]{width:99%;}select{width:100%;background:#dddddd;color:#000000;}textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;background:#1f1f1f;color:#65c115;}body{text-align:center;font-family:verdana,sans-serif;background:#252525;}td{padding:0px;}button{border:0;border-radius:0.3rem;background:#1fa3ec;color:#faffff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}button:hover{background:#0e70a4;}.bred{background:#d43535;}.bred:hover{background:#931f1f;}.bgrn{background:#47c266;}.bgrn:hover{background:#5aaf6f;}a{color:#1fa3ec;text-decoration:none;}.p{float:left;text-align:left;}.q{float:right;text-align:right;}.r{border-radius:0.3em;padding:2px;margin:6px 2px;}</style>
+	</head>
+	<body>
+	  <div style='text-align:left;display:inline-block;color:#eaeaea;min-width:340px;'>
+	  <div style='text-align:center;color:#eaeaea;'>
+	    <h3>aWOT Web Server: get with variables</h3>
+	  </div>
+	  <fieldset>
+      <form action='/getvar/save' method='get'>
+	    <div><label For='_nwk'>SSID</label><br><input name='_nwk' id='_nwk' value='1'></div>
+	    <div><label For='_key'>SSID Key</label><br><input name='_key' id='_key' value='2'></div>
+	    <div><label For='_rf1'>Key1 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf1' id='_rf1' value='3'></div>
+	    <div><label For='_rf2'>Key2 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf2' id='_rf2' value='3'></div>
+	    <div><label For='_rf3'>Key3 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf3' id='_rf3' value='4'></div>
+	    <div><label For='_rf4'>Key4 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf4' id='_rf4' value='5'></div>
+	    <div><label For='_rf5'>Key5 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf5' id='_rf5' value='6'></div>
+	    <div><label For='_rf6'>Key6 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf6' id='_rf6' value='7'></div>
+	    <div><label For='_rf7'>Key7 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf7' id='_rf7' value='8'></div>
+	    <div><label For='_rf8'>Key8 (Rcode, Ecode, protocol, nb bits, delay)</label><br><input name='_rf8' id='_rf8' value='9'></div>
+		<div><br><button name='_save'>Save</button></div>
+	  </form>
+	  <div><button onclick="location.href = '/getvar/_abort';" id="myButton" class="float-left submit-button" >Abort</button></div>
+	  <div><button onclick="location.href = '/getvar/_erase';" id="myButton2" class="float-left submit-button" >Erase</button></div>
+	  </fieldset></div>
+	</body>
+	</html>	
+	)=====";
+								
+const char *const msg_table[] PROGMEM = { getvar};
+const uint16_t msg_len[] =  { sizeof(getvar)};
+	
+char strx[3110];
+  
+B4R::Object* gethtml(B4R::Object* o) {
+	strcpy_P(strx, (char*)pgm_read_dword(&(msg_table[o->toLong()])));
+	Serial.print("length_html_msg[");Serial.print(o->toLong());Serial.print("]= ");Serial.println(msg_len[o->toLong()]);		
+    b4r_main::_text->data = strx;
+    b4r_main::_text->length = msg_len[o->toLong()]-1; 
+    return 0; 
+}
+#end if
+

@@ -1,0 +1,98 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=jcore
+Library2=jshell
+Library3=xlutils
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=8.9
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+
+Sub Process_Globals
+	Private xl As XLUtils
+End Sub
+
+Sub AppStart (Args() As String)
+	CreateWorkbook
+	StartMessageLoop 'non-ui app
+End Sub
+
+Private Sub CreateWorkbook
+	xl.Initialize
+	Dim Workbook As XLWorkbookWriter = xl.CreateWriterBlank
+	Dim sheet1 As XLSheetWriter = Workbook.CreateSheetWriterByName("Sheet1")
+	Dim TitleStyle As XLStyle = Workbook.CreateStyle
+	TitleStyle.ForegroundColor(xl.COLOR_GREY_80_PERCENT).FontBoldColor(12, xl.COLOR_WHITE).HorizontalAlignment("CENTER")
+	sheet1.PutString(xl.AddressName("A1"), "Product").SetStyles(sheet1.LastAccessed, Array(TitleStyle, Workbook.CreateStyle.BorderLeft("THIN"))) 'title style + border
+	sheet1.PutString(xl.AddressName("B1"), "Price").SetStyle(sheet1.LastAccessed, TitleStyle)
+	sheet1.PutString(xl.AddressName("C1"), "Quantity").SetStyle(sheet1.LastAccessed, TitleStyle)
+	sheet1.PutString(xl.AddressName("D1"), "Total").SetStyles(sheet1.LastAccessed, Array(TitleStyle, Workbook.CreateStyle.BorderRight("THIN")))
+
+	Dim RowStyles As List = Array(Workbook.CreateStyle.ForegroundColor(xl.COLOR_LIGHT_TURQUOISE), Workbook.CreateStyle.ForegroundColor(xl.COLOR_WHITE))
+	Dim ProductStyle As XLStyle = Workbook.CreateStyle.BorderLeft("THIN")
+	Dim PriceStyle As XLStyle = Workbook.CreateStyle.DataFormat("$#,##0.0")
+	Dim QuantityStyle As XLStyle = Workbook.CreateStyle.DataFormat("#,##0")
+	Dim TotalStyle As XLStyle = Workbook.CreateStyle.DataFormat("$#,##0").BorderRight("THIN")
+
+	For i = 1 To 25
+		Dim Row1Based As Int = 1 + i 'starting from row 2.
+		Dim RowStyle As XLStyle = RowStyles.Get(Row1Based Mod RowStyles.Size)
+		sheet1.PutString(xl.AddressOne("A", Row1Based), "Product #" & i).SetStyles(sheet1.LastAccessed, Array(ProductStyle, RowStyle))
+		sheet1.PutNumber(xl.AddressOne("B", Row1Based), Rnd(0, 100000) / 100).SetStyles(sheet1.LastAccessed, Array(PriceStyle, RowStyle))
+		sheet1.PutNumber(xl.AddressOne("C", Row1Based), Rnd(0, 5000)).SetStyles(sheet1.LastAccessed, Array(QuantityStyle, RowStyle))
+		sheet1.PutFormula(xl.AddressOne("D", Row1Based), $"${xl.AddressOneToString("B", Row1Based)} * ${xl.AddressOneToString("C", Row1Based)}"$)
+		sheet1.SetStyles(sheet1.LastAccessed, Array(TotalStyle, RowStyle))
+	Next
+	'add bottom border
+	Dim LastTableRow1 As Int = sheet1.LastAccessed.Row0Based + 1
+	'Using AddStyles instead of SetStyles to keep the already set style.
+	sheet1.AddStylesToRange(xl.CreateXLRange(xl.AddressOne("A",LastTableRow1), xl.AddressOne("D", LastTableRow1)), Array(Workbook.CreateStyle.BorderBottom("THIN")))
+
+	'add sum field:
+	sheet1.PutFormula(xl.AddressOne("D", LastTableRow1 + 2), $"SUM(D2:${xl.AddressOneToString("D", LastTableRow1)})"$)
+	Dim BoldStyle As XLStyle = Workbook.CreateStyle.FontBold(Workbook.DefaultFontSize)
+	sheet1.SetStyles(sheet1.LastAccessed, Array(TotalStyle, BoldStyle))
+	'The TotalStyle includes right border, so we need to remove it:
+	sheet1.AddStyle(sheet1.LastAccessed, Workbook.CreateStyle.BorderRight("NONE"))
+	
+	sheet1.PutString(xl.AddressOne("C", LastTableRow1 + 2), "Total:").SetStyle(sheet1.LastAccessed, BoldStyle)
+
+	'add auto filters - range with the data. The filters will appear above the data.
+	sheet1.SetAutoFilter(xl.CreateXLRange(xl.AddressName("A2"), xl.AddressOne("D", LastTableRow1)))
+	
+	'We forgot to add a title:
+	'shift the rows down
+	sheet1.ShiftRows(0, sheet1.LastAccessed.Row0Based, 1)
+	'merge the cells
+	sheet1.AddMergedRegion(xl.CreateXLRange(xl.AddressName("A1"), xl.AddressName("D1")))
+	'set the title
+	sheet1.PutString(xl.AddressName("A1"), "Important Products List")
+	sheet1.SetStyle(sheet1.LastAccessed, Workbook.CreateStyle.Font(15).HorizontalAlignment("CENTER"))
+	
+	'Set the columns widths to fit the content
+	'To make sure that the "total" column is measured correctly we need to first evaluate the formulas:
+	Workbook.EvaluateFormulas
+	For col0 = xl.AddressName("A").Col0Based To xl.AddressName("D").Col0Based
+		sheet1.AutoSizeColumn(col0)
+	Next
+	sheet1.CreateFreezePane(0, 2) 'lock the two upmost rows.
+	
+	
+	'make the columns a bit wider to make room for the filter arrows:
+	For col0  = 0 To 3
+		sheet1.PoiSheet.SetColumnWidth(col0, sheet1.PoiSheet.GetColumnWidth(col0) + 1200)
+	Next
+	
+	'save the workbook
+	Dim f As String = Workbook.SaveAs(File.DirApp, "Products.xlsx", True)
+	Wait For (xl.OpenExcel(f)) Complete (Success As Boolean)
+	StopMessageLoop 'non-ui
+End Sub
+

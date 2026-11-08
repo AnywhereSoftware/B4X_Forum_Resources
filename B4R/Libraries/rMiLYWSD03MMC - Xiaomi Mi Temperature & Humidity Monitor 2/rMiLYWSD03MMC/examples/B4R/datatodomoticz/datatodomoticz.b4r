@@ -1,0 +1,113 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp8266wifi
+Library3=rmilywsd03mmc
+Library4=rhttputils2
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=3.71
+@EndOfDesignText@
+#Region Project Notes
+' datatodomoticz.b4r
+' Sample project for the B4R Library rMiLYWSD03MMC.
+' BLE Device: Xiaomi Mi Temperature And Humidity Monitor 2, Model LYWSD03MMC
+' Send data via HTTP JSON/API request, the sensor temperature (C),humidity (%RH) to a Domoticz Temp+Hum device.
+' The humidity status is not used and set to 0.
+' Additional Libraries: rESP8266WiFi, rHttpUtils2, rMiLYWSD03MMC.
+' Requires installation of the NimBLE-Arduino library in the Arduino IDE.
+' Hardware: ESP32 Dev Module WROOM
+' 20210619 rwbl
+#End Region
+
+#Region Wiring
+' NOT USED
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public VERSION As String = "B4R Library rMiLYWSD03MMC - Example Data to Domoticz v20210618"
+	Private DEBUG As Boolean = False
+	' Domoticz URL to submit via HTTP JSON/API GET request for the device with idx=95 (Temp+Hum device)
+	Private DOM_URL As String = "http://192.168.1.179:8080/json.htm?type=command&param=udevice&"
+	Private DOM_IDX As Int = 95
+	' Communication & Network
+	Public serialLine As Serial
+	Private wifiESP As ESP8266WiFi
+	' Xiaomi Mi Temperature Humidity Monitor 2 
+	Private miSensor As MiLYWSD03MMC
+	' Timer getting data in regular intervals
+	Private timerGetData As Timer
+	Private TIMER_INTERVAL As ULong = 60000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log(VERSION)
+	' Init sensor with callback event, MAC adress A4:C1:38:38:A9:0C and debug flag
+	miSensor.Initialize("miSensor_ScanCompleted", "A4:C1:38:38:A9:0C", DEBUG)
+	' Set the data gathering timer
+	timerGetData.Initialize("TimerGetData_Tick", TIMER_INTERVAL)
+	timerGetData.Enabled = False
+	' Connect to the local network
+	If Connect_Network Then
+		timerGetData.Enabled = True
+		' First time scan for data - results handled by sub _ScanCompleted
+		miSensor.Scan()
+	Else
+		Log("Program Abort: Can not connect to the network. Check parameter or connection.")
+	End If
+End Sub
+
+' Connect to the local network
+Private Sub Connect_Network As Boolean
+	Dim result As Boolean
+	If wifiESP.Connect2("SSID", "KEY") Then
+		If DEBUG Then Log("Connected to network")
+		result = True
+	Else
+		If DEBUG Then Log("ERROR Failed to connect to network")
+		result = False
+	End If
+	Return result	
+End Sub
+
+' Start scan for data - handled by sub _ScanCompleted
+Sub TimerGetData_Tick
+	miSensor.Scan()
+End Sub
+
+Sub miSensor_ScanCompleted
+	If DEBUG Then Log("Scan completed. Status: ", miSensor.StatusCode)
+	Select miSensor.StatusCode
+		Case miSensor.STATUS_OK
+			If DEBUG Then Log("T: ", miSensor.Temperature, " C, H: ", miSensor.Humidity, " %, B: ", miSensor.Battery, " V")
+			HttpJob.Initialize("DOMOTICZUPDATE")
+			HttpJob.ResponseTimeout = 5000
+			Dim url As String = JoinStrings(Array As String(DOM_URL, "idx=", DOM_IDX, "&nvalue=0&svalue=", miSensor.Temperature, ";", miSensor.Humidity, ";0"))
+			If DEBUG Then Log(url)
+			' Start the download = HTTP request. The HTTP response is handled by JobDone.
+			HttpJob.Download(url)
+		Case miSensor.STATUS_ERR_CONNECT
+			Log("ERROR: Can not connect to the device.")
+		Case miSensor.STATUS_ERR_SERVICEUUID
+			Log("ERROR: Can not find the device service UUID.")
+		Case miSensor.STATUS_ERR_CHARUUID
+			Log("ERROR: Can not find the characteristics UUID from the service UUID.")
+		Case Else
+			Log("Unknown status code.")
+	End Select
+End Sub
+
+Sub JobDone (Job As JobResult)
+	If DEBUG Then Log("Job Done:", Job.Success)
+	If DEBUG Then Log("*************")
+	' Log("Job Done:", Job.Response)
+End Sub

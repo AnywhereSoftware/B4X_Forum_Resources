@@ -1,0 +1,103 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32blesimpleadvertiser
+Library3=rrandomaccessfile
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 1000
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public Serial1 As Serial
+	Private raf As RandomAccessFile
+	Private bc As ByteConverter
+	Private BLEAdv As BLESimpleAdvertiser
+	Private BLEuuid As BLEUUID
+'	Private BLEDev As BLEDevice 
+'	Private Scanner As BLEScan
+'	Private advDev As BLEAdvertisedDevice
+'	Private scantime As Byte = 5
+	Private delaytime As Long = Millis
+	Private uuid16 As UInt = 0xAABB
+	Private uuid32 As ULong = 0x22334455
+	'//	Private uuid128 As String = "AABBCCDDeeffggHH"
+	Private BLEname As String = "BLE-SSS"
+	Private tag As Byte = 0
+    Private tag2 As UInt = 0
+End Sub
+
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	Log(" << esp32 ble advertisement service sender >>")
+	BLEAdv.Initialize
+	'// init ble advertiser
+	BLEAdv.begin(BLEname)
+	Log("# start service data advertising ", BLEname)
+	AddLooper("ProjectLoop")
+End Sub
+
+
+Sub ProjectLoop
+	If Millis > delaytime + 2000  Then
+		Dim datastr As String  = cstring
+		Dim datab() As Byte = cdata
+		Select tag
+			Case 0
+				Log("advertise service <0> ",BLEname," datastr1=",datastr)                         '/OK
+				BLEAdv.serviceDataAdvertise( datastr)
+			Case 1
+				Log("advertise service <1> ",BLEname," uuid=",uuid16," datastr1=",datastr)        '/OK
+				BLEAdv.serviceDataAdvertise1(uuid16, datastr)				
+			Case 2
+				Dim uuidstr1 As String = BLEuuid.setUUID2(uuid16)
+				Log("advertise service <2> ",BLEname," uuidStr=",uuidstr1," datastr2=",datastr)   '/OK
+				BLEAdv.serviceDataAdvertise2(uuidstr1, datastr)				
+			Case 3
+				Log("advertise service <3> ",BLEname," data1=",datab)                              '/OK
+				BLEAdv.serviceDataAdvertise3(datab)
+			Case 4
+				Log("advertise service <4> ",BLEname," uuid=",uuid16," data2=", datab)             '/OK
+				BLEAdv.serviceDataAdvertise4(uuid16, datab)
+			Case 5
+				Dim uuidstr2 As String = BLEuuid.setUUID2(uuid32)
+				Log("advertise service <5> ",BLEname," uuidStr=",uuidstr2," data2=",datab)         '/OK
+				BLEAdv.serviceDataAdvertise5(uuidstr2, datab)
+
+			Case 6
+				Log("advertise manufacturer <6> ",BLEname," dataStr1=",datastr)                     '/OK
+				BLEAdv.manufacturerDataAdvertise( datastr)
+			Case 7
+				Log("advertise manufacturer <7> ",BLEname," data2=",datab)                          '/OK
+		End Select
+		tag2 = tag2 + 1
+		tag = tag + 1: If tag > 7 Then tag = 0
+		delaytime = Millis
+	End If 	
+End Sub
+
+Sub cdata As Byte()
+	Return JoinBytes(Array( "###".GetBytes, NumberFormat(tag,0,0).getbytes, "#".GetBytes, NumberFormat(tag2,0,0).getbytes , "#".GetBytes))
+End Sub
+
+Sub cstring As String
+	Return JoinStrings(Array As String( "###",NumberFormat(tag,0,0),"#",NumberFormat(tag2,0,0) ,  "#"))
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub

@@ -1,0 +1,117 @@
+﻿' Main View
+' Version 0.60
+Sub Class_Globals
+	Private mModal As Tag
+	Private mToast As Tag
+	Private mContent As Tag
+	Private mSubContent As Tag
+End Sub
+
+Public Sub Initialize
+
+End Sub
+
+Public Sub LoadContent (Tag1 As Tag)
+	mContent = Tag1
+End Sub
+
+Public Sub LoadSubContent (Tag1 As Tag)
+	mSubContent = Tag1
+End Sub
+
+Public Sub LoadModal (Tag1 As Tag)
+	mModal = Tag1
+End Sub
+
+Public Sub LoadToast (Tag1 As Tag)
+	mToast = Tag1
+End Sub
+
+Public Sub Render As Tag
+	Dim page1 As Tag = Html.lang("en")
+	page1.add(PageHeader)
+	page1.add(PageBody)
+	Dim body1 As Tag = page1.ChildByTagName("body")
+	body1.add(BodyFooter)
+	#If Bundle
+	body1.script("$SERVER_URL$/assets/js/bootstrap.min.js")
+	body1.script("$SERVER_URL$/assets/js/htmx.min.js")
+	#Else
+	body1.cdnScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js", _
+	"sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y")
+	body1.cdnScript("https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", _
+	"sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz")
+	#End If
+	body1.script("$SERVER_URL$/assets/js/app.js")
+	Return page1
+End Sub
+
+Private Sub PageHeader As Tag
+	Dim header1 As Tag = Head.init
+	header1.add(Meta.attr("http-equiv", "content-type" ).attr("content", "text/html; charset=utf-8"))
+	header1.add(Meta.attr("name", "viewport").attr("content", "width=device-width, initial-scale=1"))
+	header1.add(Meta.attr("name", "description").attr("content", "Created using MiniHtml library"))
+	header1.add(Meta.attr("name", "author").attr("content", "Author Name"))
+	header1.title("$APP_TITLE$")
+	header1.linkIcon("image/png", "$SERVER_URL$/assets/img/favicon.png")
+	#If Bundle
+	header1.linkCss("$SERVER_URL$/assets/css/bootstrap.min.css")
+	header1.linkCss("$SERVER_URL$/assets/css/bootstrap-icons.min.css")
+	#Else
+	header1.cdnStyle("https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css", _
+	"sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB")
+	header1.linkcss("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css")
+	#End If
+	header1.linkcss("$SERVER_URL$/assets/css/main.css?v=$VERSION$")
+	Return header1
+End Sub
+
+Private Sub PageBody As Tag
+	Dim body1 As Tag = Body.cls("bg-white")
+	If mToast.IsInitialized Then mToast.up(body1)
+	Dim nav1 As Tag = Nav.cls("navbar navbar-expand-lg sticky-top yellow").up(body1)
+	Dim div1 As Tag = Div.cls("container-fluid").up(nav1)
+	Dim anchor1 As Tag = Anchor.cls("navbar-brand me-0 me-lg-2 pt-2").up(div1)
+	anchor1.hrefOf("#").add(Icon.cls("bi bi-infinity h3"))
+	Dim anchor2 As Tag = Anchor.cls("navbar-brand").up(div1)
+	anchor2.hrefOf("$SERVER_URL$").text("$APP_TRADEMARK$")
+	Dim toggler1 As Tag = Button.cls("navbar-toggler d-md-block d-lg-none collapsed").up(div1)
+	toggler1.typeOf("button")
+	toggler1.data("bs-toggle", "collapse")
+	toggler1.data("bs-target", "#navbarCollapse")
+	toggler1.sty("border: none")
+	toggler1.add(Span.cls("navbar-toggler-icon"))
+	Dim collapse1 As Tag = Div.cls("collapse navbar-collapse").id("navbarCollapse").up(div1)
+	Dim ulist1 As Tag = Ul.cls("navbar-nav navbar-brand ms-auto mb-md-0").up(collapse1)
+	Dim list1 As Tag = Li.cls("nav-item d-block d-lg-none").up(ulist1)
+	Dim anchor1 As Tag = Anchor.href("https://paypal.me/aeric80/").targetOf("_blank").up(list1)
+	Img.src("/assets/img/coffee.png").cls("ml-2 mt-1").sty("height: 40px").up(anchor1)
+	Dim sponsor As Tag = Div.cls("text-center font-weight-bold d-none d-lg-block").up(body1)
+	sponsor.sty("background-color: whitesmoke")
+	Dim anchor2 As Tag = Anchor.href("https://paypal.me/aeric80/").targetOf("_blank").up(sponsor)
+	anchor2.add(Img.src("/assets/img/sponsor.png").cls("mx-2").sty("width: 174px"))
+	Dim content1 As Tag = Div.cls("content m-3").up(body1)
+	Dim padding2 As Tag = Div.cls("p-2").up(content1)
+	Dim row1 As Tag = Div.cls("row text-center align-items-center justify-content-center").up(padding2)
+	Dim div1 As Tag = Div.init.up(row1)
+	H3.cls("mb-0").sty("font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif").up(div1).text("$HOME_TITLE$")
+	Span.cls("small").text("Version: $VERSION$").up(div1)
+	If mContent.IsInitialized Then mContent.up(padding2)
+	If mSubContent.IsInitialized Then mSubContent.up(padding2)
+	If mModal.IsInitialized Then mModal.up(body1)
+	Div.cls("bottom").up(body1)
+	Return body1
+End Sub
+
+Private Sub BodyFooter As Tag
+	Dim footer1 As Tag = Footer.cls("footer mt-auto py-3 bg-body-tertiary border-top")
+	Dim small1 As Tag = Div.cls("footer small text-center d-md-block").up(footer1)
+	small1.sty("font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif")
+	Dim caption1 As Tag = Caption.text("$APP_COPYRIGHT$").up(small1)
+	caption1.add(Br.init)
+	caption1.text("Created with ")
+	Dim span1 As Tag = Span.sty("color: red").up(caption1)
+	span1.add(Icon.cls("bi bi-heart"))
+	caption1.text(" in Pakai")
+	Return footer1
+End Sub

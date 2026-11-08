@@ -1,0 +1,111 @@
+﻿Build1=Default,b4a.bbcodeexample.NonB4XPage
+File1=1.bal
+File2=logo.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=bctextengine
+Library2=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=2
+NumberOfModules=1
+Version=12
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: BBCode Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	
+End Sub
+
+Sub Globals
+	Private BBCodeView1 As BBCodeView
+	Private TextEngine As BCTextEngine
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("1")
+	TextEngine.Initialize(Activity)
+	BBCodeView1.TextEngine = TextEngine
+	Dim btn As Button
+	btn.Initialize("btn")
+	Dim xbtn As Button = btn
+	
+	xbtn.Text = "Click!"
+	xbtn.SetLayoutAnimated(0, 0, 0, 100dip, 40dip)
+	
+	Dim pnl As Panel
+	pnl.Initialize("panel")
+	pnl.SetLayoutAnimated(0, 0, 0, 200dip, 120dip)
+	
+	BBCodeView1.Views.Put("btn", btn)
+	BBCodeView1.Text = _
+$"[Alignment=Center][TextSize=20][b][u]This is the title [FontAwesome=0xF034/] [FontAwesome=0xF035/][/u][/b][/TextSize][/Alignment]
+Emoji made of multiple "characters": 👨‍💻 and a flag: [TextSize=30][e=🇺🇳/][/TextSize]
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc fermentum elit vitae nisi faucibus, vitae lacinia turpis mattis.
+Lets add a [Color=#ff0000][b]button:[/b][/color] [View=btn Vertical=10/]  and more text here...
+We can also add links, for example: [url]https://www.google.com[/url]. You can click on the link. The title will be updated.
+Here is a nice logo: [img FileName="logo.png" width=50/]
+We can also download an image here: [url="DonManfred's avatar"][img url="https://b4x-4c17.kxcdn.com/android/forum/data/avatars/l/42/42649.jpg?1432374732" width=60 height=60/][/url]
+Note that you must explicitly set the dimensions of such images.
+Colors:
+[list]
+[*][Color=#ff0000][b][u]Red[/u][/b][/Color]
+[*][Color=#00ff00][b][u color=Magenta]Green[/u][/b][/Color]
+[*][Color=#0000ff][b][u color=DarkGray Thickness=3]Blue[/u][/b][/Color]
+[/list]
+Items:
+[list style=ordered]
+[*]Item A
+[*]Item B
+[*]Item C
+[/list]
+${TableRow("[b]Column 1[/b]", "[b]Column 2[/b]", "[b]Column 3[/b]")}
+${TableRow($"[img FileName="logo.png" width=30/]000"$, "100", "200")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+${TableRow($"[color=#ff0000][b]-232[/b][/color]"$, "AAA", "CCC")}
+
+"$
+
+End Sub
+
+Sub TableRow(Field1 As String, Field2 As String, Field3 As String) As String
+	Return $"[Span MinWidth=33%x Alignment=center]${Field1}[/Span][Span MinWidth=33%x Alignment=center]${Field2}[/Span][Span MinWidth=33%x Alignment=center]${Field3}[/Span]"$
+End Sub
+
+Sub btn_Click
+	ToastMessageShow("click",False)
+End Sub
+
+Sub BBCodeView1_LinkClicked (URL As String)
+	ToastMessageShow(URL,False)
+End Sub
+
+
+Sub Activity_Resume
+	
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	
+End Sub
+
+Sub Activity_PermissionResult (Permission As String, Result As Boolean)
+	
+End Sub
+

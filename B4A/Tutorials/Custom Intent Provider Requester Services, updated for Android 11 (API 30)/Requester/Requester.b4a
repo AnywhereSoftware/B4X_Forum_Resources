@@ -1,0 +1,72 @@
+﻿Build1=Default,b4a.Requester
+Group=Default Group
+Library1=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~AddActivityText(Receiver, <intent-filter>~\n~   <action android:name="b4a.Requester.CALLBACK" />~\n~   <category android:name="android.intent.category.DEFAULT" />~\n~   <data android:mimeType="text/plain" />~\n~</intent-filter>)~\n~~\n~AddManifestText(~\n~<queries>~\n~    <package android:name="b4a.Provider" />~\n~    <package android:name="com.example.service" />~\n~    <intent>~\n~      <action android:name="b4a.Provider.REQUEST" />~\n~      <data android:mimeType="text/plain" />~\n~    </intent>~\n~  </queries>)
+Module1=Receiver
+Module2=Starter
+NumberOfFiles=0
+NumberOfLibraries=1
+NumberOfModules=2
+Version=11.2
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Requester
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	'Activity.LoadLayout("Layout1")
+End Sub
+
+Sub Activity_Resume
+	Dim in As Intent
+	in = Activity.GetStartingIntent
+	LogColor("R.M.AR " & in, Colors.Yellow)
+	Request_Lookup
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+' some android actions
+' android.intent.action.ATTACH_DATA
+' android.intent.action.VIEW
+' android.intent.action.PROCESS_TEXT
+' android.intent.action.VIEW_LOCUS EXTRA_LOCUS_ID
+' or make your own, such as b4a.Provider.REQUEST
+Public Sub Request_Lookup
+	Log("R.M.RL")
+	Dim in As Intent
+	in.Initialize("b4a.Provider.REQUEST","")	' Only some actions need a URI
+	in.SetComponent("b4a.Provider")
+	in.AddCategory("android.intent.category.DEFAULT")
+	in.setpackage("b4a.Provider") 'target app package name
+	in.setType("text/plain") 'mime types ex: text/plain
+	in.PutExtra("Callback","b4a.Requester.CALLBACK")
+	in.PutExtra("SomeIdentifier", "Last, First")		' such as Lastname, Firstname
+	in.PutExtra("Some Context","Some Additional Text")	' perhaps their City, Brooklyn
+	StartService(in)
+End Sub

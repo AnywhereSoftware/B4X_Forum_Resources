@@ -1,0 +1,220 @@
+﻿AppType=StandardJava
+Build1=Default,b4j.example
+Group=Default Group
+Library1=archiver
+Library2=jcore
+Library3=jdateutils
+Library4=jsql
+Library5=pybridge
+Library6=jshell
+Module1=ReadmeCreator
+NumberOfFiles=0
+NumberOfLibraries=6
+NumberOfModules=1
+Version=10.3
+@EndOfDesignText@
+'Non-UI application (console / server application)
+#Region Project Attributes 
+	#CommandLineArgs:
+	#MergeLibraries: True 
+#End Region
+#AdditionalJar: mysql-connector-j-9.4.0
+'#CommandLineArgs: 2025-08-16
+Sub Process_Globals
+	Private sql As SQL
+	Private StartTime As Long
+	Public NodeToCategory As Map = CreateMap()
+	Dim NodesPlatforms As Map = CreateMap()
+	Dim github_root As String = "D:\B4X_Tutorials"
+	Dim attachments_root As String = "D:\site_backup\basicap\homedir\public_html\android\forum\internal_data\attachments"
+	Private CommonQuery As String = $"
+AND xf_post.user_id = xf_user.user_id
+AND xf_thread.node_id IN (27, 29, 59, 63, 64, 66, 56, 57, 60, 76, 78, 81)
+
+AND xf_post.message_state = "visible"
+AND (xf_post.last_edit_date > ? or xf_post.post_date > ?)
+AND xf_post.position = 0
+AND xf_thread.discussion_state = "visible"
+ORDER BY xf_post.post_id
+"$
+	Private DownloadedBackup As String
+	Private zip7 As String = "c:\Program Files\7-Zip\7z.exe"
+End Sub
+
+Sub AppStart (Args() As String)
+	DownloadedBackup = Args(0)
+	Start
+	StartMessageLoop
+End Sub
+
+
+Sub Start
+	Log("Delete previous backup")
+	DeleteFolder("D:\site_backup\basicap")
+	For Each p As String In Array("A", "i", "J", "R", "X")
+		DeleteFolder(File.Combine(github_root, "B4" & p))
+	Next
+	Wait For (UnzipBasicap) Complete (Result As Boolean)
+	Wait For (ImportSQL) Complete (Result As Boolean)
+	For Each n As Int In Array(27, 29, 59)
+		NodesPlatforms.Put(n, "[B4A]")
+	Next
+	For Each n As Int In Array(63, 64, 66)
+		NodesPlatforms.Put(n, "[B4i]")
+	Next
+	For Each n As Int In Array(57, 56, 60)
+		NodesPlatforms.Put(n, "[B4J]")
+	Next
+	For Each n As Int In Array(76, 78, 81)
+		NodesPlatforms.Put(n, "[B4R]")
+	Next
+	
+	For Each n As Int In Array(27, 63, 57, 76)
+		NodeToCategory.Put(n, "Tutorials")
+	Next
+	For Each n As Int In Array(29, 64, 56, 78)
+		NodeToCategory.Put(n, "Libraries")
+	Next
+	For Each n As Int In Array(59, 66, 60, 81)
+		NodeToCategory.Put(n, "Code snippets")
+	Next
+	sql.Initialize2("com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost/xf", "root", File.ReadString("D:\MySQLPassword.txt", ""))
+	StartTime = DateUtils.TicksToUnixTime(DateTime.Now - DateTime.TicksPerDay * 5 * 365)
+	Wait For (HandlePosts) Complete (Unused As Boolean)
+	HandleAttachments
+	sql.Close
+	Log("done!")
+	ExitApplication
+End Sub
+
+Private Sub ImportSQL As ResumableSub
+	Dim s As String = "D:\site_backup\basicap\mysql\basicap_xf.sql"
+	Dim mysql As String = "D:\wamp64\bin\mysql\mysql8.0.27\bin\mysql.exe"
+	Dim shl As Shell
+	shl.Initialize("shl", mysql, Array("-u", "root", "xf", "-e", "SOURCE " & s))
+	Log("importing sql")
+	Dim n As Long = DateTime.Now
+	shl.Run(-1)
+	Wait For shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+	Log(StdOut)
+	Log(StdErr)
+	Log(ExitCode)
+	Log("complete: " & (DateTime.Now - n))
+	Return True
+End Sub
+
+Private Sub UnzipBasicap As ResumableSub
+	Dim t1 As String = $"D:\site_backup\${DownloadedBackup}\${DownloadedBackup}\accounts\basicap.tar.gz"$
+	Dim t2 As String = "D:\site_backup\basicap.tar"
+	File.Delete(t2, "")
+	For Each t As String In Array(t1, t2)
+		Dim shl As Shell
+		shl.Initialize("shl", zip7, Array("x", "-y", t, "-oD:\site_backup"))
+		Log("Unzipping: " & t)
+		Dim n As Long = DateTime.Now
+		shl.Run(-1)
+		Wait For shl_ProcessCompleted (Success As Boolean, ExitCode As Int, StdOut As String, StdErr As String)
+		Log(StdOut)
+		Log(StdErr)
+		Log(ExitCode)
+		Log("complete: " & (DateTime.Now - n))
+	Next
+	Return True
+End Sub
+
+Private Sub HandleAttachments
+	Log("HandleAttachments")
+	Dim queryWithAttachments As String = $"
+	SELECT xf_user.username, 
+xf_post.last_edit_date, xf_post.post_date, xf_thread.title, xf_thread.node_id, xf_thread.thread_id, xf_post.post_id, file_hash
+, xf_attachment.data_id, xf_attachment_data.filename
+FROM xf_thread, xf_post, xf_attachment, xf_attachment_data, xf_user
+WHERE xf_thread.thread_id = xf_post.thread_id
+AND xf_attachment.content_id = xf_post.post_id
+AND xf_attachment_data.data_id = xf_attachment.data_id
+AND xf_post.attach_count > 0
+AND (filename LIKE "%.zip" OR filename LIKE "%.b4xlib")
+${CommonQuery}"$
+	Dim archiver As Archiver	
+	Dim rs As ResultSet = sql.ExecQuery2(queryWithAttachments, Array(StartTime, StartTime))
+	Do While rs.NextRow
+		Dim a() As Object = GetTitleAndPlatform(rs)
+		Dim filename As String = rs.GetString("filename")
+		Dim filehash As String = rs.GetString("file_hash")
+		Dim DataId As Int = rs.GetInt("data_id")
+		Dim Path As String = File.Combine(attachments_root, $"$1.0{Floor(DataId / 1000)}\${DataId}-${filehash}.data"$)
+		Dim TargetFolder As String = a(3)
+		If filename.ToLowerCase.EndsWith(".b4xlib") Then
+			TargetFolder = File.Combine(TargetFolder, filename.SubString2(0, filename.Length - ".b4xlib".Length) & "_b4xlib")
+		End If
+		Try
+			archiver.UnZip(Path, "", TargetFolder, "")
+		Catch
+			Log(LastException)
+		End Try
+	Loop
+	rs.Close
+	Log("complete")
+End Sub
+
+Private Sub HandlePosts As ResumableSub
+	Log("HandlePosts")
+	Dim QueryWithoutAttachments As String = $"
+SELECT xf_user.username, 
+xf_post.last_edit_date, xf_post.post_date, xf_thread.title, xf_thread.node_id, xf_thread.thread_id, xf_post.post_id, xf_post.message 
+FROM xf_thread, xf_post, xf_user
+WHERE xf_thread.thread_id = xf_post.thread_id
+${CommonQuery}
+"$
+	Dim rc As ReadmeCreator
+	rc.Initialize
+	Wait For (rc.Start) Complete (Result As Boolean)
+	Dim rs As ResultSet = sql.ExecQuery2(QueryWithoutAttachments, Array(StartTime, StartTime))
+	Do While rs.NextRow
+		Dim date As Long = DateUtils.UnixTimeToTicks(Max(rs.GetLong("last_edit_date"), rs.GetLong("post_date")))
+		Dim author As String = rs.GetString("username")
+		Dim thread_id As Int = rs.GetInt("thread_id")
+		Dim node_id As Int = rs.GetInt("node_id")
+		Dim message As String = rs.GetString("message")
+		
+		Dim a() As Object = GetTitleAndPlatform(rs)
+		Dim title As String = a(0)
+		Dim platform As String = a(1)		
+		Dim category As String = a(2)
+		Dim TargetFolder As String = a(3)
+		File.MakeDir(TargetFolder, "")
+		Wait For (rc.CreateReadme(date, category, platform, title, thread_id, author, node_id, message)) Complete (Markdown As String)
+		File.WriteString(TargetFolder, "readme.md", Markdown)
+	Loop
+	Log("complete")
+	rs.Close
+	Return True
+End Sub
+
+Private Sub GetTitleAndPlatform (rs As ResultSet) As Object()
+	Dim platform As String = NodesPlatforms.Get(rs.GetInt("node_id"))
+	Dim title As String = rs.GetString("title")
+	If title.IndexOf("[B4X]") > -1 Then platform = "[B4X]"
+	title = Regex.Replace("\[B4[AIJRX]]", title, "")
+	platform = platform.Replace("[", "").Replace("]", "")
+	Dim folder As String = SanitizeFilename(title)
+	Dim category As String = NodeToCategory.Get(rs.GetInt("node_id")).As(String)
+	Dim TargetFolder As String = File.Combine(github_root & "\" & platform & "\" & category, folder)
+	Return Array(title, platform, category, TargetFolder)
+End Sub
+
+Private Sub SanitizeFilename (f As String) As String
+	Dim s As String = Regex.Replace("[\\/:*?""<>|]", f, "_")
+	s = Regex.Replace("\.+$", s, "")
+	If s.Length > 100 Then s = s.SubString2(0, 100)
+	Return s.Trim
+End Sub
+
+Sub DeleteFolder (folder As String)
+	For Each f As String In File.ListFiles(folder)
+		If File.IsDirectory(folder, f) Then
+			DeleteFolder(File.Combine(folder, f))
+		End If
+		File.Delete(folder, f)
+	Next
+End Sub

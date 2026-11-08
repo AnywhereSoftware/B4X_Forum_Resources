@@ -1,0 +1,585 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Module1=NavigationSystem
+Module2=RoadNetwork
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=2
+Version=10.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 1100
+	#MainFormHeight: 710 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	' SHARED TYPE DEFINITIONS (used across modules)
+	Type RoadNode(id As Int, lat As Double, lon As Double, name As String)
+	Type RoadEdge(fromNode As Int, toNode As Int, Distance As Double, speedLimit As Int, roadName As String, oneWay As Boolean)
+	'Type NavNode(nodeId As Int, cost As Double, heuristic As Double, priority As Double, path As List)
+	
+	' Map canvas
+	Private MapCanvas As Canvas
+	Private MapWidth As Double = 800
+	Private MapHeight As Double = 600
+	
+	' UI Controls
+	Private ComboStart As ComboBox
+	Private ComboEnd As ComboBox
+	Private ButtonFindRoute As Button
+	Private ButtonClear As Button
+	Private CheckBoxShowNodes As CheckBox
+	Private CheckBoxShowLabels As CheckBox
+	Private lblDistance As Label
+	Private lblTime As Label
+	Private TextAreaDirections As TextArea
+	Private ComboOptimize As ComboBox
+	
+	' Navigation system
+	Private navSystem As NavigationSystem
+	Private roadNetwork1 As RoadNetwork
+	
+	' Visual settings
+	Private scale As Double = 1.0
+	Private offsetX As Double = 0
+	Private offsetY As Double = 0
+	Private currentRoute As List
+	
+	' Colors
+	Private colorRoad As Object
+	Private colorRoute As Object
+	Private colorNode As Object
+	Private colorStart As Object
+	Private colorEnd As Object
+	Private colorHighway As Object
+End Sub
+
+'================================================================================
+' AppStart - Main entry point when application launches
+' Initializes UI, loads map data, and displays the main form
+'================================================================================
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Title = "B4J Navigation System"
+	MainForm.Show
+	
+	' Initialize colors for map drawing
+	colorRoad = fx.Colors.Gray
+	colorRoute = fx.Colors.Blue
+	colorNode = fx.Colors.DarkGray
+	colorStart = fx.Colors.Green
+	colorEnd = fx.Colors.Red
+	colorHighway = fx.Colors.RGB(255,255,0)
+	
+	' Create all UI elements (canvas, buttons, labels, etc.)
+	CreateUI
+	
+	' Initialize the road network and navigation system
+	roadNetwork1.Initialize
+	navSystem.Initialize
+	navSystem.SetRoadNetwork(roadNetwork1)
+	
+	' Load sample city data (intersections and roads)
+	LoadSampleCity
+	
+	' Fill dropdown boxes with location names
+	PopulateLocationDropdowns
+	
+	' Draw the initial empty map
+	DrawMap
+End Sub
+
+'================================================================================
+' CreateUI - Creates and positions all user interface elements
+' Sets up the map canvas, combo boxes, buttons, checkboxes, and text areas
+'================================================================================
+Sub CreateUI
+	' Map canvas - main drawing area for the road network
+	MapCanvas.Initialize("MapCanvas")
+	MainForm.RootPane.AddNode(MapCanvas, 10, 10, MapWidth, MapHeight)
+	
+	' Start location selector
+	Dim lblStart As Label
+	lblStart.Initialize("")
+	lblStart.Text = "Start:"
+	MainForm.RootPane.AddNode(lblStart, 820, 20, 60, 25)
+	
+	ComboStart.Initialize("ComboStart")
+	MainForm.RootPane.AddNode(ComboStart, 820, 45, 250, 30)
+	
+	' End location selector
+	Dim lblEnd As Label
+	lblEnd.Initialize("")
+	lblEnd.Text = "End:"
+	MainForm.RootPane.AddNode(lblEnd, 820, 85, 60, 25)
+	
+	ComboEnd.Initialize("ComboEnd")
+	MainForm.RootPane.AddNode(ComboEnd, 820, 110, 250, 30)
+	
+	' Optimization mode selector (distance, time, avoid highways)
+	Dim lblOptimize As Label
+	lblOptimize.Initialize("")
+	lblOptimize.Text = "Optimize for:"
+	MainForm.RootPane.AddNode(lblOptimize, 820, 150, 100, 25)
+	
+	ComboOptimize.Initialize("ComboOptimize")
+	ComboOptimize.Items.Add("Shortest Distance")
+	ComboOptimize.Items.Add("Fastest Time")
+	ComboOptimize.Items.Add("Avoid Highways")
+	ComboOptimize.SelectedIndex = 0
+	MainForm.RootPane.AddNode(ComboOptimize, 820, 175, 250, 30)
+	
+	' Action buttons
+	ButtonFindRoute.Initialize("ButtonFindRoute")
+	ButtonFindRoute.Text = "Find Route"
+	MainForm.RootPane.AddNode(ButtonFindRoute, 820, 215, 120, 35)
+	
+	ButtonClear.Initialize("ButtonClear")
+	ButtonClear.Text = "Clear"
+	MainForm.RootPane.AddNode(ButtonClear, 950, 215, 120, 35)
+	
+	' Display options checkboxes
+	CheckBoxShowNodes.Initialize("CheckBoxShowNodes")
+	CheckBoxShowNodes.Text = "Show Intersections"
+	CheckBoxShowNodes.Checked = True
+	MainForm.RootPane.AddNode(CheckBoxShowNodes, 820, 260, 150, 25)
+	
+	CheckBoxShowLabels.Initialize("CheckBoxShowLabels")
+	CheckBoxShowLabels.Text = "Show Labels"
+	CheckBoxShowLabels.Checked = False
+	MainForm.RootPane.AddNode(CheckBoxShowLabels, 820, 285, 150, 25)
+	
+	' Route information display
+	lblDistance.Initialize("")
+	lblDistance.Text = "Distance: --"
+	MainForm.RootPane.AddNode(lblDistance, 820, 320, 250, 25)
+	
+	lblTime.Initialize("")
+	lblTime.Text = "Time: --"
+	MainForm.RootPane.AddNode(lblTime, 820, 345, 250, 25)
+	
+	' Turn-by-turn directions area
+	Dim lblDirections As Label
+	lblDirections.Initialize("")
+	lblDirections.Text = "Turn-by-Turn Directions:"
+	MainForm.RootPane.AddNode(lblDirections, 820, 380, 250, 25)
+	
+	TextAreaDirections.Initialize("TextAreaDirections")
+	TextAreaDirections.WrapText = True
+	MainForm.RootPane.AddNode(TextAreaDirections, 820, 405, 250, 280)
+End Sub
+
+'================================================================================
+' LoadSampleCity - Creates a sample city road network for demonstration
+' Adds 19 intersections and multiple roads including a highway
+' Creates a grid layout representing a small downtown area
+'================================================================================
+Sub LoadSampleCity
+	Log("Loading sample city map...")
+	
+	' Create a sample city with streets and intersections
+	' Downtown area with grid layout + some diagonal roads
+	
+	' Add nodes (intersections) in a 4x4 grid plus extras
+	roadNetwork1.AddNode(0, 52.5200, 13.4050, "1st Ave & Main St")
+	roadNetwork1.AddNode(1, 52.5200, 13.4150, "1st Ave & Oak St")
+	roadNetwork1.AddNode(2, 52.5200, 13.4250, "1st Ave & Pine St")
+	roadNetwork1.AddNode(3, 52.5200, 13.4350, "1st Ave & Elm St")
+	
+	roadNetwork1.AddNode(4, 52.5250, 13.4050, "2nd Ave & Main St")
+	roadNetwork1.AddNode(5, 52.5250, 13.4150, "2nd Ave & Oak St")
+	roadNetwork1.AddNode(6, 52.5250, 13.4250, "2nd Ave & Pine St")
+	roadNetwork1.AddNode(7, 52.5250, 13.4350, "2nd Ave & Elm St")
+	
+	roadNetwork1.AddNode(8, 52.5300, 13.4050, "3rd Ave & Main St")
+	roadNetwork1.AddNode(9, 52.5300, 13.4150, "3rd Ave & Oak St")
+	roadNetwork1.AddNode(10, 52.5300, 13.4250, "3rd Ave & Pine St")
+	roadNetwork1.AddNode(11, 52.5300, 13.4350, "3rd Ave & Elm St")
+	
+	roadNetwork1.AddNode(12, 52.5350, 13.4050, "4th Ave & Main St")
+	roadNetwork1.AddNode(13, 52.5350, 13.4150, "4th Ave & Oak St")
+	roadNetwork1.AddNode(14, 52.5350, 13.4250, "4th Ave & Pine St")
+	roadNetwork1.AddNode(15, 52.5350, 13.4350, "4th Ave & Elm St")
+	
+	' Add some extra nodes for variety (park, hospital, shopping)
+	roadNetwork1.AddNode(16, 52.5180, 13.4200, "Park Entrance")
+	roadNetwork1.AddNode(17, 52.5320, 13.4200, "Hospital")
+	roadNetwork1.AddNode(18, 52.5275, 13.4400, "Shopping Center")
+	
+	' Add roads (edges) - Main Street (vertical, north-south)
+	roadNetwork1.AddRoad(0, 4, 50, "Main Street", False)
+	roadNetwork1.AddRoad(4, 8, 50, "Main Street", False)
+	roadNetwork1.AddRoad(8, 12, 50, "Main Street", False)
+	
+	' Oak Street (vertical)
+	roadNetwork1.AddRoad(1, 5, 50, "Oak Street", False)
+	roadNetwork1.AddRoad(5, 9, 50, "Oak Street", False)
+	roadNetwork1.AddRoad(9, 13, 50, "Oak Street", False)
+	
+	' Pine Street (vertical)
+	roadNetwork1.AddRoad(2, 6, 50, "Pine Street", False)
+	roadNetwork1.AddRoad(6, 10, 50, "Pine Street", False)
+	roadNetwork1.AddRoad(10, 14, 50, "Pine Street", False)
+	
+	' Elm Street (vertical)
+	roadNetwork1.AddRoad(3, 7, 50, "Elm Street", False)
+	roadNetwork1.AddRoad(7, 11, 50, "Elm Street", False)
+	roadNetwork1.AddRoad(11, 15, 50, "Elm Street", False)
+	
+	' 1st Avenue (horizontal, east-west)
+	roadNetwork1.AddRoad(0, 1, 60, "1st Avenue", False)
+	roadNetwork1.AddRoad(1, 2, 60, "1st Avenue", False)
+	roadNetwork1.AddRoad(2, 3, 60, "1st Avenue", False)
+	
+	' 2nd Avenue (horizontal)
+	roadNetwork1.AddRoad(4, 5, 60, "2nd Avenue", False)
+	roadNetwork1.AddRoad(5, 6, 60, "2nd Avenue", False)
+	roadNetwork1.AddRoad(6, 7, 60, "2nd Avenue", False)
+	
+	' 3rd Avenue (horizontal)
+	roadNetwork1.AddRoad(8, 9, 60, "3rd Avenue", False)
+	roadNetwork1.AddRoad(9, 10, 60, "3rd Avenue", False)
+	roadNetwork1.AddRoad(10, 11, 60, "3rd Avenue", False)
+	
+	' 4th Avenue (horizontal)
+	roadNetwork1.AddRoad(12, 13, 60, "4th Avenue", False)
+	roadNetwork1.AddRoad(13, 14, 60, "4th Avenue", False)
+	roadNetwork1.AddRoad(14, 15, 60, "4th Avenue", False)
+	
+	' Highway (faster, diagonal connection across city)
+	roadNetwork1.AddRoad(0, 15, 100, "Highway 1", False)
+	
+	' Park connections (access roads to park)
+	roadNetwork1.AddRoad(1, 16, 30, "Park Road", False)
+	roadNetwork1.AddRoad(2, 16, 30, "Park Road", False)
+	
+	' Hospital connection (access to hospital)
+	roadNetwork1.AddRoad(10, 17, 40, "Hospital Drive", False)
+	
+	' Shopping center connections
+	roadNetwork1.AddRoad(7, 18, 40, "Shopping Way", False)
+	roadNetwork1.AddRoad(11, 18, 40, "Shopping Way", False)
+	
+	' One-way street example (can only go from node 5 to node 17)
+	roadNetwork1.AddRoad(5, 17, 50, "One-Way Street", True)
+	
+	Log("Sample city loaded: " & roadNetwork1.GetNodeCount & " intersections, " & roadNetwork1.GetRoadCount & " roads")
+	
+	' Calculate proper scaling to fit map in canvas
+	CalculateMapBounds
+End Sub
+
+'================================================================================
+' CalculateMapBounds - Calculates scale and offset to fit all nodes in canvas
+' Analyzes all faked GPS coordinates to determine proper zoom level and centering
+' Ensures the entire road network fits within the visible map area
+'================================================================================
+Sub CalculateMapBounds
+	Dim nodes As List = roadNetwork1.GetAllNodes
+	If nodes.Size = 0 Then Return
+	
+	' Find the bounding box of all nodes (min/max lat/lon)
+	Dim minLat As Double = 999
+	Dim maxLat As Double = -999
+	Dim minLon As Double = 999
+	Dim maxLon As Double = -999
+	
+	For i = 0 To nodes.Size - 1
+		Dim node As RoadNode = nodes.Get(i)
+		If node.lat < minLat Then minLat = node.lat
+		If node.lat > maxLat Then maxLat = node.lat
+		If node.lon < minLon Then minLon = node.lon
+		If node.lon > maxLon Then maxLon = node.lon
+	Next
+	
+	' Calculate the range of coordinates
+	Dim latRange As Double = maxLat - minLat
+	Dim lonRange As Double = maxLon - minLon
+	
+	If latRange > 0 And lonRange > 0 Then
+		' Calculate scale factor to fit map in canvas with margin
+		Dim scaleX As Double = (MapWidth - 80) / lonRange
+		Dim scaleY As Double = (MapHeight - 80) / latRange
+		scale = Min(scaleX, scaleY)
+		
+		' Calculate offset to center the map
+		Dim centerLon As Double = (minLon + maxLon) / 2
+		Dim centerLat As Double = (minLat + maxLat) / 2
+		
+		offsetX = MapWidth / 2 - centerLon * scale
+		offsetY = MapHeight / 2 + centerLat * scale
+	End If
+End Sub
+
+'================================================================================
+' PopulateLocationDropdowns - Fills start/end combo boxes with location names
+' Extracts all intersection names from the road network
+' Sets default selections (first node as start, last node as end)
+'================================================================================
+Sub PopulateLocationDropdowns
+	Dim nodes As List = roadNetwork1.GetAllNodes
+	
+	ComboStart.Items.Clear
+	ComboEnd.Items.Clear
+	
+	' Add all node names to both dropdowns
+	For i = 0 To nodes.Size - 1
+		Dim node As RoadNode = nodes.Get(i)
+		ComboStart.Items.Add(node.name)
+		ComboEnd.Items.Add(node.name)
+	Next
+	
+	' Set default selections
+	If nodes.Size > 0 Then
+		ComboStart.SelectedIndex = 0
+		If nodes.Size > 1 Then
+			ComboEnd.SelectedIndex = nodes.Size - 1
+		End If
+	End If
+End Sub
+
+'================================================================================
+' ButtonFindRoute_Click - Event handler when "Find Route" button is clicked
+' Validates selections, runs A* pathfinding algorithm, displays results
+' Shows route on map, calculates distance/time, generates turn-by-turn directions
+'================================================================================
+Sub ButtonFindRoute_Click
+	' Validate that both start and end locations are selected
+	If ComboStart.SelectedIndex < 0 Or ComboEnd.SelectedIndex < 0 Then
+		Log("Please select start and end locations")
+		Return
+	End If
+	
+	Dim startNodeId As Int = ComboStart.SelectedIndex
+	Dim endNodeId As Int = ComboEnd.SelectedIndex
+	
+	' Check if start and end are the same
+	If startNodeId = endNodeId Then
+		Log("Start and end locations are the same")
+		Return
+	End If
+	
+	' Determine optimization mode from dropdown selection
+	Dim optimizeMode As String = "distance"
+	Select ComboOptimize.SelectedIndex
+		Case 0
+			optimizeMode = "distance"
+		Case 1
+			optimizeMode = "time"
+		Case 2
+			optimizeMode = "avoid_highways"
+	End Select
+	
+	Log("Finding route from " & ComboStart.Items.Get(ComboStart.SelectedIndex) & " to " & ComboEnd.Items.Get(ComboEnd.SelectedIndex))
+	Log("Optimization: " & optimizeMode)
+	
+	Dim startTime As Long = DateTime.Now
+	
+	' Run the A* pathfinding algorithm
+	Dim result As Map = navSystem.FindRoute(startNodeId, endNodeId, optimizeMode)
+	
+	Dim elapsedTime As Long = DateTime.Now - startTime
+	
+	' Process results
+	If result.Get("success") Then
+		' Route found successfully
+		currentRoute = result.Get("route")
+		Dim totalDistance As Double = result.Get("distance")
+		Dim totalTime As Double = result.Get("time")
+		Dim directions As List = result.Get("directions")
+		
+		Log("Route found in " & elapsedTime & " ms")
+		Log("Distance: " & Round2(totalDistance, 2) & " km")
+		Log("Time: " & Round2(totalTime, 1) & " minutes")
+		
+		' Update UI with route information
+		lblDistance.Text = "Distance: " & Round2(totalDistance, 2) & " km"
+		lblTime.Text = "Time: " & Round2(totalTime, 1) & " min"
+		
+		' Display turn-by-turn directions
+		Dim sb As StringBuilder
+		sb.Initialize
+		For i = 0 To directions.Size - 1
+			sb.Append((i + 1)).Append(". ").Append(directions.Get(i)).Append(CRLF)
+		Next
+		TextAreaDirections.Text = sb.ToString
+		
+		' Redraw map with the route highlighted
+		DrawMap
+	Else
+		' No route found
+		Log("No route found")
+		lblDistance.Text = "Distance: No route"
+		lblTime.Text = "Time: --"
+		TextAreaDirections.Text = "No route found between selected locations."
+		currentRoute.Initialize
+		DrawMap
+	End If
+End Sub
+
+'================================================================================
+' ButtonClear_Click - Event handler when "Clear" button is clicked
+' Removes the displayed route and resets the map to show only roads
+' Clears distance, time, and directions information
+'================================================================================
+Sub ButtonClear_Click
+	currentRoute.Initialize
+	lblDistance.Text = "Distance: --"
+	lblTime.Text = "Time: --"
+	TextAreaDirections.Text = ""
+	DrawMap
+End Sub
+
+'================================================================================
+' CheckBoxShowNodes_CheckedChange - Toggles visibility of intersection dots
+' Redraws map when checkbox state changes
+'================================================================================
+Sub CheckBoxShowNodes_CheckedChange(Checked As Boolean)
+	DrawMap
+End Sub
+
+'================================================================================
+' CheckBoxShowLabels_CheckedChange - Toggles visibility of location labels
+' Redraws map when checkbox state changes
+'================================================================================
+Sub CheckBoxShowLabels_CheckedChange(Checked As Boolean)
+	DrawMap
+End Sub
+
+'================================================================================
+' DrawMap - Main rendering function that draws the entire road network
+' Draws roads (gray), current route (blue), intersections, and labels
+' Called whenever the map needs to be refreshed
+'================================================================================
+Sub DrawMap
+	Dim roads As List = roadNetwork1.GetAllRoads
+	For i = 0 To roads.Size - 1
+		Dim road As RoadEdge = roads.Get(i)
+		Dim fromNode As RoadNode = roadNetwork1.GetNode(road.fromNode)
+		Dim toNode As RoadNode = roadNetwork1.GetNode(road.toNode)
+		
+		' Convert GPS coordinates to canvas pixels
+		Dim x1 As Double = LonToX(fromNode.lon)
+		Dim y1 As Double = LatToY(fromNode.lat)
+		Dim x2 As Double = LonToX(toNode.lon)
+		Dim y2 As Double = LatToY(toNode.lat)
+		
+		' MODIFIED: Choose color and width based on road type
+		Dim roadColor As Object
+		Dim lineWidth As Double
+		
+		If road.speedLimit > 80 Then
+			' Highway - orange and thick
+			roadColor = colorHighway
+			lineWidth = 4
+		Else
+			' Regular road - gray and normal
+			roadColor = colorRoad
+			lineWidth = 2
+		End If
+		
+		MapCanvas.DrawLine(x1, y1, x2, y2, roadColor, lineWidth)
+		
+		' Draw arrow for one-way streets
+		If road.oneWay Then
+			DrawArrow(x1, y1, x2, y2)
+		End If
+	Next
+	
+	' Draw the current route in blue (if exists)
+	If currentRoute.IsInitialized And currentRoute.Size > 0 Then
+		For i = 0 To currentRoute.Size - 1
+			Dim road As RoadEdge = currentRoute.Get(i)
+			Dim fromNode As RoadNode = roadNetwork1.GetNode(road.fromNode)
+			Dim toNode As RoadNode = roadNetwork1.GetNode(road.toNode)
+			
+			Dim x1 As Double = LonToX(fromNode.lon)
+			Dim y1 As Double = LatToY(fromNode.lat)
+			Dim x2 As Double = LonToX(toNode.lon)
+			Dim y2 As Double = LatToY(toNode.lat)
+			
+			' Draw route in blue with thick line
+			MapCanvas.DrawLine(x1, y1, x2, y2, colorRoute, 4)
+		Next
+	End If
+	
+	' Draw intersection nodes as colored circles
+	If CheckBoxShowNodes.Checked Then
+		Dim nodes As List = roadNetwork1.GetAllNodes
+		For i = 0 To nodes.Size - 1
+			Dim node As RoadNode = nodes.Get(i)
+			Dim x As Double = LonToX(node.lon)
+			Dim y As Double = LatToY(node.lat)
+			
+			' Color based on role: green=start, red=end, gray=normal
+			Dim nodeColor As Object = colorNode
+			If ComboStart.SelectedIndex = i Then
+				nodeColor = colorStart
+			Else If ComboEnd.SelectedIndex = i Then
+				nodeColor = colorEnd
+			End If
+			
+			' Draw filled circle with black outline
+			MapCanvas.DrawCircle(x, y, 5, nodeColor, True, 0)
+			MapCanvas.DrawCircle(x, y, 5, fx.Colors.Black, False, 1)
+			
+			' Draw location name labels if enabled
+			If CheckBoxShowLabels.Checked Then
+				MapCanvas.DrawText(node.name, x + 8, y - 8, fx.DefaultFont(10), fx.Colors.Black, "LEFT")
+			End If
+		Next
+	End If
+End Sub
+
+'================================================================================
+' DrawArrow - Draws a directional arrow on a line to indicate one-way street
+' x1,y1 - Start point of line
+' x2,y2 - End point of line
+' Arrow is drawn at the midpoint pointing in the direction of travel
+'================================================================================
+Sub DrawArrow(x1 As Double, y1 As Double, x2 As Double, y2 As Double)
+	' Calculate angle of the line
+	Dim angle As Double = ATan2(y2 - y1, x2 - x1)
+	Dim arrowSize As Double = 8
+	
+	' Find midpoint of line for arrow placement
+	Dim midX As Double = (x1 + x2) / 2
+	Dim midY As Double = (y1 + y2) / 2
+	
+	' Calculate arrow head points
+	Dim arr1X As Double = midX - arrowSize * Cos(angle - 0.5)
+	Dim arr1Y As Double = midY - arrowSize * Sin(angle - 0.5)
+	Dim arr2X As Double = midX - arrowSize * Cos(angle + 0.5)
+	Dim arr2Y As Double = midY - arrowSize * Sin(angle + 0.5)
+	
+	' Draw two lines forming arrow head
+	MapCanvas.DrawLine(midX, midY, arr1X, arr1Y, colorRoad, 2)
+	MapCanvas.DrawLine(midX, midY, arr2X, arr2Y, colorRoad, 2)
+End Sub
+
+'================================================================================
+' LonToX - Converts longitude (GPS coordinate) to canvas X pixel coordinate
+' lon - Longitude value
+' Returns: X pixel position on canvas
+'================================================================================
+Sub LonToX(lon As Double) As Double
+	Return lon * scale + offsetX
+End Sub
+
+'================================================================================
+' LatToY - Converts latitude (GPS coordinate) to canvas Y pixel coordinate
+' lat - Latitude value
+' Returns: Y pixel position on canvas (note: Y axis is inverted)
+'================================================================================
+Sub LatToY(lat As Double) As Double
+	Return offsetY - lat * scale
+End Sub

@@ -1,0 +1,148 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=pd_resumabledownloader
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=0
+Version=10.5
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	
+	Private lbl_name As Label
+	Private lbl_downloaded As Label
+	Private lbl_totalsize As Label
+	Private lbl_speed As Label
+	Private ProgressBar1 As ProgressBar
+	Private TextField1 As TextField
+	Private lbl_percent As Label
+	Private lbl_EtaSeconds As Label
+	
+	Private btn_cancel As Button
+	Private btn_pause As Button
+	Private btn_start As Button
+	
+	Dim dl As PD_ResumableDownloader
+   
+	
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	
+	dl.Initialize("pd")
+    dl.SetBufferSize(1024)
+	dl.SetConnectTimeout(5000) 'milisecond
+	dl.SetDeleteOnCancel(True)
+	dl.SetMaxRetries(5)
+	dl.SetRetryDelayMs(1000)
+	dl.SetHeader("User-Agent","Mozilla/5.0 (Linux; Android 16; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.12.45 Mobile Safari/537.36")
+	dl.SetHeader("Authorization","")
+	dl.SetSpeedLimit(2*1024*1024)  ' 2MB
+'	dl.SetSpeedLimitFormatted("500KB")
+	dl.SetMinFreeSpace(100 * 1024 * 1024) '100MB
+	dl.SetProgressInterval(500)
+
+	' بررسی فضا
+	If Not(dl.HasEnoughSpace(File.DirApp, 100 * 1024 * 1024)) Then
+		Log("There is not enough space....!")
+		Return
+	End If
+End Sub
+
+Private Sub btn_start_Click
+	
+	Dim url As String = TextField1.Text.Trim
+	Dim output As String = File.Combine(File.DirApp,"200MB.bin")
+	
+'	dl.StartAsync(url,output)
+	dl.StartAsyncToFolder(url,File.DirApp) 'save with original Name
+End Sub
+
+Private Sub btn_pause_Click
+
+	If Not(dl.IsPaused) Then
+		dl.Pause
+		btn_pause.Text ="resume"
+	Else If dl.IsPaused Then
+		dl.Resume
+		btn_pause.Text ="pause"
+	End If
+	
+End Sub
+
+Private Sub btn_cancel_Click
+	
+	dl.Cancel
+	
+End Sub
+
+Private Sub pd_StateChanged(state As Int, data As DownloadEventData)
+        
+	Select state
+			
+		Case dl.STATE_STARTED
+			Log("Download Started..")
+			lbl_name.Text ="File Name : "& dl.GetFileName
+			Log(dl.GetSuggestedFileName(dl.Url)) 'remote file name
+
+		Case dl.STATE_PAUSED
+			Log("Download Paused..")
+				
+				
+		Case dl.STATE_CANCELED
+			Log("Download Canceled..")
+			
+			
+		Case dl.STATE_ERROR
+			Log($"error message : ${data.Message}"$)
+			
+		Case dl.STATE_INSUFFICIENT_SPACE
+			Log(dl.FormatBytes(data.RequiredSpace))
+			Log(dl.FormatBytes(data.AvailableSpace))
+				 
+		Case dl.STATE_COMPLETED
+			Log("Download Completed..")
+			Log($"message : ${data.Message}"$)
+			Log($"filePath : ${data.FilePath}"$)
+
+	End Select
+    
+	
+End Sub
+
+
+Private Sub pd_Progress(downloaded As Long, total As Long, remaining As Long, percent As Int, speed As Long, etaSeconds As Long)
+	
+
+'	''1
+'	lbl_totalsize.Text = $"total : $1.2{total / 1024 / 1024}MB"$
+'	lbl_speed.Text = $"speed : $1.2{speed / 1024 / 1024}MB/s"$
+'	lbl_downloaded.Text =$"current : $1.2{downloaded / 1024 / 1024}MB"$
+'	lbl_percent.Text = 	$" ${percent}% "$
+'	lbl_EtaSeconds.Text = $"Estimated Time : ${dl.FormatETA(etaSeconds)} "$
+	
+	''2
+	lbl_totalsize.Text = $"total : ${dl.FormatBytes(total)} "$
+	lbl_speed.Text = $"speed : ${dl.FormatSpeed(speed)} "$
+	lbl_downloaded.Text =$"current :${dl.FormatBytes(downloaded)} "$
+	lbl_percent.Text = 	$" ${percent}% "$
+	lbl_EtaSeconds.Text = $"Estimated Time : ${dl.FormatETA(etaSeconds)} "$
+	
+	ProgressBar1.Progress = (downloaded / total)
+	
+End Sub
+

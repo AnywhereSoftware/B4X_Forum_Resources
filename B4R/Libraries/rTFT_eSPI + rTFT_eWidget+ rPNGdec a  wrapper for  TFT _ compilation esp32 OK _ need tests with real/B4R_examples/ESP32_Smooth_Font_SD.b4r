@@ -1,0 +1,231 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrandomaccessfile
+Library3=rsd32
+Library4=rtft_espi
+NumberOfFiles=0
+NumberOfLibraries=4
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+ '/*
+ ' Sketch To demonstrate using the print class with smooth fonts
+ ' that are saved onto an SD Card accessed by the SD library.'
+
+ ' For ESP32 only, GPIO 5 must be used For SD chip Select.
+ ' This method of storing the fonts is Not compatible with the ESP8266.
+
+ ' Sketch is written For a 240 x 320 display
+
+ ' Load the font file onto the root directory of the SD Card.  The font files
+ ' used by this sketch can be found in the Data folder, press Ctrl+K To see it.
+
+ ' The library supports 16-Bit Unicode characters:
+ ' https://en.wikipedia.org/wiki/Unicode_font
+
+ ' The characters supported are in the in the Basic Multilingual Plane:
+ ' https://en.wikipedia.org/wiki/Plane_(Unicode)#Basic_Multilingual_Plane
+
+ ' Make sure all the display driver And pin connections are correct by
+ ' editing the User_Setup.h file in the TFT_eSPI library folder.
+
+ ' #########################################################################
+ ' ######                     only for esp32                          ######
+ ' #########################################################################
+ ' ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+ ' #########################################################################
+ '*/
+
+Sub Process_Globals
+	Public Serial1 As Serial
+'	Private wifi As ESP8266WiFi 
+    Private bc As ByteConverter
+	Private raf As RandomAccessFile
+	Private SD As SD32
+	Private TFT As TFT_eSPI
+	Private TFTid As Long
+	private rtr as byte =0
+End Sub
+
+Private Sub AppStart
+	Serial1.Initialize(115200)
+	Log("AppStart")
+	'example of connecting to a local network
+'	If wifi.Connect2("SSID", "PASSWORD") Then
+'		Log("Connected to network")
+'	Else
+'		Log("Failed to connect to network")
+'	End If
+	TFTid = TFT.Initialize(-1,-1)
+	
+	If Not(SD.Initialize(False)) Then 
+		Log("Card Mount Failed")
+		Do While(True):Delay(100):Loop
+    End If
+	Dim cardType As Byte = SD.cardType
+	
+	If cardType = SD.CARD_NONE Then 
+		Log("No SD card attached")
+		Do While(True):Delay(100):Loop
+	End If
+
+	If cardType = SD.CARD_MMC Then
+	   Log("SD Card Type: ","MMC")
+	else if cardType = SD.CARD_SD Then
+	   Log("SD Card Type: ","SDSC")
+	else if cardType = SD.CARD_SDHC Then
+	   Log("SD Card Type: ","SDHC")
+	Else 
+	   Log("SD Card Type: ","UNKNOWN")
+    End If
+
+	Dim cardSize As ULong = SD.cardSize / (1024 * 1024)
+	Log("SD Card Size: %lluMB\n", cardSize)
+
+	'// Initialise the TFT after the SD card!
+	TFT.begin(0xFF)
+	TFT.setRotation(1)
+	TFT.fillScreen(TFT.TFT_BLACK)
+	Log("SD and TFT initialisation done.")
+	
+ 	listDir("/", 0)
+
+
+	AddLooper("localloop")
+End Sub
+
+Sub LocalLoop
+	'// Wrap test at right And bottom of screen
+	TFT.setTextWrap(True, True)
+	'// Name of font file (library adds leading / And .vlw)
+ 	Dim file_Name As String = "Final-Frontier-28"
+
+	'// Font And background colour, background colour is used For anti-alias blending
+	TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False)
+
+	'// Load the font
+	rtr = TFT.loadFontSD(file_Name)      ' // Use font stored on SD
+    If rtr > 0 Then
+		If rtr = 1 Then Log("error loadfontSD  SD.begin") Else Log("error loadfontSD  CARD_NONE")
+	Else	
+
+	'// Display all characters of the font 
+	TFT.showFont(2000)
+
+	Dim dt As ULong = Millis
+	Dim count As Int = 100
+	Do While count > 0
+
+		'// Set "cursor" at top left corner of display (0,0)
+		'// (cursor will move To Next line automatically during printing with 'tft.println'
+		'//  Or stay on the line is there is room For the text with TFT.print)
+		TFT.setCursor(0, 0)
+
+		'// Set the font colour To be white with a black background, set text size multiplier To 1
+		TFT.setTextColor1(TFT.TFT_WHITE, TFT.TFT_BLACK,False)
+
+		'// We can now plot text on screen using the "print" class
+		TFT.println("Hello World!")
+
+		'// Set the font colour To be yellow
+		TFT.setTextColor1(TFT.TFT_YELLOW, TFT.TFT_BLACK,False)
+		TFT.println(1234.56)
+
+		'// Set the font colour To be red
+		TFT.setTextColor1(TFT.TFT_RED, TFT.TFT_BLACK, False)
+		TFT.println(NumberFormat(3735928559,10,0)) ' // Should print DEADBEEF
+
+		'// Set the font colour To be green with black background
+		TFT.setTextColor1(TFT.TFT_GREEN, TFT.TFT_BLACK, False)
+		TFT.println("Anti-aliased font!")
+		TFT.println("")
+
+		'// Test some print formatting functions
+		Dim fnumber As Double = 123.45
+
+		'// Set the font colour To be blue
+		TFT.setTextColor1(TFT.TFT_BLUE, TFT.TFT_BLACK,False)
+		TFT.print("Float = "):       TFT.println(NumberFormat(fnumber,4,4))               ' // Print floating point number
+		TFT.print("Binary = "):      TFT.println(bc.stringfrombytes(UIntToBinary(fnumber))) ' // Print As integer value in binary
+		TFT.print("Hexadecimal = "): TFT.println(bc.stringfrombytes(UinttoHexa(fnumber)))   ' // Print As integer number in Hexadecimal
+		count = count -1
+   	Loop
+
+	Log(Millis-dt)
+ 
+	'// Unload the font To recover used RAM
+	TFT.unloadFont
+    End If
+	Delay(10000)
+End Sub
+
+Sub listDir(path As String, nblevel As Byte)
+
+	Log("Listing directory: %s\n", path)
+
+	If nblevel > 6 Then nblevel = 6
+	Dim ppath() As Byte
+	Dim level() As Byte = DIRlevel(bc.StringToBytes(path))
+	For Each f As File In SD.ListFiles(path)
+		If f.isdirectory Then
+			If path <> "/" Then
+				ppath = JoinBytes(Array(path.getbytes,"/".getbytes,f.name.getbytes))
+			Else
+				ppath = JoinBytes(Array(path.getbytes,f.name.getbytes))
+			End If
+			Log(level,"Dir  : ",ppath)
+			If nblevel-1>0  Then
+				If nblevel > 1 Then listDir(bc.stringfrombytes(ppath),nblevel-1)
+			End If
+		Else
+			Log(level,"Name: ",f.name," - Size: ",f.size)
+		End If
+	Next
+End Sub
+
+Sub DIRlevel(lpath() As Byte) As Byte()
+	Dim level As Byte = 0
+	If lpath.Length >1 Then lpath = JoinBytes(Array(lpath,"/".getbytes))
+	For Each f As Byte In bc.substring(lpath,1)
+		If f = 47 Then level = level +1
+	Next
+	Dim tmp() As Byte = "-   -   -   -   -   -   -   -"
+	Return bc.SubString2(tmp,0,(level*4)+1)
+End Sub
+
+Sub UinttoHexa(n As UInt) As Byte()
+	Dim b(2) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteUint16(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UlongtoHexa(n As ULong) As Byte()
+	Dim b(4) As Byte
+	raf.Initialize(b, False) 'big endian
+	raf.WriteULong32(n, 0)
+'	Log( bc.HexFromBytes(b))
+	Return bc.HexFromBytes(b)
+End Sub
+
+Sub UIntToBinary (Number As UInt) As Byte()
+	Dim Result(16) As Byte
+	For i = 0 To 15
+		If Bit.Get(Number, 15 - i) = 1 Then
+			Result(i) = Asc("1")
+		Else
+			Result(i) = Asc("0")
+		End If
+    Next
+	Return Result
+End Sub

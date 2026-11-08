@@ -1,0 +1,149 @@
+﻿Build1=Default,b4i.example
+File1=img1.jpg
+File2=img2.jpg
+File3=layout1.bil
+File4=layout2.bil
+File5=ximageslider_video.bil
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Library3=ihud
+Library4=xcustomlistview
+Library5=ihttputils2
+Library6=iui8
+Library7=ximagesliderig
+NumberOfFiles=5
+NumberOfLibraries=7
+NumberOfModules=0
+Version=6.5
+@EndOfDesignText@
+'Code module
+#Region  Project Attributes 
+	#ApplicationLabel: xImageSlider Sample
+	#Version: 1.0.0 
+	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
+	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
+	#Target: iPhone, iPad
+	#ATSEnabled: True
+	#MinVersion: 8
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'Public variables can be accessed from all modules.
+	Public App As Application
+	Public NavControl As NavigationController
+	Private Page1 As Page
+	Private hud As HUD
+
+	Type SliderContainer(slider As xImageSliderIG, items As List)
+	Private xImageSliderIG1 As xImageSliderIG
+	Private CustomListView1 As CustomListView
+	
+	Private sliders As List
+End Sub
+
+Private Sub Application_Start (Nav As NavigationController)
+	'SetDebugAutoFlushLogs(True) 'Uncomment if program crashes before all logs are printed.
+	NavControl = Nav
+	Page1.Initialize("Page1")
+	Page1.Title = "Page 1"
+	Page1.RootPanel.Color = Colors.White
+	NavControl.ShowPage(Page1)
+	Page1.RootPanel.LoadLayout("layout2")
+	
+	Dim b As BarButton
+	b.InitializeSystem(b.ITEM_REFRESH,"")
+	Page1.TopRightButtons = Array(b)
+	
+	sliders.Initialize
+	For i=0 To 15
+		If i=1 Or i=10 Then
+			Dim p As Panel
+			p.Initialize("")
+			p.SetLayoutAnimated(0,1,0,0,100%x,250dip)
+			p.LoadLayout("layout1")
+			
+			Dim sc As SliderContainer
+			sc.Initialize
+			sc.slider = xImageSliderIG1
+			sc.slider.ActivityHasActionBar = True
+			sc.items.Initialize
+			
+			For j=0 To 5
+				sc.items.Add(CreateMap("data":"Item 0-"&j, "video":"https://media.w3.org/2010/05/sintel/trailer.mp4", "type":"uri"))
+				sc.items.Add(CreateMap("data":"Item 1-"&j, "image":LoadBitmap(File.DirAssets,"img1.jpg")))
+				sc.items.Add(CreateMap("data":"Item 2-"&j, "image":"https://cdn.pixabay.com/photo/2015/07/06/13/58/arlberg-pass-833326__340.jpg"))
+			Next
+	
+			sc.slider.SetItems(sc.items)
+			sc.slider.SetZoomPanel(Page1.RootPanel)
+			
+			sliders.Add(sc)
+			CustomListView1.Add(p,"")
+			CustomListView1.GetPanel(i).Color = Colors.White
+		Else
+			CustomListView1.AddTextItem("abc "&i,"")
+		End If
+	Next
+	UpdateSliders
+End Sub
+
+Private Sub Page1_BarButtonClick (Tag As String)
+	
+	Dim sc As SliderContainer = sliders.Get(0)
+	sc.items.Initialize
+			
+	For j=0 To 5
+		sc.items.Add(CreateMap("data":"Item 0-"&j, "video":"https://media.w3.org/2010/05/sintel/trailer.mp4", "type":"uri"))
+		sc.items.Add(CreateMap("data":"Item 1-"&j, "image":LoadBitmap(File.DirAssets,"img2.jpg")))
+		sc.items.Add(CreateMap("data":"Item 2-"&j, "image":"https://cdn.pixabay.com/photo/2015/07/06/13/58/arlberg-pass-833326__340.jpg"))
+	Next
+	
+	sc.slider.SetItems(sc.items)
+	UpdateSliders
+End Sub
+
+Private Sub Application_Background
+	
+End Sub
+
+Private Sub Page1_Resize(Width As Int, Height As Int)
+	
+End Sub
+
+Private Sub Page1_Appear
+	UpdateSliders
+End Sub
+
+Private Sub Page1_Disappear
+	For Each sc As SliderContainer In sliders
+		sc.slider.PauseCurrentVideo
+	Next
+End Sub
+
+Sub xImageSliderIG1_SingleTap(CurrentIndex As Int, Data As Object)
+	Dim str As String = Data
+	hud.ToastMessageShow("Single Tap:" & CurrentIndex &", "& str,False)
+End Sub
+
+Sub xImageSliderIG1_DoubleTap(CurrentIndex As Int, Data As Object)
+	Dim str As String = Data
+	hud.ToastMessageShow("Double Tap:" & CurrentIndex &", "& str,False)
+End Sub
+
+Sub CustomListView1_ScrollChanged (Offset As Int)
+	UpdateSliders
+End Sub
+
+Sub UpdateSliders
+	For Each sc As SliderContainer In sliders
+		sc.slider.UpdatePlayback
+	Next
+End Sub

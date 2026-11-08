@@ -1,0 +1,70 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=jspdf.plugin.autotable.min.js
+File2=jspdf.umd.min.js
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=banano
+Library2=jcore
+Library3=jfx
+Module1=BAElement
+Module10=JsPdfLine
+Module11=JsPdfLink
+Module12=JsPdfPage
+Module13=JsPdfRect
+Module14=JsPdfRoundedrect
+Module15=JsPdfText
+Module16=JsPdfTriangle
+Module17=jsPdfView
+Module2=BANanoJSPDF
+Module3=BANanoJSPDFTable
+Module4=BANanoShared
+Module5=JsPdfAnnotation
+Module6=JsPdfCircle
+Module7=JsPdfDoc
+Module8=JsPdfEllipse
+Module9=JsPdfImage
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=17
+Version=9
+@EndOfDesignText@
+
+#IgnoreWarnings: 16, 10, 14, 15	
+#Region Project Attributes 
+	#MergeLibraries: True
+	#LibraryAuthor: Anele Mashy Mbanga
+	#LibraryName: BANanoJsPDFCore
+#End Region
+
+Sub Process_Globals
+	Public BANano As BANano 'ignore
+	Public AppName As String = "BANanoJsPDFCore"
+	Public Version As String = "1.0"
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	'initialize banano for first use
+	BANano.Initialize("BANano", AppName, Version)
+	BANano.Header.Title = AppName
+	'
+	BANano.Header.AddJavascriptFile("jspdf.umd.min.js")
+	BANano.Header.AddJavascriptFile("jspdf.plugin.autotable.min.js")
+	
+	' start the build
+	#if release
+	BANano.BuildAsB4Xlib(Version)
+	#else
+	BANano.Build(File.DirApp)
+	#end if
+	ExitApplication
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub BANano_Ready
+End Sub

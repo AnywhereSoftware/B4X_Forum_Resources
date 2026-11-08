@@ -1,0 +1,67 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcommuart
+Library2=rcore
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:		rCommUART
+' Brief:		B4R library rCommUART.b4xlib basic example program.
+' Date:			2026-09-29
+' Author: 		Robert W.B. Linn (c) 2026 MIT
+' Description:	Set the state of a connected LED to on (1) or OFF(0) via serial line command.
+'				Frame Protocol: Length: 3 Bytes
+'				Byte 0: 0x19; Byte 1: 0x00 (OFF) Or 0x01 (ON); Byte 2: 0x58
+' Hardware:		Arduino UNO
+' Software:		B4R 4.00 (64 bit)
+' Wiring:		MCU = LED (DFRobot): D4 = Signal - White; 5V = VCC; GND = GND
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 600
+#End Region
+
+Sub Process_Globals
+	Public SerialLine 		As Serial		' UART0 (Port 0)
+	Private FRAME_SIZE 		As Int = 3		' IMPORTANT must match frame size used
+	Private Led 			As Pin			
+	Private LED_PINNR		As Byte = 4		' D4
+	Private LED_ON			As Byte = 1
+End Sub
+
+Private Sub AppStart
+	SerialLine.Initialize(115200)
+	Led.Initialize(LED_PINNR, Led.MODE_OUTPUT)
+	Led.DigitalWrite(False)
+	CommUart.Initialize(SerialLine.Stream, FRAME_SIZE)
+End Sub
+
+' CommUART_OnReceived
+' Handle new data from the client.
+' Parameter:
+'	buffer - byte array received
+Public Sub CommUART_OnReceived(buffer() As Byte)	
+	If buffer.Length = FRAME_SIZE Then
+		Led.DigitalWrite(IIf(buffer(1) = LED_ON, True, False))
+	End If
+End Sub
+
+' CommUART_OnError
+Public Sub CommUART_OnError
+	Log("[Main.CommUART_OnError]")
+End Sub
+
+' CommUART_Write
+' Write data to the connected client.
+' Parameter:
+'	data - Byte array with framesize length
+Private Sub CommUART_Write(data() As Byte)
+	CommUart.Write(data)		
+End Sub

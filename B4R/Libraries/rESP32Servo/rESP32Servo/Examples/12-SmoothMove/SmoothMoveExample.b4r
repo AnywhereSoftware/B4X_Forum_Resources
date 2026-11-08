@@ -1,0 +1,99 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=resp32servo
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=4
+@EndOfDesignText@
+#Region Project Header
+'==============================================
+' Project:	rESP32Servo
+' Brief:	Example moving the servo in steps connected to the ESP32.
+'			The angles are between 60 and 120 degrees.
+' Author: 	Robert W.B. Linn
+' Version: 	1.0
+' Created: 	2025-08-21
+' License:	MIT — see LICENSE file.
+
+' Hardware
+' Servo:	PowerHD 1160A, Pulse width range 800-2200 mV.
+' MCU:		ESP-WROOM-32, B4R 4.00 (64 bit), IDE ESP32 Dev Module, Arduino Board Manager ESP32 3.0.0.
+
+' Wiring
+' Servo = ESP32
+' Signal = D4
+' VCC = VIn
+' GND = GND
+'==============================================
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 300
+#End Region
+
+Sub Process_Globals
+	Private ANGLE_MIN_POS As UInt = 60
+	Private ANGLE_MAX_POS As UInt = 90
+	Private ANGLE_STEP As UInt = 5
+
+	Private Serial1 As Serial
+
+	Private Servo1 As ESP32Servo
+	Private Servo1Pin As Pin
+	Private Servo1PinNr As Byte = 4
+	Private ServoAngle As UInt
+	Private DirectionUp As Boolean = False
+
+	Private Timer1 As Timer
+	Private counter As Int = 0
+End Sub
+
+Private Sub AppStart
+    Serial1.Initialize(115200)
+    Log("[Main.AppStart] Start")
+    
+	Servo1Pin.Initialize (Servo1PinNr, Servo1Pin.MODE_OUTPUT)   	' Connect servo to pin 4 of the ESP32
+	Servo1.Attach(Servo1Pin.PinNumber)               	' Assign servo to device on pin servo
+	Servo1.Write(ANGLE_MIN_POS)							' Set servo initial angle to min pos
+	Delay(50)
+	ServoAngle = ANGLE_MIN_POS
+	Log("[Main.AppStart] Initial angle=", ServoAngle)
+
+    Timer1.Initialize ("Timer1_Tick", 2000)         	' Call timer N seconds
+	Timer1.Enabled=True
+	Log("[Main.AppStart] Done")
+End Sub
+
+Sub Timer1_Tick
+	' Log("[Timer1_Tick] angle=", ServoAngle)
+	
+	If ServoAngle <= ANGLE_MIN_POS Then
+		DirectionUp = True
+		ServoAngle = ANGLE_MIN_POS
+	End If	
+	If ServoAngle >= ANGLE_MAX_POS Then
+		DirectionUp = False
+		ServoAngle = ANGLE_MAX_POS
+		counter = counter + 1
+	End If
+
+	If DirectionUp Then
+		ServoAngle = ServoAngle + ANGLE_STEP
+	Else
+		ServoAngle = ServoAngle - ANGLE_STEP
+	End If
+
+	Servo1.Write(ServoAngle)
+	Delay(50)
+	Log("[Timer1_Tick] angle=", ServoAngle, ", counter=", counter)
+	
+	If counter == 2 Then
+		Timer1.Enabled = False
+		Servo1.detach
+		Log("[Timer1_Tick] stopped")
+	End If
+End Sub

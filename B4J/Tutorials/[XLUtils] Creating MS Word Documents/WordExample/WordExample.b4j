@@ -1,0 +1,113 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+File2=logo.png
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jxui
+Library4=xlutils
+Library5=xui views
+NumberOfFiles=2
+NumberOfLibraries=5
+NumberOfModules=0
+Version=9
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI 
+	Private WD As WordUtils
+	Private Label1 As B4XView
+	Private AnotherProgressBar1 As AnotherProgressBar
+End Sub
+
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+	WD.Initialize
+	xui.SetDataFolder("word example")
+	Dim doc As WordDocument = CreateDocument
+	Dim f As String = doc.SaveAs(xui.DefaultFolder, "Report.docx", True)
+	Log($"Document saved: ${f}"$)
+	'if MS Word is installed:
+	Label1.Text = "Creating PDF..."
+	'this step can be a bit slow. Comment it during development.
+	Wait For (WD.PowerShellConvertToPdf(f, File.Combine(xui.DefaultFolder, "Report.pdf"), True)) Complete (Success As Boolean)
+	Label1.Text = "Opening word"
+	Wait For (WD.OpenWord(f)) Complete (Success As Boolean)
+	Label1.Text = "Report created: " & f
+	AnotherProgressBar1.Visible = False
+End Sub
+
+Private Sub CreateDocument As WordDocument
+	Dim Document As WordDocument = WD.CreateDocument
+	Document.Append($"
+[header]
+	[p alignment=left]$Date{DateTime.Now}[/p]
+	[p alignment=right][img dir=assets filename=logo.png width=30 height=30/][/p]
+[/header]
+
+[p alignment=center][TextSize=22][u][highlight=yellow]This is the title[/highlight][/u][/TextSize][/p]
+[p]This is an example of generating report using XLUtils.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas vel auctor nisl, id sollicitudin erat.
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+Pellentesque varius, mi sit amet dictum scelerisque, turpis nisl hendrerit mauris, et porta magna sem in eros. Morbi lobortis at ex at pretium. Curabitur ut commodo nulla.
+Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Sed dapibus sollicitudin dolor, cursus tincidunt enim dictum vel. Sed dignissim mi at mi ultrices dictum. 
+[/p]
+[p][font=Arial]Another paragraph with different font[/font], we can use [font="Ink Free"][TextSize=18]multiple fonts[/TextSize][/font] easily.[/p]
+
+This text will not appear as it is not inside a paragraph.
+${CreateTable}
+
+[p]
+[color=red]red[/color] [color=0xff00ff00]green[/color] [u pattern=thick color=blue]blue[/u][/p]
+[footer]
+	[p]Generated automatically...[/p]
+[/footer]
+"$)
+	Return Document
+End Sub
+
+Private Sub CreateTable As String
+	Dim items As List
+	items.Initialize
+	For i = 1 To 20
+		items.Add(Array("Item " & i, Rnd(1, 100), Rnd(100, 1000)))
+	Next
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim TitleCellStyle As String = "color=black width=100 VerticalAlignment=center"
+	Dim TitlePStyle As String = "[p alignment=center][color=white][b]"
+	sb.Append($"
+	[table Alignment=Center rows=${1 + items.Size} cols=3]
+		this is the header row
+		[row RepeatHeader=True]
+			[cell ${TitleCellStyle}]${TitlePStyle}Item Id[/b][/color][/p][/cell]
+			[cell ${TitleCellStyle}]${TitlePStyle}Amount[/b][/color][/p][/cell]
+			[cell ${TitleCellStyle}]${TitlePStyle}Price[/b][/color][/p][/cell]
+		[/row]
+	"$)
+	
+	For Each row() As Object In items
+		sb.Append($"
+		[row height=10]
+			[cell][p alignment=center]${row(0)}[/p][/cell]
+			[cell][p alignment=center]${row(1)}[/p][/cell]
+			[cell][p alignment=center]$${row(2)}[/p][/cell]
+		[/row]
+		"$)
+	Next
+	sb.Append("[/table]")
+	Return sb.ToString
+	
+End Sub

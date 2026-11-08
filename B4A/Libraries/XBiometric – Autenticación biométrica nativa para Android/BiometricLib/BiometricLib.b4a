@@ -1,0 +1,78 @@
+﻿Build1=Default,b4a.example
+File1=icono.png
+File2=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=biometric
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~AddPermission(android.permission.USE_BIOMETRIC)~\n~AddPermission(android.permission.USE_FINGERPRINT)~\n~AddManifestText(<uses-feature android:name="android.hardware.fingerprint" android:required="false"/>)~\n~~\n~~\n~
+Module1=Starter
+NumberOfFiles=2
+NumberOfLibraries=3
+NumberOfModules=1
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#AdditionalJar: Xbiometric/biometric-1.1.0.aar
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+	Dim xio As XBiometric
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	xio.Initialize("xbiometric","NombeAPP","Identifiquese","Prueba de app")
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	Dim disponible As Int 
+	disponible = xio.SePuedeAutenticar
+	If (disponible= xio.SUCCESS)  Or (disponible = xio.LLAMAR_A_AUTENTICAR)Then
+		xio.Autenticar
+	End If
+		
+End Sub
+
+Sub xbiometric_Exito
+	Log("Te has autenticado")
+End Sub
+
+Sub xbiometric_Error (codigo As Int, descripcion As String)
+	Log($"Error ${codigo} --> ${descripcion}"$)
+End Sub
+
+Sub xbiometric_Fallo
+	Log("mmmmm No eres tu :P :(")
+End Sub

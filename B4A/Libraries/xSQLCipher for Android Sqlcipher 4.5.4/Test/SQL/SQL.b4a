@@ -1,0 +1,87 @@
+﻿Build1=Default,com.tummosoft
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=sql
+Library3=xsqlcipher2
+Library4=xui
+Library5=b4xencryption
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=5
+NumberOfModules=1
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: True
+#AdditionalJar: bcprov-jdk15on-1.70
+#AdditionalJar: sqlite-2.4.0.aar
+#AdditionalJar: android-database-sqlcipher-4.5.4.aar
+
+Sub Process_Globals
+	Dim sqlci As xSQLCipher
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private Button2 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+		
+	
+	
+	Dim key As String = "Hello world"
+	Dim c As B4XCipher
+	Dim b() As Byte = c.Encrypt(key.GetBytes("utf8"), "12345678")
+		
+	sqlci.initializeCipher(sqlci, "db3.db", "12345678", 1)
+	
+	ChangePassword(password As String)
+	ChangePassword(password() As Byte)
+	
+	sqlci.DatabasePath a
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	sqlci.ExecNonQuery("CREATE TABLE table1 (col1 TEXT, col2 INTEGER, col3 INTEGER)")
+	For i=0 To 10
+		sqlci.ExecNonQuery2("INSERT INTO table1 VALUES (?, ?, ?)", Array As Object("some text" & i, i, i * 2))
+	Next
+	
+End Sub
+
+Private Sub Button2_Click
+	Dim Cursor As Cursor
+	Cursor = sqlci.ExecQuery("SELECT col1, col2 FROM table1")
+	For i = 0 To Cursor.RowCount - 1
+		Cursor.Position = i
+		Log(Cursor.GetString("col1"))
+		Log(Cursor.GetInt("col2"))
+	Next
+End Sub

@@ -1,0 +1,90 @@
+﻿Build1=Default,jhs.rubikcube
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=rubik
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: b4aRubikCube
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#AdditionalRes: ..\LibRes
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	Private xui As XUI
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	Private rc1 As RubikCube
+	
+	Private Button1 As Button
+	Dim move As String
+	Private et1 As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	'using smart string literals for the move commands
+	rc1.Editable = True                   'set to true to rotate planes manually
+	rc1.BackFaceDistance = 4              'set the distance of the back faces from the cube -> a value (0) zero -> no back faces are shown
+	et1.Text = $"R2' U3 M2 U3' R3' U2 M1' U1'"$
+	rc1.DoubleRotationSpeed = 25
+	rc1.SingleRotationSpeed = 25
+	
+	
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+
+Private Sub Button1_Click
+	
+	move = et1.Text                            'get the move sequence from the EditText box
+	rc1.MoveSequence = move                    'pass the move sequence to be performed
+	rc1.AnimateMoveSequence                    'execute the move as defined above
+	Wait For rc1_animation_finished            'with for animation to finish
+	Log("now going to do move sequence in reverse")             
+	rc1.AnimateMoveSequenceReversed            'do the same move sequence but in reverse order
+
+	
+End Sub
+
+Private Sub rc1_animation_finished
+	Log("gotcha")
+	rc1.CubeModel = "000000000111111111222222222333333333444444444555555555"    'define a model to set when animation is completed
+	rc1.ResetToInitialState                                                     'set the cube state as defined in rc1.CubeModel = "012345012012345012012345012012345012012345012012345012"
+End Sub
+
+Private Sub rc1_cube_model(model As String)
+	Log("in rc1_cube_model")
+	Log(model)
+End Sub

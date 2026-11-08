@@ -1,0 +1,109 @@
+﻿Build1=Default,com.stu.nav
+File1=Main.bal
+File2=Settings.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=core
+Library2=reflection
+Library3=xui
+Library4=stdactionbar
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Settings
+Module2=Starter
+Module3=Utils
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=3
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Side Navigation Menu
+	#VersionCode: 1
+	#VersionName: 1.00
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	Private xui As XUI
+	Type MenuItem (mtype As Int, micon As Int, mtitle As String)
+End Sub
+
+Sub Globals
+	Private lvMenu As ListView	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Main")
+	Utils.Set_ListView_Props(lvMenu)
+	Load_MenuItems
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub
+
+
+
+Sub Load_MenuItems
+	'initialize the List object
+	Dim lstMenu As List
+	lstMenu.Initialize
+	
+	'create the group headers and menu items into the List object
+	lstMenu.Add(Utils.CreateMenuItem(2,0xFFFF,"MAIN"))			'group heading - does not matter what icon you choose, as it is not used.
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF252,"Time sheet"))	'menu item
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF1B2,"Projects"))
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF1B3,"Tasks"))
+	lstMenu.Add(Utils.CreateMenuItem(2,0xFFFF,"CONFIGURATION"))	'group heading
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF013,"Settings"))
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF2BC,"Clients"))
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF2C0,"Users"))
+	lstMenu.Add(Utils.CreateMenuItem(3,0xFFFF,""))				'divider
+	lstMenu.Add(Utils.CreateMenuItem(1,0xF08B,"Sign out"))		'sign out
+	
+	'add the menu items into the ListView
+	For Each m As MenuItem In lstMenu
+		If m.mtype = 1 Then				'menu item
+			lvMenu.AddTwoLinesAndBitmap2(m.mtitle, m.mtitle, Utils.FontAwesomeToBitmap(Chr(m.micon), 14, Colors.Gray), m.mtitle)
+		Else If m.mtype = 2 Then		'heading
+			lvMenu.AddSingleLine2(m.mtitle,"")
+		Else If m.mtype = 3 Then		'divider
+			lvMenu.AddSingleLine2("","")
+		End If
+	Next
+End Sub
+
+
+Private Sub lvMenu_ItemClick(Position As Int, Value As Object)
+	'do something when the ListView menuitem is clicked
+	Select Value
+		Case "Time sheet"
+			SetTitle(Value)
+		Case "Projects"
+			SetTitle(Value)
+		Case "Tasks"
+			SetTitle(Value)
+		Case "Settings"
+			StartActivity(Settings)
+		Case "Clients"
+			SetTitle(Value)
+		Case "Users"
+			SetTitle(Value)
+		Case "Sign out"
+			
+	End Select
+End Sub
+
+Sub SetTitle(txt As String)
+	Activity.Title = "Side Navigation - " & txt
+End Sub

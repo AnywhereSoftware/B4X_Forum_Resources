@@ -1,0 +1,96 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=button.css
+File2=main.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=jmqtt
+Library4=jrandomaccessfile
+Module1=clsClient
+NumberOfFiles=2
+NumberOfLibraries=4
+NumberOfModules=1
+Version=8.31
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 200
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+
+	Private btnStart As Button
+	Private taResult As TextArea
+
+	Dim Const NB_CLIENTS As Int = 100
+	Dim Client(NB_CLIENTS) As clsClient
+	Dim Const SLEEP_DURATION As Int = 20
+
+	Dim Const IPAddress As String = "127.0.0.1"
+	Dim Const Port As Int = 1883
+	Dim Const ServerURI As String = "tcp://" & IPAddress & ":" & Port
+
+	Dim GlobalCount As Long
+	Dim Stop_Counting As Boolean
+	Dim StartTime As Long
+	Dim Topic(3) As String
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main")
+	MainForm.Stylesheets.Add(File.GetUri(File.DirAssets, "button.css"))
+	taResult.Editable = False
+	taResult.WrapText = True
+	MainForm.Show
+End Sub
+
+Sub btnStart_Click
+	btnStart.Enabled = False
+	taResult.Text = "Please wait..."
+	Topic(0) = "0_" & DateTime.Now
+	Topic(1) = "1_" & DateTime.Now
+	Topic(2) = "2_" & DateTime.Now
+	GlobalCount = 0
+	Stop_Counting = False
+	StartTime = DateTime.Now
+	RunStressTest
+End Sub
+
+Sub RunStressTest
+	For i = 0 To NB_CLIENTS - 1
+		If i = NB_CLIENTS - 1 Then
+			Client(i).Initialize("LAST" & DateTime.Now)
+		Else
+			Client(i).Initialize(DateTime.Now)
+			Sleep(SLEEP_DURATION)
+		End If
+	Next
+End Sub
+
+Sub IncMessageCount
+	GlobalCount = GlobalCount + 1
+	If Stop_Counting Then
+		Dim EndTime As Long = DateTime.Now
+		Dim Elapsed As Long = EndTime - StartTime
+		taResult.Text = GlobalCount & " messages:" & CRLF & "Elapsed=" & Elapsed & " ms" & CRLF & "-> " & NumberFormat(GlobalCount/Elapsed, 1, 2) & " msg/ms"
+		Log(taResult.Text)
+	End If
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub MainForm_Closed
+	Log("Exiting (GlobalCount=" & GlobalCount & ")")
+	For i = 0 To NB_CLIENTS - 1
+		If Client(i).IsInitialized Then Client(i).Close
+	Next
+End Sub

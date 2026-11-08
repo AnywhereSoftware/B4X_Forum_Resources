@@ -1,0 +1,137 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterSlidePot.b4r - Sample project for the B4R Library rRFXMeter
+'The Arduino listens to slide pot changes and sends the potmeter value via the 433Mhz Transmitter To the RFXCOM RFXtrx433e connected via USB with the Raspberry Pi running Domoticz.
+'The data is received by a RFXMeter device, parsed into a value 0 - 100% and a light device (Type Light/Switch, Switch, Dimmer) is updated.
+'Hardware:
+'Arduino UNO with connected modules 433Mhz Transmitter, Slide Pot.
+'Domoticz Configuration:
+'When running for the first time and the Domoticz RFXMeter device with ID 0AFA is not created, then set in Domoticz the settings option "Accecpt new hardware for 5 minutes on".
+'Changing the slide pot will sent a message to the RFXtrx433e hardware which will create a new device with initial properties:
+'IDX=387, Hardware=RFXtrx433e, ID=0AFA, Unit=0, Name=Unknown, Type=RFXMeter, SubType=RFXMeter counter, Data=133.864 kWh
+'Add the new device, change the device name (like RFXMETER) and set the type to Counter via the device widget in the GUI tab utilities.
+'This results in device properties (device list):
+'IDX=387, Hardware=RFXtrx433e, ID=0AFA, Unit=0, Name=RFXMETER, Type=RFXMeter, SubType=RFXMeter counter, Data=133864
+'The device controlled by the slide pot:
+'Device Light/Switch (name RFXMeterSwitch) connected hardware Dummy (Virtual Sensors) hardware:
+'IDX=386, Hardware=VirtualSensors, ID=000141D2, Unit=1, Name=RFXMeterSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+'Set the device property type to Dimmer.
+'Additional Libraries: rRFXMeter
+'20220407 rwbl
+#End Region
+
+#Region TODO
+'Consider using delta time in milliseconds between state changes to avoid multiple state changes within short timeframe.
+#End Region
+
+#Region Wiring
+'RX 433 Transmitter = Arduino UNO
+'VCC = 5v
+'Signal = #7
+'GND = GND
+'
+'Slide Pot = Arduino UNO
+'Signal = #A0
+'VCC = 5v
+'GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	'RFXMeter & 433 TX Module
+	Private RFX_DEVADDR As Byte		= 0x0A			'RFXMeter address which is used as Domoticz ID (set as 0AFA with Unit 0)
+	Private RFX_PINTX As Byte 		= 7				'Transmi pin
+	Private RFX_PINLED As Byte		= 13			'Internal Arduino UNO LED
+	Private IDX_LIGHTSWITCH As Int	= 386			'IDX of the Domoticz Light/Switch which level is set 0 - 100%
+	'Slide Pot
+	Private slidePot As Pin
+	Private slidePotOldLevel As Byte	= 0
+	Private slidePotNewLevel As Byte	= 0
+	Private slidePotNoiseLevel As Byte	= 3			'Device change triggered if abs(newlevel - oldlevel) > noiselevel
+	'Timer to regular check the value of the slide pot
+	Private TimerController As Timer
+	Private TimerControllerInterval As Long = 1000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	Log("Slide Pot Value 0 - 100% to Domoticz Device")
+	RFXMeter.Initialize(RFX_PINTX, RFX_PINLED)
+	RFXMeter.Logging = True
+	'Init the slide pot and set the old level
+	slidePot.Initialize(0, slidePot.AnalogRead)
+	slidePotOldLevel = MapRange(slidePot.AnalogRead, 0, 1023, 0, 100)
+	'Init timer to check if the slide pot level has changed.
+	TimerController.Initialize("TimerController_Tick", TimerControllerInterval)
+	TimerController.Enabled = True
+	TimerController_Tick
+End Sub
+
+#Region Timer
+'Read the slidepot value (0 - 1023) and set level (0-100).
+'If old/new level difference > noise level then sent value to Domoticz.
+Private Sub TimerController_Tick
+	slidePotNewLevel = MapRange(slidePot.AnalogRead, 0, 1023, 0, 100)
+	If slidePotNewLevel < slidePotNoiseLevel Then slidePotNewLevel = 0
+	If Abs(slidePotNewLevel - slidePotOldLevel) >= slidePotNoiseLevel Then
+		Log("Slide Pot: Level changed from ", slidePotOldLevel, " to ", slidePotNewLevel, "%. Device updated IDX ", IDX_LIGHTSWITCH)
+		RFXMeter.SendValueToIDX(RFX_DEVADDR, IDX_LIGHTSWITCH, slidePotNewLevel)
+		slidePotOldLevel = slidePotNewLevel
+		'Slide Pot: Level changed from 4 To 52%. Device updated IDX 386
+		'RFXMeter SendDeviceValue: value=1338652, RFXMeter SendCommand: data=0AFA6D1C1407
+	End If
+End Sub
+#End Region
+
+'Domoticz Automation Event
+'--[[
+'    rfxmeterslidepot.dzvents - Explore Arduino_RFXCOM.
+'    20220407 rwbl
+']]--
+'
+'-- IDX of the RFXMeter device with ID=0AFA As set in the B4R program
+'local IDX_RFXMETER = 387
+'-- Optional check If the right device is set in the ULong value received = this in Case the RFXMeter device is used by other events Or devices As well.
+'local IDX_SWITCHDIMMER = 386
+'
+'Return {
+'	on = { devices = { IDX_RFXMETER } },
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETERSLIDEPOT', },
+'	execute = function(domoticz, device)
+'	    -- Example: device.sValue=133860: 1=LeadingNumber,3=Length IDX,386=IDX,0=Reed Switch state (0=Off,1=On)
+'		domoticz.log(("%s: %s"):format(device.name, device.sValue))
+'        -- Convert the value To a given idx And update the device nValue
+'        -- IDX=386, Hardware=VirtualSensors, ID=000141D2, Unit=1, Name=RFXMeterSwitch, Type=Light/Switch, SubType=Switch, Data=Off
+'        -- Method string.sub extracts a piece of the string s, from the i-th To the j-th character inclusive. In Lua, the first character of a string has index 1
+'        -- The switch device is updated via HTTP: Processing device-adapter For RFXHumidity: Humidty device adapter
+'        -- RFXMeter: OpenURL: url = http://127.0.0.1:8080/json.htm?type=command&param=udevice&idx=386&nvalue=0&svalue=0&parsetrigger=False
+'        -- Get the length of the idx at pos 2
+'        local idxlen = tonumber(string.sub(device.sValue, 2, 2))
+'        -- Get the idx starting at pos 3 of the sValue
+'        local idx = tonumber(string.sub(device.sValue, 3, 3 + idxlen - 1))
+'        -- The switch state On Or Off is set As nValue
+'        local nvalue = 0
+'        local svalue = tonumber(string.sub(device.sValue, 3 + idxlen, -1))
+'        If svalue > 0 Then nvalue = 1 End
+'        domoticz.log(("IDX %d=%d"):format(idx, nvalue))
+'        -- Update the device If idx . 
+'        If (idx == IDX_SWITCHDIMMER) Then 
+'            domoticz.devices(idx).setValues(nvalue, svalue)
+'        End
+'    End
+'}

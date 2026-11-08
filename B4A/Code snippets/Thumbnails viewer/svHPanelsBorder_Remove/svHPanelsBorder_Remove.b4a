@@ -1,0 +1,268 @@
+﻿Build1=Default,b4a.svhpanelsborder_remove
+File1=casa_75x75.jpg
+File2=casa2_75x75.jpg
+File3=dream_tradingcard_thumb.png
+File4=einstein_thumb.jpg
+File5=LayoutMain.bal
+File6=loffit-groucho-marx-11-600x450-1538404429_thumb.jpg
+File7=paisatge_75x75.jpg
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+Library1=core
+Library2=xui
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=Starter
+NumberOfFiles=7
+NumberOfLibraries=2
+NumberOfModules=1
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: svHPanelsBorder_Remove
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+
+	Private xui As XUI
+	Private lstFilenames As List
+	Private NumItems As Int
+	Private SelectedIndex As Int
+End Sub
+
+Sub Globals
+
+	Private HorizontalScrollView1 As HorizontalScrollView
+	Private itemSize As Int
+	Private separation As Int
+End Sub
+
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	Activity.LoadLayout("LayoutMain")
+	
+	If FirstTime Then
+		lstFilenames.Initialize
+		
+		MsgboxAsync("LongClick on item to remove it", "Info")
+		
+		
+		'Using an auxiliary list to make it work
+		Private lst As List = File.ListFiles(File.DirAssets)
+		Dim i As Int
+		For i = 0 To lst.Size - 1
+			
+			Dim name As String = lst.Get(i)
+			
+			If name.EndsWith(".jpg") Or name.EndsWith(".jpeg") Or name.EndsWith(".png") Then
+				Log("name on onCreate = " & name)
+					
+				lstFilenames.Add(name)
+					
+				If File.Exists(File.DirInternal, name) = False Then File.Copy(File.DirAssets, name, File.DirInternal, name)
+			End If
+		Next
+	
+	End If
+	
+	NumItems = lstFilenames.Size
+	
+	itemSize = 75dip
+	separation = 2dip
+	
+	HorizontalScrollView1.Panel.Width = ((itemSize + separation) * NumItems)
+	
+	
+	For j = 0 To (NumItems - 1)
+		
+		Dim panelItem As Panel
+		panelItem.Initialize("panelItem")
+		panelItem.Tag = j
+		HorizontalScrollView1.Panel.AddView(panelItem, (itemSize + separation) * j, 0, (itemSize + separation), HorizontalScrollView1.Panel.Height)
+		
+		Dim ivItem3 As ImageView
+		ivItem3.Initialize("")		'If I don't put an event to the ImageView, it will respond to the Panel event
+		ivItem3.Tag = j
+		ivItem3.Bitmap = LoadBitmap(File.DirInternal, lstFilenames.Get(j))
+		
+		panelItem.AddView(ivItem3,0,0,itemSize + separation,HorizontalScrollView1.Panel.Height)
+	Next
+	
+	If FirstTime Then PaintMarkerPanel(HorizontalScrollView1.Panel.GetView(0))
+End Sub
+
+Sub Activity_Resume
+
+	If NumItems = 0 Then Return
+
+	If HorizontalScrollView1.IsInitialized Then
+				
+		Dim pnl As Panel
+		For Each v As View In HorizontalScrollView1.Panel.GetAllViewsRecursive
+			
+			If v Is Panel Then pnl = v
+			If pnl.tag = SelectedIndex Then			'Here we identify it
+'				LogColor(v.Left, Colors.Blue)
+				PaintMarkerPanel(pnl)
+				Exit
+			End If
+		Next
+		
+		'It should be put like this:
+		HorizontalScrollView1.ScrollPosition = pnl.Left + itemSize - Activity.Width 'Center the selected item to the left
+		DoEvents
+		HorizontalScrollView1.ScrollPosition = pnl.Left + itemSize - Activity.Width
+
+	End If
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
+Sub RemoveItem (pa As Panel)
+	
+	If NumItems < 2 Then Return		'There must always be one element left
+	
+	Dim left As Int = pa.Left
+	Dim ind As Int = pa.Tag
+	
+	pa.RemoveAllViews
+	HorizontalScrollView1.Panel.RemoveViewAt(ind)
+	
+	For Each v As View In HorizontalScrollView1.Panel.GetAllViewsRecursive	'The Panel and the ImageView
+		If v.Left > left Then v.Left = v.Left - itemSize - separation
+		If v.Tag > ind Then v.Tag = v.Tag - 1
+	Next
+	
+	
+	If SelectedIndex = 0 Then
+		PaintMarkerPanel(HorizontalScrollView1.Panel.GetView(0))		'We mark the new zero panel
+	Else
+		PaintMarkerPanel(HorizontalScrollView1.Panel.GetView(SelectedIndex-1))		'We mark the previous panel
+		SelectedIndex = SelectedIndex - 1
+	End If
+	
+	
+	lstFilenames.RemoveAt(pa.Tag)
+
+	
+	NumItems = NumItems - 1
+	
+	HorizontalScrollView1.Panel.Width = (itemSize + separation) * NumItems
+	
+	'And remove the file from DirInternal? Who?
+End Sub
+
+
+Sub PaintMarkerPanel (pa As Panel)
+	
+	'Option 1:
+	Dim pnlSelection As B4XView = xui.CreatePanel("")
+	pnlSelection.Tag = "sp"
+	pnlSelection.SetColorAndBorder(xui.Color_Transparent, 4dip, xui.Color_Green, 0)
+	pa.AddView(pnlSelection, 0, 2dip, itemSize + separation, itemSize + separation)
+	
+	
+	'Option 2:
+'	Dim pnlSelection As Panel
+'	pnlSelection.Initialize("")
+'	pnlSelection.Tag = "sp"
+'	Dim c As ColorDrawable
+'	c.Initialize2(xui.Color_Transparent, 0, 4dip, xui.Color_Green)
+'	pnlSelection.Background = c
+'	pa.AddView(pnlSelection, 0, 2dip, itemSize + separation, itemSize + separation)
+
+
+	'Complement option of option 1 and option 2 if they do not paint the border
+	'Paint the canvas over the new selector panel:
+'	Private cvs As Canvas
+'	Dim Rect1 As Rect
+'	cvs.Initialize(pnlSelection)
+'	Rect1.Initialize(pnlSelection.Left, pnlSelection.Left * 2, itemSize, pnlSelection.Left + itemSize)
+'	cvs.DrawRect(Rect1, Colors.Green, False, 6dip)
+'	Activity.Invalidate
+End Sub
+
+
+Private Sub panelItem_Click
+
+	'We change the position of the scroll if it is necessary to see the border panels if we have selected them
+	Dim item As Panel = Sender
+	Dim itemPosition As Int = item.Left
+	Dim itemWidth As Int = item.Width
+	Dim scrollViewWidth As Int = HorizontalScrollView1.Width
+	Dim scrollViewPosition As Int = HorizontalScrollView1.ScrollPosition
+	Dim scrollX As Int
+
+
+	'Conditions to make an automatic scroll so that the selected item can be seen in its entirety
+	If itemPosition < scrollViewPosition Then
+		' the element is to the left of the visible area
+		scrollX = itemPosition
+	Else If itemPosition + itemWidth > scrollViewPosition + scrollViewWidth Then
+		' the element is to the right of the visible area
+		scrollX = itemPosition + itemWidth - scrollViewWidth
+	Else If itemPosition < scrollViewPosition + scrollViewWidth/2 Then
+		' the element is partially visible on the left edge
+		scrollX = itemPosition
+	Else If itemPosition + itemWidth > scrollViewPosition + scrollViewWidth/2 Then
+		' the element is partially visible on the right edge
+		scrollX = itemPosition + itemWidth - scrollViewWidth
+	Else
+		' the element is already inside the visible area
+		Return
+	End If
+   
+	HorizontalScrollView1.ScrollPosition = scrollX	
+	
+	
+	
+	'We remove the marker panel if exists:
+	For Each v As View In HorizontalScrollView1.Panel.GetAllViewsRecursive	
+		If v Is Panel And v.Tag = "sp" Then v.RemoveView
+	Next
+	
+	
+	'We put a frame again
+	PaintMarkerPanel(item)
+	
+	SelectedIndex = item.Tag		'For when you go through onResume
+End Sub
+
+
+Sub panelItem_LongClick
+	
+	Dim pa As Panel = Sender
+	
+	Log("LongClick at Panel " & pa.Tag)
+	
+	panelItem_Click
+	
+	
+	Msgbox2Async("Do you want to remove the selected image from the list?", "Title", "Yes", "", "No", Null, False)
+	Wait For Msgbox_Result (result As Int)
+	If result = DialogResponse.NEGATIVE Then Return
+	
+	ToastMessageShow("Yes", False)
+	
+	RemoveItem (pa)
+End Sub

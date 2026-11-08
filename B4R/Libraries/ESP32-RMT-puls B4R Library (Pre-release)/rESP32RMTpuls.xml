@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root>
+    <doclet-version-NOT-library-version>1.00</doclet-version-NOT-library-version>
+    <class>
+        <name>B4R::B4RESP32RMTpuls</name>
+        <shortname>ESP32RMTpuls</shortname>
+        <comment>B4R Library to produce pulse signals with ESP32 RMT module. Using ESP32 IDF API driver rmt_tx.h
+   Refer documentation and example files.
+   Use ChannelConfig() to setup the RMT TX channels.
+   Then send the pulse with with eg. TXpuls_us, TXpuls_ms, TXpuls_s, TXpuls_prd or TXpulsTrain.
+   SOC variants have different number of channels. eg. ESP32 has 8, ESP32-S3 has 4, ESP32-C3 has 2.
+   Dependencies: ESP-IDF V5.2+</comment>
+        <method>
+            <name DesignerName="ChannelConfig">ChannelConfig</name>
+            <comment>Setup RMT Channel
+&lt;code&gt; 'Example:
+RMT.channelConfig (Ch0, P2, False)) '(RMT TX_channel,  GPIO pin, Invert)
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>GPIO_n</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Inv_out</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="TXpuls_us">TXpuls_us</name>
+            <comment>Send TX Pulse on Channel n in microseconds (µs)
+Loop_cnt is a multiplier,  0 or 1 = 1*PW_us.  2 = 2*PW_us.  -1 = indefinitly*PW_us
+&lt;code&gt; 'Example:
+RMT.TXpuls_us(Ch0, 10000, 0)  ' (channel n, PulseWidth us, loop) 10ms pulse
+' PW_us Max. = 48*65534, Loop_cnt Max. = 1000, resolution = 1us
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PW_us</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Loop_cnt</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="TXpuls_ms">TXpuls_ms</name>
+            <comment>Send TX Pulse on Channel n  in milliseconds (ms)
+Loop_cnt is a multiplier,  0 or 1 = 1*PW_ms.  2 = 2*PW_ms.  -1 = indefinitly*PW_ms
+&lt;code&gt; 'Example:
+RMT.TXpuls_ms(Ch0, 10, 0)  ' (channel n, PulseWidth ms, loop) 10ms pulse
+' PW_ms Max. = 48*65, Loop_cnt Max. = 1000, resolution = 1000us
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PW_ms</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Loop_cnt</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="TXpuls_s">TXpuls_s</name>
+            <comment>Send TX Pulse on Channel n  in seconds (s)
+Loop_cnt is a multiplier,  0 or 1 = 1*PW_s.  2 = 2*PW_s.  -1 = indefinitly*PW_s
+&lt;code&gt; 'Example:
+RMT.TXpuls_ms(Ch0, 10, 0)  ' (channel n, PulseWidth ms, loop) 10ms pulse
+' PW_ms Max. = 48*65, Loop_cnt Max. = 1000, resolution = 1000us
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PW_s</name>
+                <type>ULong</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="TXpuls_prd">TXpuls_prd</name>
+            <comment>Send TX Pulse with period on Channel n  in microseconds (us)
+Loop_cnt is a multiplier,  0 or 1 = 1*PW_us.  2 = 2*PW_us.  -1 = indefinitly*PW_us
+&lt;code&gt; 'Example:
+RMT.TXpuls_PRD(Ch0, 1000, 2000, 10)  ' (channel n, PulseWidth us, PulsePeriod us, loop) 1ms pulse/2ms period, x10
+' PW_us Max. = 48*65534, Loop_cnt Max. = 1000, resolution = 1000us
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PW_us</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>PRD_us</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Loop_cnt</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="TXpulsTrain">TXpulsTrain</name>
+            <comment>Send TX Pulse Train on Channel n  in microseconds (µs)
+Loop_cnt is a multiplier,  0 or 1 = 1*PW_us.  2 = 2*PW_us.  -1 = indefinitly*PW_us
+&lt;code&gt; 'Example:
+RMT.TXpulsTrain(Ch0, 10000, 20000, 48, 0)  ' (channel n, PulseWidth us,  Period us,  Num of pulse,  loop) 20ms period (50hz)
+' Period Max. = 65534,  PulseWidth Max = Period,  Loop_cnt Max. = 1000,  resolution = 1000µs
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>PW_us</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Prd_us</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Puls_n</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Loop_cnt</name>
+                <type>int</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="PWMmod">PWMmod</name>
+            <comment>Apply PWM to TX Pulse on Channel n. [Frequency, Duty%]
+This will modulate the pulse with carrier, eg. to adjust intensity.
+&lt;code&gt; 'Example:
+RMT.PWMmod(Ch0, 30000, 480)  ' (channel n, Frequency hz,  Duty Percent) 30khz, 48% duty
+' Frequency Max. = 20mhz,  Duty = 1 to 1000% (0 = disable Modulation)
+&lt;/code&gt;</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Freq_hz</name>
+                <type>ULong</type>
+            </parameter>
+            <parameter>
+                <name>Duty_val</name>
+                <type>UInt</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SYNC_ch">SYNC_ch</name>
+            <comment>Configure and apply sync to RMT channel group.
+- Channels listed in `tx_channels` will have synchronized start.
+- Must call this *immediately before* triggering the first channel in the sync group.
+- Do not transmit on unrelated channels between `SYNC_ch()` and the last group TX start,
+  as they may be inadvertently included in the sync group (ESP-IDF behavior).
+- Call again before each new sync group TX to rearm the sync manager.
+
+&lt;code&gt; 'Example:
+Private RMTsync_ch() As Byte
+RMTsync_ch = Array As Byte(0,  1) ' channels to include in sync
+RMT.SYNC_ch(RMTsync_ch,  2,  True)
+&lt;/code&gt;
+- tx_channels  {byte array} of channel indices (e.g., [0,1])
+- numof_ch     {byte} Number of channels in tx_channels[]
+- SYNC_en      {bool} True to enable sync, False to delete current sync manager</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>tx_channels</name>
+                <type>Byte[]</type>
+            </parameter>
+            <parameter>
+                <name>numof_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>SYNC_en</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="SwitchGPIO">SwitchGPIO</name>
+            <comment>Switch RMT out to another GPIO n
+&lt;code&gt; 'Example:
+SwitchGPIO(0, 2, 3, False)  '( ch 0, discon. GPIO 2, con. GPIO 3, no invert)
+SwitchGPIO(0, -1, 3, False)  '( ch 0, --, con. GPIO 3, no invert)
+&lt;/code&gt;
+- Tx_ch    {byte} RMT channel to apply
+- GPIO_dis {int}  Disconnect GPIO pin  from RMT ch (-1 for no action)
+- GPIO_con {int}  Connect GPIO pin to RMT ch (-1 for no action)
+- Inv_out  {bool} True to invert output</comment>
+            <returntype>int</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>GPIO_dis</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>GPIO_con</name>
+                <type>int</type>
+            </parameter>
+            <parameter>
+                <name>Inv_out</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="InvOut">InvOut</name>
+            <comment>Invert RMT out for GPIO n  (at point when set)
+Using gpio_matrix_out macro
+&lt;code&gt; 'Example:
+InvOut(P2, True) ' (GPIO n, Inv_out)  invert RMT ch0 on GPIO2 pin.
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>GPIO_n</name>
+                <type>Byte</type>
+            </parameter>
+            <parameter>
+                <name>Inv_out</name>
+                <type>bool</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="StopPuls">StopPuls</name>
+            <comment>Stop RMT Loop - Use to stop a long or indefinite loop.
+Need to call channelConfig before send a new puls on same ch.
+&lt;code&gt; 'Example:
+StopLoop(ch0) ' (Tx_ch)  Stop RMT Loop.
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+        <method>
+            <name DesignerName="ChannelDelete">ChannelDelete</name>
+            <comment>Delete RMT Channel config
+&lt;code&gt; 'Example:
+ChannelDel(ch0) ' (Tx_ch)  Delete RMT Channel.
+&lt;/code&gt;</comment>
+            <returntype>B4R::void</returntype>
+            <parameter>
+                <name>Tx_ch</name>
+                <type>Byte</type>
+            </parameter>
+        </method>
+    </class>
+    <version>0.9</version>
+</root>

@@ -1,0 +1,125 @@
+﻿Build1=Default,B4RDev
+Group=Default Group
+Library1=rcore
+Library2=rrfxmeter
+NumberOfFiles=0
+NumberOfLibraries=2
+NumberOfModules=0
+Version=3.9
+@EndOfDesignText@
+#Region Project Notes
+'RFXMeterTempHum.b4r
+'Sample project for the B4R Library rRFXMeter
+'Simulate a Domoticz Temp+Hum device.
+'The RFXMeter is used to send the value as Long to Domoticz via RX 433 Transmitter.
+'The long value (positive only in range 0 - 16777215) contains N bytes which is parsed by Domoticz Automation Event dzVents to an RFXMeter devices and assigned to N Domoticz devices (Hardware Dummy Virtual Sensors).
+'Domoticz Device Example (the type is set to counter in the Domoticz device widget:
+'IDX=382, Hardware=RFXtrx433e, ID=09F9, Unit=0, Name=RFXMETER, Type=RFXMeter, SubType, RFXMeter counter, Data=131889
+'This example creates 3 bytes for the temperature sign (ts, temperature pos=1, neg=2), temperature (t, always pos) 0-255, humidity (h) 0-100.
+'The temperature & humidity values are randomly generated. The ByteConverter is used to convert the bytes to long, which is sent to Domoticz.
+'Steps:
+'From the random values t & h, create an Array As Byte(ts, t, h), convert the byte array to hex string with length 6 with 3 (HexFromBytes), parse the HEX string to Long (Bit.ParseInt(hex, 16)), sent the long value via the RFXMeter to Domoticz.
+'Random t=-3, h=49 > set sign ts=2 (02, t is neg), set t pos t=3 (03), h=49 (31) > hex=020331 > long=131889 > sent to Domoticz
+'Domoticz parses the value in an Automation Event dzVents.
+'Additional Libraries: rRFXMeter
+'20220405 rwbl
+#End Region
+
+#Region TODO
+#End Region
+
+#Region Wiring
+'RX 433 Transmitter = Arduino
+'VCC = 5v
+'Signal = #7
+'GND = GND
+#End Region
+
+#Region Project Attributes
+	#AutoFlushLogs: True
+	#CheckArrayBounds: True
+	#StackBufferSize: 500
+#End Region
+'Ctrl+Click to open the C code folder: ide://run?File=%WINDIR%\System32\explorer.exe&Args=%PROJECT%\Objects\Src
+
+Sub Process_Globals
+	Public serialLine As Serial
+	Private DEVADDR As Byte = 0x09
+	Private PINTX As Byte = 7
+	Private PINLED As Byte = 13
+	Private timerDataGathering As Timer
+	Private DATAGATHERING_INTERVAL As ULong = 15000	'60000
+End Sub
+
+Private Sub AppStart
+	serialLine.Initialize(115200)
+	'The B4XLib contains the code module RFXMeter which does not need to be declared in Process_Globals.
+	RFXMeter.Initialize(PINTX, PINLED)
+	timerDataGathering.Initialize("TimerDataGathering_Tick", DATAGATHERING_INTERVAL)
+	timerDataGathering.Enabled = True
+	TimerDataGathering_Tick
+End Sub
+
+Sub TimerDataGathering_Tick
+	'Get t and h random as int
+	Dim ts As Byte	= 1	'Temperature sign pos=1 or neg=2
+	Dim ti As Int	= Rnd(-10, 11)	'Temperature as Int - converted below to byte after setting the temperature sign
+	Dim h As Byte	= Rnd(0, 101)	'Humidity
+	'Example t=-3, h=49
+	Log("t=", ti, ", h=", h)
+	' Set t: if ti is neg then set ts=2 and make t positive t = t * -1
+	If ti < 0 Then
+		ts = 2
+		ti = ti * -1
+	End If
+	Dim t As Byte = ti
+	RFXMeter.SendBytes(DEVADDR, Array As Byte(ts, t, h))
+	'Disable timer to send once
+	' timerDataGathering.Enabled = False
+End Sub
+
+'Domoticz Automation Event
+'--[[
+'    rfxmetertemphum.dzvents - Explore Arduino_RFXCOM.
+'    20220405 rwbl
+']]--
+'
+'local RFXMeter = 384
+'local rfxmetertemphum = 385
+'
+'-- Convert a number To N bytes.
+'-- value - number To convert (integer Or long). Float is Not handled.
+'-- nrbytes - number of bytes To convert from the value.
+'-- Return table with N byte entries.
+'local function convert_to_bytes(value, nrbytes)
+'    local result = {}
+'    For i = 0, nrbytes - 1 Do
+'        -- Convert the byte To a number (int) And assign To the table (note the table index starts with 1 And Not 0)
+'        result[i+1] = math.floor((value / (2 ^ (i * 8))) % (2 ^ 8))
+'        -- result[i+1] = (value >> (i * 8)) & 0xFF
+'    End
+'    Return result
+'End
+'
+'Return {
+'	on = { devices = { RFXMeter } },
+'	logging = { level = domoticz.LOG_DEBUG, marker = 'RFXMETER', },
+'	execute = function(domoticz, device)
+'        -- Convert the sValue from string To number
+'		local value = tonumber(device.sValue)
+'		domoticz.log(("Value=%.f"):format(value))
+'        -- Convert Long Number To 3 Bytes And assign To Domoticz Virtual Sensor Temp+Hum
+'        -- Example: The value contains 3 Bytes converted To table with 3 entries ts=2, t=3 (converted To -3 because s=2), h=49
+'        local data = convert_to_bytes(value, 3)
+'        domoticz.log(data)
+'        local sign = tonumber(data[3])
+'        local temperature = tonumber(data[2])
+'        If (sign == 2) Then temperature = temperature * -1 End
+'        local humidity = data[1]    
+'        -- dzVents: Info: RFXMeter: s=2, t=-3, h=49
+'        domoticz.log(("s=%d, t=%d, h=%d"):format(sign, temperature, humidity))
+'        -- Assign the values To a Domoticz device
+'        -- Parameter: temperature: Celsius, status: domoticz.HUM_NORMAL, HUM_COMFORTABLE, HUM_DRY, HUM_WET Or HUM_COMPUTE. 
+'        domoticz.devices(rfxmetertemphum).updateTempHum(temperature, humidity)  --  [, status] )
+'    End
+'}

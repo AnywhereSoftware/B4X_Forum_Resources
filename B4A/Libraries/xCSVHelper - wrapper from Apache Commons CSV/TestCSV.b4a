@@ -1,0 +1,97 @@
+﻿Build1=Default,b4a.example
+File1=customers-100.csv
+File2=customers-1000.csv
+File3=file1.csv
+File4=Layout.bal
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+Group=Default Group
+Library1=core
+Library2=xcsvparsing
+Library3=xui
+Library4=preferenceactivity
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=csvRecords
+Module2=Starter
+NumberOfFiles=4
+NumberOfLibraries=4
+NumberOfModules=2
+Version=12.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: B4A Example
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#AdditionalJar: commons-csv-1.10.0.jar
+#MultiDex: true
+
+Sub Process_Globals	
+	Private xui As XUI
+	
+	Dim csvparsering As xCSVHelper
+End Sub
+
+Sub Globals
+	
+	Private Button2 As Button
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	File.Copy(File.DirAssets,"customers-100.csv", File.DirInternalCache, "file1.csv")
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+Sub Button1_Click
+	
+	
+	Dim filepath As String = File.Combine(File.DirInternalCache, "file1.csv")
+	'Index,Customer Id,First Name,Last Name,Company,City,Country,Phone 1,Phone 2,Email,Subscription Date,Website
+	Dim fileds() As String = Array As String("_id","_customerid","_firstname")
+	csvparsering.FieldSeparator = ","
+	csvparsering.SkipEmptyRows = True
+	csvparsering.ErrorOnDifferentFieldCount = True
+	Dim lstrs As List = csvparsering.Parser(filepath, fileds)
+	
+	Log("Size=" & lstrs.Size)
+	
+	For i=0 To lstrs.Size - 1
+		Dim row As Map = lstrs.Get(i)
+		Log(row.Get("_firstname"))
+	Next
+End Sub
+
+Private Sub Button2_Click
+	Dim filepath As String = File.Combine(File.DirInternalCache, "file1.csv")
+		
+	csvparsering.FieldSeparator = ","
+	csvparsering.SkipEmptyRows = True
+	csvparsering.ErrorOnDifferentFieldCount = True
+	
+	Dim csvRecord As xCSVRecord = csvparsering.Parser2(filepath)
+	
+	
+	For Each w1 In csvRecord
+		Log(w1)
+	Next
+End Sub

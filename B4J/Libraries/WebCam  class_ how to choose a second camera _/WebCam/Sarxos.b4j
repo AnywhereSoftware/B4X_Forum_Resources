@@ -1,0 +1,83 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=MainLayout.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Module1=SarxosWebCam
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=10
+@EndOfDesignText@
+#Region  Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 400
+	'#MergeLibraries:True
+	
+	#AdditionalJar : webcam-capture-0.3.12
+	#AdditionalJar : slf4j-api-2.0.0.jar
+	#AdditionalJar : bridj-0.6.2
+	#PackagerProperty: AdditionalModuleInfoString = exports org.bridj;
+	#PackagerProperty: AdditionalModuleInfoString = exports org.bridj.cpp;
+	
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Dim cam As SarxosWebCam
+	Private ImageView1 As ImageView
+	Dim timCamera As Timer
+	Dim defCamera As JavaObject
+	Dim ViewSizes As List
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("MainLayout") 'Load the layout file.
+	MainForm.Show
+	cam.Initialize
+	
+	'Dim defCamera As JavaObject = cam.DefaultCam	'this was before, only one default camera is accesible !
+	'now we can get the cameras name list and choose
+	Dim L As List = cam.WebCam_Names
+	Dim defCamera As JavaObject = cam.getWebcamByName(L.Get(0))	'let it be ... again the first single webcam for text
+	Dim ViewSizes As List = cam.ViewSizes
+	Log(ViewSizes)
+	
+	InitCam(640, 480)
+	Sleep(5000)
+	InitCam(1280, 720)	'experiment1
+	Sleep(5000)
+	InitCam(1920, 1080)	'experiment2
+	Sleep(5000)
+	InitCam(3840, 2160)	'experiment3
+End Sub
+
+Sub timCamera_Tick
+	ImageView1.SetImage(cam.TakePicture2(defCamera))
+End Sub
+
+Sub InitCam(w As Int, h As Int) As WebCamDeviceDimension
+	Dim resolution As WebCamDeviceDimension
+	resolution.Initialize
+	resolution.width = w
+	resolution.height = h
+	
+	timCamera.Initialize("timCamera", 100)
+	timCamera.Enabled = False
+	If cam.CameraIsOpened Then cam.CloseCam(defCamera)
+	'Try
+		cam.setDimension3(defCamera, w, h)
+		cam.OpenCam(defCamera)
+		'cam.TakePicture(def,"test2.png")
+		timCamera.Enabled = True
+		Log("Set OK: " & resolution)
+'	Catch
+'		Log("Non supporting resolution ! " & resolution)
+'	End Try
+	Return resolution
+End Sub

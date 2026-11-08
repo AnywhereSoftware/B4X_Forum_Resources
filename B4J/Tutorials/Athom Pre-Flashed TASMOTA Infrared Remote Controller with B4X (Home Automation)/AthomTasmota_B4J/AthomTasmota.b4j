@@ -1,0 +1,118 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=Layout1.bjl
+FileGroup1=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=json
+Library4=jstringutils
+Library5=jxui
+Library6=jokhttputils2
+NumberOfFiles=1
+NumberOfLibraries=6
+NumberOfModules=0
+Version=10
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600
+#End Region
+
+Sub Process_Globals
+
+	Private fx As JFX
+	Private MainForm As Form
+	Private xui As XUI
+	Private su As StringUtils
+
+	Private dataMap As Map
+	Private selectedKey As String = ""
+
+	Private TextFieldIPaddress As TextField
+	Private ChoiceBoxIRdata As ChoiceBox
+	Private ButtonSend As B4XView
+	Private TextArea1 As TextArea
+
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("Layout1")
+	MainForm.Show
+
+	' Setup dataMap; the keys are used for the ChoiceBox, and the values are copy/pasted from the Tasmota Console when learning IR codes
+	dataMap.Initialize
+	dataMap.Put("Other : Play",$"$10:22:26.271 RSL: RESULT = {"IrReceived":{"Protocol":"UNKNOWN","Bits":63,"Hash":"0xEAB4A65C","Repeat":0,"RawData":"+1905-945+915-940+930-965+910-450+465-895+435hDd+955i+460-890+1000-425+495-905H-48385+1990dD-960FcHh+990-885+505-390BuF-400Q-370+470-935EbI-48350+2010bE-995GdKmDg+410-480+970wN-515+420-475HrWf+410-48380+2015d+920-950G-935+445pDrHh+935eJ-445I-410+470-935L-920+410-48415+2015d+870oD-935+445zLeI-430+985dG-480H-445+410-1005Fg+500-48355+2010gR-975R","RawDataInfo":[125,125,0]}}"$)
+	dataMap.Put("Other : Pause",$"$10:22:32.490 RSL: RESULT = {"IrReceived":{"Protocol":"UNKNOWN","Bits":63,"Hash":"0x39EB94D6","Repeat":0,"RawData":"+1975-855+960-920+970-910E-430+475-450+480-405+500-865+975-895+945iJ-435+465-440+470o+505-48365+2015-900+980-915+925-950HiY-425+455iI-925YpDcNz+460fH-48360+2040fEzP-935+445gP-425J-425Ho+940-955E-870E-925J-890+460-48385W-925Pd+940xHq+990-410+445gI-925+965-905YdP-935LdU-48360+2030-925Pz+965c+420-445+990gH-425+420-950YzPcC-955+420-925JvW-925+965","RawDataInfo":[125,125,0]}}"$)
+	dataMap.Put("TV : On/Off",$"$10:19:06.651 RSL: RESULT = {"IrReceived":{"Protocol":"SAMSUNG","Bits":32,"Data":"0xE0E040BF","DataLSB":"0x70702FD","Repeat":0,"RawData":"+4565-4520+580-1685+520-1745Cd+565-550Gg+595-560+605-555C-585C-1660K-1665+600nCjPh+570-545P-530PjKj+575nKcLlM-540IuIqGqPd+610lC-1670M-1735InMdT-1690J-1680V-41955+4580-4470PnVnQ-1695VhEp+625jTlCjIwE-1725QwP-535+590gGiClHq+590gTwTgQgPjQ-590H-590QiCyHvLyCyCdCyPoCn+525-42045+4580-4485+590-1655Q-1695GzVe+615r+640-500S-635QuV-1675+640-1630S-1740+640sV-525+640-500+635-525+635-525UpV-1630+590iUtE-615+640-505+630-525Pu+630-1630+525vPyK-1635KoU-1700Qz+625-1620+535","RawDataInfo":[203,203,0]}}"$)
+	dataMap.Put("TV : Volume down",$"$10:15:33.014 RSL: RESULT = {"IrReceived":{"Protocol":"SAMSUNG","Bits":32,"Data":"0xE0E0D02F","DataLSB":"0x7070BF4","Repeat":0,"RawData":"+4545-4540+565-1700+570dC-1690+555-600+590c+530-605C-560El+580-1705C-1695I-1675Ki+535-595J-585S-550MiT-1685L-1715ElEvJmS-545SsIcJhClEfR-540CfG-1720JdGyI-42480+4560-4500+620-1640+615-1660LdL-575GhIlL-575M-575R-1635R-1660H-1660Ge+625lEj+650qJ-625GuLoRjSn+525hMg+620lHj+610t+615q+620-1660+625-510KnH-1635+575nMu+620z+4620-4460G-1730T-1680+575-1680MkLeH-505+575m+525-630L-1670+620-1610+610-1680+630-520+620qRq+620qLr+620-1635Mf+635xM-1670Iw+615xWmLeIwHtJ-1740+610q+575nS-1680+615-1660T-1735+505","RawDataInfo":[203,203,0]}}"$)
+	dataMap.Put("TV : Volume up",$"$10:15:38.665 RSL: RESULT = {"IrReceived":{"Protocol":"SAMSUNG","Bits":32,"Data":"0xE0E0E01F","DataLSB":"0x70707F8","Repeat":0,"RawData":"+4555-4520+590-1690+560-1720+565dE-595GgCc+530-585+610gCdE-1695E-1725+570-545N-580E-600NjNgH-1685NrNrCoK-525NnN-575JjIjK-540C-535H-1660V-1700C-1670J-1665HwH-42455+4580-4470Kz+620-1635ElEqIqHu+550-625Eq+555xQwHwHvQvPtQv+620ePr+615wJxQv+620iQ-555+625-505+620g+620-510T-605+555-550+650w+625w+550-1705G-1675+645-1630+605","RawDataInfo":[135,135,0]}}"$)
+
+	For Each key As String In dataMap.Keys
+		ChoiceBoxIRdata.Items.Add(key)
+	Next
+	ChoiceBoxIRdata.Items.SortCaseInsensitive(True)
+
+End Sub
+
+Private Sub TextFieldIPaddress_TextChanged (Old As String, New As String)
+
+	ChoiceBoxIRdata.Visible = (New <> "")
+	ButtonSend.Visible = (New <> "") And (ChoiceBoxIRdata.SelectedIndex >= 0)
+	TextArea1.Visible = ButtonSend.Visible
+
+End Sub
+
+Private Sub ChoiceBoxIRdata_SelectedIndexChanged(Index As Int, Value As Object)
+
+	selectedKey = Value.As(String)
+	ButtonSend.Visible = True
+	TextArea1.Visible = True
+	TextArea1.Text = ""
+
+End Sub
+
+Private Sub ButtonSend_Click
+
+	Dim val As String = dataMap.Get(selectedKey).As(String)
+	TextArea1.Text = "Val:" & CRLF & val
+
+	Dim i As Int = val.IndexOf("{") ' Find the start of the 'RESULT' JSON string in 'val'
+	i = val.IndexOf2("{", i + 1) ' Find the start of the 'IrReceived' JSON string in 'val'
+	val = val.SubString(i).Replace("}}", "}") ' Now, 'val' contains the 'IrReceived' JSON value
+	TextArea1.Text = TextArea1.Text & CRLF & CRLF & "Val, cleaned:" & CRLF & val
+
+	Dim urlData As String = IIf(val.Contains($""Protocol":"UNKNOWN""$), GetURLunknownProtocol(val), val)
+	TextArea1.Text = TextArea1.Text & CRLF & CRLF & "urlData:" & CRLF & urlData
+
+	Dim url As String = "http://" & TextFieldIPaddress.Text & "/cm?cmnd=IRSEND%20" & su.EncodeUrl(urlData, "UTF8").Replace("+", "%20")
+	TextArea1.Text = TextArea1.Text & CRLF & CRLF & "url:" & CRLF & url
+
+	Try
+		Dim Job As HttpJob
+		Job.Initialize("", Me)
+		Job.Download(url)
+		Wait For (Job) JobDone(Job As HttpJob)
+		If Job.Success Then
+			TextArea1.Text = TextArea1.Text & CRLF & CRLF & "Job.Success:" & CRLF & "True"
+		Else
+			TextArea1.Text = TextArea1.Text & CRLF & CRLF & "Job failed:" & CRLF & Job.ErrorMessage
+		End If
+		Job.Release
+	Catch
+		TextArea1.Text = TextArea1.Text & CRLF & CRLF & "Exception:" & CRLF & LastException
+	End Try
+
+End Sub
+
+Private Sub GetURLunknownProtocol(val As String) As String
+
+	' If protocol is 'unknown', use "0,rawdata"
+	Dim jp1 As JSONParser
+	jp1.Initialize(val)
+	Dim m As Map = jp1.NextObject
+	Return "0," & m.Get("RawData")
+
+End Sub

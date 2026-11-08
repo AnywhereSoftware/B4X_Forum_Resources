@@ -1,0 +1,106 @@
+﻿Build1=Default,com.georgieapps.sse,HU2_PUBLIC
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=byteconverter
+Library10=runtimepermissions
+Library11=stringutils
+Library12=gsse
+Library2=clipboard
+Library3=core
+Library4=javaobject
+Library5=json
+Library6=okhttp
+Library7=okhttputils2
+Library8=phone
+Library9=reflection
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="26" android:targetSdkVersion="30"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+NumberOfFiles=1
+NumberOfLibraries=12
+NumberOfModules=0
+Version=11.8
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: SSE
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+	'These global dimiables will be declared once when the application starts.
+	'These dimiables can be accessed from all modules.
+End Sub
+
+Sub Globals
+	'These global dimiables will be redeclared each time the activity is created.
+	Dim ph As Phone
+	Dim button1 As Button
+	Dim jo As JavaObject
+	Dim gsse As gsse
+	Dim label1 As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("Layout")
+	
+	If HttpUtils2Service.hc.IsInitialized = False Then
+		Log("trying to start service")
+		StartService(HttpUtils2Service)
+	End If
+	Sleep(5000)
+	If IsPaused(HttpUtils2Service) Then
+		Log("could not start httputils...")
+		ExitApplication
+	Else	
+		Log("service up and running")
+	End If
+	
+	label1.BringToFront
+	gsse.Initialize("gsse")
+	
+	gsse.setSSE(HttpUtils2Service.hc, "URL_OF_SITE_WITH_NOTIFICATIONS")
+	If HttpUtils2Service.hc.IsInitialized = False Then
+		Log("some problem setting up SSE ...")
+		Activity.Finish
+	End If
+	
+	Dim j As HttpJob
+	j.Initialize("",Me)
+	j.Download("https://www.b4x.com")
+	wait for (j) JobDone(j As HttpJob)
+	If j.Success Then
+		Log("SUCCESS!")   ' you could log the whole page if you wanted...
+	Else
+		Log(j.ErrorMessage)
+		
+	End If
+	j.release
+End Sub
+
+Sub button1_Click
+'	jo.RunMethod("shutDown",Null)
+		gsse.shutDown
+End Sub
+
+Sub gotevent( s As String )
+	label1.Text = s	
+End Sub
+
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+
+End Sub
+
+
