@@ -1,8 +1,8 @@
 ###  MiniHTML4 by aeric
-### 09/13/2026
+### 10/30/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/172058/)
 
-Version 4.00  
+Version 4.05  
 GitHub: <https://github.com/pyhoon/MiniHTML4>  
   
 MiniHTML library for B4X — a fluent HTML builder for B4J/B4A/B4i.  

@@ -1,5 +1,5 @@
 ### SithasoDaisy5-Skills — AI Development Skills Suite for SithasoDaisy5 by Mashiane
-### 10/23/2026
+### 10/29/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/172352/)
 
 Hi Coders! 👋  
@@ -7,6 +7,11 @@ Hi Coders! 👋
 I am excited to officially launch **SithasoDaisy5-Skills**, a comprehensive AI agent skill suite designed to supercharge AI coding assistants when building web applications in B4J using **SithasoDaisy5**.  
   
 **SithasoDaisy5-Skills** equips AI developer agents with source-grounded knowledge, verified component specs, and strict guardrails so they can generate 100% browser-renderable B4J/BANano code using **DaisyUI v5 + Tailwind CSS v4** design semantics.  
+  
+
+![](https://www.b4x.com/android/forum/attachments/174604)
+
+  
   
 
 ---
@@ -41,28 +46,15 @@ The suite consists of **8 specialized skills**:
 ---
 
   
-📝 Code Example: Clean B4J Output  
   
-We have created our first AI assisted up using these skills, see it here.  
-  
-<https://www.b4x.com/android/forum/threads/sithasodaisy5-skills-cloud-auth-screen.172350/>  
-  
-The app created with this code builds this page.  
-  
-![](https://www.b4x.com/android/forum/attachments/174413)  
   
 🚀 Quick Start & Installation  
   
 Option 1: Claude Code Plugin Marketplace (Recommended)  
 Register the source and install directly in Claude Code:  
   
-
-```B4X
 /plugin marketplace add Mashiane/SithasoDaisy5-Skills  
-/plugin install sithasodaisy5-skills@sithasodaisy5-skills
-```
-
-  
+/plugin install sithasodaisy5-skills@sithasodaisy5-skills  
   
 Option 2: Git Clone for AI Coding Agents  
 Clone directly into your AI agent's skills path:  

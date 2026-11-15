@@ -1,5 +1,5 @@
 ### [XUI]   xSD_OpenMaps by Star-Dust
-### 04/13/2026
+### 11/13/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/169391/)
 
 **NOTE**  
@@ -16,7 +16,7 @@ B4J Version [**here**](https://www.b4x.com/android/forum/threads/jsd_openmaps.16
 **xSD\_OpenMaps  
   
 Author:** Star-Dust  
-**Version:** 1.03  
+**Version:** 1.05  
 
 - **CameraPosition**
 
@@ -330,3 +330,5 @@ Update**
 - added OpenMpas.**AddPolygonHole**, MapPolygon.**SetHole**, **GetHole**
 
 - 1.03 - Fix bug
+- 1.04 - Fix Bug (camera)
+- 1.05 - Fix Bug (UpdateCircleCenter)

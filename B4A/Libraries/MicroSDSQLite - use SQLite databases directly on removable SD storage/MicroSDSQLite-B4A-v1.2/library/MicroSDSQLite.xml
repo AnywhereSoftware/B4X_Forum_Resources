@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <doclet-version-NOT-library-version>1.07</doclet-version-NOT-library-version>
+    <class>
+        <name>com.microsdsqlite.MicroSDSQLite</name>
+        <shortname>MicroSDSQLite</shortname>
+            <comment>Manages SQLite databases on removable external storage.
+SAF tree URIs are not normal filesystem paths and cannot be opened directly by Android SQLite.
+Use the removable app-specific external directory for no-permission direct access, use an arbitrary direct path only after Android grants Manage All Files access and the real database file opens successfully, or use experimental SAF file-descriptor mode when a direct path is unavailable. A saved SAF tree URI can be reused, and SAF databases can be opened directly in that folder or at a relative path under it.
+SAF file-descriptor mode keeps the real .db file on the card, disables WAL assumptions, and uses conservative connection PRAGMAs; document-provider sidecar behavior can vary.</comment>
+        <owner>process</owner>
+        <event>SafFolderSelected (Success As Boolean, FolderUri As String)</event>
+        <event>ManageAllFilesResult (Granted As Boolean)</event>
+        <event>Error (Operation As String, Message As String)</event>
+        <method>
+            <name>Initialize</name>
+            <comment>Initializes the manager and sets the event name.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+            <parameter>
+                <name>EventName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsInitialized</name>
+            <comment>Returns true after Initialize has been called.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>GetExternalFilesDirs</name>
+            <comment>Returns the app-specific external file directories exposed by Android. One of these may be on the removable microSD card.</comment>
+            <returntype>java.lang.String[]</returntype>
+        </method>
+        <method>
+            <name>GetExternalFilesDirInfo</name>
+            <comment>Returns a human-readable list of app-specific external file directories, including removable state and usable bytes.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetPrimaryAppSpecificRoot</name>
+            <comment>Returns the primary app-specific external files directory, or an empty string if none is available.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetRemovableAppSpecificRoot</name>
+            <comment>Returns the first mounted removable app-specific external files directory, or an empty string if none is available.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetRemovableVolumeRoot</name>
+            <comment>Best-effort helper that derives the removable volume root from Android's app-specific directory path. Always verify write access before using the returned path.</comment>
+            <returntype>java.lang.String</returntype>
+        </method>
+        <method>
+            <name>GetVolumeRootFromAppSpecificDir</name>
+            <comment>Best-effort helper that derives a storage volume root from an app-specific external directory path.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>AppSpecificDir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CombinePath</name>
+            <comment>Combines a parent path with a child path. The child path cannot contain '..'.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>Parent</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>Child</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ResolveRemovableSubDir</name>
+            <comment>Combines the removable app-specific root with a child folder path. Returns an empty string if no removable app-specific root is mounted.</comment>
+            <returntype>java.lang.String</returntype>
+            <parameter>
+                <name>SubFolder</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>EnsureDirectory</name>
+            <comment>Creates the directory if needed. Returns false and raises Error if the directory cannot be created.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsDirectoryWritable</name>
+            <comment>Verifies direct write access by creating, syncing, and deleting a small temporary file in the directory.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetUsableBytes</name>
+            <comment>Returns File.getUsableSpace for the directory, or -1 if the directory cannot be checked.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetFreeBytes</name>
+            <comment>Returns File.getFreeSpace for the directory, or -1 if the directory cannot be checked.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetTotalBytes</name>
+            <comment>Returns File.getTotalSpace for the directory, or -1 if the directory cannot be checked.</comment>
+            <returntype>long</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>PickSafFolder</name>
+            <comment>Opens Android's folder picker and persists read/write access to the selected SAF tree. The SafFolderSelected event is raised with the selected URI.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>SetSafFolderUri</name>
+            <comment>Sets a previously persisted SAF tree URI. Use HasSafFolderPermission to verify the app still has read/write access.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>FolderUri</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>HasSafFolderPermission</name>
+            <comment>Returns true when the current SAF tree URI is still persisted with read and write permission.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>OpenSafDatabase</name>
+            <comment>Experimental no-copy SAF mode. Opens or creates DatabaseName in the selected SAF folder, keeps its ParcelFileDescriptor open, and initializes the supplied B4A SQL object through /proc/self/fd. This uses the real .db document on the card, requests MEMORY journal mode, and should not be used with WAL. Local document providers can still vary in sidecar behavior.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>DatabaseName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OpenSafDatabaseAtRelativePath</name>
+            <comment>Experimental no-copy SAF mode for a database under the selected SAF tree. RelativePath can be a file name such as app.db or a child path such as Databases/app.db. Parent folders are created only when CreateIfNecessary is true. Existing copied databases can be opened with CreateIfNecessary false.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>RelativePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CloseSafDatabase</name>
+            <comment>Closes the supplied B4A SQL object, closes the SAF file descriptor, and releases the SAF manager lock.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReleaseSafLockOnly</name>
+            <comment>Releases the SAF manager lock without touching a SQL object. Use only for recovery paths where SQL has already been closed or was never opened.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>DeleteSafLockFileIfExists</name>
+            <comment>Deletes a stale SAF manager lock document for DatabaseName in the selected SAF folder if this process is not currently holding it.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>DatabaseName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DeleteSafLockFileAtRelativePath</name>
+            <comment>Deletes a stale SAF manager lock document for RelativePath under the selected SAF tree if this process is not currently holding it.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>RelativePath</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>IsManageAllFilesGranted</name>
+            <comment>Returns Environment.isExternalStorageManager on Android 11+; returns true on older Android versions where this permission does not exist.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>OpenManageAllFilesSettings</name>
+            <comment>Opens Android settings so the user can grant Manage All Files access. The ManageAllFilesResult event is raised when the settings activity returns.</comment>
+            <returntype>void</returntype>
+            <parameter>
+                <name>ba</name>
+                <type>anywheresoftware.b4a.BA</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OpenDatabase</name>
+            <comment>Acquires a manager lock in Dir and initializes the supplied B4A SQL object directly on Dir/FileName. No local working copy is made.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>OpenDatabaseAtFullPath</name>
+            <comment>Same as OpenDatabase, but accepts the complete database path.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>FullPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AttachDatabase</name>
+            <comment>Locks and attaches a developer-supplied second direct-path SQLite database to the currently managed direct-path SQL connection. SchemaName should be a simple name such as aux.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SchemaName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>AttachDatabaseAtFullPath</name>
+            <comment>Same as AttachDatabase, but accepts the complete path to the developer-supplied database to attach.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>FullPath</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>SchemaName</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>CreateIfNecessary</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>DetachDatabase</name>
+            <comment>Detaches a schema previously attached through this manager and releases that attached database lock.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>SchemaName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>CloseDatabase</name>
+            <comment>Optionally checkpoints WAL, closes the supplied B4A SQL object, and releases the main and attached database locks.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Sql</name>
+                <type>anywheresoftware.b4a.sql.SQL</type>
+            </parameter>
+            <parameter>
+                <name>CheckpointWal</name>
+                <type>boolean</type>
+            </parameter>
+        </method>
+        <method>
+            <name>ReleaseLockOnly</name>
+            <comment>Releases the manager lock without touching a SQL object. Use this only for recovery paths where SQL has already been closed or was never opened.</comment>
+            <returntype>boolean</returntype>
+        </method>
+        <method>
+            <name>DeleteLockFileIfNotHeld</name>
+            <comment>Deletes a stale manager lock file for the database if this process is not currently holding it.</comment>
+            <returntype>boolean</returntype>
+            <parameter>
+                <name>Dir</name>
+                <type>java.lang.String</type>
+            </parameter>
+            <parameter>
+                <name>FileName</name>
+                <type>java.lang.String</type>
+            </parameter>
+        </method>
+        <method>
+            <name>GetAttachedSchemas</name>
+            <comment>Returns the schema names currently attached through this manager.</comment>
+            <returntype>java.lang.String[]</returntype>
+        </method>
+        <property>
+            <name>LastError</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Last error message recorded by the manager.</comment>
+        </property>
+        <property>
+            <name>HasOpenDatabase</name>
+            <returntype>boolean</returntype>
+            <comment>Returns true while the manager lock is held.</comment>
+        </property>
+        <property>
+            <name>AttachedDatabaseCount</name>
+            <returntype>int</returntype>
+            <comment>Number of direct-path attached databases currently locked through this manager.</comment>
+        </property>
+        <property>
+            <name>ManagedDir</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Directory of the currently managed database, or empty string.</comment>
+        </property>
+        <property>
+            <name>ManagedFileName</name>
+            <returntype>java.lang.String</returntype>
+            <comment>File name of the currently managed database, or empty string.</comment>
+        </property>
+        <property>
+            <name>ManagedPath</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Full path of the currently managed database, or empty string.</comment>
+        </property>
+        <property>
+            <name>LockPath</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Full path of the current manager lock file, or empty string.</comment>
+        </property>
+        <property>
+            <name>SafFolderUri</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Current SAF tree URI, or empty string.</comment>
+        </property>
+        <property>
+            <name>SafDatabaseUri</name>
+            <returntype>java.lang.String</returntype>
+            <comment>Current SAF database document URI, or empty string.</comment>
+        </property>
+        <property>
+            <name>SafFdPath</name>
+            <returntype>java.lang.String</returntype>
+            <comment>/proc/self/fd path used by the current SAF database session, or empty string.</comment>
+        </property>
+        <property>
+            <name>HasOpenSafDatabase</name>
+            <returntype>boolean</returntype>
+            <comment>Returns true while a SAF file-descriptor database session is open.</comment>
+        </property>
+    </class>
+    <version>1.1</version>
+    <dependsOn>SQL</dependsOn>
+</root>

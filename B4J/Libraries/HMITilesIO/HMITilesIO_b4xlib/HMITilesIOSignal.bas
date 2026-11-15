@@ -4,16 +4,14 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOSignal.bas
 ' Brief:    	Wi-Fi/Radio Signal Strength Bars.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Signal Strength: Robust infrastructure diagnostics tile displaying an ascending 4-bar vector staircase. Features built-in string parsing that auto-detects and processes raw whole percentages ("50%"), decimal ratios (".50"), or negative RSSI dBm telemetry ("-65").
 ' Usage:		
 '				TileSignal.Value = "68%"
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -28,14 +26,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -44,22 +50,17 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	Value - String readout the text
-Public Sub SetTile(Header As String, _
-                   Footer As String, _
-                   Value As String)
+Public Sub SetTile(Header As String, Footer As String, Value As String)
+	mValue = value
     
 	' Clean incoming raw string from any hidden returns
 	Dim CleanValue As String = Value.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "").Trim
-	' Check value, if empty set default 0
-	If CleanValue.Length = 0 Then
-		CleanValue = "0"
-	End If
+	If CleanValue.Length = 0 Then CleanValue = "0"
     
-	' Save the original clean value text to display exactly what the micro sent (e.g. "20%", "-65 dBm")
+	' Save the original clean value text to display exactly what the micro sent
 	Dim DisplayText As String = CleanValue
     
 	' Normalize the string to extract raw numeric values for the bar math
-	' Strip common units so we can parse the number safely
 	Dim NumericString As String = CleanValue.toLowerCase.Replace("%", "").Replace("dbm", "").Replace("db", "").Trim
     
 	Dim RawSignal As Double = 0
@@ -74,18 +75,15 @@ Public Sub SetTile(Header As String, _
 	' Smart Format Auto-Detection Loops
 	If RawSignal < 0 Then
 		' Format A: Standard negative dBm RSSI (e.g. -65)
-		' -30 dBm or better is 100% signal, -90 dBm or worse is 0% signal
 		If RawSignal > -30 Then RawSignal = -30
 		If RawSignal < -90 Then RawSignal = -90
 		SignalPct = ((RawSignal + 90) / 60) * 100
 	Else If RawSignal > 0 And RawSignal <= 1.0 And CleanValue.Contains("%") = False Then
-		' Format B: Decimal Fraction ratio (e.g. .20 or 0.20)
+		' Format B: Decimal Fraction ratio (e.g. 0.20)
 		SignalPct = RawSignal * 100
-		' Update display text to show a clean percentage representation instead of the raw fraction
 		DisplayText = NumberFormat2(SignalPct, 1, 0, 0, False) & "%"
 	Else
-		' Format C: Standard whole number percentage (e.g. 20 or 20%)
-		' Automatically append the % symbol to the text readout if it's a raw integer
+		' Format C: Standard whole number percentage (e.g. 20%)
 		If IsNumber(CleanValue) Then
 			DisplayText = CleanValue & "%"
 		End If
@@ -95,48 +93,39 @@ Public Sub SetTile(Header As String, _
 	If SignalPct < 0 Then SignalPct = 0
 	If SignalPct > 100 Then SignalPct = 100
 
-	Dim EscapedHeader As String = Header.Replace("'", "\'").Replace("""", "\""")
-	Dim EscapedFooter As String = Footer.Replace("'", "\'").Replace("""", "\""")
-	Dim JS_Pct As String = NumberFormat2(SignalPct, 1, 0, 0, False)
+	' Calculate percentage as an explicit Int for crisp threshold gating
+	Dim PctInt As Int = NumberFormat2(SignalPct, 1, 0, 0, False).As(Int)
 
-	' Formulate the execution string using backticks ` for maximum stability
-	Dim js As String = $"
-        var head = document.getElementById('tile-header');
-        var foot = document.getElementById('tile-footer');
-        var valTxt = document.getElementById('current-value');
-        
-        var bar1 = document.getElementById('sig-bar1');
-        var bar2 = document.getElementById('sig-bar2');
-        var bar3 = document.getElementById('sig-bar3');
-        var bar4 = document.getElementById('sig-bar4');
-
-        if (head) { head.textContent = `${EscapedHeader}`; };
-        if (foot) { foot.textContent = `${EscapedFooter}`; };
-        if (valTxt) { valTxt.textContent = `${DisplayText}`; };
-
-        var pct = parseInt(`${JS_Pct}`);
-        var color = '#22c55e'; 
-        if (pct <= 25) { color = '#ef4444'; }       
-        else if (pct <= 60) { color = '#f59e0b'; }  
-
-        if (bar1) { bar1.setAttribute('fill', pct > 5   ? color : '#cbd5e1'); }
-        if (bar2) { bar2.setAttribute('fill', pct >= 30 ? color : '#cbd5e1'); }
-        if (bar3) { bar3.setAttribute('fill', pct >= 60 ? color : '#cbd5e1'); }
-        if (bar4) { bar4.setAttribute('fill', pct >= 85 ? color : '#cbd5e1'); }
-    "$
-    
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Signal.UpdateTile][E] Can not update the tile."$)
+	' 1. Determine signal bar color based on percentage thresholds inside B4X
+	Dim hexColor As String = "#22c55e" ' Default Green
+	If PctInt <= 25 Then
+		hexColor = "#ef4444" ' Red
+	Else If PctInt <= 60 Then
+		hexColor = "#f59e0b" ' Amber
 	End If
+
+	' 2. Group core structural text updates together
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value":  DisplayText _
+	)
+	
+	' 3. Map individual attribute fills based on thresholds using B4X inline If
+	Dim attrUpdates As Map = CreateMap( _
+		"sig-bar1": CreateMap("fill": IIf(PctInt > 5,   hexColor, "#cbd5e1")), _
+		"sig-bar2": CreateMap("fill": IIf(PctInt >= 30, hexColor, "#cbd5e1")), _
+		"sig-bar3": CreateMap("fill": IIf(PctInt >= 60, hexColor, "#cbd5e1")), _
+		"sig-bar4": CreateMap("fill": IIf(PctInt >= 85, hexColor, "#cbd5e1")) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

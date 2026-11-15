@@ -1,5 +1,5 @@
 ###  jMQTT - Official MQTT client by Erel
-### 08/24/2026
+### 11/01/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/59472/)
 
 Implementation of MQTT client based on the Paho open source project: <http://www.eclipse.org/paho/>  
@@ -20,4 +20,15 @@ If building a standalone package then add this to the main module:
 [/spoiler]  
   
 Updates:  
-v1.30 - Adds two configuration fields for the disconnection process timeouts: <https://www.b4x.com/android/forum/threads/connectandreconnect-mqtt-close-problem.171884/post-1051058>
+v1.30 - Adds two configuration fields for the disconnection process timeouts: <https://www.b4x.com/android/forum/threads/connectandreconnect-mqtt-close-problem.171884/post-1051058>  
+  
+  
+B4A + R8 optimizer - add to manifest editor:  
+
+```B4X
+AddProguardText(  
+-keep class org.eclipse.paho.** { *; }  
+-keep interface org.eclipse.paho.** { *; }  
+-dontwarn org.eclipse.paho.**  
+)
+```

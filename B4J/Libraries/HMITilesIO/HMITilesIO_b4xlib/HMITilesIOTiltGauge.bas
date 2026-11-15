@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ==============================================================================
 ' File:         HMITilesIOTiltGauge.bas
 ' Brief:        A specialized quadrant-type gauge designed for 90° process status tracking.
-' Date:         2026-09-20
+' Date:         2026-10-28
 ' Description:  Designed for angular positions, tilt monitoring, incline tracking, 
 '               or physical gate/valve status visualization sweeping a 90° arc.
 '
@@ -29,7 +28,6 @@ Version=10.5
 '               TileTiltGauge.Value = 25
 '               TileTiltGauge.InstanceTiltGauge.SetPositionSegmentColor("#FF0000")
 ' ==============================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -41,17 +39,25 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 	
 	' Additional properties
 	Private mInverted 					As Boolean = False
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -90,79 +96,49 @@ Public Sub SetTile(Header As String, _
 	End If
 	
 	' Quadrant sweep calculation math (Pivot at 42, 78)
-	' pct = 0.0 -> Needle stays at 0 degrees (Vertical pointing straight up)
-	' pct = 1.0 -> Needle rotates 90 degrees clockwise (Horizontal pointing right)
 	Dim targetDegrees As Float = pct * 90.0
-    
-	' Clean text variables
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
     
 	' Calculate position track offset (Total Arc Length = 56.55px)
 	Dim positionOffset As Float = 56.55 - (56.55 * pct)
     
-	' EXECUTION GUARD: Prevents random rendering race conditions during initialization
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var arcPos = document.getElementById("arc-position");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        if(arcPos) { arcPos.setAttribute("stroke-dashoffset", "${positionOffset}"); };
-        
-        function applyTransform() {
-            var needle = document.getElementById("gauge-needle");
-            if (needle) {
-                needle.style.transform = "";
-                needle.style.transformOrigin = "";
-                needle.style.transition = "";
-                var deg = ${targetDegrees};
-                needle.setAttribute("transform", "rotate(" + deg + ", 42, 78)");
-            } else {
-                setTimeout(applyTransform, 20);
-            }
-        }
-        applyTransform();
-    "$
+	' 1. Group core structural text updates together
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
 	
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[TiltGauge.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 2. Construct the exact needle SVG transform rotation string
+	Dim rotationString As String = "rotate(" & NumberFormat2(targetDegrees, 1, 2, 2, False) & ", 42, 78)"
+	
+	' 3. Map SVG presentation attributes cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"arc-position": CreateMap("stroke-dashoffset": NumberFormat2(positionOffset, 1, 2, 2, False)), _
+		"gauge-needle": CreateMap("transform": rotationString) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' SetPositionSegmentColor
 ' Parameter:
-'	segment - Arc red, yellow or green (lowercase)
-'	value - Web HMTL color with # prefix
+'	value - Web HTML color with or without # prefix
 Public Sub SetPositionSegmentColor(value As String)
-	Dim segment As String = $"arc-position"$
-	If Not(value.StartsWith("#")) Then value = $"#${value}"$
-	Dim js As String = $"
-        var segment = document.getElementById("${segment}");
-        if(segment) { segment.setAttribute("stroke", "${value}"); };
-    "$
-	UpdateSegment(js)
-End Sub
-
-' UpdateSegment
-' Change the segment using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateSegment(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[TiltGauge.UpdateSegment][E] Can not update the tile."$)
-	End If
+	If Not(value.StartsWith("#")) Then value = "#" & value
+	
+	' 1. Formulate direct attribute update data packet
+	Dim attrUpdates As Map = CreateMap( _
+		"arc-position": CreateMap("stroke": value) _
+	)
+	Dim updatePayload As Map = CreateMap("attrs": attrUpdates)
+	
+	' 2. Pass straight to the engine
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 Public Sub setInverted(value As Boolean)

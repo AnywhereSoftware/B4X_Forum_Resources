@@ -4,19 +4,16 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:         HMITilesIOPanel.bas
 ' Brief:        Independent Input/Output Panel Matrix (4x2 layout).
-' Date:         2026-09-06
+' Date:         2026-10-28
 ' Description:  An 8-channel bidirectional control dashboard layout tracking a 
 '               binary string state (e.g. "1010"). Automatically scales its physical 
 '               density dynamically based on input string lengths, handling up to 8 
 '               independent operational switch or status channels seamlessly.
 ' ================================================================
-#End Region
 
-#Region Class Variables
 Sub Class_Globals
 	Private xui As XUI
 	
@@ -40,21 +37,28 @@ Sub Class_Globals
 	Private mWebView						As WebView		' Local WebView reference handle container
 	Private mEventName 						As String 'ignore
 	Private mCallBack 						As Object 'ignore
+	Private mParentTile 				As HMITilesIO
 End Sub
-#End Region
 
-' Initialize the class with 8 channels state set to disabled
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+' Initializes the instance
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
 
 	' Default all 8 channels to Disabled (2) until a value string is received
 	For i = MIN_CHANNEL_INDEX To MAX_CHANNEL_INDEX
 		mChannels(i) = STATE_DISABLED
 	Next
 	mValue = ""
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 Public Sub setChannels(values() As Int)
@@ -68,16 +72,7 @@ Public Sub getmChannels As Int()
 End Sub
 
 ' SetTile (Binary String Version)
-' Parameter:
-'	Header - Tile header text
-'	Footer - Tile footer text (If left empty "", displays the binary string directly)
-'	Value - Binary content string matching channel states (e.g. "11111111" or "0101")
-' Returns:
-'	String - JavaScript DOM alteration payload bundle text
-Public Sub SetTile(Header As String, _
-				   Footer As String, _ 
-				   Value As String)
-
+Public Sub SetTile(Header As String, Footer As String, Value As String)
 	mValue = Value
 	
 	' Parse the incoming string length to automatically configure density layouts
@@ -85,7 +80,6 @@ Public Sub SetTile(Header As String, _
 	
 	For i = MIN_CHANNEL_INDEX To MAX_CHANNEL_INDEX
 		If i < ActiveCount Then
-			' Extract individual character ("1" or "0") linearly from left to right
 			Dim CharState As String = mValue.CharAt(i)
 			If CharState = "1" Then
 				mChannels(i) = STATE_ON
@@ -93,86 +87,33 @@ Public Sub SetTile(Header As String, _
 				mChannels(i) = STATE_OFF
 			End If
 		Else
-			' Beyond string length limit: Mark channel as permanently disabled
 			mChannels(i) = STATE_DISABLED
 		End If
 	Next
 
-	' Compile base structural text adjustments
-	Dim sb As StringBuilder
-	sb.Initialize
-	sb.Append($"
-		var head = document.getElementById("tile-header");
-		if(head) { head.textContent = "${Header}"; };
-	"$)
-	
-	' Append visual layout color update matrix strings
-	sb.Append(UpdateLayout)
-	
 	' Handle footer display tracking fallback mechanisms smoothly
 	Dim DeterminedFooter As String = Footer
 	If DeterminedFooter = "" Then DeterminedFooter = mValue
-	sb.Append($"
-		var foot = document.getElementById("tile-footer");
-		if(foot) { foot.textContent = "${DeterminedFooter}"; };
-	"$)
+
+	' 1. Group core structural text updates directly
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": DeterminedFooter _
+	)
 	
-	Dim js As String = sb.ToString
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[IOPanel.UpdateTile][E] Can not update the tile."$)
-	End If
-End Sub
-
-' Generates layout commands by evaluating the simple channel state integer array directly
-Public Sub UpdateLayout As String
-	Dim displaystyle As String
-	Dim sb As StringBuilder
-
-	sb.Initialize
-
-	For i = MIN_CHANNEL_INDEX To MAX_CHANNEL_INDEX
-		Dim UrlFill As String
-		Select mChannels(i)
-			Case STATE_OFF
-				UrlFill = "url(#stateOff)"
-				displaystyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
-			Case STATE_ON
-				UrlFill = "url(#stateOn)"
-				displaystyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
-			Case STATE_DISABLED
-				UrlFill = "url(#stateDisabled)"
-				displaystyle = HMITilesIOUtils.DISPLAY_STYLE_NONE
-			Case Else
-				UrlFill = "url(#stateDisabled)"
-				displaystyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
-		End Select
-		
-		sb.Append($"
-			var el${i} = document.getElementById("ch${i}"); 
-			if(el${i}){
-				el${i}.setAttribute("fill", "${UrlFill}");
-				el${i}.parentElement.style.display = "${displaystyle}"; 
-			};
-		"$)
-	Next
+	' 2. Bundle all calculated channel attributes and ship to engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": GetLayoutAttributes _
+	)
 	
-	Return sb.ToString
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' Direct Setter Method modifying individual operational channels at runtime
 Public Sub SetChannelState(channel As Byte, newstate As Int)
-	' Check ranges and disabled state configurations
 	If channel < MIN_CHANNEL_INDEX Or channel > MAX_CHANNEL_INDEX Then Return
-	If mChannels(channel) = STATE_DISABLED Then Return ' Do not alter disabled slots
+	If mChannels(channel) = STATE_DISABLED Then Return
 
 	If mChannels(channel) <> newstate Then
 		mChannels(channel) = newstate
@@ -180,18 +121,52 @@ Public Sub SetChannelState(channel As Byte, newstate As Int)
 		' Rebuild the binary tracking value string dynamically up to active length bounds
 		mValue = GetState
 							
-		' Compile full structural sync update layout string via your rendering engine
-		Dim js As String = UpdateLayout
+		' 1. Rebuild layout attributes along with the freshly calculated footer text
+		Dim textUpdates As Map = CreateMap("tile-footer": mValue)
 		
-		' Sync footer tracker output string text node change synchronously to match visual conversions
-		js = js & $"var foot = document.getElementById("tile-footer"); if(foot){foot.textContent = "${mValue}";};"$
-					
-		' Execute asynchronously using your reliable Wait For architecture utility wrappers
-		Wait For (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-		If Not(result) Then
-			Log($"[SetChannelState][E] Can not set the channel for tile IOPanel"$)
-		End If
+		Dim updatePayload As Map = CreateMap( _
+			"text": textUpdates, _
+			"attrs": GetLayoutAttributes _
+		)
+		
+		' 2. Push directly down the clean JSON communication channel
+		HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 	End If
+End Sub
+
+' --- Replaces the old UpdateLayout string builder entirely ---
+Private Sub GetLayoutAttributes As Map
+	Dim attrs As Map
+	attrs.Initialize
+	
+	For i = MIN_CHANNEL_INDEX To MAX_CHANNEL_INDEX
+		Dim UrlFill As String
+		Dim displayStyle As String
+		
+		Select mChannels(i)
+			Case STATE_OFF
+				UrlFill = "url(#stateOff)"
+				displayStyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
+			Case STATE_ON
+				UrlFill = "url(#stateOn)"
+				displayStyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
+			Case STATE_DISABLED
+				UrlFill = "url(#stateDisabled)"
+				displayStyle = HMITilesIOUtils.DISPLAY_STYLE_NONE
+			Case Else
+				UrlFill = "url(#stateDisabled)"
+				displayStyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
+		End Select
+		
+		' Build the standard SVG presentation parameters map for the channel container element
+		' Our universal web engine will loop over these style/fill adjustments securely
+		attrs.Put("ch" & i, CreateMap( _
+			"fill": UrlFill, _
+			"style": "display: " & displayStyle & ";" _
+		))
+	Next
+	
+	Return attrs
 End Sub
 
 ' Direct Getter Method returning current state integer values

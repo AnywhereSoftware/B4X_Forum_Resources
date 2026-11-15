@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOMultiState.bas
 ' Brief:    	Matrix 4x2 to set the state of the 8-bits for a byte value.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	An 8-bit digital register status word display mapping a raw byte (0-255) into a high-visibility 2x4 diagnostic grid matrix with real-time hexadecimal footer logging.
 '				Array-Based Configuration — Introduced a human-readable byte-Array masking scheme (`PinsAttached`) To easily enable, disable, Or gray out individual Bit status slots.
 '				The matrix 8 items are named pins.
@@ -20,7 +19,6 @@ Version=10.5
 '				[R][G][G][G]
 '				Default all pins are set 1,1,1,1,1,1,1,1.
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -40,16 +38,24 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		' Local WebView reference handle container
 	Private mEventName 					As String 		'ignore
 	Private mCallBack 					As Object 		'ignore
+	Private mParentTile 				As HMITilesIO
 End Sub
 
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+' Initializes the instance
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
-
+	mParentTile = parent
 	' Set all states as used
 	mStates = Array As Byte(1,1,1,1,1,1,1,1)
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' ================================================================
@@ -171,9 +177,7 @@ Public Sub SetStateVisibility(statenr As Byte, visible As Boolean)
 	' Targets the rect, then jumps up to the parent <g> group to hide everything inside
 	Dim js As String = $"
 		var rectEl = document.getElementById("state${statenr}");
-		if (rectEl) { 
-			rectEl.parentElement.style.display = "${displayStyle}"; 
-		};
+		if (rectEl) { rectEl.parentElement.style.display = "${displayStyle}"; };
 	"$
 	
 	' Execute layout adjustment change synchronously using JavaScript Wait For architecture
@@ -202,9 +206,7 @@ Public Sub SetTile(Header As String, _
 	Dim js As String = $"
 		var head = document.getElementById("tile-header");
 		var foot = document.getElementById("tile-footer");
-		if(head) {
-			head.textContent = "${Header}";
-		};
+		if(head) { head.textContent = "${Header}"; };
 	"$
 	js = $"${js}${UpdateLayout(mValue, getStates)}"$
 	UpdateTile(js)
@@ -217,51 +219,60 @@ End Sub
 Private Sub UpdateTile(js As String)
 	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
 	If Not(result) Then
-		Log($"[MultiState.UpdateTile][E] Can not update the tile."$)
+		Log($"[MultiState.UpdateTile][E] Can not update the tile: ${js}"$)
 	End If
 End Sub
 
 Private Sub UpdateLayout(ActiveState As Int, states() As Byte) As String
-	Dim displaystyle As String
-	Dim sb As StringBuilder
-
-	sb.Initialize
-
-	' Guard check to ensure the state density configuration array contains exactly 8 slots
 	If states.Length <> 8 Then
 		Log("[MultiState.UpdateLayout][E] States array must contain exactly 8 elements.")
 		Return ""
 	End If
-	
-	' Loop through each of the 8 grid blocks linearly from left to right (Index 0 to 7)
+    
+	' 1. Convert state logic into simple data maps/lists
+	Dim configList As List
+	configList.Initialize
+    
 	For i = MIN_STATE_INDEX To MAX_STATE_INDEX
-		Dim IsConfiguredState As Boolean = (states(i) = 1)
-		
-		Dim UrlFill As String
-		If Not(IsConfiguredState) Then
-			' Dynamically handle less states by graying out unconfigured block slots
-			UrlFill = "url(#stateDisabled)"
-			displaystyle = HMITilesIOUtils.DISPLAY_STYLE_NONE
+		Dim isConfigured As Boolean = (states(i) = 1)
+		Dim fillValue As String
+		Dim displayValue As String
+        
+		If Not(isConfigured) Then
+			fillValue = "url(#stateDisabled)"
+			displayValue = "none" ' inline value replacement for clean JS execution
 		Else
-			' Radio group mutual exclusion logic:
-			' Only the block exactly matching the selected ActiveState index lights up green
+			displayValue = "block"
 			If i = ActiveState Then
-				UrlFill = "url(#stateActive)"
+				fillValue = "url(#stateActive)"
 			Else
-				UrlFill = "url(#stateInactive)"
+				fillValue = "url(#stateInactive)"
 			End If
-			displaystyle = HMITilesIOUtils.DISPLAY_STYLE_BLOCK
 		End If
-		
-		' Append the execution statement targeting your element IDs
-		sb.Append($"
-			var el${i} = document.getElementById("state${i}"); 
-			if(el${i}){
-				el${i}.setAttribute("fill", "${UrlFill}");};
-				el${i}.parentElement.style.display = "${displaystyle}"; 
-			"$)
+        
+		configList.Add(CreateMap("id": i, "fill": fillValue, "display": displayValue))
 	Next
-	Return sb.tostring
+    
+	' 2. Turn configuration list into a safe JSON payload
+	Dim json As JSONGenerator
+	json.Initialize2(configList)
+	Dim configJson As String = json.ToString
+    
+	' 3. Return a clean, easy-to-read native JS loop
+	Return $"
+        (() => {
+            const statesData = ${configJson};
+            statesData.forEach(item => {
+                let el = document.getElementById("state" + item.id);
+                if (el) {
+                    el.setAttribute("fill", item.fill);
+                    if (el.parentElement) {
+                        el.parentElement.style.display = item.display;
+                    }
+                }
+            });
+        })();
+    "$
 End Sub
 
 ' Updates all 8 state blocks visually by checking a selected state index against a configuration layout array

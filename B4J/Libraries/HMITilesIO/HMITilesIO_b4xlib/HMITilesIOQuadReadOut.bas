@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:        HMITilesIOQuadReadOut.bas
 ' Brief:       High-density 2x2 multi-variable industrial readout tile
-' Date:        2026-09-06
+' Date:        2026-10-28
 ' Description: Renders up to 4 distinct sub-channels (quadrants) inside 
 '              a standard 120x120px grid layout. Features an intelligent
 '              dynamic layout engine that hides unused quadrants and layout
@@ -35,7 +34,6 @@ Version=10.5
 '              - Uses strict string slicing routines to guarantee zero 
 '                B4X syntax compiler exceptions during quick runtime checks.
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -47,6 +45,7 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 
 	' Flexibly defined arrays for layout properties (1-indexed for 4 quadrants)
 	Private mLabels(5)                  As String
@@ -56,12 +55,13 @@ Private Sub Class_Globals
 End Sub
 
 ' Initializes the instance with safe, high-performance HMI defaults
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
 	mActiveQuads = 4
+	mParentTile = parent
 	
 	' Fill arrays with clean defaults
 	For i = 1 To mActiveQuads
@@ -71,6 +71,12 @@ Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object
 	Next
 End Sub
 
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
+End Sub
+
 ' SetQuadConfiguration
 ' Flexible method to customize labels, units, and colors for a specific cell.
 Public Sub SetQuadConfiguration(QuadIndex As Int, Label As String, Unit As String, HexColor As String)
@@ -78,6 +84,77 @@ Public Sub SetQuadConfiguration(QuadIndex As Int, Label As String, Unit As Strin
 	mLabels(QuadIndex) = Label
 	mUnits(QuadIndex)  = Unit
 	mColors(QuadIndex) = HexColor
+End Sub
+
+' SetTile
+' Value must be a flat comma-separated string mapping values to active quadrants (e.g. "2288,178,9,31")
+Public Sub SetTile(Header As String, Footer As String, Value As String)
+	mValue = Value
+	
+	Dim valItems() As String = Regex.Split(",", mValue)
+	
+	' 1. Group core structural text updates
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	Dim attrUpdates As Map
+	attrUpdates.Initialize
+	
+	' Track layout matrix line visibility entirely within B4X boolean flags
+	Dim showTL As Boolean = False
+	Dim showTR As Boolean = False
+	Dim showBL As Boolean = False
+	Dim showBR As Boolean = False
+
+	' 2. Evaluate each quadrant matrix loop natively in B4X
+	For i = 1 To 4
+		Dim currentVal As String = ""
+		If (i - 1) < valItems.Length Then
+			currentVal = valItems(i - 1).Trim
+		End If
+		
+		Dim isQuadActive As Boolean = (currentVal <> "" Or mLabels(i) <> "")
+		
+		If isQuadActive Then
+			' Toggle our layout tracking coordinates
+			If i = 1 Then showTL = True
+			If i = 2 Then showTR = True
+			If i = 3 Then showBL = True
+			If i = 4 Then showBR = True
+			
+			' Set display block style rules
+			attrUpdates.Put("quad-" & i, CreateMap("style": "display: block;"))
+			
+			' Put quadrant values and text colors securely into the payload map
+			textUpdates.Put("q" & i & "-value", currentVal)
+			attrUpdates.Put("q" & i & "-value", CreateMap("fill": mColors(i)))
+			
+			' Target custom label and unit explicit IDs directly
+			textUpdates.Put("q" & i & "-label", mLabels(i))
+			textUpdates.Put("q" & i & "-unit", mUnits(i))
+		Else
+			' Instantly hide unused quadrants
+			attrUpdates.Put("quad-" & i, CreateMap("style": "display: none;"))
+		End If
+	Next
+
+	' 3. Matrix Math Engine: Calculate lines visibility inside B4X
+	Dim showVerticalLine As Boolean = (showTL And showTR) Or (showBL And showBR)
+	Dim showHorizontalLine As Boolean = (showTL And showBL) Or (showTR And showBR)
+	
+	' Map divider visibility rules cleanly
+	attrUpdates.Put("divider-h", CreateMap("style": "display: " & IIf(showHorizontalLine, "block;", "none;")))
+	attrUpdates.Put("divider-v", CreateMap("style": "display: " & IIf(showVerticalLine, "block;", "none;")))
+
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' UpdateSingleValue
@@ -94,100 +171,12 @@ Public Sub UpdateSingleValue(QuadIndex As Int, NewValue As String)
 	values(QuadIndex - 1) = NewValue
 	mValue = values(0) & "," & values(1) & "," & values(2) & "," & values(3)
 	
-	' Low-latency single element target swap
-	Dim js As String = $"
-		var txt = document.getElementById("q${QuadIndex}-value");
-		if(txt) { txt.textContent = "${NewValue}"; }
-	"$
-	UpdateTile(js)
-End Sub
-
-' SetTile
-' Value must be a flat comma-separated string mapping values to active quadrants (e.g. "2288,178,9,31")
-' The max number f quadrants is 4.
-Public Sub SetTile(Header As String, Footer As String, Value As String)
-	mValue = Value
+	' 1. Group a pinpoint target map update purely for the modified element ID string
+	Dim textUpdates As Map = CreateMap("q" & QuadIndex & "-value": NewValue)
+	Dim updatePayload As Map = CreateMap("text": textUpdates)
 	
-	' Split out individual quadrant strings from the main flat value string
-	Dim valItems() As String = Regex.Split(",", mValue)
-	
-	Dim sb As StringBuilder
-	sb.Initialize
-	
-	' Update global frame layout definitions and reset divider tracking states
-	sb.Append($"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		if(head) { head.textContent = "${Header}"; };
-		if(foot) { foot.textContent = "${Footer}"; };
-		var showTL = 0;
-		var showTR = 0;
-		var showBL = 0;
-		var showBR = 0;
-	"$)
-
-	' Inject visibility, layout formatting, and structural tracking values
-	For i = 1 To 4
-		Dim currentVal As String = ""
-		
-		' Safely check if the index exists inside your passed array bounds
-		If (i - 1) < valItems.Length Then
-			currentVal = valItems(i - 1).Trim
-		End If
-		
-		' A quadrant is active if it contains a value or a configuration label
-		Dim isQuadActive As Boolean = (currentVal <> "" Or mLabels(i) <> "")
-		
-		If isQuadActive Then
-			' Update inner script tracking integers dynamically inside the JS runtime environment
-			If i = 1 Then sb.Append("showTL = 1;")
-			If i = 2 Then sb.Append("showTR = 1;")
-			If i = 3 Then sb.Append("showBL = 1;")
-			If i = 4 Then sb.Append("showBR = 1;")
-			
-			sb.Append($"
-				var q${i} = document.getElementById("quad-${i}");
-				var q${i}_lbl = document.querySelector("#quad-${i} text:nth-child(1)");
-				var q${i}_val = document.getElementById("q${i}-value");
-				var q${i}_unt = document.querySelector("#quad-${i} text:nth-child(3)");
-				
-				if(q${i}) { q${i}.style.display = "block"; }
-				if(q${i}_lbl) { q${i}_lbl.textContent = "${mLabels(i)}"; }
-				if(q${i}_val) { 
-					q${i}_val.textContent = "${currentVal}"; 
-					q${i}_val.setAttribute("fill", "${mColors(i)}");
-				}
-				if(q${i}_unt) { q${i}_unt.textContent = "${mUnits(i)}"; }
-			"$)
-		Else
-			' Instantly strip the unused elements out of the viewport DOM tree
-			sb.Append($"
-				var q${i} = document.getElementById("quad-${i}");
-				if(q${i}) { q${i}.style.display = "none"; }
-			"$)
-		End If
-	Next
-
-	' Layout Engine: Toggles dividers based on mathematical matrix flags
-	sb.Append($"
-		var divH = document.getElementById("divider-h");
-		var divV = document.getElementById("divider-v");
-		
-		var showVerticalLine = ((showTL === 1) && (showTR === 1)) || ((showBL === 1) && (showBR === 1));
-		var showHorizontalLine = ((showTL === 1) && (showBL === 1)) || ((showTR === 1) && (showBR === 1));
-		
-		if(divH) { divH.style.display = showHorizontalLine ? "block" : "none"; }
-		if(divV) { divV.style.display = showVerticalLine ? "block" : "none"; }
-	"$)
-
-	UpdateTile(sb.ToString)
-End Sub
-
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[QuadReadout.UpdateTile][E] Error executing layout calculation script."$)
-	End If
+	' 2. Execute via safe data serialization pipeline
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 Public Sub ProcessTouchHandler(Data As HMITouchData) As HMITouchResult

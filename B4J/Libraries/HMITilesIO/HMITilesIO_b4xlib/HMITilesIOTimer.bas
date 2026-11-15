@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOTimer.bas
 ' Brief:    	Timer clock and execution tracker.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	A high-visibility clock and execution tracker featuring a centered monospace layout and 
 '				a dynamic circular progress ring with integrated multi-state warning colors.
 '				To keep things ultra-flexible for different firmware behaviors, this routine will accept a string formatted as 
@@ -20,7 +19,6 @@ Version=10.5
 '				TileTimerClock.InstanceTimer.StartClock
 ' 				Important: TimerClock - must be started after sleep(1)
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -36,6 +34,7 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 	
 	' Class locals specific
 	' Global Timer tracking metrics (Exposed for applications)
@@ -51,15 +50,22 @@ Private Sub Class_Globals
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
 
 	' Clock - disabled per default
 	TimerClock.Initialize("TimerClock", TIMERCLOCK_INTERVAL)
 	TimerClock.Enabled = False
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -68,14 +74,13 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	Value - String with currenttime;totaltime
-Public Sub SetTile(Header As String, _
-                   Footer As String, _
-                   Value As String)
+Public Sub SetTile(Header As String, Footer As String, Value As String)
     
+	mValue = Value
+	
 	Dim CleanValue As String = Value.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "").Trim
-	' Check value
 	If CleanValue.Length = 0 Then
-		Log($"[IOTimer.SetTile[E] Missing items. Check value."$)
+		Log($"[IdTimer.SetTile[E] Missing items. Check value."$)
 		Return
 	End If
     
@@ -87,7 +92,6 @@ Public Sub SetTile(Header As String, _
 	TotalTime = 0
     
 	If CleanValue.Contains(";") Then
-		' Mode 1: Timer Profile (e.g., "45;60" or "0;300") -> Circle is Visible
 		ShowRing = True
 		Dim Parts() As String = Regex.Split(";", CleanValue)
 		If Parts.Length >= 2 Then
@@ -102,7 +106,6 @@ Public Sub SetTile(Header As String, _
 				ProgressPct = (CurrentTime / TotalTime) * 100
 			End If
             
-			' Format long raw seconds into standard visual clock format if applicable
 			If CurrentTime < 86400 And TotalTime > 120 Then
 				Dim Hours As Int = CurrentTime / 3600
 				Dim Minutes As Int = (CurrentTime Mod 3600) / 60
@@ -113,70 +116,51 @@ Public Sub SetTile(Header As String, _
 			End If
 		End If
 	Else
-		' Mode 2: Time Readout Only (e.g., "12:01:22") -> Circle is HIdden
 		ShowRing = False
 	End If
     
 	If ProgressPct < 0 Then ProgressPct = 0
 	If ProgressPct > 100 Then ProgressPct = 100
 
-	Dim EscapedHeader As String = Header.Replace("'", "\'").Replace("""", "\""")
-	Dim EscapedFooter As String = Footer.Replace("'", "\'").Replace("""", "\""")
-	Dim JS_Pct As String = NumberFormat2(ProgressPct, 1, 1, 0, False).Replace(",", ".")
-	Dim JS_ShowRing As String = "none"
-	If ShowRing Then JS_ShowRing = "inline"
-
-	' Strictly removed all // comments to prevent single-line flattening crashes
-	Dim js As String = $"
-        var head = document.getElementById('tile-header');
-        var foot = document.getElementById('tile-footer');
-        var valTxt = document.getElementById('current-value');
-        var ring = document.getElementById('timer-ring');
-        var track = ring ? ring.previousElementSibling : null;
-
-        if (head) { head.textContent = `${EscapedHeader}`; };
-        if (foot) { foot.textContent = `${EscapedFooter}`; };
-        if (valTxt) { 
-            valTxt.textContent = `${DisplayText}`; 
-            if (`${DisplayText}`.length > 3) {
-                valTxt.setAttribute('font-size', '24'); 
-            } else {
-                valTxt.setAttribute('font-size', '24'); 
-            }
-        };
-
-        if (ring) {
-            ring.style.display = `${JS_ShowRing}`;
-            if (track) { track.style.display = `${JS_ShowRing}`; }
-            
-            var pct = parseFloat(`${JS_Pct}`); 
-            var circumference = 188.5; 
-            var offset = circumference - ((pct / 100) * circumference);
-            
-            ring.setAttribute('stroke-dashoffset', offset.toFixed(1));
-            
-            if (pct >= 90) {
-                ring.setAttribute('stroke', '#ef4444');
-            } else if (pct >= 75) {
-                ring.setAttribute('stroke', '#f59e0b');
-            } else {
-                ring.setAttribute('stroke', '#3b82f6');
-            }
-        }
-    "$
-    
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Timer.UpdateTile][E] Can not update the tile."$)
+	' 1. Calculate percentage constraints natively
+	Dim circumference As Double = 188.5
+	Dim calculatedOffset As Double = circumference - ((ProgressPct / 100) * circumference)
+	
+	Dim ringColor As String = "#3b82f6" ' Default blue
+	If ProgressPct >= 90 Then
+		ringColor = "#ef4444"
+	Else If ProgressPct >= 75 Then
+		ringColor = "#f59e0b"
 	End If
+
+	' Determine exact display rules based on Mode status matching your original setup
+	Dim displayRule As String = "display: none;"
+	If ShowRing Then displayRule = "display: inline;"
+
+	' 2. Formulate target text updates
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value":  DisplayText _
+	)
+	
+	' 3. Map precise presentation attributes safely
+	Dim attrUpdates As Map = CreateMap( _
+		"tile-value": CreateMap("font-size": "24"), _
+		"timer-ring": CreateMap( _
+			"style": displayRule, _
+			"stroke-dashoffset": NumberFormat2(calculatedOffset, 1, 1, 1, False), _
+			"stroke": ringColor _
+		) _
+	)
+	
+	' 4. Bundle and send down the safe json utility line
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 Public Sub GetTime As String
@@ -201,31 +185,25 @@ Private Sub TimerClock_Tick
 	Dim value As String = GetTime
 	Dim footer As String = GetDate
 
-	Dim js As String = $"
-        var foot = document.getElementById('tile-footer');
-        var currentvalue = document.getElementById('current-value');
-
-        if (foot) { foot.textContent = `${footer}`; };
-        if (currentvalue) { 
-            currentvalue.textContent = `${value}`; 
-            currentvalue.setAttribute('font-size', '24'); 
-        };
-    "$
+	' 1. Group the text changes directly mapping your element IDs
+	Dim textUpdates As Map = CreateMap( _
+		"tile-footer":   footer, _
+		"tile-value": value _
+	)
 	
-	UpdateClock(js)
+	' 2. Enforce the font styling property safely
+	Dim attrUpdates As Map = CreateMap( _
+		"tile-value": CreateMap("font-size": "24") _
+	)
+	
+	' 3. Bundle and push down the safe data pipeline
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateClock(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Timer.UpdateClock][E] Can not update the tile."$)
-	End If
-End Sub
-
 #End Region	
 
 ' ProcessTouchHandler

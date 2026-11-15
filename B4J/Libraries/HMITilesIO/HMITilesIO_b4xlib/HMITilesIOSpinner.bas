@@ -4,46 +4,50 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOSpinner.bas
 ' Brief:    	Spinner with + and - buttons to set a value.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	High-precision directional increment control featuring clear high-contrast tactile action touch targets for exact setpoint calibration.
 ' Usage:		
 '				TileSpinner.Value = 99
 '				TileSpinner.ValueFontSize = 24
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
 	
 	' Instance-specific configuration variables (completely isolated for each tile)
-	Public TEXT_COLOR As String = "#0f172a"
-	Public TEXT_SIZE As Int = 24
-	Public PinsAttached() As Byte = Array As Byte (1,1,1,1,1,1,1,1)
+	Public PinsAttached() 	As Byte = Array As Byte (1,1,1,1,1,1,1,1)
 
-	Private mState						As Boolean
-	Private mValue						As String
-	Private mParentPanel 				As B4XView		'ignore Local panel holding the webview
-	Private mWebView					As WebView		'ignore Local WebView reference handle container
-	Private mEventName 					As String
-	Private mCallBack 					As Object
+	Private mState			As Boolean
+	Private mValue			As String
+	Private mParentPanel	As B4XView		'ignore Local panel holding the webview
+	Private mWebView		As WebView		'ignore Local WebView reference handle container
+	Private mEventName 		As String
+	Private mCallBack 		As Object
+	Private mParentTile 	As HMITilesIO  
 
-	Private mMinValue					As Float
-	Private mMaxValue					As Float
-	Private mStepSize					As Int
+	Private mMinValue		As Float
+	Private mMaxValue		As Float
+	Private mStepSize		As Int
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
 
+	mParentTile = parent	
 	mStepSize = 1
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 Public Sub setMinValue(value As Float)
@@ -61,7 +65,7 @@ Public Sub getMaxValue As Float
 End Sub
 
 Public Sub setStepSize(value As Int)
-	if mStepSize < 1 then mStepSize = 1
+	If mStepSize < 1 Then mStepSize = 1
 	mStepSize = value
 End Sub
 Public Sub getStepSize As Int
@@ -82,56 +86,31 @@ Public Sub SetTile(Header As String, _
 				   Value As String)
 
 	' Guard input values inside safety boundaries
-	Value = Max(MinValue, Min(MaxValue, Value.As(Float)))
+	Dim GuardedValue As Float = Max(MinValue, Min(MaxValue, Value.As(Float)))
+	
+	mValue = GuardedValue
 
-	' Formulate a safe, compact single-line DOM manipulator execution string
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var txt = document.getElementById("value-display");
+	' Map the structural element IDs directly to their intended text strings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value": Value _
+	)
+	
+	' Bundle into the payload layout expected by the universal handler
+	Dim updatePayload As Map = CreateMap("text": textUpdates)
 
-		if(head) { 
-			head.textContent = "${Header}"; 
-		};
-		
-		if(foot) { 
-			foot.textContent = "${Footer}"; 
-		};
-
-		if (txt) {
-			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${TEXT_SIZE}");
-			txt.setAttribute("fill", "${TEXT_COLOR}");
-		}
-	"$
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Spinner.UpdateTile][E] Can not update the tile."$)
-	End If
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 Private Sub UpdateValue(Value As String)
-	Dim js As String = $"
-		var txt = document.getElementById("value-display");
-		if(txt) {
-			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${TEXT_SIZE}");
-			txt.setAttribute("fill", "${TEXT_COLOR}");
-		}
-	"$
-
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Spinner.UpdateValue][E] Can not update value"$)
-	End If
+	' Direct text target swap map
+	Dim textUpdates As Map = CreateMap("tile-value": Value)
+	
+	' Bundle and push down the safe data pipeline
+	Dim updatePayload As Map = CreateMap("text": textUpdates)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

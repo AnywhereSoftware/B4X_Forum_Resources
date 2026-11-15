@@ -1,5 +1,5 @@
 ### rOpen62541 (OPC UA Server) by rwblinn
-### 10/12/2026
+### 11/10/2026
 [B4X Forum - B4R - Libraries](https://www.b4x.com/android/forum/threads/172071/)
 
 **B4R Library rOpen62541**  
@@ -186,8 +186,8 @@ Sub Process_Globals
     ' Communication  
     Public Serial1                 As Serial  
     Private WiFi                 As ESP8266WiFi                        ' Lib rESP8266WiFi  
-    Private SSID                As String = "Zuse"  
-    Private PW                     As String = "83425399897672098612"  
+    Private SSID                As String = "***"  
+    Private PW                     As String = "***"  
     ' Open62541  
     Private OPCUAServer            As Open62541                        ' Lib rOpen62541  
     Private PORT                 As Int = 4840  
@@ -233,14 +233,14 @@ Private Sub InitOPCUAServer As Boolean
                            Null)                                ' No data write callback  
     ' Wait for the background thread layout initialization to complete!  
     Do While OPCUAServer.IsReady = False  
-        Delay(100) ' 100ms yield ticks for the cooperative scheduler        
+        Delay(100) ' 100ms yield ticks for the cooperative scheduler       
         TimeoutCounter = TimeoutCounter + 1  
         If TimeoutCounter >= 50 Then ' 50 ticks * 100ms = 5000ms (5 Seconds Timeout)  
             ServerBootFailed = True  
             Exit ' Break out of the endless loop safely!  
         End If  
     Loop  
-    
+   
     If ServerBootFailed Then  
         Log("[InitOPCUAServer][E] Failed with TIMEOUT! Core 0 failed.")  
         ' Optional: Run local emergency fallback routine or let local sensors run offline  

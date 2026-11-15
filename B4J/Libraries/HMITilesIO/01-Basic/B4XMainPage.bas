@@ -7,7 +7,7 @@ Version=9.85
 ' ================================================================
 ' File:			B4XMainPage
 ' Project:		HMITilesIO
-' Brief:		Development program for the B4X HMITilesIO library.
+' Brief:		Basic example for the B4X HMITilesIO library.
 ' Date:			See Class_Globals VERSION
 ' Author:		Robert W.B. Linn (c) 2026 MIT
 ' Description:	This page is used to develop & test the HMITilesIO library.
@@ -23,7 +23,7 @@ Version=9.85
 #End Region
 
 Private Sub Class_Globals
-	Private VERSION As String	= "HMITilesIO 1.0.0 (Build 20261018)"
+	Private VERSION As String	= "HMITilesIO 1.5.0 (Build 20261102)"
 	Private ABOUT As String 	= "HMITilesIO (c) 2026 Robert W.B. Linn - MIT"
 	
 	' UI
@@ -39,6 +39,7 @@ Private Sub Class_Globals
 	Private TileVerticalMeter As HMITilesIO
 	Private TileSlider As HMITilesIO
 	Private TileSevenSegment As HMITilesIO
+	Private TileSevenSegment5 As HMITilesIO
 	Private TileReadOut As HMITilesIO
 	Private TileReadOutEnv As HMITilesIO
 	Private TileSpinner As HMITilesIO
@@ -63,6 +64,7 @@ Private Sub Class_Globals
 	Private TileLoadingIndicator As HMITilesIO
 	Private TileQuadReadOut As HMITilesIO
 	Private TileQuadReadOut2 As HMITilesIO
+	Private TileReadOutTest As HMITilesIO
 End Sub
 
 Public Sub Initialize
@@ -89,22 +91,35 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	#End If
 	LabelAbout.Text = ABOUT
 	LabelAbout.TextColor = 0xFF000000
+	
+	' Allow the UI layout thread to completely settle its paint passes
+	Sleep(200)
+	' Execute the configuration pass safely on the next message queue loop
+	CallSubDelayed(Me, "TileProperties")
+End Sub
 
-	' HMITiles
-	' Ensure to set sleep prior calling customviews 
-	' (set 100 or more depending completness of the tiles)
-	Sleep(100)
+Private Sub B4XPage_Appear
+	' No action
+End Sub
 
+Private Sub B4XPage_Resize (Width As Double, Height As Double)
+	' No action
+End Sub
+
+Private Sub TileProperties
+	
 	' ----------
 	' State
 	' ----------
 
-'	TileAlarm.Value = "0,OK"
-	TileAlarm.Value = "1,WARN"
-'	TileAlarm.Value = "2,ERROR"
-
 	' Button
-	TileButton.State = False
+	' TileButton.State = False
+	TileButton.BackgroundColor = "#D3D3D3"
+	TileButton.ID = "Button1"
+	TileButton.Data = "This is button1 data"
+	' Not recommended - better set in the designer
+	'TileButton.BorderColor = "#FF0000"
+	'TileButton.BorderWidth = 4
 
 	' LEDPanel - state set in the designer
 	' TileLEDPanel.State = True
@@ -112,6 +127,12 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Switch
 	TileSwitch.State = True
 
+'	TileAlarm.Value = "0,OK"
+	TileAlarm.Value = "1,WARN"
+'	TileAlarm.Value = "2,ERROR"
+
+	TileLoadingIndicator.State = False
+	
 	' ----------
 	' Value
 	' ----------
@@ -131,7 +152,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	TileCompass.Footer = $"${TileCompass.Value} | ${TileCompass.InstanceCompass.GetDirection(TileCompass.Value)}"$
 
 	' Dual
-	' TileDualReadOut.ValueFontColor = "#0000FF"
+	TileDualReadOut.ValueFontColor = "#0000FF"
 
 	' Horizon (Pitch,Roll)
 	TileHorizon.Value = "5.5,-12.3"
@@ -148,24 +169,27 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	' Spinner
 	TileSpinner.Value = 99
 	TileSpinner.ValueFontSize = 18
-	TileSpinner.InstanceSpinner.StepSize = 10
+	TileSpinner.MaxValue = 102
+	TileSpinner.InstanceSpinner.StepSize = 1
 	
 	' ReadOut
-	TileReadOut.Value = "Value"
-	' TileReadOut.ValueFontColor = "#FF0000"
+'	TileReadOut.Value = "Value"
+	TileReadOut.ValueFontColor = "#FF0000"
+'	TileReadOut.HeaderFontSize = 24
 
 	' ReadOutEnv
 	TileReadOutEnv.Value = $"23°C"$
 	TileReadOutEnv.Footer = "68%RH"
-	' TileReadOutEnv.FooterFontSize = 16
-	' TileReadOutEnv.FooterFontColor = "#000000"
+	TileReadOutEnv.FooterFontSize = 16
+	TileReadOutEnv.FooterFontColor = "#0000FF"
 
 	' Slider
 	TileSlider.Value = 68
 	
 	' SevenSegment
 	TileSevenSegment.Value = TileSlider.Value
-	TileSevenSegment.ValueFontColor = HMITilesIOUtils.COLOR_STATIC_TEXT
+	' TileSevenSegment.InstanceSevenSegment.ContainerColor = "#FF0000"
+	TileSevenSegment5.Value = -12345
 	
 	' TiltGauge
 	TileTiltGauge.Value = TileSlider.Value
@@ -223,7 +247,10 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 
 	' Push 2-digit array metric directly to the layout property binder
 	TileQuadReadOut2.InstanceQuadReadOut.SetTile("DUAL MONITOR", "Split Active", "19,58")
-
+	
+	' Test changing tile type from readout to spinner
+	TileReadOutTest.TileType = "SPINNER"
+	TileReadOutTest.Footer = "Changed TileType"
 End Sub
 
 ' ================================================================
@@ -319,7 +346,7 @@ End Sub
 
 Private Sub TileButton_Click(state As Boolean, value As String)
 	TileButton.State = IIf(state, False, True)
-	Log($"[TileButton_Click] state=${TileButton.state}, value=${TileButton.value}"$)
+	Log($"[TileButton_Click] state=${TileButton.state}, value=${TileButton.value}, id=${TileButton.ID}, data=${TileButton.data}"$)
 End Sub
 
 Private Sub TileLoadingIndicator_Click(State As Boolean, Value As String)
@@ -328,7 +355,11 @@ Private Sub TileLoadingIndicator_Click(State As Boolean, Value As String)
 End Sub
 
 Private Sub TileQuadReadOut_Click(State As Boolean, Value As String)
-	
+	Log($"[TileQuadReadOut_Click] state=${TileQuadReadOut.state}, value=${TileQuadReadOut.value}, id=${TileQuadReadOut.ID}, data=${TileQuadReadOut.data}"$)
+End Sub
+
+Private Sub TileSpinner_Click(State As Boolean, Value As String)
+	Log($"[TileSpinner_Click] state=${TileSpinner.state}, value=${TileSpinner.value}, id=${TileSpinner.ID}, data=${TileSpinner.data}"$)
 End Sub
 
 ' ================================================================

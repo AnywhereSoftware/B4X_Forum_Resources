@@ -4,22 +4,20 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOVerticalMeter.bas
 ' Brief:    	Vertical meter with actual value arrow.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Simplified scale column with a perfectly aligned left-pointing reference tracking arrow.
 ' Usage:		
 '				TileVerticalMeter.Value = 68
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
 
-	Public TEXT_COLOR As String = "#0f172a"
-	Public TEXT_SIZE As Int = 24
+'	Public TEXT_COLOR As String = "#0f172a"
+'	Public TEXT_SIZE As Int = 24
 	Public COLOR_TRACK As String = "#808080"
 
 	Private mState						As Boolean
@@ -28,17 +26,25 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 
 	Private mMinValue					As Float		'ignore
 	Private mMaxValue					As Float		'ignore
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -72,49 +78,36 @@ Public Sub SetTile(Header As String, _
 	Dim barHeight As Float = pct * 64.0
 	Dim barY As Float = 94.0 - barHeight
     
-	' Calculate vertical slide translate vector shift for the pointer arrow
-	Dim arrowShiftY As Float = -barHeight
+	' 1. Group core structural text readouts
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"meter-value": Value.As(Int) _
+	)
     
-	' Clean text variables
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-	TrackColor = TrackColor.Replace("'", "\'")
+	' 2. Pre-format the SVG arrow translate vector string safely
+	Dim arrowTransform As String = "translate(0, " & NumberFormat2(-barHeight, 1, 2, 2, False) & ")"
     
-	' Isolated script execution prevents global DOM crashes
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var vtxt = document.getElementById("meter-val");
-        var level = document.getElementById("meter-level");
-        var arrow = document.getElementById("meter-arrow");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        if(vtxt) { vtxt.textContent = "${Value.As(Int)}"; };
-        
-        if(level) { 
-            level.setAttribute("y", "${barY}");
-            level.setAttribute("height", "${barHeight}");
-            level.setAttribute("fill", "${TrackColor}");
-        };
-        
-        if(arrow) {
-            arrow.setAttribute("fill", "${TrackColor}");
-            arrow.setAttribute("transform", "translate(0, " + ${arrowShiftY} + ")");
-        };
-    "$
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[VerticalMeter.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 3. Map all geometric presentation attributes cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"meter-level": CreateMap( _
+			"y":      NumberFormat2(barY, 1, 2, 2, False), _
+			"height": NumberFormat2(barHeight, 1, 2, 2, False), _
+			"fill":   TrackColor _
+		), _
+		"meter-arrow": CreateMap( _
+			"fill":      TrackColor, _
+			"transform": arrowTransform _
+		) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

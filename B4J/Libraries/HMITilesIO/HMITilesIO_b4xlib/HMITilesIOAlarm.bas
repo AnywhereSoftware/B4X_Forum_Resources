@@ -4,16 +4,14 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOAlarm.bas
 ' Brief:        Industrial Master Alarm Panel / Warning Annunciator
-' Date:			2026-09-25
-' Description:	
+' Date:			2026-10-28
+' Description:	An annunciation component utilizing subtle outer border-stroke color signaling to isolate critical process alerts while preserving dashboard grid visual aesthetics.
 ' Usage:		
 '				TileAlarm.Value = "Value"
 ' ==============================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -29,6 +27,7 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 	
 	' --- Standard Severity Value Mappings ---
 	Public Const STATE_OK As Int = 0        ' Normal quiet operation
@@ -41,11 +40,18 @@ Private Sub Class_Globals
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -55,13 +61,11 @@ End Sub
 '   Footer - String set text at tile bottom
 '   Value  - String format containing "SEVERITY,TEXT" (e.g. "2,ERROR")
 Public Sub SetTile(Header As String, Footer As String, Value As String)
-    
 	mValue = Value
-
-	'     
+	
 	Dim statusCode As Int = STATE_OK
 	Dim alertLabel As String = STATE_OK_LABEL
-    
+	
 	If Value.Contains(",") Then
 		Dim parts() As String = Regex.Split(",", Value)
 		If IsNumber(parts(0)) Then statusCode = parts(0)
@@ -73,66 +77,42 @@ Public Sub SetTile(Header As String, Footer As String, Value As String)
 	End If
     
 	' Color Settings
+	Dim hexBorderColor As String = "transparent" ' Removed '#' to prevent double hashing if your CSS needs it clean, or keep it if required by SVG
+	Dim hexLabelColor As String = "#64748b"
 	
-	' --- Standard Palette Map for Dark HMI Frameworks ---
-	Dim hexBorderColor As String      = "#transparent" ' Default: Muted Dark Slate Gray (Boring/Quiet)
-	Dim hexLabelColor As String    = "#64748b" ' Default: Muted gray label
-
 	Select statusCode
-		Case STATE_WARNING  ' (Level 2 Alarm)
-			' Solid, medium-saturation Amber/Yellow.
-			' Requires high-contrast dark text for optimum industrial readability.
-			hexBorderColor     = "#eab308"
-			hexLabelColor   = "#eab308" ' Dark slate text over light background
+		Case STATE_WARNING
+			hexBorderColor = "#eab308"
+			hexLabelColor  = "#eab308"
         
-		Case STATE_ERROR  ' (Level 1 High Priority Alarm)
-			' Solid, unmistakable Crimson Red.
-			' Stark white text for extreme readability under emergency conditions.
-			hexBorderColor     = "#ef4444"
-			hexLabelColor   = "#ef4444" ' White text over red background
+		Case STATE_ERROR
+			hexBorderColor = "#ef4444"
+			hexLabelColor  = "#ef4444"
 	End Select
-    
-	' Safe string parsing
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-	alertLabel = alertLabel.Replace("'", "\'")
-    
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var tile = document.getElementById("alarm-border");
-        var label = document.getElementById("alarm-label");
-        
-        if(head) { 
-			head.textContent = "${Header}"; 
-		};
-        
-		if(foot) { 
-			foot.textContent = "${Footer}";
-		};
-        
-		if (tile) {
-			tile.setAttribute("stroke", "${hexBorderColor}");
-        };
-        
-        if (label) {
-            label.textContent = "${alertLabel}";
-            label.setAttribute("fill", "${hexLabelColor}");
-        };
-    "$
 	
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Alarm.UpdateTile][E] Can not update the tile."$)
-	End If
+	' --- NO MORE MANUAL ESCAPING OR RAW JS BLOCKS HERE ---
+	
+	' Group text changes by element ID
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value": alertLabel _
+	)
+	
+	' Group attribute changes by element ID -> Attribute Name -> Value
+	Dim attrUpdates As Map = CreateMap( _
+		"tile-border": CreateMap("stroke": hexBorderColor), _
+		"tile-value": CreateMap("fill": hexLabelColor) _
+	)
+	
+	' Bundle it together
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	' Push to the universal updater
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

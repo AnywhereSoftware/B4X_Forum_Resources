@@ -1,5 +1,5 @@
 ###  Open PDF by Lucas Siqueira
-### 02/19/2025
+### 10/28/2026
 [B4X Forum - B4X - Code snippets](https://www.b4x.com/android/forum/threads/164989/)
 
 ```B4X
@@ -9,11 +9,11 @@ Sub OpenPDF(dirFile As String, nameFile As String)
         ' Platform: Android  
         Dim provider As FileProvider  
         provider.Initialize  
-        
+       
         ' Copy the file to the shared directory  
         Wait For (File.CopyAsync(dirFile, nameFile, provider.SharedFolder, nameFile)) Complete (Success As Boolean)  
         Log("Android - File copy successful: " & Success)  
-        
+       
         If Success = False Then  
             Log("Android - Error: Failed to copy the file to the shared directory.")  
             Return  
@@ -26,7 +26,7 @@ Sub OpenPDF(dirFile As String, nameFile As String)
         docIntent.SetType("application/pdf")  
         docIntent.Flags = Bit.Or(1, 2) ' FLAG_GRANT_READ_URI_PERMISSION  
         StartActivity(docIntent)  
-        
+       
         #Else If B4I  
         ' Platform: iOS  
         ' Check if the file exists  
@@ -41,7 +41,7 @@ Sub OpenPDF(dirFile As String, nameFile As String)
         'docInteraction.OpenFile(B4XPages.GetNativeParent(Me).RootPanel) ' shared file  
         docInteraction.PreviewFile(B4XPages.GetNativeParent(Me)) ' view file  
         Log("iOS - PDF opened successfully.")  
-        
+       
         #Else If B4J  
         ' Platform: Desktop  
         ' Check if the file exists  

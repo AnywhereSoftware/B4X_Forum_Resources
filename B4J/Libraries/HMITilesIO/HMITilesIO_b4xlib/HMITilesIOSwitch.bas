@@ -4,17 +4,15 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOSwitch.bas
 ' Brief:    	Switch with state ON (True, Green) and OFF (False, Red).
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	The Rocker Switch with crisp, tactile 3D effect with clear status symbols.
 ' Usage:		
 '				TileSwitch.State = False - set state OFF, Red
 '				TileSwitch.State = True - set state ON, Green
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -25,14 +23,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -41,87 +47,62 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 '	State - Boolean True (ON, Green) or False (OFF, Red)
-Public Sub SetTile(Header As String, _
-				   Footer As String, _
-				   State As Boolean)
+Public Sub SetTile(Header As String, Footer As String, State As Boolean)
 
-	Dim js As String
+	mState = State
 
-	' Log($"[HMITilesIoswitch.SetTile] state=${State}"$)
+	' 1. Group standard text content updates directly
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	' 2. Calculate State-dependent variables upfront inside B4X using inline If expressions
+	' --- Top Segment (ON State Options / OFF State Options) ---
+	Dim topFill As String     = IIf(State, "url(#greenGlow)", "#450a0a")
+	Dim topStroke As String   = IIf(State, "#86efac", "#1e0202")
+	Dim topHeight As String   = IIf(State, "29", "26")
+	Dim topSymStroke As String = IIf(State, "#ffffff", "#991b1b")
+	Dim topSymFilter As String = IIf(State, "url(#neonGlow)", "") ' Empty string clears attribute
+	
+	' --- Bottom Segment (ON State Options / OFF State Options) ---
+	Dim botFill As String     = IIf(State, "#14532d", "url(#redGlow)")
+	Dim botStroke As String   = IIf(State, "#052e16", "#fca5a5")
+	Dim botY As String        = IIf(State, "62", "60")
+	Dim botHeight As String   = IIf(State, "25", "27")
+	Dim botSymStroke As String = IIf(State, "#166534", "#ffffff")
+	Dim botSymFilter As String = IIf(State, "", "url(#neonGlow)")
 
-	' Escape text values cleanly for safe JS execution strings
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	If State Then
-		' State: ON -> Top part turns GREEN / Glowing (Pressed up). Bottom part turns dark dim.
-		js = $"
-            var head = document.getElementById("tile-header");
-            var foot = document.getElementById("tile-footer");
-            var topSeg = document.getElementById("rocker-top");
-            var topSym = document.getElementById("rocker-symbol-i");
-            var botSeg = document.getElementById("rocker-bottom");
-            var botSym = document.getElementById("rocker-symbol-o");
-            
-            if(head) { head.textContent = "${Header}"; };
-            if(foot) { foot.textContent = "${Footer}"; };
-            if(topSeg) {
-                topSeg.setAttribute("fill", "url(#greenGlow)");
-                topSeg.setAttribute("stroke", "#86efac");
-                topSeg.setAttribute("height", "29");
-                topSym.setAttribute("stroke", "#ffffff");
-                topSym.setAttribute("filter", "url(#neonGlow)");
-            };
-            if(botSeg) {
-                botSeg.setAttribute("fill", "#14532d");
-                botSeg.setAttribute("stroke", "#052e16");
-                botSeg.setAttribute("y", "62");
-                botSeg.setAttribute("height", "25");
-                botSym.setAttribute("stroke", "#166534");
-                botSym.removeAttribute("filter");
-            };
-        "$
-	Else
-		' State: OFF -> Top part turns dark dim. Bottom part turns RED / Glowing (Pressed down).
-		js = $"
-            var head = document.getElementById("tile-header");
-            var foot = document.getElementById("tile-footer");
-            var topSeg = document.getElementById("rocker-top");
-            var topSym = document.getElementById("rocker-symbol-i");
-            var botSeg = document.getElementById("rocker-bottom");
-            var botSym = document.getElementById("rocker-symbol-o");
-            
-            if(head) { head.textContent = "${Header}"; };
-            if(foot) { foot.textContent = "${Footer}"; };
-            if(topSeg) {
-                topSeg.setAttribute("fill", "#450a0a");
-                topSeg.setAttribute("stroke", "#1e0202");
-                topSeg.setAttribute("height", "26");
-                topSym.setAttribute("stroke", "#991b1b");
-                topSym.removeAttribute("filter");
-            };
-            if(botSeg) {
-                botSeg.setAttribute("fill", "url(#redGlow)");
-                botSeg.setAttribute("stroke", "#fca5a5");
-                botSeg.setAttribute("y", "60");
-                botSeg.setAttribute("height", "27");
-                botSym.setAttribute("stroke", "#ffffff");
-                botSym.setAttribute("filter", "url(#neonGlow)");
-            };
-        "$
-	End If
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Switch.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 3. Map all visual presentation attributes to their target element IDs cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"rocker-top": CreateMap( _
+			"fill": topFill, _
+			"stroke": topStroke, _
+			"height": topHeight _
+		), _
+		"rocker-symbol-i": CreateMap( _
+			"stroke": topSymStroke, _
+			"filter": topSymFilter _
+		), _
+		"rocker-bottom": CreateMap( _
+			"fill": botFill, _
+			"stroke": botStroke, _
+			"y": botY, _
+			"height": botHeight _
+		), _
+		"rocker-symbol-o": CreateMap( _
+			"stroke": botSymStroke, _
+			"filter": botSymFilter _
+		) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

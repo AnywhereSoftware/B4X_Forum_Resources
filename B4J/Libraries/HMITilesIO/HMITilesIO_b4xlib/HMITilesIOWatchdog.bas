@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ==============================================================================
 ' File:         HMITilesIOWatchdog.bas
 ' Brief:        An industrial instrumentation bezel telemetry health and latency monitor.
-' Date:         2026-09-22
+' Date:         2026-10-28
 ' Description:  Displays real-time node latency diagnostics and communication safety
 '               timeouts using an enclosed digital hardware panel design.
 '
@@ -24,14 +23,9 @@ Version=10.5
 ' Usage:        TileWatchdog.Value = TileWatchdog.InstanceWatchdog.STATUS_WARNING
 '               TileWatchdog.Value = 1 ' Warning
 ' ==============================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
-	
-'	' Instance-specific configuration variables (completely isolated for each tile)
-'	Public TEXT_COLOR As String = "#0f172a"
-'	Public TEXT_SIZE As Int = 24
 
 	' Mandatory glass globals 
 	Private mState						As Boolean
@@ -40,6 +34,7 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 
 	' Public class globals
 	Public STATUS_OK As Int = 0
@@ -52,11 +47,18 @@ Private Sub Class_Globals
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -75,10 +77,12 @@ Public Sub SetTile(Header As String, Footer As String, Value As String)
 	Dim panelColor As String = "#1e293b"  ' Slate Dark Sub-Frame
 	Dim textColor As String  = "#38bdf8"  ' High-Contrast Cyan Vector Text
 	Dim valueText As String  = mLatency & "ms"
+
 	mState = True
+	mValue = Value
 
 	Dim StatusCode As Int = 0
-	If IsNumber(Value) Then StatusCode = Value
+	If IsNumber(Value) Then StatusCode = Value.As(Int)
 
 	Select StatusCode
 		Case STATUS_OK
@@ -103,41 +107,27 @@ Public Sub SetTile(Header As String, Footer As String, Value As String)
 			mState     = False
 	End Select
 
-	' Clean text variables
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var val = document.getElementById("value-display");
-        var dot = document.getElementById("status-dot");
-        var pnl = document.getElementById("status-panel-bg");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        if(val)  { 
-            val.textContent = "${valueText}"; 
-            val.setAttribute("fill", "${textColor}");
-        };
-        if(dot)  { dot.setAttribute("fill", "${dotColor}"); };
-        if(pnl)  { 
-            pnl.setAttribute("fill", "${panelColor}"); 
-            pnl.setAttribute("stroke", "${textColor}");
-        };
-    "$
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Watchdog.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 1. Group standard text updates directly
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value":  valueText _
+	)
+	
+	' 2. Map all theme element presentation attributes cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"tile-value":      CreateMap("fill": textColor), _
+		"status-dot":      CreateMap("fill": dotColor), _
+		"status-panel-bg": CreateMap("fill": panelColor, "stroke": textColor) _
+	)
+	
+	' 3. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' Set or get Latency.

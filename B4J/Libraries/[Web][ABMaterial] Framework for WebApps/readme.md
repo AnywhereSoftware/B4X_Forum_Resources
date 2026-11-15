@@ -1,5 +1,5 @@
 ### [Web][ABMaterial] Framework for WebApps by alwaysbusy
-### 05/17/2024
+### 10/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/60072/)
 
 **TIP:** **For absolute beginners with ABM,** [**Get started with the Mini Template**](https://www.b4x.com/android/forum/threads/abmaterial-abmserver-mini-template-for-absolute-beginners-update-2024-05-17.117237)  
@@ -88,8 +88,7 @@ With the Grid Builder you can build the responsive framework very easy. This has
   
 ![](https://alwaysbusycorner.files.wordpress.com/2016/12/gridbuilder1.png?w=490)  
   
-There is an **online demo** at <http://abmaterial.com>  
-**Alternative url:** <http://prd.one-two.com:51042/demo/>  
+There is an **online demo** <http://prd.one-two.com:51042/demo/>  
   
 > ***NEW:** You can now support BANano and ABMaterial here too:  **<https://www.patreon.com/alwaysbusy>***
 

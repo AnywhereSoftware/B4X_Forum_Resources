@@ -1,5 +1,5 @@
 ### R8 Dexer & Optimizer by Erel
-### 10/15/2026
+### 10/26/2026
 [B4X Forum - B4A - Tutorials](https://www.b4x.com/android/forum/threads/172284/)
 
 The Java compiler generates Java bytecode. The bytecode is then converted to an Android specific format named DEX. This step is done by default with a tool named D8.  
@@ -48,7 +48,9 @@ If you get a runtime error about a missing obfuscated class then find its origin
 Enabling R8:  
 
 ```B4X
-#R8Optimizer: True
+#If RELEASE  
+#R8Optimizer: True  
+#End If
 ```
 
   
@@ -65,6 +67,6 @@ Once you tested it and especially in release mode, you can limit it to the app b
 To conclude:  
   
 1. D8 is still the default dexer and it works exactly as before.  
-2. It is recommended to test your app with #R8Optimizer: True. Report issues encountered in the forum and we will help you solve them.   
+2. It is recommended to test your app with #R8Optimizer: True. Report issues encountered in the forum and we will help you solve them.  
 3. Tips regarding JavaObject and R8: <https://www.b4x.com/android/forum/threads/tips-regarding-javaobject-and-r8-optimizer.172191/#content>  
 4. Old B4A compiled libraries (not b4xlibs) may fail with R8. If possible compile again and the compiler will generate the required proguard file. If not possible then it is usually simple to create the rules yourself. Check BitmapCreator.proguard as an example.

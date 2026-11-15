@@ -1,5 +1,5 @@
 ### KSCrash - simple and powerful crash reports framework by Erel
-### 01/23/2025
+### 11/06/2026
 [B4X Forum - B4i - Libraries](https://www.b4x.com/android/forum/threads/120644/)
 
 KSCrash is an open source crash reports framework: <https://github.com/kstenerud/KSCrash>  
@@ -22,9 +22,7 @@ How to use?
 #AdditionalLib: MessageUI.framework  
 #AdditionalLib: SystemConfiguration.framework  
 #AdditionalLib: libc++.dylib  
-#AdditionalLib: libz.dylib  
-'Add a reference to iCPP library!  
-#IgnoreWarnings: 32
+#AdditionalLib: libz.dylib
 ```
 
   

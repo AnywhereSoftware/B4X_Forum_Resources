@@ -1,5 +1,5 @@
 ### PD_PDFBox by behnam_tr
-### 10/23/2026
+### 10/26/2026
 [B4X Forum - B4J - Libraries](https://www.b4x.com/android/forum/threads/172303/)
 
 A B4J wrapper for Apache PDFBox 2.0.37 to generate PDF documents.  
@@ -27,9 +27,14 @@ bug fix
 Sample updated.  
   
 v1.2  
-new AddRow method// AddRow(String[] values, String[] hAligns, String[] colors)  
-removed method : AddRowAligned,AddRowAlignedCells  
-added change color of the text in the columns  
+new AddRow method >> AddRow(String[] values, String[] hAligns, String[] colors)  
+removed method >> AddRowAligned,AddRowAlignedCells  
+possible change color of the text in the Table  
+  
+v1.3  
+-MergeRow  
+-sample Updated  
+  
   
 
 ```B4X
@@ -45,6 +50,6 @@ pdf.Save(File.DirApp, "test.pdf")
 
   
   
-need jars - copy to b4j library folder : {"commons-logging-1.3.6.jar", "fontbox-2.0.37.jar", "icu4j-60.2.jar", "pdfbox-2.0.37.jar"}  
   
+need jars - download and copy to b4j library folder : **commons-logging-1.3.6.jar , fontbox-2.0.37.jar , icu4j-60.2.jar , pdfbox-2.0.37.jar**  
 Download jar files >> [**Download**](https://drive.google.com/file/d/1SyGqdvmI0ZSgZ2-Qa2qSATEqygBOLEX1/view?usp=sharing)

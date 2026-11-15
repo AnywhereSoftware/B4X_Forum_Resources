@@ -4,16 +4,14 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOBattery.bas
 ' Brief:    	Battery indicator
-' Date:			2026-08-29
+' Date:			2026-10-28
 ' Description:	Smart, low-footprint charge level layout displaying a responsive 4-segment vertical vector cell. Automatically transitions through visibility and warning color profiles based on raw 0-100% capacity data blocks.
 ' Usage:		Show a low level battery with red cell.
 '				TileBattery.Value = 10
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -28,14 +26,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -44,65 +50,51 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	Value - String converted to 0-100 percentage
-Public Sub SetTile(Header As String, _
-                   Footer As String, _
-                   Value As String)
-    
+Public Sub SetTile(Header As String, Footer As String, Value As String)
 	' Clean input parameters safely
-	If Not(IsNumber(Value)) Then
-		Return
-	End If
+	If Not(IsNumber(Value)) Then Return
+	
+	mValue = Value
+	
 	Dim BatteryPct As Double = Value.As(Double)
     
 	' Ensure boundaries stay within 0-100% constraints
 	If BatteryPct < 0 Then BatteryPct = 0
 	If BatteryPct > 100 Then BatteryPct = 100
 
-	Dim EscapedHeader As String = Header.Replace("'", "\'").Replace("""", "\""")
-	Dim EscapedFooter As String = Footer.Replace("'", "\'").Replace("""", "\""")
-	Dim JS_Pct As String = NumberFormat2(BatteryPct, 1, 0, 0, False)
+	Dim PctString As String = NumberFormat2(BatteryPct, 1, 0, 0, False)
+	Dim PctInt As Int = PctString.As(Int) ' Used for step thresholds
 
-	' Formulate the execution string
-	Dim js As String = $"
-        var head = document.getElementById('tile-header');
-        var foot = document.getElementById('tile-footer');
-        var valTxt = document.getElementById('current-value');
-        
-        var lvl1 = document.getElementById('bat-lvl1');
-        var lvl2 = document.getElementById('bat-lvl2');
-        var lvl3 = document.getElementById('bat-lvl3');
-        var lvl4 = document.getElementById('bat-lvl4');
-
-        if (head) { head.textContent = `${EscapedHeader}`; };
-        if (foot) { foot.textContent = `${EscapedFooter}`; };
-        if (valTxt) { valTxt.textContent = `${JS_Pct}%`; };
-
-        if (lvl1 && lvl2 && lvl3 && lvl4) {
-            var pct = parseInt(`${JS_Pct}`);
-            
-            var color = '#22c55e'; 
-            if (pct <= 20) { color = '#ef4444'; }       
-            else if (pct <= 50) { color = '#f59e0b'; }  
-
-            lvl1.setAttribute('fill', pct > 5   ? color : 'none');
-            lvl2.setAttribute('fill', pct >= 25 ? color : 'none');
-            lvl3.setAttribute('fill', pct >= 50 ? color : 'none');
-            lvl4.setAttribute('fill', pct >= 75 ? color : 'none');
-        }
-    "$
-
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Battery.UpdateTile][E] Can not update the tile."$)
+	' 1. Calculate color based on percentage thresholds in B4X
+	Dim hexColor As String = "#22c55e" ' Default green
+	If PctInt <= 20 Then
+		hexColor = "#ef4444" ' Red
+	Else If PctInt <= 50 Then
+		hexColor = "#f59e0b" ' Amber
 	End If
+
+	' 2. Formulate standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value": PctString & "%" _
+	)
+	
+	' 3. Map individual attribute fills based on thresholds
+	Dim attrUpdates As Map = CreateMap( _
+		"bat-lvl1": CreateMap("fill": IIf(PctInt > 5,   hexColor, "none")), _
+		"bat-lvl2": CreateMap("fill": IIf(PctInt >= 25, hexColor, "none")), _
+		"bat-lvl3": CreateMap("fill": IIf(PctInt >= 50, hexColor, "none")), _
+		"bat-lvl4": CreateMap("fill": IIf(PctInt >= 75, hexColor, "none")) _
+	)
+	
+	' 4. Bundle and ship to your single centralized engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

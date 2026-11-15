@@ -1,0 +1,58 @@
+﻿Build1=Default,xx.xx.CarPlayDemo
+File1=Page1.bil
+FileGroup1=Default Group
+Group=Default Group
+Library1=icore
+Library2=ixui
+Module1=CarPlayDemo
+NumberOfFiles=1
+NumberOfLibraries=2
+NumberOfModules=1
+Version=10.31
+@EndOfDesignText@
+#Region Project Attributes
+    #ApplicationLabel: CarPlay Demo
+    #Version: 1.0.0
+    #iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
+    #iPadOrientations: Portrait, PortraitUpsideDown, LandscapeLeft, LandscapeRight
+    #MinVersion: 16.0
+    #AdditionalLib: CarPlay.framework
+
+    'Use only an entitlement that Apple has granted and included in your provisioning profile.
+    #Entitlement: <key>com.apple.developer.carplay-maps</key><true/>
+
+    'Register separate phone and CarPlay scenes.
+    #PlistExtra: <key>UIApplicationSceneManifest</key><dict>
+    #PlistExtra: <key>UIApplicationSupportsMultipleScenes</key><true/>
+    #PlistExtra: <key>UISceneConfigurations</key><dict>
+    #PlistExtra: <key>UIWindowSceneSessionRoleApplication</key><array><dict>
+    #PlistExtra: <key>UISceneClassName</key><string>UIWindowScene</string>
+    #PlistExtra: <key>UISceneConfigurationName</key><string>Demo Phone</string>
+    #PlistExtra: <key>UISceneDelegateClassName</key><string>ForumPhoneSceneDelegate</string>
+    #PlistExtra: </dict></array>
+    #PlistExtra: <key>CPTemplateApplicationSceneSessionRoleApplication</key><array><dict>
+    #PlistExtra: <key>UISceneClassName</key><string>CPTemplateApplicationScene</string>
+    #PlistExtra: <key>UISceneConfigurationName</key><string>Demo CarPlay</string>
+    #PlistExtra: <key>UISceneDelegateClassName</key><string>ForumCarPlaySceneDelegate</string>
+    #PlistExtra: </dict></array>
+    #PlistExtra: </dict></dict>
+	#CertificateFile: ios_distribution.cer		
+	#ProvisionFile: AdHoc.mobileprovision
+#End Region
+
+'Keep the phone navigation controller and its simple page alive.
+Sub Process_Globals
+	Public App As Application
+	Public NavControl As NavigationController
+	Private PhonePage As Page
+End Sub
+
+'Create the phone page; the CarPlay scene creates its own independent interface.
+Private Sub Application_Start (Nav As NavigationController)
+	NavControl = Nav
+	PhonePage.Initialize("PhonePage")
+	PhonePage.Title = "CarPlay Demo"
+	PhonePage.RootPanel.Color = Colors.White
+	NavControl.ShowPage(PhonePage)
+	CarPlayDemo.Prepare
+End Sub

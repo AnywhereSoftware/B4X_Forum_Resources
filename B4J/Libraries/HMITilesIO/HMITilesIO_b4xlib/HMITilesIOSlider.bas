@@ -4,22 +4,17 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOSlider.bas
 ' Brief:    	Horizontal slider with default range 0-100.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Symmetrical control groove rail with flawless cursor mapping.
 ' Usage:		
 '				TileSlider.Value = 68
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
-
-'	Public TEXT_COLOR As String = "#0f172a"
-'	Public TEXT_SIZE As Int = 24
 
 	Private mState						As Boolean
 	Private mValue						As String
@@ -27,17 +22,25 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 
 	Private mMinValue					As Float
 	Private mMaxValue					As Float
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 Public Sub setMinValue(value As Float)
@@ -55,18 +58,22 @@ Public Sub getMaxValue As Float
 End Sub
 
 #If B4J
+' Init
+' Initializes the core mouse and touch interaction layer for B4J JavaFX containers
 Public Sub Init(showmovement As Boolean)
 	Dim movement As String = ""
 	If showmovement Then
-		movement = $"window.location.href = "http://slider?val=" + finalValue;"$
+		movement = "window.location.href = 'http://slider?val=' + finalValue;"
 	End If
 	
+	' We preserve the interactive touch tracking engine natively in JS,
+	' but remove backticks and use single quotes to guarantee string stability.
 	Dim js As String = $"
         (function() {
             var zone = document.getElementById("hmi-touch-zone");
             var handle = document.getElementById("hmi-handle");
             var prog = document.getElementById("hmi-progress");
-            var txt = document.getElementById("slider-val");
+            var value = document.getElementById("tile-value");
 			var val = 0;
             
             if (zone && handle && prog) {
@@ -94,10 +101,9 @@ Public Sub Init(showmovement As Boolean)
 					
                     handle.setAttribute("x", (touchX - 5).toString());
                     prog.setAttribute("x2", touchX.toString());
-                    if (txt) { txt.textContent = finalValue; };
+                    if (value) { value.textContent = finalValue; };
 
 					${movement}
-
                 };
 
                 zone.addEventListener("mousedown", function(e) {
@@ -131,119 +137,73 @@ Public Sub Init(showmovement As Boolean)
         })();
     "$
 
-	InitTile(js)
-End Sub
-
-' InitTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to init the tile.
-Private Sub InitTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Slider.InitTile][E] Can not init the tile."$)
-	End If
+	' Directly calls your central executor utility
+	HMITilesIOUtils.ExecuteJS(mWebView, js)
 End Sub
 #End If
 
 #if B4A
 ' Init
-' Set starting position touch
+' Sets starting position for Android touch layouts
 Public Sub Init(StartingValue As Int)
-	' Pre-calculate the starting visual layout vectors based on your hardware initialization parameters
 	Dim startX As Float = 20 + ((StartingValue / 100) * 80)
-	
-	Dim js As String = $"
-		(function() {
-			var handle = document.getElementById("hmi-handle");
-			var prog = document.getElementById("hmi-progress");
-			var txt = document.getElementById("slider-val");
-			
-			if (handle) { handle.setAttribute("x", "${startX - 5}"); }
-			if (prog)   { prog.setAttribute("x2", "${startX}"); }
-			if (txt)    { txt.textContent = "${StartingValue}"; }
-		})();
-	"$
-	InitTile(js)
-End Sub
-
-' InitTile
-' Init the tile using JavaScript.
-' Parameters:
-'	js - JavaScript to init the tile.
-Private Sub InitTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Slider.InitTile][E] Can not init the tile."$)
-	End If
+	UpdateSliderPosition(startX, StartingValue)
 End Sub
 #End If
 
 ' SetTile
-' Set all tile properties.
-' Parameter:
-'	Header - String set text at tile top
-'	Footer - String set text at tile bottom
-' 	MinValue / MaxValue - Float for calibration floor and ceiling limits
-' 	Value - Float current value
-Public Sub SetTile(Header As String, _
-				   Footer As String, _
-				   MinValue As Int, _
-				   MaxValue As Int, _ 
-				   Value As Int)
-				   
+' Sets all tile properties uniformly
+Public Sub SetTile(Header As String, Footer As String, MinValue As Int, MaxValue As Int, Value As Int)
 	' Check boundaries
 	Value = Max(MinValue, Min(MaxValue, Value))
 	mValue = Value
 	    
 	' Calculates accurate offsets based on tracking layout standards
 	Dim handleX As Float = 20.0 + ((Value / 100.0) * 80.0)
-	Dim rectOriginX As Float = handleX - 5.0
     
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var handle = document.getElementById("hmi-handle");
-        var prog = document.getElementById("hmi-progress");
-        var txt = document.getElementById("slider-val");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        if(txt) { txt.textContent = "${Value}"; };
-        if(handle) { handle.setAttribute("x", "${rectOriginX}"); };
-        if(prog) { prog.setAttribute("x2", "${handleX}"); };
-    "$
-	UpdateTile(js)
+	' 1. Group core structural text updates
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value":  Value _
+	)
+	
+	' 2. Map SVG handle positions and bar progress vectors cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"hmi-handle":   CreateMap("x": NumberFormat2(handleX - 5.0, 1, 2, 2, False)), _
+		"hmi-progress": CreateMap("x2": NumberFormat2(handleX, 1, 2, 2, False)) _
+	)
+	
+	' 3. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Slider.UpdateTile][E] Can not update the tile."$)
-	End If
-End Sub
-
+' UpdateSlider
+' Low-latency repositioning helper called during fast telemetry refreshes
 Private Sub UpdateSlider(x As Float, value As String)
-	Dim js As String = $"
-						var handle = document.getElementById("hmi-handle");
-						var prog = document.getElementById("hmi-progress");
-						var txt = document.getElementById("slider-val");
-						
-						if (handle) { handle.setAttribute("x", "${X - 5}"); }
-						if (prog)   { prog.setAttribute("x2", "${X}"); }
-						if (txt)    { txt.textContent = "${value}"; }
-					"$
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Slider.UpdateSlider][E] Can not update value"$)
-	End If
+	UpdateSliderPosition(x, value)
+End Sub
+
+' --- Central Private Utility to handle clean positional translations ---
+Private Sub UpdateSliderPosition(PositionX As Float, DisplayValue As String)
+	Dim textUpdates As Map = CreateMap("tile-value": DisplayValue)
+	
+	Dim attrUpdates As Map = CreateMap( _
+		"hmi-handle":   CreateMap("x": NumberFormat2(PositionX - 5.0, 1, 2, 2, False)), _
+		"hmi-progress": CreateMap("x2": NumberFormat2(PositionX, 1, 2, 2, False)) _
+	)
+	
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

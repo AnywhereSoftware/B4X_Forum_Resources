@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOGauge.bas
 ' Brief:    	Gauge with 3 segments.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	180° Gauge with beautiful, perfectly mapped left-to-right neon tracking arc.
 ' Usage:		
 '				' Gauge with segments green > yellow > red
@@ -32,7 +31,6 @@ Version=10.5
 '				TileGaugeReverse.Value = value.As(Float)
 '				TileGaugeReverse.SetFooter($"${NumberFormat(TileGaugeReverse.Value, 0, 0)}"$)
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -43,14 +41,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -83,61 +89,35 @@ Public Sub SetTile(Header As String, _
 	If totalRange > 0 Then pct = (Value - MinValue) / totalRange
     
 	' 3. Symmetrical 180-degree sweep calculation math
-	' Pct = 0.0 (0%)   -> Angle maps to -180 degrees (Pointing exactly West / Left)
-	' Pct = 0.5 (50%)  -> Angle maps to -90 degrees  (Pointing exactly North / Straight Up)
-	' Pct = 1.0 (100%) -> Angle maps to 0 degrees    (Pointing exactly East / Right)
 	Dim targetDegrees As Float = -90.0 + (pct * 180.0)
     
-	' 4. Clean text variables
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	' 5. Calculate mask offsets to reveal zones from left to right (Total Arc = 113.1px)
+	' 4. Calculate mask offsets to reveal zones from left to right (Total Arc = 113.1px)
 	Dim greenOffset As Float = 113.1 - (113.1 * (GreenMaxPct / 100.0))
 	Dim yellowOffset As Float = 113.1 - (113.1 * (YellowMaxPct / 100.0))
     
-	' If DOM Is still loading, wait 20ms And Try again
-	Dim js As String = $"
-        function updateGaugeDOM() {
-            var head = document.getElementById("tile-header");
-            var foot = document.getElementById("tile-footer");
-            var needle = document.getElementById("gauge-needle");
-            var arcG = document.getElementById("arc-green");
-            var arcY = document.getElementById("arc-yellow");
-            
-            if (head || foot || needle || arcG || arcY) {
-                if(head) { head.textContent = "${Header}"; };
-                if(foot) { foot.textContent = "${Footer}"; };
-                
-                if(arcG) { arcG.setAttribute("stroke-dashoffset", "${greenOffset}"); };
-                if(arcY) { arcY.setAttribute("stroke-dashoffset", "${yellowOffset}"); };
-                
-                if(needle) {
-                    needle.style.transform = "";
-                    needle.style.transformOrigin = "";
-                    needle.style.transition = "";
-                    var deg = ${targetDegrees};
-                    needle.setAttribute("transform", "rotate(" + deg + ", 60, 80)");
-                };
-            } else {
-                setTimeout(updateGaugeDOM, 20);
-            }
-        }
-        updateGaugeDOM();
-    "$
-
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Gauge.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 5. Group all standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	' 6. Construct the exact needle SVG transform rotation string
+	Dim rotationString As String = "rotate(" & NumberFormat2(targetDegrees, 1, 2, 2, False) & ", 60, 80)"
+	
+	' 7. Map SVG attributes cleanly (removing string formats from JS entirely)
+	Dim attrUpdates As Map = CreateMap( _
+		"arc-green":    CreateMap("stroke-dashoffset": NumberFormat2(greenOffset, 1, 2, 2, False)), _
+		"arc-yellow":   CreateMap("stroke-dashoffset": NumberFormat2(yellowOffset, 1, 2, 2, False)), _
+		"gauge-needle": CreateMap("transform": rotationString) _
+	)
+	
+	' 8. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' SetSegmentColor

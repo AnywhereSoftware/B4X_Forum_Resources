@@ -4,23 +4,17 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOIconIndicator.bas
 ' Brief:    	Show icon as value depending value.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Icon Indicator: High-visibility visual alert interface rendering a scalable 48x48px vector symbol frame. Dynamically handles inline status updates (e.g., "OK", "WARNING", "ERROR", "INFO") using low-latency embedded strings.
 ' Usage:		
 '				TileIconIndicator.Value = "INFO"
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
-	
-	' Instance-specific configuration variables (completely isolated for each tile)
-'	Public TEXT_COLOR As String = "#0f172a"
-'	Public TEXT_SIZE As Int = 24
 
 	' Public states
 	Public STATE_INFO 		As String = "INFO"
@@ -71,14 +65,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile for Icon Indicator
@@ -86,11 +88,11 @@ End Sub
 '   Header - String text at tile top
 '   Footer - String text at tile bottom
 '   Value - Status string: "OK", "WARN", "ERR", or "INFO"
-Public Sub SetTile(Header As String, _
-				   Footer As String, _
-				   Value As String)
+Public Sub SetTile(Header As String, Footer As String, Value As String)
 
-	' Select the embedded vector string based on status
+	mValue = Value
+
+	' 1. Select the embedded vector string based on status
 	Dim IconVector As String = ICON_INFO
 	Select Value.ToUpperCase
 		Case STATE_OK
@@ -101,34 +103,26 @@ Public Sub SetTile(Header As String, _
 			IconVector = ICON_ERROR
 	End Select
 
-	' Inside your SetTile routine, flatten the string to a single line before passing to JS:
-	IconVector = IconVector.Replace(CRLF, "").Replace(Chr(10), "").Replace(Chr(13), "")
-	IconVector = Regex.Replace("\s+", IconVector, " ") ' Strips out all the tabs and indentation spaces
+	' --- NO MORE MANUAL STRIP, FLATTEN, OR REGEX CLEANUP CODE NEEDED HERE ---
 
-
-	' Formulate a safe, compact single-line DOM manipulator execution string
-	' Seamless single-line execution string updating the href data target
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var icon = document.getElementById("tile-icon");
-
-        if (head) { head.textContent = "${Header}"; };
-        if (foot) { foot.textContent = "${Footer}"; };
-        if (icon) { icon.setAttribute("href", "${IconVector}"); };
-    "$	
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[IconIndicator.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 2. Group all standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	' 3. Map the SVG sprite href target element attribute cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"tile-icon": CreateMap("href": IconVector) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

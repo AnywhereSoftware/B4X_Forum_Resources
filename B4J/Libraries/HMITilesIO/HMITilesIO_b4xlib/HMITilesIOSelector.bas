@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOSelector.bas
 ' Brief:    	Selector with rolling selection using touch.
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Readout style value.
 ' Usage:		
 '				Private TileSelector As HMITilesIO
@@ -16,14 +15,9 @@ Version=10.5
 '				TileSelector.Value = TileSelector.Items.Get(0)
 '				Use TileSelector.Value to get the cuirrent value.
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
-	
-	' Instance-specific configuration variables (completely isolated for each tile)
-	Public TEXT_COLOR As String = "#0f172a"
-	Public TEXT_SIZE As Int = 24
 	
 	Private mItems As List
 	Private mSelectedIndex As Int = -1
@@ -33,15 +27,23 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
 	mItems.Initialize
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' Configures the selection data list from a clean CSV input string
@@ -94,46 +96,33 @@ End Sub
 '	Footer - String set text at tile bottom
 ' 	Value - String current value (can be number or text)
 Public Sub SetTile(Header As String, Footer As String, Value As String)
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var txt = document.getElementById("value-display");
+	mValue = Value
+	
+	' Map the structural element IDs directly to their intended text strings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value": Value _
+	)
+	
+	' Bundle into the payload layout expected by the universal handler
+	Dim updatePayload As Map = CreateMap("text": textUpdates)
+	
+	' Send directly to your central utility engine
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 
-		if(head) { head.textContent = "${Header}"; };
-		if(foot) { foot.textContent = "${Footer}"; };
-		if(txt) {
-			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${TEXT_SIZE}");
-			txt.setAttribute("fill", "${TEXT_COLOR}");
-		}
-	"$
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Selector.UpdateTile][E] Can not update the tile."$)
-	End If
+	UpdateValue(Value)
 End Sub
 
 Private Sub UpdateValue(Value As String)
-	Dim js As String = $"
-		var txt = document.getElementById("value-display");
-		if(txt) {
-			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${TEXT_SIZE}");
-			txt.setAttribute("fill", "${TEXT_COLOR}");
-		}
-	"$
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Selector.UpdateValue][E] Can not update value"$)
-	End If
+	' Map the text swap target directly
+	Dim textUpdates As Map = CreateMap("tile-value": Value)
+	
+	' 3. Bundle and push out down the data pipeline
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

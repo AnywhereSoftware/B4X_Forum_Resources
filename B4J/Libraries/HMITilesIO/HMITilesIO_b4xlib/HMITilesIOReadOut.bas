@@ -4,17 +4,15 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOReadOut.bas
 ' Brief:    	ReadOut to show value, text or number.
-' Date:			2026-09-06
+' Date:			2026-10-25
 ' Description:	Crisp telemetry display that cleanly outputs dynamic process numbers or 
 '				operational status string values (e.g., "23.5 °C", "1013 hPa", "RUNNING").
 ' Usage:		
 '				TileReadOut.Value = "Value"
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -28,6 +26,7 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 
 	' Private class globals
 	Private mTextColor 					As String
@@ -35,48 +34,43 @@ Private Sub Class_Globals
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
 	mTextColor = HMITilesIOUtils.COLOR_SOFT_TEXT
 	mTextSize = HMITilesIOUtils.TEXTSIZE_VALUE
 End Sub
 
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
+End Sub
+
 ' SetTile
-' Set all tile properties.
+' Set tile text header, value and footer.
 ' Parameter:
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	Value - String readout the text
-Public Sub SetTile(Header As String, _
-				   Footer As String, _
-				   Value As String)
-
-	Dim textcolor As String = mTextColor
-	Dim textsize As Int = mTextSize
-
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var txt = document.getElementById("value-display");
-
-		if(head) { 
-			head.textContent = "${Header}"; 
-		};
-		
-		if(foot) { 
-			foot.textContent = "${Footer}"; 
-		};
-
-		if (txt) {
-			txt.textContent = "${Value}";
-			txt.setAttribute("font-size", "${textsize}");
-			txt.setAttribute("fill", "${textcolor}");
-		}
-	"$
-	UpdateTile(js)
+Public Sub SetTile(Header As String, Footer As String, Value As String)
+	mValue = Value
+	
+	' Map the structural element IDs directly to their intended text strings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer, _
+		"tile-value": Value _
+	)
+	
+	' Bundle into the payload layout expected by the universal handler
+	Dim updatePayload As Map = CreateMap("text": textUpdates)
+	
+	' Send directly to the central utility engine
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 Public Sub setTextColor(value As String)
@@ -91,17 +85,6 @@ Public Sub setTextSize(value As Int)
 End Sub
 Public Sub getTextSize As Int
 	Return mTextSize
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[ReadOut.UpdateTile][E] Can not update the tile."$)
-	End If
 End Sub
 
 ' ProcessTouchHandler

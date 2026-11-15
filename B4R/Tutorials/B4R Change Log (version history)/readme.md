@@ -1,7 +1,15 @@
 ### B4R Change Log (version history) by Erel
-### 09/05/2023
+### 10/29/2026
 [B4X Forum - B4R - Tutorials](https://www.b4x.com/android/forum/threads/68742/)
 
+**v4.20** - October 29, 2026: <https://www.b4x.com/android/forum/threads/b4r-v4-20-is-available-for-download.172424/>  
+  
+The new version includes recent features added to the other B4X tools, such as optional parameters, code bundle and macro improvements.  
+  
+Code bundle (Ctrl + R) is especially useful in B4R as the bundle includes the generated source code and library header files. Note that the complete generated source code is included in the bundle.  
+  
+A few additional bugs were fixed including the conflict with the EMPTY macro.  
+  
 **v4.00** - September 5, 2023: <https://www.b4x.com/android/forum/threads/b4r-v4-00-is-available-for-download.150115/>  
 
 - This update adds support for the latest version of Arduino IDE.

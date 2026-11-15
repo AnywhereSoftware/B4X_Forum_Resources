@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ==============================================================================
 ' File:         HMITilesIOHorizon.bas
 ' Brief:        Flight Attitude Indicator / Künstlicher Horizont UI Tile Component
-' Date:         2026-09-25
+' Date:         2026-10-28
 ' Framework:    HMITilesIO Ecosystem (Strict 3-Parameter Signature Standard)
 ' Platform:     B4J (Optimized for JavaFX WebEngine Hardware Acceleration on Pi 5)
 '
@@ -49,7 +48,6 @@ Version=10.5
 '   Dim CombinedTelemetry As String = CurrentPitch & "," & CurrentRoll
 '   TileHorizon.SetTile("Horizon", "Pitch:" & CurrentPitch & "° | Roll:" & CurrentRoll & "°", CombinedTelemetry)
 ' ==============================================================================
-#End Region
 
 Sub Class_Globals
 	Private xui As XUI
@@ -61,6 +59,7 @@ Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String		'ignore
 	Private mCallBack 					As Object		'ignore
+	Private mParentTile 				As HMITilesIO
 
 	' Scaling factor: how many pixels the background shifts per 1 degree of pitch
 	Private Const PIXELS_PER_DEGREE As Double = 1.5
@@ -88,14 +87,20 @@ Sub Class_Globals
 	Public PitchDegrees As Float = 0
 	Public RollDegrees As Float = 0
 End Sub
-#End Region
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' ==============================================================================
@@ -109,7 +114,7 @@ End Sub
 '   Footer - String set text at tile bottom
 '   Value  - String containing Pitch and Roll separated by a comma (e.g. "5.5,-12.3")
 Public Sub SetTile(Header As String, Footer As String, Value As String)
-    mValue = Value
+	mValue = Value
             
 	' Safe Split and Cast the uniform Value string to extraction floats
 	If Value.Contains(",") Then
@@ -128,48 +133,32 @@ Public Sub SetTile(Header As String, Footer As String, Value As String)
 	RollDegrees = (RollDegrees Mod ROLL_MAX_LIMIT)
 	If RollDegrees < ROLL_MIN_LIMIT Then RollDegrees = RollDegrees + ROLL_MAX_LIMIT
     
-    ' Calculate the vertical Pitch offset translation shift
-    ' Climbing shifts the horizon line DOWNwards on the Y-axis matrix
-    Dim pitchShiftY As Double = PitchDegrees * PIXELS_PER_DEGREE
+	' Calculate the vertical Pitch offset translation shift
+	Dim pitchShiftY As Double = PitchDegrees * PIXELS_PER_DEGREE
     
-    ' Clean text variables to protect string injection safety
-    Header = Header.Replace("'", "\'")
-    Footer = Footer.Replace("'", "\'")
+	' 1. Group all standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
     
-    ' Framework Native DOM Execution Package Block
-    Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var pitchGroup = document.getElementById("horizon-pitch-group");
-        var gyroGroup = document.getElementById("horizon-gyro-group");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        
-        if(pitchGroup) {
-            pitchGroup.setAttribute("transform", "translate(0, " + ${pitchShiftY} + ")");
-        };
-        
-        if(gyroGroup) {
-            var roll = ${RollDegrees};
-            gyroGroup.setAttribute("transform", "rotate(" + roll + ", 60, 60)");
-        };
-    "$
+	' 2. Pre-format the complex SVG translate and rotate attribute strings safely
+	Dim pitchTransform As String = "translate(0, " & NumberFormat2(pitchShiftY, 1, 2, 2, False) & ")"
+	Dim rollTransform As String = "rotate(" & NumberFormat2(RollDegrees, 1, 2, 2, False) & ", 60, 60)"
     
-    ' Pass the built layout package script straight up to your active WebView container
-    UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Private proxy bridge method required by the HMITilesIO engine pipeline wrapper
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[HMITilesIOHorizon.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 3. Map DOM attributes cleanly
+	Dim attrUpdates As Map = CreateMap( _
+		"horizon-pitch-group": CreateMap("transform": pitchTransform), _
+		"horizon-gyro-group":  CreateMap("transform": rollTransform) _
+	)
+    
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+    
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' GETTER

@@ -1,5 +1,5 @@
 ###  SD CustomKeyboard (new version) by Star-Dust
-### 03/22/2026
+### 11/01/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/160116/)
 
 The **CustomKeyboard** library has made a **leap** in quality to be able to replace the native Android/iOs keyboard and also for the Desktop version.  
@@ -23,7 +23,7 @@ This required a more radical change, which is why I preferred to abandon the old
 **SD\_CustomKeyboard  
   
 Author:** Star-Dust  
-**Version:** 2.04  
+**Version:** 2.05  
 
 - **CustomKey**
 
@@ -153,3 +153,7 @@ Author:** Star-Dust
 - **Rel.** 2.04
 
 - Fix bug
+
+- **Rel.** 2.05
+
+- Fix bug of longClick, RightMouseClick

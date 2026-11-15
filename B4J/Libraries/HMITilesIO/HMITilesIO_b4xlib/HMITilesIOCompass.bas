@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ==============================================================================
 ' File:         HMITilesIOCompass.bas
 ' Brief:        A specialized directional vector status compass tile.
-' Date:         2026-09-22
+' Date:         2026-10-28
 ' Description:  Tracks rotational orientation paths, material flows, or wind vectors
 '               natively using a 0 to 360 degree input variable.
 '
@@ -16,7 +15,6 @@ Version=10.5
 '				TileCompass.Value = 165
 '				TileCompass.Footer = TileCompass.InstanceCompass.GetDirectionString(TileCompass.Value)
 ' ==============================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -28,14 +26,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -45,14 +51,12 @@ End Sub
 '	Footer - String set text at tile bottom
 ' 	Value - String converted to value degress 0-360
 Public Sub SetTile(Header As String, Footer As String, Value As String)
-    
-	' Safe Cast String to Float/Int for structural degree math
-	Dim degrees As Float = 0
-	If IsNumber(Value) Then 
-		degrees = Value
-	Else
-		Return
-	End If
+	' Safe Cast String to Float for structural degree math
+	If Not(IsNumber(Value)) Then Return
+	
+	mValue = Value
+	
+	Dim degrees As Float = Value.As(Float)
     
 	' Enforce standard compass bounding rules (wrap degrees inside 0-360)
 	degrees = (degrees Mod 360)
@@ -60,40 +64,28 @@ Public Sub SetTile(Header As String, Footer As String, Value As String)
 	
 	' Update class locals
 	mValue = degrees
-	'Log($"[HMITilesIOCompass.SetTile] value=${mValue}, direction=${mDirection}"$)
     
-	' Clean text variables
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	Dim js As String = $"
-        var head = document.getElementById("tile-header");
-        var foot = document.getElementById("tile-footer");
-        var arrow = document.getElementById("compass-arrow");
-        
-        if(head) { head.textContent = "${Header}"; };
-        if(foot) { foot.textContent = "${Footer}"; };
-        
-        if(arrow) {
-            arrow.style.transform = "";
-            arrow.style.transformOrigin = "";
-            arrow.style.transition = "";
-            var deg = ${degrees};
-            arrow.setAttribute("transform", "rotate(" + deg + ", 60, 60)");
-        };
-    "$
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[HMITilesIOCompass.UpdateTile][E] Can not update the tile."$)
-	End If
+	' 1. Formulate standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	' 2. Construct the exact SVG transform rotation string expression
+	Dim rotationString As String = "rotate(" & NumberFormat2(degrees, 1, 1, 1, False) & ", 60, 60)"
+	
+	' 3. Map attributes cleanly (universal engine updates the DOM directly)
+	Dim attrUpdates As Map = CreateMap( _
+		"compass-arrow": CreateMap("transform": rotationString) _
+	)
+	
+	' 4. Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 'Public Sub GetDirectionFrmValue(Value As String) As String

@@ -1,0 +1,71 @@
+Build1=Default,b4a.microsdsqlitesafexample
+Group=Default Group
+Library1=core
+Library2=sql
+Library3=microsdsqlite
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.
+Module1=Starter
+Module2=DbSaf
+NumberOfFiles=0
+NumberOfLibraries=3
+NumberOfModules=2
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes
+    #ApplicationLabel: MicroSDSQLite SAF
+    #VersionCode: 1
+    #VersionName: 1.00
+    #SupportedOrientations: unspecified
+    #CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes
+    #FullScreen: False
+    #IncludeTitle: True
+#End Region
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+    Private lblStatus As Label
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+    Activity.Color = Colors.White
+    DbSaf.Initialize
+
+    Dim btnRun As Button
+    btnRun.Initialize("btnRun")
+    btnRun.Text = "Pick Folder / Run SAF Mode"
+    Activity.AddView(btnRun, 10dip, 10dip, 100%x - 20dip, 42dip)
+
+    lblStatus.Initialize("")
+    lblStatus.TextColor = Colors.Black
+    lblStatus.Color = Colors.RGB(245, 245, 245)
+    lblStatus.TextSize = 14
+    lblStatus.Gravity = Gravity.TOP
+    Activity.AddView(lblStatus, 10dip, 66dip, 100%x - 20dip, 100%y - 76dip)
+
+    Append("SAF Mode example ready.")
+    Append("Pick an allowed folder on the SD card, such as Documents or a subfolder.")
+End Sub
+
+Private Sub btnRun_Click
+    Append(DbSaf.StartDemo)
+End Sub
+
+Public Sub DbSaf_Message(Message As String)
+    Append(Message)
+End Sub
+
+Private Sub Append(Message As String)
+    Log(Message)
+    lblStatus.Text = lblStatus.Text & DateTime.Time(DateTime.Now) & "  " & Message & CRLF
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+End Sub

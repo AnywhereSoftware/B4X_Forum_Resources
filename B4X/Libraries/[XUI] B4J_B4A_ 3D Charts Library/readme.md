@@ -1,11 +1,11 @@
 ###  [XUI] B4J/B4A: 3D Charts Library by Peter Simpson
-### 10/21/2026
+### 11/05/2026
 [B4X Forum - B4X - Libraries](https://www.b4x.com/android/forum/threads/172332/)
 
 Hello everyone,  
 Here is a B4X XUI 3D Charts library for B4J and B4A. Maybe at a later date when I get the chance to do so, I may look more closely at B4i, but I'm really not an Apple person.  
   
-A lot of learning new techniques, and relearning old and long-forgotten trigonometric functions and mathematical constants went into creating this library, and an awful lot of my spare time too. This is a cross-platform charting suite developed specifically for B4A and B4J. Built with XUI and optimised canvas drawing, it delivers smooth 3D visualisations across mobile and desktop. Each chart has its own high quality screenshot feature. For #If B4J, I've included inline java that allow you to print the select chart directly to your printer. I've attached a pdf file of the Stacked Bar Chart. I compressed the pdf file for the forum, so it's not a sharp as not being compressed.  
+A lot of learning new techniques, and relearning old and long-forgotten trigonometric functions and mathematical constants went into creating this library, and an awful lot of my spare time too. This is a cross-platform charting suite developed specifically for B4A and B4J. Built with XUI and optimised canvas drawing, it delivers smooth 3D visualisations across mobile and desktop. Each chart has its own high quality screenshot function. For #If B4J, I've included inline java that allow you to print the select chart directly to your printer. I've attached a pdf file of the Stacked Bar Chart. I compressed the pdf file for the forum, so it's not a sharp as not being compressed.  
   
 **B4X 3D Charts** include the following:  
 

@@ -4,11 +4,10 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:         HMITilesIOLoadingIndicator.bas
 ' Brief:        LoadingIndicator to visualize long-running processes or polling states.
-' Date:         2026-10-05
+' Date:         2026-10-28
 ' Description:  An industrial dashboard indicator designed around an SVG vector asset. 
 '               Features a high-performance CSS-animated rotating blue arc for active processes,
 '               and morphs into a static, neutral full circle upon task completion.
@@ -16,7 +15,6 @@ Version=10.5
 '               TileLoading.Start("DATA SYNC", "Fetching registers...")
 '               TileLoading.Stop("DATA SYNC", "COMPLETE", True)
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -28,29 +26,33 @@ Private Sub Class_Globals
 	Private mWebView                    As WebView      'ignore Local WebView reference handle container
 	Private mEventName                  As String
 	Private mCallBack                   As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
 ' Set all tile properties.
 ' Parameter:
-'	Header - String set text at tile top
-'	Footer - String set text at tile bottom
-' 	Value - String readout the text
-Public Sub SetTile(Header As String, _
-				   Footer As String, _
-				   State As Boolean)
-	' Escape text values cleanly for safe JS execution strings
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-
+' Header - String set text at tile top
+' Footer - String set text at tile bottom
+' State - Boolean true to show loading else false
+Public Sub SetTile(Header As String, Footer As String, State As Boolean)
+	mState = State
+	
 	If State Then
 		Start(Header, Footer)
 	Else
@@ -59,89 +61,48 @@ Public Sub SetTile(Header As String, _
 End Sub
 
 ' Start
-' Activates the high-performance CSS rotation loop and updates the text properties.
-' Parameter:
-'	Header - String set text at tile top
-'	Footer - String set text at tile bottom
 Public Sub Start(Header As String, Footer As String)
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var container = document.getElementById("stateContainer");
-
-		if(head) { head.textContent = "${Header}"; };
-		if(foot) { foot.textContent = "${Footer}"; };
-		
-		if(container) {
-			container.setAttribute("class", "is-loading");
-		}
-	"$
-	UpdateTile(js)
+	UpdateTile(Header, Footer, "is-loading", "visible")
 End Sub
 
 ' Stop
-' Freezes the rotation, snaps the ring to a full static circle, and handles optional automatic hiding.
-' Parameter:
-'	Header - String set text at tile top
-'	Footer - String set text at tile bottom
-'	HideTileAfterwards - Boolean if true, cleanly hides the tile frame from the grid layout after a small delay
 Public Sub Stop(Header As String, Footer As String, HideTileAfterwards As Boolean)
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var container = document.getElementById("stateContainer");
-
-		if(head) { head.textContent = "${Header}"; };
-		if(foot) { foot.textContent = "${Footer}"; };
-		
-		if(container) {
-			container.setAttribute("class", "is-stopped");
-		}
-	"$
-	UpdateTile(js)
-
 	If HideTileAfterwards Then
-		' Give the operator 800ms to visually parse the finished solid circle
-		' state before the element safely drops out of the dashboard mesh
+		' Freeze the circle first
+		UpdateTile(Header, Footer, "is-stopped", "visible")
+		' Plain synchronous block pause. Because it's followed by a direct command,
+		' it acts as a clean delay before execution moves to the next line.
 		Sleep(800)
-		
-		Dim hideJs As String = "document.getElementById('tile-value').style.visibility = 'hidden';"
-		UpdateTile(hideJs)
+		UpdateTile(Header, Footer, "is-stopped", "hidden")
+	Else
+		UpdateTile(Header, Footer, "is-stopped", "visible")
 	End If
 End Sub
 
 ' Reset
-' Completely zeros out text fields, reverts the graphic to a neutral idle color state, and forces visibility back on.
 Public Sub Reset
-	Dim js As String = $"
-		var head = document.getElementById("tile-header");
-		var foot = document.getElementById("tile-footer");
-		var container = document.getElementById("stateContainer");
-		var root = document.getElementById("tile-value");
-
-		if(head) { head.textContent = ""; };
-		if(foot) { foot.textContent = ""; };
-		
-		if(container) {
-			container.setAttribute("class", "is-stopped");
-		}
-		
-		if(root) {
-			root.style.visibility = "visible";
-		}
-	"$
-	UpdateTile(js)
+	UpdateTile("", "", "is-stopped", "visible")
 End Sub
 
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[LoadingIndicator.UpdateTile][E] Can not update the tile."$)
-	End If
+' --- Simple Synchronous UI Updater ---
+Private Sub UpdateTile(Header As String, Footer As String, StateClass As String, ObjectVisibility As String)
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	Dim attrUpdates As Map = CreateMap( _
+		"stateContainer": CreateMap("class": StateClass), _
+		"tile-value":     CreateMap("style": "visibility: " & ObjectVisibility & ";"), _
+		"tile-loadingindicator": CreateMap("style": "visibility: " & ObjectVisibility & ";") _
+	)
+	
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

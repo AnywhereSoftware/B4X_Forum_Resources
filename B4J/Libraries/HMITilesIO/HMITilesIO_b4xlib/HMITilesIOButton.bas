@@ -4,16 +4,14 @@ ModulesStructureVersion=1
 Type=Class
 Version=10.5
 @EndOfDesignText@
-#Region Class Header
 ' ================================================================
 ' File:     	HMITilesIOButton.bas
 ' Brief:    	Push button with state ON (Green) or OFF (Red).
-' Date:			2026-09-06
+' Date:			2026-10-28
 ' Description:	Deep, polished status lens with a realistic glare overlay.
 ' Usage:		Set state ON:
 '				TileLEDPanel.State = True
 ' ================================================================
-#End Region
 
 Private Sub Class_Globals
 	Private xui As XUI
@@ -24,14 +22,22 @@ Private Sub Class_Globals
 	Private mWebView					As WebView		'ignore Local WebView reference handle container
 	Private mEventName 					As String
 	Private mCallBack 					As Object
+	Private mParentTile 				As HMITilesIO
 End Sub
 
 ' Initializes the instance
-Public Sub Initialize(pnl As B4XView, wv As WebView, evt As String, cb As Object)
+Public Sub Initialize(parent As HMITilesIO, pnl As B4XView, wv As WebView, evt As String, cb As Object)
 	mParentPanel = pnl
 	mWebView = wv
 	mEventName = evt
 	mCallBack = cb
+	mParentTile = parent
+End Sub
+
+' GetParent
+' Get the parent tile HMITilesIO to access public methods & fields.
+Public Sub GetParent As HMITilesIO
+	Return mParentTile
 End Sub
 
 ' SetTile
@@ -40,59 +46,34 @@ End Sub
 '	Header - String set text at tile top
 '	Footer - String set text at tile bottom
 ' 	State - Boolean True (ON, Green) or False (OFF, Red)
-Public Sub SetTile(Header As String, _
-					Footer As String, _
-					State As Boolean)
-	Dim js As String
-    
-	' Escape text values cleanly for safe JS execution strings
-	Header = Header.Replace("'", "\'")
-	Footer = Footer.Replace("'", "\'")
-    
-	If State Then
-		js = $"
-            var head = document.getElementById("tile-header");
-            var foot = document.getElementById("tile-footer");
-            var lens = document.getElementById("led-lens");
-            if(head) { head.textContent = "${Header}"; };
-            if(foot) {
-                foot.textContent = "${Footer}";
-                foot.setAttribute("fill", "#64748b");
-            };
-            if(lens) {
-                lens.setAttribute("fill", "url(#ledGreen)");
-                lens.setAttribute("filter", "url(#lensGlow)");
-            };
-        "$
-	Else
-		js = $"
-            var head = document.getElementById("polygon-header");
-            var head = document.getElementById("tile-header");
-            var foot = document.getElementById("tile-footer");
-            var lens = document.getElementById("led-lens");
-            if(head) { head.textContent = "${Header}"; };
-            if(foot) {
-                foot.textContent = "${Footer}";
-                foot.setAttribute("fill", "#64748b");
-            };
-            if(lens) {
-                lens.setAttribute("fill", "url(#ledOff)");
-                lens.removeAttribute("filter");
-            };
-        "$
-	End If
-	UpdateTile(js)
-End Sub
-
-' UpdateTile
-' Change the state using JavaScript.
-' Parameters:
-'	js - JavaScript to update the tile elements.
-Private Sub UpdateTile(js As String)
-	Wait for (HMITilesIOUtils.ExecuteJS(mWebView, js)) complete (result As Boolean)
-	If Not(result) Then
-		Log($"[Button.UpdateTile][E] Can not update the tile."$)
-	End If
+Public Sub SetTile(Header As String, Footer As String, State As Boolean)
+	mState = State
+	
+	' Formulate standard text content mappings
+	Dim textUpdates As Map = CreateMap( _
+		"tile-header": Header, _
+		"tile-footer": Footer _
+	)
+	
+	' Determine state-dependent lens properties using B4X inline If expressions
+	Dim lensFill As String = IIf(State, "url(#ledGreen)", "url(#ledOff)")
+	Dim lensFilter As String = IIf(State, "url(#lensGlow)", "") ' An empty string safely resets/clears the SVG filter effect
+	
+	' Map DOM element attributes cleanly
+	' "tile-footer": CreateMap("fill": "#64748b"), _
+	Dim attrUpdates As Map = CreateMap( _
+		"led-lens": CreateMap("fill": lensFill, "filter": lensFilter) _
+	)
+	
+	' Bundle everything up and push to your central utility engine
+	Dim updatePayload As Map = CreateMap( _
+		"text": textUpdates, _
+		"attrs": attrUpdates _
+	)
+	
+	' Log($"[HMITilesIOButton.SetTile] state=${State}, > ${updatePayload}"$)
+	' [HMITilesIOButton.SetTile] state=true, > {text={tile-header=BUTTON, tile-footer=Footer}, attrs={tile-footer={fill=#64748b}, led-lens={fill=url(#ledGreen), filter=url(#lensGlow)}}}
+	HMITilesIOUtils.UpdateElementsViaJSON(mWebView, updatePayload)
 End Sub
 
 ' ProcessTouchHandler

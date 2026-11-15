@@ -1,10 +1,14 @@
 ### [BANano] Using PocketBase (Firebase Alternative) for your Apps. by Mashiane
-### 09/19/2023
+### 11/11/2026
 [B4X Forum - B4J - Tutorials](https://www.b4x.com/android/forum/threads/143589/)
 
 Hi there.  
   
-**Update: This class is based on the JavaScript SDK available here, <https://github.com/pocketbase/js-sdk>  
+Relevant Source: <https://pocketbase.io/old/>  
+  
+Use any release with version 22: <https://github.com/pocketbase/pocketbase/releases>  
+  
+**Update: This class is based on the JavaScript SDK available here, <https://github.com/pocketbase/js-sdk/releases/tag/v0.21.5>  
 REST API calls are dont internal to the library, if you want to use pure REST API, use BANanoFetch, the documentation should be easy to follow.**  
   
 I got to test the "Open Source backend for your next SaaS and Mobile app in 1 file" tech stack today. I must say its a very interesting project.  

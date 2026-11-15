@@ -1,5 +1,5 @@
 ###  GPBilling_JE by Jerryk
-### 01/06/2026
+### 11/10/2026
 [B4X Forum - B4A - Libraries](https://www.b4x.com/android/forum/threads/163010/)
 
 This library wraps the GooglePlayBilling base library. It returns the results in structures as they are built in the Google accounting system.  
@@ -9,7 +9,7 @@ The principle of using the library is in the example application.
   
 **GPBilling\_JE  
 Author: Jerryk   
-Version: 1.1  
+Version: 1.14  
   
 Add to the manifest editor:**  
 [INDENT=2] CreateResourceFromFile(Macro GooglePlayBilling.GooglePlayBilling)[/INDENT]  
