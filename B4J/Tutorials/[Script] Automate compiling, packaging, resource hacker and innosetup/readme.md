@@ -11,7 +11,7 @@ The integrated B4JPackager11 (`Project > Build Standalone Package`) works, but t
 - generic `Version Info` (FileDescription, ProductName, version, copyright),
 - no single-file installer.
 
-This repo automates the manual [Resource Hacker](http://www.angusj.com/resourcehacker/) + [Inno Setup](https://jrsoftware.org/isinfo.php) post-processing into a repeatable `automate-build.bat` pipeline.
+This repo automates the manual [Resource Hacker](http://www.angusj.com/resourcehacker/) or [Resource Cracker](https://www.pelock.com/products/resource-cracker) + [Inno Setup](https://jrsoftware.org/isinfo.php) post-processing into a repeatable `automate-build.bat` pipeline.
 
 ## How it works
 
@@ -24,8 +24,11 @@ This repo automates the manual [Resource Hacker](http://www.angusj.com/resourceh
 [2] Inject properties into Objects\packager.json  → synced ExeName, Title, Version, …
 [3] B4JPackager11.jar packager.json               → Objects\temp\build\MyApp.exe
 [4] Resource Hacker: inject app.ico               → ICONGROUP,MAINICON
+// Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 [5] Resource Hacker: inject app.manifest          → MANIFEST,1
+// Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 [6] Resource Hacker: compile version.rc → .res,
+// Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
     inject VERSIONINFO                            → File/Product version, Company, Copyright, …
 [7] ISCC.exe /DAppVersion=x.y.z.w installer.iss  → Setup MyApp.exe
 ```
@@ -48,6 +51,7 @@ Version normalization: `1.0` → `1.0.0.0`. Both `1,0,0,0` (FILEVERSION) and `1.
 - B4J (with `B4JBuilder.exe` and `B4JPackager11.jar`)
 - JDK 19 (or 11+/14+ for the packager) — set `JAVA_EXE` to its `java.exe`
 - [Resource Hacker](http://www.angusj.com/resourcehacker/) (`ResourceHacker.exe`)
+- [Resource Cracker](https://www.pelock.com/products/resource-cracker)
 - [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`ISCC.exe`)
 
 ## Setup
@@ -84,6 +88,7 @@ set "JAVA_EXE=C:\Java\jdk-19.0.2\bin\java.exe"
 set "B4J_BUILDER=C:\Program Files\Anywhere Software\B4J\B4JBuilder.exe"
 set "B4J_PACKAGER_JAR=C:\Program Files\Anywhere Software\B4J\B4JPackager11.jar"
 set "RESHACKER=C:\Program Files (x86)\Resource Hacker\ResourceHacker.exe"
+rem Alternative: Resource Cracker https://www.pelock.com/download/resource-cracker.exe
 set "INNO_COMPILER=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 set "PACKAGER_JSON=%B4J_PROJECT_DIR%\Objects\packager.json"
@@ -219,7 +224,7 @@ Typical workflow:
 ## References
 
 - B4JPackager11 tutorial: `https://www.b4x.com/android/forum/threads/integrated-b4jpackager11-the-simple-way-to-distribute-standalone-ui-apps.117616/`
-- Resource Hacker + B4J icon/version guide: `https://www.b4x.com/android/forum/threads/using-resource-hacker-to-replace-openjdk-platform-app-name-and-icon.136771/`
+- Resource Hacker or [Resource Cracker](https://www.pelock.com/products/resource-cracker) + B4J icon/version guide: `https://www.b4x.com/android/forum/threads/using-resource-hacker-to-replace-openjdk-platform-app-name-and-icon.136771/`
 - B4JBuilder command-line compilation: `https://www.b4x.com/android/forum/threads/b4abuilder-b4jbuilder-command-line-compilation.50154/`
 
 ## License

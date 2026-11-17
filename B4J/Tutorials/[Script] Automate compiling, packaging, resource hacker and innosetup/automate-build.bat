@@ -17,6 +17,7 @@ set "JAVA_EXE=C:\Java\jdk-19.0.2\bin\java.exe"
 set "B4J_BUILDER=C:\Program Files\Anywhere Software\B4J\B4JBuilder.exe"
 set "B4J_PACKAGER_JAR=C:\Program Files\Anywhere Software\B4J\B4JPackager11.jar"
 set "RESHACKER=C:\Program Files (x86)\Resource Hacker\ResourceHacker.exe"
+rem Alternative: Resource Cracker https://www.pelock.com/download/resource-cracker.exe
 set "INNO_COMPILER=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 :: Derived Output Paths
@@ -57,6 +58,7 @@ echo Found AssemblyVersion: %B4J_VERSION%
 echo Found ExeName:         %EXE_NAME%
 
 :: Format Version commas and dots for Resource Hacker
+rem Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 for /f "tokens=1,2,3,4 delims=." %%a in ("%B4J_VERSION%") do (
     set "v1=%%a" & set "v2=%%b" & set "v3=%%c" & set "v4=%%d"
 )
@@ -115,6 +117,7 @@ if %errorlevel% neq 0 (echo B4JPackager11 Failed! && exit /b %errorlevel%)
 
 :: ==========================================
 :: STEP 4: Resource Hacker - Icon
+rem Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 :: ==========================================
 echo [4/7] Injecting Custom Icon into Standalone EXE...
 "%RESHACKER%" -open "%TARGET_EXE%" -save "%TARGET_EXE%" -action addoverwrite -res "%ICON_PATH%" -mask ICONGROUP,MAINICON,
@@ -122,6 +125,7 @@ if %errorlevel% neq 0 (echo Icon Injection Failed! && exit /b %errorlevel%)
 
 :: ==========================================
 :: STEP 5: Resource Hacker - Manifest
+rem Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 :: ==========================================
 echo [5/7] Injecting Custom Manifest...
 "%RESHACKER%" -open "%TARGET_EXE%" -save "%TARGET_EXE%" -action addoverwrite -res "%MANIFEST_PATH%" -mask MANIFEST,1,0
@@ -129,6 +133,7 @@ if %errorlevel% neq 0 (echo Manifest Injection Failed! && exit /b %errorlevel%)
 
 :: ==========================================
 :: STEP 6: Resource Hacker - Version Info
+rem Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 :: ==========================================
 echo [6/7] Injecting Synced Version Info...
 "%RESHACKER%" -open "%GENERATED_RC%" -save "%B4J_PROJECT_DIR%\version.res" -action compile
